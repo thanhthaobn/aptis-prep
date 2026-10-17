@@ -1,5 +1,10 @@
 package com.aptisprep.controller;
 
+import com.aptisprep.entity.User;
+import com.aptisprep.enums.Role;
+import com.aptisprep.enums.UserStatus;
+import com.aptisprep.repository.UserRepository;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -17,6 +22,14 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc
 class NavbarActiveTests {
     @Autowired MockMvc mvc;
+    @Autowired UserRepository users;
+
+    @BeforeEach
+    void seedRealAccounts() {
+        saveIfMissing("Test Student", "student@aptis.local", Role.STUDENT);
+        saveIfMissing("Test Admin", "admin@aptis.local", Role.ADMIN);
+    }
+
     @Test void homeRemainsActiveEvenAfterRoleLogin() throws Exception {
         for(String role : new String[]{"STUDENT","ADMIN"}) {
             mvc.perform(get("/").with(user("demo").roles(role))).andExpect(status().isOk())
@@ -25,11 +38,11 @@ class NavbarActiveTests {
     }
     @Test void roleAreasRemainActiveOnDetailPages() throws Exception {
         for(String path : new String[]{"/student/dashboard","/student/lessons/6004","/student/exams","/student/attempts/8001/result","/student/profile"}) {
-            mvc.perform(get(path).with(user("student").roles("STUDENT"))).andExpect(status().isOk())
+            mvc.perform(get(path).with(user("student@aptis.local").roles("STUDENT"))).andExpect(status().isOk())
                 .andExpect(activeHref("/student/dashboard"));
         }
-        for(String path : new String[]{"/admin/dashboard","/admin/students/1001","/admin/scoring-schemes/9201"}) {
-            mvc.perform(get(path).with(user("admin").roles("ADMIN"))).andExpect(status().isOk())
+        for(String path : new String[]{"/admin/dashboard","/admin/students","/admin/certificates"}) {
+            mvc.perform(get(path).with(user("admin@aptis.local").roles("ADMIN"))).andExpect(status().isOk())
                 .andExpect(activeHref("/admin/dashboard"));
         }
     }
@@ -51,5 +64,11 @@ class NavbarActiveTests {
             assertTrue(Pattern.compile("class=\"[^\"]*\\bactive\\b[^\"]*\"").matcher(link).find(), link);
             assertFalse(links.find(), "Only one navbar link may be active");
         };
+    }
+
+    private void saveIfMissing(String name, String email, Role role) {
+        if (users.findByEmailIgnoreCase(email).isPresent()) return;
+        User value = new User(); value.setFullName(name); value.setEmail(email); value.setPasswordHash("test-hash");
+        value.setRole(role); value.setStatus(UserStatus.ACTIVE); users.save(value);
     }
 }
