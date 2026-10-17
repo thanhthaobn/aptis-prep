@@ -1,0 +1,15 @@
+target/
+.idea/
+*.iml
+.vscode/
+.env
+.env.*
+!.env.example
+*.jks
+*.p12
+*.pem
+src/main/resources/application-dev.properties
+uploads/*
+!uploads/.gitkeep
+*.log
+hs_err_pid*

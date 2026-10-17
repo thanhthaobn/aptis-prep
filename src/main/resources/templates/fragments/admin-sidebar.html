@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<body>
+<aside class="app-sidebar" th:fragment="adminSidebar(activePage)">
+    <span class="sidebar-label">QUẢN TRỊ</span>
+    <nav class="sidebar-nav" aria-label="Điều hướng quản trị">
+        <a class="sidebar-link" th:classappend="${activePage == 'dashboard'} ? 'active'" th:href="@{/admin/dashboard}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h6v6H4zm10 0h6v6h-6zM4 14h6v6H4zm10 0h6v6h-6z"/></svg>Tổng quan</a>
+        <a class="sidebar-link" th:classappend="${activePage == 'students'} ? 'active'" th:href="@{/admin/students}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="8" r="3"/><path d="M3 20v-2a6 6 0 0 1 12 0v2M16 5a3 3 0 0 1 0 6m2 3a5 5 0 0 1 3 4v2"/></svg>Học viên</a>
+        <a class="sidebar-link" th:classappend="${activePage == 'lessons'} ? 'active'" th:href="@{/admin/lessons}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20V4H6.5A2.5 2.5 0 0 0 4 6.5z"/></svg>Bài học</a>
+        <a class="sidebar-link" th:classappend="${activePage == 'questions'} ? 'active'" th:href="@{/admin/questions}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 1 1 3.2 2.4c-.7.3-.7.8-.7 1.6M12 17h.01"/></svg>Ngân hàng câu hỏi</a>
+        <a class="sidebar-link" th:classappend="${activePage == 'exams'} ? 'active'" th:href="@{/admin/exams}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 3h10v4H7zM5 7h14v14H5z"/></svg>Đề thi</a>
+        <a class="sidebar-link" th:classappend="${activePage == 'results'} ? 'active'" th:href="@{/admin/results}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19V5m0 14h16M8 16v-4m4 4V7m4 9v-6"/></svg>Kết quả</a>
+    </nav>
+    <div class="sidebar-divider"></div>
+    <span class="sidebar-label">HỆ THỐNG</span>
+    <nav class="sidebar-nav"><a class="sidebar-link" th:classappend="${activePage == 'settings'} ? 'active'" th:href="@{/admin/certificates}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1-2.8 2.8-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.6v.2h-4V21a1.7 1.7 0 0 0-1-1.6 1.7 1.7 0 0 0-1.9.3l-.1.1L4.2 17l.1-.1a1.7 1.7 0 0 0 .3-1.9A1.7 1.7 0 0 0 3 14H3v-4h.2a1.7 1.7 0 0 0 1.6-1 1.7 1.7 0 0 0-.3-1.9L4.2 7 7 4.2l.1.1A1.7 1.7 0 0 0 9 4.6 1.7 1.7 0 0 0 10 3V3h4v.2a1.7 1.7 0 0 0 1 1.6 1.7 1.7 0 0 0 1.9-.3l.1-.1L19.8 7l-.1.1a1.7 1.7 0 0 0-.3 1.9 1.7 1.7 0 0 0 1.6 1h.2v4H21a1.7 1.7 0 0 0-1.6 1Z"/></svg>Chứng chỉ &amp; Chấm điểm</a></nav>
+</aside>
+</body>
+</html>

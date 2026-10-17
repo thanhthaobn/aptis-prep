@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/head :: head('Chi tiết học viên')}"></head>
+<body class="admin-theme">
+<div th:replace="~{fragments/navbar :: navbar}"></div>
+<div class="container app-shell">
+    <div th:replace="~{fragments/admin-sidebar :: adminSidebar('students')}"></div>
+    <main class="app-main student-management">
+        <div th:replace="~{fragments/breadcrumb :: breadcrumb('Học viên', @{/admin/students}, 'Chi tiết học viên')}"></div>
+        <header class="page-header"><div><p class="eyebrow">HỒ SƠ HỌC VIÊN</p><h1 th:text="${student.fullName}"></h1><p th:text="${student.email}"></p></div><div class="page-actions"><a class="button button-secondary" th:href="@{/admin/students}">Về danh sách</a></div></header>
+        <section class="dashboard-panel student-profile">
+            <div class="student-identity"><span class="student-avatar student-avatar-large" th:text="${student.initials}"></span><div><h2 th:text="${student.fullName}"></h2><span class="student-status" th:classappend="${student.statusClass()}" th:text="${student.statusLabel()}"></span></div></div>
+            <dl class="student-profile-facts"><div><dt>Ngày tham gia</dt><dd th:text="${student.joinedAt}"></dd></div><div><dt>Mục tiêu CEFR</dt><dd th:text="${student.targetLevel}"></dd></div><div><dt>Ngày mục tiêu</dt><dd th:text="${student.targetDate}"></dd></div></dl>
+        </section>
+        <section class="student-summary dashboard-section" aria-label="Tiến độ học tập">
+            <article class="dashboard-panel"><span>Bài đã hoàn thành</span><strong th:text="${student.completedLessons}"></strong></article>
+            <article class="dashboard-panel"><span>Flashcard đã ôn</span><strong th:text="${student.reviewedCards}"></strong></article>
+            <article class="dashboard-panel"><span>Lượt thi</span><strong th:text="${#lists.size(student.attempts)}"></strong></article>
+        </section>
+        <section class="dashboard-grid lower-grid">
+            <article class="dashboard-panel"><div class="panel-heading"><h2>Năng lực từng kỹ năng</h2></div>
+                <div class="skill-list" th:if="${!#lists.isEmpty(student.skills)}"><div th:each="skill : ${student.skills}"><span th:text="${skill.name}"></span><span class="badge" th:text="${skill.level}"></span></div></div>
+                <div class="empty-state" th:if="${#lists.isEmpty(student.skills)}"><h3>Chưa có đánh giá kỹ năng</h3></div>
+            </article>
+            <article class="dashboard-panel"><div class="panel-heading"><h2>Lộ trình hiện tại</h2></div>
+                <div th:if="${student.totalLessons > 0}"><p class="student-target" th:text="|Mục tiêu ${student.targetLevel}|"></p><progress max="100" th:value="${student.progressPercent()}" aria-label="Tiến độ lộ trình"></progress><p class="muted" th:text="|Đã hoàn thành ${student.completedLessons}/${student.totalLessons} bài học (${student.progressPercent()}%).|"></p></div>
+                <div class="empty-state" th:if="${student.totalLessons == 0}"><h3>Chưa có lộ trình học tập</h3></div>
+            </article>
+        </section>
+        <section class="dashboard-section"><div class="section-title-row"><h2>Lịch sử thi</h2><span class="muted">Điểm ước lượng</span></div>
+            <div class="table-wrap" th:if="${!#lists.isEmpty(student.attempts)}"><table class="data-table student-table"><thead><tr><th scope="col">Bài thi</th><th scope="col">Ngày làm</th><th scope="col">Trạng thái</th><th scope="col">Kết quả</th></tr></thead><tbody><tr th:each="attempt : ${student.attempts}"><td th:text="${attempt.title}"></td><td th:text="${attempt.date}"></td><td th:text="${attempt.status}"></td><td th:text="${attempt.score}"></td></tr></tbody></table></div>
+            <div class="empty-box" th:if="${#lists.isEmpty(student.attempts)}"><h2>Chưa có lượt thi</h2></div>
+        </section>
+        <section class="dashboard-panel dashboard-section student-account-panel"><div><h2>Trạng thái tài khoản</h2><p class="muted">Khóa đăng nhập, giữ nguyên lịch sử học tập.</p></div>
+            <button th:if="${student.status.name() == 'ACTIVE'}" class="button student-lock-button" type="button" data-open-student-dialog>Khóa tài khoản</button>
+            <button th:if="${student.status.name() == 'LOCKED'}" class="button" type="button" data-open-student-dialog>Mở khóa tài khoản</button>
+            <span th:if="${student.status.name() == 'INACTIVE'}" class="student-status student-status-inactive">Ngừng hoạt động</span>
+        </section>
+        <dialog class="student-confirm-dialog" id="studentAccountDialog" aria-labelledby="studentDialogTitle" th:if="${student.status.name() != 'INACTIVE'}">
+            <h2 id="studentDialogTitle" th:text="${student.status.name() == 'LOCKED' ? 'Mở khóa tài khoản?' : 'Khóa tài khoản?'}"></h2>
+            <p><strong th:text="${student.fullName}"></strong><br><span class="muted" th:text="${student.email}"></span></p>
+            <p th:text="${student.status.name() == 'LOCKED' ? 'Học viên có thể đăng nhập lại sau khi tài khoản được mở khóa.' : 'Học viên sẽ không thể tiếp tục truy cập. Tiến độ và bài làm được giữ nguyên.'}"></p>
+            
+            <div class="modal-actions"><form method="dialog"><button class="button button-secondary" autofocus>Hủy</button></form><button class="button" type="button" disabled>Xác nhận</button></div>
+        </dialog>
+    </main>
+</div>
+<div th:replace="~{fragments/footer :: footer}"></div>
+<script th:src="@{/js/admin-students.js}" defer></script>
+</body>
+</html>

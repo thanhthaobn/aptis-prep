@@ -1,0 +1,18 @@
+package com.aptisprep.dto.view;
+
+import java.util.List;
+
+/** Immutable UI fixture models, not entities or persistence contracts. */
+public final class AdminCatalogPreview {
+    private AdminCatalogPreview() {}
+    public record Field(String label, String value) {}
+    public record Row(String title, String description, String value) {}
+    public record Entry(int id, String title, String subtitle, String skill, String level,
+                        String kind, String status, String statusLabel, String date,
+                        List<Field> facts, List<Row> rows) {}
+    public record Module(String key, String title, String description, String singular,
+                         String createLabel, String typeLabel, List<String> kinds, List<Entry> entries) {
+        public boolean editable() { return !key.equals("results"); }
+        public String baseUrl() { return "/admin/" + key; }
+    }
+}

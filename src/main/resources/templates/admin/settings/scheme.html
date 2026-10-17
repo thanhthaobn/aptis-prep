@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/head :: head('Bộ chấm điểm & CEFR')}"></head>
+<body class="admin-theme"><div th:replace="~{fragments/navbar :: navbar}"></div>
+<div class="container app-shell"><div th:replace="~{fragments/admin-sidebar :: adminSidebar('settings')}"></div>
+<main class="app-main admin-catalog">
+    <div th:replace="~{fragments/breadcrumb :: breadcrumb('Chứng chỉ & Chấm điểm', @{/admin/certificates}, 'Bộ chấm điểm')}"></div>
+    <header class="page-header"><h1 th:text="${readOnly ? scheme.name : (editing ? 'Chỉnh sửa bộ chấm điểm' : 'Thêm bộ chấm điểm')}"></h1><a class="button button-secondary" th:href="@{/admin/certificates#schemes}">Về danh sách</a></header>
+    <form class="dashboard-panel" onsubmit="return false;">
+        <fieldset class="scoring-fields" th:disabled="${readOnly}"><legend>Thông tin bộ chấm điểm</legend><div class="catalog-form-grid">
+            <div class="field"><label for="schemeCertificate">Chứng chỉ</label><select id="schemeCertificate"><option th:each="certificate : ${certificates}" th:value="${certificate.id}" th:text="${certificate.name}" th:selected="${editing and scheme.certificateId == certificate.id}"></option></select></div>
+            <div class="field"><label for="schemeName">Tên bộ chấm điểm</label><input id="schemeName" maxlength="255" th:value="${editing ? scheme.name : ''}" required></div>
+            <div class="field"><label for="schemeVersion">Phiên bản</label><input id="schemeVersion" maxlength="30" placeholder="1.0" th:value="${editing ? scheme.version : ''}" required></div>
+            <div class="field"><label for="schemeStatus">Trạng thái</label><select id="schemeStatus"><option value="ACTIVE">Đang sử dụng</option><option value="INACTIVE">Ngừng sử dụng</option></select></div>
+            <div class="field"><label for="schemeDate">Ngày hiệu lực</label><input id="schemeDate" type="datetime-local" th:value="${editing ? scheme.effectiveFrom : ''}"></div>
+        </div></fieldset>
+        <div class="actions"><button class="button" type="button" disabled>Lưu bộ chấm điểm</button><a th:if="${readOnly}" class="button button-secondary" th:href="@{/admin/scoring-schemes/{id}/edit(id=${scheme.id},skill=${selectedSkill})}">Chỉnh sửa</a><button th:if="${editing}" class="button button-secondary" type="button" disabled>Ngừng sử dụng</button></div>
+    </form>
+    <section class="dashboard-panel dashboard-section"><h2>Khoảng điểm CEFR</h2><p class="muted">Thang điểm nội bộ để ước lượng, không phải ngưỡng Aptis chính thức.</p>
+        <form th:if="${editing}" class="toolbar" method="get" th:action="@{${'/admin/scoring-schemes/' + scheme.id + (readOnly ? '' : '/edit')}}"><div><label for="bandSkill">Kỹ năng</label><select id="bandSkill" name="skill"><option th:each="skill : ${skills}" th:text="${skill}" th:value="${skill}" th:selected="${selectedSkill == skill}"></option></select></div><button class="button button-secondary" type="submit">Xem khoảng điểm</button></form>
+        <div class="table-wrap" th:if="${!#lists.isEmpty(bands)}"><table class="data-table"><thead><tr><th scope="col">CEFR</th><th scope="col">Từ điểm</th><th scope="col">Đến điểm</th></tr></thead><tbody><tr th:each="band : ${bands}"><td th:text="${band.level}"></td><td th:text="${band.min}"></td><td th:text="${band.max}"></td></tr></tbody></table></div>
+        <p th:if="${#lists.isEmpty(bands)}">Chưa có khoảng điểm cho kỹ năng này.</p>
+        <form class="catalog-form-section" onsubmit="return false;"><h3>Thiết lập khoảng điểm</h3><div class="catalog-form-grid"><div class="field"><label for="newBandSkill">Kỹ năng</label><select id="newBandSkill"><option th:each="skill : ${skills}" th:text="${skill}" th:selected="${selectedSkill == skill}"></option></select></div><div class="field"><label for="bandLevel">CEFR</label><select id="bandLevel"><option th:each="level : ${ {'A1','A2','B1','B2','C1','C2'} }" th:text="${level}"></option></select></div><div class="field"><label for="bandMin">Từ điểm</label><input id="bandMin" type="number" step="0.01" min="0"></div><div class="field"><label for="bandMax">Đến điểm</label><input id="bandMax" type="number" step="0.01" min="0"></div></div><div class="actions"><button class="button" type="button" disabled>Lưu khoảng điểm</button><button class="button button-secondary" type="button" disabled>Xóa khoảng điểm</button></div></form>
+    </section>
+</main></div><div th:replace="~{fragments/footer :: footer}"></div></body></html>

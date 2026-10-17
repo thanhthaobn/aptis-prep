@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/head :: head('Chứng chỉ')}"></head>
+<body class="admin-theme"><div th:replace="~{fragments/navbar :: navbar}"></div>
+<div class="container app-shell"><div th:replace="~{fragments/admin-sidebar :: adminSidebar('settings')}"></div>
+<main class="app-main admin-catalog">
+    <div th:replace="~{fragments/breadcrumb :: breadcrumb('Chứng chỉ & Chấm điểm', @{/admin/certificates}, 'Chứng chỉ')}"></div>
+    <header class="page-header"><h1 th:text="${readOnly ? certificate.name : (editing ? 'Chỉnh sửa chứng chỉ' : 'Thêm chứng chỉ')}"></h1><a class="button button-secondary" th:href="@{/admin/certificates}">Về danh sách</a></header>
+    <form class="dashboard-panel" onsubmit="return false;">
+        <fieldset class="scoring-fields" th:disabled="${readOnly}"><legend>Thông tin chứng chỉ</legend>
+            <div class="catalog-form-grid"><div class="field"><label for="certificateName">Tên chứng chỉ</label><input id="certificateName" maxlength="255" th:value="${editing ? certificate.name : ''}" required></div><div class="field"><label for="certificateCode">Mã chứng chỉ</label><input id="certificateCode" maxlength="50" th:value="${editing ? certificate.code : ''}" required></div></div>
+            <div class="field"><label for="certificateDescription">Mô tả</label><textarea id="certificateDescription" rows="3" th:text="${editing ? certificate.description : ''}"></textarea></div>
+            <div class="field"><label for="certificateStatus">Trạng thái</label><select id="certificateStatus"><option value="ACTIVE">Đang sử dụng</option><option value="INACTIVE">Ngừng sử dụng</option></select></div>
+        </fieldset>
+        <div class="actions"><a th:if="${readOnly}" class="button" th:href="@{/admin/certificates/{id}/edit(id=${certificate.id})}">Chỉnh sửa</a><button th:unless="${readOnly}" class="button" type="button" disabled>Lưu chứng chỉ</button><button th:if="${editing}" class="button button-secondary" type="button" disabled>Ngừng sử dụng</button><a class="button button-secondary" th:href="@{/admin/certificates}">Quay lại</a></div>
+    </form>
+</main></div><div th:replace="~{fragments/footer :: footer}"></div></body></html>

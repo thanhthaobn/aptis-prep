@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/head :: head('Khám phá lộ trình')}"></head>
+<body class="student-theme">
+<div th:replace="~{fragments/navbar :: navbar}"></div>
+<div class="container app-shell">
+    <div th:replace="~{fragments/student-sidebar :: studentSidebar('orientation')}"></div>
+    <main class="app-main orientation-page">
+        <div th:replace="~{fragments/breadcrumb :: breadcrumb('Học tập', @{/student/dashboard}, 'Lộ trình định hướng')}"></div>
+        <header class="page-header" id="start"><div><h1>Bắt đầu theo cách của bạn.</h1><p>Không cần đặt mục tiêu hoặc làm bài đầu vào để khám phá.</p></div></header>
+        <section class="learn-choice"><div><h2>Chào bạn, mình là Navi!</h2><p>Cùng làm quen với các kỹ năng Aptis. Chọn kỹ năng để tìm bài học phù hợp.</p><span class="learn-soft-label">Nội dung làm quen · Chưa ghi nhận tiến độ</span></div><div th:replace="~{fragments/study-guide :: guide}"></div></section>
+        <section class="explore-grid" aria-label="Khám phá từng kỹ năng">
+            <article class="explore-card explore-reading" id="reading"><div class="explore-card-top"><span class="explore-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 6v15M3 4l9 2 9-2v15l-9 2-9-2z"/></svg></span><span class="explore-number" aria-hidden="true">01</span></div><h2>Reading</h2><p>Đọc ngắn, hiểu sâu.</p><span class="explore-chip">Đọc hiểu · Liên kết ý</span><a class="button" th:href="@{/student/lessons(skill='Reading')}">Xem bài Reading <span aria-hidden="true">→</span></a></article>
+            <article class="explore-card explore-listening" id="listening"><div class="explore-card-top"><span class="explore-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 14a8 8 0 0 1 16 0M4 14v5h4v-7H4zm16 0v5h-4v-7h4z"/></svg></span><span class="explore-number" aria-hidden="true">02</span></div><h2>Listening</h2><p>Lắng nghe, nắm ý chính.</p><span class="explore-chip">Hội thoại · Chi tiết</span><a class="button" th:href="@{/student/lessons(skill='Listening')}">Xem bài Listening <span aria-hidden="true">→</span></a></article>
+            <section class="explore-expression" id="expression" aria-label="Writing và Speaking">
+                <article class="explore-card explore-writing"><div class="explore-card-top"><span class="explore-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="m4 20 1-5L17 3l4 4L9 19zM14 6l4 4M4 20l5-1"/></svg></span><span class="explore-number" aria-hidden="true">03</span></div><h2>Writing</h2><p>Viết rõ ý, tự tin diễn đạt.</p><span class="explore-chip">Lên ý · Kết nối câu</span><a class="button" th:href="@{/student/lessons(skill='Writing')}">Xem bài Writing <span aria-hidden="true">→</span></a></article>
+                <article class="explore-card explore-speaking"><div class="explore-card-top"><span class="explore-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0 0 14 0M12 17v5m-4 0h8"/></svg></span><span class="explore-number" aria-hidden="true">04</span></div><h2>Speaking</h2><p>Mỗi câu nói, thêm tự tin.</p><span class="explore-chip">Từ khóa · Trình bày ý</span><a class="button" th:href="@{/student/lessons(skill='Speaking')}">Xem bài Speaking <span aria-hidden="true">→</span></a></article>
+            </section>
+            <article class="explore-card explore-vocabulary" id="vocabulary"><div class="explore-card-top"><span class="explore-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="6" y="6" width="15" height="15" rx="3"/><path d="M17 6V3H3v14h3M10 11h7m-7 5h4"/></svg></span><span class="explore-number" aria-hidden="true">05</span></div><h2>Flashcard</h2><p>Grammar &amp; Vocabulary theo chủ đề.</p><span class="explore-chip">Bài học · Flashcard</span><a class="button" th:href="@{/student/lessons(skill='Grammar &amp; Vocabulary')}">Xem bài học và Flashcard <span aria-hidden="true">→</span></a></article>
+        </section>
+        <div class="actions"><a class="button button-secondary" th:href="@{/student/dashboard}">VỀ HÀNH TRÌNH</a></div>
+    </main>
+</div>
+<div th:replace="~{fragments/footer :: footer}"></div>
+</body>
+</html>

@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/head :: head('Hồ sơ của bạn')}"></head>
+<body class="student-theme">
+<div th:replace="~{fragments/navbar :: navbar}"></div>
+<div class="container app-shell">
+    <div th:replace="~{fragments/student-sidebar :: studentSidebar('profile')}"></div>
+    <main class="app-main student-content">
+        <header class="page-header"><h1>Hồ sơ của bạn</h1></header>
+        <section class="dashboard-panel"><h2>Thông tin tài khoản</h2><dl class="study-facts"><div><dt>Email đăng nhập</dt><dd th:text="${email}"></dd></div><div><dt>Họ và tên</dt><dd>Chưa hiển thị</dd></div></dl></section>
+        <form class="dashboard-panel dashboard-section" onsubmit="return false;">
+            <h2>Thông tin cá nhân</h2><div class="field"><label for="profileName">Họ và tên</label><input id="profileName" name="fullName" autocomplete="name" placeholder="Nhập họ và tên" maxlength="255"></div><button class="button" type="button" disabled>Lưu thay đổi</button>
+        </form>
+        <section class="dashboard-section study-card-grid">
+            <article class="dashboard-panel"><h2>Mục tiêu</h2><p>Chưa có dữ liệu mục tiêu.</p><span class="learn-soft-label">Có thể chọn sau</span></article>
+            <article class="dashboard-panel"><h2>Trình độ</h2><p>Chưa có dữ liệu đánh giá.</p><a class="button button-secondary" th:href="@{/student/placement}">Xem kiểm tra đầu vào</a></article>
+        </section>
+        <div class="actions"><a class="button" th:href="@{/student/orientation}">Khám phá lộ trình</a></div>
+    </main>
+</div>
+<div th:replace="~{fragments/footer :: footer}"></div>
+</body></html>

@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/head :: head(${entry.title})}"></head>
+<body class="student-theme">
+<div th:replace="~{fragments/navbar :: navbar}"></div>
+<div class="container app-shell">
+    <div th:replace="~{fragments/student-sidebar :: studentSidebar(${module})}"></div>
+    <main class="app-main student-content compact-catalog" th:attr="data-skill=${entry.skill},data-kind=${entry.kind}">
+        <div th:replace="~{fragments/breadcrumb :: breadcrumb(${title}, @{${'/student/' + module}}, 'Chi tiết')}"></div>
+        <header class="page-header study-detail-header"><div><p class="eyebrow" th:text="${entry.skill}"></p><h1 th:text="${entry.title}"></h1></div><div class="page-actions"><a class="button button-secondary" th:href="@{${'/student/' + module}}">Về danh sách</a></div></header>
+        <section class="dashboard-panel"><div class="study-card-meta"><span class="badge" th:text="${entry.kind}"></span><strong th:text="${module == 'results' ? entry.status : entry.level}"></strong></div><p class="study-summary" th:text="${entry.summary}"></p><dl class="study-facts"><div th:each="fact : ${entry.facts}"><dt th:text="${fact.label}"></dt><dd th:text="${fact.value}"></dd></div></dl></section>
+
+        <section class="dashboard-section" th:if="${module == 'lessons'}">
+            <div class="section-title-row"><h2 th:text="${entry.kind == 'Flashcard' ? 'Bộ Flashcard' : 'Nội dung bài học'}"></h2><span class="muted">Chưa ghi nhận tiến độ</span></div>
+            <div class="study-lesson-blocks" th:if="${entry.kind != 'Flashcard'}"><article class="dashboard-panel" th:each="block : ${entry.blocks}"><span class="badge" th:text="|Bước ${block.value}|"></span><h2 th:text="${block.title}"></h2><p th:text="${block.content}"></p></article></div>
+            <div class="study-flashcards" th:if="${entry.kind == 'Flashcard'}"><details class="orientation-flashcard" th:each="block : ${entry.blocks}"><summary><span th:text="${block.title}"></span><small th:text="${block.value}"></small></summary><p th:text="${block.content}"></p></details></div>
+            <section class="dashboard-panel dashboard-section lesson-practice practice-writing" th:if="${entry.skill == 'Writing'}">
+                <span class="learn-soft-label">THỬ VIẾT MỘT CHÚT</span><h2>Đến lượt bạn</h2><p>Write a short paragraph about an activity you enjoy. Say when you do it and why you like it.</p>
+                <div class="field"><label for="writingPractice">Đoạn văn của bạn</label><textarea id="writingPractice" rows="7" placeholder="In my free time, I enjoy…" aria-describedby="writingPracticeNote"></textarea></div>
+                <p class="muted" id="writingPracticeNote">Nội dung nhập chưa được lưu. Tải lại trang sẽ mất nội dung.</p>
+                <button class="button" type="button" disabled>Gửi bài và nhận phản hồi</button>
+            </section>
+            <section class="dashboard-panel dashboard-section lesson-practice practice-speaking" th:if="${entry.skill == 'Speaking'}">
+                <span class="learn-soft-label">THỬ NÓI MỘT CHÚT</span><h2>Kể về sở thích của bạn</h2><p>Tell us about an activity you enjoy in your free time.</p>
+                <div class="speaking-cues"><span>What do you enjoy?</span><span>When do you do it?</span><span>Why do you like it?</span></div>
+                <div class="speaking-recorder"><span class="recorder-symbol" aria-hidden="true">♫</span><div><strong>Luyện nói thành tiếng</strong><p>Chưa bật ghi âm hoặc gửi âm thanh.</p></div><button class="button" type="button" disabled>Ghi âm câu trả lời</button></div>
+                <details class="study-instructions"><summary>Gợi ý tự đánh giá</summary><p>Đủ ba ý, câu rõ nghĩa và có lý do. Thử nói lại bằng cách diễn đạt khác thay vì học thuộc.</p></details>
+            </section>
+            <div class="actions"><button class="button" type="button" disabled th:text="${entry.kind == 'Flashcard' ? 'Hoàn thành ôn tập' : 'Hoàn thành bài học'}"></button><a class="button button-secondary" th:href="@{/student/lessons}">Chọn bài khác</a></div>
+        </section>
+
+        <section class="dashboard-section" th:if="${module == 'exams'}">
+            <div class="section-title-row"><h2>Cấu trúc đề thi</h2></div>
+            <div class="study-lesson-blocks"><article class="dashboard-panel study-exam-section" th:each="block : ${entry.blocks}" th:attr="data-skill=${block.title}"><div><h2 th:text="${block.title}"></h2><p th:text="${block.content}"></p></div><strong th:text="${block.value}"></strong></article></div>
+            <details class="dashboard-panel study-instructions dashboard-section"><summary>Trước khi làm bài</summary><ul><li>Mỗi đoạn Listening được nghe tối đa hai lượt.</li><li>Chuẩn bị micro cho Speaking khi tính năng ghi âm được tích hợp.</li><li>Điểm và CEFR là kết quả ước lượng, không phải chứng chỉ.</li></ul></details>
+            <div class="actions"><button class="button" type="button" disabled>Bắt đầu làm bài</button><a class="button button-secondary" th:href="@{/student/exams}">Chọn đề khác</a></div>
+        </section>
+
+        <section class="dashboard-section" th:if="${module == 'results'}">
+            <article class="dashboard-panel" th:if="${entry.state == 'COMPLETED'}"><h2>Đánh giá và gợi ý</h2><div class="study-result-block" th:each="block : ${entry.blocks}"><h3 th:text="${block.title}"></h3><strong th:text="${block.value}"></strong><p th:text="${block.content}"></p></div></article>
+            <article class="empty-box" th:if="${entry.state == 'GRADING'}"><h2>Đang chờ kết quả</h2><p>Chưa có điểm và CEFR ước lượng.</p></article>
+            <article class="empty-box" th:if="${entry.state == 'GRADING_FAILED'}"><h2>Chấm chưa thành công</h2><p>Chưa có điểm. Không coi đây là kết quả trượt.</p><button class="button button-secondary" type="button" disabled>Yêu cầu chấm lại</button></article>
+            <div class="actions"><a class="button" th:href="@{/student/lessons}">Tiếp tục học</a><a class="button button-secondary" th:href="@{/student/exams}">Xem đề thi</a></div>
+        </section>
+    </main>
+</div>
+<div th:replace="~{fragments/footer :: footer}"></div>
+</body>
+</html>

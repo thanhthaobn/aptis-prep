@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/head :: head('Hành trình học tập')}"></head>
+<body class="student-theme">
+<div th:replace="~{fragments/navbar :: navbar}"></div>
+<div class="container app-shell">
+    <div th:replace="~{fragments/student-sidebar :: studentSidebar('dashboard')}"></div>
+    <main class="app-main learn-dashboard">
+        <header class="learn-topbar"><span class="learn-topbar-title">HÀNH TRÌNH CỦA BẠN</span><span class="learn-account" th:text="${email}"></span></header>
+        <div class="learn-board">
+            <div class="learn-journey">
+                <section class="learn-unit-banner">
+                    <span class="learn-unit-icon" aria-hidden="true">✦</span>
+                    <div><p>BẮT ĐẦU TỪ ĐÂY</p><h1>Mỗi ngày một bước nhỏ.</h1><span>Chọn cách học phù hợp với bạn.</span></div>
+                </section>
+                <section class="learn-choice">
+                    <div><span class="learn-tag">KHÔNG CẦN KIỂM TRA ĐẦU VÀO</span><h2>Thử học trước, đặt mục tiêu sau</h2><div class="actions"><a class="button" th:href="@{/student/orientation}">KHÁM PHÁ LỘ TRÌNH</a></div></div>
+                    <div th:replace="~{fragments/study-guide :: guide}"></div>
+                </section>
+                <div class="learn-path-heading"><h2>Bản đồ khởi đầu</h2></div>
+                <section class="learn-path" aria-label="Các chặng làm quen">
+                    <div class="learn-stop"><a class="learn-node node-green" th:href="@{/student/orientation#start}" aria-label="Khám phá Aptis">★</a><div><h3>Làm quen Aptis</h3><p>Khám phá cách học</p></div></div>
+                    <div class="learn-stop"><a class="learn-node node-blue" th:href="@{/student/orientation#reading}" aria-label="Khám phá Reading">▤</a><div><h3>Reading</h3><p>Bắt đầu với đoạn đọc ngắn</p></div></div>
+                    <div class="learn-stop"><a class="learn-node node-gold" th:href="@{/student/orientation#listening}" aria-label="Khám phá Listening">♫</a><div><h3>Listening</h3><p>Lắng nghe và nắm ý chính</p></div></div>
+                    <div class="learn-stop"><a class="learn-node node-purple" th:href="@{/student/orientation#expression}" aria-label="Khám phá Writing và Speaking">✎</a><div><h3>Writing &amp; Speaking</h3><p>Tự tin thể hiện ý tưởng</p></div></div>
+                    <div class="learn-stop"><a class="learn-node node-coral" th:href="@{/student/orientation#vocabulary}" aria-label="Khám phá Flashcard">◆</a><div><h3>Flashcard</h3><p>Tích lũy từng từ mới</p></div></div>
+                </section>
+            </div>
+            <aside class="learn-rail" aria-label="Tổng quan học tập">
+                <article class="learn-rail-card"><div class="learn-rail-heading"><span aria-hidden="true">◎</span><h2>Mục tiêu của bạn</h2></div><strong>Chưa đặt mục tiêu</strong><p>Bạn vẫn có thể khám phá trước và chọn mục tiêu sau.</p><span class="learn-soft-label">Bước tùy chọn</span></article>
+                <article class="learn-rail-card"><div class="learn-rail-heading"><span aria-hidden="true">⚑</span><h2>Trình độ hiện tại</h2></div><strong>Chưa đánh giá</strong><p>Bài kiểm tra đầu vào giúp chọn cấp độ phù hợp hơn.</p><a class="button button-secondary button-block" th:href="@{/student/placement}">KIỂM TRA ĐẦU VÀO</a></article>
+                <article class="learn-rail-card"><div class="learn-rail-heading"><span aria-hidden="true">✦</span><h2>Góc học tập</h2></div><div class="learn-mini-stat"><span>Bài đã hoàn thành</span><strong>—</strong></div><div class="learn-mini-stat"><span>Kết quả gần nhất</span><strong>—</strong></div><p>Chưa có hoạt động học tập.</p></article>
+            </aside>
+        </div>
+    </main>
+</div>
+<div th:replace="~{fragments/footer :: footer}"></div>
+</body>
+</html>

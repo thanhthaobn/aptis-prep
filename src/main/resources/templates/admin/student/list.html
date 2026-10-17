@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/head :: head('Học viên')}"></head>
+<body class="admin-theme">
+<div th:replace="~{fragments/navbar :: navbar}"></div>
+<div class="container app-shell">
+    <div th:replace="~{fragments/admin-sidebar :: adminSidebar('students')}"></div>
+    <main class="app-main student-management">
+        <div th:replace="~{fragments/breadcrumb :: breadcrumb('Tổng quan', @{/admin/dashboard}, 'Học viên')}"></div>
+        <header class="page-header">
+            <div><h1>Học viên</h1></div>
+            
+        </header>
+        <section class="student-summary" aria-label="Tổng quan học viên">
+            <article class="dashboard-panel"><span>Tổng học viên</span><strong th:text="${totalStudents}">4</strong></article>
+            <article class="dashboard-panel"><span>Đang hoạt động</span><strong th:text="${activeStudents}">2</strong></article>
+            <article class="dashboard-panel"><span>Đã khóa</span><strong th:text="${lockedStudents}">1</strong></article>
+        </section>
+        <form class="toolbar student-toolbar" th:action="@{/admin/students}" method="get" role="search">
+            <div class="toolbar-search"><label for="studentQuery">Tìm học viên</label><input id="studentQuery" name="q" th:value="${q}" maxlength="255" placeholder="Nhập họ tên hoặc email…" type="search"></div>
+            <div>
+                <label for="studentStatus">Trạng thái</label>
+                <select id="studentStatus" name="status">
+                    <option value="">Tất cả trạng thái</option>
+                    <option value="ACTIVE" th:selected="${selectedStatus == 'ACTIVE'}">Đang hoạt động</option>
+                    <option value="LOCKED" th:selected="${selectedStatus == 'LOCKED'}">Đã khóa</option>
+                    <option value="INACTIVE" th:selected="${selectedStatus == 'INACTIVE'}">Ngừng hoạt động</option>
+                </select>
+            </div>
+            <button class="button" type="submit">Tìm kiếm</button>
+            <a class="button button-secondary" th:href="@{/admin/students}">Đặt lại</a>
+        </form>
+        <div class="section-title-row"><h2>Danh sách học viên</h2><span class="muted" th:text="|${#lists.size(students)} kết quả|">4 kết quả</span></div>
+        <div class="table-wrap" th:if="${!#lists.isEmpty(students)}">
+            <table class="data-table student-table">
+                <caption class="student-sr-only">Danh sách học viên</caption>
+                <thead><tr><th scope="col">Học viên</th><th scope="col">Ngày tham gia</th><th scope="col">Mục tiêu</th><th scope="col">Tiến độ</th><th scope="col">Trạng thái</th><th scope="col">Thao tác</th></tr></thead>
+                <tbody><tr th:each="student : ${students}">
+                    <td><div class="student-identity"><span class="student-avatar" th:text="${student.initials}">MA</span><div><strong th:text="${student.fullName}">Tên học viên</strong><span th:text="${student.email}">Email</span></div></div></td>
+                    <td th:text="${student.joinedAt}"></td>
+                    <td th:text="${student.targetLevel}"></td>
+                    <td><span th:if="${student.totalLessons == 0}" class="muted">Chưa bắt đầu</span><div th:if="${student.totalLessons > 0}"><strong th:text="|${student.completedLessons}/${student.totalLessons} bài|">8/12 bài</strong><progress max="100" th:value="${student.progressPercent()}" th:aria-label="|Tiến độ của ${student.fullName}|"></progress></div></td>
+                    <td><span class="student-status" th:classappend="${student.statusClass()}" th:text="${student.statusLabel()}"></span></td>
+                    <td><a class="button button-secondary button-small" th:href="@{/admin/students/{id}(id=${student.id})}">Xem chi tiết</a></td>
+                </tr></tbody>
+            </table>
+        </div>
+        <div class="empty-box" th:if="${#lists.isEmpty(students)}"><h2>Không tìm thấy học viên phù hợp</h2><p>Thử tên, email hoặc trạng thái khác.</p><a class="button button-secondary" th:href="@{/admin/students}">Xem tất cả học viên</a></div>
+    </main>
+</div>
+<div th:replace="~{fragments/footer :: footer}"></div>
+</body>
+</html>

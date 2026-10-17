@@ -1,0 +1,96 @@
+# APTISPREP — QUYẾT ĐỊNH TRIỂN KHAI THEO V2
+
+## 1. Tài liệu chuẩn và phạm vi
+
+[docs/SPEC_V2.md](docs/SPEC_V2.md) là bản yêu cầu nghiệp vụ chuẩn, được đưa vào repository từ v2.md do nhóm cung cấp. Tài liệu này thay thế các quyết định trước đây khi có khác biệt về schema và nghiệp vụ.
+
+Project hiện là nền tảng để bốn thành viên phát triển các luồng. Có database, giao diện và interface không đồng nghĩa đã hoàn tất use case. Theo dõi phần còn thiếu trong [docs/V2_IMPLEMENTATION.md](docs/V2_IMPLEMENTATION.md).
+
+## 2. Công nghệ và cấu trúc
+
+- Java 21, Spring Boot 4.1.1, SQL Server, Maven Wrapper.
+- Thymeleaf và Spring MVC: Controller → Service → Repository.
+- Session, Spring Security form login, CSRF; không xây REST API cho giao diện.
+- Base package: com.aptisprep.
+- File local application-dev.properties không commit; file example không có secret.
+- Flyway thay đổi schema; không sửa migration đã được chạy (hiện V001–V005).
+- Không dùng cloud storage. File lưu local trong uploads/, database lưu đường dẫn.
+
+## 3. Các thay đổi theo V2
+
+V004__align_v2_contract.sql là migration chuyển tiếp, không xóa bảng hoặc cột có dữ liệu:
+
+V005 bỏ unique theo section cũ vì NULL trong unique của SQL Server có thể chặn tái sử dụng câu hỏi ở các đề không có section. Unique theo toàn đề của V004 vẫn được giữ.
+
+- QUESTION → QUESTION_ITEM → QUESTION_OPTION; đáp án đúng ở option.is_correct hoặc item.correct_position.
+- Các bảng item/option/media/câu hỏi trong đề/lộ trình dùng position theo V2.
+- QUESTION_MEDIA dùng media_url.
+- MOCK_EXAM có skill và duration_minutes; MOCK_EXAM_QUESTION có mock_exam_id và vị trí duy nhất toàn đề.
+- mock_exam_sections được giữ như phần mở rộng tùy chọn cho thời gian từng kỹ năng. Nếu gán section cho câu hỏi, section phải thuộc đúng đề; mock_exam_id là quan hệ đề chuẩn V2.
+- Writing dùng WRITING_TEXT; Speaking dùng SPEAKING_AUDIO.
+- USER_ANSWER.text_answer/audio_url là nguồn bài tự luận/nói chuẩn V2. USER_ANSWER_DETAIL phục vụ các câu khách quan.
+- USER_ANSWER có ai_score, ai_feedback, graded_at và thông tin truy vết chấm.
+- Các cột tự luận cũ trong USER_ANSWER_DETAIL chỉ giữ để bảo toàn dữ liệu cũ; code mới không ghi vào đó.
+- LEARNING_PATH_ITEM có status/completed_at theo V2. Luồng học phải đồng bộ với LESSON_PROGRESS trong cùng transaction.
+- Target level của Learning Path có thể NULL khi là lộ trình định hướng.
+- Certificate, Scoring Scheme và Score Band phải có chức năng quản lý theo UC-A03–A05; seed cố định chỉ là dữ liệu khởi tạo, không thay thế CRUD.
+
+Migration từ chối chuyển tiếp nếu câu hỏi/vị trí bị trùng trong cùng đề hoặc nhiều bài tự luận ở cấp item không thể gộp an toàn. Khi đó giải quyết dữ liệu cụ thể trước, không reset database của người khác.
+
+## 4. Quy tắc nghiệp vụ phải triển khai
+
+Đã chốt làm lại Placement không giới hạn tổng lượt, một lượt chưa kết thúc mỗi user/skill; resume lượt cũ, chặn tạo lượt mới khi chờ chấm, retry lỗi trên cùng bài. Dùng Placement hợp lệ gần nhất, không lấy điểm cao nhất; không tự hạ dưới trình độ đã đạt qua checkpoint và không xóa tiến độ. Chi tiết và phân công: [PLACEMENT_RETAKE_POLICY.md](docs/PLACEMENT_RETAKE_POLICY.md).
+
+- Đề: PLACEMENT, PRACTICE, CHECKPOINT, FULL_MOCK.
+- Kỹ năng: GRAMMAR_VOCABULARY, READING, LISTENING, WRITING, SPEAKING.
+- Goal và Placement có thể bỏ qua; khi thiếu dữ liệu, cung cấp lộ trình định hướng theo V2.
+- Placement có thể khởi tạo/cập nhật hồ sơ kỹ năng sau khi có kết quả hợp lệ.
+- Practice và Full Mock không tự nâng trình độ.
+- Checkpoint đạt mới xác nhận cấp độ mới; trượt giữ trình độ cũ.
+- Không áp dụng nâng cấp hai lần từ cùng một lượt thi.
+- Hoàn thành bài học không tự nâng CEFR.
+- Chấm khách quan theo item; chuyển raw → scale bằng chính sách riêng theo skill/scoring scheme. Không dùng một công thức phần trăm cố định cho mọi skill.
+- Score Band không được chồng lấn trong cùng scheme và skill.
+- Kết quả chỉ là ước lượng khi chưa tái tạo được cách chấm chính thức.
+- Nội dung đã được dùng trong lịch sử thi ưu tiên vô hiệu hóa/lưu trữ thay vì xóa.
+- Kiểm tra quyền sở hữu attempt, goal và progress ở backend.
+- Giới hạn Listening hai lượt là yêu cầu bổ sung nhóm đã chốt; bộ đếm phải ở backend.
+
+## 5. OpenAI cho Writing và Speaking
+
+Nhóm chọn bật phần mở rộng AI của V2 bằng OpenAI.
+
+- WritingGradingService và SpeakingGradingService có OpenAiGradingService triển khai.
+- Backend gọi /v1/responses với JSON Schema để chấm, không cung cấp API key cho trình duyệt.
+- Speaking gọi /v1/audio/transcriptions trước rồi chấm nội dung bản nhận diện. Phương án này chưa đánh giá phát âm/ngữ điệu; phải hiển thị giới hạn đó.
+- Điểm từ 0–50, CEFR A1–C2 và phản hồi tiếng Việt; chưa chấm/AI lỗi phải giữ NULL, không gán 0 hay điểm mẫu.
+- Chưa bật AI hoặc thiếu key thì vẫn khởi động project bình thường.
+- Lỗi quyền truy cập, hạn mức, timeout hoặc kết quả sai không được làm mất bài thi.
+- Người phụ trách lượt thi phải lưu bài làm trước khi gọi AI; transaction lưu đáp án không giữ mở trong khi chờ mạng.
+- Lưu trạng thái chấm, thông tin provider/model; retry chỉ phần chưa chấm và không nộp lại bài.
+- Chấm AI được tích hợp vào luồng nộp bài thi; không có trang chấm riêng trong khu vực quản trị. Hiện service và cấu hình đã có, phần nối attempt/result do luồng thi triển khai.
+- Hướng dẫn bật AI: [docs/AI_SETUP.md](docs/AI_SETUP.md).
+
+## 6. Bốn luồng và quyền sở hữu
+
+| Người | Luồng | Phạm vi |
+|---|---|---|
+| 1 | Tài khoản, mục tiêu, đầu vào | Hồ sơ, Goal, Skill Profile, nối Placement với Exam Engine; quản trị danh sách/tiến độ và khóa học viên |
+| 2 | Nội dung học và cuối chặng | CRUD Lesson/Flashcard phía Admin; học tập, Progress, Learning Path và Checkpoint phía Student |
+| 3 | Quản trị nội dung đề thi | Certificate, Scoring/Score Band, Question/Media, cấu hình đề |
+| 4 | Làm bài và kết quả | Attempt, Answer, chấm khách quan/AI, kết quả và lịch sử |
+
+Người 2 làm cả CRUD Lesson/Flashcard phía Admin và hành trình học phía Student để cân bằng khối lượng, giữ đầu mối Entity/Repository của hai bảng này. Placement và Checkpoint cùng dùng Exam Engine người 4, không tạo ba engine riêng. Công việc chi tiết, contract phối hợp và tiêu chí nghiệm thu ở [docs/TEAM_ASSIGNMENT_V2.md](docs/TEAM_ASSIGNMENT_V2.md).
+
+Nhóm bổ sung UC-A11–A14 quản lý học viên ngoài V2 gốc: xem danh sách, tìm kiếm/lọc, xem tiến độ và khóa/mở khóa. Không tạo/xóa học viên hoặc sửa điểm. Người 1 giữ đầu mối, người 2/4 cung cấp dữ liệu tiến độ/kết quả. Đặc tả tại [docs/STUDENT_MANAGEMENT.md](docs/STUDENT_MANAGEMENT.md). Hiện có giao diện GET và dữ liệu minh họa, chưa nối database/POST khóa. Khi làm nghiệp vụ, khóa phải chặn cả đăng nhập mới và yêu cầu tiếp theo của session đang hoạt động, không chỉ đổi users.status.
+
+## 7. Giao diện và làm việc nhóm
+
+- Đọc docs/UI_GUIDE.md trước khi tạo trang chi tiết.
+- Thiết kế mới 17/10/2026: trang chủ/học viên xanh lá, nút/thẻ nổi và bản đồ chặng; quản trị teal riêng, nền sáng. CSS hoàn thiện `learning-theme.css`, chi tiết UI_GUIDE.md.
+- Kỹ năng Reading, Listening, Writing, Speaking, Grammar & Vocabulary và Flashcard giữ tiếng Anh. Hành động/hướng dẫn/trạng thái dùng tiếng Việt.
+- Không đưa tên thuộc tính, enum hay ghi chú đội phát triển lên giao diện.
+- Route và trạng thái triển khai xem docs/ROUTES.md.
+- Feature branch → Pull Request → review → merge; không sửa CSS/fragment chung tùy tiện.
+- Mỗi migration mới đăng ký số trong nhóm; không phân khoảng V1xx/V2xx vì dễ chạy sai thứ tự khi merge.
+- Mỗi luồng phải có validation, phân quyền, trạng thái rỗng/lỗi, dữ liệu kiểm tra và test nghiệp vụ.

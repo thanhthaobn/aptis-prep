@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/head :: head('Trung tâm quản trị')}"></head>
+<body class="admin-theme">
+<div th:replace="~{fragments/navbar :: navbar}"></div>
+<div class="container app-shell">
+<div th:replace="~{fragments/admin-sidebar :: adminSidebar('dashboard')}"></div>
+<main class="app-main dashboard-page">
+    <header class="dashboard-header">
+        <div><p class="eyebrow">Trung tâm quản trị</p><h1>Tổng quan hệ thống</h1><p>Tài khoản: <strong th:text="${email}"></strong></p></div>
+        <span class="badge badge-success">Quản trị viên</span>
+    </header>
+
+    <section class="admin-stat-grid" aria-label="Tổng quan hệ thống">
+        <article><span class="mini-icon purple">♙</span><div><strong>0</strong><span>Học viên</span></div></article>
+        <article><span class="mini-icon cyan">▤</span><div><strong>0</strong><span>Bài học</span></div></article>
+        <article><span class="mini-icon pink">?</span><div><strong>0</strong><span>Câu hỏi</span></div></article>
+        <article><span class="mini-icon orange">✓</span><div><strong>0</strong><span>Đề đã công bố</span></div></article>
+    </section>
+
+    <section class="dashboard-section">
+        <div class="section-title-row"><div><p class="panel-kicker">THAO TÁC NHANH</p><h2>Bắt đầu quản lý nội dung</h2></div></div>
+        <div class="quick-grid">
+            <a class="quick-card" th:href="@{/admin/lessons/create}"><span class="card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14m-7-7h14"/></svg></span><div><h3>Tạo bài học</h3></div><span class="quick-arrow">→</span></a>
+            <a class="quick-card" th:href="@{/admin/questions/create}"><span class="card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 1 1 3.2 2.4c-.7.3-.7.8-.7 1.6M12 17h.01"/></svg></span><div><h3>Thêm câu hỏi</h3></div><span class="quick-arrow">→</span></a>
+            <a class="quick-card" th:href="@{/admin/exams/create}"><span class="card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 3h10v4H7zM5 7h14v14H5z"/></svg></span><div><h3>Tạo đề thi</h3></div><span class="quick-arrow">→</span></a>
+            <a class="quick-card" th:href="@{/admin/results}"><span class="card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19V5m0 14h16M8 16v-4m4 4V7m4 9v-6"/></svg></span><div><h3>Xem kết quả</h3></div><span class="quick-arrow">→</span></a>
+        </div>
+    </section>
+
+    <section class="dashboard-grid admin-main-grid dashboard-section">
+        <article class="dashboard-panel">
+            <div class="panel-heading"><div><span class="panel-kicker">NỘI DUNG</span><h2>Cập nhật gần đây</h2></div></div>
+            <div class="empty-state"><span class="empty-state-icon">▤</span><h3>Chưa có nội dung gần đây</h3></div>
+        </article>
+
+        <article class="dashboard-panel">
+            <div class="panel-heading"><div><span class="panel-kicker">HOẠT ĐỘNG</span><h2>Lượt thi gần đây</h2></div></div>
+            <div class="empty-state"><span class="empty-state-icon">◎</span><h3>Chưa có lượt thi gần đây</h3></div>
+        </article>
+    </section>
+
+    <section class="dashboard-section">
+        <div class="section-title-row"><div><p class="panel-kicker">QUẢN LÝ</p><h2>Quản lý nội dung</h2></div></div>
+        <div class="grid grid-3">
+            <a class="card feature-card" th:href="@{/admin/lessons}"><span class="card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20V4H6.5A2.5 2.5 0 0 0 4 6.5z"/></svg></span><h3>Bài học</h3><p>Bài học và Flashcard.</p></a>
+            <a class="card feature-card" th:href="@{/admin/questions}"><span class="card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 1 1 3.2 2.4c-.7.3-.7.8-.7 1.6M12 17h.01"/></svg></span><h3>Ngân hàng câu hỏi</h3><p>Câu hỏi và đáp án.</p></a>
+            <a class="card feature-card" th:href="@{/admin/exams}"><span class="card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 3h10v4H7zM5 7h14v14H5zM9 12h6m-6 4h4"/></svg></span><h3>Đề thi và kết quả</h3><p>Tạo đề và theo dõi lượt thi.</p></a>
+        </div>
+    </section>
+</main>
+</div>
+<div th:replace="~{fragments/footer :: footer}"></div>
+</body>
+</html>

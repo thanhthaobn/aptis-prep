@@ -1,0 +1,19 @@
+package com.aptisprep.config;
+
+import java.time.Duration;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.http.client.SimpleClientHttpRequestFactory;
+import org.springframework.web.client.RestClient;
+
+@Configuration
+public class AiClientConfig {
+    @Bean("openAiClient")
+    RestClient openAiClient() {
+        var factory = new SimpleClientHttpRequestFactory();
+        factory.setConnectTimeout(Duration.ofSeconds(10));
+        factory.setReadTimeout(Duration.ofSeconds(90));
+        return RestClient.builder().baseUrl("https://api.openai.com/v1")
+                .requestFactory(factory).build();
+    }
+}
