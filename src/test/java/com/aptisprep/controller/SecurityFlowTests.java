@@ -5,8 +5,15 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.test.web.servlet.MockMvc;
+import org.junit.jupiter.api.BeforeEach;
+import com.aptisprep.entity.User;
+import com.aptisprep.enums.Role;
+import com.aptisprep.enums.UserStatus;
+import com.aptisprep.repository.UserRepository;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -18,6 +25,44 @@ class SecurityFlowTests {
 
     @Autowired
     private MockMvc mockMvc;
+
+    @Autowired
+    private UserRepository users;
+
+    @BeforeEach
+    void seedRealStudents() {
+        saveAdminIfMissing();
+        saveIfMissing("Nguyễn Minh Anh", "minhanh@example.com", UserStatus.ACTIVE);
+        saveIfMissing("Trần Hoàng Nam", "hoangnam@example.com", UserStatus.LOCKED);
+        saveIfMissing("Lê Thu Hà", "thuha@example.com", UserStatus.ACTIVE);
+        saveIfMissing("Phạm Gia Huy", "giahuy@example.com", UserStatus.INACTIVE);
+    }
+
+    @Test
+    void adminLockUnlockRequiresCsrfAndInvalidatesNextStudentRequest() throws Exception {
+        int id = users.findByEmailIgnoreCase("minhanh@example.com").orElseThrow().getId();
+        mockMvc.perform(post("/admin/students/" + id + "/lock")
+                        .with(user("admin@aptis.local").roles("ADMIN")))
+                .andExpect(status().isForbidden());
+
+        mockMvc.perform(post("/admin/students/" + id + "/lock")
+                        .with(user("admin@aptis.local").roles("ADMIN")).with(csrf()))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/admin/students/" + id));
+        org.junit.jupiter.api.Assertions.assertEquals(UserStatus.LOCKED,
+                users.findById(id).orElseThrow().getStatus());
+
+        mockMvc.perform(get("/student/dashboard")
+                        .with(user("minhanh@example.com").roles("STUDENT")))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/login?locked"));
+
+        mockMvc.perform(post("/admin/students/" + id + "/unlock")
+                        .with(user("admin@aptis.local").roles("ADMIN")).with(csrf()))
+                .andExpect(status().is3xxRedirection());
+        org.junit.jupiter.api.Assertions.assertEquals(UserStatus.ACTIVE,
+                users.findById(id).orElseThrow().getStatus());
+    }
 
     @Test
     void publicHomeIsAccessible() throws Exception {
@@ -63,7 +108,7 @@ class SecurityFlowTests {
     }
 
     @Test
-    void adminCanSearchStudentPreviewWithoutAccents() throws Exception {
+    void adminCanSearchRealStudentsWithoutAccents() throws Exception {
         mockMvc.perform(get("/admin/students").param("q", "minh anh")
                         .with(user("admin@aptis.local").roles("ADMIN")))
                 .andExpect(status().isOk()).andExpect(view().name("admin/student/list"))
@@ -74,7 +119,7 @@ class SecurityFlowTests {
     }
 
     @Test
-    void studentPreviewFilterAndEmptyStateRender() throws Exception {
+    void studentFilterAndEmptyStateRender() throws Exception {
         mockMvc.perform(get("/admin/students").param("status", "LOCKED")
                         .with(user("admin@aptis.local").roles("ADMIN")))
                 .andExpect(status().isOk())
@@ -88,19 +133,34 @@ class SecurityFlowTests {
     }
 
     @Test
-    void studentDetailRendersProgressAndBothAccountActions() throws Exception {
-        for (int id : new int[]{1001, 1002, 1003, 1004}) {
+    void studentDetailRendersRealAccounts() throws Exception {
+        for (String email : new String[]{"minhanh@example.com", "hoangnam@example.com", "thuha@example.com", "giahuy@example.com"}) {
+            int id = users.findByEmailIgnoreCase(email).orElseThrow().getId();
             mockMvc.perform(get("/admin/students/" + id).with(user("admin@aptis.local").roles("ADMIN")))
-                    .andExpect(status().isOk()).andExpect(view().name("admin/student/detail"));
+                    .andExpect(status().isOk()).andExpect(view().name("admin/student/detail"))
+                    .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.content()
+                            .string(org.hamcrest.Matchers.containsString("name=\"_csrf\"")));
         }
     }
 
     @Test
     void studentCannotAccessAdminStudentPages() throws Exception {
-        for (String url : new String[]{"/admin/students", "/admin/students/1001"}) {
+        int id = users.findByEmailIgnoreCase("minhanh@example.com").orElseThrow().getId();
+        for (String url : new String[]{"/admin/students", "/admin/students/" + id}) {
             mockMvc.perform(get(url).with(user("student@aptis.local").roles("STUDENT")))
                     .andExpect(status().isForbidden());
         }
+    }
+
+    private void saveIfMissing(String name, String email, UserStatus status) {
+        if (users.findByEmailIgnoreCase(email).isPresent()) return;
+        User value = new User(); value.setFullName(name); value.setEmail(email); value.setPasswordHash("test-hash"); value.setRole(Role.STUDENT); value.setStatus(status); users.save(value);
+    }
+
+    private void saveAdminIfMissing() {
+        if (users.findByEmailIgnoreCase("admin@aptis.local").isPresent()) return;
+        User value = new User(); value.setFullName("System Admin"); value.setEmail("admin@aptis.local");
+        value.setPasswordHash("test-hash"); value.setRole(Role.ADMIN); value.setStatus(UserStatus.ACTIVE); users.save(value);
     }
 
 }

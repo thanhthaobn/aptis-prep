@@ -1,5 +1,10 @@
 package com.aptisprep.controller;
 
+import com.aptisprep.entity.User;
+import com.aptisprep.enums.Role;
+import com.aptisprep.enums.UserStatus;
+import com.aptisprep.repository.UserRepository;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -14,9 +19,21 @@ import static org.hamcrest.Matchers.*;
 @AutoConfigureMockMvc
 class FoundationPreviewTests {
     @Autowired MockMvc mvc;
+    @Autowired UserRepository users;
+
+    @BeforeEach
+    void seedRealStudent() {
+        if (users.findByEmailIgnoreCase("new@example.com").isEmpty()) {
+            User value = new User(); value.setFullName("New Student"); value.setEmail("new@example.com");
+            value.setPasswordHash("test-hash"); value.setRole(Role.STUDENT); value.setStatus(UserStatus.ACTIVE);
+            users.save(value);
+        }
+    }
+
     @Test void profileAndPlacementRenderWithoutWrites() throws Exception {
         mvc.perform(get("/student/profile").with(user("new@example.com").roles("STUDENT")))
             .andExpect(status().isOk()).andExpect(content().string(containsString("new@example.com")))
+            .andExpect(content().string(containsString("name=\"_csrf\"")))
             .andExpect(content().string(not(containsString("Giao diện minh họa"))));
         mvc.perform(get("/student/placement").with(user("new@example.com").roles("STUDENT")))
             .andExpect(status().isOk()).andExpect(content().string(containsString("Bỏ qua và khám phá")));

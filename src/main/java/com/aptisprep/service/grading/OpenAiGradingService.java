@@ -63,6 +63,14 @@ public class OpenAiGradingService implements WritingGradingService, SpeakingGrad
         return gradeText("Speaking transcript", prompt, transcript, transcript);
     }
 
+    @Override
+    public GradingResult gradeTranscript(String prompt, String transcript) {
+        requireConfiguration();
+        validateText(prompt, 10000, "Đề bài");
+        validateText(transcript, 20000, "Nội dung bản ghi");
+        return gradeText("Speaking transcript", prompt, transcript, transcript);
+    }
+
     private GradingResult gradeText(String skill, String prompt, String answer, String transcript) {
         Map<String, Object> schema = Map.of(
                 "type", "object", "additionalProperties", false,

@@ -2,42 +2,67 @@ package com.aptisprep.controller.admin;
 
 import com.aptisprep.enums.UserStatus;
 import com.aptisprep.exception.BusinessRuleException;
-import com.aptisprep.service.admin.StudentPreviewService;
+import com.aptisprep.service.admin.StudentManagementService;
+import java.security.Principal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
-/** Routes render the read-only preview; lock/unlock POST routes are intentionally absent. */
 @Controller
 @RequestMapping("/admin/students")
 public class AdminStudentController {
-    private final StudentPreviewService preview;
-    public AdminStudentController(StudentPreviewService preview) { this.preview = preview; }
+    private final StudentManagementService students;
+    public AdminStudentController(StudentManagementService students) { this.students = students; }
 
     @GetMapping
     public String list(@RequestParam(defaultValue = "") String q,
-                       @RequestParam(defaultValue = "") String status, Model model) {
-        if (q.length() > 255) throw new BusinessRuleException("Từ khóa tìm kiếm tối đa 255 ký tự");
-        UserStatus filter = null;
-        if (!status.isBlank()) {
-            try { filter = UserStatus.valueOf(status); }
-            catch (IllegalArgumentException exception) { throw new BusinessRuleException("Trạng thái tìm kiếm không hợp lệ"); }
-        }
-        model.addAttribute("students", preview.find(q, filter));
-        model.addAttribute("q", q.trim());
-        model.addAttribute("selectedStatus", status);
-        model.addAttribute("totalStudents", preview.total());
-        model.addAttribute("activeStudents", preview.activeCount());
-        model.addAttribute("lockedStudents", preview.lockedCount());
+            @RequestParam(defaultValue = "") String status,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size, Model model) {
+        UserStatus filter = parseStatus(status);
+        model.addAttribute("pageData", students.list(q, filter, page, size));
+        model.addAttribute("q", q == null ? "" : q.trim());
+        model.addAttribute("selectedStatus", status == null ? "" : status);
+        model.addAttribute("totalStudents", students.totalStudents());
+        model.addAttribute("activeStudents", students.activeStudents());
+        model.addAttribute("lockedStudents", students.lockedStudents());
         return "admin/student/list";
     }
 
     @GetMapping("/{id}")
-    public String detail(@PathVariable int id, Model model) {
-        model.addAttribute("student", preview.get(id));
+    public String detail(@PathVariable int id,
+            @RequestParam(defaultValue = "0") int attemptPage,
+            @RequestParam(defaultValue = "10") int attemptSize, Model model) {
+        model.addAttribute("student", students.detail(id, attemptPage, attemptSize));
         return "admin/student/detail";
+    }
+
+    @PostMapping("/{id}/lock")
+    public String lock(@PathVariable int id, Principal principal, RedirectAttributes redirectAttributes) {
+        try {
+            students.lock(principal.getName(), id);
+            redirectAttributes.addFlashAttribute("successMessage", "Đã khóa tài khoản học viên. Lịch sử và tiến độ được giữ nguyên.");
+        } catch (BusinessRuleException exception) {
+            redirectAttributes.addFlashAttribute("errorMessage", exception.getMessage());
+        }
+        return "redirect:/admin/students/" + id;
+    }
+
+    @PostMapping("/{id}/unlock")
+    public String unlock(@PathVariable int id, Principal principal, RedirectAttributes redirectAttributes) {
+        try {
+            students.unlock(principal.getName(), id);
+            redirectAttributes.addFlashAttribute("successMessage", "Đã mở khóa tài khoản học viên.");
+        } catch (BusinessRuleException exception) {
+            redirectAttributes.addFlashAttribute("errorMessage", exception.getMessage());
+        }
+        return "redirect:/admin/students/" + id;
+    }
+
+    private UserStatus parseStatus(String value) {
+        if (value == null || value.isBlank()) return null;
+        try { return UserStatus.valueOf(value.trim().toUpperCase()); }
+        catch (IllegalArgumentException exception) { throw new BusinessRuleException("Trạng thái tìm kiếm không hợp lệ"); }
     }
 }

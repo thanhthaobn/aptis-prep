@@ -30,22 +30,27 @@
             <button class="button" type="submit">Tìm kiếm</button>
             <a class="button button-secondary" th:href="@{/admin/students}">Đặt lại</a>
         </form>
-        <div class="section-title-row"><h2>Danh sách học viên</h2><span class="muted" th:text="|${#lists.size(students)} kết quả|">4 kết quả</span></div>
-        <div class="table-wrap" th:if="${!#lists.isEmpty(students)}">
+        <div class="section-title-row"><h2>Danh sách học viên</h2><span class="muted" th:text="|${pageData.totalItems} kết quả|">0 kết quả</span></div>
+        <div class="table-wrap" th:if="${!#lists.isEmpty(pageData.items)}">
             <table class="data-table student-table">
                 <caption class="student-sr-only">Danh sách học viên</caption>
                 <thead><tr><th scope="col">Học viên</th><th scope="col">Ngày tham gia</th><th scope="col">Mục tiêu</th><th scope="col">Tiến độ</th><th scope="col">Trạng thái</th><th scope="col">Thao tác</th></tr></thead>
-                <tbody><tr th:each="student : ${students}">
+                <tbody><tr th:each="student : ${pageData.items}">
                     <td><div class="student-identity"><span class="student-avatar" th:text="${student.initials}">MA</span><div><strong th:text="${student.fullName}">Tên học viên</strong><span th:text="${student.email}">Email</span></div></div></td>
-                    <td th:text="${student.joinedAt}"></td>
+                    <td th:text="${student.joinedDate}"></td>
                     <td th:text="${student.targetLevel}"></td>
-                    <td><span th:if="${student.totalLessons == 0}" class="muted">Chưa bắt đầu</span><div th:if="${student.totalLessons > 0}"><strong th:text="|${student.completedLessons}/${student.totalLessons} bài|">8/12 bài</strong><progress max="100" th:value="${student.progressPercent()}" th:aria-label="|Tiến độ của ${student.fullName}|"></progress></div></td>
+                    <td><span class="muted">Xem chi tiết để xem tiến độ</span></td>
                     <td><span class="student-status" th:classappend="${student.statusClass()}" th:text="${student.statusLabel()}"></span></td>
                     <td><a class="button button-secondary button-small" th:href="@{/admin/students/{id}(id=${student.id})}">Xem chi tiết</a></td>
                 </tr></tbody>
             </table>
         </div>
-        <div class="empty-box" th:if="${#lists.isEmpty(students)}"><h2>Không tìm thấy học viên phù hợp</h2><p>Thử tên, email hoặc trạng thái khác.</p><a class="button button-secondary" th:href="@{/admin/students}">Xem tất cả học viên</a></div>
+        <div class="empty-box" th:if="${#lists.isEmpty(pageData.items)}"><h2 th:text="${pageData.totalItems == 0 and (q == null or q == '') and (selectedStatus == null or selectedStatus == '') ? 'Chưa có học viên' : 'Không tìm thấy học viên phù hợp'}">Chưa có học viên</h2><p>Thử tên, email hoặc trạng thái khác.</p><a class="button button-secondary" th:href="@{/admin/students}">Xem tất cả học viên</a></div>
+        <nav class="pagination" th:if="${pageData.totalPages > 1}" aria-label="Phân trang học viên">
+            <a th:if="${pageData.hasPrevious}" th:href="@{/admin/students(page=${pageData.previousPage},size=${pageData.size},q=${q},status=${selectedStatus})}">Trang trước</a>
+            <span th:text="|Trang ${pageData.page + 1}/${pageData.totalPages}|">Trang 1/1</span>
+            <a th:if="${pageData.hasNext}" th:href="@{/admin/students(page=${pageData.nextPage},size=${pageData.size},q=${q},status=${selectedStatus})}">Trang sau</a>
+        </nav>
     </main>
 </div>
 <div th:replace="~{fragments/footer :: footer}"></div>
