@@ -104,8 +104,10 @@ public class AccountAccessService implements AccountAccessContract {
         if (type.equals("CHECKPOINT")) {
             boolean newerCheckpoint = isNewer(submittedAt, attemptId,
                     profile.getCheckpointLastSubmittedAt(), profile.getCheckpointLastAttemptId());
-            profile.setCheckpointLastAttemptId(attemptId);
-            profile.setCheckpointLastSubmittedAt(submittedAtUtc);
+            if (newerCheckpoint) {
+                profile.setCheckpointLastAttemptId(attemptId);
+                profile.setCheckpointLastSubmittedAt(submittedAtUtc);
+            }
             if (result.passed()) {
                 CefrLevel floor = CefrLevel.parse(profile.getCheckpointFloorLevel());
                 if (floor == null || (level.atLeast(floor) && (level.higherThan(floor) || newerCheckpoint))) {
@@ -121,6 +123,7 @@ public class AccountAccessService implements AccountAccessContract {
             }
         }
         if (type.equals("CHECKPOINT") && !result.passed()) {
+            profiles.save(profile);
             saveApplication(user, attemptId, skill);
             return;
         }

@@ -22,6 +22,7 @@
 - Checkpoint không đạt vẫn được claim bền nhưng không thay đổi Profile; trạng thái chờ/lỗi hoặc thiếu dữ liệu hợp lệ không tạo mức CEFR.
 - Contract Certificate/Scheme trả cả skill đã có band và từ chối scheme thiếu band cho skill được yêu cầu; Grammar & Vocabulary vì vậy không được tự suy ra CEFR.
 - Việc khóa sửa scheme/version hoặc band đã được MockExam sử dụng cần Owner 3 cung cấp usage signal/contract; trong phạm vi Người 1 hiện chưa truy vấn bảng `mock_exams` chéo module.
+- `ScoringSchemeUsageContract` là cổng tùy chọn của Owner 3; khi bean cung cấp usage signal, mọi sửa scheme cùng version và mọi thêm/sửa/xóa band của scheme đã dùng đều bị từ chối, buộc tạo version mới. Khi Owner 3 chưa có bean trong repo hiện tại, không có luồng MockExam nào đủ khả năng dùng scheme để phát sinh lịch sử.
 
 ## Giới hạn kiểm tra lần này
 

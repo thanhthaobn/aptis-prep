@@ -7,9 +7,11 @@ import com.aptisprep.exception.AccessDeniedException;
 import com.aptisprep.exception.BusinessRuleException;
 import com.aptisprep.exception.ResourceNotFoundException;
 import com.aptisprep.repository.*;
+import com.aptisprep.service.contract.ScoringSchemeUsageContract;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.*;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,10 +24,11 @@ public class ScoringAdminService {
     private final ScoringSchemeRepository schemes;
     private final ScoreBandRepository bands;
     private final UserRepository users;
+    private final ObjectProvider<ScoringSchemeUsageContract> usage;
 
     public ScoringAdminService(CertificateRepository certificates, ScoringSchemeRepository schemes,
-            ScoreBandRepository bands, UserRepository users) {
-        this.certificates = certificates; this.schemes = schemes; this.bands = bands; this.users = users;
+            ScoreBandRepository bands, UserRepository users, ObjectProvider<ScoringSchemeUsageContract> usage) {
+        this.certificates = certificates; this.schemes = schemes; this.bands = bands; this.users = users; this.usage = usage;
     }
 
     @Transactional(readOnly = true)
@@ -81,6 +84,9 @@ public class ScoringAdminService {
             ensureSchemeVersion(certificate.getId(), version, null);
             ScoringScheme replacement = new ScoringScheme(); setScheme(replacement, certificate, form, version); return schemes.save(replacement).getId();
         }
+        if (schemeIsUsed(current.getId())) {
+            throw new BusinessRuleException("Bộ chấm điểm đã được sử dụng; hãy tạo phiên bản mới để bảo toàn lịch sử");
+        }
         current.setName(required(form.getName(), "Tên bộ chấm điểm")); current.setStatus(status(form.getStatus())); current.setEffectiveFrom(form.getEffectiveFrom());
         return current.getId();
     }
@@ -91,6 +97,7 @@ public class ScoringAdminService {
     public void saveBand(String adminEmail, Integer schemeId, Integer id, ScoreBandForm form) {
         requireAdmin(adminEmail); ScoringScheme scheme = requireScheme(schemeId); String skill = normalizeSkill(form.getSkill()); String level = normalizeLevel(form.getCefrLevel());
         if (scheme.getStatus() != RecordStatus.ACTIVE) throw new BusinessRuleException("Không thể sửa bộ chấm điểm đã ngừng sử dụng");
+        if (schemeIsUsed(schemeId)) throw new BusinessRuleException("Bộ chấm điểm đã được sử dụng; hãy tạo phiên bản mới để bảo toàn lịch sử");
         BigDecimal min = decimal(form.getMinScore()); BigDecimal max = decimal(form.getMaxScore());
         if (min == null || max == null || min.compareTo(max) > 0) throw new BusinessRuleException("Khoảng điểm phải có min ≤ max");
         if (id == null && bands.existsBySchemeIdAndSkillAndCefrLevelIgnoreCase(schemeId, skill, level)) throw new BusinessRuleException("CEFR này đã có khoảng điểm");
@@ -102,13 +109,23 @@ public class ScoringAdminService {
         value.setScheme(scheme); value.setSkill(skill); value.setCefrLevel(level); value.setMinScore(min); value.setMaxScore(max); bands.save(value);
     }
     @Transactional
-    public void deleteBand(String adminEmail, Integer schemeId, Integer id) { requireAdmin(adminEmail); ScoreBand value = bands.findByIdAndSchemeId(id, schemeId).orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy khoảng điểm")); bands.delete(value); }
+    public void deleteBand(String adminEmail, Integer schemeId, Integer id) {
+        requireAdmin(adminEmail);
+        requireScheme(schemeId);
+        if (schemeIsUsed(schemeId)) throw new BusinessRuleException("Bộ chấm điểm đã được sử dụng; hãy tạo phiên bản mới để bảo toàn lịch sử");
+        ScoreBand value = bands.findByIdAndSchemeId(id, schemeId).orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy khoảng điểm"));
+        bands.delete(value);
+    }
 
     private void setScheme(ScoringScheme value, Certificate certificate, ScoringSchemeForm form, String version) { value.setCertificate(certificate); value.setName(required(form.getName(), "Tên bộ chấm điểm")); value.setVersion(version); value.setStatus(status(form.getStatus())); value.setEffectiveFrom(form.getEffectiveFrom()); }
     private void ensureSchemeVersion(Integer certificateId, String version, Integer ignored) { if (schemes.existsByCertificateIdAndVersionIgnoreCase(certificateId, version)) throw new BusinessRuleException("Phiên bản đã tồn tại trong chứng chỉ; hãy tăng version để bảo toàn lịch sử"); }
     private User requireAdmin(String email) { User user = users.findByEmailIgnoreCase(email).orElseThrow(() -> new AccessDeniedException("Không có quyền thực hiện thao tác")); if (user.getRole() != Role.ADMIN) throw new AccessDeniedException("Chỉ quản trị viên mới được ghi cấu hình chấm điểm"); return user; }
     private Certificate requireCertificate(Integer id) { return certificates.findById(id).orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy chứng chỉ")); }
     private ScoringScheme requireScheme(Integer id) { return schemes.findById(id).orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy bộ chấm điểm")); }
+    private boolean schemeIsUsed(Integer schemeId) {
+        ScoringSchemeUsageContract contract = usage.getIfAvailable();
+        return contract != null && contract.isUsed(schemeId);
+    }
     private ScoringViews.CertificateView certificateView(Certificate value) { return new ScoringViews.CertificateView(value.getId(), value.getName(), value.getCode(), value.getDescription(), value.getStatus().name(), statusLabel(value.getStatus())); }
     private ScoringViews.SchemeView schemeView(ScoringScheme value) { return new ScoringViews.SchemeView(value.getId(), value.getCertificate().getId(), value.getCertificate().getName(), value.getName(), value.getVersion(), value.getStatus().name(), statusLabel(value.getStatus()), value.getEffectiveFrom()); }
     private ScoringViews.BandView bandView(ScoreBand value) { return new ScoringViews.BandView(value.getId(), value.getSkill(), value.getCefrLevel(), value.getMinScore(), value.getMaxScore()); }

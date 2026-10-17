@@ -83,6 +83,9 @@ class AiAssessmentServiceTests {
         assertEquals("ERROR", failed.state());
         assertNull(failed.score());
         assertNotNull(failed.errorMessage());
+        var eventCaptor = org.mockito.ArgumentCaptor.forClass(AiAssessmentCompletedEvent.class);
+        verify(events).publishEvent(eventCaptor.capture());
+        assertEquals("ERROR", eventCaptor.getValue().state());
 
         AssessmentView retried = service.retry("assessment-1", 1, false);
         assertEquals("COMPLETED", retried.state());

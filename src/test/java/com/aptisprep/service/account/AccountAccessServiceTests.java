@@ -102,6 +102,8 @@ class AccountAccessServiceTests {
         assertEquals("B2", profile.getCheckpointFloorLevel());
         assertEquals(70, profile.getCheckpointSourceAttemptId());
         assertEquals("B2", profile.getCurrentLevel());
+        assertEquals(60, profile.getCheckpointLastAttemptId());
+        assertEquals(java.time.LocalDateTime.of(2026, 1, 2, 0, 0), profile.getCheckpointLastSubmittedAt());
     }
 
     private AttemptResult result(int attemptId, String type, String level, Instant submittedAt, boolean passed) {

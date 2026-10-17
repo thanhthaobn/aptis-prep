@@ -127,7 +127,7 @@ public class AiAssessmentService implements AiAssessmentContract {
             assessment.setState(AiAssessmentState.COMPLETED); assessment.setScore(result.estimatedScore()); assessment.setEstimatedCefr(result.estimatedCefr()); assessment.setFeedback(result.feedback()); assessment.setTranscript(result.transcript() == null ? job.getTranscript() : result.transcript()); assessment.setProvider(result.provider()); assessment.setModel(result.model()); assessment.setErrorMessage(null); assessment.setCompletedAt(LocalDateTime.now()); assessments.save(assessment);
             return viewFor(job);
         });
-        publishAfterCommit(new AiAssessmentCompletedEvent(claim.assessmentKey(), claim.userId(), claim.attemptId(), claim.answerId()));
+        publishAfterCommit(new AiAssessmentCompletedEvent(claim.assessmentKey(), claim.userId(), claim.attemptId(), claim.answerId(), "COMPLETED", null));
         return view;
     }
 
@@ -142,10 +142,13 @@ public class AiAssessmentService implements AiAssessmentContract {
     }
 
     private AssessmentView fail(String key, String error) {
-        return transactions.execute(status -> {
+        FailureSnapshot failure = transactions.execute(status -> {
             AiAssessmentJob job = job(key); job.setState(AiJobState.ERROR); job.setLastError(error); jobs.save(job);
-            AiAssessment assessment = assessments.findFirstByJobIdAndAnswerVersionOrderByIdDesc(job.getId(), job.getAnswerVersion()).orElseThrow(); assessment.setState(AiAssessmentState.ERROR); assessment.setScore(null); assessment.setEstimatedCefr(null); assessment.setFeedback(null); assessment.setErrorMessage(error); assessment.setCompletedAt(null); assessments.save(assessment); return viewFor(job);
+            AiAssessment assessment = assessments.findFirstByJobIdAndAnswerVersionOrderByIdDesc(job.getId(), job.getAnswerVersion()).orElseThrow(); assessment.setState(AiAssessmentState.ERROR); assessment.setScore(null); assessment.setEstimatedCefr(null); assessment.setFeedback(null); assessment.setErrorMessage(error); assessment.setCompletedAt(null); assessments.save(assessment);
+            return new FailureSnapshot(viewFor(job), new AiAssessmentCompletedEvent(job.getAssessmentKey(), job.getUserId(), job.getAttemptId(), job.getAnswerId(), "ERROR", error));
         });
+        publishAfterCommit(failure.event());
+        return failure.view();
     }
 
     private AssessmentView viewFor(AiAssessmentJob job) {
@@ -198,4 +201,5 @@ public class AiAssessmentService implements AiAssessmentContract {
     private String blankToNull(String value) { return blank(value) ? null : value.trim(); }
     private Instant instant(LocalDateTime value) { return value == null ? null : value.toInstant(ZoneOffset.UTC); }
     private record JobSnapshot(String assessmentKey, String taskType, String taskContent, String lockedContent, String transcript, BigDecimal maxScore, Integer userId, Integer attemptId, Integer answerId, Integer answerVersion, AssessmentView view) {}
+    private record FailureSnapshot(AssessmentView view, AiAssessmentCompletedEvent event) {}
 }
