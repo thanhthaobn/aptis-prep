@@ -191,15 +191,18 @@
 .student-management progress::-webkit-progress-bar { background: var(--color-border); border-radius: 99px; }
 .student-management progress::-webkit-progress-value { background: var(--color-primary); border-radius: 99px; }
 .student-management progress::-moz-progress-bar { background: var(--color-primary); border-radius: 99px; }
-.student-profile { display: flex; justify-content: space-between; align-items: center; gap: 1.5rem; }
+.student-profile { display: block; }
+.student-profile-heading { display: flex; justify-content: space-between; align-items: center; gap: 1.5rem; }
 .student-profile h2 { font-size: 1.3rem; }
-.student-profile-facts { display: flex; gap: 2rem; margin: 0; flex-wrap: wrap; }
+.student-profile-facts { display: flex; gap: 2rem; margin: 1.5rem 0 0; flex-wrap: wrap; }
 .student-profile-facts dt { font-size: .85rem; color: var(--color-muted); }
 .student-profile-facts dd { margin: .35rem 0 0; font-weight: 700; }
 .student-target { color: var(--color-primary-dark); font-size: 1.5rem; font-weight: 800; }
 .student-account-panel { display: flex; justify-content: space-between; gap: 1.5rem; align-items: center; }
 .student-account-panel h2 { font-size: 1.4rem; }
 .student-account-panel p { margin-bottom: 0; }
+.student-account-actions { display: flex; align-items: center; gap: .75rem; }
+.student-account-actions form { margin: 0; }
 .student-lock-button { background: var(--color-danger); border-color: var(--color-danger); box-shadow: none; }
 .student-lock-button:hover { background: var(--color-danger); }
 .student-confirm-dialog { width: min(calc(100% - 2rem),480px); padding: 2rem; border: 1px solid var(--color-border); border-radius: var(--radius); color: var(--color-text); background: var(--color-surface); box-shadow: var(--shadow); }
@@ -208,7 +211,7 @@
 .student-confirm-dialog .modal-actions form { margin: 0; }
 .student-confirm-dialog button:disabled { opacity: .45; cursor: not-allowed; box-shadow: none; }
 .student-sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
-@media (max-width: 760px) { .student-profile,.student-account-panel { align-items: flex-start; flex-direction: column; } .student-management .student-summary { grid-template-columns: 1fr; } }
+@media (max-width: 760px) { .student-profile-heading,.student-account-panel { align-items: flex-start; flex-direction: column; } .student-management .student-summary { grid-template-columns: 1fr; } .student-management .skill-list > div { grid-template-columns: minmax(0, 1fr) auto; } .student-management .skill-target { grid-column: 1 / -1; text-align: left; } }
 .dashboard-page { padding-top: 2.25rem; }
 .dashboard-page .dashboard-header h1 { font-size: clamp(2.35rem,3.5vw,3.5rem); }
 .dashboard-page .dashboard-header p { font-size: 1rem; }
@@ -257,7 +260,10 @@
 .feature-card p { min-height: 48px; font-size: 1rem; }
 .lower-grid { margin-top: 2.5rem; grid-template-columns: 1fr 1fr; }
 .skill-list { display: grid; gap: .15rem; }
-.skill-list > div { display: flex; justify-content: space-between; align-items: center; gap: 1rem; padding: .85rem 0; border-bottom: 1px solid #f1f5f9; font-size: 1rem; font-weight: 650; }
+.skill-list > div { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 1rem; padding: .85rem 0; border-bottom: 1px solid #f1f5f9; font-size: 1rem; font-weight: 650; }
+.skill-level { justify-self: start; }
+.student-management .skill-list > div { grid-template-columns: minmax(0, 1fr) auto minmax(8rem, auto); }
+.student-management .skill-target { text-align: right; white-space: nowrap; }
 .skill-list > div:last-child { border-bottom: 0; }
 .skill-empty { color: #94a3b8; font-size: .85rem; font-weight: 500; }
 .empty-state { padding: 1.5rem 1rem; color: var(--color-muted); text-align: center; }

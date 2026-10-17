@@ -12,7 +12,7 @@
             <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
             <h2>Mục tiêu của bạn</h2>
             <div class="field"><label for="certificateId">Chứng chỉ</label><select id="certificateId" th:field="*{certificateId}"><option value="">Không chọn</option><option th:each="certificate : ${certificates}" th:value="${certificate.id}" th:text="|${certificate.name} (${certificate.code})|"></option></select></div>
-            <div class="field"><label for="targetDate">Ngày mục tiêu</label><input id="targetDate" type="date" th:field="*{targetDate}"></div>
+            <div class="field"><label for="targetDate">Ngày mục tiêu</label><input id="targetDate" type="date" th:field="*{targetDate}"><p class="field-error" th:errors="*{targetDate}"></p></div>
             <div class="catalog-form-grid">
                 <div class="field"><label for="grammarVocabulary">Grammar &amp; Vocabulary</label><select id="grammarVocabulary" th:field="*{grammarVocabulary}"><option value="">Chưa đặt</option><option th:each="level : ${ {'A1','A2','B1','B2','C1','C2'} }" th:value="${level}" th:text="${level}"></option></select></div>
                 <div class="field"><label for="reading">Reading</label><select id="reading" th:field="*{reading}"><option value="">Chưa đặt</option><option th:each="level : ${ {'A1','A2','B1','B2','C1','C2'} }" th:value="${level}" th:text="${level}"></option></select></div>
