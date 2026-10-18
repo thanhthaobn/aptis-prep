@@ -34,8 +34,12 @@ Tài khoản demo được tạo tự động trong profile `dev`:
 ## Kiểm thử
 
 ```powershell
+$env:JAVA_HOME = "C:\duong-dan-den-jdk-21"
+$env:Path = "$env:JAVA_HOME\bin;$env:Path"
 .\mvnw.cmd clean test
 ```
+
+Maven Wrapper kiểm tra `JAVA_HOME` và chỉ chạy với JDK 21, kể cả khi máy đang cài thêm Java phiên bản mới hơn.
 
 Test thường dùng H2 in-memory và không cần SQL Server. V001–V003 đã được kiểm tra trên SQL Server 15 với database rỗng; migration V004–V005 chuyển nền cũ sang contract V2. `SqlServerMigrationTests` chỉ chạy khi đặt `APTIS_SQLSERVER_TESTS=true` và dùng cấu hình database local.
 
