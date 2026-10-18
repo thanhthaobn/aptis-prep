@@ -22,4 +22,11 @@ public class GlobalExceptionHandler {
         model.addAttribute("message", exception.getMessage());
         return "error/400";
     }
+
+    @ExceptionHandler(AccessDeniedException.class)
+    @ResponseStatus(HttpStatus.FORBIDDEN)
+    public String handleAccessDenied(AccessDeniedException exception, Model model) {
+        model.addAttribute("message", exception.getMessage());
+        return "error/403";
+    }
 }

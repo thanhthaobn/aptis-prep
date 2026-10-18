@@ -7,13 +7,15 @@
     <div th:replace="~{fragments/student-sidebar :: studentSidebar('profile')}"></div>
     <main class="app-main student-content">
         <header class="page-header"><h1>Hồ sơ của bạn</h1></header>
-        <section class="dashboard-panel"><h2>Thông tin tài khoản</h2><dl class="study-facts"><div><dt>Email đăng nhập</dt><dd th:text="${email}"></dd></div><div><dt>Họ và tên</dt><dd>Chưa hiển thị</dd></div></dl></section>
-        <form class="dashboard-panel dashboard-section" onsubmit="return false;">
-            <h2>Thông tin cá nhân</h2><div class="field"><label for="profileName">Họ và tên</label><input id="profileName" name="fullName" autocomplete="name" placeholder="Nhập họ và tên" maxlength="255"></div><button class="button" type="button" disabled>Lưu thay đổi</button>
+        <div th:replace="~{fragments/messages :: messages}"></div>
+        <section class="dashboard-panel"><h2>Thông tin tài khoản</h2><dl class="study-facts"><div><dt>Email đăng nhập</dt><dd th:text="${account.email}"></dd></div><div><dt>Họ và tên</dt><dd th:text="${account.fullName}"></dd></div></dl></section>
+        <form class="dashboard-panel dashboard-section" th:action="@{/student/profile/edit}" th:object="${profileForm}" method="post">
+            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+            <h2>Thông tin cá nhân</h2><div class="field"><label for="profileName">Họ và tên</label><input id="profileName" th:field="*{fullName}" autocomplete="name" maxlength="255"><p class="field-error" th:errors="*{fullName}"></p></div><button class="button" type="submit">Lưu thay đổi</button>
         </form>
         <section class="dashboard-section study-card-grid">
-            <article class="dashboard-panel"><h2>Mục tiêu</h2><p>Chưa có dữ liệu mục tiêu.</p><span class="learn-soft-label">Có thể chọn sau</span></article>
-            <article class="dashboard-panel"><h2>Trình độ</h2><p>Chưa có dữ liệu đánh giá.</p><a class="button button-secondary" th:href="@{/student/placement}">Xem kiểm tra đầu vào</a></article>
+            <article class="dashboard-panel"><h2>Mục tiêu</h2><p th:if="${account.goal == null}">Chưa đặt mục tiêu.</p><div th:if="${account.goal != null}"><p th:text="${account.goal.certificateName != null ? account.goal.certificateName : 'Chưa chọn chứng chỉ'}"></p><p th:text="${account.goal.targetDate != null ? 'Ngày mục tiêu: ' + account.goal.targetDate : 'Chưa đặt ngày mục tiêu'}"></p></div><a class="button button-secondary" th:href="@{/student/goals}">Thiết lập mục tiêu</a></article>
+            <article class="dashboard-panel"><h2>Trình độ</h2><div th:if="${#lists.isEmpty(account.profiles)}"><p>Chưa đánh giá.</p></div><div th:unless="${#lists.isEmpty(account.profiles)}" class="skill-list"><div th:each="profile : ${account.profiles}"><span th:text="${profile.skill}"></span><span class="badge" th:text="${profile.currentLevel}"></span></div></div><a class="button button-secondary" th:href="@{/student/placement}">Xem kiểm tra đầu vào</a></article>
         </section>
         <div class="actions"><a class="button" th:href="@{/student/orientation}">Khám phá lộ trình</a></div>
     </main>
