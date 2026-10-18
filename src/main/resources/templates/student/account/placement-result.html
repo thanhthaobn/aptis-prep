@@ -1,0 +1,11 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/head :: head('Kết quả Placement')}"></head>
+<body class="student-theme">
+<div th:replace="~{fragments/navbar :: navbar}"></div>
+<div class="container app-shell"><div th:replace="~{fragments/student-sidebar :: studentSidebar('placement')}"></div><main class="app-main student-content">
+    <header class="page-header"><div><h1>Kết quả kiểm tra đầu vào</h1><p>Điểm và CEFR được lấy từ engine chấm điểm của lượt thi.</p></div></header>
+    <section class="dashboard-panel dashboard-section"><h2 th:text="${placementResult.state}"></h2><div class="catalog-answer" th:each="skill : ${placementResult.skills}"><strong th:text="${skill.skill}"></strong><span th:text="${skill.estimatedLevel == null ? 'Đang chờ chấm' : skill.estimatedLevel}"></span></div></section>
+    <a class="button" th:href="@{/student/placement}">Quay lại Placement</a>
+</main></div><div th:replace="~{fragments/footer :: footer}"></div>
+</body></html>
