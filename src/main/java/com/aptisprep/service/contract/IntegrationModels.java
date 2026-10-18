@@ -21,8 +21,18 @@ public final class IntegrationModels {
     public record ExamView(ExamSummary exam, List<QuestionView> questions) {}
     public record AttemptHandle(Integer attemptId, String state, Instant deadline) {}
     public record SkillResult(String skill, BigDecimal rawScore, BigDecimal scaleScore,
-            String estimatedLevel, String gradingState, String feedback) {}
+            String estimatedLevel, String gradingState, String feedback, boolean passed) {
+        public SkillResult(String skill, BigDecimal rawScore, BigDecimal scaleScore,
+                String estimatedLevel, String gradingState, String feedback) {
+            this(skill, rawScore, scaleScore, estimatedLevel, gradingState, feedback, false);
+        }
+    }
     public record AttemptResult(Integer attemptId, Integer userId, Integer examId, String examType,
-            Integer scoringSchemeId, String state, List<SkillResult> skills) {}
+            Integer scoringSchemeId, String state, List<SkillResult> skills, Instant submittedAt) {
+        public AttemptResult(Integer attemptId, Integer userId, Integer examId, String examType,
+                Integer scoringSchemeId, String state, List<SkillResult> skills) {
+            this(attemptId, userId, examId, examType, scoringSchemeId, state, skills, null);
+        }
+    }
     public record HistoryPage(List<AttemptResult> items, int page, int size, long totalItems) {}
 }

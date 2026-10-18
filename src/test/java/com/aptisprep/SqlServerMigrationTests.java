@@ -31,6 +31,16 @@ class SqlServerMigrationTests {
                     assertTrue(columns.next(), column);
                 }
             }
+            for (String column : new String[]{"checkpoint_floor_level", "checkpoint_source_attempt_id",
+                    "checkpoint_last_attempt_id", "checkpoint_last_submitted_at", "placement_level",
+                    "placement_submitted_at"}) {
+                try (var columns = connection.getMetaData().getColumns(null, "dbo", "user_skill_profiles", column)) {
+                    assertTrue(columns.next(), column);
+                }
+            }
+            try (var tables = connection.getMetaData().getTables(null, "dbo", "ai_assessment_jobs", new String[]{"TABLE"})) {
+                assertTrue(tables.next(), "ai_assessment_jobs");
+            }
             try (var columns = connection.getMetaData().getColumns(null, "dbo", "mock_exam_questions", "mock_exam_id")) {
                 assertTrue(columns.next());
             }

@@ -1,12 +1,14 @@
 package com.aptisprep.config;
 
 import com.aptisprep.security.LoginSuccessHandler;
+import com.aptisprep.security.ActiveAccountFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.access.intercept.AuthorizationFilter;
 
 @Configuration
 public class SecurityConfig {
@@ -19,7 +21,8 @@ public class SecurityConfig {
     @Bean
     SecurityFilterChain securityFilterChain(
             HttpSecurity http,
-            LoginSuccessHandler loginSuccessHandler) throws Exception {
+            LoginSuccessHandler loginSuccessHandler,
+            ActiveAccountFilter activeAccountFilter) throws Exception {
 
         http
                 .authorizeHttpRequests(authorize -> authorize
@@ -47,6 +50,7 @@ public class SecurityConfig {
                 .exceptionHandling(exception -> exception
                         .accessDeniedPage("/access-denied"));
 
+        http.addFilterBefore(activeAccountFilter, AuthorizationFilter.class);
         return http.build();
     }
 }
