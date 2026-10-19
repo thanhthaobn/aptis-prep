@@ -1,17 +1,26 @@
 package com.aptisprep.controller.student;
 
 import com.aptisprep.exception.BusinessRuleException;
+import com.aptisprep.dto.form.GoalForm;
+import com.aptisprep.dto.form.ProfileForm;
+import com.aptisprep.service.account.AccountProfileService;
 import com.aptisprep.service.placement.PlacementService;
+import jakarta.validation.Valid;
 import java.security.Principal;
 import java.util.List;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 @Controller
 public class StudentAccountPreviewController {
     private final PlacementService placement;
-    public StudentAccountPreviewController(PlacementService placement) { this.placement = placement; }
+    private final AccountProfileService accounts;
+    public StudentAccountPreviewController(PlacementService placement, AccountProfileService accounts) {
+        this.placement = placement; this.accounts = accounts;
+    }
     @GetMapping("/student/profile")
     public String profile(Principal principal, Model model) {
         var snapshot = accounts.snapshot(principal.getName());
@@ -73,8 +82,8 @@ public class StudentAccountPreviewController {
     }
 
     @PostMapping("/student/placement/start")
-    public String start(@RequestParam String skill, Principal principal, org.springframework.web.servlet.mvc.support.RedirectAttributes redirect) {
-        try { var handle = placement.start(principal.getName(), skill); return "redirect:/student/placement/result?attemptId=" + handle.attemptId(); }
+    public String start(@RequestParam String skill, @RequestParam Integer examId, Principal principal, RedirectAttributes redirect) {
+        try { var handle = placement.start(principal.getName(), skill, examId); return "redirect:/student/attempts/" + handle.attemptId(); }
         catch (BusinessRuleException e) { redirect.addFlashAttribute("error", e.getMessage()); return "redirect:/student/placement?skill=" + skill; }
     }
 

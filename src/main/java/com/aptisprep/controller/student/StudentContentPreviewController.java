@@ -1,6 +1,10 @@
 package com.aptisprep.controller.student;
 
 import com.aptisprep.exception.BusinessRuleException;
+import com.aptisprep.exception.ResourceNotFoundException;
+import com.aptisprep.service.account.AccountAccessService;
+import com.aptisprep.service.exam.ExamAttemptService;
+import java.security.Principal;
 import com.aptisprep.service.student.StudentContentPreviewService;
 import java.util.List;
 import org.springframework.stereotype.Controller;
@@ -12,7 +16,11 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/student")
 public class StudentContentPreviewController {
     private final StudentContentPreviewService preview;
-    public StudentContentPreviewController(StudentContentPreviewService preview) { this.preview = preview; }
+    private final AccountAccessService accounts;
+    private final ExamAttemptService attempts;
+    public StudentContentPreviewController(StudentContentPreviewService preview, AccountAccessService accounts, ExamAttemptService attempts) {
+        this.preview = preview; this.accounts = accounts; this.attempts = attempts;
+    }
 
     @GetMapping("/{module:lessons|exams|results}")
     public String list(@PathVariable String module, @RequestParam(defaultValue="") String q,
@@ -32,7 +40,16 @@ public class StudentContentPreviewController {
         return "student/content/detail";
     }
     @GetMapping("/attempts/{id:\\d+}/result")
-    public String result(@PathVariable int id, Model model) {
+    public String result(@PathVariable int id, Principal principal, Model model) {
+        try {
+            Integer userId = accounts.requireActiveStudent(principal.getName());
+            if (attempts.ownsAttempt(userId, id)) {
+                model.addAttribute("attemptResult", attempts.result(userId, id));
+                return "student/attempt-result";
+            }
+        } catch (ResourceNotFoundException ignored) {
+            // The preview catalog intentionally supports fixture-only test users.
+        }
         common("results", model); model.addAttribute("entry", preview.entry("results", id));
         return "student/content/detail";
     }

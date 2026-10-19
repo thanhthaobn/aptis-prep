@@ -9,7 +9,7 @@ import com.aptisprep.service.contract.ExamCatalogContract;
 import com.aptisprep.service.contract.IntegrationModels.AttemptHandle;
 import com.aptisprep.service.contract.IntegrationModels.AttemptResult;
 import java.util.List;
-import java.util.UUID;
+import java.util.Locale;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.stereotype.Service;
 
@@ -24,16 +24,24 @@ public class PlacementService {
         this.catalog = catalog; this.examCatalog = examCatalog; this.attempts = attempts; this.accounts = accounts;
     }
 
-    public List<Entry> available(String skill) { return catalog.find("exams", "", skill, "PUBLISHED", "PLACEMENT"); }
+    public List<Entry> available(String skill) {
+        String normalized = skill == null ? "" : skill.trim().toUpperCase(Locale.ROOT);
+        return catalog.find("exams", "", normalized, "PUBLISHED", "PLACEMENT");
+    }
 
     public AttemptHandle start(String email, String skill) {
+        return start(email, skill, null);
+    }
+
+    public AttemptHandle start(String email, String skill, Integer examId) {
         AccountAccessContract account = accounts.getIfAvailable();
         ExamAttemptContract attempt = attempts.getIfAvailable();
         if (account == null || attempt == null) throw new BusinessRuleException("Luồng Placement chưa thể bắt đầu vì engine lượt thi của hệ thống chưa sẵn sàng");
         Integer userId = account.requireActiveStudent(email);
-        Entry exam = available(skill).stream().findFirst().orElseThrow(() -> new BusinessRuleException("Chưa có đề Placement đã công bố cho kỹ năng này"));
+        Entry exam = available(skill).stream().filter(value -> examId == null || value.id() == examId).findFirst()
+                .orElseThrow(() -> new BusinessRuleException("Chưa có đề Placement đã công bố cho kỹ năng này"));
         examCatalog.publishedExam(userId, exam.id());
-        return attempt.start(userId, exam.id(), "placement-" + UUID.randomUUID());
+        return attempt.start(userId, exam.id(), "placement:" + userId + ":" + exam.skill());
     }
 
     public AttemptResult result(String email, Integer attemptId) {
