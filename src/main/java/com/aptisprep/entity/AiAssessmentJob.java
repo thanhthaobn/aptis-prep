@@ -16,12 +16,12 @@ public class AiAssessmentJob {
     @Column(name = "answer_version", nullable = false) private Integer answerVersion;
     @Column(nullable = false, length = 30) private String skill;
     @Column(name = "task_type", nullable = false, length = 30) private String taskType;
-    @Lob @Column(name = "task_content", nullable = false) private String taskContent;
-    @Lob @Column(name = "locked_content", nullable = false) private String lockedContent;
+    @Column(name = "task_content", nullable = false, columnDefinition = "nvarchar(max)") private String taskContent;
+    @Column(name = "locked_content", nullable = false, columnDefinition = "nvarchar(max)") private String lockedContent;
     @Column(name = "rubric_version", nullable = false, length = 100) private String rubricVersion;
     @Column(name = "policy_version", nullable = false, length = 100) private String policyVersion;
     @Column(name = "max_score", nullable = false, precision = 5, scale = 2) private BigDecimal maxScore;
-    @Lob private String transcript;
+    @Column(columnDefinition = "nvarchar(max)") private String transcript;
     @Enumerated(EnumType.STRING) @Column(nullable = false, length = 30) private AiJobState state;
     @Column(name = "retry_count", nullable = false) private int retryCount;
     @Column(name = "last_error", length = 1000) private String lastError;

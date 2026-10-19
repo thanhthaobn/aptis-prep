@@ -1,9 +1,15 @@
 package com.aptisprep.repository;
 
-import com.aptisprep.entity.CertificateEntity;
+import com.aptisprep.entity.Certificate;
+import com.aptisprep.enums.RecordStatus;
 import java.util.List;
+import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 
-public interface CertificateRepository extends JpaRepository<CertificateEntity, Integer> {
-    List<CertificateEntity> findByStatusOrderByName(String status);
+public interface CertificateRepository extends JpaRepository<Certificate, Integer> {
+    List<Certificate> findAllByOrderByNameAsc();
+    List<Certificate> findByStatusOrderByNameAsc(RecordStatus status);
+    Optional<Certificate> findByCodeIgnoreCase(String code);
+    boolean existsByCodeIgnoreCase(String code);
+    boolean existsByCodeIgnoreCaseAndIdNot(String code, Integer id);
 }

@@ -14,7 +14,7 @@ public class StudentContentPreviewController {
     private final StudentContentPreviewService preview;
     public StudentContentPreviewController(StudentContentPreviewService preview) { this.preview = preview; }
 
-    @GetMapping("/{module:lessons|exams|results}")
+    @GetMapping("/{module:exams|results}")
     public String list(@PathVariable String module, @RequestParam(defaultValue="") String q,
                        @RequestParam(defaultValue="") String skill, @RequestParam(defaultValue="") String level,
                        @RequestParam(defaultValue="") String state, Model model) {
@@ -26,7 +26,7 @@ public class StudentContentPreviewController {
         model.addAttribute("selectedLevel", level); model.addAttribute("selectedState", state);
         return "student/content/list";
     }
-    @GetMapping("/{module:lessons|exams}/{id:\\d+}")
+    @GetMapping("/{module:exams}/{id:\\d+}")
     public String detail(@PathVariable String module, @PathVariable int id, Model model) {
         common(module, model); model.addAttribute("entry", preview.entry(module, id));
         return "student/content/detail";
