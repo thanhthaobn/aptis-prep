@@ -16,12 +16,12 @@ public class AdminLessonController {
     @GetMapping public String list(Model m){m.addAttribute("tree",service.adminTree());return "admin/lesson/list";}
     @GetMapping("/{id}") public String detail(@PathVariable Integer id,Model m){m.addAttribute("lesson",service.require(id));m.addAttribute("cards",service.cards(id));m.addAttribute("questions",service.questions(id));m.addAttribute("stats",service.stats(id));return "admin/lesson/detail";}
     @GetMapping("/create") public String create(@RequestParam(defaultValue="Reading") String skill,@RequestParam(defaultValue="A1") String level,@RequestParam(defaultValue="") String topic,Model m){if(topic.length()>160)throw new com.aptisprep.exception.BusinessRuleException("Tên chủ đề tối đa 160 ký tự");var form=service.newForm(skill,level);form.setTopic(topic);formModel(m,form,false,null);return "admin/lesson/form";}
-    @PostMapping public String create(@Valid @ModelAttribute("form") LessonForm f,BindingResult b,@RequestParam(required=false) MultipartFile audio,Model m,RedirectAttributes r){return save(null,f,b,audio,false,m,r);}
+    @PostMapping public String create(@Valid @ModelAttribute("form") LessonForm f,BindingResult b,@RequestParam(required=false) MultipartFile audio,@RequestParam(required=false) MultipartFile image,Model m,RedirectAttributes r){return save(null,f,b,audio,false,image,false,m,r);}
     @GetMapping("/{id}/edit") public String edit(@PathVariable Integer id,Model m){formModel(m,service.form(id),true,id);return "admin/lesson/form";}
-    @PostMapping("/{id}") public String edit(@PathVariable Integer id,@Valid @ModelAttribute("form") LessonForm f,BindingResult b,@RequestParam(required=false) MultipartFile audio,@RequestParam(defaultValue="false") boolean removeAudio,Model m,RedirectAttributes r){return save(id,f,b,audio,removeAudio,m,r);}
-    private String save(Integer id,LessonForm f,BindingResult b,MultipartFile audio,boolean removeAudio,Model m,RedirectAttributes r){
+    @PostMapping("/{id}") public String edit(@PathVariable Integer id,@Valid @ModelAttribute("form") LessonForm f,BindingResult b,@RequestParam(required=false) MultipartFile audio,@RequestParam(defaultValue="false") boolean removeAudio,@RequestParam(required=false) MultipartFile image,@RequestParam(defaultValue="false") boolean removeImage,Model m,RedirectAttributes r){return save(id,f,b,audio,removeAudio,image,removeImage,m,r);}
+    private String save(Integer id,LessonForm f,BindingResult b,MultipartFile audio,boolean removeAudio,MultipartFile image,boolean removeImage,Model m,RedirectAttributes r){
         if(!b.hasErrors()){
-            try{var lesson=service.save(id,f,audio,removeAudio);r.addFlashAttribute("message",id==null?"Đã tạo bài học":"Đã cập nhật bài học");return "redirect:/admin/lessons/"+lesson.getId();}
+            try{var lesson=service.save(id,f,audio,removeAudio,image,removeImage);r.addFlashAttribute("message",id==null?"Đã tạo bài học":"Đã cập nhật bài học");return "redirect:/admin/lessons/"+lesson.getId();}
             catch(com.aptisprep.exception.BusinessRuleException e){b.reject("lesson.invalid",e.getMessage());}
         }
         formModel(m,f,id!=null,id);return "admin/lesson/form";

@@ -34,4 +34,6 @@ public class StudentLearningPathController {
                 published.stream().filter(lesson -> level.equals(lesson.getCefrLevel())).toList())).toList());
         return "student/learning/skill";
     }
+    @PostMapping("/{pathId}/checkpoint/start")
+    public String startCheckpoint(@PathVariable Integer pathId,Principal principal,RedirectAttributes redirect){try{var user=service.userId(principal.getName());Integer attemptId=service.startCheckpoint(user,pathId,java.util.UUID.randomUUID().toString());return "redirect:/student/attempts/"+attemptId+"/result";}catch(com.aptisprep.exception.BusinessRuleException|com.aptisprep.exception.ResourceNotFoundException e){redirect.addFlashAttribute("error",e.getMessage());return "redirect:/student/learning-path";}}
 }
