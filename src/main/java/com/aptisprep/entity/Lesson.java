@@ -18,6 +18,8 @@ public class Lesson {
     @Column(name = "video_path", length = 500) private String videoPath;
     @Column(name = "audio_path", length = 500) private String audioPath;
     @Column(name = "audio_name", length = 255) private String audioName;
+    @Column(name = "image_path", length = 500) private String imagePath;
+    @Column(name = "image_name", length = 255) private String imageName;
     @Column(name = "transcript", columnDefinition = "nvarchar(max)") private String transcript;
     @Column(name = "min_word_count") private Integer minWordCount;
     @Column(name = "max_word_count") private Integer maxWordCount;
@@ -36,6 +38,8 @@ public class Lesson {
     public String getVideoPath() { return videoPath; } public void setVideoPath(String v) { videoPath = v; }
     public String getAudioPath() { return audioPath; } public void setAudioPath(String v) { audioPath = v; }
     public String getAudioName() { return audioName; } public void setAudioName(String v) { audioName = v; }
+    public String getImagePath() { return imagePath; } public void setImagePath(String v) { imagePath = v; }
+    public String getImageName() { return imageName; } public void setImageName(String v) { imageName = v; }
     public String getTranscript() { return transcript; } public void setTranscript(String v) { transcript = v; }
     public Integer getMinWordCount() { return minWordCount; } public void setMinWordCount(Integer v) { minWordCount = v; }
     public Integer getMaxWordCount() { return maxWordCount; } public void setMaxWordCount(Integer v) { maxWordCount = v; }
