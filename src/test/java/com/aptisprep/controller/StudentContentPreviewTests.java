@@ -25,13 +25,10 @@ class StudentContentPreviewTests {
             .andExpect(status().isOk()).andExpect(content().string(containsString("data-skill=\"Tổng hợp\"")))
             .andExpect(content().string(containsString("data-skill=\"Listening\"")));
     }
-    @Test void orientationLinksToEachLessonSkill() throws Exception {
-        var page = mvc.perform(get("/student/orientation").with(user("student").roles("STUDENT")))
-            .andExpect(status().isOk());
-        for(String skill : new String[]{"Reading","Listening","Writing","Speaking"}) {
-            page.andExpect(content().string(containsString("/student/lessons?skill=" + skill)));
-        }
-        page.andExpect(content().string(containsString("/student/lessons?skill=Grammar")));
+    @Test void legacyOrientationUsesCanonicalLearningPath() throws Exception {
+        mvc.perform(get("/student/orientation").with(user("student").roles("STUDENT")))
+            .andExpect(status().is3xxRedirection())
+            .andExpect(redirectedUrl("/student/learning-path"));
     }
     @Test void allPagesRenderWithoutGoalOrPlacement() throws Exception {
         for (String module : new String[]{"exams","results"}) {

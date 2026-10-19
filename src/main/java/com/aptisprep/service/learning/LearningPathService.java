@@ -24,7 +24,10 @@ public class LearningPathService implements LearningPathContract {
         var user=active(userId); var published=lessons.findByStatusOrderBySkillAscCefrLevelAscDisplayOrderAsc("PUBLISHED");
         for(String skill:LessonService.SKILLS){if(paths.findFirstByUserIdAndSkillAndStatusOrderByCreatedAtDesc(userId,skill,"ACTIVE").isPresent())continue;var path=new LearningPath();path.setUser(user);path.setSkill(skill);path.setPathSource("ORIENTATION");path.setStatus("ACTIVE");path=paths.save(path);int position=1;for(var lesson:published){if(!skill.equals(lesson.getSkill()))continue;var item=new LearningPathItem();item.setLearningPath(path);item.setLesson(lesson);item.setPosition(position++);item.setRequired(true);var done=progress.findByUserIdAndLessonId(userId,lesson.getId()).filter(x->"COMPLETED".equals(x.getStatus())).orElse(null);item.setStatus(done==null?"NOT_STARTED":"COMPLETED");item.setCompletedAt(done==null?null:done.getCompletedAt());items.save(item);}}
     }
-    @Override @Transactional(readOnly=true) public List<PathProgress> summaries(Integer userId){active(userId);return paths.findByUserIdAndStatusOrderBySkillAscCreatedAtDesc(userId,"ACTIVE").stream().map(this::summaryOf).toList();}
+    @Override @Transactional(readOnly=true) public List<PathProgress> summaries(Integer userId){
+        users.findById(userId).orElseThrow(()->new ResourceNotFoundException("Không tìm thấy tài khoản"));
+        return paths.findByUserIdAndStatusOrderBySkillAscCreatedAtDesc(userId,"ACTIVE").stream().map(this::summaryOf).toList();
+    }
     @Transactional public List<PathProgress> ensureAndSummaries(String email){var user=active(email);ensurePaths(user.getId());return summaries(user.getId());}
     /** Refresh only changed orientation paths; preserve old items and all lesson completion records. */
     @Transactional
