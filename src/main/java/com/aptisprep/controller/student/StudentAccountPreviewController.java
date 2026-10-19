@@ -1,17 +1,26 @@
 package com.aptisprep.controller.student;
 
+import com.aptisprep.dto.form.GoalForm;
+import com.aptisprep.dto.form.ProfileForm;
 import com.aptisprep.exception.BusinessRuleException;
+import com.aptisprep.service.account.AccountProfileService;
 import com.aptisprep.service.placement.PlacementService;
+import jakarta.validation.Valid;
 import java.security.Principal;
 import java.util.List;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 @Controller
 public class StudentAccountPreviewController {
+    private final AccountProfileService accounts;
     private final PlacementService placement;
-    public StudentAccountPreviewController(PlacementService placement) { this.placement = placement; }
+    public StudentAccountPreviewController(AccountProfileService accounts, PlacementService placement) {
+        this.accounts = accounts; this.placement = placement;
+    }
     @GetMapping("/student/profile")
     public String profile(Principal principal, Model model) {
         var snapshot = accounts.snapshot(principal.getName());

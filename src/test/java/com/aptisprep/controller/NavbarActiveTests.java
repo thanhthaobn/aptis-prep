@@ -37,7 +37,7 @@ class NavbarActiveTests {
         }
     }
     @Test void roleAreasRemainActiveOnDetailPages() throws Exception {
-        for(String path : new String[]{"/student/dashboard","/student/lessons/6004","/student/exams","/student/attempts/8001/result","/student/profile"}) {
+        for(String path : new String[]{"/student/dashboard","/student/lessons","/student/lessons/6004","/student/exams","/student/attempts/8001/result","/student/profile"}) {
             mvc.perform(get(path).with(user("student@aptis.local").roles("STUDENT"))).andExpect(status().isOk())
                 .andExpect(activeHref("/student/dashboard"));
         }

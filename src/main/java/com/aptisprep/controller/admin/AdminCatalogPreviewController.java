@@ -19,7 +19,7 @@ public class AdminCatalogPreviewController {
     private final CatalogService catalogService;
     public AdminCatalogPreviewController(AdminCatalogPreviewService preview, CatalogService catalogService) { this.preview = preview; this.catalogService = catalogService; }
 
-    @GetMapping("/{module:lessons|questions|exams|results}")
+    @GetMapping("/{module:questions|exams|results}")
     public String list(@PathVariable String module, @RequestParam(defaultValue = "") String q,
                        @RequestParam(defaultValue = "") String skill, @RequestParam(defaultValue = "") String status,
                        @RequestParam(defaultValue = "") String kind, Model model) {
@@ -32,13 +32,13 @@ public class AdminCatalogPreviewController {
         return "admin/catalog/list";
     }
 
-    @GetMapping("/{module:lessons|questions|exams|results}/{id:\\d+}")
+    @GetMapping("/{module:questions|exams|results}/{id:\\d+}")
     public String detail(@PathVariable String module, @PathVariable int id, Model model) {
         addModule(module, model); model.addAttribute("entry", isReal(module) && catalogService.hasData(module) ? catalogService.entry(module, id) : preview.entry(module, id));
         return "admin/catalog/detail";
     }
 
-    @GetMapping("/{module:lessons|questions|exams}/create")
+    @GetMapping("/{module:questions|exams}/create")
     public String create(@PathVariable String module, Model model) {
         addModule(module, model); model.addAttribute("editing", false);
         if ("questions".equals(module)) model.addAttribute("questionForm", catalogService.questionForm(null));
@@ -46,7 +46,7 @@ public class AdminCatalogPreviewController {
         return "admin/catalog/form";
     }
 
-    @GetMapping("/{module:lessons|questions|exams}/{id:\\d+}/edit")
+    @GetMapping("/{module:questions|exams}/{id:\\d+}/edit")
     public String edit(@PathVariable String module, @PathVariable int id, Model model) {
         if (!isReal(module)) {
             if (!preview.module(module).editable()) throw new ResourceNotFoundException("Không tìm thấy nội dung");

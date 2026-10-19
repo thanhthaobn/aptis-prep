@@ -8,6 +8,7 @@ import com.aptisprep.dto.view.AdminCatalogPreview.Field;
 import com.aptisprep.dto.view.AdminCatalogPreview.Module;
 import com.aptisprep.dto.view.AdminCatalogPreview.Row;
 import com.aptisprep.entity.*;
+import com.aptisprep.enums.RecordStatus;
 import com.aptisprep.exception.BusinessRuleException;
 import com.aptisprep.exception.ResourceNotFoundException;
 import com.aptisprep.repository.*;
@@ -119,8 +120,8 @@ public class CatalogService {
 
     public ExamForm examForm(Integer id) {
         ExamForm form = new ExamForm();
-        certificates.findByStatusOrderByName("ACTIVE").stream().findFirst().ifPresent(x -> form.setCertificateId(x.getId()));
-        schemes.findByStatusOrderByName("ACTIVE").stream().findFirst().ifPresent(x -> form.setScoringSchemeId(x.getId()));
+        certificates.findByStatusOrderByNameAsc(RecordStatus.ACTIVE).stream().findFirst().ifPresent(x -> form.setCertificateId(x.getId()));
+        schemes.findAllByOrderByCertificateNameAscVersionDesc().stream().filter(x -> x.getStatus() == RecordStatus.ACTIVE).findFirst().ifPresent(x -> form.setScoringSchemeId(x.getId()));
         if (id == null) return form;
         MockExamEntity exam = exams.findById(id).orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy đề thi"));
         form.setTitle(exam.getTitle()); form.setDescription(exam.getDescription()); form.setExamType(exam.getExamType()); form.setTargetLevel(exam.getTargetLevel());
@@ -156,8 +157,8 @@ public class CatalogService {
         validateQuestionSelection(ids, form.getSectionSkill()); exam.setStatus("PUBLISHED"); exams.save(exam);
     }
 
-    public List<CertificateEntity> activeCertificates() { return certificates.findByStatusOrderByName("ACTIVE"); }
-    public List<ScoringSchemeEntity> activeSchemes() { return schemes.findByStatusOrderByName("ACTIVE"); }
+    public List<Certificate> activeCertificates() { return certificates.findByStatusOrderByNameAsc(RecordStatus.ACTIVE); }
+    public List<ScoringScheme> activeSchemes() { return schemes.findAllByOrderByCertificateNameAscVersionDesc().stream().filter(value -> value.getStatus() == RecordStatus.ACTIVE).toList(); }
     public List<QuestionEntity> publishedQuestions() { return questions.findByStatusOrderByUpdatedAtDesc("PUBLISHED"); }
     public List<String> skills() { return SKILLS; }
     public List<String> levels() { return LEVELS; }

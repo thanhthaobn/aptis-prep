@@ -18,8 +18,8 @@ class AdminCatalogPreviewTests {
 
     @Test
     void allCatalogPagesAndFormsRenderForAdmin() throws Exception {
-        String[] modules = {"lessons", "questions", "exams", "results"};
-        int[] ids = {2001, 3001, 4001, 5001};
+        String[] modules = {"questions", "exams", "results"};
+        int[] ids = {3001, 4001, 5001};
         for (int i = 0; i < modules.length; i++) {
             String base = "/admin/" + modules[i];
             mvc.perform(get(base).with(user("admin@aptis.local").roles("ADMIN")))
@@ -45,8 +45,6 @@ class AdminCatalogPreviewTests {
                 .andExpect(content().string(not(containsString("Chọn từ phù hợp trong câu"))));
         mvc.perform(get("/admin/results").param("q", "minh anh").with(user("admin@aptis.local").roles("ADMIN")))
                 .andExpect(status().isOk()).andExpect(content().string(containsString("Nguyễn Minh Anh")));
-        mvc.perform(get("/admin/lessons").param("q", "no-such-content").with(user("admin@aptis.local").roles("ADMIN")))
-                .andExpect(status().isOk()).andExpect(content().string(containsString("Không tìm thấy nội dung phù hợp")));
     }
 
     @Test
