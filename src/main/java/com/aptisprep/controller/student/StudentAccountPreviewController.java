@@ -3,6 +3,8 @@ package com.aptisprep.controller.student;
 import com.aptisprep.dto.form.GoalForm;
 import com.aptisprep.dto.form.ProfileForm;
 import com.aptisprep.exception.BusinessRuleException;
+import com.aptisprep.dto.form.GoalForm;
+import com.aptisprep.dto.form.ProfileForm;
 import com.aptisprep.service.account.AccountProfileService;
 import com.aptisprep.service.placement.PlacementService;
 import jakarta.validation.Valid;
@@ -18,8 +20,9 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 public class StudentAccountPreviewController {
     private final AccountProfileService accounts;
     private final PlacementService placement;
-    public StudentAccountPreviewController(AccountProfileService accounts, PlacementService placement) {
-        this.accounts = accounts; this.placement = placement;
+    private final AccountProfileService accounts;
+    public StudentAccountPreviewController(PlacementService placement, AccountProfileService accounts) {
+        this.placement = placement; this.accounts = accounts;
     }
     @GetMapping("/student/profile")
     public String profile(Principal principal, Model model) {
@@ -82,8 +85,8 @@ public class StudentAccountPreviewController {
     }
 
     @PostMapping("/student/placement/start")
-    public String start(@RequestParam String skill, Principal principal, org.springframework.web.servlet.mvc.support.RedirectAttributes redirect) {
-        try { var handle = placement.start(principal.getName(), skill); return "redirect:/student/placement/result?attemptId=" + handle.attemptId(); }
+    public String start(@RequestParam String skill, @RequestParam Integer examId, Principal principal, RedirectAttributes redirect) {
+        try { var handle = placement.start(principal.getName(), skill, examId); return "redirect:/student/attempts/" + handle.attemptId(); }
         catch (BusinessRuleException e) { redirect.addFlashAttribute("error", e.getMessage()); return "redirect:/student/placement?skill=" + skill; }
     }
 

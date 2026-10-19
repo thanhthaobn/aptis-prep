@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/head :: head(${attempt.title})}"></head>
+<body class="student-theme">
+<div th:replace="~{fragments/navbar :: navbar}"></div>
+<div class="container app-shell"><div th:replace="~{fragments/student-sidebar :: studentSidebar('exams')}"></div>
+<main class="app-main student-content">
+    <header class="page-header"><div><h1 th:text="${attempt.title}"></h1><p>Hãy lưu từng câu trả lời trước khi nộp bài.</p></div></header>
+    <div class="alert alert-error" th:if="${error}" th:text="${error}"></div>
+    <section class="dashboard-panel dashboard-section" th:each="question : ${attempt.questions}">
+        <p class="eyebrow" th:text="|Câu ${question.position} · ${question.skill}|"></p>
+        <h2 th:text="${question.content}"></h2>
+        <div th:each="item : ${question.items}" class="question-item">
+            <p class="muted" th:text="|Ý ${item.position}: ${item.content}|"></p>
+            <form method="post" th:action="@{/student/attempts/{id}/answers(id=${attempt.attemptId})}">
+                <input type="hidden" name="questionId" th:value="${question.questionId}"><input type="hidden" name="itemId" th:value="${item.itemId}">
+                <div th:if="${question.type == 'ORDERING'}" class="field"><label th:for="|position-${item.itemId}|">Vị trí trong thứ tự</label><input type="number" min="1" th:max="${#lists.size(question.items)}" name="userPosition" th:id="|position-${item.itemId}|" th:value="${item.userPosition}"></div>
+                <div th:if="${question.type != 'ORDERING' and !#lists.isEmpty(item.options)}" class="catalog-checkbox">
+                    <label th:each="option : ${item.options}"><input type="radio" name="selectedOptionId" th:value="${option.id}" th:checked="${item.selectedOptionId == option.id}"><span th:text="${option.code + ' · ' + option.content}"></span></label>
+                </div>
+                <div class="field" th:if="${question.type == 'WRITING_TEXT'}"><label th:for="|answer-${item.itemId}|">Bài trả lời</label><textarea th:id="|answer-${item.itemId}|" name="textAnswer" rows="6" th:text="${item.textAnswer}"></textarea></div>
+                <button class="button button-secondary" type="submit">Lưu ý trả lời</button>
+            </form>
+        </div>
+    </section>
+    <form method="post" th:action="@{/student/attempts/{id}/submit(id=${attempt.attemptId})}"><button class="button" type="submit">Nộp bài</button></form>
+</main></div><div th:replace="~{fragments/footer :: footer}"></div>
+</body></html>
