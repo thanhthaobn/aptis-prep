@@ -14,3 +14,4 @@ uploads/*
 !uploads/.gitkeep
 *.log
 hs_err_pid*
+backups/

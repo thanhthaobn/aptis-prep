@@ -1,0 +1,13 @@
+<!DOCTYPE html><html lang="vi" xmlns:th="http://www.thymeleaf.org"><head th:replace="~{fragments/head :: head(${selectedSkill})}"></head><body class="student-theme">
+<div th:replace="~{fragments/navbar :: navbar}"></div><div class="container app-shell"><div th:replace="~{fragments/student-sidebar :: studentSidebar('learning-path')}"></div><main class="app-main student-content">
+<header class="page-header"><div><h1 th:text="${selectedSkill}"></h1><p>Bắt đầu theo cách của bạn. Không cần đặt mục tiêu hoặc kiểm tra đầu vào để học.</p></div></header>
+<p role="status" th:if="${message}" class="alert alert-success" th:text="${message}"></p><p role="alert" th:if="${error}" class="alert alert-error" th:text="${error}"></p>
+<form method="post" th:action="@{/student/learning-path/refresh}" class="page-actions"><button class="button button-secondary" type="submit">Cập nhật lộ trình</button><span>Giữ lại tiến độ đã học khi bổ sung bài mới.</span></form>
+<div class="actions"><a class="button button-secondary" th:href="@{/student/learning-path}">← Tất cả kỹ năng</a></div>
+<section class="curriculum-tree" aria-label="Kỹ năng, cấp độ và bài học">
+<details class="dashboard-panel skill-branch" th:each="path:${paths}" open th:attr="data-skill=${path.skill()}">
+<summary><strong th:text="${path.skill()}"></strong><span th:text="${path.totalLessons()==0?'Chưa có bài học':path.completedLessons()+'/'+path.totalLessons()+' bài · '+path.progressPercent()+'%'}"></span></summary>
+<p class="muted">Chọn cấp độ để xem bài học. Cấp độ nội dung không phải trình độ đã đạt của bạn.</p>
+<details class="level-branch" th:each="level:${curriculum}"><summary><strong th:text="${level.level()}"></strong><span>Xem bài học</span></summary><p class="muted" th:if="${#lists.isEmpty(level.lessons())}">Chưa có bài học ở cấp độ này.</p><details class="topic-branch" th:each="topic:${level.topics()}"><summary><span th:text="${topic.key}"></span><small th:text="|${#lists.size(topic.value)} bài|"></small></summary><ul class="lesson-leaves"><li th:each="lesson:${topic.value}"><a th:href="@{/student/lessons/{id}(id=${lesson.id})}" th:text="${lesson.title}"></a></li></ul></details></details>
+<div class="dashboard-section"><p th:if="${path.checkpointState()=='locked'}">Checkpoint sẽ mở sau khi bạn hoàn thành các bài bắt buộc.</p><p th:if="${path.checkpointState()=='passed'}" class="alert alert-success">Bạn đã vượt qua checkpoint của kỹ năng này.</p><form th:if="${path.checkpointState()=='available'}" method="post" th:action="@{/student/learning-path/{id}/checkpoint/start(id=${path.pathId()})}"><button class="button" type="submit">Bắt đầu checkpoint</button></form></div>
+</details></section></main></div><div th:replace="~{fragments/footer :: footer}"></div></body></html>
