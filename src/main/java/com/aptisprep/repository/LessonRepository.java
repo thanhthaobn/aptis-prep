@@ -1,9 +1,9 @@
 package com.aptisprep.repository;
-import com.aptisprep.entity.Lesson;
+
+import com.aptisprep.entity.LessonEntity;
 import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
-public interface LessonRepository extends JpaRepository<Lesson, Integer> {
-    List<Lesson> findAllByOrderBySkillAscCefrLevelAscDisplayOrderAsc();
-    List<Lesson> findByStatusOrderBySkillAscCefrLevelAscDisplayOrderAsc(String status);
-    boolean existsBySkillAndCefrLevelAndDisplayOrderAndIdNot(String skill, String level, Integer order, Integer id);
+
+public interface LessonRepository extends JpaRepository<LessonEntity, Integer> {
+    List<LessonEntity> findBySkillAndStatusOrderByDisplayOrderAsc(String skill, String status);
 }

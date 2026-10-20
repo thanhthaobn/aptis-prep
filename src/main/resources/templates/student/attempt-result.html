@@ -1,0 +1,10 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/head :: head('Kết quả bài thi')}"></head>
+<body class="student-theme">
+<div th:replace="~{fragments/navbar :: navbar}"></div>
+<div class="container app-shell"><div th:replace="~{fragments/student-sidebar :: studentSidebar('results')}"></div>
+<main class="app-main student-content"><header class="page-header"><div><h1>Kết quả bài thi</h1><p th:text="${attemptResult.state}"></p></div></header>
+<section class="dashboard-panel dashboard-section"><div class="catalog-answer" th:each="skill : ${attemptResult.skills}"><strong th:text="${skill.skill}"></strong><span th:text="${skill.estimatedLevel == null ? 'Đang chờ chấm' : skill.estimatedLevel}"></span><small th:text="${skill.scaleScore == null ? 'Chưa có điểm' : skill.scaleScore}"></small></div></section>
+<a class="button" th:href="@{/student/placement}">Quay lại Placement</a></main></div><div th:replace="~{fragments/footer :: footer}"></div>
+</body></html>

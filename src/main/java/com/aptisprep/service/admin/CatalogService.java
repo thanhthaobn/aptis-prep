@@ -13,6 +13,7 @@ import com.aptisprep.exception.BusinessRuleException;
 import com.aptisprep.exception.ResourceNotFoundException;
 import com.aptisprep.repository.*;
 import com.aptisprep.service.storage.StorageService;
+import com.aptisprep.service.contract.CertificateSchemeContract;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -36,14 +37,15 @@ public class CatalogService {
     private final CertificateRepository certificates;
     private final ScoringSchemeRepository schemes;
     private final StorageService storage;
+    private final CertificateSchemeContract certificateSchemes;
 
     public CatalogService(QuestionRepository questions, QuestionItemRepository items, QuestionOptionRepository options,
                           QuestionMediaRepository media, MockExamRepository exams, MockExamSectionRepository sections,
                           MockExamQuestionRepository examQuestions, CertificateRepository certificates,
-                          ScoringSchemeRepository schemes, StorageService storage) {
+                          ScoringSchemeRepository schemes, StorageService storage, CertificateSchemeContract certificateSchemes) {
         this.questions = questions; this.items = items; this.options = options; this.media = media;
         this.exams = exams; this.sections = sections; this.examQuestions = examQuestions;
-        this.certificates = certificates; this.schemes = schemes; this.storage = storage;
+        this.certificates = certificates; this.schemes = schemes; this.storage = storage; this.certificateSchemes = certificateSchemes;
     }
 
     public Module module(String key) {
@@ -76,20 +78,24 @@ public class CatalogService {
         form.setContent(q.getContent()); form.setInstruction(q.getInstruction()); form.setQuestionType(q.getQuestionType()); form.setSkill(q.getSkill());
         form.setPartNo(q.getPartNo()); form.setCefrLevel(q.getCefrLevel()); form.setDifficulty(q.getDifficulty()); form.setAllowOptionReuse(q.isAllowOptionReuse());
         form.setPreparationSeconds(q.getPreparationSeconds()); form.setStatus(q.getStatus());
-        QuestionItemEntity item = items.findByQuestionIdOrderByPosition(id).stream().findFirst().orElse(null);
-        if (item != null) {
-            form.setItemContent(item.getContent()); form.setCorrectPosition(item.getCorrectPosition()); form.setMinWordCount(item.getMinWordCount());
-            form.setMaxWordCount(item.getMaxWordCount()); form.setResponseSeconds(item.getResponseSeconds());
+        List<QuestionForm.ItemForm> values = new ArrayList<>();
+        for (QuestionItemEntity item : items.findByQuestionIdOrderByPosition(id)) {
+            QuestionForm.ItemForm itemForm = new QuestionForm.ItemForm();
+            itemForm.setContent(item.getContent()); itemForm.setCorrectPosition(item.getCorrectPosition()); itemForm.setMinWordCount(item.getMinWordCount());
+            itemForm.setMaxWordCount(item.getMaxWordCount()); itemForm.setResponseSeconds(item.getResponseSeconds());
             List<QuestionForm.OptionForm> os = options.findByQuestionItemIdOrderByPosition(item.getId()).stream().map(o -> {
                 QuestionForm.OptionForm f = new QuestionForm.OptionForm(o.getOptionCode()); f.setContent(o.getContent()); f.setCorrect(Boolean.TRUE.equals(o.getCorrect())); return f;
             }).collect(Collectors.toCollection(ArrayList::new));
-            if (!os.isEmpty()) form.setOptions(os);
+            if (!os.isEmpty()) itemForm.setOptions(os);
+            values.add(itemForm);
         }
+        if (!values.isEmpty()) form.setItems(values);
         return form;
     }
 
     @Transactional
     public Integer saveQuestion(Integer id, QuestionForm form, MultipartFile upload) {
+        normalizeItems(form);
         validateQuestion(form);
         QuestionEntity q = id == null ? new QuestionEntity() : questions.findById(id).orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy câu hỏi"));
         if ("PUBLISHED".equals(q.getStatus()) && !"PUBLISHED".equals(form.getStatus())) throw new BusinessRuleException("Câu hỏi đã công bố không thể quay về bản nháp");
@@ -101,12 +107,15 @@ public class CatalogService {
             for (QuestionItemEntity old : items.findByQuestionIdOrderByPosition(id)) { options.deleteByQuestionItemId(old.getId()); }
             items.deleteByQuestionId(id);
         }
-        QuestionItemEntity item = new QuestionItemEntity(); item.setQuestionId(q.getId()); item.setContent(form.getItemContent().trim()); item.setPosition(1);
-        item.setCorrectPosition(form.getCorrectPosition()); item.setMinWordCount(form.getMinWordCount()); item.setMaxWordCount(form.getMaxWordCount()); item.setResponseSeconds(form.getResponseSeconds());
-        item = items.save(item);
-        int position = 1;
-        if (usesOptions(form.getQuestionType())) for (QuestionForm.OptionForm option : form.getOptions()) if (option.getContent() != null && !option.getContent().isBlank()) {
-            QuestionOptionEntity entity = new QuestionOptionEntity(); entity.setQuestionItemId(item.getId()); entity.setContent(option.getContent().trim()); entity.setOptionCode(option.getCode()); entity.setCorrect(Objects.equals(position, form.getCorrectPosition())); entity.setPosition(position++); options.save(entity);
+        int itemPosition = 1;
+        for (QuestionForm.ItemForm value : form.getItems()) {
+            QuestionItemEntity item = new QuestionItemEntity(); item.setQuestionId(q.getId()); item.setContent(value.getContent().trim()); item.setPosition(itemPosition++);
+            item.setCorrectPosition(value.getCorrectPosition()); item.setMinWordCount(value.getMinWordCount()); item.setMaxWordCount(value.getMaxWordCount()); item.setResponseSeconds(value.getResponseSeconds());
+            item = items.save(item);
+            int optionPosition = 1;
+            if (usesOptions(form.getQuestionType())) for (QuestionForm.OptionForm option : value.getOptions()) if (option.getContent() != null && !option.getContent().isBlank()) {
+                QuestionOptionEntity entity = new QuestionOptionEntity(); entity.setQuestionItemId(item.getId()); entity.setContent(option.getContent().trim()); entity.setOptionCode(option.getCode()); entity.setCorrect(Objects.equals(optionPosition, value.getCorrectPosition())); entity.setPosition(optionPosition++); options.save(entity);
+            }
         }
         if (upload != null && !upload.isEmpty()) saveMedia(q, upload);
         return q.getId();
@@ -120,8 +129,8 @@ public class CatalogService {
 
     public ExamForm examForm(Integer id) {
         ExamForm form = new ExamForm();
-        certificates.findByStatusOrderByNameAsc(RecordStatus.ACTIVE).stream().findFirst().ifPresent(x -> form.setCertificateId(x.getId()));
-        schemes.findAllByOrderByCertificateNameAscVersionDesc().stream().filter(x -> x.getStatus() == RecordStatus.ACTIVE).findFirst().ifPresent(x -> form.setScoringSchemeId(x.getId()));
+        certificates.findByStatusOrderByName(RecordStatus.ACTIVE).stream().findFirst().ifPresent(x -> form.setCertificateId(x.getId()));
+        if (form.getCertificateId() != null) schemes.findByCertificateIdAndStatusOrderByVersionDesc(form.getCertificateId(), RecordStatus.ACTIVE).stream().findFirst().ifPresent(x -> form.setScoringSchemeId(x.getId()));
         if (id == null) return form;
         MockExamEntity exam = exams.findById(id).orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy đề thi"));
         form.setTitle(exam.getTitle()); form.setDescription(exam.getDescription()); form.setExamType(exam.getExamType()); form.setTargetLevel(exam.getTargetLevel());
@@ -157,8 +166,8 @@ public class CatalogService {
         validateQuestionSelection(ids, form.getSectionSkill()); exam.setStatus("PUBLISHED"); exams.save(exam);
     }
 
-    public List<Certificate> activeCertificates() { return certificates.findByStatusOrderByNameAsc(RecordStatus.ACTIVE); }
-    public List<ScoringScheme> activeSchemes() { return schemes.findAllByOrderByCertificateNameAscVersionDesc().stream().filter(value -> value.getStatus() == RecordStatus.ACTIVE).toList(); }
+    public List<Certificate> activeCertificates() { return certificates.findByStatusOrderByName(RecordStatus.ACTIVE); }
+    public List<ScoringScheme> activeSchemes() { return schemes.findByStatusOrderByName(RecordStatus.ACTIVE); }
     public List<QuestionEntity> publishedQuestions() { return questions.findByStatusOrderByUpdatedAtDesc("PUBLISHED"); }
     public List<String> skills() { return SKILLS; }
     public List<String> levels() { return LEVELS; }
@@ -169,13 +178,16 @@ public class CatalogService {
     private void validateQuestion(QuestionForm f) {
         if (f.getContent() == null || f.getContent().isBlank() || f.getContent().length() > 10000) throw new BusinessRuleException("Nội dung câu hỏi là bắt buộc");
         if (!SKILLS.contains(f.getSkill()) || !LEVELS.contains(f.getCefrLevel()) || !TYPES.contains(f.getQuestionType())) throw new BusinessRuleException("Kỹ năng, cấp độ hoặc dạng câu hỏi không hợp lệ");
-        if (f.getItemContent() == null || f.getItemContent().isBlank()) throw new BusinessRuleException("Câu hỏi phải có ít nhất một ý hỏi");
+        if (f.getItems() == null || f.getItems().isEmpty() || f.getItems().stream().anyMatch(x -> x.getContent() == null || x.getContent().isBlank())) throw new BusinessRuleException("Câu hỏi phải có ít nhất một ý hỏi");
+        if (("MATCHING".equals(f.getQuestionType()) || "ORDERING".equals(f.getQuestionType())) && f.getItems().size() < 2) throw new BusinessRuleException("Dạng ghép nối hoặc sắp xếp phải có ít nhất 2 ý hỏi");
         if (usesOptions(f.getQuestionType())) {
-            long count = f.getOptions() == null ? 0 : f.getOptions().stream().filter(x -> x.getContent() != null && !x.getContent().isBlank()).count();
-            long correct = f.getCorrectPosition() != null && f.getCorrectPosition() >= 1 && f.getCorrectPosition() <= count ? 1 : 0;
-            if (count < 2 || correct != 1) throw new BusinessRuleException("Dạng chọn đáp án phải có ít nhất 2 phương án và đúng 1 đáp án đúng");
+            for (QuestionForm.ItemForm item : f.getItems()) {
+                long count = item.getOptions() == null ? 0 : item.getOptions().stream().filter(x -> x.getContent() != null && !x.getContent().isBlank()).count();
+                boolean correct = item.getCorrectPosition() != null && item.getCorrectPosition() >= 1 && item.getCorrectPosition() <= count;
+                if (count < 2 || !correct) throw new BusinessRuleException("Mỗi ý hỏi phải có ít nhất 2 phương án và đúng 1 đáp án đúng");
+            }
         }
-        if (f.getMinWordCount() != null && f.getMaxWordCount() != null && f.getMinWordCount() > f.getMaxWordCount()) throw new BusinessRuleException("Số từ tối thiểu không được lớn hơn tối đa");
+        if (f.getItems().stream().anyMatch(x -> x.getMinWordCount() != null && x.getMaxWordCount() != null && x.getMinWordCount() > x.getMaxWordCount())) throw new BusinessRuleException("Số từ tối thiểu không được lớn hơn tối đa");
     }
     private void validateExamBasics(ExamForm f) {
         if (f.getTitle() == null || f.getTitle().isBlank() || f.getTitle().length() > 255) throw new BusinessRuleException("Tên đề thi là bắt buộc");
@@ -183,6 +195,7 @@ public class CatalogService {
         if (f.getDurationMinutes() == null || f.getDurationMinutes() <= 0 || f.getSectionDurationMinutes() == null || f.getSectionDurationMinutes() <= 0) throw new BusinessRuleException("Thời lượng phải lớn hơn 0");
         if (f.getCertificateId() == null || !certificates.existsById(f.getCertificateId())) throw new BusinessRuleException("Chứng chỉ không hợp lệ");
         if (f.getScoringSchemeId() == null || !schemes.existsById(f.getScoringSchemeId())) throw new BusinessRuleException("Bộ chấm điểm không hợp lệ");
+        certificateSchemes.requireAvailableScheme(f.getCertificateId(), f.getScoringSchemeId(), f.getSectionSkill());
     }
     private void validateQuestionSelection(List<Integer> ids, String skill) {
         Set<Integer> unique = new HashSet<>(ids); if (unique.size() != ids.size()) throw new BusinessRuleException("Một câu hỏi không được chọn lặp trong cùng đề");
@@ -200,8 +213,24 @@ public class CatalogService {
     private List<Integer> parseIds(String raw) { if (raw == null || raw.isBlank()) return List.of(); try { return Arrays.stream(raw.split(",")).map(String::trim).filter(x -> !x.isBlank()).map(Integer::valueOf).toList(); } catch (NumberFormatException e) { throw new BusinessRuleException("Danh sách câu hỏi không hợp lệ"); } }
     private Integer getQuestionId(MockExamQuestionEntity e) { return e.getQuestionId(); }
     private Entry questionEntry(QuestionEntity q) {
-        List<Row> rows = items.findByQuestionIdOrderByPosition(q.getId()).stream().flatMap(i -> options.findByQuestionItemIdOrderByPosition(i.getId()).stream().map(o -> new Row(o.getOptionCode(), o.getContent(), Boolean.TRUE.equals(o.getCorrect()) ? "Đáp án đúng" : ""))).toList();
+        List<Row> rows = new ArrayList<>();
+        for (QuestionItemEntity item : items.findByQuestionIdOrderByPosition(q.getId())) {
+            rows.add(new Row("Ý " + item.getPosition(), item.getContent(), item.getCorrectPosition() == null ? "" : "Đúng vị trí " + item.getCorrectPosition()));
+            options.findByQuestionItemIdOrderByPosition(item.getId()).forEach(o -> rows.add(new Row(o.getOptionCode(), o.getContent(), Boolean.TRUE.equals(o.getCorrect()) ? "Đáp án đúng" : "")));
+        }
+        media.findByQuestionIdOrderByPosition(q.getId()).forEach(m -> rows.add(new Row("MEDIA", m.getMediaUrl(), m.getMediaType())));
         return new Entry(q.getId(), q.getContent(), q.getContent(), q.getSkill(), q.getCefrLevel(), q.getQuestionType(), q.getStatus(), statusLabel(q.getStatus()), q.getUpdatedAt().toLocalDate().toString(), List.of(new Field("Phần thi", String.valueOf(q.getPartNo())), new Field("Độ khó", String.valueOf(q.getDifficulty()))), rows);
+    }
+
+    private void normalizeItems(QuestionForm form) {
+        if (form.getItems() == null || form.getItems().isEmpty()) form.setItems(List.of(new QuestionForm.ItemForm()));
+        QuestionForm.ItemForm first = form.getItems().get(0);
+        if ((first.getContent() == null || first.getContent().isBlank()) && form.getItemContent() != null) first.setContent(form.getItemContent());
+        if (first.getCorrectPosition() == null) first.setCorrectPosition(form.getCorrectPosition());
+        if (first.getMinWordCount() == null) first.setMinWordCount(form.getMinWordCount());
+        if (first.getMaxWordCount() == null) first.setMaxWordCount(form.getMaxWordCount());
+        if (first.getResponseSeconds() == null) first.setResponseSeconds(form.getResponseSeconds());
+        if ((first.getOptions() == null || first.getOptions().isEmpty()) && form.getOptions() != null) first.setOptions(form.getOptions());
     }
     private Entry examEntry(MockExamEntity e) { List<Row> rows = sections.findByMockExamIdOrderById(e.getId()).stream().map(s -> new Row(s.getSkill(), "Các câu hỏi đã chọn", "Section")).toList(); return new Entry(e.getId(), e.getTitle(), e.getDescription(), e.getSkill() == null ? "" : e.getSkill(), e.getTargetLevel(), e.getExamType(), e.getStatus(), statusLabel(e.getStatus()), e.getUpdatedAt().toLocalDate().toString(), List.of(new Field("Thời lượng", e.getDurationMinutes() + " phút"), new Field("Bộ chấm điểm", String.valueOf(e.getScoringSchemeId()))), rows); }
     private String statusLabel(String status) { return switch (status) { case "PUBLISHED" -> "Đã công bố"; case "ARCHIVED" -> "Đã lưu trữ"; default -> "Bản nháp"; }; }
