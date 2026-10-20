@@ -7,18 +7,16 @@ Repository: https://github.com/thanhthaobn/aptis-prep
 ```text
 feature/thong ─┐
 feature/thao  ─┼── Pull Request → develop ── Pull Request → main
-feature/tram  ─┤                   tích hợp                  ổn định/demo
-feature/duong ─┘
+feature/tram  ─┘                   tích hợp                  ổn định/demo
 ```
 
 | Nhánh | Người dùng | Mục đích |
 |---|---|---|
 | main | Chủ repo duyệt/merge | Bản ổn định, không chứa phần đang làm dở |
 | develop | Tích hợp cả nhóm qua PR | Nguồn cập nhật thường xuyên cho nhánh thành viên |
-| feature/thong | Thông | Tài khoản/Goal/học viên, Chứng chỉ & Chấm điểm, AI |
-| feature/thao | Thảo | Lesson/Flashcard, lộ trình/tiến độ/checkpoint |
-| feature/tram | Trâm | Câu hỏi/media/đề, Placement |
-| feature/duong | Dương | Engine thi, chấm khách quan, tổng hợp/kết quả |
+| feature/thong | Thông | Tài khoản/Goal, scoring/AI và grading/kết quả dữ liệu |
+| feature/thao | Thảo | Lesson/Flashcard, lộ trình/checkpoint và giao diện kết quả |
+| feature/tram | Trâm | Câu hỏi/media/đề, Placement và engine attempt |
 
 Không push trực tiếp main/develop, không force push hoặc xóa các nhánh đang dùng chung. Nhánh cá nhân đã tạo sẵn, không tạo lại từ main. Một PR chỉ bao gồm phần nhỏ có thể kiểm tra; không chờ xong toàn bộ luồng.
 
@@ -43,8 +41,6 @@ git switch --track origin/feature/thong
 git switch --track origin/feature/thao
 # Trâm
 git switch --track origin/feature/tram
-# Dương
-git switch --track origin/feature/duong
 ```
 
 Nếu nhánh local đã tồn tại, dùng git switch feature/TEN thay vì --track. Người đang giữ project gốc không cần clone lại. Cấu hình Java 21/SQL Server theo [SETUP_LOCAL](SETUP_LOCAL.md); password/key riêng, không commit.
