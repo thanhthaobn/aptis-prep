@@ -18,7 +18,7 @@ Migration V012 thêm 5 bài và 15 câu kiểm tra kiến thức; không sửa/x
 
 - Câu kiểm tra Lesson là kiểm tra kiến thức ngắn phục vụ phản hồi ngay sau học, không phải đề MOCK_EXAM, không giới hạn lượt, không tạo exam_attempt, không nâng Profile và không chặn hoàn thành Lesson. Đáp án chỉ trả sau khi POST; flash feedback hiển thị cho lần chuyển trang sau nộp, chưa lưu lịch sử điểm kiểm tra.
 - Bài thực hành văn bản/dàn ý được lưu trong lesson_responses của đúng user. Writing/Speaking có bài mẫu và checklist tự đánh giá; chưa chấm AI, chưa upload/ghi âm audio trong Lesson. Không hiển thị điểm tự luận giả.
-- Practice/Placement/Checkpoint/Full Mock chính thức vẫn dùng engine Dương, đề Trâm và policy Thông. Không dùng câu kiểm tra Lesson thay checkpoint.
+- Practice/Placement/Checkpoint/Full Mock dùng engine attempt của Trâm và policy/grading của Thông. Không dùng câu kiểm tra Lesson thay checkpoint.
 - Video bài giảng nghe tự do, không áp giới hạn 2 lượt của bài thi. YouTube được nhúng từ ID đã xác thực host; có đường dẫn mở ngoài khi trình phát không khả dụng. Không bảo đảm video luôn còn công khai/khả dụng.
 
 ## Nguồn và biên soạn

@@ -10,7 +10,7 @@ UC-A03–A05 hiện có GET UI danh sách/tạo/xem/sửa chứng chỉ, bộ ch
 
 Đã chốt tài liệu [Placement làm lại](PLACEMENT_RETAKE_POLICY.md): nhiều lượt, một lượt chưa kết thúc/user/skill, dùng kết quả hợp lệ gần nhất và bảo vệ mức checkpoint. Đây là policy/phân công, chưa có code tạo lượt, resume, retry hoặc cập nhật Profile tương ứng.
 
-Nền bổ sung: CI Java 21/verify, interface/DTO liên luồng (chưa implementation), GET Hồ sơ/Placement/Cấu hình admin, chặn static uploads và guard extension/dung lượng. Chưa có endpoint media theo ownership/listen-limit, chưa có chặn session khóa theo request; các phần này vẫn thuộc luồng 1/3/4. Xem SERVICE_CONTRACTS.md. Kiểm tra máy clone thứ hai và SQL Server mới vẫn cần chạy thực tế trước khi ghi hoàn tất.
+Nền bổ sung: CI Java 21/verify, interface/DTO liên luồng, GET Hồ sơ/Placement/Cấu hình admin, chặn static uploads và guard extension/dung lượng. Endpoint media/engine attempt thuộc Trâm; khóa session và grading thuộc Thông. Xem SERVICE_CONTRACTS.md.
 
 | Use case | Phần đã có | Phần thành viên cần hoàn thiện |
 |---|---|---|
@@ -42,7 +42,7 @@ Giao diện Admin cho Bài học, Ngân hàng câu hỏi, Đề thi và Kết qu
 
 ## Phần mở rộng quản lý học viên
 
-Nhóm bổ sung UC-A11–A14 ngoài bản V2 gốc. Đã có Controller GET, preview service chỉ đọc và trang danh sách/chi tiết dùng dữ liệu minh họa; tìm/lọc fixture hoạt động, dialog khóa/mở khóa chưa có POST hoặc thay đổi tài khoản. Người 1 thay preview bằng dữ liệu thật, thêm phân trang và nghiệp vụ khóa; phối hợp người 2/4 lấy tiến độ/kết quả. Không tạo hoặc xóa học viên. Chi tiết: [STUDENT_MANAGEMENT.md](STUDENT_MANAGEMENT.md).
+Nhóm bổ sung UC-A11–A14 ngoài bản V2 gốc. Thông thay preview bằng dữ liệu thật, thêm phân trang và nghiệp vụ khóa; phối hợp Thảo lấy tiến độ/kết quả và Trâm lấy metadata attempt. Không tạo hoặc xóa học viên. Chi tiết: [STUDENT_MANAGEMENT.md](STUDENT_MANAGEMENT.md).
 
 ## Migration chuyển tiếp V004–V005
 

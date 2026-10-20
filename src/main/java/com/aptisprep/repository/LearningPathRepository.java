@@ -1,12 +1,8 @@
 package com.aptisprep.repository;
-
-import com.aptisprep.entity.LearningPathEntity;
-import java.util.List;
-import java.util.Optional;
+import com.aptisprep.entity.LearningPath;
+import java.util.*;
 import org.springframework.data.jpa.repository.JpaRepository;
-
-public interface LearningPathRepository extends JpaRepository<LearningPathEntity, Integer> {
-    List<LearningPathEntity> findByUserIdAndStatusOrderBySkillAscCreatedAtDesc(Integer userId, String status);
-    Optional<LearningPathEntity> findFirstByUserIdAndSkillAndStatusOrderByCreatedAtDesc(Integer userId, String skill, String status);
-    Optional<LearningPathEntity> findByIdAndUserId(Integer id, Integer userId);
+public interface LearningPathRepository extends JpaRepository<LearningPath,Integer>{
+    List<LearningPath> findByUserIdAndStatusOrderBySkillAscCreatedAtDesc(Integer userId,String status);
+    Optional<LearningPath> findFirstByUserIdAndSkillAndStatusOrderByCreatedAtDesc(Integer userId,String skill,String status);
 }

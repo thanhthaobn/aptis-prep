@@ -22,7 +22,7 @@ public class StudentContentPreviewController {
         this.preview = preview; this.accounts = accounts; this.attempts = attempts;
     }
 
-    @GetMapping("/{module:exams|results}")
+    @GetMapping("/{module:exams}")
     public String list(@PathVariable String module, @RequestParam(defaultValue="") String q,
                        @RequestParam(defaultValue="") String skill, @RequestParam(defaultValue="") String level,
                        @RequestParam(defaultValue="") String state, Model model) {
@@ -33,6 +33,33 @@ public class StudentContentPreviewController {
         model.addAttribute("q", q); model.addAttribute("selectedSkill", skill);
         model.addAttribute("selectedLevel", level); model.addAttribute("selectedState", state);
         return "student/content/list";
+    }
+
+    @GetMapping("/results")
+    public String results(@RequestParam(defaultValue = "0") int page,
+                          @RequestParam(defaultValue = "10") int size,
+                          @RequestParam(defaultValue = "") String q,
+                          @RequestParam(defaultValue = "") String skill,
+                          @RequestParam(defaultValue = "") String level,
+                          @RequestParam(defaultValue = "") String state,
+                          Principal principal, Model model) {
+        if (page < 0 || size < 1 || size > 50) throw new BusinessRuleException("Phân trang không hợp lệ");
+        if (q.length() > 255 || skill.length() > 80 || level.length() > 40 || state.length() > 40)
+            throw new BusinessRuleException("Bộ lọc không hợp lệ");
+        try {
+            Integer userId = accounts.requireActiveStudent(principal.getName());
+            model.addAttribute("history", attempts.history(userId, page, size));
+            model.addAttribute("page", page);
+            model.addAttribute("size", size);
+            return "student/results/list";
+        } catch (ResourceNotFoundException ignored) {
+            // Giữ fallback cho tài khoản fixture cũ; tài khoản DB thật luôn dùng lịch sử attempt.
+            common("results", model);
+            model.addAttribute("entries", preview.find("results", q, skill, level, state));
+            model.addAttribute("q", q); model.addAttribute("selectedSkill", skill);
+            model.addAttribute("selectedLevel", level); model.addAttribute("selectedState", state);
+            return "student/content/list";
+        }
     }
     @GetMapping("/{module:exams}/{id:\\d+}")
     public String detail(@PathVariable String module, @PathVariable int id, Model model) {
