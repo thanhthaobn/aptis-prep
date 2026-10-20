@@ -641,6 +641,8 @@ body.flashcard-page > :last-child { flex-shrink:0; }
 .result-actions { display:flex; flex-wrap:wrap; justify-content:center; gap:10px; }
 @media(max-width:600px){.result-metrics{grid-template-columns:1fr 1fr}.review-term-list{grid-template-columns:1fr}.review-term-list dd{background:#fff}.result-actions .button{width:100%}}
 .result-history-list { display:grid; gap:14px; }
+.result-filters { display:grid; grid-template-columns:minmax(180px,1.5fr) repeat(3,minmax(145px,1fr)); gap:12px; align-items:end; margin-bottom:18px; padding:16px; }
+.result-filters .field { margin:0; }.result-filters .actions{grid-column:1/-1;margin:0;display:flex;gap:10px;flex-wrap:wrap}.result-overall{margin:0;color:var(--color-text);font-weight:700}.result-overall-panel{display:flex;gap:32px;margin-bottom:18px}.result-overall-panel div{display:grid;gap:4px}.result-overall-panel span{color:var(--color-muted);font-size:.85rem}.result-overall-panel strong{font-size:1.4rem;color:var(--color-primary)}.dashboard-skill-pills{display:flex;gap:6px;flex-wrap:wrap;margin:.6rem 0}.dashboard-skill-pills span{background:#eef8e8;border-radius:999px;padding:5px 9px;font-size:.78rem;font-weight:700;color:#347b13}
 .result-history-card { display:grid; grid-template-columns:minmax(0,1fr) minmax(250px,.7fr); gap:20px; align-items:center; margin:0; padding:20px; }
 .result-card-main h2 { margin:5px 0; font-size:1.18rem; }
 .result-card-main p { margin:0; color:var(--color-muted); }
@@ -669,4 +671,4 @@ body.flashcard-page > :last-child { flex-shrink:0; }
 .result-feedback { margin-top:14px; padding:13px; border-radius:9px; background:var(--color-primary-soft); }
 .result-feedback h3 { margin:0 0 5px; font-size:.92rem; }.result-feedback p { margin:0; white-space:pre-wrap; }
 .result-page-actions { display:flex; flex-wrap:wrap; gap:10px; margin-top:20px; }
-@media(max-width:720px){.result-history-card{grid-template-columns:1fr}.result-card-summary{justify-items:start}.result-levels{justify-content:flex-start}.result-skill-grid{grid-template-columns:1fr}.result-pagination{flex-wrap:wrap}.result-page-actions .button{width:100%}}
+@media(max-width:900px){.result-filters{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:720px){.result-filters{grid-template-columns:1fr}.result-history-card{grid-template-columns:1fr}.result-card-summary{justify-items:start}.result-levels{justify-content:flex-start}.result-skill-grid{grid-template-columns:1fr}.result-pagination{flex-wrap:wrap}.result-page-actions .button{width:100%}.result-overall-panel{flex-direction:column;gap:14px}}

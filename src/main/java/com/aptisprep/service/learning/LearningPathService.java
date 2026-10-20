@@ -88,17 +88,34 @@ public class LearningPathService implements LearningPathContract {
         if(engine==null)throw new BusinessRuleException("Chưa có dịch vụ kết quả bài thi");
         AttemptResult result=engine.result(userId,attemptId);
         if(result==null||!"COMPLETED".equalsIgnoreCase(result.state())||!"CHECKPOINT".equalsIgnoreCase(result.examType()))throw new BusinessRuleException("Checkpoint chưa hoàn tất");
+        if(paths.findByUserIdAndSourceAttemptId(userId,attemptId).isPresent())return;
         var path=paths.findByUserIdAndStatusOrderBySkillAscCreatedAtDesc(userId,"ACTIVE").stream().filter(x->Objects.equals(x.getCheckpointExamId(),result.examId())).findFirst().orElseThrow(()->new ResourceNotFoundException("Kết quả không thuộc lộ trình hiện tại"));
         entityManager.lock(path,LockModeType.PESSIMISTIC_WRITE);
         if(Objects.equals(path.getSourceAttemptId(),attemptId))return;
         accounts.applyAssessment(userId,attemptId);
         boolean passed=result.skills()!=null&&result.skills().stream().anyMatch(x->x.passed()&&normalizeSkill(path.getSkill()).equals(normalizeSkill(x.skill())));
         path.setSourceAttemptId(attemptId);
-        if(passed&&path.getCompletedAt()==null)path.setCompletedAt(LocalDateTime.now());
+        if(passed&&path.getCompletedAt()==null){
+            path.setCompletedAt(LocalDateTime.now());
+            openNextStage(path, result);
+        }
         paths.save(path);
+    }
+    private void openNextStage(LearningPath current,AttemptResult result){
+        String achieved=result.skills().stream().filter(x->x.passed()&&normalizeSkill(current.getSkill()).equals(normalizeSkill(x.skill()))).map(SkillResult::estimatedLevel).filter(Objects::nonNull).findFirst().orElse(current.getTargetLevel());
+        String next=nextLevel(achieved);
+        if(next==null)return;
+        var selected=lessons.findByStatusOrderBySkillAscCefrLevelAscDisplayOrderAsc("PUBLISHED").stream().filter(lesson->current.getSkill().equals(lesson.getSkill())&&next.equalsIgnoreCase(lesson.getCefrLevel())).toList();
+        if(selected.isEmpty())return;
+        current.setStatus("COMPLETED");
+        paths.saveAndFlush(current);
+        var replacement=new LearningPath();replacement.setUser(current.getUser());replacement.setSkill(current.getSkill());replacement.setPathSource("CHECKPOINT");replacement.setFromLevel(achieved);replacement.setTargetLevel(next);replacement.setStatus("ACTIVE");replacement=paths.save(replacement);
+        int position=1;
+        for(var lesson:selected){var item=new LearningPathItem();item.setLearningPath(replacement);item.setLesson(lesson);item.setPosition(position++);item.setRequired(true);var done=progress.findByUserIdAndLessonId(current.getUser().getId(),lesson.getId()).filter(x->"COMPLETED".equals(x.getStatus())).orElse(null);item.setStatus(done==null?"NOT_STARTED":"COMPLETED");item.setCompletedAt(done==null?null:done.getCompletedAt());items.save(item);}
     }
     private PathProgress summaryOf(LearningPath path){var list=items.findByLearningPathIdOrderByPositionAsc(path.getId());int total=list.size();int completed=(int)list.stream().filter(x->"COMPLETED".equals(x.getStatus())).count();int required=(int)list.stream().filter(LearningPathItem::isRequired).count();int completedRequired=(int)list.stream().filter(LearningPathItem::isRequired).filter(x->"COMPLETED".equals(x.getStatus())).count();var next=list.stream().filter(x->!"COMPLETED".equals(x.getStatus())).findFirst().orElse(null);String checkpoint=path.getCompletedAt()!=null?"passed":required==0?"not_configured":completedRequired==required?"available":"locked";return new PathProgress(path.getId(),path.getSkill(),path.getPathSource(),path.getStatus(),completed,total,LearningProgressCalculator.percent(completed,total),completedRequired,required,next==null?null:next.getLesson().getId(),next==null?null:next.getLesson().getTitle(),checkpoint);}
     private User active(Integer id){var u=users.findById(id).orElseThrow(()->new ResourceNotFoundException("Không tìm thấy tài khoản"));if(u.getStatus()!=UserStatus.ACTIVE)throw new BusinessRuleException("Tài khoản không hoạt động");return u;}
     private User active(String email){var u=users.findByEmailIgnoreCase(email).orElseThrow(()->new ResourceNotFoundException("Không tìm thấy tài khoản"));if(u.getStatus()!=UserStatus.ACTIVE)throw new BusinessRuleException("Tài khoản không hoạt động");return u;}
     private static String normalizeSkill(String value){return value==null?"":value.trim().toUpperCase(Locale.ROOT).replaceAll("[^A-Z0-9]+","_");}
+    private static String nextLevel(String value){return switch(value==null?"":value.trim().toUpperCase(Locale.ROOT)){case "A1"->"A2";case "A2"->"B1";case "B1"->"B2";case "B2"->"C1";case "C1"->"C2";default->null;};}
 }
