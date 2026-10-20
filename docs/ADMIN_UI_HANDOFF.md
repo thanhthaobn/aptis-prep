@@ -1,6 +1,6 @@
 # Bàn giao giao diện quản trị nội dung
 
-> Phân công mới nhất 17/10/2026: Kết quả admin thuộc Người 4; Người 1 nhận quản lý Học viên, trọn Chứng chỉ & Chấm điểm và AI, không có trang chấm mẫu Admin; Người 2 nhận Bài học/Flashcard; Người 3 nhận Câu hỏi/Đề thi và Placement. Phương án giao scoring cho Người 3 hoặc kết quả tổng quát cho Người 1 không còn áp dụng. Xem [TEAM_ASSIGNMENT_V2.md](TEAM_ASSIGNMENT_V2.md).
+> Phân công 20/10/2026: Thông phụ trách Học viên, Chứng chỉ/Chấm điểm và grading; Thảo phụ trách Bài học/Flashcard cùng lịch sử/kết quả; Trâm phụ trách Câu hỏi/Đề thi, Placement và engine attempt. Xem [TEAM_ASSIGNMENT_V2.md](TEAM_ASSIGNMENT_V2.md).
 
 Mục Cấu hình cũ đã đổi thành **Chứng chỉ & Chấm điểm**, không còn trang trạng thái OpenAI. UI UC-A03–A05 và phân công Người 1 xem [SCORING_UI_HANDOFF.md](SCORING_UI_HANDOFF.md). Các mô tả Cấu hình/settings cũ bên dưới được thay bằng luồng mới này; settings chỉ còn redirect.
 

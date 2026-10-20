@@ -155,15 +155,35 @@ public class ExamAttemptService implements ExamAttemptContract {
 
     @Override
     @Transactional(readOnly = true)
-    public HistoryPage history(Integer userId, int page, int size) {
+    public HistoryPage history(Integer userId, int page, int size, HistoryFilter filter) {
         // History is also rendered by the admin's student-detail view, including
         // locked/inactive students. Student-facing endpoints validate the active
         // principal before calling this contract.
         int safePage = Math.max(0, page); int safeSize = Math.min(100, Math.max(1, size));
-        var result = attempts.findByUserIdOrderByCreatedAtDesc(userId, PageRequest.of(safePage, safeSize));
+        HistoryFilter safeFilter = filter == null ? HistoryFilter.empty() : filter;
+        String pattern = safeFilter.query() == null || safeFilter.query().isBlank() ? "" : "%" + safeFilter.query().trim().toLowerCase(Locale.ROOT) + "%";
+        String skill = normalizedFilter(safeFilter.skill());
+        String examType = normalizedFilter(safeFilter.examType());
+        String state = normalizedFilter(safeFilter.state());
+        var result = attempts.searchHistory(userId, pattern, skill, examType, state, PageRequest.of(safePage, safeSize));
         List<AttemptResult> values = result.stream().map(a -> resultView(a, examFor(a))).toList();
         return new HistoryPage(values, safePage, safeSize, result.getTotalElements());
     }
+
+    @Override @Transactional(readOnly = true)
+    public AdminHistoryPage adminHistory(String adminEmail, int page, int size, AdminHistoryFilter filter) {
+        requireAdmin(adminEmail); int safePage=Math.max(0,page), safeSize=Math.min(100,Math.max(1,size));
+        AdminHistoryFilter f=filter==null?new AdminHistoryFilter("","","","",null,null):filter;
+        String pattern=f.query()==null||f.query().isBlank()?"":"%"+f.query().trim().toLowerCase(Locale.ROOT)+"%";
+        LocalDateTime from=f.submittedFrom()==null?null:LocalDateTime.ofInstant(f.submittedFrom(),ZoneOffset.UTC);
+        LocalDateTime to=f.submittedTo()==null?null:LocalDateTime.ofInstant(f.submittedTo(),ZoneOffset.UTC);
+        var pageData=attempts.searchAllHistory(pattern,normalizedFilter(f.skill()),normalizedFilter(f.examType()),normalizedFilter(f.state()),from,to,PageRequest.of(safePage,safeSize));
+        var values=pageData.stream().map(a->{var user=users.findById(a.getUserId()).orElseThrow();return new AdminHistoryItem(user.getFullName(),user.getEmail(),resultView(a,examFor(a)));}).toList();
+        return new AdminHistoryPage(values,safePage,safeSize,pageData.getTotalElements());
+    }
+
+    @Override @Transactional(readOnly = true)
+    public AttemptResult adminResult(String adminEmail,Integer attemptId){requireAdmin(adminEmail);var attempt=attempts.findById(attemptId).orElseThrow(()->new ResourceNotFoundException("Không tìm thấy kết quả"));return resultView(attempt,examFor(attempt));}
 
     @Override
     public void retryFailedGrading(Integer userId, Integer attemptId, String requestKey) {
@@ -219,9 +239,9 @@ public class ExamAttemptService implements ExamAttemptContract {
                     "ERROR".equals(state) && !"POLICY_ERROR".equals(value.getGradingMethod()));
         }).toList();
         Integer schemeId = attempt.getScoringSchemeId() == null ? exam.getScoringSchemeId() : attempt.getScoringSchemeId();
-        return new AttemptResult(attempt.getId(), attempt.getUserId(), exam.getId(), exam.getExamType(), schemeId,
-                attempt.getStatus(), skills, instant(attempt.getSubmittedAt()), attempt.getFinalScaleScore(),
-                attempt.getEstimatedOverallCefr());
+        return new AttemptResult(attempt.getId(), attempt.getUserId(), exam.getId(), exam.getExamType(), exam.getTitle(), schemeId,
+                attempt.getStatus(), skills, attempt.getFinalScaleScore(), attempt.getEstimatedOverallCefr(),
+                instant(attempt.getSubmittedAt()));
     }
 
     private String feedbackFor(Integer attemptId, String skill) {
@@ -269,6 +289,7 @@ public class ExamAttemptService implements ExamAttemptContract {
     private MockExamEntity publishedExam(Integer id) { return exams.findById(id).filter(x -> "PUBLISHED".equals(x.getStatus())).orElseThrow(() -> new ResourceNotFoundException("Đề thi chưa được công bố")); }
     private MockExamEntity examFor(ExamAttemptEntity attempt) { return exams.findById(attempt.getMockExamId()).orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy đề thi")); }
     private User activeUser(Integer id) { User user = users.findById(id).orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy tài khoản")); if (user.getRole() != Role.STUDENT || user.getStatus() != UserStatus.ACTIVE) throw new AccessDeniedException("Tài khoản không còn hoạt động"); return user; }
+    private User requireAdmin(String email){User user=users.findByEmailIgnoreCase(email).orElseThrow(()->new AccessDeniedException("Không có quyền xem kết quả"));if(user.getRole()!=Role.ADMIN||user.getStatus()!=UserStatus.ACTIVE)throw new AccessDeniedException("Chỉ quản trị viên đang hoạt động mới được xem kết quả");return user;}
     private AttemptHandle handle(ExamAttemptEntity attempt, MockExamEntity exam) {
         Integer duration = exam.getDurationMinutes();
         Instant deadline = duration == null ? null : instant(attempt.getStartedAt().plusMinutes(duration));
@@ -279,5 +300,6 @@ public class ExamAttemptService implements ExamAttemptContract {
     private boolean usesOptions(String type) { return "SINGLE_CHOICE".equals(type) || "MATCHING".equals(type) || "ORDERING".equals(type); }
     private String blankToNull(String value) { return value == null || value.isBlank() ? null : value.trim(); }
     private String firstNonBlank(String... values) { for (String value : values) if (value != null && !value.isBlank()) return value; return null; }
+    private String normalizedFilter(String value) { return value == null || value.isBlank() ? "" : value.trim().toUpperCase(Locale.ROOT); }
     private int levelOrder(String value) { return switch (value == null ? "" : value) { case "A1" -> 1; case "A2" -> 2; case "B1" -> 3; case "B2" -> 4; case "C1" -> 5; case "C2" -> 6; default -> 0; }; }
 }

@@ -16,6 +16,36 @@ public interface ExamAttemptRepository extends JpaRepository<ExamAttemptEntity, 
     Optional<ExamAttemptEntity> findByIdAndUserId(Integer id, Integer userId);
     Optional<ExamAttemptEntity> findByUserIdAndRequestKey(Integer userId, String requestKey);
     Page<ExamAttemptEntity> findByUserIdOrderByCreatedAtDesc(Integer userId, Pageable pageable);
+    @Query(value = "select a from ExamAttemptEntity a join MockExamEntity e on e.id = a.mockExamId "
+            + "where a.userId = :userId "
+            + "and (:pattern = '' or lower(e.title) like :pattern) "
+            + "and (:examType = '' or e.examType = :examType) "
+            + "and (:state = '' or a.status = :state) "
+            + "and (:skill = '' or e.skill = :skill or exists (select r.id from ExamSkillResultEntity r where r.attemptId = a.id and r.skill = :skill)) "
+            + "order by a.createdAt desc",
+            countQuery = "select count(a) from ExamAttemptEntity a join MockExamEntity e on e.id = a.mockExamId "
+            + "where a.userId = :userId "
+            + "and (:pattern = '' or lower(e.title) like :pattern) "
+            + "and (:examType = '' or e.examType = :examType) "
+            + "and (:state = '' or a.status = :state) "
+            + "and (:skill = '' or e.skill = :skill or exists (select r.id from ExamSkillResultEntity r where r.attemptId = a.id and r.skill = :skill))")
+    Page<ExamAttemptEntity> searchHistory(@Param("userId") Integer userId, @Param("pattern") String pattern,
+            @Param("skill") String skill, @Param("examType") String examType, @Param("state") String state,
+            Pageable pageable);
+    @Query(value = "select a from ExamAttemptEntity a join MockExamEntity e on e.id = a.mockExamId join User u on u.id = a.userId "
+            + "where (:pattern = '' or lower(e.title) like :pattern or lower(u.fullName) like :pattern or lower(u.email) like :pattern) "
+            + "and (:examType = '' or e.examType = :examType) and (:state = '' or a.status = :state) "
+            + "and (:skill = '' or e.skill = :skill or exists (select r.id from ExamSkillResultEntity r where r.attemptId = a.id and r.skill = :skill)) "
+            + "and (:submittedFrom is null or a.submittedAt >= :submittedFrom) and (:submittedTo is null or a.submittedAt < :submittedTo) order by a.createdAt desc",
+            countQuery = "select count(a) from ExamAttemptEntity a join MockExamEntity e on e.id = a.mockExamId join User u on u.id = a.userId "
+            + "where (:pattern = '' or lower(e.title) like :pattern or lower(u.fullName) like :pattern or lower(u.email) like :pattern) "
+            + "and (:examType = '' or e.examType = :examType) and (:state = '' or a.status = :state) "
+            + "and (:skill = '' or e.skill = :skill or exists (select r.id from ExamSkillResultEntity r where r.attemptId = a.id and r.skill = :skill)) "
+            + "and (:submittedFrom is null or a.submittedAt >= :submittedFrom) and (:submittedTo is null or a.submittedAt < :submittedTo)")
+    Page<ExamAttemptEntity> searchAllHistory(@Param("pattern") String pattern, @Param("skill") String skill,
+            @Param("examType") String examType, @Param("state") String state,
+            @Param("submittedFrom") java.time.LocalDateTime submittedFrom, @Param("submittedTo") java.time.LocalDateTime submittedTo,
+            Pageable pageable);
     long countByUserId(Integer userId);
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)

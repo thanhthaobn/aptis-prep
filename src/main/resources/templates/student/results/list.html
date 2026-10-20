@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/head :: head('Kết quả học tập')}"></head>
+<body class="student-theme">
+<div th:replace="~{fragments/navbar :: navbar}"></div>
+<div class="container app-shell">
+<div th:replace="~{fragments/student-sidebar :: studentSidebar('results')}"></div>
+<main class="app-main student-content result-history-page">
+    <header class="page-header">
+        <div><p class="eyebrow">THEO DÕI TIẾN BỘ</p><h1>Kết quả học tập</h1><p>Xem lại các bài đã làm và trạng thái chấm điểm của bạn.</p></div>
+    </header>
+
+    <form class="dashboard-panel result-filters" method="get" th:action="@{/student/results}">
+        <div class="field"><label for="result-q">Tên đề</label><input id="result-q" name="q" maxlength="255" th:value="${q}" placeholder="Ví dụ: Reading Part 1"></div>
+        <div class="field"><label for="result-skill">Kỹ năng</label><select id="result-skill" name="skill"><option value="">Tất cả</option><option th:each="value : ${T(java.util.List).of('GRAMMAR_VOCABULARY','READING','LISTENING','WRITING','SPEAKING')}" th:value="${value}" th:text="${#strings.replace(value,'_',' & ')}" th:selected="${selectedSkill == value}"></option></select></div>
+        <div class="field"><label for="result-type">Loại bài</label><select id="result-type" name="examType"><option value="">Tất cả</option><option value="PLACEMENT" th:selected="${selectedExamType == 'PLACEMENT'}">Kiểm tra đầu vào</option><option value="PRACTICE" th:selected="${selectedExamType == 'PRACTICE'}">Luyện tập</option><option value="CHECKPOINT" th:selected="${selectedExamType == 'CHECKPOINT'}">Kiểm tra cuối chặng</option><option value="FULL_MOCK" th:selected="${selectedExamType == 'FULL_MOCK'}">Thi thử tổng hợp</option></select></div>
+        <div class="field"><label for="result-state">Trạng thái</label><select id="result-state" name="state"><option value="">Tất cả</option><option value="IN_PROGRESS" th:selected="${selectedState == 'IN_PROGRESS'}">Đang làm</option><option value="WAITING_GRADING" th:selected="${selectedState == 'WAITING_GRADING'}">Đang chấm</option><option value="COMPLETED" th:selected="${selectedState == 'COMPLETED'}">Hoàn thành</option><option value="ERROR" th:selected="${selectedState == 'ERROR'}">Chấm lỗi</option><option value="EXPIRED" th:selected="${selectedState == 'EXPIRED'}">Hết thời gian</option></select></div>
+        <div class="actions"><button class="button" type="submit">Lọc kết quả</button><a class="button button-secondary" th:href="@{/student/results}">Xóa bộ lọc</a></div>
+    </form>
+
+    <section class="result-history-list" th:if="${!history.items.isEmpty()}">
+        <article class="dashboard-panel result-history-card" th:each="attempt : ${history.items}">
+            <div class="result-card-main">
+                <span class="result-type" th:text="${attempt.examType == 'PLACEMENT' ? 'Kiểm tra đầu vào' : attempt.examType == 'CHECKPOINT' ? 'Kiểm tra cuối chặng' : attempt.examType == 'FULL_MOCK' ? 'Thi thử tổng hợp' : 'Bài luyện tập'}"></span>
+                <h2 th:text="${attempt.examTitle == null ? 'Bài thi #' + attempt.examId : attempt.examTitle}"></h2>
+                <p th:if="${attempt.submittedAt != null}" th:text="|Đã nộp ${#temporals.format(attempt.submittedAt, 'dd/MM/yyyy HH:mm')}|"></p>
+                <p th:unless="${attempt.submittedAt != null}">Chưa nộp bài</p>
+            </div>
+            <div class="result-card-summary">
+                <span class="result-status"
+                      th:classappend="${attempt.state == 'COMPLETED' ? ' is-complete' : attempt.state == 'ERROR' ? ' is-error' : ' is-pending'}"
+                      th:text="${attempt.state == 'COMPLETED' ? 'Đã hoàn thành' : attempt.state == 'ERROR' ? 'Chấm điểm gặp lỗi' : attempt.state == 'EXPIRED' ? 'Đã hết thời gian' : attempt.state == 'IN_PROGRESS' ? 'Đang làm bài' : 'Đang chấm điểm'}"></span>
+                <div class="result-levels" th:if="${!attempt.skills.isEmpty()}">
+                    <span th:each="skill : ${attempt.skills}" th:text="|${#strings.replace(skill.skill, '_', ' ')}: ${skill.estimatedLevel == null ? 'Chờ chấm' : skill.estimatedLevel}|"></span>
+                </div>
+                <p class="result-overall" th:if="${attempt.finalScaleScore != null or attempt.overallCefr != null}" th:text="|Tổng quan: ${attempt.finalScaleScore == null ? '—' : attempt.finalScaleScore} điểm · ${attempt.overallCefr == null ? 'Chưa có CEFR' : attempt.overallCefr}|"></p>
+                <a class="button button-secondary" th:href="@{/student/attempts/{id}/result(id=${attempt.attemptId})}">Xem kết quả</a>
+            </div>
+        </article>
+    </section>
+
+    <section class="dashboard-panel empty-result-state" th:if="${history.items.isEmpty()}">
+        <div class="empty-result-icon" aria-hidden="true">✓</div>
+        <h2>Bạn chưa có kết quả nào</h2>
+        <p>Hãy làm bài kiểm tra đầu vào hoặc một đề luyện tập. Kết quả sẽ xuất hiện tại đây sau khi bạn nộp bài.</p>
+        <a class="button" th:href="@{/student/exams}">Khám phá đề thi</a>
+    </section>
+
+    <nav class="result-pagination" aria-label="Phân trang kết quả" th:if="${history.totalItems > history.size}">
+        <a class="button button-secondary" th:if="${history.page > 0}" th:href="@{/student/results(page=${history.page - 1},size=${history.size},q=${q},skill=${selectedSkill},examType=${selectedExamType},state=${selectedState})}">← Trang trước</a>
+        <span th:text="|Trang ${history.page + 1} / ${(history.totalItems + history.size - 1) / history.size}|"></span>
+        <a class="button button-secondary" th:if="${(history.page + 1) * history.size < history.totalItems}" th:href="@{/student/results(page=${history.page + 1},size=${history.size},q=${q},skill=${selectedSkill},examType=${selectedExamType},state=${selectedState})}">Trang sau →</a>
+    </nav>
+</main>
+</div>
+<div th:replace="~{fragments/footer :: footer}"></div>
+</body>
+</html>

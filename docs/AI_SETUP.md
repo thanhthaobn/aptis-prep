@@ -1,6 +1,6 @@
 # Cấu hình chấm Writing/Speaking bằng OpenAI
 
-Phân công mới theo [TEAM_ASSIGNMENT_V2.md](TEAM_ASSIGNMENT_V2.md): Người 1 tiếp nhận service/provider, tác vụ đánh giá AI, retry và phản hồi tự luận; Người 4 lưu/khóa bài, gửi yêu cầu sau commit, nhận đánh giá để tổng hợp và là người duy nhất đổi trạng thái attempt/skill result. Không tự tạo trang chấm mẫu Admin. Ranh giới schema/writer và hợp đồng AI phải chốt trong PR đầu theo [SERVICE_CONTRACTS.md](SERVICE_CONTRACTS.md); đây chưa phải nghiệp vụ đã triển khai.
+Phân công theo [TEAM_ASSIGNMENT_V2.md](TEAM_ASSIGNMENT_V2.md): Thông tiếp nhận provider, đánh giá AI, retry, chấm/tổng hợp skill result; Trâm lưu/khóa bài và gửi yêu cầu sau commit; Thảo hiển thị phản hồi/kết quả theo quyền. Không tự tạo trang chấm mẫu Admin. Ranh giới schema/writer theo [SERVICE_CONTRACTS.md](SERVICE_CONTRACTS.md).
 
 ## 1. Bật AI trên máy cá nhân
 

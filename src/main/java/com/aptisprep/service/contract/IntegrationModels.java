@@ -52,16 +52,32 @@ public final class IntegrationModels {
         }
     }
     public record AttemptResult(Integer attemptId, Integer userId, Integer examId, String examType,
-            Integer scoringSchemeId, String state, List<SkillResult> skills, Instant submittedAt,
-            BigDecimal overallScaleScore, String overallCefr) {
+            String examTitle, Integer scoringSchemeId, String state, List<SkillResult> skills,
+            BigDecimal finalScaleScore, String overallCefr, Instant submittedAt) {
         public AttemptResult(Integer attemptId, Integer userId, Integer examId, String examType,
                 Integer scoringSchemeId, String state, List<SkillResult> skills) {
-            this(attemptId, userId, examId, examType, scoringSchemeId, state, skills, null, null, null);
+            this(attemptId, userId, examId, examType, null, scoringSchemeId, state, skills, null, null, null);
         }
         public AttemptResult(Integer attemptId, Integer userId, Integer examId, String examType,
                 Integer scoringSchemeId, String state, List<SkillResult> skills, Instant submittedAt) {
-            this(attemptId, userId, examId, examType, scoringSchemeId, state, skills, submittedAt, null, null);
+            this(attemptId, userId, examId, examType, null, scoringSchemeId, state, skills, null, null, submittedAt);
+        }
+        public AttemptResult(Integer attemptId, Integer userId, Integer examId, String examType,
+                Integer scoringSchemeId, String state, List<SkillResult> skills, Instant submittedAt,
+                BigDecimal overallScaleScore, String overallCefr) {
+            this(attemptId, userId, examId, examType, null, scoringSchemeId, state, skills,
+                    overallScaleScore, overallCefr, submittedAt);
+        }
+        public BigDecimal overallScaleScore() {
+            return finalScaleScore;
         }
     }
+    public record HistoryFilter(String query, String skill, String examType, String state) {
+        public static HistoryFilter empty() { return new HistoryFilter("", "", "", ""); }
+    }
     public record HistoryPage(List<AttemptResult> items, int page, int size, long totalItems) {}
+    public record AdminHistoryFilter(String query, String skill, String examType, String state,
+            Instant submittedFrom, Instant submittedTo) {}
+    public record AdminHistoryItem(String learnerName, String learnerEmail, AttemptResult result) {}
+    public record AdminHistoryPage(List<AdminHistoryItem> items, int page, int size, long totalItems) {}
 }
