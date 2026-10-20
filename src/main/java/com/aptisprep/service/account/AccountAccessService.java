@@ -42,6 +42,9 @@ public class AccountAccessService implements AccountAccessContract {
         return user.getId();
     }
 
+    @Transactional(readOnly = true)
+    public User requireActiveStudentById(Integer userId) { return activeStudent(userId); }
+
     @Override
     @Transactional(readOnly = true)
     public LearnerContext context(Integer userId) {

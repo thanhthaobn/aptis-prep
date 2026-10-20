@@ -10,8 +10,12 @@
 Kiểm tra Java:
 
 ```powershell
-java -version
+$env:JAVA_HOME = "C:\duong-dan-den-jdk-21"
+$env:Path = "$env:JAVA_HOME\bin;$env:Path"
+& "$env:JAVA_HOME\bin\java.exe" -version
 ```
+
+`mvnw.cmd` sẽ dùng và kiểm tra JDK được khai báo trong `JAVA_HOME`; dự án yêu cầu đúng Java 21. Nếu máy có nhiều JDK, không dùng kết quả `java -version` đang trỏ nhầm Java 25 để chạy Maven.
 
 ## 2. Tạo database
 
@@ -73,7 +77,7 @@ Mở `http://localhost:8080`.
 - Mở thư mục chứa pom.xml; Project Structure → Project SDK/Language level: 21.
 - Settings → Maven: Maven Wrapper, Runner JRE và Importer JDK: 21; reload Maven.
 - Chạy com.aptisprep.AptisPrepApplication; working directory là thư mục repo. Profile mặc định dev, kiểm tra Run Configuration không override sang profile khác.
-- So sánh `java -version` và `.\mvnw.cmd -version`, cả hai phải là 21. Lần đầu cần mạng tải dependency.
+- Kiểm tra `& "$env:JAVA_HOME\bin\java.exe" -version` là 21 và `.\mvnw.cmd -version` chạy thành công. Lần đầu cần mạng tải dependency.
 - Chỉ mở localhost khi log có Started AptisPrepApplication và server còn chạy. Dừng bản IntelliJ trước khi chạy bản terminal cùng cổng.
 - Sau sửa UI: Build Project hoặc chạy lại và Ctrl+F5, không sửa file trong target.
 

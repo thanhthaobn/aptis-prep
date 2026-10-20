@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/head :: head('Flashcard')}"></head>
+<body th:class="${admin?'admin-theme flashcard-page':'student-theme flashcard-page'}">
+<div th:replace="~{fragments/navbar :: navbar}"></div>
+<div class="container app-shell">
+    <div th:if="${admin}" th:insert="~{fragments/admin-sidebar :: adminSidebar('flashcards')}"></div>
+    <div th:unless="${admin}" th:insert="~{fragments/student-sidebar :: studentSidebar('flashcards')}"></div>
+    <main class="app-main flashcard-library">
+        <header class="page-header"><div><p class="eyebrow">FLASHCARD</p><h1 th:text="${admin?'Quản lý bộ thẻ':'Bộ thẻ của bạn'}"></h1><p th:text="${admin?'Biên soạn thư viện chung cho học viên.':'Học bộ thẻ chung hoặc tự tạo bộ thẻ riêng tư của bạn.'}"></p></div><a class="button" th:href="${admin?'/admin/flashcards/create':'/student/flashcards/create'}" th:text="${admin?'Tạo bộ thẻ':'Tạo bộ thẻ của tôi'}"></a></header>
+        <div th:replace="~{fragments/messages :: messages}"></div>
+        <div class="study-card-grid">
+            <article class="dashboard-panel" th:each="set:${sets}">
+                <div class="set-badges"><span class="badge" th:text="${set.level()}"></span><span th:if="${set.personal()}" class="badge personal-badge">Riêng tư</span></div>
+                <h2 th:text="${set.title()}"></h2><p th:text="${set.description()}"></p><p th:text="|${set.count()} thuật ngữ|"></p>
+                <p th:if="${admin}" class="badge set-status" th:text="${set.status()=='PUBLISHED'?'Đã công bố':(set.status()=='DRAFT'?'Bản nháp':'Đã lưu trữ')}"></p>
+                <div class="actions"><a class="button button-secondary" th:href="${admin?'/admin/flashcards/'+set.id()+'/edit':'/student/flashcards/'+set.id()}" th:text="${admin?'Chỉnh sửa':'Bắt đầu học'}"></a><a th:if="${!admin and set.personal()}" class="button button-secondary" th:href="@{/student/flashcards/{id}/edit(id=${set.id()})}">Chỉnh sửa</a><form th:if="${!admin and set.personal()}" method="post" th:action="@{/student/flashcards/{id}/archive(id=${set.id()})}" onsubmit="return confirm('Lưu trữ bộ thẻ này? Tiến độ đã ghi nhận vẫn được giữ lại.');"><button class="button button-secondary" type="submit">Lưu trữ</button></form></div>
+            </article>
+        </div>
+        <div class="empty-box" th:if="${#lists.isEmpty(sets)}"><h2>Chưa có bộ thẻ</h2><p>Hãy tạo bộ thẻ đầu tiên từ những từ bạn muốn ghi nhớ.</p></div>
+    </main>
+</div>
+<div th:replace="~{fragments/footer :: footer}"></div>
+</body></html>

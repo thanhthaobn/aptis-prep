@@ -11,25 +11,25 @@
             <div class="learn-journey">
                 <section class="learn-unit-banner">
                     <span class="learn-unit-icon" aria-hidden="true">✦</span>
-                    <div><p>BẮT ĐẦU TỪ ĐÂY</p><h1>Mỗi ngày một bước nhỏ.</h1><span>Chọn cách học phù hợp với bạn.</span></div>
+                    <div><p>HÀNH TRÌNH HỌC TẬP</p><h1>Mỗi ngày một bước nhỏ.</h1><span th:text="${hasLearningContent ? 'Tiến độ được lưu theo tài khoản của bạn.' : 'Chưa có bài học được công bố cho lộ trình.'}"></span></div>
                 </section>
-                <section class="learn-choice">
-                    <div><span class="learn-tag">KHÔNG CẦN KIỂM TRA ĐẦU VÀO</span><h2>Thử học trước, đặt mục tiêu sau</h2><div class="actions"><a class="button" th:href="@{/student/orientation}">KHÁM PHÁ LỘ TRÌNH</a></div></div>
+                <section class="learn-choice" >
+                    <div><span class="learn-tag">KHÔNG CẦN ĐẶT MỤC TIÊU</span><h2>Bắt đầu theo cách của bạn</h2><p>Chọn kỹ năng và cấp độ để bắt đầu học.</p><div class="actions"><a class="button" th:href="@{/student/learning-path}">KHÁM PHÁ LỘ TRÌNH</a></div></div>
                     <div th:replace="~{fragments/study-guide :: guide}"></div>
                 </section>
-                <div class="learn-path-heading"><h2>Bản đồ khởi đầu</h2></div>
-                <section class="learn-path" aria-label="Các chặng làm quen">
-                    <div class="learn-stop"><a class="learn-node node-green" th:href="@{/student/orientation#start}" aria-label="Khám phá Aptis">★</a><div><h3>Làm quen Aptis</h3><p>Khám phá cách học</p></div></div>
-                    <div class="learn-stop"><a class="learn-node node-blue" th:href="@{/student/orientation#reading}" aria-label="Khám phá Reading">▤</a><div><h3>Reading</h3><p>Bắt đầu với đoạn đọc ngắn</p></div></div>
-                    <div class="learn-stop"><a class="learn-node node-gold" th:href="@{/student/orientation#listening}" aria-label="Khám phá Listening">♫</a><div><h3>Listening</h3><p>Lắng nghe và nắm ý chính</p></div></div>
-                    <div class="learn-stop"><a class="learn-node node-purple" th:href="@{/student/orientation#expression}" aria-label="Khám phá Writing và Speaking">✎</a><div><h3>Writing &amp; Speaking</h3><p>Tự tin thể hiện ý tưởng</p></div></div>
-                    <div class="learn-stop"><a class="learn-node node-coral" th:href="@{/student/orientation#vocabulary}" aria-label="Khám phá Flashcard">◆</a><div><h3>Flashcard</h3><p>Tích lũy từng từ mới</p></div></div>
+                <section class="learn-choice" th:if="${false}">
+                    <div><span class="learn-tag" th:text="${hasLearningContent ? 'ĐÃ HOÀN THÀNH PHẦN BÀI HỌC' : 'CHƯA CÓ NỘI DUNG'}"></span><h2 th:text="${hasLearningContent ? 'Bạn đã học hết các bài trong lộ trình hiện tại.' : 'Lộ trình chưa có bài học phù hợp.'}"></h2><div class="actions"><a class="button button-secondary" th:href="@{/student/learning-path}">XEM LỘ TRÌNH</a></div></div>
+                    <div th:replace="~{fragments/study-guide :: guide}"></div>
+                </section>
+                <div class="learn-path-heading"><h2>Lộ trình hiện tại</h2><a th:href="@{/student/learning-path}">Xem chi tiết</a></div>
+                <section class="learn-path" aria-label="Các lộ trình kỹ năng">
+                    <div class="learn-stop" th:each="path : ${paths}"><a class="learn-node" th:classappend="${path.skill()=='Reading'?'node-blue':(path.skill()=='Listening'?'node-gold':(path.skill()=='Writing'?'node-purple':(path.skill()=='Speaking'?'node-coral':'node-green')))}" th:href="@{/student/learning-path/{skill}(skill=${path.skill()})}" th:attr="aria-label=|Xem lộ trình ${path.skill()}|" th:text="${path.progressPercent() == null ? '—' : path.progressPercent() + '%'}"></a><div><h3 th:text="${path.skill()}"></h3><p th:if="${path.totalLessons() > 0}" th:text="|${path.completedLessons()}/${path.totalLessons()} bài đã hoàn thành|"></p><p th:if="${path.totalLessons() == 0}">Chưa có bài học</p></div></div>
                 </section>
             </div>
             <aside class="learn-rail" aria-label="Tổng quan học tập">
                 <article class="learn-rail-card"><div class="learn-rail-heading"><span aria-hidden="true">◎</span><h2>Mục tiêu của bạn</h2></div><strong>Chưa đặt mục tiêu</strong><p>Bạn vẫn có thể khám phá trước và chọn mục tiêu sau.</p><span class="learn-soft-label">Bước tùy chọn</span></article>
                 <article class="learn-rail-card"><div class="learn-rail-heading"><span aria-hidden="true">⚑</span><h2>Trình độ hiện tại</h2></div><strong>Chưa đánh giá</strong><p>Bài kiểm tra đầu vào giúp chọn cấp độ phù hợp hơn.</p><a class="button button-secondary button-block" th:href="@{/student/placement}">KIỂM TRA ĐẦU VÀO</a></article>
-                <article class="learn-rail-card"><div class="learn-rail-heading"><span aria-hidden="true">✦</span><h2>Góc học tập</h2></div><div class="learn-mini-stat"><span>Bài đã hoàn thành</span><strong>—</strong></div><div class="learn-mini-stat"><span>Kết quả gần nhất</span><strong>—</strong></div><p>Chưa có hoạt động học tập.</p></article>
+                <article class="learn-rail-card"><div class="learn-rail-heading"><span aria-hidden="true">✦</span><h2>Góc học tập</h2></div><div class="learn-mini-stat"><span>Bài đã hoàn thành</span><strong th:text="|${completedLessons}/${totalLessons}|"></strong></div><div class="learn-mini-stat"><span>Lộ trình kỹ năng</span><strong th:text="${#lists.size(paths)}"></strong></div><p th:text="${completedLessons > 0 ? 'Tiến độ được lấy từ dữ liệu học thật.' : (hasLearningContent ? 'Bạn chưa hoàn thành bài học nào.' : 'Chưa có nội dung học tập.')}"></p></article>
             </aside>
         </div>
     </main>

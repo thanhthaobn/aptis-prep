@@ -93,11 +93,10 @@ class SecurityFlowTests {
     }
 
     @Test
-    void studentCanExploreOrientationWithoutGoalOrPlacement() throws Exception {
+    void legacyOrientationRedirectsToLearningPath() throws Exception {
         mockMvc.perform(get("/student/orientation").with(user("new-student@aptis.local").roles("STUDENT")))
-                .andExpect(status().isOk()).andExpect(view().name("student/learning/orientation"))
-                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.content()
-                        .string(org.hamcrest.Matchers.containsString("Không cần đặt mục tiêu hoặc làm bài đầu vào")));
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/student/learning-path"));
     }
 
     @Test
