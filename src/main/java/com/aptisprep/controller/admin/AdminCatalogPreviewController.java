@@ -19,7 +19,7 @@ public class AdminCatalogPreviewController {
     private final CatalogService catalogService;
     public AdminCatalogPreviewController(AdminCatalogPreviewService preview, CatalogService catalogService) { this.preview = preview; this.catalogService = catalogService; }
 
-    @GetMapping("/{module:questions|exams|results}")
+    @GetMapping("/{module:questions|exams}")
     public String list(@PathVariable String module, @RequestParam(defaultValue = "") String q,
                        @RequestParam(defaultValue = "") String skill, @RequestParam(defaultValue = "") String status,
                        @RequestParam(defaultValue = "") String kind, Model model) {
@@ -32,7 +32,7 @@ public class AdminCatalogPreviewController {
         return "admin/catalog/list";
     }
 
-    @GetMapping("/{module:questions|exams|results}/{id:\\d+}")
+    @GetMapping("/{module:questions|exams}/{id:\\d+}")
     public String detail(@PathVariable String module, @PathVariable int id, Model model) {
         addModule(module, model); model.addAttribute("entry", isReal(module) && catalogService.hasData(module) ? catalogService.entry(module, id) : preview.entry(module, id));
         return "admin/catalog/detail";
