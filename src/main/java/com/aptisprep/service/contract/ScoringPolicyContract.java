@@ -1,9 +1,15 @@
 package com.aptisprep.service.contract;
 
 import java.math.BigDecimal;
+import java.util.List;
 
-/** Owner 1. Backend-only, versioned policy. Not a universal percent formula. */
+/** Owner: Thông. Backend-only, versioned policy; not a universal percent formula. */
 public interface ScoringPolicyContract {
     BigDecimal scale(Integer schemeId, String skill, BigDecimal rawScore);
     String estimatedLevel(Integer schemeId, String skill, BigDecimal scaleScore);
+    String policyVersion(Integer schemeId);
+    BigDecimal overallScale(Integer schemeId, List<SkillScore> skillScores);
+    String overallLevel(Integer schemeId, List<SkillScore> skillScores);
+
+    record SkillScore(String skill, BigDecimal scaleScore, String cefrLevel) {}
 }

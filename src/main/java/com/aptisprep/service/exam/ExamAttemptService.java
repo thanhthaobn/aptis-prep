@@ -3,22 +3,18 @@ package com.aptisprep.service.exam;
 import com.aptisprep.entity.*;
 import com.aptisprep.enums.Role;
 import com.aptisprep.enums.UserStatus;
-import com.aptisprep.event.AttemptCompletedEvent;
 import com.aptisprep.event.AttemptSubmittedEvent;
-import com.aptisprep.event.AiAssessmentCompletedEvent;
 import com.aptisprep.exception.AccessDeniedException;
 import com.aptisprep.exception.BusinessRuleException;
 import com.aptisprep.exception.ResourceNotFoundException;
 import com.aptisprep.repository.*;
 import com.aptisprep.service.contract.ExamAttemptContract;
-import com.aptisprep.service.contract.AiAssessmentContract;
 import com.aptisprep.service.contract.IntegrationModels.*;
 import com.aptisprep.service.contract.ScoringPolicyContract;
-import java.math.BigDecimal;
-import java.math.RoundingMode;
+import com.aptisprep.service.grading.AttemptFinalizationService;
+import com.aptisprep.service.grading.ObjectiveGradingService;
 import java.time.*;
 import java.util.*;
-import java.util.stream.Collectors;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
@@ -26,8 +22,10 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class ExamAttemptService implements ExamAttemptContract {
+    private static final String RUBRIC_VERSION = "aptis-rubric-v1";
     private static final Set<String> ACTIVE_STATES = Set.of("IN_PROGRESS", "SUBMITTED", "WAITING_GRADING");
     private static final Set<String> TERMINAL_STATES = Set.of("COMPLETED", "ERROR", "EXPIRED");
+    private static final long SAVE_GRACE_SECONDS = 10;
     private final UserRepository users;
     private final MockExamRepository exams;
     private final MockExamQuestionRepository examQuestions;
@@ -39,16 +37,19 @@ public class ExamAttemptService implements ExamAttemptContract {
     private final UserAnswerDetailRepository details;
     private final ExamSkillResultRepository skillResults;
     private final ScoringPolicyContract scoring;
-    private final AiAssessmentContract ai;
+    private final ObjectiveGradingService objectiveGrading;
+    private final AttemptFinalizationService finalization;
     private final ApplicationEventPublisher events;
 
     public ExamAttemptService(UserRepository users, MockExamRepository exams, MockExamQuestionRepository examQuestions,
             QuestionRepository questions, QuestionItemRepository items, QuestionOptionRepository options,
             ExamAttemptRepository attempts, UserAnswerRepository answers, UserAnswerDetailRepository details,
-            ExamSkillResultRepository skillResults, ScoringPolicyContract scoring, AiAssessmentContract ai, ApplicationEventPublisher events) {
+            ExamSkillResultRepository skillResults, ScoringPolicyContract scoring, ObjectiveGradingService objectiveGrading,
+            AttemptFinalizationService finalization, ApplicationEventPublisher events) {
         this.users = users; this.exams = exams; this.examQuestions = examQuestions; this.questions = questions;
         this.items = items; this.options = options; this.attempts = attempts; this.answers = answers; this.details = details;
-        this.skillResults = skillResults; this.scoring = scoring; this.ai = ai; this.events = events;
+        this.skillResults = skillResults; this.scoring = scoring; this.objectiveGrading = objectiveGrading;
+        this.finalization = finalization; this.events = events;
     }
 
     @Override
@@ -68,6 +69,10 @@ public class ExamAttemptService implements ExamAttemptContract {
         if (byKey.isPresent()) key = key + "-" + UUID.randomUUID();
         ExamAttemptEntity attempt = new ExamAttemptEntity(); attempt.setUserId(userId); attempt.setMockExamId(examId);
         attempt.setRequestKey(key); attempt.setStatus("IN_PROGRESS"); attempt.setGradingStatus("NOT_STARTED");
+        attempt.setAnswerVersion(1);
+        attempt.setScoringSchemeId(exam.getScoringSchemeId());
+        attempt.setPolicyVersion(scoring.policyVersion(exam.getScoringSchemeId()));
+        attempt.setRubricVersion(RUBRIC_VERSION);
         attempt = attempts.save(attempt);
         for (MockExamQuestionEntity link : links) {
             UserAnswerEntity answer = new UserAnswerEntity(); answer.setAttemptId(attempt.getId()); answer.setQuestionId(link.getQuestionId());
@@ -112,21 +117,30 @@ public class ExamAttemptService implements ExamAttemptContract {
     public void submit(Integer userId, Integer attemptId, String requestKey) {
         ExamAttemptEntity attempt = attempts.findByIdAndUserIdForUpdate(attemptId, userId)
                 .orElseThrow(() -> new AccessDeniedException("Bạn không có quyền với lượt thi này"));
-        if ("COMPLETED".equals(attempt.getStatus())) return;
-        if (!"IN_PROGRESS".equals(attempt.getStatus()) && !"WAITING_GRADING".equals(attempt.getStatus())) {
+        if ("COMPLETED".equals(attempt.getStatus()) || "WAITING_GRADING".equals(attempt.getStatus())
+                || "SUBMITTED".equals(attempt.getStatus()) || "EXPIRED".equals(attempt.getStatus())) return;
+        if (!"IN_PROGRESS".equals(attempt.getStatus())) {
             throw new BusinessRuleException("Lượt thi không thể nộp ở trạng thái hiện tại");
         }
         MockExamEntity exam = publishedExam(attempt.getMockExamId());
         LocalDateTime now = LocalDateTime.now();
         boolean expired = exam.getDurationMinutes() != null && attempt.getStartedAt().plusMinutes(exam.getDurationMinutes()).isBefore(now);
-        attempt.setSubmittedAt(now); attempt.setGradingStatus("GRADING"); attempt.setStatus(expired ? "EXPIRED" : "SUBMITTED");
-        gradeObjective(attempt, exam);
-        boolean waiting = skillResults.findByAttemptIdOrderBySkillAsc(attempt.getId()).stream().anyMatch(x -> x.getScaleScore() == null);
-        if (waiting) { attempt.setStatus(expired ? "EXPIRED" : "WAITING_GRADING"); attempt.setGradingStatus("WAITING"); }
-        else complete(attempt, exam);
+        attempt.setSubmittedAt(now);
+        attempt.setAnswerVersion((attempt.getAnswerVersion() == null ? 1 : attempt.getAnswerVersion()) + 1);
+        attempt.setGradingRequestKey(normalizeRequestKey(requestKey, userId, attemptId));
+        attempt.setGradingStatus("GRADING");
+        attempt.setStatus(expired ? "EXPIRED" : "SUBMITTED");
         attempts.save(attempt);
-        if ("COMPLETED".equals(attempt.getStatus())) events.publishEvent(new AttemptCompletedEvent(userId, attemptId, exam.getExamType()));
-        else if ("WAITING_GRADING".equals(attempt.getStatus())) events.publishEvent(new AttemptSubmittedEvent(userId, attemptId, exam.getId(), exam.getExamType()));
+        LockedAttempt locked = lockedAttempt(attempt, exam);
+        objectiveGrading.gradeObjective(locked, exam);
+        boolean finalized = !expired && finalization.finalizeIfReady(attempt, exam);
+        if (!finalized) {
+            if ("ERROR".equals(attempt.getStatus())) return;
+            attempt.setStatus(expired ? "EXPIRED" : "WAITING_GRADING");
+            attempt.setGradingStatus(expired ? "EXPIRED" : "WAITING");
+            attempts.save(attempt);
+            if (!expired) events.publishEvent(new AttemptSubmittedEvent(userId, attemptId, exam.getId(), exam.getExamType(), locked));
+        }
     }
 
     @Override
@@ -152,38 +166,12 @@ public class ExamAttemptService implements ExamAttemptContract {
     }
 
     @Override
-    @Transactional
     public void retryFailedGrading(Integer userId, Integer attemptId, String requestKey) {
-        ExamAttemptEntity attempt = attempts.findByIdAndUserIdForUpdate(attemptId, userId)
-                .orElseThrow(() -> new AccessDeniedException("Bạn không có quyền với lượt thi này"));
-        if (!"ERROR".equals(attempt.getStatus())) throw new BusinessRuleException("Lượt thi này không có phần chấm lỗi");
-        throw new BusinessRuleException("Chưa có phần chấm AI lỗi để thử lại");
+        finalization.retryFailedGrading(userId, attemptId);
     }
 
     @Transactional(readOnly = true)
     public boolean ownsAttempt(Integer userId, Integer attemptId) { return attempts.findByIdAndUserId(attemptId, userId).isPresent(); }
-
-    @Transactional
-    public void applyAiAssessment(AiAssessmentCompletedEvent event) {
-        ExamAttemptEntity attempt = attempts.findByIdAndUserIdForUpdate(event.attemptId(), event.userId())
-                .orElseThrow(() -> new AccessDeniedException("Bạn không có quyền cập nhật lượt thi này"));
-        UserAnswerEntity answer = answers.findByIdAndAttemptId(event.answerId(), attempt.getId())
-                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy câu trả lời cần chấm"));
-        if (!"COMPLETED".equalsIgnoreCase(event.state())) {
-            attempt.setStatus("ERROR"); attempt.setGradingStatus("ERROR"); attempts.save(attempt); return;
-        }
-        AiAssessmentContract.AssessmentView assessment = ai.get(event.assessmentKey(), event.userId(), false);
-        if (assessment.score() == null || assessment.estimatedCefr() == null) {
-            attempt.setStatus("ERROR"); attempt.setGradingStatus("ERROR"); attempts.save(attempt); return;
-        }
-        QuestionEntity question = questions.findById(answer.getQuestionId()).orElseThrow();
-        answer.setAiScore(assessment.score()); answer.setAiFeedback(assessment.feedback()); answer.setAiProvider(assessment.provider()); answer.setAiModel(assessment.model()); answer.setGradedAt(LocalDateTime.now()); answer.setStatus("GRADED"); answers.save(answer);
-        MockExamEntity exam = examFor(attempt);
-        ExamSkillResultEntity result = skillResults.findByAttemptIdAndSkill(attempt.getId(), question.getSkill()).orElseGet(() -> { ExamSkillResultEntity value = new ExamSkillResultEntity(); value.setAttemptId(attempt.getId()); value.setSkill(question.getSkill()); return value; });
-        result.setGradingMethod("AI"); result.setCorrectCount(null); result.setTotalItems(null); result.setRawScore(assessment.score()); result.setScaleScore(scoring.scale(exam.getScoringSchemeId(), question.getSkill(), assessment.score())); result.setCefrLevel(scoring.estimatedLevel(exam.getScoringSchemeId(), question.getSkill(), result.getScaleScore())); skillResults.save(result);
-        List<ExamSkillResultEntity> results = skillResults.findByAttemptIdOrderBySkillAsc(attempt.getId());
-        if (results.stream().allMatch(value -> value.getScaleScore() != null)) { complete(attempt, exam); attempts.save(attempt); events.publishEvent(new AttemptCompletedEvent(attempt.getUserId(), attempt.getId(), exam.getExamType())); }
-    }
 
     @Transactional(readOnly = true)
     public AttemptPage page(Integer userId, Integer attemptId) {
@@ -202,77 +190,94 @@ public class ExamAttemptService implements ExamAttemptContract {
             }).toList();
             return new QuestionPage(q.getId(), q.getContent(), q.getSkill(), q.getQuestionType(), link.getPosition(), itemPages);
         }).toList();
-        return new AttemptPage(attempt.getId(), exam.getTitle(), exam.getDurationMinutes(), handle(attempt, exam).deadline(), questionsView);
+        return new AttemptPage(attempt.getId(), exam.getTitle(), remainingSeconds(attempt, exam), questionsView);
     }
 
-    public record AttemptPage(Integer attemptId, String title, Integer durationMinutes, Instant deadline, List<QuestionPage> questions) {}
+    public record AttemptPage(Integer attemptId, String title, Long remainingSeconds, List<QuestionPage> questions) {}
     public record QuestionPage(Integer questionId, String content, String skill, String type, int position,
             List<ItemPage> items) {}
     public record ItemPage(Integer itemId, int position, String content, List<OptionPage> options,
             Integer selectedOptionId, Integer userPosition, String textAnswer) {}
     public record OptionPage(Integer id, String code, String content) {}
 
-    private void gradeObjective(ExamAttemptEntity attempt, MockExamEntity exam) {
-        Map<String, List<MockExamQuestionEntity>> grouped = examQuestions.findByMockExamIdOrderByPosition(exam.getId()).stream()
-                .collect(Collectors.groupingBy(link -> questions.findById(link.getQuestionId()).orElseThrow().getSkill(), LinkedHashMap::new, Collectors.toList()));
-        grouped.forEach((skill, links) -> {
-            int total = 0, correct = 0; boolean subjective = false;
-            for (MockExamQuestionEntity link : links) {
-                QuestionEntity q = questions.findById(link.getQuestionId()).orElseThrow();
-                UserAnswerEntity answer = answers.findByAttemptIdAndQuestionId(attempt.getId(), q.getId()).orElseThrow();
-                if ("WRITING_TEXT".equals(q.getQuestionType()) || "SPEAKING_AUDIO".equals(q.getQuestionType())) { subjective = true; continue; }
-                for (QuestionItemEntity item : items.findByQuestionIdOrderByPosition(q.getId())) {
-                    total++; UserAnswerDetailEntity detail = details.findByUserAnswerIdAndQuestionItemId(answer.getId(), item.getId()).orElse(null);
-                    boolean right = detail != null && detail.getSelectedOptionId() != null && options.findById(detail.getSelectedOptionId()).map(o -> Boolean.TRUE.equals(o.getCorrect())).orElse(false);
-                    if (!right && detail != null && item.getCorrectPosition() != null) right = Objects.equals(detail.getUserPosition(), item.getCorrectPosition());
-                    if (right) correct++;
-                }
-            }
-            ExamSkillResultEntity result = skillResults.findByAttemptIdAndSkill(attempt.getId(), skill).orElseGet(() -> {
-                ExamSkillResultEntity value = new ExamSkillResultEntity(); value.setAttemptId(attempt.getId()); value.setSkill(skill); return value;
-            });
-            if (subjective) { result.setGradingMethod("PENDING"); result.setCorrectCount(null); result.setTotalItems(null); result.setRawScore(null); result.setScaleScore(null); result.setCefrLevel(null); }
-            else {
-                result.setCorrectCount(correct); result.setTotalItems(total); result.setGradingMethod("OBJECTIVE");
-                BigDecimal raw = total == 0 ? BigDecimal.ZERO : BigDecimal.valueOf(correct * 50.0 / total).setScale(2, RoundingMode.HALF_UP);
-                result.setRawScore(raw); result.setScaleScore(scoring.scale(exam.getScoringSchemeId(), skill, raw));
-                result.setCefrLevel(scoring.estimatedLevel(exam.getScoringSchemeId(), skill, result.getScaleScore()));
-            }
-            skillResults.save(result);
-        });
-    }
-
-    private void complete(ExamAttemptEntity attempt, MockExamEntity exam) {
-        List<ExamSkillResultEntity> results = skillResults.findByAttemptIdOrderBySkillAsc(attempt.getId());
-        BigDecimal average = results.stream().map(ExamSkillResultEntity::getScaleScore).filter(Objects::nonNull).reduce(BigDecimal.ZERO, BigDecimal::add)
-                .divide(BigDecimal.valueOf(results.size()), 2, RoundingMode.HALF_UP);
-        attempt.setFinalScaleScore(average); attempt.setEstimatedOverallCefr(results.stream().map(ExamSkillResultEntity::getCefrLevel).filter(Objects::nonNull).min(Comparator.comparingInt(this::levelOrder)).orElse(null));
-        attempt.setCompletedAt(LocalDateTime.now()); attempt.setGradingStatus("COMPLETED"); attempt.setStatus("COMPLETED");
+    private Long remainingSeconds(ExamAttemptEntity attempt, MockExamEntity exam) {
+        Integer duration = exam.getDurationMinutes();
+        if (duration == null) return null;
+        LocalDateTime deadline = attempt.getStartedAt().plusMinutes(duration);
+        return Math.max(0L, Duration.between(LocalDateTime.now(), deadline).getSeconds());
     }
 
     private AttemptResult resultView(ExamAttemptEntity attempt, MockExamEntity exam) {
         List<SkillResult> skills = skillResults.findByAttemptIdOrderBySkillAsc(attempt.getId()).stream().map(value -> {
             boolean passed = value.getCefrLevel() != null && exam.getTargetLevel() != null && levelOrder(value.getCefrLevel()) >= levelOrder(exam.getTargetLevel());
-            return new SkillResult(value.getSkill(), value.getRawScore(), value.getScaleScore(), value.getCefrLevel(), value.getScaleScore() == null ? "PENDING" : "COMPLETED", null, passed);
+            String state = value.getGradingStatus();
+            if (state == null) state = value.getScaleScore() == null ? "PENDING" : "COMPLETED";
+            else if ("WAITING".equals(state)) state = "PENDING";
+            else if ("ERROR".equals(state)) state = "ERROR";
+            return new SkillResult(value.getSkill(), value.getRawScore(), value.getScaleScore(), value.getCefrLevel(), state,
+                    feedbackFor(attempt.getId(), value.getSkill()), passed,
+                    "ERROR".equals(state) && !"POLICY_ERROR".equals(value.getGradingMethod()));
         }).toList();
-        return new AttemptResult(attempt.getId(), attempt.getUserId(), exam.getId(), exam.getExamType(), exam.getScoringSchemeId(), attempt.getStatus(), skills, instant(attempt.getSubmittedAt()));
+        Integer schemeId = attempt.getScoringSchemeId() == null ? exam.getScoringSchemeId() : attempt.getScoringSchemeId();
+        return new AttemptResult(attempt.getId(), attempt.getUserId(), exam.getId(), exam.getExamType(), schemeId,
+                attempt.getStatus(), skills, instant(attempt.getSubmittedAt()), attempt.getFinalScaleScore(),
+                attempt.getEstimatedOverallCefr());
+    }
+
+    private String feedbackFor(Integer attemptId, String skill) {
+        StringJoiner feedback = new StringJoiner("\n\n");
+        for (UserAnswerEntity answer : answers.findByAttemptIdOrderByQuestionIdAsc(attemptId)) {
+            if (answer.getAiFeedback() == null || answer.getAiFeedback().isBlank()) continue;
+            QuestionEntity question = questions.findById(answer.getQuestionId()).orElse(null);
+            if (question != null && Objects.equals(question.getSkill(), skill)) feedback.add(answer.getAiFeedback().trim());
+        }
+        return feedback.length() == 0 ? null : feedback.toString();
+    }
+
+    private LockedAttempt lockedAttempt(ExamAttemptEntity attempt, MockExamEntity exam) {
+        List<LockedAnswer> snapshots = answers.findByAttemptIdOrderByQuestionIdAsc(attempt.getId()).stream().map(answer -> {
+            QuestionEntity question = questions.findById(answer.getQuestionId()).orElseThrow();
+            String task = question.getInstruction() == null || question.getInstruction().isBlank()
+                    ? question.getContent() : question.getInstruction() + "\n" + question.getContent();
+            String lockedContent = firstNonBlank(answer.getTextAnswer(), answer.getAudioUrl(), answer.getTranscript());
+            List<LockedItem> lockedItems = items.findByQuestionIdOrderByPosition(question.getId()).stream()
+                    .map(item -> new LockedItem(item.getId(), options.findByQuestionItemIdOrderByPosition(item.getId()).stream()
+                            .filter(option -> Boolean.TRUE.equals(option.getCorrect())).map(QuestionOptionEntity::getId).findFirst().orElse(null),
+                            item.getCorrectPosition()))
+                    .toList();
+            return new LockedAnswer(answer.getId(), question.getId(), question.getSkill(), question.getQuestionType(),
+                    task, lockedContent, answer.getTranscript(), lockedItems);
+        }).toList();
+        return new LockedAttempt(attempt.getId(), attempt.getUserId(), exam.getId(), exam.getExamType(),
+                attempt.getAnswerVersion() == null ? 1 : attempt.getAnswerVersion(), instant(attempt.getSubmittedAt()),
+                attempt.getScoringSchemeId() == null ? exam.getScoringSchemeId() : attempt.getScoringSchemeId(),
+                attempt.getPolicyVersion(), attempt.getRubricVersion() == null ? RUBRIC_VERSION : attempt.getRubricVersion(),
+                attempt.getGradingRequestKey(), snapshots);
     }
 
     private ExamAttemptEntity editableAttempt(Integer userId, Integer attemptId) {
         ExamAttemptEntity attempt = attempts.findByIdAndUserIdForUpdate(attemptId, userId).orElseThrow(() -> new AccessDeniedException("Bạn không có quyền với lượt thi này"));
         if (!"IN_PROGRESS".equals(attempt.getStatus())) throw new BusinessRuleException("Lượt thi đã khóa");
         MockExamEntity exam = examFor(attempt);
-        if (exam.getDurationMinutes() != null && attempt.getStartedAt().plusMinutes(exam.getDurationMinutes()).isBefore(LocalDateTime.now())) throw new BusinessRuleException("Lượt thi đã hết thời gian");
+        if (exam.getDurationMinutes() != null
+                && attempt.getStartedAt().plusMinutes(exam.getDurationMinutes()).plusSeconds(SAVE_GRACE_SECONDS).isBefore(LocalDateTime.now())) {
+            throw new BusinessRuleException("Lượt thi đã hết thời gian");
+        }
         return attempt;
     }
     private QuestionItemEntity chooseItem(Integer questionId, Integer itemId) { return items.findByQuestionIdOrderByPosition(questionId).stream().filter(x -> itemId == null || Objects.equals(x.getId(), itemId)).findFirst().orElseThrow(() -> new ResourceNotFoundException("Câu hỏi chưa có ý hỏi")); }
     private MockExamEntity publishedExam(Integer id) { return exams.findById(id).filter(x -> "PUBLISHED".equals(x.getStatus())).orElseThrow(() -> new ResourceNotFoundException("Đề thi chưa được công bố")); }
     private MockExamEntity examFor(ExamAttemptEntity attempt) { return exams.findById(attempt.getMockExamId()).orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy đề thi")); }
     private User activeUser(Integer id) { User user = users.findById(id).orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy tài khoản")); if (user.getRole() != Role.STUDENT || user.getStatus() != UserStatus.ACTIVE) throw new AccessDeniedException("Tài khoản không còn hoạt động"); return user; }
-    private AttemptHandle handle(ExamAttemptEntity attempt, MockExamEntity exam) { return new AttemptHandle(attempt.getId(), attempt.getStatus(), instant(attempt.getStartedAt().plusMinutes(exam.getDurationMinutes() == null ? 0 : exam.getDurationMinutes()))); }
-    private Instant instant(LocalDateTime value) { return value == null ? null : value.toInstant(ZoneOffset.UTC); }
+    private AttemptHandle handle(ExamAttemptEntity attempt, MockExamEntity exam) {
+        Integer duration = exam.getDurationMinutes();
+        Instant deadline = duration == null ? null : instant(attempt.getStartedAt().plusMinutes(duration));
+        return new AttemptHandle(attempt.getId(), attempt.getStatus(), deadline);
+    }
+    private Instant instant(LocalDateTime value) { return value == null ? null : value.atZone(ZoneId.systemDefault()).toInstant(); }
     private String normalizeRequestKey(String value, Integer userId, Integer examId) { return value == null || value.isBlank() ? "attempt:" + userId + ":" + examId : value.trim(); }
     private boolean usesOptions(String type) { return "SINGLE_CHOICE".equals(type) || "MATCHING".equals(type) || "ORDERING".equals(type); }
     private String blankToNull(String value) { return value == null || value.isBlank() ? null : value.trim(); }
+    private String firstNonBlank(String... values) { for (String value : values) if (value != null && !value.isBlank()) return value; return null; }
     private int levelOrder(String value) { return switch (value == null ? "" : value) { case "A1" -> 1; case "A2" -> 2; case "B1" -> 3; case "B2" -> 4; case "C1" -> 5; case "C2" -> 6; default -> 0; }; }
 }

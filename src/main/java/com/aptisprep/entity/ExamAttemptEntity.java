@@ -12,6 +12,11 @@ public class ExamAttemptEntity {
     @Column(name = "mock_exam_id", nullable = false) private Integer mockExamId;
     @Column(nullable = false, length = 30) private String status;
     @Column(name = "grading_status", length = 30) private String gradingStatus;
+    @Column(name = "answer_version", nullable = false) private Integer answerVersion = 1;
+    @Column(name = "scoring_scheme_id") private Integer scoringSchemeId;
+    @Column(name = "policy_version", length = 100) private String policyVersion;
+    @Column(name = "rubric_version", length = 100) private String rubricVersion;
+    @Column(name = "grading_request_key", length = 255) private String gradingRequestKey;
     @Column(name = "started_at", nullable = false) private LocalDateTime startedAt;
     @Column(name = "submitted_at") private LocalDateTime submittedAt;
     @Column(name = "completed_at") private LocalDateTime completedAt;
@@ -30,6 +35,11 @@ public class ExamAttemptEntity {
     public Integer getMockExamId() { return mockExamId; }
     public String getStatus() { return status; }
     public String getGradingStatus() { return gradingStatus; }
+    public Integer getAnswerVersion() { return answerVersion; }
+    public Integer getScoringSchemeId() { return scoringSchemeId; }
+    public String getPolicyVersion() { return policyVersion; }
+    public String getRubricVersion() { return rubricVersion; }
+    public String getGradingRequestKey() { return gradingRequestKey; }
     public LocalDateTime getStartedAt() { return startedAt; }
     public LocalDateTime getSubmittedAt() { return submittedAt; }
     public LocalDateTime getCompletedAt() { return completedAt; }
@@ -40,6 +50,11 @@ public class ExamAttemptEntity {
     public void setMockExamId(Integer value) { mockExamId = value; }
     public void setStatus(String value) { status = value; }
     public void setGradingStatus(String value) { gradingStatus = value; }
+    public void setAnswerVersion(Integer value) { answerVersion = value; }
+    public void setScoringSchemeId(Integer value) { scoringSchemeId = value; }
+    public void setPolicyVersion(String value) { policyVersion = value; }
+    public void setRubricVersion(String value) { rubricVersion = value; }
+    public void setGradingRequestKey(String value) { gradingRequestKey = value; }
     public void setStartedAt(LocalDateTime value) { startedAt = value; }
     public void setSubmittedAt(LocalDateTime value) { submittedAt = value; }
     public void setCompletedAt(LocalDateTime value) { completedAt = value; }
