@@ -1,0 +1,463 @@
+/* ==========================================================================
+   AptisPrep Exam Stylesheet (exam.css)
+   ========================================================================== */
+
+.exam-page {
+    background-color: var(--color-background);
+}
+
+/* Progressive enhancement: Ẩn các nút submit fallback khi có JS */
+.js-enabled .non-js-submit-btn {
+    display: none !important;
+}
+
+.exam-runner-header {
+    position: sticky;
+    top: 0;
+    z-index: 850;
+    background: #ffffff;
+    border-bottom: 2px solid var(--color-border);
+    padding: .85rem 1.5rem;
+    box-shadow: var(--shadow-sm);
+}
+
+.exam-header-inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1.5rem;
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+.exam-header-title h1 {
+    font-size: 1.25rem;
+    margin: 0;
+    color: var(--color-navy);
+}
+
+.exam-header-controls {
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+}
+
+/* Timer Sticky Badge */
+.exam-timer-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: .5rem;
+    padding: .45rem .95rem;
+    background: var(--color-surface-soft);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    font-weight: 700;
+    font-size: 1.05rem;
+    color: var(--color-navy);
+    font-variant-numeric: tabular-nums;
+}
+.exam-timer-badge.timer-warning {
+    background: var(--color-warning-bg);
+    color: var(--color-warning);
+    border-color: var(--color-warning-border);
+    animation: pulseWarning 1.5s infinite;
+}
+.exam-timer-badge.timer-danger {
+    background: var(--color-danger-bg);
+    color: var(--color-danger);
+    border-color: var(--color-danger-border);
+    animation: pulseDanger 1s infinite;
+}
+
+@keyframes pulseWarning {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.02); }
+}
+@keyframes pulseDanger {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.03); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .exam-timer-badge.timer-warning,
+    .exam-timer-badge.timer-danger {
+        animation: none !important;
+    }
+}
+
+/* Autosave Indicator */
+.autosave-indicator {
+    font-size: .88rem;
+    font-weight: 600;
+    color: var(--color-muted);
+}
+.autosave-indicator.saved {
+    color: var(--color-success);
+}
+.autosave-indicator.saving {
+    color: var(--color-primary);
+}
+.autosave-indicator.error {
+    color: var(--color-danger);
+}
+
+/* Exam Layout: 2 Cột */
+.exam-layout-grid {
+    display: grid;
+    grid-template-columns: 1fr 340px;
+    gap: 2rem;
+    max-width: 1400px;
+    margin: 2rem auto;
+    padding: 0 1.5rem;
+    align-items: start;
+}
+
+/* Cột Trái: Câu hỏi */
+.exam-question-area {
+    min-width: 0;
+}
+
+.exam-question-card {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    padding: 2.25rem;
+    box-shadow: var(--shadow-sm);
+    margin-bottom: 1.5rem;
+}
+
+.question-meta-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.25rem;
+}
+
+.question-prompt {
+    font-size: 1.35rem;
+    font-weight: 700;
+    line-height: 1.4;
+    color: var(--color-navy);
+    margin-bottom: 1.5rem;
+}
+
+/* Single Choice Card */
+.choice-cards-container {
+    display: grid;
+    gap: .85rem;
+}
+
+.choice-card {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem 1.25rem;
+    border: 2px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    background: var(--color-surface);
+    cursor: pointer;
+    transition: border-color .15s ease, background-color .15s ease;
+    min-height: var(--min-touch-target);
+}
+
+.choice-card:hover {
+    border-color: var(--color-primary-light);
+    background: var(--color-surface-soft);
+}
+
+.choice-card.selected {
+    border-color: var(--color-primary);
+    background: var(--color-primary-soft);
+}
+
+.choice-card input[type="radio"] {
+    width: 20px;
+    height: 20px;
+    accent-color: var(--color-primary);
+}
+
+.choice-card-text {
+    font-size: 1.05rem;
+    color: var(--color-text);
+}
+
+/* Ordering Question */
+.ordering-list {
+    display: grid;
+    gap: .75rem;
+    margin: 1.25rem 0;
+}
+
+.ordering-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: .85rem 1.25rem;
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    cursor: grab;
+}
+.ordering-item.dragging {
+    opacity: 0.4;
+}
+
+.ordering-position-number {
+    display: grid;
+    width: 32px;
+    height: 32px;
+    place-items: center;
+    background: var(--color-surface-soft);
+    border-radius: 50%;
+    font-weight: 700;
+    color: var(--color-navy);
+}
+
+.ordering-actions {
+    display: flex;
+    gap: .35rem;
+}
+.btn-order-up, .btn-order-down {
+    min-width: 38px;
+    min-height: 38px;
+    padding: 4px 8px;
+    background: var(--color-surface-soft);
+    border: 1px solid var(--color-border);
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+/* Matching Question */
+.matching-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: .85rem 0;
+    border-bottom: 1px solid var(--color-border);
+}
+.matching-select {
+    min-height: 44px;
+    min-width: 200px;
+    padding: .5rem .85rem;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+}
+
+/* Writing Textarea */
+.writing-textarea {
+    width: 100%;
+    padding: 1rem;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    font-size: 1.05rem;
+    line-height: 1.6;
+}
+.writing-word-counter {
+    text-align: right;
+    font-size: .88rem;
+    color: var(--color-muted);
+    margin-top: .4rem;
+}
+
+/* Audio Player */
+.exam-audio-player {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    background: var(--color-surface-soft);
+    border-radius: var(--radius-sm);
+    margin: 1rem 0;
+}
+.audio-play-count {
+    font-weight: 700;
+    font-size: .9rem;
+    color: var(--color-primary-dark);
+}
+
+/* Thanh điều hướng câu */
+.question-nav-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    margin-top: 1.5rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--color-border);
+}
+
+#exam-btn-review.flagged {
+    color: #b54708;
+    background: #fffaeb;
+    border-color: #fedf89;
+    font-weight: 700;
+}
+
+/* Cột Phải: Palette Câu Hỏi */
+.exam-palette-panel {
+    position: sticky;
+    top: 90px;
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    padding: 1.5rem;
+    box-shadow: var(--shadow-sm);
+}
+
+.palette-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .75rem;
+    padding-bottom: 1rem;
+    margin-bottom: 1rem;
+    border-bottom: 1px solid var(--color-border);
+    font-size: .82rem;
+}
+.legend-item {
+    display: inline-flex;
+    align-items: center;
+    gap: .4rem;
+}
+.legend-dot {
+    width: 14px;
+    height: 14px;
+    border-radius: 4px;
+    border: 1px solid var(--color-border);
+}
+.legend-dot.answered { background: var(--color-primary); border-color: var(--color-primary); }
+.legend-dot.flagged { background: #fedf89; border-color: #b54708; }
+.legend-dot.unanswered { background: #ffffff; }
+
+.palette-skill-group {
+    margin-bottom: 1.25rem;
+}
+.palette-skill-title {
+    font-size: .9rem;
+    font-weight: 700;
+    color: var(--color-muted);
+    text-transform: uppercase;
+    letter-spacing: .05em;
+    margin-bottom: .65rem;
+}
+
+.palette-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: .5rem;
+}
+
+.palette-btn {
+    display: grid;
+    place-items: center;
+    height: 44px;
+    background: #ffffff;
+    border: 2px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    font-weight: 700;
+    font-size: 1rem;
+    color: var(--color-navy);
+    cursor: pointer;
+    transition: all .15s ease;
+}
+
+.palette-btn:hover {
+    border-color: var(--color-primary-light);
+    background: var(--color-surface-soft);
+}
+
+.palette-btn.current {
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px rgba(var(--color-primary-rgb), 0.25);
+}
+
+.palette-btn.answered {
+    background: var(--color-primary);
+    color: #ffffff;
+    border-color: var(--color-primary);
+}
+
+.palette-btn.flagged {
+    position: relative;
+    border-color: #f59e0b;
+    background: #fffbeb;
+    color: #b45309;
+}
+.palette-btn.flagged::after {
+    content: "★";
+    position: absolute;
+    top: 2px;
+    right: 3px;
+    font-size: .65rem;
+    color: #b45309;
+}
+
+/* Modal xác nhận nộp bài */
+.exam-modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.6);
+    z-index: 1000;
+    place-items: center;
+    padding: 1.5rem;
+    backdrop-filter: blur(4px);
+}
+.exam-modal-overlay.is-open {
+    display: grid;
+}
+
+.exam-modal-card {
+    background: #ffffff;
+    border-radius: var(--radius);
+    padding: 2.25rem;
+    max-width: 520px;
+    width: 100%;
+    box-shadow: var(--shadow);
+    text-align: center;
+}
+
+.exam-modal-stats {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin: 1.5rem 0;
+}
+.modal-stat-box {
+    padding: 1rem;
+    background: var(--color-surface-soft);
+    border-radius: var(--radius-sm);
+}
+.modal-stat-box strong {
+    font-size: 1.75rem;
+    display: block;
+    color: var(--color-navy);
+}
+
+/* Mobile Drawer Responsive (<992px) */
+@media (max-width: 992px) {
+    .exam-layout-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .btn-toggle-palette-drawer {
+        display: inline-flex !important;
+    }
+
+    .exam-palette-panel {
+        display: none;
+        position: fixed;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        width: 320px;
+        z-index: 999;
+        overflow-y: auto;
+        box-shadow: -5px 0 25px rgba(0, 0, 0, 0.15);
+    }
+
+    .exam-palette-panel.is-open {
+        display: block;
+    }
+}

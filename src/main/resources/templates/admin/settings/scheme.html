@@ -2,8 +2,8 @@
 <html lang="vi" xmlns:th="http://www.thymeleaf.org">
 <head th:replace="~{fragments/head :: head('Bộ chấm điểm & CEFR')}"></head>
 <body class="admin-theme"><div th:replace="~{fragments/navbar :: navbar}"></div>
-<div class="container app-shell"><div th:replace="~{fragments/admin-sidebar :: adminSidebar('settings')}"></div>
-<main class="app-main admin-catalog">
+<div class="container ap-container app-shell"><div th:replace="~{fragments/admin-sidebar :: adminSidebar('settings')}"></div>
+<main id="main-content" tabindex="-1" class="app-main admin-catalog">
     <div th:replace="~{fragments/breadcrumb :: breadcrumb('Chứng chỉ & Chấm điểm', @{/admin/certificates}, 'Bộ chấm điểm')}"></div>
     <div th:replace="~{fragments/messages :: messages}"></div>
     <header class="page-header"><h1 th:text="${readOnly ? scheme.name : (editing ? 'Chỉnh sửa bộ chấm điểm' : 'Thêm bộ chấm điểm')}"></h1><a class="button button-secondary" th:href="@{/admin/certificates#schemes}">Về danh sách</a></header>

@@ -3,9 +3,9 @@
 <head th:replace="~{fragments/head :: head(${catalog.title})}"></head>
 <body class="admin-theme">
 <div th:replace="~{fragments/navbar :: navbar}"></div>
-<div class="container app-shell">
+<div class="container ap-container app-shell">
     <div th:replace="~{fragments/admin-sidebar :: adminSidebar(${catalog.key})}"></div>
-    <main class="app-main admin-catalog">
+    <main id="main-content" tabindex="-1" class="app-main admin-catalog">
         <div th:replace="~{fragments/breadcrumb :: breadcrumb(${catalog.title}, @{${catalog.baseUrl()}}, ${editing ? 'Chỉnh sửa' : catalog.createLabel})}"></div>
         <header class="page-header"><div><h1 th:text="${editing ? 'Chỉnh sửa ' + catalog.singular : catalog.createLabel}"></h1><p class="muted">Dữ liệu được lưu trực tiếp vào ngân hàng nội dung.</p></div></header>
         <form th:if="${catalog.key == 'questions'}" class="dashboard-panel catalog-preview-form" method="post" enctype="multipart/form-data" th:object="${questionForm}" th:action="${editing ? '/admin/questions/' + entry.id + '/edit' : '/admin/questions'}">

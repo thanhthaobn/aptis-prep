@@ -3,10 +3,10 @@
 <head th:replace="~{fragments/head :: head('Đăng ký')}"></head>
 <body class="landing-theme">
 <div th:replace="~{fragments/navbar :: navbar}"></div>
-<main class="auth-page">
-  <div class="container auth-layout">
+<main id="main-content" tabindex="-1" class="auth-page">
+  <div class="container ap-container auth-layout">
     <section class="auth-welcome" aria-label="Bắt đầu hành trình">
-        <div th:replace="~{fragments/study-guide :: guide}"></div>
+        <div th:replace="~{fragments/navi :: navi('welcome', 'Navi đồng hành cùng bạn')}"></div>
         <p class="eyebrow">BẮT ĐẦU TỪ HÔM NAY</p>
         <h2>Một thói quen nhỏ. Một hành trình mới.</h2>
         <p>Khám phá trước, chọn mục tiêu sau. Bạn không cần làm bài đầu vào để bắt đầu tìm hiểu.</p>

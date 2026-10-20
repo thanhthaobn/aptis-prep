@@ -3,10 +3,10 @@
 <head th:replace="~{fragments/head :: head('Đăng nhập')}"></head>
 <body class="landing-theme">
 <div th:replace="~{fragments/navbar :: navbar}"></div>
-<main class="auth-page">
-  <div class="container auth-layout">
+<main id="main-content" tabindex="-1" class="auth-page">
+  <div class="container ap-container auth-layout">
     <section class="auth-welcome" aria-label="Chào mừng trở lại">
-        <div th:replace="~{fragments/study-guide :: guide}"></div>
+        <div th:replace="~{fragments/navi :: navi('welcome', 'Navi đồng hành cùng bạn')}"></div>
         <p class="eyebrow">MỖI NGÀY MỘT BƯỚC NHỎ</p>
         <h2>Hôm nay, mình cùng tiến bộ nhé!</h2>
         <p>Luyện Aptis theo nhịp của bạn.</p>

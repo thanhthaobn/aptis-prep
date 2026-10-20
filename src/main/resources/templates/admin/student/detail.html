@@ -3,9 +3,9 @@
 <head th:replace="~{fragments/head :: head('Chi tiết học viên')}"></head>
 <body class="admin-theme">
 <div th:replace="~{fragments/navbar :: navbar}"></div>
-<div class="container app-shell">
+<div class="container ap-container app-shell">
     <div th:replace="~{fragments/admin-sidebar :: adminSidebar('students')}"></div>
-    <main class="app-main student-management">
+    <main id="main-content" tabindex="-1" class="app-main student-management">
         <div th:replace="~{fragments/breadcrumb :: breadcrumb('Học viên', @{/admin/students}, 'Chi tiết học viên')}"></div>
         <div th:replace="~{fragments/messages :: messages}"></div>
         <header class="page-header"><div><p class="eyebrow">HỒ SƠ HỌC VIÊN</p><h1 th:text="${student.fullName}"></h1><p th:text="${student.email}"></p></div><div class="page-actions"><a class="button button-secondary" th:href="@{/admin/students}">Về danh sách</a></div></header>
@@ -18,13 +18,13 @@
                 <div class="skill-list"><div th:each="skill : ${student.skills}"><span class="skill-name" th:text="${skill.name}"></span><span class="badge skill-level" th:text="${skill.level}"></span><span class="muted skill-target" th:text="|Mục tiêu: ${skill.target}|"></span></div></div>
             </article>
             <article class="dashboard-panel"><div class="panel-heading"><h2>Lộ trình hiện tại</h2></div>
-                <div th:if="${!#lists.isEmpty(student.progress)}" th:each="path : ${student.progress}" class="dashboard-section"><p class="student-target" th:text="|${path.skill} · ${path.pathSource}|"></p><p th:text="|${path.completedLessons}/${path.totalLessons} bài học|"/><progress th:if="${path.progressPercent != null}" max="100" th:value="${path.progressPercent}" aria-label="Tiến độ lộ trình"></progress><p class="muted" th:text="${path.progressPercent == null ? 'Chưa có dữ liệu phần trăm' : path.percentLabel}"></p><p class="muted" th:text="|Checkpoint: ${path.checkpointState}|"></p></div>
+                <div th:if="${!#lists.isEmpty(student.progress)}" th:each="path : ${student.progress}" class="dashboard-section"><p class="student-target" th:text="|${path.skill} · ${path.pathSource}|"></p><p th:text="|${path.completedLessons}/${path.totalLessons} bài học|"/><progress th:if="${path.progressPercent != null}" max="100" th:value="${path.progressPercent}" aria-label="Tiến độ lộ trình"></progress><p class="muted" th:text="${path.progressPercent == null ? 'Chưa có dữ liệu phần trăm' : path.percentLabel}"></p><p class="muted">Bài kiểm tra cuối chặng: <span th:text="${path.checkpointState == 'passed' ? 'Đã vượt qua' : (path.checkpointState == 'available' ? 'Sẵn sàng làm bài' : 'Chưa mở')}"></span></p></div>
                 <div class="empty-state" th:if="${#lists.isEmpty(student.progress)}"><h3>Chưa có dữ liệu lộ trình</h3><p class="muted">Lộ trình do luồng học tập cung cấp; không dùng dữ liệu minh họa.</p></div>
             </article>
         </section>
         <section class="dashboard-section"><div class="section-title-row"><h2>Lịch sử thi</h2><span class="muted" th:text="|${student.attemptTotal} lượt|">0 lượt</span></div>
-            <div class="table-wrap" th:if="${!#lists.isEmpty(student.attempts)}"><table class="data-table student-table"><thead><tr><th scope="col">Bài thi</th><th scope="col">Ngày nộp</th><th scope="col">Trạng thái</th><th scope="col">Kết quả</th></tr></thead><tbody><tr th:each="attempt : ${student.attempts}"><td th:text="${attempt.title}"></td><td th:text="${attempt.date}"></td><td th:text="${attempt.status}"></td><td th:text="${attempt.score}"></td></tr></tbody></table></div>
-            <div class="empty-box" th:if="${#lists.isEmpty(student.attempts)}"><h2>Chưa có lượt thi</h2></div>
+            <div class="table-wrap" th:if="${!#lists.isEmpty(student.attempts)}"><table class="data-table student-table"><thead><tr><th scope="col">Bài thi</th><th scope="col">Ngày nộp</th><th scope="col">Trạng thái</th><th scope="col">Kết quả</th></tr></thead><tbody><tr th:each="attempt : ${student.attempts}"><td th:text="${attempt.title}"></td><td th:text="${attempt.date}"></td><td><th:block th:replace="~{fragments/status :: statusBadge(${attempt.status})}"></th:block></td><td th:text="${attempt.score}"></td></tr></tbody></table></div>
+            <div class="empty-box" th:if="${#lists.isEmpty(student.attempts)}"><div th:replace="~{fragments/navi :: navi('empty', 'Navi đang chờ lượt thi đầu tiên')}"></div><h2>Chưa có lượt thi</h2></div>
             <nav class="pagination" th:if="${student.attemptTotal > student.attemptSize}" aria-label="Phân trang lịch sử thi"><a th:if="${student.attemptPage > 0}" th:href="@{/admin/students/{id}(id=${student.id},attemptPage=${student.attemptPage - 1},attemptSize=${student.attemptSize})}">Trang trước</a><span th:text="|Trang ${student.attemptPage + 1}|">Trang 1</span><a th:if="${(student.attemptPage + 1) * student.attemptSize < student.attemptTotal}" th:href="@{/admin/students/{id}(id=${student.id},attemptPage=${student.attemptPage + 1},attemptSize=${student.attemptSize})}">Trang sau</a></nav>
         </section>
     </main>

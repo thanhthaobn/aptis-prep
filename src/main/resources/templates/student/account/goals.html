@@ -5,7 +5,7 @@
 <div th:replace="~{fragments/navbar :: navbar}"></div>
 <div class="container app-shell">
     <div th:replace="~{fragments/student-sidebar :: studentSidebar('profile')}"></div>
-    <main class="app-main student-content">
+    <main class="app-main student-content" id="main-content" tabindex="-1">
         <header class="page-header"><div><p class="eyebrow">MỤC TIÊU</p><h1>Mục tiêu học tập</h1><p>Chọn mục tiêu theo từng kỹ năng; có thể bỏ qua và khám phá bài học trước.</p></div></header>
         <div th:replace="~{fragments/messages :: messages}"></div>
         <form class="dashboard-panel" th:action="@{/student/goals}" th:object="${goalForm}" method="post">
@@ -21,7 +21,7 @@
                 <div class="field"><label for="speaking">Speaking</label><select id="speaking" th:field="*{speaking}"><option value="">Chưa đặt</option><option th:each="level : ${ {'A1','A2','B1','B2','C1','C2'} }" th:value="${level}" th:text="${level}"></option></select></div>
             </div>
             <div class="alert alert-danger" th:if="${#fields.hasGlobalErrors()}"><p th:each="error : ${#fields.globalErrors()}" th:text="${error}"></p></div>
-            <div class="actions"><button class="button" type="submit">Lưu mục tiêu</button><a class="button button-secondary" th:href="@{/student/orientation}">Khám phá trước</a></div>
+            <div class="actions"><button class="button" type="submit">Lưu mục tiêu</button><a class="button button-secondary" th:href="@{/student/learning-path}">Khám phá lộ trình</a></div>
         </form>
     </main>
 </div>

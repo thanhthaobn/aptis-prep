@@ -1,0 +1,23 @@
+.navi { position: relative; display: grid; justify-items: center; margin: 0; text-align: center; }
+.navi svg { width: 160px; display: block; }
+.navi figcaption { color: var(--color-muted); font-size: .75rem; }
+.navi-shadow { fill: rgba(15, 71, 56, .1); }
+.navi-body { fill: var(--color-primary-light); stroke: var(--color-primary-dark); stroke-width: 2; }
+.navi-antenna, .navi-mouth, .navi-arm { fill: none; stroke: var(--color-primary-dark); stroke-width: 4; stroke-linecap: round; }
+.navi-eye { fill: var(--color-navy); }
+.confetti { fill: none; stroke: #d28b19; stroke-width: 4; stroke-linecap: round; }
+.navi-question { fill: none; stroke: var(--color-primary-dark); stroke-width: 3; stroke-linecap: round; }
+.navi-celebrate .navi-arm-left { d: path("M46 73 25 50"); }
+.navi-celebrate .navi-arm-right { d: path("m122 73 19-25"); }
+.navi-empty .navi-mouth { d: path("M74 82c5-3 13-3 19 0"); }
+.cta-card .navi { flex: 0 0 130px; }
+.cta-card .navi svg { width: 130px; }
+.cta-card .navi figcaption { display: none; }
+.cta-card .navi-body { fill: #5bc4a5; }
+.error-page .navi svg { width: 150px; }
+.error-page .navi figcaption { display: none; }
+.result-navi { display: grid; justify-items: center; margin: 1.25rem 0; }
+.result-navi .navi svg { width: 120px; }
+.result-navi .navi figcaption { display: none; }
+@media (max-width: 900px) { .cta-card .navi { flex-basis: auto; } }
+@media (prefers-reduced-motion: reduce) { .navi * { animation: none !important; } }

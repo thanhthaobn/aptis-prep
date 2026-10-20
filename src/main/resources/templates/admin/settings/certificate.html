@@ -2,8 +2,8 @@
 <html lang="vi" xmlns:th="http://www.thymeleaf.org">
 <head th:replace="~{fragments/head :: head('Chứng chỉ')}"></head>
 <body class="admin-theme"><div th:replace="~{fragments/navbar :: navbar}"></div>
-<div class="container app-shell"><div th:replace="~{fragments/admin-sidebar :: adminSidebar('settings')}"></div>
-<main class="app-main admin-catalog">
+<div class="container ap-container app-shell"><div th:replace="~{fragments/admin-sidebar :: adminSidebar('settings')}"></div>
+<main id="main-content" tabindex="-1" class="app-main admin-catalog">
     <div th:replace="~{fragments/breadcrumb :: breadcrumb('Chứng chỉ & Chấm điểm', @{/admin/certificates}, 'Chứng chỉ')}"></div>
     <div th:replace="~{fragments/messages :: messages}"></div>
     <header class="page-header"><h1 th:text="${readOnly ? certificate.name : (editing ? 'Chỉnh sửa chứng chỉ' : 'Thêm chứng chỉ')}"></h1><a class="button button-secondary" th:href="@{/admin/certificates}">Về danh sách</a></header>

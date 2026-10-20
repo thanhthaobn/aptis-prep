@@ -3,16 +3,75 @@
 <head th:replace="~{fragments/head :: head('Kiểm tra đầu vào')}"></head>
 <body class="student-theme">
 <div th:replace="~{fragments/navbar :: navbar}"></div>
-<div class="container app-shell">
+<div class="container ap-container app-shell">
     <div th:replace="~{fragments/student-sidebar :: studentSidebar('placement')}"></div>
-    <main class="app-main student-content">
-        <header class="page-header"><div><h1>Khám phá trình độ của bạn</h1><p>Kiểm tra đầu vào là bước tùy chọn và chỉ dùng để ước lượng trình độ.</p></div></header>
-        <section class="learn-choice"><div><h2>Bạn có thể học trước</h2><p>Chưa sẵn sàng kiểm tra? Khám phá các kỹ năng ngay.</p><a class="button" th:href="@{/student/orientation}">Bỏ qua và khám phá</a></div><div th:replace="~{fragments/study-guide :: guide}"></div></section>
-        <div class="alert alert-error" th:if="${error}" th:text="${error}"></div>
-        <section class="dashboard-panel dashboard-section"><h2>Chọn kỹ năng</h2><form method="get" th:action="@{/student/placement}"><div class="field"><label for="placementSkill">Kỹ năng muốn đánh giá</label><select id="placementSkill" name="skill"><option value="GRAMMAR_VOCABULARY" th:selected="${skill == 'GRAMMAR_VOCABULARY'}">Grammar &amp; Vocabulary</option><option value="READING" th:selected="${skill == 'READING'}">Reading</option><option value="LISTENING" th:selected="${skill == 'LISTENING'}">Listening</option><option value="WRITING" th:selected="${skill == 'WRITING'}">Writing</option><option value="SPEAKING" th:selected="${skill == 'SPEAKING'}">Speaking</option></select></div><button class="button" type="submit">Xem bài kiểm tra</button></form></section>
-        <section class="dashboard-panel dashboard-section"><h2>Đề Placement khả dụng</h2><div th:if="${#lists.isEmpty(placementExams)}" class="empty-box"><p>Hiện chưa có đề Placement đã công bố cho kỹ năng này.</p></div><div th:unless="${#lists.isEmpty(placementExams)}" th:each="exam : ${placementExams}" class="catalog-answer"><div><strong th:text="${exam.title}"></strong><p class="muted" th:text="${exam.subtitle}"></p></div><form method="post" th:action="@{/student/placement/start}"><input type="hidden" name="skill" th:value="${skill}"><input type="hidden" name="examId" th:value="${exam.id}"><button class="button" type="submit">Bắt đầu / tiếp tục</button></form></div></section>
-        <details class="dashboard-panel dashboard-section study-instructions"><summary>Điều cần biết</summary><ul><li>CEFR là kết quả ước lượng, không phải chứng chỉ.</li><li>Mỗi đoạn Listening được nghe tối đa hai lượt.</li><li>Writing và Speaking có thể cần chờ chấm.</li></ul></details>
+    <main class="app-main student-content" id="main-content" tabindex="-1">
+        <header class="page-header">
+            <div>
+                <h1>Kiểm tra đầu vào</h1>
+                <p>Kiểm tra đầu vào là bước tùy chọn giúp hệ thống ước lượng trình độ CEFR và gợi ý bài học phù hợp nhất.</p>
+            </div>
+        </header>
+
+        <section class="learn-choice">
+            <div>
+                <h2>Bạn có thể học trước</h2>
+                <p>Chưa sẵn sàng kiểm tra? Khám phá ngay các kỹ năng theo lộ trình.</p>
+                <a class="button" th:href="@{/student/learning-path}">Bỏ qua và khám phá lộ trình</a>
+            </div>
+            <div th:replace="~{fragments/navi :: navi('welcome', 'Navi đồng hành cùng bạn')}"></div>
+        </section>
+
+        <!-- Thông báo alert chuẩn -->
+        <div th:replace="~{fragments/messages :: messages}"></div>
+
+        <section class="dashboard-panel dashboard-section">
+            <h2>Chọn kỹ năng</h2>
+            <form method="get" th:action="@{/student/placement}">
+                <div class="field">
+                    <label for="entranceSkill">Kỹ năng muốn đánh giá</label>
+                    <select id="entranceSkill" name="skill">
+                        <option value="GRAMMAR_VOCABULARY" th:selected="${skill == 'GRAMMAR_VOCABULARY'}">Grammar &amp; Vocabulary</option>
+                        <option value="READING" th:selected="${skill == 'READING'}">Reading</option>
+                        <option value="LISTENING" th:selected="${skill == 'LISTENING'}">Listening</option>
+                        <option value="WRITING" th:selected="${skill == 'WRITING'}">Writing</option>
+                        <option value="SPEAKING" th:selected="${skill == 'SPEAKING'}">Speaking</option>
+                    </select>
+                </div>
+                <button class="button" type="submit">Xem bài kiểm tra</button>
+            </form>
+        </section>
+
+        <section class="dashboard-panel dashboard-section">
+            <h2>Đề kiểm tra đầu vào khả dụng</h2>
+            <div th:if="${#lists.isEmpty(placementExams)}" class="empty-box">
+                <div th:replace="~{fragments/navi :: navi('empty', 'Navi đang chờ đề kiểm tra')}"></div>
+                <p>Hiện chưa có đề kiểm tra đầu vào đã công bố cho kỹ năng này.</p>
+            </div>
+            <div th:unless="${#lists.isEmpty(placementExams)}" th:each="exam : ${placementExams}" class="catalog-answer">
+                <div>
+                    <strong th:text="${exam.title}"></strong>
+                    <p class="muted" th:text="${exam.subtitle}"></p>
+                </div>
+                <form method="post" th:action="@{/student/placement/start}">
+                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                    <input type="hidden" name="skill" th:value="${skill}">
+                    <input type="hidden" name="examId" th:value="${exam.id}">
+                    <button class="button" type="submit">Bắt đầu / tiếp tục</button>
+                </form>
+            </div>
+        </section>
+
+        <details class="dashboard-panel dashboard-section study-instructions">
+            <summary>Điều cần biết khi kiểm tra đầu vào</summary>
+            <ul>
+                <li>CEFR là kết quả ước lượng học tập, không phải chứng chỉ quốc tế.</li>
+                <li>Mỗi đoạn nghe (Listening) được nghe tối đa hai lượt.</li>
+                <li>Writing và Speaking sử dụng công nghệ AI để chấm và có thể cần một khoảng thời gian ngắn để xử lý.</li>
+            </ul>
+        </details>
     </main>
 </div>
 <div th:replace="~{fragments/footer :: footer}"></div>
-</body></html>
+</body>
+</html>
