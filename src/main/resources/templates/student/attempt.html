@@ -10,9 +10,16 @@
     <section class="dashboard-panel dashboard-section" th:each="question : ${attempt.questions}">
         <p class="eyebrow" th:text="|Câu ${question.position} · ${question.skill}|"></p>
         <h2 th:text="${question.content}"></h2>
+        <div class="attempt-media" th:each="media : ${question.media}">
+            <img th:if="${media.type == 'IMAGE'}" th:src="@{/student/attempts/{id}/media/{mediaId}/content(id=${attempt.attemptId},mediaId=${media.id})}" th:alt="${media.filename}">
+            <div th:if="${media.type == 'AUDIO'}" class="media-player">
+                <button type="button" class="button button-secondary media-play" th:attr="data-play=@{/student/attempts/{id}/media/{mediaId}/play(id=${attempt.attemptId},mediaId=${media.id})},data-content=@{/student/attempts/{id}/media/{mediaId}/content(id=${attempt.attemptId},mediaId=${media.id})}">Nghe audio</button>
+                <audio class="media-audio" preload="none"></audio><span class="media-status muted" aria-live="polite"></span>
+            </div>
+        </div>
         <div th:each="item : ${question.items}" class="question-item">
             <p class="muted" th:text="|Ý ${item.position}: ${item.content}|"></p>
-            <form method="post" th:action="@{/student/attempts/{id}/answers(id=${attempt.attemptId})}">
+            <form class="answer-form" method="post" th:attr="data-autosave=@{/student/attempts/{id}/answers/autosave(id=${attempt.attemptId})}" th:action="@{/student/attempts/{id}/answers(id=${attempt.attemptId})}">
                 <input type="hidden" name="questionId" th:value="${question.questionId}"><input type="hidden" name="itemId" th:value="${item.itemId}">
                 <div th:if="${question.type == 'ORDERING'}" class="field"><label th:for="|position-${item.itemId}|">Vị trí trong thứ tự</label><input type="number" min="1" th:max="${#lists.size(question.items)}" name="userPosition" th:id="|position-${item.itemId}|" th:value="${item.userPosition}"></div>
                 <div th:if="${question.type != 'ORDERING' and !#lists.isEmpty(item.options)}" class="catalog-checkbox">
@@ -20,9 +27,48 @@
                 </div>
                 <div class="field" th:if="${question.type == 'WRITING_TEXT'}"><label th:for="|answer-${item.itemId}|">Bài trả lời</label><textarea th:id="|answer-${item.itemId}|" name="textAnswer" rows="6" th:text="${item.textAnswer}"></textarea></div>
                 <button class="button button-secondary" type="submit">Lưu ý trả lời</button>
+                <span class="autosave-status muted" aria-live="polite"></span>
+            </form>
+            <form th:if="${question.type == 'SPEAKING_AUDIO'}" method="post" enctype="multipart/form-data" th:action="@{/student/attempts/{id}/answers/audio(id=${attempt.attemptId})}">
+                <input type="hidden" name="questionId" th:value="${question.questionId}"><input type="hidden" name="itemId" th:value="${item.itemId}">
+                <div class="field"><label th:for="|audio-${item.itemId}|">File ghi âm</label><input type="file" accept="audio/*,.webm,.m4a,.mp3,.wav,.ogg" name="audioFile" th:id="|audio-${item.itemId}|" required></div>
+                <button class="button button-secondary" type="submit">Lưu file ghi âm</button>
             </form>
         </div>
     </section>
     <form method="post" th:action="@{/student/attempts/{id}/submit(id=${attempt.attemptId})}"><button class="button" type="submit">Nộp bài</button></form>
 </main></div><div th:replace="~{fragments/footer :: footer}"></div>
+<script>
+(() => {
+  const csrf = document.querySelector('input[name="_csrf"]')?.value;
+  document.querySelectorAll('.answer-form').forEach(form => {
+    let timer;
+    const status = form.querySelector('.autosave-status');
+    const save = () => {
+      if (!csrf || !status) return;
+      status.textContent = 'Đang lưu…';
+      fetch(form.dataset.autosave, { method: 'POST', headers: {'X-CSRF-TOKEN': csrf, 'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8'}, body: new URLSearchParams(new FormData(form)) })
+        .then(response => response.json())
+        .then(result => { status.textContent = result.saved ? 'Đã tự động lưu' : (result.message || 'Chưa lưu được'); })
+        .catch(() => { status.textContent = 'Mất kết nối, câu trả lời chưa được lưu'; });
+    };
+    form.addEventListener('input', () => { clearTimeout(timer); timer = setTimeout(save, 700); });
+    form.addEventListener('change', () => { clearTimeout(timer); timer = setTimeout(save, 250); });
+  });
+  document.querySelectorAll('.media-play').forEach(button => button.addEventListener('click', async () => {
+    const player = button.parentElement.querySelector('.media-audio');
+    const status = button.parentElement.querySelector('.media-status');
+    button.disabled = true; status.textContent = 'Đang kiểm tra lượt nghe…';
+    try {
+      const response = await fetch(button.dataset.play, {method: 'POST', headers: {'X-CSRF-TOKEN': csrf}});
+      if (!response.ok) throw new Error((await response.json()).message || 'Không thể phát audio');
+      const result = await response.json();
+      player.src = button.dataset.content + '?token=' + encodeURIComponent(result.contentToken); player.controls = false;
+      player.onended = () => { if (result.playCount < result.maxPlayCount) button.disabled = false; };
+      await player.play();
+      status.textContent = `Đã dùng ${result.playCount}/${result.maxPlayCount} lượt nghe`;
+    } catch (error) { button.disabled = false; status.textContent = error.message; }
+  }));
+})();
+</script>
 </body></html>

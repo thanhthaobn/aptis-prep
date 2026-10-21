@@ -36,8 +36,8 @@ public class AttemptGradingOrchestrationService {
             String submission = "WRITING_TEXT".equals(question.getQuestionType()) ? answer.getTextAnswer() : answer.getTranscript();
             if (submission == null || submission.isBlank()) continue;
             String taskType = "WRITING_TEXT".equals(question.getQuestionType()) ? "WRITING" : "SPEAKING";
-            String key = "attempt:" + event.attemptId() + ":answer:" + answer.getId() + ":v1";
-            AiAssessmentContract.AssessmentRequest request = new AiAssessmentContract.AssessmentRequest(key, event.userId(), event.attemptId(), answer.getId(), 1,
+            String key = "attempt:" + event.attemptId() + ":answer:" + answer.getId() + ":v" + answer.getAnswerVersion();
+            AiAssessmentContract.AssessmentRequest request = new AiAssessmentContract.AssessmentRequest(key, event.userId(), event.attemptId(), answer.getId(), answer.getAnswerVersion(),
                     question.getSkill(), taskType, question.getContent(), question.getInstruction() == null ? question.getContent() : question.getInstruction() + "\n" + question.getContent(),
                     "aptis-rubric-v1", "scale-v1", BigDecimal.valueOf(50), answer.getTranscript());
             ai.request(request);
