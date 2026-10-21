@@ -34,11 +34,12 @@ public class AttemptGradingOrchestrationService {
             if (!"WRITING_TEXT".equals(answer.questionType()) && !"SPEAKING_AUDIO".equals(answer.questionType())) continue;
             String submission = answer.lockedContent();
             if (submission == null || submission.isBlank()) continue;
-            String taskType = "WRITING_TEXT".equals(question.getQuestionType()) ? "WRITING" : "SPEAKING";
-            String key = "attempt:" + event.attemptId() + ":answer:" + answer.getId() + ":v" + answer.getAnswerVersion();
-            AiAssessmentContract.AssessmentRequest request = new AiAssessmentContract.AssessmentRequest(key, event.userId(), event.attemptId(), answer.getId(), answer.getAnswerVersion(),
-                    question.getSkill(), taskType, question.getContent(), question.getInstruction() == null ? question.getContent() : question.getInstruction() + "\n" + question.getContent(),
-                    "aptis-rubric-v1", "scale-v1", BigDecimal.valueOf(50), answer.getTranscript());
+            String taskType = "WRITING_TEXT".equals(answer.questionType()) ? "WRITING" : "SPEAKING";
+            String key = "attempt:" + event.attemptId() + ":answer:" + answer.answerId() + ":v" + locked.answerVersion();
+            AiAssessmentContract.AssessmentRequest request = new AiAssessmentContract.AssessmentRequest(key,
+                    event.userId(), event.attemptId(), answer.answerId(), locked.answerVersion(), answer.skill(), taskType,
+                    answer.taskContent(), submission, locked.rubricVersion(), locked.policyVersion(), BigDecimal.valueOf(50),
+                    answer.transcript());
             ai.request(request);
             ai.process(key);
         }

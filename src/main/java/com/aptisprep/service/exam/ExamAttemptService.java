@@ -3,14 +3,18 @@ package com.aptisprep.service.exam;
 import com.aptisprep.entity.*;
 import com.aptisprep.enums.Role;
 import com.aptisprep.enums.UserStatus;
+import com.aptisprep.event.AiAssessmentCompletedEvent;
+import com.aptisprep.event.AttemptCompletedEvent;
 import com.aptisprep.event.AttemptSubmittedEvent;
 import com.aptisprep.exception.AccessDeniedException;
 import com.aptisprep.exception.BusinessRuleException;
 import com.aptisprep.exception.ResourceNotFoundException;
 import com.aptisprep.repository.*;
 import com.aptisprep.service.contract.ExamAttemptContract;
+import com.aptisprep.service.contract.AiAssessmentContract;
 import com.aptisprep.service.contract.IntegrationModels.*;
 import com.aptisprep.service.contract.ScoringPolicyContract;
+import com.aptisprep.service.grading.AttemptFinalizationService;
 import com.aptisprep.service.storage.AudioUploadService;
 import com.aptisprep.service.storage.StorageService;
 import org.springframework.core.io.Resource;
@@ -33,6 +37,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class ExamAttemptService implements ExamAttemptContract {
     private static final String RUBRIC_VERSION = "aptis-rubric-v1";
+    private static final int SAVE_GRACE_SECONDS = 5;
     private static final Set<String> ACTIVE_STATES = Set.of("IN_PROGRESS", "SUBMITTED", "WAITING_GRADING");
     private static final Set<String> TERMINAL_STATES = Set.of("COMPLETED", "ERROR", "EXPIRED");
     private static final ConcurrentHashMap<String, Object> START_LOCKS = new ConcurrentHashMap<>();
@@ -54,6 +59,7 @@ public class ExamAttemptService implements ExamAttemptContract {
     private final AudioUploadService audioUploads;
     private final StorageService storage;
     private final AttemptOutboxService outbox;
+    private final AttemptFinalizationService finalization;
     private final ApplicationEventPublisher events;
     private final JsonMapper json = JsonMapper.builder().build();
 
@@ -62,11 +68,13 @@ public class ExamAttemptService implements ExamAttemptContract {
             QuestionMediaRepository questionMedia, UserMediaActivityRepository mediaActivities, ExamAttemptSnapshotRepository snapshots,
             ExamAttemptRepository attempts, UserAnswerRepository answers, UserAnswerDetailRepository details,
             ExamSkillResultRepository skillResults, ScoringPolicyContract scoring, AiAssessmentContract ai,
-            AudioUploadService audioUploads, StorageService storage, AttemptOutboxService outbox, ApplicationEventPublisher events) {
+            AudioUploadService audioUploads, StorageService storage, AttemptOutboxService outbox,
+            AttemptFinalizationService finalization, ApplicationEventPublisher events) {
         this.users = users; this.exams = exams; this.examQuestions = examQuestions; this.questions = questions;
         this.items = items; this.options = options; this.questionMedia = questionMedia; this.mediaActivities = mediaActivities; this.snapshots = snapshots;
         this.attempts = attempts; this.answers = answers; this.details = details;
-        this.skillResults = skillResults; this.scoring = scoring; this.ai = ai; this.audioUploads = audioUploads; this.storage = storage; this.outbox = outbox; this.events = events;
+        this.skillResults = skillResults; this.scoring = scoring; this.ai = ai; this.audioUploads = audioUploads; this.storage = storage;
+        this.outbox = outbox; this.finalization = finalization; this.events = events;
     }
 
     @Override
@@ -88,6 +96,9 @@ public class ExamAttemptService implements ExamAttemptContract {
             if (byKey.isPresent()) key = key + "-" + UUID.randomUUID();
             ExamAttemptEntity attempt = new ExamAttemptEntity(); attempt.setUserId(userId); attempt.setMockExamId(examId);
             attempt.setRequestKey(key); attempt.setStatus("IN_PROGRESS"); attempt.setGradingStatus("NOT_STARTED");
+            attempt.setAnswerVersion(1); attempt.setScoringSchemeId(exam.getScoringSchemeId());
+            attempt.setPolicyVersion("scoring-scheme:" + exam.getScoringSchemeId() + ":v1");
+            attempt.setRubricVersion(RUBRIC_VERSION);
             attempt = attempts.save(attempt);
             createSnapshot(attempt, exam, links);
             Integer newAttemptId = attempt.getId();
@@ -208,7 +219,11 @@ public class ExamAttemptService implements ExamAttemptContract {
         MockExamEntity exam = publishedExam(attempt.getMockExamId());
         LocalDateTime now = LocalDateTime.now();
         boolean expired = exam.getDurationMinutes() != null && attempt.getStartedAt().plusMinutes(exam.getDurationMinutes()).isBefore(now);
-        refreshSnapshotAnswerVersion(attempt.getId());
+        refreshSnapshotAnswerVersion(attempt);
+        attempt.setScoringSchemeId(attempt.getScoringSchemeId() == null ? exam.getScoringSchemeId() : attempt.getScoringSchemeId());
+        attempt.setPolicyVersion(attempt.getPolicyVersion() == null ? "scoring-scheme:" + exam.getScoringSchemeId() + ":v1" : attempt.getPolicyVersion());
+        attempt.setRubricVersion(attempt.getRubricVersion() == null ? RUBRIC_VERSION : attempt.getRubricVersion());
+        attempt.setGradingRequestKey("attempt:" + attemptId + ":grading:v" + attempt.getAnswerVersion());
         attempt.setSubmittedAt(now); attempt.setGradingStatus("GRADING"); attempt.setStatus(expired ? "EXPIRED" : "SUBMITTED");
         gradeObjective(attempt, exam);
         boolean waiting = skillResults.findByAttemptIdOrderBySkillAsc(attempt.getId()).stream().anyMatch(x -> x.getScaleScore() == null);
@@ -216,7 +231,10 @@ public class ExamAttemptService implements ExamAttemptContract {
         else complete(attempt, exam, expired);
         attempts.save(attempt);
         if (isGradedTerminal(attempt)) { AttemptCompletedEvent event = new AttemptCompletedEvent(userId, attemptId, exam.getExamType()); outbox.enqueueCompleted(event); events.publishEvent(event); }
-        else if ("WAITING_GRADING".equals(attempt.getStatus()) || ("EXPIRED".equals(attempt.getStatus()) && "WAITING".equals(attempt.getGradingStatus()))) { AttemptSubmittedEvent event = new AttemptSubmittedEvent(userId, attemptId, exam.getId(), exam.getExamType()); outbox.enqueueSubmitted(event); events.publishEvent(event); }
+        else if ("WAITING_GRADING".equals(attempt.getStatus()) || ("EXPIRED".equals(attempt.getStatus()) && "WAITING".equals(attempt.getGradingStatus()))) {
+            AttemptSubmittedEvent event = new AttemptSubmittedEvent(userId, attemptId, exam.getId(), exam.getExamType(), lockedAttempt(attempt, exam));
+            outbox.enqueueSubmitted(event); events.publishEvent(event);
+        }
     }
 
     @Override
@@ -310,10 +328,16 @@ public class ExamAttemptService implements ExamAttemptContract {
                     .map(media -> new MediaPage(media.getId(), media.getMediaType(), media.getOriginalFilename(), media.getContentType())).toList();
             return new QuestionPage(q.getId(), q.getContent(), q.getSkill(), q.getQuestionType(), link.getPosition(), itemPages, mediaPages);
         }).toList();
-        return new AttemptPage(attempt.getId(), exam.getTitle(), remainingSeconds(attempt, exam), questionsView);
+        Instant deadline = exam.getDurationMinutes() == null || attempt.getStartedAt() == null ? null
+                : instant(attempt.getStartedAt().plusMinutes(exam.getDurationMinutes()));
+        return new AttemptPage(attempt.getId(), exam.getTitle(), remainingSeconds(attempt, exam), questionsView, deadline);
     }
 
-    public record AttemptPage(Integer attemptId, String title, Long remainingSeconds, List<QuestionPage> questions) {}
+    public record AttemptPage(Integer attemptId, String title, Long remainingSeconds, List<QuestionPage> questions, Instant deadline) {
+        public AttemptPage(Integer attemptId, String title, Long remainingSeconds, List<QuestionPage> questions) {
+            this(attemptId, title, remainingSeconds, questions, null);
+        }
+    }
     public record QuestionPage(Integer questionId, String content, String skill, String type, int position,
             List<ItemPage> items, List<MediaPage> media) {}
     public record ItemPage(Integer itemId, int position, String content, List<OptionPage> options,
@@ -397,10 +421,12 @@ public class ExamAttemptService implements ExamAttemptContract {
         }
     }
 
-    private void refreshSnapshotAnswerVersion(Integer attemptId) {
-        snapshots.findByAttemptId(attemptId).ifPresent(snapshot -> {
-            int version = answers.findByAttemptIdOrderByQuestionIdAsc(attemptId).stream()
+    private void refreshSnapshotAnswerVersion(ExamAttemptEntity attempt) {
+        Integer attemptId = attempt.getId();
+        int version = answers.findByAttemptIdOrderByQuestionIdAsc(attemptId).stream()
                     .mapToInt(UserAnswerEntity::getAnswerVersion).max().orElse(1);
+        attempt.setAnswerVersion(version);
+        snapshots.findByAttemptId(attemptId).ifPresent(snapshot -> {
             snapshot.setAnswerVersion(version);
             snapshots.save(snapshot);
         });
@@ -476,7 +502,16 @@ public class ExamAttemptService implements ExamAttemptContract {
     private MockExamEntity publishedExam(Integer id) { return exams.findById(id).filter(x -> "PUBLISHED".equals(x.getStatus())).orElseThrow(() -> new ResourceNotFoundException("Đề thi chưa được công bố")); }
     private MockExamEntity examFor(ExamAttemptEntity attempt) { return exams.findById(attempt.getMockExamId()).orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy đề thi")); }
     private User activeUser(Integer id) { User user = users.findById(id).orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy tài khoản")); if (user.getRole() != Role.STUDENT || user.getStatus() != UserStatus.ACTIVE) throw new AccessDeniedException("Tài khoản không còn hoạt động"); return user; }
+    private User requireAdmin(String email) {
+        User user = users.findByEmailIgnoreCase(email).orElseThrow(() -> new AccessDeniedException("Không có quyền quản trị"));
+        if (user.getRole() != Role.ADMIN || user.getStatus() != UserStatus.ACTIVE) throw new AccessDeniedException("Không có quyền quản trị");
+        return user;
+    }
     private AttemptHandle handle(ExamAttemptEntity attempt, MockExamEntity exam) { return new AttemptHandle(attempt.getId(), attempt.getStatus(), instant(attempt.getStartedAt().plusMinutes(exam.getDurationMinutes() == null ? 0 : exam.getDurationMinutes()))); }
+    private Long remainingSeconds(ExamAttemptEntity attempt, MockExamEntity exam) {
+        if (exam.getDurationMinutes() == null || attempt.getStartedAt() == null) return null;
+        return Math.max(0L, Duration.between(LocalDateTime.now(), attempt.getStartedAt().plusMinutes(exam.getDurationMinutes())).getSeconds());
+    }
     private Instant instant(LocalDateTime value) { return value == null ? null : value.atZone(ZoneId.systemDefault()).toInstant(); }
     private String normalizeRequestKey(String value, Integer userId, Integer examId) { return value == null || value.isBlank() ? "attempt:" + userId + ":" + examId : value.trim(); }
     private boolean usesOptions(String type) { return "SINGLE_CHOICE".equals(type) || "MATCHING".equals(type) || "ORDERING".equals(type); }

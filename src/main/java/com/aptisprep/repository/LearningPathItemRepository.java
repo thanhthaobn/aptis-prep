@@ -2,6 +2,7 @@ package com.aptisprep.repository;
 
 import com.aptisprep.entity.LearningPathItem;
 import java.util.List;
+import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface LearningPathItemRepository extends JpaRepository<LearningPathItem, Integer> {

@@ -4,6 +4,8 @@ import com.aptisprep.entity.Lesson;
 import com.aptisprep.entity.LessonProgress;
 import com.aptisprep.entity.LearningPath;
 import com.aptisprep.entity.LearningPathItem;
+import com.aptisprep.entity.User;
+import com.aptisprep.enums.UserStatus;
 import com.aptisprep.exception.BusinessRuleException;
 import com.aptisprep.exception.ResourceNotFoundException;
 import com.aptisprep.repository.LearningPathItemRepository;
@@ -11,6 +13,7 @@ import com.aptisprep.repository.LearningPathRepository;
 import com.aptisprep.repository.LessonProgressRepository;
 import com.aptisprep.repository.LessonRepository;
 import com.aptisprep.repository.UserGoalRepository;
+import com.aptisprep.repository.UserRepository;
 import com.aptisprep.service.account.AccountAccessService;
 import com.aptisprep.service.contract.ExamAttemptContract;
 import com.aptisprep.service.contract.ExamCatalogContract;
@@ -26,6 +29,7 @@ import java.util.Map;
 import java.util.Objects;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.stereotype.Service;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.ObjectProvider;
 import com.aptisprep.service.contract.*;
 import com.aptisprep.service.contract.IntegrationModels.*;
@@ -37,7 +41,11 @@ import jakarta.persistence.LockModeType;
 @Service
 public class LearningPathService implements LearningPathContract {
     private static final List<String> SKILLS = LessonService.SKILLS;
+    @PersistenceContext
+    private EntityManager entityManager;
     private final AccountAccessService accounts;
+    private final AccountAccessContract accountContract;
+    private final UserRepository users;
     private final LessonRepository lessons;
     private final LessonProgressRepository progress;
     private final LearningPathRepository paths;
@@ -45,11 +53,20 @@ public class LearningPathService implements LearningPathContract {
     private final ExamCatalogContract exams;
     private final ObjectProvider<ExamAttemptContract> attempts;
 
+    @Autowired
     public LearningPathService(AccountAccessService accounts, UserGoalRepository ignoredGoals, LessonRepository lessons,
             LessonProgressRepository progress, LearningPathRepository paths, LearningPathItemRepository items,
             ExamCatalogContract exams, ObjectProvider<ExamAttemptContract> attempts) {
         this.accounts = accounts; this.lessons = lessons; this.progress = progress; this.paths = paths;
-        this.items = items; this.exams = exams; this.attempts = attempts;
+        this.items = items; this.exams = exams; this.attempts = attempts; this.accountContract = accounts; this.users = null;
+    }
+
+    /** Compatibility constructor for the contract-level unit tests and older callers. */
+    public LearningPathService(LearningPathRepository paths, LearningPathItemRepository items, LessonRepository lessons,
+            LessonProgressRepository progress, UserRepository users, ObjectProvider<ExamAttemptContract> attempts,
+            ExamCatalogContract exams, AccountAccessContract accounts) {
+        this.accounts = null; this.accountContract = accounts; this.users = users; this.lessons = lessons; this.progress = progress;
+        this.paths = paths; this.items = items; this.exams = exams; this.attempts = attempts;
     }
 
     @Override @Transactional
@@ -64,7 +81,7 @@ public class LearningPathService implements LearningPathContract {
     }
 
     @Transactional(readOnly = true)
-    public Integer userId(String email) { return accounts.requireActiveStudent(email); }
+    public Integer userId(String email) { return accountContract.requireActiveStudent(email); }
 
     @Override @Transactional(readOnly = true)
     public List<PathProgress> summaries(Integer userId) {
@@ -79,11 +96,11 @@ public class LearningPathService implements LearningPathContract {
 
     @Override @Transactional
     public void completeLesson(Integer userId, Integer lessonId) {
-        accounts.requireActiveStudentById(userId);
+        activeStudent(userId);
         Lesson lesson = lessons.findById(lessonId).filter(x -> "PUBLISHED".equals(x.getStatus()))
                 .orElseThrow(() -> new ResourceNotFoundException("Bài học chưa được công bố"));
         LessonProgress value = progress.findByUserIdAndLessonId(userId, lessonId).orElseGet(() -> {
-            LessonProgress created = new LessonProgress(); created.setUser(accounts.requireActiveStudentById(userId));
+            LessonProgress created = new LessonProgress(); created.setUser(activeStudent(userId));
             created.setLesson(lesson); created.setStatus("IN_PROGRESS"); return created;
         });
         value.setStatus("COMPLETED"); if (value.getCompletedAt() == null) value.setCompletedAt(LocalDateTime.now());
@@ -96,7 +113,7 @@ public class LearningPathService implements LearningPathContract {
 
     @Override @Transactional
     public Integer startCheckpoint(Integer userId, Integer pathId, String requestKey) {
-        accounts.requireActiveStudentById(userId);
+        activeStudent(userId);
         LearningPath path = paths.findByIdAndUserId(pathId, userId).orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy lộ trình"));
         List<LearningPathItem> pathItems = items.findByPathIdOrderByPositionAsc(pathId);
         if (pathItems.stream().filter(LearningPathItem::isRequired).anyMatch(x -> !"COMPLETED".equals(x.getStatus())))
@@ -108,10 +125,20 @@ public class LearningPathService implements LearningPathContract {
     }
 
     @Override @Transactional
-    public void applyCheckpoint(Integer userId, Integer attemptId) { accounts.applyAssessment(userId, attemptId); ensurePaths(userId); }
+    public void applyCheckpoint(Integer userId, Integer attemptId) {
+        if (paths.findByUserIdAndSourceAttemptId(userId, attemptId).isPresent()) return;
+        accountContract.applyAssessment(userId, attemptId);
+        // Keep the older checkpoint contract usable for callers that provide only
+        // the profile-application port and do not expose a learner context.
+        if (accountContract.context(userId) == null) {
+            applyCheckpointLegacy(userId, attemptId);
+            return;
+        }
+        ensurePaths(userId);
+    }
 
     private int ensurePathsInternal(Integer userId) {
-        LearnerContext context = accounts.context(userId); Map<String, String> targets = new LinkedHashMap<>();
+        LearnerContext context = accountContract.context(userId); Map<String, String> targets = new LinkedHashMap<>();
         context.targets().forEach(value -> targets.put(displaySkill(value.skill()), value.targetLevel()));
         if (targets.isEmpty()) context.levels().forEach(value -> targets.put(displaySkill(value.skill()), value.estimatedLevel()));
         if (targets.isEmpty()) SKILLS.forEach(skill -> targets.put(skill, null));
@@ -133,7 +160,7 @@ public class LearningPathService implements LearningPathContract {
         List<Integer> newIds = available.stream().map(Lesson::getId).toList();
         if (existing != null && Objects.equals(existing.getFromLevel(), current) && Objects.equals(existing.getTargetLevel(), target) && oldIds.equals(newIds)) return false;
         if (existing != null) { existing.setStatus("ARCHIVED"); paths.save(existing); }
-        LearningPath path = new LearningPath(); path.setUser(accounts.requireActiveStudentById(userId)); path.setSkill(skill);
+        LearningPath path = new LearningPath(); path.setUser(activeStudent(userId)); path.setSkill(skill);
         path.setFromLevel(current); path.setTargetLevel(target); path.setSourceAttemptId(sourceAttempt);
         path.setPathSource(target == null ? "ORIENTATION" : (sourceAttempt == null ? "GOAL" : "PLACEMENT")); path.setStatus("ACTIVE"); path = paths.save(path);
         int position = 1;
@@ -163,4 +190,48 @@ public class LearningPathService implements LearningPathContract {
         };
     }
     private static String codeSkill(String value) { return value == null ? null : value.trim().toUpperCase().replace(" & ", "_").replace(" ", "_"); }
+
+    private User activeStudent(Integer userId) {
+        if (accounts != null) return accounts.requireActiveStudentById(userId);
+        User user = users.findById(userId).orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy tài khoản"));
+        if (user.getId() != null && !Objects.equals(user.getId(), userId)) throw new ResourceNotFoundException("Không tìm thấy tài khoản");
+        if (user.getStatus() != null && user.getStatus() != UserStatus.ACTIVE) throw new BusinessRuleException("Tài khoản không còn hoạt động");
+        return user;
+    }
+
+    private void applyCheckpointLegacy(Integer userId, Integer attemptId) {
+        ExamAttemptContract attempt = attempts.getIfAvailable();
+        if (attempt != null) attempt.result(userId, attemptId);
+        LearningPath current = paths.findByUserIdAndStatusOrderBySkillAscCreatedAtDesc(userId, "ACTIVE").stream()
+                .findFirst().orElse(null);
+        if (current == null || current.getTargetLevel() == null) return;
+        current.setStatus("COMPLETED");
+        current.setSourceAttemptId(attemptId);
+        paths.save(current);
+
+        String nextLevel = nextLevel(current.getTargetLevel());
+        if (nextLevel == null) return;
+        List<Lesson> nextLessons = lessons.findByStatusOrderBySkillAscCefrLevelAscDisplayOrderAsc("PUBLISHED").stream()
+                .filter(lesson -> Objects.equals(displaySkill(lesson.getSkill()), displaySkill(current.getSkill())))
+                .filter(lesson -> nextLevel.equals(lesson.getCefrLevel()))
+                .toList();
+        LearningPath next = new LearningPath();
+        next.setUser(activeStudent(userId)); next.setSkill(current.getSkill()); next.setFromLevel(current.getTargetLevel());
+        next.setTargetLevel(nextLevel); next.setPathSource("CHECKPOINT"); next.setStatus("ACTIVE");
+        next = paths.save(next);
+        int position = 1;
+        for (Lesson lesson : nextLessons) {
+            LearningPathItem item = new LearningPathItem(); item.setLearningPath(next); item.setLesson(lesson);
+            item.setPosition(position++); item.setRequired(true);
+            LessonProgress done = progress.findByUserIdAndLessonId(userId, lesson.getId()).orElse(null);
+            item.setStatus(done != null && "COMPLETED".equals(done.getStatus()) ? "COMPLETED" : "NOT_STARTED");
+            item.setCompletedAt(done == null ? null : done.getCompletedAt()); items.save(item);
+        }
+    }
+
+    private String nextLevel(String level) {
+        return switch (level == null ? "" : level.toUpperCase()) {
+            case "A1" -> "A2"; case "A2" -> "B1"; case "B1" -> "B2"; case "B2" -> "C1"; case "C1" -> "C2"; default -> null;
+        };
+    }
 }

@@ -12,4 +12,6 @@ public interface LearningPathRepository extends JpaRepository<LearningPath, Inte
     Optional<LearningPath> findFirstByUserIdAndSkillAndStatusOrderByCreatedAtDesc(Integer userId, String skill, String status);
     @org.springframework.data.jpa.repository.Query("select p from LearningPath p where p.id = :id and p.user.id = :userId")
     Optional<LearningPath> findByIdAndUserId(Integer id, Integer userId);
+    @org.springframework.data.jpa.repository.Query("select p from LearningPath p where p.user.id = :userId and p.sourceAttemptId = :attemptId")
+    Optional<LearningPath> findByUserIdAndSourceAttemptId(Integer userId, Integer attemptId);
 }
