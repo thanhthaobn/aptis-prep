@@ -4,7 +4,6 @@ import com.aptisprep.entity.*;
 import com.aptisprep.enums.Role;
 import com.aptisprep.enums.UserStatus;
 import com.aptisprep.event.AiAssessmentCompletedEvent;
-import com.aptisprep.event.AttemptCompletedEvent;
 import com.aptisprep.event.AttemptSubmittedEvent;
 import com.aptisprep.exception.AccessDeniedException;
 import com.aptisprep.exception.BusinessRuleException;
@@ -15,20 +14,18 @@ import com.aptisprep.service.contract.AiAssessmentContract;
 import com.aptisprep.service.contract.IntegrationModels.*;
 import com.aptisprep.service.contract.ScoringPolicyContract;
 import com.aptisprep.service.grading.AttemptFinalizationService;
+import com.aptisprep.service.grading.ObjectiveGradingService;
 import com.aptisprep.service.storage.AudioUploadService;
 import com.aptisprep.service.storage.StorageService;
 import org.springframework.core.io.Resource;
 import org.springframework.web.multipart.MultipartFile;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
-import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.time.*;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.Collectors;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
@@ -39,7 +36,7 @@ public class ExamAttemptService implements ExamAttemptContract {
     private static final String RUBRIC_VERSION = "aptis-rubric-v1";
     private static final int SAVE_GRACE_SECONDS = 5;
     private static final Set<String> ACTIVE_STATES = Set.of("IN_PROGRESS", "SUBMITTED", "WAITING_GRADING");
-    private static final Set<String> TERMINAL_STATES = Set.of("COMPLETED", "ERROR", "EXPIRED");
+    private static final Set<String> TERMINAL_STATES = Set.of("COMPLETED", "ERROR", "EXPIRED", "CANCELLED");
     private static final ConcurrentHashMap<String, Object> START_LOCKS = new ConcurrentHashMap<>();
     private final UserRepository users;
     private final MockExamRepository exams;
@@ -60,6 +57,7 @@ public class ExamAttemptService implements ExamAttemptContract {
     private final StorageService storage;
     private final AttemptOutboxService outbox;
     private final AttemptFinalizationService finalization;
+    private final ObjectiveGradingService objectiveGrading;
     private final ApplicationEventPublisher events;
     private final JsonMapper json = JsonMapper.builder().build();
 
@@ -69,12 +67,13 @@ public class ExamAttemptService implements ExamAttemptContract {
             ExamAttemptRepository attempts, UserAnswerRepository answers, UserAnswerDetailRepository details,
             ExamSkillResultRepository skillResults, ScoringPolicyContract scoring, AiAssessmentContract ai,
             AudioUploadService audioUploads, StorageService storage, AttemptOutboxService outbox,
-            AttemptFinalizationService finalization, ApplicationEventPublisher events) {
+            AttemptFinalizationService finalization, ObjectiveGradingService objectiveGrading,
+            ApplicationEventPublisher events) {
         this.users = users; this.exams = exams; this.examQuestions = examQuestions; this.questions = questions;
         this.items = items; this.options = options; this.questionMedia = questionMedia; this.mediaActivities = mediaActivities; this.snapshots = snapshots;
         this.attempts = attempts; this.answers = answers; this.details = details;
         this.skillResults = skillResults; this.scoring = scoring; this.ai = ai; this.audioUploads = audioUploads; this.storage = storage;
-        this.outbox = outbox; this.finalization = finalization; this.events = events;
+        this.outbox = outbox; this.finalization = finalization; this.objectiveGrading = objectiveGrading; this.events = events;
     }
 
     @Override
@@ -91,12 +90,16 @@ public class ExamAttemptService implements ExamAttemptContract {
         Object lock = START_LOCKS.computeIfAbsent(userId + ":" + key, ignored -> new Object());
         synchronized (lock) {
             Optional<ExamAttemptEntity> byKey = attempts.findByUserIdAndRequestKey(userId, key);
-            if (byKey.isPresent() && !TERMINAL_STATES.contains(byKey.get().getStatus())) return handle(byKey.get(), exam);
+            if (byKey.isPresent()) {
+                if (!Objects.equals(byKey.get().getMockExamId(), examId)) {
+                    throw new BusinessRuleException("Request key đã được dùng cho một đề thi khác");
+                }
+                return handle(byKey.get(), examFor(byKey.get()));
+            }
             if ("PLACEMENT".equals(exam.getExamType())) {
                 Optional<ExamAttemptEntity> active = attempts.findActivePlacement(userId, exam.getSkill(), ACTIVE_STATES);
                 if (active.isPresent()) return handle(active.get(), examFor(active.get()));
             }
-            if (byKey.isPresent()) key = key + "-" + UUID.randomUUID();
             ExamAttemptEntity attempt = new ExamAttemptEntity(); attempt.setUserId(userId); attempt.setMockExamId(examId);
             attempt.setRequestKey(key); attempt.setStatus("IN_PROGRESS"); attempt.setGradingStatus("NOT_STARTED");
             attempt.setAnswerVersion(1); attempt.setScoringSchemeId(exam.getScoringSchemeId());
@@ -143,6 +146,7 @@ public class ExamAttemptService implements ExamAttemptContract {
         if (!"IN_PROGRESS".equals(attempt.getStatus())) throw new BusinessRuleException("Lượt thi đã khóa");
         QuestionMediaEntity media = questionMedia.findById(mediaId).orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy media"));
         if (!"AUDIO".equals(media.getMediaType()) || !answers.findByAttemptIdAndQuestionId(attemptId, media.getQuestionId()).isPresent()) throw new AccessDeniedException("Media không thuộc lượt thi");
+        ensureMediaWindow(attempt);
         int limit = Math.min(2, media.getMaxPlayCount() == null ? 2 : media.getMaxPlayCount());
         UserMediaActivityEntity activity = mediaActivities.findByAttemptIdAndMediaIdForUpdate(attemptId, mediaId)
                 .orElseThrow(() -> new BusinessRuleException("Không thể khởi tạo bộ đếm lượt nghe"));
@@ -156,9 +160,11 @@ public class ExamAttemptService implements ExamAttemptContract {
 
     @Transactional
     public MediaResource mediaContent(Integer userId, Integer attemptId, Integer mediaId, String contentToken) {
-        attempts.findByIdAndUserId(attemptId, userId).orElseThrow(() -> new AccessDeniedException("Bạn không có quyền xem media này"));
+        ExamAttemptEntity attempt = attempts.findByIdAndUserId(attemptId, userId)
+                .orElseThrow(() -> new AccessDeniedException("Bạn không có quyền xem media này"));
         QuestionMediaEntity media = questionMedia.findById(mediaId).orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy media"));
         if (!answers.findByAttemptIdAndQuestionId(attemptId, media.getQuestionId()).isPresent()) throw new AccessDeniedException("Media không thuộc lượt thi");
+        ensureMediaWindow(attempt);
         if ("AUDIO".equals(media.getMediaType())) {
             UserMediaActivityEntity activity = mediaActivities.findByAttemptIdAndMediaIdForUpdate(attemptId, mediaId)
                     .orElseThrow(() -> new AccessDeniedException("Media chưa được cấp lượt phát"));
@@ -228,14 +234,16 @@ public class ExamAttemptService implements ExamAttemptContract {
         attempt.setRubricVersion(attempt.getRubricVersion() == null ? RUBRIC_VERSION : attempt.getRubricVersion());
         attempt.setGradingRequestKey("attempt:" + attemptId + ":grading:v" + attempt.getAnswerVersion());
         attempt.setSubmittedAt(now); attempt.setGradingStatus("GRADING"); attempt.setStatus(expired ? "EXPIRED" : "SUBMITTED");
-        gradeObjective(attempt, exam);
+        LockedAttempt locked = lockedAttempt(attempt, exam);
+        objectiveGrading.gradeObjective(locked, exam);
         boolean waiting = skillResults.findByAttemptIdOrderBySkillAsc(attempt.getId()).stream().anyMatch(x -> x.getScaleScore() == null);
         if (waiting) { attempt.setStatus(expired ? "EXPIRED" : "WAITING_GRADING"); attempt.setGradingStatus("WAITING"); }
-        else complete(attempt, exam, expired);
+        boolean completed = !waiting && finalization.finalizeIfReady(attempt, exam);
         attempts.save(attempt);
-        if (isGradedTerminal(attempt)) { AttemptCompletedEvent event = new AttemptCompletedEvent(userId, attemptId, exam.getExamType()); outbox.enqueueCompleted(event); events.publishEvent(event); }
-        else if ("WAITING_GRADING".equals(attempt.getStatus()) || ("EXPIRED".equals(attempt.getStatus()) && "WAITING".equals(attempt.getGradingStatus()))) {
-            AttemptSubmittedEvent event = new AttemptSubmittedEvent(userId, attemptId, exam.getId(), exam.getExamType(), lockedAttempt(attempt, exam));
+        if (completed) {
+            finalization.publishCompleted(attempt, exam);
+        } else if ("WAITING_GRADING".equals(attempt.getStatus()) || ("EXPIRED".equals(attempt.getStatus()) && "WAITING".equals(attempt.getGradingStatus()))) {
+            AttemptSubmittedEvent event = new AttemptSubmittedEvent(userId, attemptId, exam.getId(), exam.getExamType(), locked);
             outbox.enqueueSubmitted(event); events.publishEvent(event);
         }
     }
@@ -292,24 +300,7 @@ public class ExamAttemptService implements ExamAttemptContract {
 
     @Transactional
     public void applyAiAssessment(AiAssessmentCompletedEvent event) {
-        ExamAttemptEntity attempt = attempts.findByIdAndUserIdForUpdate(event.attemptId(), event.userId())
-                .orElseThrow(() -> new AccessDeniedException("Bạn không có quyền cập nhật lượt thi này"));
-        UserAnswerEntity answer = answers.findByIdAndAttemptId(event.answerId(), attempt.getId())
-                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy câu trả lời cần chấm"));
-        if (!"COMPLETED".equalsIgnoreCase(event.state())) {
-            attempt.setStatus("ERROR"); attempt.setGradingStatus("ERROR"); attempts.save(attempt); return;
-        }
-        AiAssessmentContract.AssessmentView assessment = ai.get(event.assessmentKey(), event.userId(), false);
-        if (assessment.score() == null || assessment.estimatedCefr() == null) {
-            attempt.setStatus("ERROR"); attempt.setGradingStatus("ERROR"); attempts.save(attempt); return;
-        }
-        QuestionEntity question = questions.findById(answer.getQuestionId()).orElseThrow();
-        answer.setAiScore(assessment.score()); answer.setAiFeedback(assessment.feedback()); answer.setAiProvider(assessment.provider()); answer.setAiModel(assessment.model()); answer.setGradedAt(LocalDateTime.now()); answer.setStatus("GRADED"); answers.save(answer);
-        MockExamEntity exam = examFor(attempt);
-        ExamSkillResultEntity result = skillResults.findByAttemptIdAndSkill(attempt.getId(), question.getSkill()).orElseGet(() -> { ExamSkillResultEntity value = new ExamSkillResultEntity(); value.setAttemptId(attempt.getId()); value.setSkill(question.getSkill()); return value; });
-        result.setGradingMethod("AI"); result.setCorrectCount(null); result.setTotalItems(null); result.setRawScore(assessment.score()); result.setScaleScore(scoring.scale(exam.getScoringSchemeId(), question.getSkill(), assessment.score())); result.setCefrLevel(scoring.estimatedLevel(exam.getScoringSchemeId(), question.getSkill(), result.getScaleScore())); skillResults.save(result);
-        List<ExamSkillResultEntity> results = skillResults.findByAttemptIdOrderBySkillAsc(attempt.getId());
-        if (results.stream().allMatch(value -> value.getScaleScore() != null)) { complete(attempt, exam, "EXPIRED".equals(attempt.getStatus())); attempts.save(attempt); if (isGradedTerminal(attempt)) { AttemptCompletedEvent completed = new AttemptCompletedEvent(attempt.getUserId(), attempt.getId(), exam.getExamType()); outbox.enqueueCompleted(completed); events.publishEvent(completed); } }
+        finalization.applyAiAssessment(event);
     }
 
     @Transactional(readOnly = true)
@@ -374,44 +365,6 @@ public class ExamAttemptService implements ExamAttemptContract {
         snapshots.save(snapshot);
     }
 
-    private void gradeObjective(ExamAttemptEntity attempt, MockExamEntity exam) {
-        Map<Integer, JsonNode> lockedByQuestion = lockedQuestions(attempt.getId());
-        Map<String, List<MockExamQuestionEntity>> grouped = examQuestions.findByMockExamIdOrderByPosition(exam.getId()).stream()
-                .collect(Collectors.groupingBy(link -> lockedByQuestion.get(link.getQuestionId()).path("skill").asText(), LinkedHashMap::new, Collectors.toList()));
-        grouped.forEach((skill, links) -> {
-            int total = 0, correct = 0; boolean subjective = false;
-            for (MockExamQuestionEntity link : links) {
-                JsonNode question = lockedByQuestion.get(link.getQuestionId());
-                UserAnswerEntity answer = answers.findByAttemptIdAndQuestionId(attempt.getId(), link.getQuestionId()).orElseThrow();
-                String questionType = question.path("type").asText();
-                if ("WRITING_TEXT".equals(questionType) || "SPEAKING_AUDIO".equals(questionType)) { subjective = true; continue; }
-                for (JsonNode item : question.path("items")) {
-                    int itemId = item.path("id").asInt();
-                    total++; UserAnswerDetailEntity detail = details.findByUserAnswerIdAndQuestionItemId(answer.getId(), itemId).orElse(null);
-                    boolean right = false;
-                    if (detail != null && detail.getSelectedOptionId() != null) {
-                        for (JsonNode option : item.path("options")) {
-                            if (option.path("id").asInt() == detail.getSelectedOptionId() && option.path("correct").asBoolean(false)) { right = true; break; }
-                        }
-                    }
-                    if (!right && detail != null && !item.path("correctPosition").isNull()) right = detail.getUserPosition() != null && detail.getUserPosition() == item.path("correctPosition").asInt();
-                    if (right) correct++;
-                }
-            }
-            ExamSkillResultEntity result = skillResults.findByAttemptIdAndSkill(attempt.getId(), skill).orElseGet(() -> {
-                ExamSkillResultEntity value = new ExamSkillResultEntity(); value.setAttemptId(attempt.getId()); value.setSkill(skill); return value;
-            });
-            if (subjective) { result.setGradingMethod("PENDING"); result.setCorrectCount(null); result.setTotalItems(null); result.setRawScore(null); result.setScaleScore(null); result.setCefrLevel(null); }
-            else {
-                result.setCorrectCount(correct); result.setTotalItems(total); result.setGradingMethod("OBJECTIVE");
-                BigDecimal raw = total == 0 ? BigDecimal.ZERO : BigDecimal.valueOf(correct * 50.0 / total).setScale(2, RoundingMode.HALF_UP);
-                result.setRawScore(raw); result.setScaleScore(scoring.scale(exam.getScoringSchemeId(), skill, raw));
-                result.setCefrLevel(scoring.estimatedLevel(exam.getScoringSchemeId(), skill, result.getScaleScore()));
-            }
-            skillResults.save(result);
-        });
-    }
-
     private Map<Integer, JsonNode> lockedQuestions(Integer attemptId) {
         ExamAttemptSnapshotEntity snapshot = snapshots.findByAttemptId(attemptId)
                 .orElseThrow(() -> new BusinessRuleException("Không tìm thấy snapshot của lượt thi"));
@@ -433,14 +386,6 @@ public class ExamAttemptService implements ExamAttemptContract {
             snapshot.setAnswerVersion(version);
             snapshots.save(snapshot);
         });
-    }
-
-    private void complete(ExamAttemptEntity attempt, MockExamEntity exam, boolean expired) {
-        List<ExamSkillResultEntity> results = skillResults.findByAttemptIdOrderBySkillAsc(attempt.getId());
-        BigDecimal average = results.stream().map(ExamSkillResultEntity::getScaleScore).filter(Objects::nonNull).reduce(BigDecimal.ZERO, BigDecimal::add)
-                .divide(BigDecimal.valueOf(results.size()), 2, RoundingMode.HALF_UP);
-        attempt.setFinalScaleScore(average); attempt.setEstimatedOverallCefr(results.stream().map(ExamSkillResultEntity::getCefrLevel).filter(Objects::nonNull).min(Comparator.comparingInt(this::levelOrder)).orElse(null));
-        attempt.setCompletedAt(LocalDateTime.now()); attempt.setGradingStatus("COMPLETED"); attempt.setStatus(expired ? "EXPIRED" : "COMPLETED");
     }
 
     private AttemptResult resultView(ExamAttemptEntity attempt, MockExamEntity exam) {
@@ -471,24 +416,36 @@ public class ExamAttemptService implements ExamAttemptContract {
     }
 
     private LockedAttempt lockedAttempt(ExamAttemptEntity attempt, MockExamEntity exam) {
-        List<LockedAnswer> snapshots = answers.findByAttemptIdOrderByQuestionIdAsc(attempt.getId()).stream().map(answer -> {
-            QuestionEntity question = questions.findById(answer.getQuestionId()).orElseThrow();
-            String task = question.getInstruction() == null || question.getInstruction().isBlank()
-                    ? question.getContent() : question.getInstruction() + "\n" + question.getContent();
+        ExamAttemptSnapshotEntity snapshot = snapshots.findByAttemptId(attempt.getId())
+                .orElseThrow(() -> new BusinessRuleException("Không tìm thấy snapshot của lượt thi"));
+        Map<Integer, JsonNode> lockedByQuestion = lockedQuestions(attempt.getId());
+        List<LockedAnswer> lockedAnswers = answers.findByAttemptIdOrderByQuestionIdAsc(attempt.getId()).stream().map(answer -> {
+            JsonNode question = lockedByQuestion.get(answer.getQuestionId());
+            if (question == null) throw new BusinessRuleException("Snapshot không chứa câu hỏi của lượt thi");
+            String instruction = question.path("instruction").asText("");
+            String content = question.path("content").asText("");
+            String task = instruction.isBlank() ? content : instruction + "\n" + content;
             String lockedContent = firstNonBlank(answer.getTextAnswer(), answer.getAudioUrl(), answer.getTranscript());
-            List<LockedItem> lockedItems = items.findByQuestionIdOrderByPosition(question.getId()).stream()
-                    .map(item -> new LockedItem(item.getId(), options.findByQuestionItemIdOrderByPosition(item.getId()).stream()
-                            .filter(option -> Boolean.TRUE.equals(option.getCorrect())).map(QuestionOptionEntity::getId).findFirst().orElse(null),
-                            item.getCorrectPosition()))
-                    .toList();
-            return new LockedAnswer(answer.getId(), question.getId(), question.getSkill(), question.getQuestionType(),
+            List<LockedItem> lockedItems = new ArrayList<>();
+            for (JsonNode item : question.path("items")) {
+                Integer correctOption = null;
+                for (JsonNode option : item.path("options")) {
+                    if (option.path("correct").asBoolean(false)) {
+                        correctOption = option.path("id").asInt();
+                        break;
+                    }
+                }
+                lockedItems.add(new LockedItem(item.path("id").asInt(), correctOption,
+                        item.path("correctPosition").isNull() ? null : item.path("correctPosition").asInt()));
+            }
+            return new LockedAnswer(answer.getId(), answer.getQuestionId(), question.path("skill").asText(), question.path("type").asText(),
                     task, lockedContent, answer.getTranscript(), lockedItems);
         }).toList();
         return new LockedAttempt(attempt.getId(), attempt.getUserId(), exam.getId(), exam.getExamType(),
                 attempt.getAnswerVersion() == null ? 1 : attempt.getAnswerVersion(), instant(attempt.getSubmittedAt()),
                 attempt.getScoringSchemeId() == null ? exam.getScoringSchemeId() : attempt.getScoringSchemeId(),
                 attempt.getPolicyVersion(), attempt.getRubricVersion() == null ? RUBRIC_VERSION : attempt.getRubricVersion(),
-                attempt.getGradingRequestKey(), snapshots);
+                snapshot.getGradingContext(), attempt.getGradingRequestKey(), lockedAnswers);
     }
 
     private ExamAttemptEntity editableAttempt(Integer userId, Integer attemptId) {
@@ -500,6 +457,14 @@ public class ExamAttemptService implements ExamAttemptContract {
             throw new BusinessRuleException("Lượt thi đã hết thời gian");
         }
         return attempt;
+    }
+    private void ensureMediaWindow(ExamAttemptEntity attempt) {
+        if (!"IN_PROGRESS".equals(attempt.getStatus())) throw new BusinessRuleException("Lượt thi đã khóa");
+        MockExamEntity exam = examFor(attempt);
+        if (exam.getDurationMinutes() != null && attempt.getStartedAt() != null
+                && attempt.getStartedAt().plusMinutes(exam.getDurationMinutes()).isBefore(LocalDateTime.now())) {
+            throw new BusinessRuleException("Lượt thi đã hết thời gian");
+        }
     }
     private QuestionItemEntity chooseItem(Integer questionId, Integer itemId) { return items.findByQuestionIdOrderByPosition(questionId).stream().filter(x -> itemId == null || Objects.equals(x.getId(), itemId)).findFirst().orElseThrow(() -> new ResourceNotFoundException("Câu hỏi chưa có ý hỏi")); }
     private MockExamEntity publishedExam(Integer id) { return exams.findById(id).filter(x -> "PUBLISHED".equals(x.getStatus())).orElseThrow(() -> new ResourceNotFoundException("Đề thi chưa được công bố")); }
@@ -519,7 +484,6 @@ public class ExamAttemptService implements ExamAttemptContract {
     private Instant instant(LocalDateTime value) { return value == null ? null : value.atZone(ZoneId.systemDefault()).toInstant(); }
     private String normalizeRequestKey(String value, Integer userId, Integer examId) { return value == null || value.isBlank() ? "attempt:" + userId + ":" + examId : value.trim(); }
     private boolean usesOptions(String type) { return "SINGLE_CHOICE".equals(type) || "MATCHING".equals(type) || "ORDERING".equals(type); }
-    private boolean isGradedTerminal(ExamAttemptEntity attempt) { return ("COMPLETED".equals(attempt.getStatus()) || "EXPIRED".equals(attempt.getStatus())) && "COMPLETED".equals(attempt.getGradingStatus()); }
     private String blankToNull(String value) { return value == null || value.isBlank() ? null : value.trim(); }
     private String firstNonBlank(String... values) { for (String value : values) if (value != null && !value.isBlank()) return value; return null; }
     private String normalizedFilter(String value) { return value == null || value.isBlank() ? "" : value.trim().toUpperCase(Locale.ROOT); }
