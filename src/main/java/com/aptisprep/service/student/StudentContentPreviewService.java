@@ -83,7 +83,8 @@ public class StudentContentPreviewService {
     private List<Entry> realExams(String q, String skill, String level) {
         String term = normalize(q);
         String requestedSkill = normalizeSkill(skill);
-        return exams.findByStatusOrderByUpdatedAtDesc("PUBLISHED").stream()
+        List<MockExamEntity> publishedExams = exams.findByStatusOrderByUpdatedAtDesc("PUBLISHED");
+        return publishedExams.stream()
                 .filter(exam -> normalize(exam.getTitle() + " " + exam.getDescription()).contains(term))
                 .filter(exam -> requestedSkill.isBlank() || requestedSkill.equals(normalizeSkill(exam.getSkill())))
                 .filter(exam -> level == null || level.isBlank() || level.equalsIgnoreCase(exam.getTargetLevel()))
