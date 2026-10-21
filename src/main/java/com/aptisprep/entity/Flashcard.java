@@ -7,8 +7,7 @@ import java.time.LocalDateTime;
 @Table(name = "flashcards")
 public class Flashcard {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY) private Integer id;
-    @ManyToOne(fetch = FetchType.LAZY) @JoinColumn(name = "lesson_id") private Lesson lesson;
-    @ManyToOne(fetch = FetchType.LAZY) @JoinColumn(name="set_id") private FlashcardSet set;
+    @ManyToOne(fetch = FetchType.LAZY, optional = false) @JoinColumn(name="set_id", nullable = false) private FlashcardSet set;
     @Column(nullable=false,length=30) private String status = "ACTIVE";
     public FlashcardSet getSet(){return set;} public void setSet(FlashcardSet v){set=v;}
     public String getStatus(){return status;} public void setStatus(String v){status=v;}
@@ -21,7 +20,6 @@ public class Flashcard {
     @PrePersist void create() { var now = LocalDateTime.now(); createdAt = now; updatedAt = now; }
     @PreUpdate void update() { updatedAt = LocalDateTime.now(); }
     public Integer getId() { return id; }
-    public Lesson getLesson() { return lesson; } public void setLesson(Lesson v) { lesson = v; }
     public String getFrontContent() { return frontContent; } public void setFrontContent(String v) { frontContent = v; }
     public String getBackContent() { return backContent; } public void setBackContent(String v) { backContent = v; }
     public String getCefrLevel() { return cefrLevel; } public void setCefrLevel(String v) { cefrLevel = v; }

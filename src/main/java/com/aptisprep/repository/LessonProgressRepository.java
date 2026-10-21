@@ -7,6 +7,7 @@ import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface LessonProgressRepository extends JpaRepository<LessonProgress, Integer> {
+    List<LessonProgress> findByUserId(Integer userId);
     @org.springframework.data.jpa.repository.Query("select count(p) from LessonProgress p where p.lesson.id = :lessonId")
     long countByLessonId(@org.springframework.data.repository.query.Param("lessonId") Integer lessonId);
     @org.springframework.data.jpa.repository.Query("select count(p) from LessonProgress p where p.lesson.id = :lessonId and p.status = :status")

@@ -4,6 +4,7 @@ import com.aptisprep.dto.form.GoalForm;
 import com.aptisprep.dto.form.ProfileForm;
 import com.aptisprep.exception.BusinessRuleException;
 import com.aptisprep.service.account.AccountProfileService;
+import com.aptisprep.service.account.LearningActivityService;
 import com.aptisprep.service.placement.PlacementService;
 import jakarta.validation.Valid;
 import java.security.Principal;
@@ -18,13 +19,15 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 public class StudentAccountPreviewController {
     private final PlacementService placement;
     private final AccountProfileService accounts;
-    public StudentAccountPreviewController(PlacementService placement, AccountProfileService accounts) {
-        this.placement = placement; this.accounts = accounts;
+    private final LearningActivityService activity;
+    public StudentAccountPreviewController(PlacementService placement, AccountProfileService accounts, LearningActivityService activity) {
+        this.placement = placement; this.accounts = accounts; this.activity = activity;
     }
     @GetMapping("/student/profile")
     public String profile(Principal principal, Model model) {
         var snapshot = accounts.snapshot(principal.getName());
         model.addAttribute("account", snapshot);
+        model.addAttribute("activity", activity.activity(principal.getName()));
         if (!model.containsAttribute("profileForm")) {
             ProfileForm form = new ProfileForm(); form.setFullName(snapshot.fullName()); model.addAttribute("profileForm", form);
         }

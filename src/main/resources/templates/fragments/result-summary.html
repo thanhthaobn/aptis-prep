@@ -27,7 +27,7 @@
             </div>
 
             <div class="result-hero-status">
-                <th:block th:replace="~{fragments/status :: statusBadge(${res.state})}"></th:block>
+                <span class="badge" th:text="${@resultLabels.state(res.state)}"></span>
             </div>
         </div>
 
@@ -53,19 +53,30 @@
     </div>
 
     <!-- Banner thông báo khi có kỹ năng chờ chấm điểm (WAITING_GRADING / PENDING) -->
-    <div th:if="${res.state == 'WAITING_GRADING' or #lists.any(res.skills, s -> s.gradingState == 'PENDING')}" class="result-pending-banner" role="status">
+    <div th:if="${res.state == 'WAITING_GRADING' or !#lists.isEmpty(res.skills.?[gradingState == 'PENDING' or gradingState == 'WAITING'])}" class="result-pending-banner" role="status">
         <span class="pending-icon" aria-hidden="true">⏳</span>
         <div>
             <strong>Đang xử lý chấm điểm phần tự luận</strong>
-            <p>Bài làm Writing hoặc Speaking đang được hệ thống chấm điểm và ước lượng trình độ. Điểm số và cấp độ CEFR sẽ tự động hiển thị đầy đủ ngay sau khi hoàn tất.</p>
+            <p>Bài làm đã được lưu. Điểm và CEFR còn thiếu sẽ xuất hiện khi dịch vụ chấm hoàn tất. Tải lại trang để xem trạng thái mới nhất.</p>
         </div>
+    </div>
+
+    <div th:if="${res.state == 'IN_PROGRESS'}" class="alert alert-info" role="status">
+        <p>Bài thi đang làm, chưa có kết quả cuối cùng.</p>
+        <a class="button" th:href="@{/student/attempts/{id}(id=${res.attemptId})}">Tiếp tục làm bài</a>
+    </div>
+    <div th:if="${res.state == 'ERROR' or !#lists.isEmpty(res.skills.?[gradingState == 'ERROR'])}" class="alert alert-error" role="alert">
+        <p>Chấm điểm chưa thành công. Bài làm được giữ lại; lỗi chấm không được tính là điểm 0 hoặc kết quả trượt.</p>
+        <form th:if="${res.state == 'ERROR' and !#lists.isEmpty(res.skills.?[retryable == true])}" method="post" th:action="@{/student/attempts/{id}/retry-grading(id=${res.attemptId})}">
+            <button class="button button-secondary" type="submit">Chấm lại phần lỗi</button>
+        </form>
     </div>
 
     <!-- Lưới thẻ chi tiết từng kỹ năng -->
     <section class="dashboard-section">
-        <h2 style="font-size: 1.25rem; color: var(--color-navy); margin-bottom: 1.25rem;">Chi tiết năng lực theo kỹ năng</h2>
+        <h2 class="result-section-title">Chi tiết năng lực theo kỹ năng</h2>
         <div class="skills-result-grid">
-            <div class="skill-result-card" th:each="skill : ${res.skills}">
+            <div class="skill-result-card" th:each="skill : ${res.skills}" th:attr="data-skill=${skill.skill}">
                 <div class="skill-card-top">
                     <span class="skill-card-name">
                         <span th:switch="${skill.skill}">
@@ -79,7 +90,7 @@
                     </span>
             <span class="badge"
                           th:classappend="${skill.estimatedLevel != null ? 'badge-cefr-' + #strings.toLowerCase(skill.estimatedLevel) : 'badge-secondary'}"
-                          th:text="${skill.estimatedLevel != null ? skill.estimatedLevel : (skill.gradingState == 'PENDING' ? 'Đang chấm' : '—')}">
+                          th:text="${skill.estimatedLevel != null ? skill.estimatedLevel : (skill.gradingState == 'ERROR' ? 'Chấm lỗi' : (skill.gradingState == 'PENDING' or skill.gradingState == 'WAITING' ? 'Đang chấm' : 'Chưa đánh giá'))}">
                     </span>
                 </div>
 
@@ -89,7 +100,7 @@
                         <span class="score-max">/50</span>
                     </div>
                     <div class="skill-score-pending" th:unless="${skill.scaleScore != null}">
-                        <span th:text="${skill.gradingState == 'PENDING' ? 'Chờ chấm điểm' : 'Chưa có điểm'}">Chờ chấm điểm</span>
+                        <span th:text="${skill.gradingState == 'ERROR' ? 'Chấm chưa thành công' : 'Chưa có điểm'}">Chưa có điểm</span>
                     </div>
 
                     <!-- Thanh tiến trình điểm 0 - 50 -->
@@ -117,7 +128,7 @@
     <section class="recommendations-card">
         <h2>💡 Lộ trình phát triển tiếp theo</h2>
         <p>
-            Dựa trên kết quả bài làm, hệ thống đã đồng bộ mục tiêu và đề xuất các bài học trọng tâm nhằm củng cố các kỹ năng còn yếu và bứt phá trình độ CEFR.
+            Điểm và CEFR ở đây là ước lượng học tập, không phải chứng chỉ. Practice và Full Mock không tự nâng trình độ. Bạn có thể xem mục tiêu và chặng học hiện tại trong lộ trình.
         </p>
         <div class="result-actions-bar">
             <a class="button button-primary" th:href="@{/student/learning-path}">

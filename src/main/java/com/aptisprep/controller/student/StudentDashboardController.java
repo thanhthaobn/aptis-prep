@@ -4,6 +4,7 @@ import com.aptisprep.service.contract.IntegrationModels.PathProgress;
 import com.aptisprep.service.learning.LearningPathService;
 import com.aptisprep.service.contract.ExamAttemptContract;
 import com.aptisprep.service.account.AccountProfileService;
+import com.aptisprep.service.account.LearningActivityService;
 import java.util.List;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.stereotype.Controller;
@@ -19,12 +20,14 @@ public class StudentDashboardController {
     private final LearningPathService learningPaths;
     private final ObjectProvider<ExamAttemptContract> attempts;
     private final AccountProfileService accounts;
+    private final LearningActivityService activity;
 
     public StudentDashboardController(LearningPathService learningPaths, ObjectProvider<ExamAttemptContract> attempts,
-            AccountProfileService accounts) {
+            AccountProfileService accounts, LearningActivityService activity) {
         this.learningPaths = learningPaths;
         this.attempts = attempts;
         this.accounts = accounts;
+        this.activity = activity;
     }
 
     @GetMapping("/dashboard")
@@ -40,6 +43,7 @@ public class StudentDashboardController {
         model.addAttribute("nextPath", nextPath);
         model.addAttribute("hasLearningContent", totalLessons > 0);
         model.addAttribute("account", accounts.snapshot(principal.getName()));
+        model.addAttribute("activity", activity.activity(principal.getName()));
         ExamAttemptContract attemptService=attempts.getIfAvailable();
         var latestResult=attemptService==null?null:attemptService.history(learningPaths.userId(principal.getName()),0,1).items().stream().findFirst().orElse(null);
         model.addAttribute("latestResult",latestResult);

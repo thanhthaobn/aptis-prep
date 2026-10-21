@@ -33,6 +33,8 @@ class FoundationPreviewTests {
     @Test void profileAndPlacementRenderWithoutWrites() throws Exception {
         mvc.perform(get("/student/profile").with(user("new@example.com").roles("STUDENT")))
             .andExpect(status().isOk()).andExpect(content().string(containsString("new@example.com")))
+            .andExpect(content().string(containsString("Chuỗi ngày học của bạn")))
+            .andExpect(content().string(containsString("activity-weeks")))
             .andExpect(content().string(containsString("name=\"_csrf\"")))
             .andExpect(content().string(not(containsString("Giao diện minh họa"))));
         mvc.perform(get("/student/placement").with(user("new@example.com").roles("STUDENT")))
