@@ -14,18 +14,33 @@
             <div><label for="level">CEFR</label><select id="level" name="level"><option value="">Tất cả</option><option th:each="v:${levels}" th:value="${v}" th:text="${v}" th:selected="${selectedLevel==v}"></option></select></div>
             <button class="button" type="submit">Tìm kiếm</button>
         </form>
-        <section class="study-card-grid lesson-catalog-grid" th:if="${!#lists.isEmpty(lessons)}">
-            <article class="dashboard-panel study-content-card lesson-catalog-card" th:each="lesson:${lessons}" th:attr="data-skill=${lesson.skill}">
-                <div class="lesson-card-topline"><span class="lesson-skill-badge"><span class="lesson-skill-icon" aria-hidden="true"></span><span th:text="${lesson.skill}"></span></span><span class="lesson-level" th:text="|CEFR ${lesson.cefrLevel}|"></span></div>
-                <div class="lesson-card-body">
-                    <p class="lesson-topic" th:if="${lesson.material!=null and !#strings.isEmpty(lesson.material.topic)}" th:text="${lesson.material.topic}"></p>
-                    <h2 th:text="${lesson.title}"></h2>
-                    <p class="lesson-description" th:if="${!#strings.isEmpty(lesson.description)}" th:text="${lesson.description}"></p>
-                    <p class="lesson-task-type" th:if="${lesson.material!=null and !#strings.isEmpty(lesson.material.taskType)}"><strong>Dạng bài:</strong> <span th:text="${lesson.material.taskType}"></span></p>
+        <section class="lesson-library-tree" th:if="${!#lists.isEmpty(lessons)}" aria-label="Cây bài học theo kỹ năng và cấp độ">
+            <p class="library-count" th:text="|${#lists.size(lessons)} bài học · Chọn kỹ năng và cấp độ để khám phá|"></p>
+            <details class="library-skill" th:each="branch,branchStat:${lessonTree}" th:attr="data-skill=${branch.skill},open=${branchStat.first or !#strings.isEmpty(selectedSkill)}">
+                <summary><span class="library-skill-name" th:text="${branch.skill}"></span><span class="library-count" th:text="|${branch.count} bài học|"></span></summary>
+                <div class="library-levels">
+                    <details class="library-level" th:each="tier,tierStat:${branch.levels}" th:attr="open=${tierStat.first or !#strings.isEmpty(selectedLevel)}">
+                        <summary><span class="library-level-badge" th:text="${tier.level}"></span><span>Cấp độ <span th:text="${tier.level}"></span></span><span class="library-count" th:text="|${tier.count} bài|"></span></summary>
+                        <div class="library-topics">
+                            <section class="library-topic" th:each="group:${tier.topics}">
+                                <header><span class="library-topic-kind" th:text="${group.independent?'TỰ HỌC':'CHỦ ĐỀ'}"></span><h3 th:text="${group.name}"></h3><span class="library-count" th:text="|${#lists.size(group.lessons)} bài|"></span></header>
+                                <ol class="library-lessons">
+                                    <li th:each="lesson,lessonStat:${group.lessons}">
+                                        <span class="library-lesson-number" th:text="${lessonStat.count}" aria-hidden="true"></span>
+                                        <div class="library-lesson-body">
+                                            <a class="library-lesson-title" th:href="@{/student/lessons/{id}(id=${lesson.id})}" th:text="${lesson.title}"></a>
+                                            <p th:if="${!#strings.isEmpty(lesson.description)}" th:text="${lesson.description}"></p>
+                                            <span class="library-task" th:if="${lesson.material!=null and !#strings.isEmpty(lesson.material.taskType)}" th:text="${lesson.material.taskType}"></span>
+                                            <a class="library-flashcards" th:if="${lessonSets.containsKey(lesson.id)}" th:href="@{/student/flashcards/{id}(id=${lessonSets.get(lesson.id).id()})}"><span class="library-flashcard-mark" aria-hidden="true">▣</span><span><strong th:text="${lessonSets.get(lesson.id).title()}"></strong><small th:text="|${lessonSets.get(lesson.id).count()} thẻ từ vựng · Ôn flashcard →|"></small></span></a>
+                                        </div>
+                                        <a class="button button-secondary button-small library-open" th:href="@{/student/lessons/{id}(id=${lesson.id})}">Học bài →</a>
+                                    </li>
+                                </ol>
+                            </section>
+                        </div>
+                    </details>
                 </div>
-                <a class="button button-secondary" th:href="@{/student/lessons/{id}(id=${lesson.id})}">Bắt đầu bài học →</a>
-                <a class="lesson-set-link" th:if="${lessonSets.containsKey(lesson.id)}" th:href="@{/student/flashcards/{id}(id=${lessonSets.get(lesson.id).id()})}"><span aria-hidden="true">▣</span><span><strong th:text="${lessonSets.get(lesson.id).title()}"></strong><small th:text="|${lessonSets.get(lesson.id).count()} thẻ · Ôn từ của bài này →|"></small></span></a>
-            </article>
+            </details>
         </section>
         <div class="empty-box" th:if="${#lists.isEmpty(lessons)}"><div th:replace="~{fragments/navi :: navi('empty', 'Navi đang chờ bài học mới')}"></div><h2>Không tìm thấy bài học phù hợp</h2><p>Thử bộ lọc khác hoặc quay lại sau khi có nội dung mới.</p></div>
     </main>
