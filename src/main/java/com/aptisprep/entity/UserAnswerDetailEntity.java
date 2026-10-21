@@ -32,6 +32,7 @@ public class UserAnswerDetailEntity {
     public Integer getUserPosition() { return userPosition; }
     public String getAnswerText() { return answerText; }
     public String getAudioPath() { return audioPath; }
+    public String getTranscript() { return transcript; }
     public String getGradingStatus() { return gradingStatus; }
     public BigDecimal getAutoScore() { return autoScore; }
     public void setUserAnswerId(Integer value) { userAnswerId = value; }

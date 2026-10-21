@@ -12,6 +12,8 @@ public class MockExamQuestionEntity {
     @Column(nullable = false) private int position;
     public MockExamQuestionEntity() {}
     public Integer getId() { return id; }
+    public Integer getMockExamId() { return mockExamId; }
+    public Integer getMockExamSectionId() { return mockExamSectionId; }
     public Integer getQuestionId() { return questionId; }
     public int getPosition() { return position; }
     public void setMockExamId(Integer v) { mockExamId = v; }
