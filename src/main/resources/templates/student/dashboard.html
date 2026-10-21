@@ -25,14 +25,15 @@
                 </section>
 
                 <!-- Thẻ học tiếp bài học gần nhất (Quick Continue) -->
-                <section class="dashboard-panel next-lesson-card mb-4" th:if="${nextPath != null and nextPath.nextLessonId() != null}">
+                <section class="dashboard-panel next-lesson-card mb-4" th:if="${recommendation != null}">
                     <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
                         <div>
-                            <span class="badge badge-secondary mb-1" th:text="${nextPath.skill()}"></span>
-                            <h2 class="m-0 section-title" th:text="${nextPath.nextLessonTitle()}">Tiếp tục bài học</h2>
-                            <p class="muted m-0 mt-1 supporting-text" th:text="|Tiến độ kỹ năng: ${nextPath.completedLessons()}/${nextPath.totalLessons()} bài (${nextPath.progressPercent() != null ? nextPath.progressPercent() : 0}%)|"></p>
+                            <span class="badge badge-secondary mb-1" th:text="${recommendation.skill()}"></span>
+                            <h2 class="m-0 section-title" th:text="${recommendation.title()}">Tiếp tục bài học</h2>
+                            <p class="muted m-0 mt-1 supporting-text" th:text="${recommendation.reason()}"></p>
+                            <p class="muted m-0 mt-1 supporting-text" th:if="${recommendation.path() != null}" th:text="|Tiến độ chặng: ${recommendation.path().completedLessons()}/${recommendation.path().totalLessons()} bài (${recommendation.path().progressPercent()}%)|"></p>
                         </div>
-                        <a class="button button-primary" th:href="@{/student/lessons/{id}(id=${nextPath.nextLessonId()})}">Học tiếp ngay →</a>
+                        <a class="button button-primary" th:href="@{/student/lessons/{id}(id=${recommendation.lessonId()})}">Học tiếp ngay →</a>
                     </div>
                 </section>
 

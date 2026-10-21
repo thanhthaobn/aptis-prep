@@ -30,11 +30,6 @@ public class StudentLearningPathController {
         model.addAttribute("paths", service.ensureAndSummaries(principal.getName()).stream()
                 .filter(path -> path.skill().equals(selected)).toList());
         model.addAttribute("stages",service.stages(principal.getName(),selected));
-        var published = lessons.publishedLessons().stream().filter(lesson -> lesson.getSkill().equals(selected)).toList();
-        model.addAttribute("lessons", published);
-        model.addAttribute("levels", LessonService.LEVELS);
-        model.addAttribute("curriculum",LessonService.LEVELS.stream().map(level -> new LessonService.LevelBranch(level,
-                published.stream().filter(lesson -> level.equals(lesson.getCefrLevel())).toList())).toList());
         return "student/learning/skill";
     }
     @PostMapping("/{pathId}/checkpoint/start")

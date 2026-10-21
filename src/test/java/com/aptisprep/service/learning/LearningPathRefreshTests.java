@@ -51,6 +51,30 @@ class LearningPathRefreshTests {
         assertThat(service.refreshPaths(user.getEmail())).isZero();
     }
 
+    @Test void openingPathReplacesArchivedAndWrongLevelAssignmentsWithoutLosingCompletion() {
+        var user=new User(); user.setFullName("Stale path learner"); user.setEmail("stale-path@test.local");
+        user.setPasswordHash("unused"); user.setRole(Role.STUDENT); user.setStatus(UserStatus.ACTIVE);
+        users.saveAndFlush(user);
+        var kept=lesson("Keep A1",921);
+        var archived=lesson("Archived A1",922);
+        var moved=lesson("Moved to A2",923);
+        service.ensurePaths(user.getId());
+        service.completeLesson(user.getId(),kept.getId());
+        var old=paths.findFirstByUserIdAndSkillAndStatusOrderByCreatedAtDesc(user.getId(),"Reading","ACTIVE").orElseThrow();
+        archived.setStatus("ARCHIVED"); lessons.saveAndFlush(archived);
+        moved.setCefrLevel("A2"); lessons.saveAndFlush(moved);
+
+        var summary=service.ensureAndSummaries(user.getEmail()).stream().filter(p->p.skill().equals("Reading")).findFirst().orElseThrow();
+
+        assertThat(old.getStatus()).isEqualTo("ARCHIVED");
+        assertThat(items.findByLearningPathIdOrderByPositionAsc(old.getId())).hasSize(3);
+        assertThat(summary.totalLessons()).isEqualTo(1);
+        assertThat(summary.completedLessons()).isEqualTo(1);
+        assertThat(service.stages(user.getEmail(),"Reading").getFirst().lessons())
+            .extracting(LearningPathService.StageLesson::id).containsExactly(kept.getId());
+        assertThat(progress.findByUserIdAndLessonId(user.getId(),kept.getId()).orElseThrow().getCompletedAt()).isNotNull();
+    }
+
     @Test void activeGoalCreatesGoalLinkedPathWithoutEmptyBranches() {
         var user = new User();
         user.setFullName("Goal learner"); user.setEmail("goal-path@test.local");

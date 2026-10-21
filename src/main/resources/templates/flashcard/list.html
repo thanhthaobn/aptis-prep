@@ -13,6 +13,12 @@
         </header>
         <div th:replace="~{fragments/messages :: messages}"></div>
 
+        <nav class="flashcard-source-filter" th:unless="${admin}" aria-label="Lọc nguồn bộ thẻ">
+            <a th:href="@{/student/flashcards(source='all')}" th:classappend="${selectedSource=='all'?'is-active':''}" th:attr="aria-current=${selectedSource=='all'?'page':null}">Tất cả <span th:text="${totalSets}"></span></a>
+            <a th:href="@{/student/flashcards(source='mine')}" th:classappend="${selectedSource=='mine'?'is-active':''}" th:attr="aria-current=${selectedSource=='mine'?'page':null}">Của tôi <span th:text="${mineCount}"></span></a>
+            <a th:href="@{/student/flashcards(source='lesson')}" th:classappend="${selectedSource=='lesson'?'is-active':''}" th:attr="aria-current=${selectedSource=='lesson'?'page':null}">Theo bài học <span th:text="${lessonCount}"></span></a>
+        </nav>
+
         <section class="flashcard-library-summary" th:unless="${#lists.isEmpty(sets)}">
             <div><span class="summary-icon" aria-hidden="true">▣</span><span><strong th:text="${#lists.size(sets)}">0</strong><small>Bộ thẻ đang có</small></span></div>
             <p>Chọn một bộ thẻ để bắt đầu ôn tập hoặc tạo bộ riêng theo nội dung bạn muốn ghi nhớ.</p>
@@ -37,7 +43,7 @@
                 </div>
             </article>
         </section>
-        <div class="empty-box" th:if="${#lists.isEmpty(sets)}"><div th:replace="~{fragments/navi :: navi('empty', 'Navi đang chờ bộ thẻ đầu tiên')}"></div><h2>Chưa có bộ thẻ</h2><p>Hãy tạo bộ thẻ đầu tiên từ những từ bạn muốn ghi nhớ.</p><a class="button" th:href="${admin?'/admin/flashcards/create':'/student/flashcards/create'}">Tạo bộ thẻ đầu tiên</a></div>
+        <div class="empty-box" th:if="${#lists.isEmpty(sets)}"><div th:replace="~{fragments/navi :: navi('empty', 'Navi đang chờ bộ thẻ đầu tiên')}"></div><h2 th:text="${!admin and selectedSource=='lesson'?'Chưa có bộ thẻ theo bài học':'Bạn chưa có bộ thẻ riêng'}"></h2><a class="button" th:href="${admin?'/admin/flashcards/create':'/student/flashcards/create'}">Tạo bộ thẻ</a></div>
     </main>
 </div>
 <div th:replace="~{fragments/footer :: footer}"></div>

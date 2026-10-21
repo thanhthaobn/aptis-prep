@@ -8,6 +8,24 @@
 .button-block { width: 100%; }
 .button svg { width: 18px; height: 18px; }
 
+/* Explicit icon sizes prevent inline SVGs from using their 300px default width. */
+.card-icon { display: grid; place-items: center; width: 48px; height: 48px; flex: 0 0 48px; margin-bottom: 1rem; border-radius: 12px; }
+.card-icon svg { width: 24px; height: 24px; }
+.card-link { display: inline-flex; align-items: center; gap: .4rem; margin-top: auto; font-size: .85rem; font-weight: 700; }
+.card-link svg { width: 16px; height: 16px; flex: 0 0 16px; }
+.landing-theme .card { min-width: 0; padding: 1.5rem; gap: .5rem; border-radius: var(--radius); }
+.landing-theme .hero > *, .landing-theme .journey-layout > *, .landing-theme .experience-grid > * { min-width: 0; }
+.landing-theme .preview-user > span:last-child { min-width: 0; overflow-wrap: anywhere; }
+.landing-theme .hero-visual { gap: 1rem; }
+.landing-theme .hero-visual .preview-card { margin-top: 0; }
+@media (max-width: 1100px) {
+    .landing-theme .hero { gap: 2rem; }
+    .landing-theme .journey-layout { gap: 2rem; }
+}
+@media (max-width: 900px) {
+    .landing-theme .journey-layout, .landing-theme .experience-grid { grid-template-columns: minmax(0,1fr); }
+}
+
 /* Badges & CEFR Standards */
 .badge { display: inline-flex; align-items: center; gap: .35rem; padding: .3rem .65rem; border-radius: 999px; background: var(--color-primary-soft); color: var(--color-primary-dark); font-size: .78rem; font-weight: 700; border: 1px solid transparent; }
 .badge::before { content: ""; width: 6px; height: 6px; background: currentColor; border-radius: 50%; }

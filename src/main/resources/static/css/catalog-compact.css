@@ -1,4 +1,19 @@
 /* Compact catalog cards; retain the established palette, rounded corners and shadows. */
+.flashcard-source-filter { display:flex; flex-wrap:wrap; gap:8px; margin:0 0 16px; }
+.flashcard-source-filter a { display:inline-flex; align-items:center; gap:8px; min-height:42px; padding:7px 14px; border:1px solid var(--color-border); border-radius:999px; background:#fff; color:var(--color-text-muted); font-size:.875rem; font-weight:650; text-decoration:none; }
+.flashcard-source-filter a.is-active { color:var(--color-primary-dark); border-color:var(--color-primary); background:var(--color-primary-soft); }
+.flashcard-source-filter a span { min-width:22px; padding:0 5px; border-radius:999px; text-align:center; background:var(--color-surface-soft); font-size:.75rem; }
+.flashcard-source-filter a:focus-visible { outline:3px solid var(--color-primary-focus); outline-offset:2px; }
+.skill-practice .lesson-response-form,.skill-practice #lesson-response-form { margin-top:20px; }
+.listening-player { position:static; padding:14px 16px; margin:12px 0 18px; border:1px solid var(--skill-border); border-radius:12px; background:var(--skill-tint,#fff); }
+.listening-player h3 { margin:0 0 8px; font-size:1rem; }
+.listening-player audio,.skill-practice #record-preview { display:block; width:100%; max-width:100%; }
+.listening-player small { display:block; margin-top:5px; color:var(--color-text-muted); font-size:.78rem; }
+.lesson-knowledge-check { margin-block:16px; }
+.method-review { padding-top:18px; margin-top:20px; border-top:1px solid var(--color-border); }
+.skill-practice .lesson-model { margin-block:16px; }
+.skill-practice .speaking-recorder { display:block; }
+.skill-practice .speaking-recorder .actions { margin-block:12px; }
 .orientation-page .explore-grid { gap: 12px; margin-top: 18px; }
 .orientation-page .explore-expression { gap: 12px; }
 .orientation-page .explore-card { padding: 16px 18px; gap: 7px; border-radius: 18px; }
@@ -25,6 +40,14 @@
 .lesson-set-link strong { font-size: .8rem; font-weight: 650; line-height: 1.4; }
 .lesson-set-link small { margin-top: 2px; font-size: .75rem; }
 .path-set-link { display: block; width: fit-content; margin-top: 3px; color: var(--color-primary-dark); font-size: .78rem; font-weight: 600; }
+.skill-branch .lesson-leaves { list-style: none; padding: 0; margin: 16px 0; }
+.skill-branch .lesson-leaves > li { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; padding: 16px 0; border-bottom: 1px solid var(--color-border); }
+.path-lesson-content { display: grid; gap: 4px; flex: 1 1 260px; min-width: 0; }
+.path-lesson-content > small { font-size: .75rem; }
+.path-lesson-title { font-size: .95rem; font-weight: 650; line-height: 1.5; overflow-wrap: anywhere; }
+.path-lesson-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.path-lesson-actions .path-set-link { margin: 0; padding: 6px 10px; border: 1px solid var(--skill-border,var(--color-border)); border-radius: 8px; background: var(--skill-tint,#f4faf8); text-decoration: none; }
+.path-lesson-actions .path-set-link:hover { border-color: var(--color-primary); }
 .skill-branch[data-skill] { border-left-color: var(--color-primary); }
 .compact-catalog .study-content-card { gap: 8px; padding: 14px; border-radius: 16px; }
 .compact-catalog .study-content-card h2 { font-size: 1.05rem; line-height: 1.4; }
@@ -53,6 +76,16 @@
 .flashcard-library-summary { padding: 12px 16px; gap: 12px; }
 .flashcard-library-summary p { font-size: .82rem; }
 .flashcard-library-summary .summary-icon { width: 34px; height: 34px; border-radius: 9px; }
+.stage-overview { margin: 12px 0; min-width: 0; }
+.stage-current { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }
+.stage-scale { display: grid; grid-template-columns: repeat(6,minmax(0,1fr)); list-style: none; padding: 4px; margin: 0 0 10px; gap: 4px; background: #f0f4f2; border: 1px solid #e1e9e5; border-radius: 14px; max-width: 560px; }
+.stage-scale li { display: flex; flex-direction: column; align-items: center; justify-content: center; min-width: 0; min-height: 52px; text-align: center; padding: 6px 2px; color: #64748b; border-radius: 10px; line-height: 1.25; }
+.stage-scale li.is-current { background: var(--color-primary); color: #fff; box-shadow: 0 2px 5px #09473826; }
+.stage-scale strong { font-size: .85rem; }
+.stage-scale small { display: block; margin-top: 2px; font-size: .62rem; line-height: 1.35; overflow-wrap: anywhere; }
+.stage-explanation { font-size: .85rem; line-height: 1.5; margin: 8px 0; }
+.stage-overview > small { display: block; font-size: .75rem; line-height: 1.4; }
+.skill-branch > header { display: flex; flex-wrap: wrap; gap: 10px; justify-content: space-between; }
 @media(min-width:1180px) {
     .lesson-catalog-grid { grid-template-columns: repeat(3,minmax(0,1fr)); }
     .flashcard-set-grid:has(.flashcard-set-card:nth-child(2)) .flashcard-set-card { grid-template-columns: 48px minmax(0,1fr); }
