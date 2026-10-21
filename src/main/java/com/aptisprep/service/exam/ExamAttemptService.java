@@ -83,6 +83,10 @@ public class ExamAttemptService implements ExamAttemptContract {
         // the first transaction has committed its attempt row.
         activeUserForUpdate(userId);
         MockExamEntity exam = publishedExam(examId);
+        if ("CHECKPOINT".equals(exam.getExamType())
+                && (requestKey == null || !requestKey.trim().startsWith("checkpoint:"))) {
+            throw new BusinessRuleException("Checkpoint chỉ được bắt đầu từ lộ trình học");
+        }
         List<MockExamQuestionEntity> links = examQuestions.findByMockExamIdOrderByPosition(examId);
         if (links.isEmpty()) throw new BusinessRuleException("Đề thi chưa có câu hỏi");
         String key = normalizeRequestKey(requestKey, userId, examId);
