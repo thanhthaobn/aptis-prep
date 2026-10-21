@@ -63,6 +63,18 @@ class LearningPathCheckpointTests {
         assertThat(profiles.findByUserIdAndSkill(user.getId(),"READING").orElseThrow().getCurrentLevel()).isEqualTo("B1");
     }
 
+    @Test void stagesAndPathPageSupportLessonsWithoutMaterial() throws Exception {
+        var user=learner("B1"); goal(user,"B2"); service.ensurePaths(user.getId());
+        var stage=service.stages(user.getEmail(),"Reading").getFirst();
+        assertThat(stage.lessons()).anySatisfy(lesson->{
+            assertThat(lesson.title()).isEqualTo("Checkpoint B2");
+            assertThat(lesson.topic()).isNull();
+            assertThat(lesson.available()).isTrue();
+        });
+        mvc.perform(get("/student/learning-path").with(user(user.getEmail()).roles("STUDENT")))
+            .andExpect(status().isOk());
+    }
+
     @Test void noAssessmentStartsAtFoundationAndOrientationCannotStartCheckpoint() {
         var user=learner(null); service.ensurePaths(user.getId()); var orientation=current(user);
         assertThat(orientation.getTargetLevel()).isNull();

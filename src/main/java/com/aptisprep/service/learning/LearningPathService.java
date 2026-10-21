@@ -63,7 +63,7 @@ public class LearningPathService implements LearningPathContract {
 
     public record Stage(Integer pathId,String skill,String fromLevel,String targetLevel,String goalLevel,
             String status,List<StageLesson> lessons) {}
-    public record StageLesson(Integer id,String title,String level,String status,boolean available) {}
+    public record StageLesson(Integer id,String title,String level,String status,boolean available,String topic) {}
 
     @Transactional(readOnly=true)
     public List<Stage> stages(String email,String skill) {
@@ -75,7 +75,8 @@ public class LearningPathService implements LearningPathContract {
             var path=owned(user.getId(),view.pathId());
             var assigned=items.findByLearningPathIdOrderByPositionAsc(path.getId()).stream()
                 .map(item->new StageLesson(item.getLesson().getId(),item.getLesson().getTitle(),
-                    item.getLesson().getCefrLevel(),item.getStatus(),"PUBLISHED".equals(item.getLesson().getStatus()))).toList();
+                    item.getLesson().getCefrLevel(),item.getStatus(),"PUBLISHED".equals(item.getLesson().getStatus()),
+                    item.getLesson().getMaterial()==null?null:item.getLesson().getMaterial().getTopic())).toList();
             return new Stage(path.getId(),path.getSkill(),path.getFromLevel(),path.getTargetLevel(),
                 targets.get(path.getGoalSkillId()),path.getStatus(),assigned);
         }).toList();
@@ -184,9 +185,13 @@ public class LearningPathService implements LearningPathContract {
             boolean same=current!=null&&Objects.equals(current.getGoalSkillId(),desired.goalSkillId())
                 &&Objects.equals(current.getFromLevel(),desired.fromLevel())
                 &&Objects.equals(current.getTargetLevel(),desired.targetLevel());
-            var assigned=current==null?List.<Integer>of():items.findByLearningPathIdOrderByPositionAsc(current.getId())
-                .stream().map(item->item.getLesson().getId()).toList();
-            if(same&&(!refreshContent||assigned.equals(selected.stream().map(Lesson::getId).toList()))) continue;
+            var assignedItems=current==null?List.<LearningPathItem>of():items.findByLearningPathIdOrderByPositionAsc(current.getId());
+            var assigned=assignedItems.stream().map(item->item.getLesson().getId()).toList();
+            boolean invalidAssignment=assignedItems.stream().anyMatch(item->
+                !"PUBLISHED".equals(item.getLesson().getStatus())
+                ||!skill.equals(item.getLesson().getSkill())
+                ||!Objects.equals(contentLevel,item.getLesson().getCefrLevel()));
+            if(same&&!invalidAssignment&&(!refreshContent||assigned.equals(selected.stream().map(Lesson::getId).toList()))) continue;
             if(current!=null) { archive(current); changed++; }
             if(!selected.isEmpty()) { createPath(user,desired); if(current==null) changed++; }
         }

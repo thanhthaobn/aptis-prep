@@ -24,6 +24,35 @@ import static org.springframework.security.test.web.servlet.request.SecurityMock
 @TestExecutionListeners({DependencyInjectionTestExecutionListener.class,TransactionalTestExecutionListener.class})
 class StructuredLessonTests {
  @Autowired LessonService lessons; @Autowired LessonTeachingService teaching; @Autowired UserRepository users; @Autowired MockMvc mvc;
+ @Test void pathsShowStageScaleOncePerSkillWithoutDuplicatedCatalog() throws Exception {
+  var u=learner("stage-scale@test.local");create("Reading");
+  String overview=mvc.perform(get("/student/learning-path").with(user(u.getEmail()).roles("STUDENT")))
+    .andExpect(status().isOk()).andReturn().getResponse().getContentAsString(java.nio.charset.StandardCharsets.UTF_8);
+  assertThat(overview).contains("Chặng A1 · Làm quen","aria-current=\"step\"","Thang chặng CEFR")
+    .doesNotContain("Xem chặng học");
+  String detail=mvc.perform(get("/student/learning-path/Reading").with(user(u.getEmail()).roles("STUDENT")))
+    .andExpect(status().isOk()).andReturn().getResponse().getContentAsString(java.nio.charset.StandardCharsets.UTF_8);
+  assertThat(detail).contains("Bài học được giao trong chặng","Reading lesson")
+   .doesNotContain("Các bài A1 giúp bạn làm quen","Thang cấp độ không phải điểm đã đạt")
+    .doesNotContain("Trình độ khi bắt đầu","Cấp độ cần xác nhận","Mục tiêu cuối","Thư viện toàn bộ cấp độ để tự ôn");
+ }
+ @Test void practiceWorkspacesMatchTheSkillAndListeningKeepsAudioWithQuestions() throws Exception {
+  var u=learner("practice-layout@test.local");
+  for(String skill:LessonService.SKILLS){
+   var lesson=create(skill);if(skill.equals("Listening")){lesson.setAudioPath("curriculum/audio/listening-a2.wav");lesson.setAudioName("Bài nghe.wav");}
+   String html=mvc.perform(get("/student/lessons/"+lesson.getId()).with(user(u.getEmail()).roles("STUDENT")))
+     .andExpect(status().isOk()).andReturn().getResponse().getContentAsString(java.nio.charset.StandardCharsets.UTF_8);
+   assertThat(html).doesNotContain("Kết quả không quy đổi CEFR.");
+   if(skill.equals("Writing")||skill.equals("Speaking"))assertThat(html.substring(html.indexOf("id=\"practice\""))).doesNotContain("class=\"lesson-question\"");
+   if(!skill.equals("Reading"))assertThat(html).doesNotContain("Câu hỏi đọc hiểu");
+   switch(skill){
+    case "Writing" -> assertThat(html).contains("Thực hành viết","Bài viết của bạn","Ôn phương pháp viết").doesNotContain("id=\"speaking-recorder\"");
+    case "Speaking" -> {assertThat(html).contains("Thực hành nói","Ôn phương pháp nói");assertThat(html.indexOf("id=\"speaking-recorder\"")).isLessThan(html.indexOf("id=\"lesson-response-form\""));}
+    case "Listening" -> {assertThat(html).contains("Câu hỏi nghe hiểu");assertThat(html.indexOf("id=\"practice\"")).isLessThan(html.indexOf("id=\"lesson-audio\""));assertThat(html.indexOf("id=\"lesson-audio\"")).isLessThan(html.indexOf("Câu hỏi nghe hiểu"));}
+    default -> {}
+   }
+  }
+ }
  private User learner(String email){var u=new User();u.setEmail(email);u.setFullName("Learner");u.setRole(Role.STUDENT);u.setStatus(UserStatus.ACTIVE);u.setPasswordHash("unused");return users.saveAndFlush(u);}
  private Lesson create(String skill){var f=lessons.newForm(skill,"A1");f.setTitle(skill+" lesson");f.setTopic("Everyday life");f.setStatus("PUBLISHED");f.setObjectives("Learn strategies");f.setStrategy("Step one");f.setExampleText("Example");f.setAnalysis("Analysis");f.setPracticePrompt("Try writing");f.setSampleResponse("Model");f.setVideoUrl("https://youtu.be/yiwhUC4S5_o");f.setSourceUrl("https://www.britishcouncil.org/");var q=new LessonForm.CheckForm();q.setPrompt("Choose the correct strategy");q.setOptionA("First");q.setOptionB("Second");q.setOptionC("Third");q.setCorrectOption(1);q.setExplanation("PRIVATE_EXPLANATION");f.getChecks().add(q);return lessons.save(null,f);}
  @Test void allSkillViewsAndEditorRenderWithoutDisclosingKeys() throws Exception {var u=learner("structured@test.local");for(String skill:LessonService.SKILLS){var l=create(skill);mvc.perform(get("/student/lessons/"+l.getId()).with(user(u.getEmail()).roles("STUDENT"))).andExpect(status().isOk()).andExpect(content().string(containsString("youtube-nocookie.com/embed/yiwhUC4S5_o"))).andExpect(content().string(not(containsString("PRIVATE_EXPLANATION"))));mvc.perform(get("/admin/lessons/"+l.getId()+"/edit").with(user("admin").roles("ADMIN"))).andExpect(status().isOk());mvc.perform(get("/student/learning-path/"+skill).with(user(u.getEmail()).roles("STUDENT"))).andExpect(status().isOk()).andExpect(content().string(containsString("Everyday life")));}mvc.perform(get("/admin/lessons").with(user("admin").roles("ADMIN"))).andExpect(status().isOk());}

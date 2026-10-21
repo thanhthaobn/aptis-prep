@@ -9,7 +9,15 @@ import org.springframework.web.bind.annotation.*;
 @Controller @RequestMapping("/student/flashcards")
 public class StudentFlashcardController {
  private final FlashcardSetService service;public StudentFlashcardController(FlashcardSetService s){service=s;}
- @GetMapping public String list(Principal p,Model m){m.addAttribute("sets",service.listForStudent(p.getName()));m.addAttribute("admin",false);return "flashcard/list";}
+ @GetMapping public String list(@RequestParam(defaultValue="all") String source,Principal p,Model m){
+  if(!java.util.List.of("all","mine","lesson").contains(source))throw new com.aptisprep.exception.BusinessRuleException("Bộ lọc bộ thẻ không hợp lệ");
+  var all=service.listForStudent(p.getName());
+  m.addAttribute("sets",all.stream().filter(set->"all".equals(source)||("mine".equals(source)?set.personal():!set.personal()&&set.lessonId()!=null)).toList());
+  m.addAttribute("selectedSource",source);m.addAttribute("totalSets",all.size());
+  m.addAttribute("mineCount",all.stream().filter(FlashcardSetService.SetView::personal).count());
+  m.addAttribute("lessonCount",all.stream().filter(set->!set.personal()&&set.lessonId()!=null).count());
+  m.addAttribute("admin",false);return "flashcard/list";
+ }
  @GetMapping("/create") public String create(Model m){var f=new com.aptisprep.dto.form.FlashcardSetForm();f.getRows().add(new com.aptisprep.dto.form.FlashcardSetForm.Row());return form(m,f,null);}
  @GetMapping("/{id}/edit") public String edit(@PathVariable Integer id,Principal p,Model m){return form(m,service.personalForm(id,p.getName()),id);}
  @PostMapping public String create(@jakarta.validation.Valid @ModelAttribute("form") com.aptisprep.dto.form.FlashcardSetForm f,org.springframework.validation.BindingResult b,Principal p,Model m){return save(null,f,b,p,m);}

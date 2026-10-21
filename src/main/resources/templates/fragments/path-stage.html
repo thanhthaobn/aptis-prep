@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<body>
+<section th:fragment="stageScale(skill)" class="stage-overview" th:each="stage : ${stages}" th:if="${stage.skill == skill}"
+         th:with="current=${stage.targetLevel != null ? stage.targetLevel : 'A1'}" aria-label="Vị trí chặng học">
+    <p class="stage-current"><strong th:text="|Chặng ${current}${stage.targetLevel == null ? ' · Làm quen' : ''}|">Chặng A1</strong>
+        <span class="badge" th:text="${stage.status == 'COMPLETED' ? 'Đã hoàn tất' : 'Đang học'}"></span></p>
+    <ol class="stage-scale" aria-label="Thang chặng CEFR">
+        <li th:each="level : ${ {'A1','A2','B1','B2','C1','C2'} }"
+            th:classappend="${level == current ? ' is-current' : ''}"
+            th:attr="aria-current=${level == current ? 'step' : null}">
+            <strong th:text="${level}"></strong>
+            <small th:if="${level == current}">Hiện tại</small>
+            <small th:if="${level == stage.goalLevel}">Mục tiêu</small>
+        </li>
+    </ol>
+    <p class="muted stage-explanation" th:if="${stage.targetLevel != null}" th:text="|Các bài ${current} thuộc kỹ năng ${stage.skill} được giao để học và kiểm tra cấp độ kế tiếp${stage.fromLevel != null ? ' sau mức đã đánh giá ' + stage.fromLevel : ', bắt đầu từ A1 khi chưa có đánh giá'}${stage.goalLevel != null ? ', hướng tới mục tiêu ' + stage.goalLevel : ''}.|"></p>
+</section>
+</body>
+</html>

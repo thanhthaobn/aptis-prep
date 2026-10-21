@@ -1,0 +1,12 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org"><body>
+<div th:fragment="lessonChecks(heading)" class="lesson-knowledge-check" th:if="${!#lists.isEmpty(questions)}">
+    <h3 th:text="|${heading} (${#lists.size(questions)} câu)|"></h3><p>Chọn đáp án rồi nộp để xem giải thích.</p>
+    <form method="post" th:action="@{/student/lessons/{id}/check(id=${lesson.id})}">
+        <fieldset class="lesson-question" th:each="question,stat:${questions}"><legend th:text="|${stat.count}. ${question.prompt()}|"></legend><label th:each="option,opt:${question.options()}"><input type="radio" th:name="|q${question.id()}|" th:value="${opt.index}" required><span th:text="${option}"></span></label></fieldset>
+        <button class="button" type="submit">Kiểm tra đáp án</button>
+    </form>
+    <div th:if="${feedback}" class="lesson-feedback" role="status"><h3 th:text="|Kết quả: ${feedback.score()}/${feedback.total()} câu đúng|"></h3><article th:each="answer:${feedback.answers()}"><strong th:text="${answer.right()?'Đúng':'Chưa đúng'}"></strong><p th:text="${answer.prompt()}"></p><p th:text="|Bạn chọn: ${answer.selected()}|"></p><p th:text="|Đáp án: ${answer.correct()}|"></p><p th:text="${answer.explanation()}"></p></article></div>
+    <details class="lesson-attempts" th:if="${!#lists.isEmpty(attempts)}"><summary th:text="|Lịch sử làm bài (${#lists.size(attempts)} lần)|"></summary><ol><li th:each="attempt:${attempts}" th:text="|${#temporals.format(attempt.submittedAt(),'dd/MM/yyyy HH:mm')} — ${attempt.score()}/${attempt.total()} câu đúng|"></li></ol></details>
+</div>
+</body></html>

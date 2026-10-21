@@ -24,6 +24,20 @@ class FlashcardFlowTests {
  @Autowired FlashcardSetService service; @Autowired UserRepository users; @Autowired LessonRepository lessons;
  @Autowired UserFlashcardProgressRepository progress; @Autowired MockMvc mvc;
  @Autowired FlashcardSetRepository sets;
+ @Test void sourceFilterSeparatesMySetsFromLessonSetsAndHidesOtherOwners() throws Exception {
+  var owner=learner("filter-owner@test.local");var other=learner("filter-other@test.local");create();
+  var f=new FlashcardSetForm();f.setTitle("My private vocabulary");var row=new FlashcardSetForm.Row();row.setTerm("study");row.setDefinition("học");f.getRows().add(row);
+  service.savePersonal(null,f,owner.getEmail());f.setTitle("Other owner's private vocabulary");service.savePersonal(null,f,other.getEmail());
+  var auth=user(owner.getEmail()).roles("STUDENT");
+  mvc.perform(get("/student/flashcards").param("source","mine").with(auth)).andExpect(status().isOk())
+    .andExpect(content().string(org.hamcrest.Matchers.containsString("My private vocabulary")))
+    .andExpect(content().string(org.hamcrest.Matchers.not(org.hamcrest.Matchers.containsString("Daily routines"))))
+    .andExpect(content().string(org.hamcrest.Matchers.not(org.hamcrest.Matchers.containsString("Other owner"))));
+  mvc.perform(get("/student/flashcards").param("source","lesson").with(auth)).andExpect(status().isOk())
+    .andExpect(content().string(org.hamcrest.Matchers.containsString("Daily routines")))
+    .andExpect(content().string(org.hamcrest.Matchers.not(org.hamcrest.Matchers.containsString("My private vocabulary"))));
+  mvc.perform(get("/student/flashcards").param("source","invalid").with(auth)).andExpect(status().isBadRequest());
+ }
  @Test void lessonAndFlashcardCatalogsLinkInBothDirections() throws Exception {
   var student=learner("linked-catalog@test.local");var id=create();var set=sets.findById(id).orElseThrow();var lessonId=set.getLesson().getId();
   var auth=user(student.getEmail()).roles("STUDENT");

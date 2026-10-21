@@ -32,7 +32,7 @@ class SecurityFlowTests {
     @BeforeEach
     void seedRealStudents() {
         saveAdminIfMissing();
-        saveIfMissing("Demo Student", "student@aptis.local", UserStatus.ACTIVE);
+        saveIfMissing("Test Student", "student@aptis.local", UserStatus.ACTIVE);
         saveIfMissing("Nguyễn Minh Anh", "minhanh@example.com", UserStatus.ACTIVE);
         saveIfMissing("Trần Hoàng Nam", "hoangnam@example.com", UserStatus.LOCKED);
         saveIfMissing("Lê Thu Hà", "thuha@example.com", UserStatus.ACTIVE);

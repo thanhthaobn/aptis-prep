@@ -12,7 +12,6 @@
             <div>
                 <p class="eyebrow">LỘ TRÌNH KỸ NĂNG</p>
                 <h1 th:text="${selectedSkill}"></h1>
-                <p>Tiến độ tính trên bài được giao trong chặng. Thư viện bên dưới dành cho tự ôn, không tự nâng CEFR hoặc thay đổi tổng bài của chặng.</p>
             </div>
             <div class="page-actions">
                 <form method="post" th:action="@{/student/learning-path/refresh}">
@@ -31,50 +30,28 @@
 
         <section class="curriculum-tree" aria-label="Kỹ năng, cấp độ và bài học">
             <p th:if="${#lists.isEmpty(paths)}" class="empty-box">Chưa có chặng phù hợp hoặc mục tiêu hiện tại đã đạt. Bạn vẫn có thể ôn bài trong thư viện.</p>
-            <a class="button button-secondary" th:href="@{/student/lessons(skill=${selectedSkill})}">Mở thư viện bài học</a>
-            <details class="dashboard-panel skill-branch" th:each="path : ${paths}" open th:attr="data-skill=${path.skill()}">
-                <summary>
+            <a class="button button-secondary" th:href="@{/student/lessons(skill=${selectedSkill})}">Xem tất cả bài học của kỹ năng</a>
+            <article class="dashboard-panel skill-branch" th:each="path : ${paths}" th:attr="data-skill=${path.skill()}">
+                <header>
                     <strong th:text="${path.skill()}"></strong>
                     <span th:text="${path.totalLessons() == 0 ? 'Chưa có bài học' : path.completedLessons() + '/' + path.totalLessons() + ' bài · ' + path.progressPercent() + '%'}"></span>
-                </summary>
+                </header>
+                <div th:replace="~{fragments/path-stage :: stageScale(${path.skill()})}"></div>
                 <div th:each="stage : ${stages}" th:if="${stage.pathId == path.pathId}">
                     <h2>Bài học được giao trong chặng</h2>
-                    <dl class="study-facts">
-                        <div><dt>Trình độ khi bắt đầu</dt><dd th:text="${stage.fromLevel == null ? 'Chưa đánh giá' : stage.fromLevel}"></dd></div>
-                        <div><dt>Cấp độ cần xác nhận</dt><dd th:text="${stage.targetLevel == null ? 'Định hướng, chưa đặt mức kiểm tra' : stage.targetLevel}"></dd></div>
-                        <div><dt>Mục tiêu cuối</dt><dd th:text="${stage.goalLevel == null ? 'Chưa đặt mục tiêu' : stage.goalLevel}"></dd></div>
-                    </dl>
                     <ol class="lesson-leaves"><li th:each="lesson : ${stage.lessons}">
-                        <a th:if="${lesson.available}" th:href="@{/student/lessons/{id}(id=${lesson.id})}" th:text="${lesson.title}"></a>
+                        <div class="path-lesson-content">
+                        <small class="muted" th:if="${lesson.topic != null}" th:text="${lesson.topic}"></small>
+                        <a class="path-lesson-title" th:if="${lesson.available}" th:href="@{/student/lessons/{id}(id=${lesson.id})}" th:text="${lesson.title}"></a>
                         <span th:unless="${lesson.available}" th:text="|${lesson.title} · Nội dung đang được cập nhật|"></span>
+                        </div>
+                        <div class="path-lesson-actions">
                         <span th:if="${lesson.status == 'COMPLETED'}" class="badge badge-success">Đã hoàn thành</span>
+                        <a class="path-set-link" th:if="${lesson.available and lessonSets.containsKey(lesson.id)}" th:href="@{/student/flashcards/{id}(id=${lessonSets.get(lesson.id).id()})}" th:text="|Ôn ${lessonSets.get(lesson.id).count()} thẻ từ vựng →|"></a>
+                        </div>
                     </li></ol>
                 </div>
 
-                <details class="dashboard-section"><summary>Thư viện toàn bộ cấp độ để tự ôn</summary>
-                <p class="muted">Các bài ngoài chặng không được cộng vào tổng bài của chặng hiện tại.</p>
-
-                <details class="level-branch" th:each="level : ${curriculum}" open>
-                    <summary>
-                        <strong class="badge" th:attr="data-cefr=${level.level()}" th:text="${level.level()}"></strong>
-                        <span>Xem danh sách bài</span>
-                    </summary>
-                    <p class="muted" th:if="${#lists.isEmpty(level.lessons())}">Chưa có bài học ở cấp độ này.</p>
-                    <details class="topic-branch" th:each="topic : ${level.topics()}" open>
-                        <summary>
-                            <span th:text="${topic.key}"></span>
-                            <small th:text="|${#lists.size(topic.value)} bài|"></small>
-                        </summary>
-                        <ul class="lesson-leaves">
-                            <li th:each="lesson : ${topic.value}">
-                                <a th:href="@{/student/lessons/{id}(id=${lesson.id})}" th:text="${lesson.title}"></a>
-                                <a class="path-set-link" th:if="${lessonSets.containsKey(lesson.id)}" th:href="@{/student/flashcards/{id}(id=${lessonSets.get(lesson.id).id()})}" th:text="|▣ ${lessonSets.get(lesson.id).count()} thẻ từ vựng →|"></a>
-                            </li>
-                        </ul>
-                    </details>
-                </details>
-
-                </details>
                 <!-- Khu vực Bài kiểm tra cuối chặng -->
                 <div class="dashboard-section final-test-section">
                     <h3>Bài kiểm tra cuối chặng</h3>
@@ -84,7 +61,10 @@
                     <div th:if="${path.checkpointState() == 'passed'}" class="alert alert-success ap-alert ap-alert-success" role="status">
                         Bạn đã vượt qua bài kiểm tra cuối chặng của kỹ năng này.
                     </div>
-                    <p th:if="${path.checkpointState == 'not_configured'}">Chưa có checkpoint phù hợp. Hãy đặt mục tiêu, làm Placement hoặc chờ đề được công bố.</p>
+                    <th:block th:if="${path.checkpointState == 'not_configured'}">
+                        <p th:if="${path.pathSource == 'ORIENTATION'}">Đặt mục tiêu hoặc làm kiểm tra đầu vào để mở chặng có bài kiểm tra cuối chặng.</p>
+                        <p th:unless="${path.pathSource == 'ORIENTATION'}">Chưa có đề kiểm tra phù hợp với kỹ năng và cấp độ của chặng. Quản trị viên cần cấu hình và công bố đề.</p>
+                    </th:block>
                     <p th:if="${path.checkpointState == 'grading'}">Bài đã nộp và đang chờ chấm hoặc xác nhận kết quả. Không cần tạo lượt mới.</p>
                     <p th:if="${path.checkpointState == 'failed'}">Chưa đạt cấp độ của chặng. Trình độ và các bài đã hoàn thành được giữ lại.</p>
                     <p th:if="${path.checkpointState == 'error'}">Chấm chưa thành công. Mở lịch sử kết quả để thử lại phần lỗi trên bài đã lưu.</p>
@@ -94,7 +74,7 @@
                         <button class="button" type="submit" th:text="${path.checkpointState == 'in_progress' ? 'Tiếp tục bài đang làm' : path.checkpointState == 'grading' ? 'Xem trạng thái chấm' : path.checkpointState == 'failed' ? 'Làm lại kiểm tra cuối chặng' : 'Bắt đầu bài kiểm tra cuối chặng'}"></button>
                     </form>
                 </div>
-            </details>
+            </article>
         </section>
     </main>
 </div>
