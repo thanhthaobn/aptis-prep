@@ -80,7 +80,10 @@ public class ExamAttemptService implements ExamAttemptContract {
     @Override
     @Transactional
     public AttemptHandle start(Integer userId, Integer examId, String requestKey) {
-        activeUser(userId);
+        // Lock the user row for the whole transaction. A JVM lock is not enough here:
+        // another request can enter after the first synchronized block exits but before
+        // the first transaction has committed its attempt row.
+        activeUserForUpdate(userId);
         MockExamEntity exam = publishedExam(examId);
         List<MockExamQuestionEntity> links = examQuestions.findByMockExamIdOrderByPosition(examId);
         if (links.isEmpty()) throw new BusinessRuleException("Đề thi chưa có câu hỏi");
@@ -502,6 +505,7 @@ public class ExamAttemptService implements ExamAttemptContract {
     private MockExamEntity publishedExam(Integer id) { return exams.findById(id).filter(x -> "PUBLISHED".equals(x.getStatus())).orElseThrow(() -> new ResourceNotFoundException("Đề thi chưa được công bố")); }
     private MockExamEntity examFor(ExamAttemptEntity attempt) { return exams.findById(attempt.getMockExamId()).orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy đề thi")); }
     private User activeUser(Integer id) { User user = users.findById(id).orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy tài khoản")); if (user.getRole() != Role.STUDENT || user.getStatus() != UserStatus.ACTIVE) throw new AccessDeniedException("Tài khoản không còn hoạt động"); return user; }
+    private User activeUserForUpdate(Integer id) { User user = users.findByIdForUpdate(id).orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy tài khoản")); if (user.getRole() != Role.STUDENT || user.getStatus() != UserStatus.ACTIVE) throw new AccessDeniedException("Tài khoản không còn hoạt động"); return user; }
     private User requireAdmin(String email) {
         User user = users.findByEmailIgnoreCase(email).orElseThrow(() -> new AccessDeniedException("Không có quyền quản trị"));
         if (user.getRole() != Role.ADMIN || user.getStatus() != UserStatus.ACTIVE) throw new AccessDeniedException("Không có quyền quản trị");
