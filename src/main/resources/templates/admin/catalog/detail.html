@@ -3,9 +3,9 @@
 <head th:replace="~{fragments/head :: head(${catalog.title})}"></head>
 <body class="admin-theme">
 <div th:replace="~{fragments/navbar :: navbar}"></div>
-<div class="container app-shell">
+<div class="container ap-container app-shell">
     <div th:replace="~{fragments/admin-sidebar :: adminSidebar(${catalog.key})}"></div>
-    <main class="app-main admin-catalog">
+    <main id="main-content" tabindex="-1" class="app-main admin-catalog">
         <div th:replace="~{fragments/breadcrumb :: breadcrumb(${catalog.title}, @{${catalog.baseUrl()}}, 'Chi tiết')}"></div>
         <header class="page-header"><div><p class="eyebrow" th:text="${catalog.title}"></p><h1 th:text="${entry.title}"></h1><p th:if="${catalog.key == 'results'}" th:text="${entry.subtitle}"></p></div><div class="page-actions"><a th:if="${catalog.editable()}" class="button" th:href="@{${catalog.baseUrl() + '/' + entry.id + '/edit'}}">Chỉnh sửa</a><a class="button button-secondary" th:href="@{${catalog.baseUrl()}}">Về danh sách</a></div></header>
         <section class="dashboard-panel"><div class="panel-heading"><h2>Thông tin chung</h2><span class="badge" th:text="${entry.statusLabel}"></span></div><dl class="catalog-facts"><div><dt>Kỹ năng</dt><dd th:text="${entry.skill}"></dd></div><div><dt th:text="${catalog.key == 'results' ? 'CEFR ước lượng' : 'Cấp độ'}"></dt><dd th:text="${entry.level}"></dd></div><div><dt th:text="${catalog.typeLabel}"></dt><dd th:text="${entry.kind}"></dd></div><div th:each="fact : ${entry.facts}"><dt th:text="${fact.label}"></dt><dd th:text="${fact.value}"></dd></div></dl></section>
@@ -14,7 +14,7 @@
         <section class="dashboard-section" th:if="${catalog.key == 'lessons'}">
             <div class="section-title-row"><h2 th:text="${entry.kind == 'Flashcard' ? 'Bộ Flashcard' : 'Nội dung bài học'}"></h2></div>
             <div class="catalog-content-list"><article class="dashboard-panel" th:each="row : ${entry.rows}"><span class="badge" th:text="${row.value}"></span><h3 th:text="${row.title}"></h3><p class="muted" th:text="${row.description}"></p></article></div>
-            <div class="empty-box" th:if="${#lists.isEmpty(entry.rows)}"><h2>Chưa có nội dung bài học</h2></div>
+            <div class="empty-box" th:if="${#lists.isEmpty(entry.rows)}"><div th:replace="~{fragments/navi :: navi('empty', 'Navi đang chờ nội dung bài học')}"></div><h2>Chưa có nội dung bài học</h2></div>
             <article class="dashboard-panel dashboard-section"><h2>Tài nguyên học tập</h2><p class="muted">Chưa có video hoặc tài liệu đính kèm.</p></article>
         </section>
 

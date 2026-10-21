@@ -5,6 +5,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.test.web.servlet.MockMvc;
+import com.aptisprep.entity.User;
+import com.aptisprep.enums.Role;
+import com.aptisprep.enums.UserStatus;
+import com.aptisprep.repository.UserRepository;
+import org.junit.jupiter.api.BeforeEach;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -15,11 +20,14 @@ import static org.hamcrest.Matchers.not;
 @AutoConfigureMockMvc
 class AdminCatalogPreviewTests {
     @Autowired MockMvc mvc;
+    @Autowired UserRepository users;
+
+    @BeforeEach void seedAdmin(){if(users.findByEmailIgnoreCase("admin@aptis.local").isEmpty()){User value=new User();value.setFullName("Test Admin");value.setEmail("admin@aptis.local");value.setPasswordHash("test");value.setRole(Role.ADMIN);value.setStatus(UserStatus.ACTIVE);users.save(value);}}
 
     @Test
     void allCatalogPagesAndFormsRenderForAdmin() throws Exception {
-        String[] modules = {"questions", "exams", "results"};
-        int[] ids = {3001, 4001, 5001};
+        String[] modules = {"questions", "exams"};
+        int[] ids = {3001, 4001};
         for (int i = 0; i < modules.length; i++) {
             String base = "/admin/" + modules[i];
             mvc.perform(get(base).with(user("admin@aptis.local").roles("ADMIN")))
@@ -35,6 +43,8 @@ class AdminCatalogPreviewTests {
                 }
             }
         }
+        mvc.perform(get("/admin/results").with(user("admin@aptis.local").roles("ADMIN")))
+                .andExpect(status().isOk()).andExpect(view().name("admin/result/list"));
     }
 
     @Test
@@ -44,7 +54,7 @@ class AdminCatalogPreviewTests {
                 .andExpect(status().isOk()).andExpect(content().string(containsString("Viết thư cho câu lạc bộ")))
                 .andExpect(content().string(not(containsString("Chọn từ phù hợp trong câu"))));
         mvc.perform(get("/admin/results").param("q", "minh anh").with(user("admin@aptis.local").roles("ADMIN")))
-                .andExpect(status().isOk()).andExpect(content().string(containsString("Nguyễn Minh Anh")));
+                .andExpect(status().isOk()).andExpect(content().string(containsString("Không có kết quả phù hợp")));
     }
 
     @Test

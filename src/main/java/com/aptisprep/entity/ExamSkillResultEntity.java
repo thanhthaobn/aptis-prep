@@ -16,6 +16,9 @@ public class ExamSkillResultEntity {
     @Column(name = "scale_score", precision = 5, scale = 2) private BigDecimal scaleScore;
     @Column(name = "cefr_level", length = 10) private String cefrLevel;
     @Column(name = "grading_method", length = 30) private String gradingMethod;
+    @Column(name = "grading_status", length = 30) private String gradingStatus;
+    @Column(name = "objective_raw_score", precision = 6, scale = 2) private BigDecimal objectiveRawScore;
+    @Column(name = "subjective_raw_score", precision = 6, scale = 2) private BigDecimal subjectiveRawScore;
     @Column(name = "created_at", nullable = false) private LocalDateTime createdAt;
     @PrePersist void onCreate() { if (createdAt == null) createdAt = LocalDateTime.now(); }
     public Integer getId() { return id; }
@@ -27,6 +30,9 @@ public class ExamSkillResultEntity {
     public BigDecimal getScaleScore() { return scaleScore; }
     public String getCefrLevel() { return cefrLevel; }
     public String getGradingMethod() { return gradingMethod; }
+    public String getGradingStatus() { return gradingStatus; }
+    public BigDecimal getObjectiveRawScore() { return objectiveRawScore; }
+    public BigDecimal getSubjectiveRawScore() { return subjectiveRawScore; }
     public void setAttemptId(Integer value) { attemptId = value; }
     public void setSkill(String value) { skill = value; }
     public void setCorrectCount(Integer value) { correctCount = value; }
@@ -35,4 +41,7 @@ public class ExamSkillResultEntity {
     public void setScaleScore(BigDecimal value) { scaleScore = value; }
     public void setCefrLevel(String value) { cefrLevel = value; }
     public void setGradingMethod(String value) { gradingMethod = value; }
+    public void setGradingStatus(String value) { gradingStatus = value; }
+    public void setObjectiveRawScore(BigDecimal value) { objectiveRawScore = value; }
+    public void setSubjectiveRawScore(BigDecimal value) { subjectiveRawScore = value; }
 }

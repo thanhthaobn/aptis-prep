@@ -18,6 +18,7 @@ import com.aptisprep.service.contract.IntegrationModels.LearnerContext;
 import com.aptisprep.service.contract.IntegrationModels.PathProgress;
 import com.aptisprep.service.contract.IntegrationModels.SkillLevel;
 import com.aptisprep.service.contract.LearningPathContract;
+import com.aptisprep.service.contract.IntegrationModels.PathProgress;
 import java.time.LocalDateTime;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -25,7 +26,13 @@ import java.util.Map;
 import java.util.Objects;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.stereotype.Service;
+import org.springframework.beans.factory.ObjectProvider;
+import com.aptisprep.service.contract.*;
+import com.aptisprep.service.contract.IntegrationModels.*;
 import org.springframework.transaction.annotation.Transactional;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
+import jakarta.persistence.LockModeType;
 
 @Service
 public class LearningPathService implements LearningPathContract {

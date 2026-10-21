@@ -95,7 +95,7 @@ public class AiAssessmentService implements AiAssessmentContract {
     @Override
     public AssessmentView retry(String assessmentKey, Integer requesterId, boolean admin) {
         transactions.executeWithoutResult(status -> {
-            AiAssessmentJob job = job(assessmentKey);
+            AiAssessmentJob job = jobForUpdate(assessmentKey);
             authorize(job, requesterId, admin);
             if (job.getState() != AiJobState.ERROR) throw new BusinessRuleException("Chỉ tác vụ lỗi mới được thử lại");
             if (job.getRetryCount() >= MAX_RETRIES) throw new BusinessRuleException("Tác vụ đã hết số lần thử lại");
@@ -108,6 +108,11 @@ public class AiAssessmentService implements AiAssessmentContract {
     @Override
     public AssessmentView get(String assessmentKey, Integer requesterId, boolean admin) {
         AiAssessmentJob job = job(assessmentKey); authorize(job, requesterId, admin); return viewFor(job);
+    }
+
+    @Override
+    public AssessmentView getForGrading(String assessmentKey) {
+        return viewFor(job(assessmentKey));
     }
 
     private JobSnapshot claim(String key) {
@@ -127,7 +132,7 @@ public class AiAssessmentService implements AiAssessmentContract {
             assessment.setState(AiAssessmentState.COMPLETED); assessment.setScore(result.estimatedScore()); assessment.setEstimatedCefr(result.estimatedCefr()); assessment.setFeedback(result.feedback()); assessment.setTranscript(result.transcript() == null ? job.getTranscript() : result.transcript()); assessment.setProvider(result.provider()); assessment.setModel(result.model()); assessment.setErrorMessage(null); assessment.setCompletedAt(LocalDateTime.now()); assessments.save(assessment);
             return viewFor(job);
         });
-        publishAfterCommit(new AiAssessmentCompletedEvent(claim.assessmentKey(), claim.userId(), claim.attemptId(), claim.answerId(), "COMPLETED", null));
+        publishAfterCommit(new AiAssessmentCompletedEvent(claim.assessmentKey(), claim.userId(), claim.attemptId(), claim.answerId(), "COMPLETED", null, claim.answerVersion()));
         return view;
     }
 
@@ -145,7 +150,7 @@ public class AiAssessmentService implements AiAssessmentContract {
         FailureSnapshot failure = transactions.execute(status -> {
             AiAssessmentJob job = job(key); job.setState(AiJobState.ERROR); job.setLastError(error); jobs.save(job);
             AiAssessment assessment = assessments.findFirstByJobIdAndAnswerVersionOrderByIdDesc(job.getId(), job.getAnswerVersion()).orElseThrow(); assessment.setState(AiAssessmentState.ERROR); assessment.setScore(null); assessment.setEstimatedCefr(null); assessment.setFeedback(null); assessment.setErrorMessage(error); assessment.setCompletedAt(null); assessments.save(assessment);
-            return new FailureSnapshot(viewFor(job), new AiAssessmentCompletedEvent(job.getAssessmentKey(), job.getUserId(), job.getAttemptId(), job.getAnswerId(), "ERROR", error));
+            return new FailureSnapshot(viewFor(job), new AiAssessmentCompletedEvent(job.getAssessmentKey(), job.getUserId(), job.getAttemptId(), job.getAnswerId(), "ERROR", error, job.getAnswerVersion()));
         });
         publishAfterCommit(failure.event());
         return failure.view();
@@ -185,6 +190,7 @@ public class AiAssessmentService implements AiAssessmentContract {
         return user;
     }
     private AiAssessmentJob job(String key) { return jobs.findByAssessmentKey(key).orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy tác vụ đánh giá")); }
+    private AiAssessmentJob jobForUpdate(String key) { return jobs.findByAssessmentKeyForUpdate(key).orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy tác vụ đánh giá")); }
     private void authorize(AiAssessmentJob job, Integer requesterId, boolean admin) {
         User requester = users.findById(requesterId).orElseThrow(() -> new AccessDeniedException("Bạn không có quyền xem đánh giá này"));
         if (requester.getStatus() != UserStatus.ACTIVE
@@ -195,7 +201,17 @@ public class AiAssessmentService implements AiAssessmentContract {
     }
     private String normalizeSkill(String value) { String normalized = value == null ? "" : value.trim().toUpperCase(Locale.ROOT); if (!SKILLS.contains(normalized)) throw new BusinessRuleException("Kỹ năng AI không hợp lệ"); return normalized; }
     private String normalizeTask(String value) { String normalized = value == null ? "" : value.trim().toUpperCase(Locale.ROOT); if (!normalized.equals("WRITING") && !normalized.equals("SPEAKING")) throw new BusinessRuleException("Dạng bài AI không hợp lệ"); return normalized; }
-    private void validateResult(GradingResult result, BigDecimal max) { if (result == null || result.estimatedScore() == null || result.estimatedScore().compareTo(BigDecimal.ZERO) < 0 || result.estimatedScore().compareTo(max) > 0 || result.estimatedCefr() == null || !LEVELS.contains(result.estimatedCefr()) || blank(result.feedback()) || result.feedback().length() > 12000) throw new AiGradingException("Chưa nhận được kết quả chấm hợp lệ. Vui lòng thử lại sau."); }
+    private void validateResult(GradingResult result, BigDecimal max) {
+        if (result == null || result.estimatedScore() == null
+                || result.estimatedScore().compareTo(BigDecimal.ZERO) < 0
+                || result.estimatedScore().compareTo(max) > 0
+                || result.estimatedCefr() == null || !LEVELS.contains(result.estimatedCefr())
+                || blank(result.feedback()) || result.feedback().length() > 12000
+                || blank(result.provider()) || result.provider().length() > 50
+                || blank(result.model()) || result.model().length() > 100) {
+            throw new AiGradingException("Chưa nhận được kết quả chấm hợp lệ. Vui lòng thử lại sau.");
+        }
+    }
     private String cleanError(String message) { return message == null || message.isBlank() || message.length() > 1000 ? "Chưa thể chấm bài lúc này. Vui lòng thử lại sau." : message; }
     private boolean blank(String value) { return value == null || value.isBlank(); }
     private String blankToNull(String value) { return blank(value) ? null : value.trim(); }

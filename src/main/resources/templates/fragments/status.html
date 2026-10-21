@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<body>
+<!-- Fragment hiển thị badge trạng thái đã được Việt hóa và gán màu ngữ nghĩa chuẩn -->
+<th:block th:fragment="statusBadge(status)">
+    <!-- COMPLETED -->
+    <span th:if="${#strings.toString(status) == 'COMPLETED'}" class="badge badge-success">
+        Đã hoàn thành
+    </span>
+
+    <!-- GRADING -->
+    <span th:if="${#strings.toString(status) == 'GRADING'}" class="badge badge-warning">
+        Đang chấm điểm
+    </span>
+
+    <!-- GRADING_FAILED -->
+    <span th:if="${#strings.toString(status) == 'GRADING_FAILED'}" class="badge badge-danger">
+        Chấm chưa thành công
+    </span>
+
+    <!-- PENDING -->
+    <span th:if="${#strings.toString(status) == 'PENDING'}" class="badge badge-warning">
+        Đang chờ xử lý
+    </span>
+
+    <!-- ERROR -->
+    <span th:if="${#strings.toString(status) == 'ERROR'}" class="badge badge-danger">
+        Lỗi xử lý
+    </span>
+
+    <!-- DRAFT -->
+    <span th:if="${#strings.toString(status) == 'DRAFT'}" class="badge">
+        Bản nháp
+    </span>
+
+    <!-- PUBLISHED -->
+    <span th:if="${#strings.toString(status) == 'PUBLISHED'}" class="badge badge-success">
+        Đã công bố
+    </span>
+
+    <!-- ARCHIVED -->
+    <span th:if="${#strings.toString(status) == 'ARCHIVED'}" class="badge">
+        Đã lưu trữ
+    </span>
+
+    <!-- ACTIVE -->
+    <span th:if="${#strings.toString(status) == 'ACTIVE'}" class="badge badge-success">
+        Đang hoạt động
+    </span>
+
+    <!-- LOCKED -->
+    <span th:if="${#strings.toString(status) == 'LOCKED'}" class="badge badge-danger">
+        Đã khóa
+    </span>
+
+    <!-- INACTIVE -->
+    <span th:if="${#strings.toString(status) == 'INACTIVE'}" class="badge">
+        Ngừng hoạt động
+    </span>
+
+    <!-- Fallback nếu không khớp enum nào đã định nghĩa -->
+    <span th:if="${#strings.toString(status) != 'COMPLETED' and #strings.toString(status) != 'GRADING' and #strings.toString(status) != 'GRADING_FAILED' and #strings.toString(status) != 'PENDING' and #strings.toString(status) != 'ERROR' and #strings.toString(status) != 'DRAFT' and #strings.toString(status) != 'PUBLISHED' and #strings.toString(status) != 'ARCHIVED' and #strings.toString(status) != 'ACTIVE' and #strings.toString(status) != 'LOCKED' and #strings.toString(status) != 'INACTIVE' and status != null}"
+          class="badge" th:text="${status}">
+    </span>
+</th:block>
+
+<!-- Fragment dạng chữ thường không badge -->
+<th:block th:fragment="statusText(status)">
+    <span th:switch="${#strings.toString(status)}">
+        <span th:case="'COMPLETED'">Đã hoàn thành</span>
+        <span th:case="'GRADING'">Đang chấm điểm</span>
+        <span th:case="'GRADING_FAILED'">Chấm chưa thành công</span>
+        <span th:case="'PENDING'">Đang chờ xử lý</span>
+        <span th:case="'ERROR'">Lỗi xử lý</span>
+        <span th:case="'DRAFT'">Bản nháp</span>
+        <span th:case="'PUBLISHED'">Đã công bố</span>
+        <span th:case="'ARCHIVED'">Đã lưu trữ</span>
+        <span th:case="'ACTIVE'">Đang hoạt động</span>
+        <span th:case="'LOCKED'">Đã khóa</span>
+        <span th:case="'INACTIVE'">Ngừng hoạt động</span>
+        <span th:case="*" th:text="${status}"></span>
+    </span>
+</th:block>
+</body>
+</html>

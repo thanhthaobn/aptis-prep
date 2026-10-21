@@ -1,13 +1,12 @@
 package com.aptisprep.service.exam;
 
 import com.aptisprep.config.AiProperties;
-import com.aptisprep.entity.QuestionEntity;
-import com.aptisprep.entity.UserAnswerEntity;
 import com.aptisprep.event.AiAssessmentCompletedEvent;
 import com.aptisprep.event.AttemptSubmittedEvent;
-import com.aptisprep.repository.QuestionRepository;
-import com.aptisprep.repository.UserAnswerRepository;
 import com.aptisprep.service.contract.AiAssessmentContract;
+import com.aptisprep.service.contract.IntegrationModels.LockedAnswer;
+import com.aptisprep.service.contract.IntegrationModels.LockedAttempt;
+import com.aptisprep.service.grading.AttemptFinalizationService;
 import java.math.BigDecimal;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
@@ -18,22 +17,22 @@ import org.springframework.transaction.event.TransactionalEventListener;
 public class AttemptGradingOrchestrationService {
     private final AiProperties properties;
     private final AiAssessmentContract ai;
-    private final QuestionRepository questions;
-    private final UserAnswerRepository answers;
-    private final ExamAttemptService attempts;
+    private final AttemptFinalizationService finalization;
 
     public AttemptGradingOrchestrationService(AiProperties properties, AiAssessmentContract ai,
-            QuestionRepository questions, UserAnswerRepository answers, ExamAttemptService attempts) {
-        this.properties = properties; this.ai = ai; this.questions = questions; this.answers = answers; this.attempts = attempts;
+            AttemptFinalizationService finalization) {
+        this.properties = properties; this.ai = ai; this.finalization = finalization;
     }
 
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void onSubmitted(AttemptSubmittedEvent event) {
         if (!properties.isEnabled()) return;
-        for (UserAnswerEntity answer : answers.findByAttemptIdOrderByQuestionIdAsc(event.attemptId())) {
-            QuestionEntity question = questions.findById(answer.getQuestionId()).orElse(null);
-            if (question == null || (!"WRITING_TEXT".equals(question.getQuestionType()) && !"SPEAKING_AUDIO".equals(question.getQuestionType()))) continue;
-            String submission = "WRITING_TEXT".equals(question.getQuestionType()) ? answer.getTextAnswer() : answer.getTranscript();
+        if (!finalization.accepts(event)) return;
+        LockedAttempt locked = event.lockedAttempt();
+        if (locked == null) return;
+        for (LockedAnswer answer : locked.answers()) {
+            if (!"WRITING_TEXT".equals(answer.questionType()) && !"SPEAKING_AUDIO".equals(answer.questionType())) continue;
+            String submission = answer.lockedContent();
             if (submission == null || submission.isBlank()) continue;
             String taskType = "WRITING_TEXT".equals(question.getQuestionType()) ? "WRITING" : "SPEAKING";
             String key = "attempt:" + event.attemptId() + ":answer:" + answer.getId() + ":v" + answer.getAnswerVersion();
@@ -46,5 +45,5 @@ public class AttemptGradingOrchestrationService {
     }
 
     @EventListener
-    public void onAssessmentCompleted(AiAssessmentCompletedEvent event) { attempts.applyAiAssessment(event); }
+    public void onAssessmentCompleted(AiAssessmentCompletedEvent event) { finalization.applyAiAssessment(event); }
 }

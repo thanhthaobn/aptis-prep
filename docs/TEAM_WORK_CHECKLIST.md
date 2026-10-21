@@ -1,161 +1,149 @@
-# Checklist triển khai — Thông, Thảo, Trâm, Dương
+# Checklist chi tiết sau khi chia lại luồng thi — Thông, Thảo, Trâm
 
-Theo [phân công chính thức](TEAM_ASSIGNMENT_V2.md) và [ranh giới service](SERVICE_CONTRACTS.md). Thông = 1, Thảo = 2, Trâm = 3, Dương = 4. Checklist là việc cần làm, chưa đánh dấu chức năng hoàn tất chỉ vì đã có schema/UI/service nền.
+> Cập nhật 20/10/2026. Phạm vi engine thi, chấm và kết quả được chia cho ba đầu mối. Dấu `[x]` chỉ có nghĩa code nền đã tồn tại; vẫn phải kiểm thử tích hợp trước khi nghiệm thu.
 
-Làm theo thứ tự trong từng người; sau bước bàn giao sớm thì tiếp tục việc độc lập, không đợi người khác xong cả luồng. Mỗi bước triển khai xuyên lớp, có kiểm thử và PR nhỏ. Mock/fixture trong test không được thay implementation thật ở cấu hình chạy ứng dụng.
+## 1. Hiện trạng code vừa nhận
 
-## 0. Cả nhóm làm trước khi sửa nghiệp vụ
+- [x] Có entity/repository cho `exam_attempts`, `user_answers`, `user_answer_details`, `exam_skill_results`.
+- [x] Có start attempt, tạo answer rỗng, lưu các loại đáp án, submit, chấm objective cơ bản và trang attempt/result tối thiểu.
+- [x] Có event `AttemptSubmittedEvent`, `AttemptCompletedEvent` và orchestration Placement/Checkpoint ban đầu.
+- [x] Có gọi AI cho Writing/Speaking khi AI bật.
+- [ ] Chưa có audio upload thật, bộ đếm Listening, autosave, màn lịch sử hoàn chỉnh, admin result, retry AI thật hoặc test concurrent cho engine.
+- [ ] Chưa tách quyền ghi đúng ba đầu mối: `ExamAttemptService` hiện vừa quản lý attempt, vừa chấm, ghi skill result và tổng hợp. Phải tách dần theo mục 2–4.
+- [ ] Trạng thái hết giờ hiện có thể vẫn gọi grading nhưng đặt `EXPIRED`; cần chốt rõ có lưu/chấm/hiển thị kết quả hay không.
+- [ ] Công thức objective hiện lấy `correct * 50 / total`; chỉ là tạm thời, chưa được coi là điểm Aptis chính thức cho mọi kỹ năng.
+- [ ] `retryFailedGrading()` hiện luôn báo chưa hỗ trợ; Speaking đang nhận `audioUrl` từ form thay vì file upload an toàn.
+- [ ] Event sau commit là event trong tiến trình; chưa có outbox/job bền nên crash có thể bỏ mất bước AI/Profile/Path.
 
-- [ ] Mỗi người chạy được project Java 21/SQL Server theo [SETUP_LOCAL](SETUP_LOCAL.md), đăng nhập demo và chạy test; cấu hình mật khẩu/key riêng, không commit.
-- [ ] Đọc V2, UI_GUIDE, ROUTES, SERVICE_CONTRACTS và Git workflow; xác nhận bảng/file/route của mình. Không tạo Entity/Repository thứ hai cho cùng bảng.
-- [ ] Tách các mapping/template/service preview dùng chung trước khi nhiều người cùng sửa: hồ sơ thuộc Thông, Placement thuộc Trâm; đề/làm bài/kết quả thuộc Dương; bài học thuộc Thảo.
-- [ ] Thông + Trâm + Dương chốt DTO chứng chỉ/scheme, raw/scale/rubric/version, validator publish/start và test quy đổi kỳ vọng.
-- [ ] Thông + Dương chốt AI request/result/job state, answerVersion, quyền truy cập, schema/writer và retry. Chốt một phương án lưu AI trong PR schema, không hai đường ghi.
-- [ ] Cả nhóm chốt ACTIVE/context, Profile/path/summary, Placement/checkpoint result và lỗi/NULL/requestKey. Interface tối thiểu hiện có cần mở rộng có review, không mặc định đã đủ.
-- [ ] Thống nhất seed/test ID chung; migration mới lấy số theo thứ tự merge, không sửa V001–V005. Người giữ nền review cấu hình/bảo mật/CSS/fragment/contract/migration.
+## 2. Trâm — nhận engine attempt và nội dung đề
 
-## 1. Thông — bắt đầu bằng policy tối thiểu, không bắt đầu bằng AI
+### 2.1. Phần code sở hữu
 
-### Bước 1 — Mở đường cho cả nhóm
+- Controller: `StudentExamController`, controller Placement và endpoint media của attempt.
+- Service: phần start/resume/page/save/submit-lock trong `ExamAttemptService`; sau khi tách có thể đổi tên thành `ExamAttemptLifecycleService`.
+- Dữ liệu ghi: `exam_attempts`, `user_answers`, `user_answer_details`, `user_media_activities`.
+- Tiếp tục sở hữu Question/Item/Option/Media, MockExam/Section/Question và Placement orchestration.
+- Không ghi `exam_skill_results`, điểm, CEFR, Profile hoặc Learning Path.
 
-- [ ] Kiểm tra auth hiện có; triển khai/test ACTIVE/context tối thiểu, user mới chưa Goal/Profile phải trả trạng thái thiếu thật, không mặc định B2.
-- [ ] Map Certificate/ScoringScheme/ScoreBand theo schema; một bộ cố định hợp lệ từ seed/migration mới được review, không hardcode điểm giả vào service thật.
-- [ ] Làm service đọc chứng chỉ/scheme khả dụng và kiểm scheme đúng certificate/skill/status.
-- [ ] Triển khai ScoringPolicyContract cho mạch khách quan nhỏ đã chốt, có raw→scale→CEFR theo version, test rounding/biên/thiếu band. Không coi ngưỡng fixture là điểm Aptis chính thức.
-- [ ] **Bàn giao Trâm:** DTO lựa chọn/validator và một scheme khả dụng. **Bàn giao Dương:** policy version, đơn vị điểm, input/output kiểm thử. **Bàn giao Thảo:** ACTIVE/Goal/Profile context.
+### 2.2. Việc bắt buộc làm thêm
 
-### Bước 2 — Hoàn thiện tài khoản và Chứng chỉ & Chấm điểm
+- [ ] Tạo DTO `LockedAttempt` chứa attempt/user/exam/type, answerVersion, submittedAt, scheme/policy version và grading context backend; không đưa đáp án đúng ra frontend.
+- [ ] Tách `gradeObjective`, `complete`, `applyAiAssessment` khỏi service vòng đời attempt và bàn giao cho Thông.
+- [ ] Chốt state machine: `IN_PROGRESS → SUBMITTED → WAITING_GRADING → COMPLETED|GRADING_ERROR`; `EXPIRED` và `CANCELLED` không được chuyển tùy ý.
+- [ ] `start`: khóa/constraint chống hai tab tạo hai Placement cùng user/skill; requestKey trùng phải trả đúng attempt cũ, không nối UUID để che trùng nghiệp vụ.
+- [ ] `resume`: khi còn `IN_PROGRESS` trả attempt cũ; không tạo lại answer hoặc reset `startedAt/deadline`.
+- [ ] `saveAnswer`: kiểm question thuộc đúng exam, item thuộc question, option thuộc item; hỗ trợ xóa lựa chọn và lưu nhiều item trong Matching/Ordering.
+- [ ] Thêm autosave hoặc form save rõ ràng; lưu xong reload phải khôi phục mọi đáp án.
+- [ ] `submit`: khóa row, kiểm deadline, khóa toàn bộ answer, tăng `answerVersion`, chống submit đồng thời và phát đúng một yêu cầu grading sau commit.
+- [ ] Chốt cách xử lý hết giờ: backend tự nộp hoặc đánh dấu hết hạn; frontend countdown chỉ để hiển thị.
+- [ ] Listening: endpoint phát media có owner/attempt/deadline guard, lưu số lượt nghe trong DB, tối đa hai lượt kể cả reload/Range/retry.
+- [ ] Speaking: nhận multipart upload thật; kiểm MIME thực, dung lượng, thời lượng nếu có, tên ngẫu nhiên/path traversal; gắn file với user/attempt/answer; không nhận `audioUrl` tùy ý từ form.
+- [ ] Không cho sửa/nghe/ghi thêm sau khi bài đã khóa.
+- [ ] Placement: chọn đề PUBLISHED đúng skill/scheme, resume một lượt chưa kết thúc, pending grading chặn lượt mới; sau result cuối gọi Profile Thông rồi Path Thảo.
+- [ ] Lưu dấu xử lý Placement bền để crash giữa Profile và Path có thể retry mà không nâng cấp hai lần.
 
-- [ ] Hồ sơ/Goal: validate, quyền sở hữu, bỏ qua; đổi Goal gọi path service Thảo. Chốt session nếu đổi email principal.
-- [ ] Admin học viên: danh sách/tìm/lọc/phân trang, chi tiết; chưa có summary/history thật thì test bằng mock, không tự làm query của Thảo/Dương.
-- [ ] Khóa/mở khóa và chặn request tiếp theo của session cũ; kiểm ACTIVE trước ghi, không unlock INACTIVE sai luật.
-- [ ] Nối CRUD chứng chỉ/scheme/band vào giao diện có sẵn; POST/CSRF/redirect, code/version duy nhất, band không chồng lấn, ngừng dùng/bảo toàn tham chiếu.
-- [ ] Hoàn thiện policy các skill đã chốt; giữ version đã sử dụng, không đổi bài cũ theo ngưỡng mới nhất.
-- [ ] Service ghi Profile: kiểm kết quả thật/newest/floor checkpoint và chống áp dụng lặp; test với mock kết quả Dương trước khi engine hoàn chỉnh.
+### 2.3. Test Trâm phải bàn giao
 
-### Bước 3 — Làm luồng AI độc lập rồi nối Dương
+- [ ] Hai request start đồng thời chỉ tạo một Placement active.
+- [ ] Hai request submit đồng thời chỉ khóa/phát grading một lần.
+- [ ] User B không xem/sửa/nộp/phát media attempt của user A; tài khoản khóa không ghi tiếp.
+- [ ] Option/item/question ngoài đề bị từ chối; đáp án đúng không có trong HTML.
+- [ ] Reload không reset deadline/answer/lượt nghe; lượt nghe thứ ba bị chặn ở backend.
+- [ ] File giả đuôi audio, quá dung lượng và path lạ bị từ chối.
+- [ ] Placement pending/error/retake và kết quả trả sai thứ tự không cập nhật Profile sai.
 
-- [ ] Tiếp nhận grading service sẵn có, dùng provider HTTP mock và submitted-answer DTO kiểm thử để phát triển không cần trang thi/API key thật.
-- [ ] Tác vụ đánh giá lưu bền, claim/idempotency, validate response, timeout/lỗi/tắt/retry có kiểm soát; lưu NULL thay vì 0, không gọi mạng trong transaction DB.
-- [ ] Ghi assessment theo schema/writer đã chốt; bản cũ trả chậm không đè version mới; thông báo sau commit.
-- [ ] Phản hồi tự luận chi tiết/fragment và form retry có CSRF/owner/admin; ghi rõ Speaking qua transcript chưa đánh giá phát âm, không trang chấm mẫu Admin.
-- [ ] **Nối Dương:** bài đã khóa → assessment → Dương quy đổi/tổng hợp. Lỗi áp kết quả chỉ retry áp, không gọi provider lại.
+## 3. Thông — nhận grading, tổng hợp và Profile
 
-### Bước 4 — Tích hợp và nghiệm thu
+### 3.1. Phần code sở hữu
 
-- [ ] Nối progress Thảo/history Dương vào admin học viên; cùng Trâm test Placement → Profile, cùng Thảo test checkpoint → Profile.
-- [ ] Test provider lỗi/response sai/retry đồng thời/crash, khóa session, ownership, band/version lịch sử; cập nhật route/tài liệu và PR nghiệm thu.
+- `ScoringPolicyContract`, Certificate/Scheme/Band và toàn bộ AI assessment.
+- Sau khi tách: `ObjectiveGradingService`, `AttemptFinalizationService` và writer giới hạn cho `exam_skill_results`/trạng thái grading.
+- Dữ liệu ghi: assessment/job AI, `exam_skill_results`, `final_scale_score`, `estimated_overall_cefr`, `grading_status` và trạng thái cuối của attempt.
+- Duy nhất ghi Skill Profile sau Placement/Checkpoint hợp lệ.
 
-**Không nhận thêm:** engine/recorder, Placement orchestration, trang kết quả toàn bài hoặc tự ghi trạng thái attempt/EXAM_SKILL_RESULT.
+### 3.2. Việc bắt buộc làm thêm
 
-## 2. Thảo — bắt đầu bằng một bài học có lưu tiến độ
+- [ ] Nhận `LockedAttempt` từ Trâm và từ chối bài chưa khóa, sai owner/exam/version hoặc grading request cũ.
+- [ ] Chấm SINGLE_CHOICE theo option đúng; MATCHING theo từng item; ORDERING theo `correctPosition`; câu bỏ trống tính sai nhưng không gây lỗi.
+- [ ] Không dùng một công thức `correct * 50 / total` cho mọi skill nếu policy chưa chốt; raw → scale → CEFR phải theo scheme/skill/version.
+- [ ] Snapshot policy/rubric version lúc start/submit; policy sửa sau đó không làm đổi kết quả lịch sử.
+- [ ] Upsert một `exam_skill_results` cho mỗi attempt/skill; request/event trùng không cộng hoặc ghi kết quả lần hai.
+- [ ] Nếu có objective và subjective cùng skill, không được để kết quả PENDING xóa mất điểm objective; chốt quy tắc tổng hợp thành phần.
+- [ ] AI request lấy bài đã khóa từ server, có assessmentKey + answerVersion; không tin nội dung/file path từ client.
+- [ ] AI tắt/lỗi/timeout giữ score/CEFR NULL và trạng thái `WAITING_GRADING` hoặc `GRADING_ERROR`, không biến thành 0.
+- [ ] Implement `retryFailedGrading`: chỉ retry phần lỗi, không nộp lại bài, không gọi lại phần đã thành công, giới hạn số lần và chống hai retry đồng thời.
+- [ ] Response AI cũ hoặc sai version không được ghi đè bài mới; validate score range, provider/model/rubric metadata.
+- [ ] `complete`: chỉ hoàn tất khi mọi skill cần chấm có kết quả hợp lệ; tránh chia trung bình cho danh sách rỗng.
+- [ ] Chốt overall score/CEFR theo policy thay vì mặc định trung bình cộng và lấy CEFR thấp nhất nếu nghiệp vụ không yêu cầu vậy.
+- [ ] Phát `AttemptCompletedEvent` đúng một lần sau commit.
+- [ ] `applyAssessment`: xác minh type là Placement/Checkpoint, result COMPLETED, thuộc user, đúng skill/policy và chưa áp trước đó; không hạ dưới checkpoint đã đạt.
+- [ ] Cung cấp DTO `ResultView`/`HistoryItem` đã làm sạch cho Thảo; không trả Entity hoặc marking key.
 
-### Bước 1 — Mạch học nhỏ độc lập
+### 3.3. Test Thông phải bàn giao
 
-- [ ] Map Lesson/Flashcard và progress, dùng User hiện có, không tạo User mới.
-- [ ] Admin tạo/xem/sửa/vô hiệu hóa một Lesson và thẻ; validate skill/CEFR/thứ tự, bảo toàn nội dung đã học.
-- [ ] Học viên mở bài, hoàn thành/ôn thẻ có lưu bền; kiểm ACTIVE/ownership, gửi lặp/refresh không đếm trùng.
-- [ ] Test quyền và dữ liệu trống; không bật upload thật khi helper/quyền media chưa đủ, có thể làm nội dung văn bản trước.
+- [ ] Chấm đúng/thiếu/sai cho từng SINGLE_CHOICE, MATCHING và ORDERING.
+- [ ] Test biên raw/scale/band, band thiếu/chồng lấn, scheme sai skill và policy version lịch sử.
+- [ ] Event grading trùng, concurrent finalize và AI callback trùng/cũ chỉ ghi một kết quả.
+- [ ] AI disabled/timeout/response sai/retry thành công không làm mất bài hoặc thành điểm 0.
+- [ ] Attempt chưa đủ skill không COMPLETED; attempt đủ skill phát completed một lần.
+- [ ] Placement/Checkpoint áp Profile một lần; Practice/Full Mock không nâng Profile.
 
-### Bước 2 — Lộ trình và summary
+## 4. Thảo — nhận lịch sử/kết quả và nối hành trình học
 
-- [ ] Map path/items; test rule bằng context mock có/không Goal/Placement, chưa cần bài thi thật hoặc AI.
-- [ ] Tạo path định hướng/cá nhân, vị trí/bài bắt buộc/tùy chọn, trạng thái thiếu nội dung.
-- [ ] Đồng bộ completion với item; C/N/làm tròn xuống theo REAL_PROGRESS_CONTRACT; N=0 trả NULL, bài tiếp theo có thể NULL.
-- [ ] Đổi Goal archive path cũ/tạo mới, giữ completion hợp lệ và lịch sử.
-- [ ] **Bàn giao Thông:** progress summary/bài tiếp theo và ca rỗng/N=0. **Bàn giao Trâm:** ensurePaths theo context và quy tắc cập nhật sau Placement.
+### 4.1. Phần code sở hữu
 
-### Bước 3 — Nối dashboard và checkpoint
+- Controller/service/template lịch sử và kết quả Student/Admin.
+- Lesson/Flashcard, dashboard, Learning Path, progress và Checkpoint.
+- Chỉ đọc attempt metadata của Trâm và result DTO của Thông; không tự ghi answer/skill result hoặc tự tính lại điểm.
 
-- [ ] Nối context thật từ Thông, hoàn thiện tổng quan/lộ trình/Bài học; CTA theo trạng thái Goal/path, không bắt buộc đặt Goal/đầu vào.
-- [ ] Dùng ExamCatalog của Trâm chọn checkpoint đúng skill/target, kiểm bài bắt buộc trước khi gọi engine Dương.
-- [ ] Test checkpoint đạt/trượt/chưa chấm với mock; sau đó nối kết quả thật, gọi Profile Thông và đóng/mở chặng idempotent.
-- [ ] Nối helper media Trâm và endpoint đúng quyền cho tài nguyên bài học nếu cần.
+### 4.2. Việc bắt buộc làm thêm
 
-### Bước 4 — Nghiệm thu
+- [ ] Tạo `/student/results`: phân trang, lọc loại đề/kỹ năng/trạng thái, sắp xếp mới nhất; trạng thái rỗng rõ ràng.
+- [ ] Tạo chi tiết result: tiêu đề đề, ngày nộp, trạng thái, raw/scale/CEFR theo skill, overall và feedback được phép xem.
+- [ ] Hiển thị `Đang chấm`, `Chấm lỗi — thử lại`, `Hoàn thành`, `Hết hạn` bằng tiếng Việt; NULL không hiển thị thành 0.
+- [ ] Nút retry chỉ xuất hiện khi Thông báo có phần retry được; POST CSRF và kiểm owner/admin ở service.
+- [ ] Admin results: tìm học viên/email, lọc exam type/status/date, phân trang và xem chi tiết; không cho sửa điểm thủ công ngoài nghiệp vụ đã chốt.
+- [ ] Trang admin học viên lấy history/result thật qua DTO; không trộn fixture với DB.
+- [ ] Checkpoint: kiểm đủ bài bắt buộc, skill/target, lấy đề checkpoint của Trâm rồi start attempt; không dựng engine riêng.
+- [ ] Khi nhận completed checkpoint, kiểm result Thông, gọi Profile Thông rồi đóng/mở chặng idempotent; submit/event lặp không mở hai lần.
+- [ ] Checkpoint trượt giữ trình độ/path hiện tại; đạt mới xác nhận cấp và tạo chặng tiếp theo, bảo toàn bài đã hoàn thành.
+- [ ] Dashboard cập nhật số bài, tiến độ, bài tiếp theo và kết quả gần nhất; N=0 trả trạng thái chưa có nội dung, không chia 0.
+- [ ] Flashcard tiếp tục dùng state đã nhớ/cần học lại để tổng kết, ôn thẻ chưa thuộc và học lại tất cả.
+- [ ] Responsive desktop/mobile, nút quay lại rõ và không in enum/tên thuộc tính lên giao diện.
 
-- [ ] Test đổi Goal, hoàn thành lặp, thiếu bài/đề, checkpoint trả chậm, crash giữa nâng Profile/chuyển chặng; không tăng CEFR theo phần trăm.
-- [ ] Cùng Thông kiểm admin/student dùng cùng summary; dữ liệu còn sau đăng nhập lại, có test SQL Server cần thiết và cập nhật tài liệu.
+### 4.3. Test Thảo phải bàn giao
 
-**Không nhận thêm:** engine checkpoint riêng, quy đổi điểm hoặc tự ghi Profile.
+- [ ] User chỉ xem kết quả của mình; admin xem được theo quyền; user khác nhận 403/404 phù hợp.
+- [ ] Lịch sử rỗng, nhiều trang, filter và pending/error/NULL hiển thị đúng.
+- [ ] Retry button đúng trạng thái, CSRF hoạt động và không retry attempt người khác.
+- [ ] Checkpoint khóa/mở đúng khi thiếu/đủ bài; đạt/trượt; completed event lặp; result trả chậm.
+- [ ] Đổi Goal/Placement refresh path vẫn giữ completion hợp lệ.
+- [ ] Kiểm giao diện ở 360px, tablet và desktop lớn.
 
-## 3. Trâm — bắt đầu bằng đề khách quan nhỏ, không chờ CRUD hoàn chỉnh
+## 5. Hợp đồng bàn giao giữa ba người
 
-### Bước 1 — Đề nhỏ cho Dương
-
-- [ ] Chốt DTO câu/item/option/media an toàn với Dương; đáp án/grading context chỉ backend.
-- [ ] Map Question→Item→Option và Exam/Question/Section, tạo bộ câu/đề nhỏ theo seed hoặc test fixture đúng quy trình; trước mắt có thể bắt đầu SINGLE_CHOICE.
-- [ ] Chọn Certificate/scheme từ service Thông; khi chưa có implementation thì mock contract trong test, không tạo bảng/entity hoặc policy thay thế.
-- [ ] Publish đề nhỏ hợp lệ, có thời gian, skill/type và policy version; kiểm scheme đúng certificate/status/phạm vi khi ghi/publish.
-- [ ] **Bàn giao Dương:** đề, item/option DTO, grading context backend, version và đáp án dự kiến. Không cần đợi màn quản trị đẹp/đủ mọi dạng câu.
-
-### Bước 2 — Hoàn thiện ngân hàng câu hỏi và đề
-
-- [ ] CRUD/validation đủ SINGLE_CHOICE, MATCHING, ORDERING, WRITING_TEXT, SPEAKING_AUDIO; option đúng item, ordering hợp lệ, tự luận không ép option.
-- [ ] Media đề/helper MIME thực/dung lượng/path an toàn; bàn giao helper cho Thảo/Dương, không tự làm hai lượt nghe của engine.
-- [ ] Form câu hỏi/đề/section, position, tái sử dụng câu; từ chối đề rỗng/sai cấu trúc và scheme không phù hợp.
-- [ ] Cùng Dương bảo toàn version/snapshot câu/đề đã dùng; không sửa đáp án làm đổi lịch sử.
-- [ ] Đủ bốn loại đề theo V2; dashboard admin lấy số liệu thật từ service các đầu mối.
-
-### Bước 3 — Placement
-
-- [ ] Tiếp nhận/tách trang Placement khỏi preview hồ sơ Thông; giới thiệu/chọn/bỏ qua, CTA theo trạng thái.
-- [ ] Test orchestration bằng mock engine/Profile/path; chọn kết quả hợp lệ mới nhất theo submittedAt/id, không chọn max score hoặc thời gian AI trả về.
-- [ ] Gọi start/resume Dương; chờ chấm không tạo lượt mới cùng skill; việc chặn concurrent do engine thực thi.
-- [ ] Kết quả hợp lệ → gọi Profile Thông → ensurePaths Thảo; có dấu xử lý bền để retry/crash không làm mất bước cập nhật path.
-
-### Bước 4 — Nghiệm thu
-
-- [ ] Nối engine/context/policy thật; test skip/resume/retake/pending/thiếu đề/scheme ngừng dùng.
-- [ ] Test Placement thấp hơn checkpoint không hạ Profile, kết quả cũ trả chậm không đè kết quả mới, không reset progress/lịch sử.
-- [ ] Test publish/quyền/media/version, hoàn thiện seed và tài liệu.
-
-**Không nhận thêm:** CRUD Certificate/Scheme/Band, ScoringPolicyContract, AI provider hoặc tự ghi Profile/path/điểm thi.
-
-## 4. Dương — bắt đầu bằng start/save/submit khách quan, chưa làm AI ngay
-
-### Bước 1 — Engine nhỏ độc lập
-
-- [ ] Chốt attempt state, answer DTO, deadline/requestKey và version với nhóm; map attempt/answer/detail/media activity/skill result, không tạo lại entity nội dung đề.
-- [ ] Dùng catalog/scoring mock trong test để làm start → hiển thị câu đơn → lưu/khôi phục đáp án; kiểm owner/ACTIVE, không lộ đáp án đúng.
-- [ ] Deadline backend, reload không reset; submit lưu/khóa bài, không sửa sau nộp/hết giờ; chống start/submit concurrent và gửi lặp.
-- [ ] Chấm khách quan mạch nhỏ; gọi policy Thông, lưu kết quả và dựng trang kết quả tối thiểu.
-- [ ] **Bàn giao Thông:** submitted-answer context, writer AI nếu dùng schema cũ, version và quyền đọc. **Bàn giao Thảo/Trâm:** result DTO/state và thông báo kết quả sau commit.
-
-### Bước 2 — Nối đề/policy thật và mở rộng engine
-
-- [ ] Nhận đề nhỏ Trâm + policy Thông, chạy mạch thật đề → làm/nộp → quy đổi → kết quả trước khi cần AI.
-- [ ] Hoàn thiện năm dạng câu và bốn loại đề qua cùng engine; chống option sai item/câu ngoài đề.
-- [ ] Listening endpoint theo attempt/media, tối đa hai lượt qua reload, chốt Range/retry/giờ/quyền; không URL tĩnh để vượt giới hạn.
-- [ ] Speaking recorder/upload/phát lại, gắn owner/attempt/answer, dùng helper Trâm; không nhận path tùy ý.
-- [ ] Hoàn thiện danh sách/chi tiết đề, lịch sử/kết quả Student/Admin, filter/page/pending/error; service đọc kiểm owner/admin cho các bên dùng.
-
-### Bước 3 — Nối AI và các luồng đánh giá
-
-- [ ] Bài tự luận đã khóa → tạo yêu cầu bền → gọi AI Thông sau commit; không gọi OpenAI trực tiếp.
-- [ ] Nhận assessment/version hợp lệ, quy đổi qua policy Thông và áp một lần; điểm chưa chấm NULL. Duy nhất engine đổi attempt state/EXAM_SKILL_RESULT.
-- [ ] Gắn phản hồi AI Thông vào kết quả, retry qua service có quyền; lỗi áp assessment không gọi provider lại.
-- [ ] Placement Trâm/checkpoint Thảo dùng chung start/resume/submit/result; kiểm một Placement chưa kết thúc/user/skill trên mọi đề.
-
-### Bước 4 — Nghiệm thu
-
-- [ ] Test hai tab/start đồng thời, hết giờ/submit lặp, reload/hai lượt nghe, upload/phát sai quyền.
-- [ ] Test AI pending/lỗi/tắt/response cũ/sự kiện trùng/crash, bảo toàn policy lúc bắt đầu; không tự nâng Profile từ Practice/Full Mock.
-- [ ] Kết quả/lịch sử lưu bền, owner/admin đúng; đủ dữ liệu cho Placement/checkpoint và cập nhật tài liệu.
-
-**Không nhận thêm:** CRUD nội dung/scoring, provider/retry mạng AI, tự ghi Profile/path.
-
-## 5. Mốc phối hợp chung — dùng để kiểm tiến độ nhóm
-
-| Mốc | Thành viên và đầu ra cần chạy thật | Chưa cần chờ |
+| Bàn giao | Đầu ra bắt buộc | Người nhận không được làm |
 |---|---|---|
-| M1: Thi khách quan nhỏ | Thông policy → Trâm đề → Dương start/save/submit/kết quả | AI, Placement hoàn chỉnh, toàn bộ CRUD |
-| M2: Học và progress | Thảo học/path/summary ↔ Thông context/admin học viên | AI và Full Mock |
-| M3: Tự luận | Dương khóa bài → Thông assessment → Dương tổng hợp/phản hồi | Key thật để test: dùng provider mock, sau đó smoke test riêng nếu bật |
-| M4: Placement | Trâm điều phối engine Dương → Profile Thông → path Thảo | Có thể nối kỹ năng khách quan trước, vẫn phải test pending AI sau |
-| M5: Checkpoint | Thảo điều kiện → đề Trâm/engine Dương → Profile Thông → chặng tiếp Thảo | Không dựng engine thứ hai |
-| M6: Nghiệm thu chung | Khóa session, ownership, version, concurrency, crash/retry, SQL Server, UI và clone mới | Không được thay bằng fixture để báo hoàn tất |
+| Trâm → Thông | `LockedAttempt`, answerVersion, scheme/policy version, grading context backend, requestKey | Thông không đọc controller/form hoặc tin payload client |
+| Thông → Thảo | `ResultView`, `HistoryPage`, retry capability, trạng thái/feedback đã làm sạch | Thảo không đọc repository result hoặc tự tính điểm |
+| Thông → Trâm | Grading accepted/completed event idempotent | Trâm không ghi `exam_skill_results` |
+| Trâm → Thảo | Attempt handle/deadline/exam metadata và start checkpoint | Thảo không tạo engine thứ hai |
+| Thảo → Thông | Checkpoint context/path target cần xác minh | Thông không tự ghi path |
 
-- [ ] Merge PR nhỏ sau từng mốc, các nhánh cập nhật theo Git workflow; không đợi cuối dự án mới ghép.
-- [ ] Contract đổi phải báo bên dùng và sửa test cùng PR. Khi chờ implementation, tiếp tục test/mock hoặc nhiệm vụ độc lập trong checklist của mình.
-- [ ] Chỉ đánh dấu xong sau khi có code/test và đầu ra kiểm tra được; tài liệu này chưa xác nhận mốc nào đã hoàn thành.
+## 6. Thứ tự PR đề xuất
+
+1. **PR Trâm 1:** state machine + locked-attempt DTO + submit idempotent, chưa làm media.
+2. **PR Thông 1:** tách objective grading/finalization khỏi `ExamAttemptService`, test grading trùng.
+3. **PR Thảo 1:** lịch sử/result DTO UI dùng dữ liệu thật, đầy đủ pending/error/NULL.
+4. **PR Trâm 2:** Listening counter và Speaking upload/ownership.
+5. **PR Thông 2:** AI retry/version/outbox hoặc recovery job bền.
+6. **PR Thảo 2:** checkpoint → result/Profile → path, dashboard và admin result.
+7. **PR tích hợp:** Placement objective, Full Mock, AI pending/error, Checkpoint đạt/trượt trên SQL Server.
+
+## 7. Definition of Done chung
+
+- `mvnw -B -ntp clean verify` xanh; test SQL Server migration/concurrency chạy trên database thử nghiệm.
+- Không sửa migration đã merge; migration mới có số duy nhất và được thử từ DB rỗng lẫn DB đã có dữ liệu.
+- Không có hai Entity/Repository cho cùng bảng; không có controller gọi repository xuyên luồng.
+- Có test quyền, trạng thái NULL/lỗi, submit/retry trùng và transaction/event sau commit.
+- PR ghi rõ bảng được ghi, contract thay đổi, migration, cách kiểm thử và giới hạn còn lại.

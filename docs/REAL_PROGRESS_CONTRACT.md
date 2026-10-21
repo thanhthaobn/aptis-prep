@@ -56,7 +56,7 @@ Không triển khai bằng nút tăng biến JavaScript/localStorage hay lưu tr
 - Khi hết bài: không dựng bài tiếp theo mẫu. Hiển thị đã hoàn thành phần bài học và trạng thái checkpoint tương ứng.
 - Điều kiện mở checkpoint: path có ít nhất một bài bắt buộc, tất cả bài bắt buộc đã hoàn thành, có checkpoint đúng skill/target đã công bố và các điều kiện tài khoản/quyền hợp lệ. Path không có bài bắt buộc không được tự mở checkpoint; Người 2 xử lý cấu hình thiếu. Bài tùy chọn chưa học có thể khiến tiến độ toàn bộ <100% nhưng không chặn checkpoint.
 - Học xong, đạt 100% hoặc đạt Practice/Full Mock không tự nâng Skill Profile. Chỉ hậu xử lý Placement/Checkpoint hợp lệ theo V2; kết quả chưa chấm, lỗi hoặc thiếu skill cần thiết không coi là đạt/trượt và không gán 0.
-- Người 4 cung cấp kết quả hoàn chỉnh theo attempt/user/type/skill/scheme. Người 2 kiểm điều kiện checkpoint rồi gọi Người 1 ghi Skill Profile; một attempt không áp dụng hai lần. Người 3 điều phối Placement, gọi Người 1 xác minh/ghi Profile rồi Người 2 cập nhật path.
+- Thông cung cấp kết quả grading theo attempt/user/type/skill/scheme. Thảo kiểm checkpoint rồi gọi Thông ghi Skill Profile; Trâm điều phối Placement → Profile Thông → path Thảo. Một attempt không áp dụng hai lần.
 - Không đánh dấu các mốc A1/A2/B1 là đã đạt dựa vào số bài. Nếu chưa có đánh giá, không dùng hình dấu tick gây hiểu nhầm. Tách mục tiêu CEFR, trình độ ước lượng và tiến độ bài học trên UI.
 - Màn hình đang làm đề dùng số câu đã trả lời/tổng câu và thời gian còn lại. Không thay bằng thanh tiến độ lộ trình.
 
@@ -73,7 +73,7 @@ LearningProgressSummary:
   checkpointState (not_configured / locked / available / grading / passed / failed)
 ```
 
-Nguồn: Path/Item + LessonProgress do Người 2 quản lý; Goal/SkillProfile do Người 1 cung cấp; đề khả dụng do Người 3 cung cấp; Attempt/Result do Người 4 cung cấp. Trạng thái DTO dùng nhãn tiếng Việt qua mapping khi render, không in tên thuộc tính/enum lên FE.
+Nguồn: Path/Item + LessonProgress do Thảo quản lý; Goal/SkillProfile/Result do Thông cung cấp; đề và Attempt do Trâm cung cấp. Trạng thái DTO dùng nhãn tiếng Việt qua mapping khi render.
 
 Học viên được đọc summary của chính mình. Endpoint admin đọc cùng phép tính nhưng phải kiểm tra ADMIN và học viên đích. ID lấy từ principal/quyền đã kiểm tra; không tin user_id/path_id từ form. Không Controller gọi Controller; không frontend REST. Người 2 là đầu mối nối dashboard, Người 1 tích hợp summary vào quản lý học viên.
 
@@ -88,7 +88,7 @@ Chỉ bỏ nhãn ở **phạm vi đã hoàn thành tất cả điều kiện dư
 - [ ] Dashboard Student và Admin cho cùng C/N trên cùng path; refresh, đăng nhập lại và khởi động lại giữ kết quả.
 - [ ] Hai tài khoản có path/tiến độ khác nhau; sửa URL không xem hay ghi dữ liệu người khác.
 - [ ] Xử lý đúng chưa path, 0 bài, chưa học, học hết, thiếu nội dung, đổi mục tiêu, chờ/lỗi chấm và lỗi tải dữ liệu.
-- [ ] Có test tự động và ảnh kiểm tra desktop/mobile; người giữ foundation review, Người 2 xác nhận tiến độ, Người 1/4 xác nhận các dữ kiện tích hợp.
+- [ ] Có test tự động và ảnh desktop/mobile; Thảo xác nhận tiến độ, Thông xác nhận grading, Trâm xác nhận attempt.
 
 Seed cố định đã đi qua nghiệp vụ/DB có thể là dữ liệu demo thật của tài khoản demo; không đồng nghĩa seed luôn là fixture. Nhưng không được hiển thị tiến độ tài khoản demo cho học viên khác. Trang chủ public vẫn là ví dụ giới thiệu: **giữ nhãn minh họa**, kể cả khi dashboard học viên đã chạy thật. Không xóa nhãn hàng loạt trong fragment/template. Vùng kết quả chỉ bỏ nhãn khi điểm/nhận xét của đúng người đã nối thật; không cần chờ AI mới được dùng tiến độ bài học thật.
 
@@ -98,13 +98,13 @@ Seed cố định đã đi qua nghiệp vụ/DB có thể là dữ liệu demo t
 |---|---|---|
 | Người 1 | Goal/Profile có thể thiếu; ACTIVE; tiến độ thật vào admin; service xác minh/ghi Profile từ Placement/Checkpoint; cung cấp đánh giá AI cho 4 | Snapshot theo user/skill, không mặc định B2; tài khoản mới/khóa/quyền; không điều phối Placement |
 | Người 2 — đầu mối | Sinh/lưu path định hướng và cá nhân; complete lesson; đồng bộ item; công thức/next lesson/checkpoint; dashboard thật | Summary duy nhất, test C/N/idempotency/đổi mục tiêu/rỗng; PR bỏ nhãn đúng phạm vi |
-| Người 3 | Đề công bố/checkpoint đúng skill/target, media và tham chiếu scoring version do 1 cung cấp; điều phối Placement → Profile 1 → path 2 | Service đề cho 2/4; test draft/thiếu đề/scheme sai/retake/kết quả trả chậm; không ghi progress/profile hoặc band |
-| Người 4 | Attempt/result đúng owner, trạng thái chờ/lỗi/hoàn tất; nhận AI 1 rồi tổng hợp; lịch sử/kết quả UI | Kết quả hợp lệ cho Placement 3/checkpoint 2; test submit/retry; không tăng C/ghi Profile |
+| Trâm | Đề đúng skill/target; attempt đúng owner; start/resume/save/submit và điều phối Placement | Service đề/attempt cho Thảo và bài khóa cho Thông; không ghi progress/profile/result |
+| Thông | Chấm/tổng hợp result, trạng thái chờ/lỗi/hoàn tất | Kết quả hợp lệ cho Placement Trâm/checkpoint Thảo; test grading/retry |
 
-1. Chốt DTO, enum trạng thái, policy tập bài và hoàn thành trong PR contract (1/2/3/4 cùng xác nhận).
+1. Chốt DTO, enum trạng thái, policy tập bài và hoàn thành trong PR contract (Thông/Thảo/Trâm cùng xác nhận).
 2. Người 2 làm complete + summary trên path DB nhỏ; Người 1 cung cấp user/Goal/Profile; Người 3 cung cấp nội dung đã công bố. Nghiệm thu thanh tiến độ bài học trước, không chờ AI.
 3. Người 2 nối dashboard và Người 1 nối admin từ cùng summary. Kiểm thử hai tài khoản, lưu bền, đổi mục tiêu.
-4. Người 3/4 nối đề/checkpoint/result; Người 1/2 tích hợp CEFR theo V2. Chỉ bật chức năng khi đủ điều kiện, không dùng kết quả mẫu để mở checkpoint.
+4. Trâm nối đề/attempt, Thông nối grading và Thảo nối checkpoint/result UI. Chỉ bật chức năng khi đủ điều kiện.
 5. Người 2 gửi PR bỏ nhãn tại dashboard đã nối thật; người giữ foundation review ảnh + test + checklist. Mục nào còn preview vẫn giữ nhãn và nút chưa triển khai vẫn disabled.
 
 Không sửa migration V001–V005 đã chạy; schema mới phải có migration mới được review.

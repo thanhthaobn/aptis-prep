@@ -1,7 +1,27 @@
 <!DOCTYPE html>
 <html lang="vi" xmlns:th="http://www.thymeleaf.org">
 <head th:replace="~{fragments/head :: head(${attempt.title})}"></head>
-<body class="student-theme">
+<body class="student-theme exam-page">
+
+<!-- Non-JS Fallback: hiển thị tất cả các câu hỏi và các nút lưu thuần HTML -->
+<noscript>
+    <style>
+        .exam-question-card {
+            display: block !important;
+        }
+        .non-js-submit-btn {
+            display: inline-block !important;
+        }
+        .exam-palette-panel,
+        .exam-runner-header .exam-timer-badge,
+        .btn-toggle-palette-drawer,
+        #btn-open-submit-modal,
+        .question-nav-bar {
+            display: none !important;
+        }
+    </style>
+</noscript>
+
 <div th:replace="~{fragments/navbar :: navbar}"></div>
 <div class="container app-shell"><div th:replace="~{fragments/student-sidebar :: studentSidebar('exams')}"></div>
 <main class="app-main student-content">

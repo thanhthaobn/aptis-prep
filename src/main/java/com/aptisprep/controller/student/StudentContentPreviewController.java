@@ -4,6 +4,7 @@ import com.aptisprep.exception.BusinessRuleException;
 import com.aptisprep.exception.ResourceNotFoundException;
 import com.aptisprep.service.account.AccountAccessService;
 import com.aptisprep.service.exam.ExamAttemptService;
+import com.aptisprep.service.contract.IntegrationModels.HistoryFilter;
 import java.security.Principal;
 import com.aptisprep.service.student.StudentContentPreviewService;
 import java.util.List;
@@ -22,7 +23,7 @@ public class StudentContentPreviewController {
         this.preview = preview; this.accounts = accounts; this.attempts = attempts;
     }
 
-    @GetMapping("/{module:exams|results}")
+    @GetMapping("/{module:exams}")
     public String list(@PathVariable String module, @RequestParam(defaultValue="") String q,
                        @RequestParam(defaultValue="") String skill, @RequestParam(defaultValue="") String level,
                        @RequestParam(defaultValue="") String state, Model model) {
@@ -34,6 +35,37 @@ public class StudentContentPreviewController {
         model.addAttribute("selectedLevel", level); model.addAttribute("selectedState", state);
         return "student/content/list";
     }
+
+    @GetMapping("/results")
+    public String results(@RequestParam(defaultValue = "0") int page,
+                          @RequestParam(defaultValue = "10") int size,
+                          @RequestParam(defaultValue = "") String q,
+                          @RequestParam(defaultValue = "") String skill,
+                          @RequestParam(defaultValue = "") String examType,
+                          @RequestParam(defaultValue = "") String state,
+                          Principal principal, Model model) {
+        if (page < 0 || size < 1 || size > 50) throw new BusinessRuleException("Phân trang không hợp lệ");
+        if (q.length() > 255 || skill.length() > 80 || examType.length() > 40 || state.length() > 40)
+            throw new BusinessRuleException("Bộ lọc không hợp lệ");
+        try {
+            Integer userId = accounts.requireActiveStudent(principal.getName());
+            model.addAttribute("history", attempts.history(userId, page, size, new HistoryFilter(q, skill, examType, state)));
+            model.addAttribute("page", page);
+            model.addAttribute("size", size);
+            model.addAttribute("q", q);
+            model.addAttribute("selectedSkill", skill);
+            model.addAttribute("selectedExamType", examType);
+            model.addAttribute("selectedState", state);
+            return "student/results/list";
+        } catch (ResourceNotFoundException ignored) {
+            // Giữ fallback cho tài khoản fixture cũ; tài khoản DB thật luôn dùng lịch sử attempt.
+            common("results", model);
+            model.addAttribute("entries", preview.find("results", q, skill, examType, state));
+            model.addAttribute("q", q); model.addAttribute("selectedSkill", skill);
+            model.addAttribute("selectedLevel", examType); model.addAttribute("selectedState", state);
+            return "student/content/list";
+        }
+    }
     @GetMapping("/{module:exams}/{id:\\d+}")
     public String detail(@PathVariable String module, @PathVariable int id, Model model) {
         common(module, model); model.addAttribute("entry", preview.entry(module, id));
@@ -43,10 +75,8 @@ public class StudentContentPreviewController {
     public String result(@PathVariable int id, Principal principal, Model model) {
         try {
             Integer userId = accounts.requireActiveStudent(principal.getName());
-            if (attempts.ownsAttempt(userId, id)) {
-                model.addAttribute("attemptResult", attempts.result(userId, id));
-                return "student/attempt-result";
-            }
+            model.addAttribute("attemptResult", attempts.result(userId, id));
+            return "student/attempt-result";
         } catch (ResourceNotFoundException ignored) {
             // The preview catalog intentionally supports fixture-only test users.
         }

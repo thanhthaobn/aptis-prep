@@ -3,9 +3,9 @@
 <head th:replace="~{fragments/head :: head('Quản lý bài học')}"></head>
 <body class="admin-theme">
 <div th:replace="~{fragments/navbar :: navbar}"></div>
-<div class="container app-shell">
+<div class="container ap-container app-shell">
 <div th:replace="~{fragments/admin-sidebar :: adminSidebar('lessons')}"></div>
-<main class="app-main admin-catalog admin-lesson-tree">
+<main id="main-content" tabindex="-1" class="app-main admin-catalog admin-lesson-tree">
 <header class="page-header"><div><p class="eyebrow">NỘI DUNG HỌC TẬP</p><h1>Quản lý bài học</h1><p>Chọn kỹ năng và cấp độ để thêm bài vào đúng vị trí.</p></div></header>
 <section class="curriculum-tree" aria-label="Cây quản lý bài học">
 <details class="dashboard-panel skill-branch" th:each="branch:${tree}" th:attr="data-skill=${branch.skill()}">

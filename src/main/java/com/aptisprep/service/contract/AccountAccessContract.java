@@ -2,7 +2,7 @@ package com.aptisprep.service.contract;
 
 import com.aptisprep.service.contract.IntegrationModels.LearnerContext;
 
-/** Owner 1. Caller must obtain IDs from authenticated/authorized server context. */
+/** Owner: Thông (Profile). Caller must obtain IDs from authenticated/authorized server context. */
 public interface AccountAccessContract {
     Integer requireActiveStudent(String principalEmail);
     LearnerContext context(Integer userId);

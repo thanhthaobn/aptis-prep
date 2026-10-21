@@ -47,7 +47,7 @@ Test thường dùng H2 in-memory và không cần SQL Server. V001–V003 đã 
 
 Giao diện học viên dùng bản đồ chặng và phong cách học tập vui. Sau đăng nhập mở `/student/orientation` để xem lộ trình định hướng minh họa không yêu cầu mục tiêu/bài đầu vào; sinh/lưu lộ trình và tiến độ thực tế còn chờ luồng học tập triển khai.
 
-Phân công đầy đủ cho bốn người theo V2 và phần mở rộng quản lý học viên: [TEAM_ASSIGNMENT_V2.md](docs/TEAM_ASSIGNMENT_V2.md).
+Phân công cập nhật cho ba thành viên Thông, Thảo và Trâm: [TEAM_ASSIGNMENT_V2.md](docs/TEAM_ASSIGNMENT_V2.md).
 
 ```text
 Controller -> Service -> Repository
@@ -70,7 +70,7 @@ Admin còn có khung Bài học (`/admin/lessons`), Ngân hàng câu hỏi (`/ad
 
 ## Giao diện học viên mới
 
-Admin có mục **Chứng chỉ & Chấm điểm** tại `/admin/certificates`: khung UC-A03–A05, không có ghi DB. Người 3 nhận theo [SCORING_UI_HANDOFF.md](docs/SCORING_UI_HANDOFF.md); `/admin/settings` chỉ còn redirect, không phải trang cấu hình key.
+Admin có mục **Chứng chỉ & Chấm điểm** tại `/admin/certificates`; Thông phụ trách nghiệp vụ scoring theo [SCORING_UI_HANDOFF.md](docs/SCORING_UI_HANDOFF.md). `/admin/settings` chỉ còn redirect, không phải trang cấu hình key.
 
 Sau khi đăng nhập Student, mở menu **Bài học**, **Đề thi**, **Kết quả** để xem danh sách và chi tiết minh họa. Chưa có lưu tiến độ, tạo lượt thi hoặc chấm AI. Hướng dẫn nhóm tiếp nhận: [docs/STUDENT_UI_HANDOFF.md](docs/STUDENT_UI_HANDOFF.md).
 
