@@ -11,6 +11,7 @@ public class UserAnswerEntity {
     @Column(name = "exam_attempt_id", nullable = false) private Integer attemptId;
     @Column(name = "question_id", nullable = false) private Integer questionId;
     @Column(nullable = false, length = 30) private String status;
+    @Column(name = "answer_version", nullable = false) private int answerVersion = 1;
     @Column(name = "started_at") private LocalDateTime startedAt;
     @Column(name = "completed_at") private LocalDateTime completedAt;
     @Column(name = "text_answer", columnDefinition = "nvarchar(max)") private String textAnswer;
@@ -30,6 +31,7 @@ public class UserAnswerEntity {
     public Integer getAttemptId() { return attemptId; }
     public Integer getQuestionId() { return questionId; }
     public String getStatus() { return status; }
+    public int getAnswerVersion() { return answerVersion; }
     public LocalDateTime getStartedAt() { return startedAt; }
     public LocalDateTime getCompletedAt() { return completedAt; }
     public String getTextAnswer() { return textAnswer; }
@@ -43,6 +45,7 @@ public class UserAnswerEntity {
     public void setAttemptId(Integer value) { attemptId = value; }
     public void setQuestionId(Integer value) { questionId = value; }
     public void setStatus(String value) { status = value; }
+    public void setAnswerVersion(int value) { answerVersion = Math.max(1, value); }
     public void setStartedAt(LocalDateTime value) { startedAt = value; }
     public void setCompletedAt(LocalDateTime value) { completedAt = value; }
     public void setTextAnswer(String value) { textAnswer = value; }

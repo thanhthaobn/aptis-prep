@@ -5,7 +5,8 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "exam_attempts")
+@Table(name = "exam_attempts", uniqueConstraints = @UniqueConstraint(
+        name = "uq_exam_attempts_user_request_key", columnNames = {"user_id", "request_key"}))
 public class ExamAttemptEntity {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY) private Integer id;
     @Column(name = "user_id", nullable = false) private Integer userId;

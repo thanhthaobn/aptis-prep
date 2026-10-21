@@ -71,7 +71,7 @@ public class AccountAccessService implements AccountAccessContract {
         if (result == null || !Objects.equals(result.userId(), userId) || !Objects.equals(result.attemptId(), attemptId)) {
             throw new AccessDeniedException("Không thể xác nhận kết quả bài thi");
         }
-        if (!"COMPLETED".equalsIgnoreCase(result.state())) {
+        if (!"COMPLETED".equalsIgnoreCase(result.state()) && !"EXPIRED".equalsIgnoreCase(result.state())) {
             throw new BusinessRuleException("Kết quả bài thi chưa hoàn tất");
         }
         String type = Optional.ofNullable(result.examType()).orElse("").toUpperCase(Locale.ROOT);

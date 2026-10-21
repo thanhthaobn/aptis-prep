@@ -1,8 +1,8 @@
 package com.aptisprep.controller.student;
 
-import com.aptisprep.exception.BusinessRuleException;
 import com.aptisprep.dto.form.GoalForm;
 import com.aptisprep.dto.form.ProfileForm;
+import com.aptisprep.exception.BusinessRuleException;
 import com.aptisprep.service.account.AccountProfileService;
 import com.aptisprep.service.placement.PlacementService;
 import jakarta.validation.Valid;

@@ -21,8 +21,12 @@ public class QuestionMediaEntity {
     public QuestionMediaEntity() {}
     @PrePersist void onCreate() { createdAt = LocalDateTime.now(); }
     public Integer getId() { return id; }
+    public Integer getQuestionId() { return questionId; }
     public String getMediaType() { return mediaType; }
     public String getMediaUrl() { return mediaUrl; }
+    public Integer getMaxPlayCount() { return maxPlayCount; }
+    public String getContentType() { return contentType; }
+    public String getOriginalFilename() { return originalFilename; }
     public void setQuestionId(Integer v) { questionId = v; }
     public void setMediaType(String v) { mediaType = v; }
     public void setMediaUrl(String v) { mediaUrl = v; }
