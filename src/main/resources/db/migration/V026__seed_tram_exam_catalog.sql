@@ -200,18 +200,31 @@ INSERT INTO mock_exam_questions (mock_exam_id, mock_exam_section_id, question_id
 
 /* Checkpoints exist for every skill and every curriculum level. */
 DECLARE @checkpoint_exams TABLE (exam_id INT, skill VARCHAR(30), question_id INT);
-INSERT INTO mock_exams (certificate_id, scoring_scheme_id, title, description, exam_type, target_level, skill, duration_minutes, status)
-OUTPUT inserted.id, seed.skill, seed.question_id INTO @checkpoint_exams (exam_id, skill, question_id)
-SELECT @certificate_id, @scheme_id,
-       N'Checkpoint ' + seed.skill + N' ' + levels.target_level,
-       N'Bài kiểm tra cuối chặng cho kỹ năng ' + seed.skill + N' ở mức ' + levels.target_level + N'.',
-       'CHECKPOINT', levels.target_level, seed.skill, 20, 'PUBLISHED'
+DECLARE @checkpoint_seed TABLE (skill VARCHAR(30), question_id INT, target_level VARCHAR(10));
+INSERT INTO @checkpoint_seed (skill, question_id, target_level)
+SELECT seed.skill, seed.question_id, levels.target_level
 FROM (VALUES
     ('GRAMMAR_VOCABULARY', @q_gv), ('READING', @q_read_matching),
     ('LISTENING', @q_listening_a2), ('WRITING', @q_writing_b1),
     ('SPEAKING', @q_speaking_a2)
 ) seed(skill, question_id)
 CROSS JOIN (VALUES ('A1'), ('A2'), ('B1'), ('B2'), ('C1'), ('C2')) levels(target_level);
+
+INSERT INTO mock_exams (certificate_id, scoring_scheme_id, title, description, exam_type, target_level, skill, duration_minutes, status)
+SELECT @certificate_id, @scheme_id,
+       N'Checkpoint ' + seed.skill + N' ' + seed.target_level,
+       N'Bài kiểm tra cuối chặng cho kỹ năng ' + seed.skill + N' ở mức ' + seed.target_level + N'.',
+       'CHECKPOINT', seed.target_level, seed.skill, 20, 'PUBLISHED'
+FROM @checkpoint_seed seed;
+
+/* OUTPUT cannot reference source aliases in SQL Server INSERT...SELECT. */
+INSERT INTO @checkpoint_exams (exam_id, skill, question_id)
+SELECT exam.id, seed.skill, seed.question_id
+FROM @checkpoint_seed seed
+JOIN mock_exams exam ON exam.title = N'Checkpoint ' + seed.skill + N' ' + seed.target_level
+    AND exam.exam_type = 'CHECKPOINT'
+    AND exam.status = 'PUBLISHED'
+    AND exam.certificate_id = @certificate_id;
 
 DECLARE @checkpoint_sections TABLE (exam_id INT, section_id INT);
 INSERT INTO mock_exam_sections (mock_exam_id, skill, display_order, duration_minutes, status)
