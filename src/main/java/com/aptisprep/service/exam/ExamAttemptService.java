@@ -3,18 +3,29 @@ package com.aptisprep.service.exam;
 import com.aptisprep.entity.*;
 import com.aptisprep.enums.Role;
 import com.aptisprep.enums.UserStatus;
+import com.aptisprep.event.AiAssessmentCompletedEvent;
 import com.aptisprep.event.AttemptSubmittedEvent;
 import com.aptisprep.exception.AccessDeniedException;
 import com.aptisprep.exception.BusinessRuleException;
 import com.aptisprep.exception.ResourceNotFoundException;
 import com.aptisprep.repository.*;
 import com.aptisprep.service.contract.ExamAttemptContract;
+import com.aptisprep.service.contract.AiAssessmentContract;
 import com.aptisprep.service.contract.IntegrationModels.*;
 import com.aptisprep.service.contract.ScoringPolicyContract;
 import com.aptisprep.service.grading.AttemptFinalizationService;
 import com.aptisprep.service.grading.ObjectiveGradingService;
+import com.aptisprep.service.storage.AudioUploadService;
+import com.aptisprep.service.storage.StorageService;
+import org.springframework.core.io.Resource;
+import org.springframework.web.multipart.MultipartFile;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.json.JsonMapper;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
 import java.time.*;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
@@ -23,67 +34,160 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class ExamAttemptService implements ExamAttemptContract {
     private static final String RUBRIC_VERSION = "aptis-rubric-v1";
+    private static final int SAVE_GRACE_SECONDS = 5;
     private static final Set<String> ACTIVE_STATES = Set.of("IN_PROGRESS", "SUBMITTED", "WAITING_GRADING");
-    private static final Set<String> TERMINAL_STATES = Set.of("COMPLETED", "ERROR", "EXPIRED");
-    private static final long SAVE_GRACE_SECONDS = 10;
+    private static final Set<String> TERMINAL_STATES = Set.of("COMPLETED", "ERROR", "EXPIRED", "CANCELLED");
+    private static final ConcurrentHashMap<String, Object> START_LOCKS = new ConcurrentHashMap<>();
     private final UserRepository users;
     private final MockExamRepository exams;
     private final MockExamQuestionRepository examQuestions;
     private final QuestionRepository questions;
     private final QuestionItemRepository items;
     private final QuestionOptionRepository options;
+    private final QuestionMediaRepository questionMedia;
+    private final UserMediaActivityRepository mediaActivities;
+    private final ExamAttemptSnapshotRepository snapshots;
     private final ExamAttemptRepository attempts;
     private final UserAnswerRepository answers;
     private final UserAnswerDetailRepository details;
     private final ExamSkillResultRepository skillResults;
     private final ScoringPolicyContract scoring;
-    private final ObjectiveGradingService objectiveGrading;
+    private final AiAssessmentContract ai;
+    private final AudioUploadService audioUploads;
+    private final StorageService storage;
+    private final AttemptOutboxService outbox;
     private final AttemptFinalizationService finalization;
+    private final ObjectiveGradingService objectiveGrading;
     private final ApplicationEventPublisher events;
+    private final JsonMapper json = JsonMapper.builder().build();
 
     public ExamAttemptService(UserRepository users, MockExamRepository exams, MockExamQuestionRepository examQuestions,
             QuestionRepository questions, QuestionItemRepository items, QuestionOptionRepository options,
+            QuestionMediaRepository questionMedia, UserMediaActivityRepository mediaActivities, ExamAttemptSnapshotRepository snapshots,
             ExamAttemptRepository attempts, UserAnswerRepository answers, UserAnswerDetailRepository details,
-            ExamSkillResultRepository skillResults, ScoringPolicyContract scoring, ObjectiveGradingService objectiveGrading,
-            AttemptFinalizationService finalization, ApplicationEventPublisher events) {
+            ExamSkillResultRepository skillResults, ScoringPolicyContract scoring, AiAssessmentContract ai,
+            AudioUploadService audioUploads, StorageService storage, AttemptOutboxService outbox,
+            AttemptFinalizationService finalization, ObjectiveGradingService objectiveGrading,
+            ApplicationEventPublisher events) {
         this.users = users; this.exams = exams; this.examQuestions = examQuestions; this.questions = questions;
-        this.items = items; this.options = options; this.attempts = attempts; this.answers = answers; this.details = details;
-        this.skillResults = skillResults; this.scoring = scoring; this.objectiveGrading = objectiveGrading;
-        this.finalization = finalization; this.events = events;
+        this.items = items; this.options = options; this.questionMedia = questionMedia; this.mediaActivities = mediaActivities; this.snapshots = snapshots;
+        this.attempts = attempts; this.answers = answers; this.details = details;
+        this.skillResults = skillResults; this.scoring = scoring; this.ai = ai; this.audioUploads = audioUploads; this.storage = storage;
+        this.outbox = outbox; this.finalization = finalization; this.objectiveGrading = objectiveGrading; this.events = events;
     }
 
     @Override
     @Transactional
     public AttemptHandle start(Integer userId, Integer examId, String requestKey) {
-        activeUser(userId);
+        // Lock the user row for the whole transaction. A JVM lock is not enough here:
+        // another request can enter after the first synchronized block exits but before
+        // the first transaction has committed its attempt row.
+        activeUserForUpdate(userId);
         MockExamEntity exam = publishedExam(examId);
         List<MockExamQuestionEntity> links = examQuestions.findByMockExamIdOrderByPosition(examId);
         if (links.isEmpty()) throw new BusinessRuleException("Đề thi chưa có câu hỏi");
         String key = normalizeRequestKey(requestKey, userId, examId);
-        Optional<ExamAttemptEntity> byKey = attempts.findByUserIdAndRequestKey(userId, key);
-        if (byKey.isPresent() && !TERMINAL_STATES.contains(byKey.get().getStatus())) return handle(byKey.get(), exam);
-        if ("PLACEMENT".equals(exam.getExamType())) {
-            Optional<ExamAttemptEntity> active = attempts.findActivePlacement(userId, exam.getSkill(), ACTIVE_STATES);
-            if (active.isPresent()) return handle(active.get(), examFor(active.get()));
+        Object lock = START_LOCKS.computeIfAbsent(userId + ":" + key, ignored -> new Object());
+        synchronized (lock) {
+            Optional<ExamAttemptEntity> byKey = attempts.findByUserIdAndRequestKey(userId, key);
+            if (byKey.isPresent()) {
+                if (!Objects.equals(byKey.get().getMockExamId(), examId)) {
+                    throw new BusinessRuleException("Request key đã được dùng cho một đề thi khác");
+                }
+                return handle(byKey.get(), examFor(byKey.get()));
+            }
+            if ("PLACEMENT".equals(exam.getExamType())) {
+                Optional<ExamAttemptEntity> active = attempts.findActivePlacement(userId, exam.getSkill(), ACTIVE_STATES);
+                if (active.isPresent()) return handle(active.get(), examFor(active.get()));
+            }
+            ExamAttemptEntity attempt = new ExamAttemptEntity(); attempt.setUserId(userId); attempt.setMockExamId(examId);
+            attempt.setRequestKey(key); attempt.setStatus("IN_PROGRESS"); attempt.setGradingStatus("NOT_STARTED");
+            attempt.setAnswerVersion(1); attempt.setScoringSchemeId(exam.getScoringSchemeId());
+            attempt.setPolicyVersion("scoring-scheme:" + exam.getScoringSchemeId() + ":v1");
+            attempt.setRubricVersion(RUBRIC_VERSION);
+            attempt = attempts.save(attempt);
+            createSnapshot(attempt, exam, links);
+            Integer newAttemptId = attempt.getId();
+            for (MockExamQuestionEntity link : links) {
+                UserAnswerEntity answer = new UserAnswerEntity(); answer.setAttemptId(newAttemptId); answer.setQuestionId(link.getQuestionId());
+                answer.setStatus("NOT_STARTED"); answers.save(answer);
+                questionMedia.findByQuestionIdOrderByPosition(link.getQuestionId()).stream()
+                        .filter(media -> "AUDIO".equals(media.getMediaType())).forEach(media -> {
+                            UserMediaActivityEntity activity = new UserMediaActivityEntity();
+                            activity.setAttemptId(newAttemptId); activity.setMediaId(media.getId()); mediaActivities.save(activity);
+                        });
+            }
+            return handle(attempt, exam);
         }
-        if (byKey.isPresent()) key = key + "-" + UUID.randomUUID();
-        ExamAttemptEntity attempt = new ExamAttemptEntity(); attempt.setUserId(userId); attempt.setMockExamId(examId);
-        attempt.setRequestKey(key); attempt.setStatus("IN_PROGRESS"); attempt.setGradingStatus("NOT_STARTED");
-        attempt.setAnswerVersion(1);
-        attempt.setScoringSchemeId(exam.getScoringSchemeId());
-        attempt.setPolicyVersion(scoring.policyVersion(exam.getScoringSchemeId()));
-        attempt.setRubricVersion(RUBRIC_VERSION);
-        attempt = attempts.save(attempt);
-        for (MockExamQuestionEntity link : links) {
-            UserAnswerEntity answer = new UserAnswerEntity(); answer.setAttemptId(attempt.getId()); answer.setQuestionId(link.getQuestionId());
-            answer.setStatus("NOT_STARTED"); answers.save(answer);
+    }
+
+    @Transactional
+    public void saveSpeakingAudio(Integer userId, Integer attemptId, Integer questionId, Integer itemId, MultipartFile audioFile) {
+        ExamAttemptEntity attempt = editableAttempt(userId, attemptId);
+        QuestionEntity question = questions.findById(questionId).orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy câu hỏi"));
+        if (!"SPEAKING_AUDIO".equals(question.getQuestionType())) throw new BusinessRuleException("Câu hỏi không yêu cầu file ghi âm");
+        UserAnswerEntity answer = answers.findByAttemptIdAndQuestionId(attemptId, questionId).orElseThrow(() -> new BusinessRuleException("Câu hỏi không thuộc lượt thi này"));
+        QuestionItemEntity item = chooseItem(questionId, itemId);
+        String oldPath = answer.getAudioUrl();
+        String path = audioUploads.store(audioFile, attemptId);
+        UserAnswerDetailEntity detail = details.findByUserAnswerIdAndQuestionItemId(answer.getId(), item.getId()).orElseGet(() -> {
+            UserAnswerDetailEntity value = new UserAnswerDetailEntity(); value.setUserAnswerId(answer.getId()); value.setQuestionItemId(item.getId()); return value;
+        });
+        detail.setAudioPath(path); detail.setGradingStatus("PENDING"); answer.setAudioUrl(path); answer.setStatus("ANSWERED");
+        if (answer.getStartedAt() == null) answer.setStartedAt(LocalDateTime.now());
+        answer.setAnswerVersion(answer.getAnswerVersion() + 1);
+        details.save(detail); answers.save(answer); if (oldPath != null && !oldPath.equals(path)) storage.delete(oldPath);
+    }
+
+    @Transactional
+    public MediaPlayResult playMedia(Integer userId, Integer attemptId, Integer mediaId) {
+        ExamAttemptEntity attempt = attempts.findByIdAndUserIdForUpdate(attemptId, userId)
+                .orElseThrow(() -> new AccessDeniedException("Bạn không có quyền với lượt thi này"));
+        if (!"IN_PROGRESS".equals(attempt.getStatus())) throw new BusinessRuleException("Lượt thi đã khóa");
+        QuestionMediaEntity media = questionMedia.findById(mediaId).orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy media"));
+        if (!"AUDIO".equals(media.getMediaType()) || !answers.findByAttemptIdAndQuestionId(attemptId, media.getQuestionId()).isPresent()) throw new AccessDeniedException("Media không thuộc lượt thi");
+        ensureMediaWindow(attempt);
+        int limit = Math.min(2, media.getMaxPlayCount() == null ? 2 : media.getMaxPlayCount());
+        UserMediaActivityEntity activity = mediaActivities.findByAttemptIdAndMediaIdForUpdate(attemptId, mediaId)
+                .orElseThrow(() -> new BusinessRuleException("Không thể khởi tạo bộ đếm lượt nghe"));
+        if (activity.getPlayCount() >= limit) throw new BusinessRuleException("Bạn đã sử dụng hết số lượt nghe cho đoạn audio này");
+        String contentToken = UUID.randomUUID().toString();
+        activity.setPlayCount(activity.getPlayCount() + 1); activity.setLastPlayedAt(LocalDateTime.now());
+        activity.setPlayTokenHash(hashToken(contentToken)); activity.setPlayTokenExpiresAt(LocalDateTime.now().plusMinutes(1));
+        mediaActivities.save(activity);
+        return new MediaPlayResult(mediaId, activity.getPlayCount(), limit, contentToken);
+    }
+
+    @Transactional
+    public MediaResource mediaContent(Integer userId, Integer attemptId, Integer mediaId, String contentToken) {
+        ExamAttemptEntity attempt = attempts.findByIdAndUserId(attemptId, userId)
+                .orElseThrow(() -> new AccessDeniedException("Bạn không có quyền xem media này"));
+        QuestionMediaEntity media = questionMedia.findById(mediaId).orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy media"));
+        if (!answers.findByAttemptIdAndQuestionId(attemptId, media.getQuestionId()).isPresent()) throw new AccessDeniedException("Media không thuộc lượt thi");
+        ensureMediaWindow(attempt);
+        if ("AUDIO".equals(media.getMediaType())) {
+            UserMediaActivityEntity activity = mediaActivities.findByAttemptIdAndMediaIdForUpdate(attemptId, mediaId)
+                    .orElseThrow(() -> new AccessDeniedException("Media chưa được cấp lượt phát"));
+            if (contentToken == null || contentToken.isBlank() || !Objects.equals(activity.getPlayTokenHash(), hashToken(contentToken))
+                    || activity.getPlayTokenExpiresAt() == null || activity.getPlayTokenExpiresAt().isBefore(LocalDateTime.now())) {
+                throw new AccessDeniedException("Token phát audio không hợp lệ hoặc đã hết hạn");
+            }
+            activity.setPlayTokenHash(null); activity.setPlayTokenExpiresAt(null); mediaActivities.save(activity);
         }
-        return handle(attempt, exam);
+        return new MediaResource(storage.load(media.getMediaUrl()), media.getContentType());
+    }
+
+    @Transactional(readOnly = true)
+    public MediaResource speakingAudio(Integer userId, Integer attemptId, Integer answerId) {
+        attempts.findByIdAndUserId(attemptId, userId).orElseThrow(() -> new AccessDeniedException("Bạn không có quyền xem audio này"));
+        UserAnswerEntity answer = answers.findByIdAndAttemptId(answerId, attemptId).orElseThrow(() -> new AccessDeniedException("Audio không thuộc lượt thi"));
+        if (answer.getAudioUrl() == null) throw new ResourceNotFoundException("Chưa có file ghi âm");
+        return new MediaResource(storage.load(answer.getAudioUrl()), "audio/*");
     }
 
     @Transactional
     public void saveAnswer(Integer userId, Integer attemptId, Integer questionId, Integer itemId,
-            Integer selectedOptionId, Integer userPosition, String textAnswer, String audioUrl) {
+            Integer selectedOptionId, Integer userPosition, String textAnswer) {
         ExamAttemptEntity attempt = editableAttempt(userId, attemptId);
         UserAnswerEntity answer = answers.findByAttemptIdAndQuestionId(attemptId, questionId)
                 .orElseThrow(() -> new BusinessRuleException("Câu hỏi không thuộc lượt thi này"));
@@ -105,10 +209,10 @@ public class ExamAttemptService implements ExamAttemptContract {
             if (value.length() > 20000) throw new BusinessRuleException("Bài viết quá dài");
             detail.setAnswerText(value); answer.setTextAnswer(value);
         } else if ("SPEAKING_AUDIO".equals(question.getQuestionType())) {
-            if (audioUrl != null && audioUrl.length() > 500) throw new BusinessRuleException("Đường dẫn ghi âm không hợp lệ");
-            detail.setAudioPath(blankToNull(audioUrl)); answer.setAudioUrl(blankToNull(audioUrl));
+            throw new BusinessRuleException("Speaking phải tải file bằng multipart upload");
         }
         if (answer.getStartedAt() == null) answer.setStartedAt(LocalDateTime.now());
+        answer.setAnswerVersion(answer.getAnswerVersion() + 1);
         answer.setStatus("ANSWERED"); details.save(detail); answers.save(answer);
     }
 
@@ -117,29 +221,30 @@ public class ExamAttemptService implements ExamAttemptContract {
     public void submit(Integer userId, Integer attemptId, String requestKey) {
         ExamAttemptEntity attempt = attempts.findByIdAndUserIdForUpdate(attemptId, userId)
                 .orElseThrow(() -> new AccessDeniedException("Bạn không có quyền với lượt thi này"));
-        if ("COMPLETED".equals(attempt.getStatus()) || "WAITING_GRADING".equals(attempt.getStatus())
-                || "SUBMITTED".equals(attempt.getStatus()) || "EXPIRED".equals(attempt.getStatus())) return;
-        if (!"IN_PROGRESS".equals(attempt.getStatus())) {
+        if ("COMPLETED".equals(attempt.getStatus()) || attempt.getSubmittedAt() != null) return;
+        if (!"IN_PROGRESS".equals(attempt.getStatus()) && !"WAITING_GRADING".equals(attempt.getStatus())) {
             throw new BusinessRuleException("Lượt thi không thể nộp ở trạng thái hiện tại");
         }
         MockExamEntity exam = publishedExam(attempt.getMockExamId());
         LocalDateTime now = LocalDateTime.now();
         boolean expired = exam.getDurationMinutes() != null && attempt.getStartedAt().plusMinutes(exam.getDurationMinutes()).isBefore(now);
-        attempt.setSubmittedAt(now);
-        attempt.setAnswerVersion((attempt.getAnswerVersion() == null ? 1 : attempt.getAnswerVersion()) + 1);
-        attempt.setGradingRequestKey(normalizeRequestKey(requestKey, userId, attemptId));
-        attempt.setGradingStatus("GRADING");
-        attempt.setStatus(expired ? "EXPIRED" : "SUBMITTED");
-        attempts.save(attempt);
+        refreshSnapshotAnswerVersion(attempt);
+        attempt.setScoringSchemeId(attempt.getScoringSchemeId() == null ? exam.getScoringSchemeId() : attempt.getScoringSchemeId());
+        attempt.setPolicyVersion(attempt.getPolicyVersion() == null ? "scoring-scheme:" + exam.getScoringSchemeId() + ":v1" : attempt.getPolicyVersion());
+        attempt.setRubricVersion(attempt.getRubricVersion() == null ? RUBRIC_VERSION : attempt.getRubricVersion());
+        attempt.setGradingRequestKey("attempt:" + attemptId + ":grading:v" + attempt.getAnswerVersion());
+        attempt.setSubmittedAt(now); attempt.setGradingStatus("GRADING"); attempt.setStatus(expired ? "EXPIRED" : "SUBMITTED");
         LockedAttempt locked = lockedAttempt(attempt, exam);
         objectiveGrading.gradeObjective(locked, exam);
-        boolean finalized = !expired && finalization.finalizeIfReady(attempt, exam);
-        if (!finalized) {
-            if ("ERROR".equals(attempt.getStatus())) return;
-            attempt.setStatus(expired ? "EXPIRED" : "WAITING_GRADING");
-            attempt.setGradingStatus(expired ? "EXPIRED" : "WAITING");
-            attempts.save(attempt);
-            if (!expired) events.publishEvent(new AttemptSubmittedEvent(userId, attemptId, exam.getId(), exam.getExamType(), locked));
+        boolean waiting = skillResults.findByAttemptIdOrderBySkillAsc(attempt.getId()).stream().anyMatch(x -> x.getScaleScore() == null);
+        if (waiting) { attempt.setStatus(expired ? "EXPIRED" : "WAITING_GRADING"); attempt.setGradingStatus("WAITING"); }
+        boolean completed = !waiting && finalization.finalizeIfReady(attempt, exam);
+        attempts.save(attempt);
+        if (completed) {
+            finalization.publishCompleted(attempt, exam);
+        } else if ("WAITING_GRADING".equals(attempt.getStatus()) || ("EXPIRED".equals(attempt.getStatus()) && "WAITING".equals(attempt.getGradingStatus()))) {
+            AttemptSubmittedEvent event = new AttemptSubmittedEvent(userId, attemptId, exam.getId(), exam.getExamType(), locked);
+            outbox.enqueueSubmitted(event); events.publishEvent(event);
         }
     }
 
@@ -193,6 +298,11 @@ public class ExamAttemptService implements ExamAttemptContract {
     @Transactional(readOnly = true)
     public boolean ownsAttempt(Integer userId, Integer attemptId) { return attempts.findByIdAndUserId(attemptId, userId).isPresent(); }
 
+    @Transactional
+    public void applyAiAssessment(AiAssessmentCompletedEvent event) {
+        finalization.applyAiAssessment(event);
+    }
+
     @Transactional(readOnly = true)
     public AttemptPage page(Integer userId, Integer attemptId) {
         activeUser(userId); ExamAttemptEntity attempt = attempts.findByIdAndUserId(attemptId, userId)
@@ -208,23 +318,74 @@ public class ExamAttemptService implements ExamAttemptContract {
                         detail == null ? null : detail.getSelectedOptionId(), detail == null ? null : detail.getUserPosition(),
                         detail == null ? null : detail.getAnswerText());
             }).toList();
-            return new QuestionPage(q.getId(), q.getContent(), q.getSkill(), q.getQuestionType(), link.getPosition(), itemPages);
+            List<MediaPage> mediaPages = questionMedia.findByQuestionIdOrderByPosition(q.getId()).stream()
+                    .map(media -> new MediaPage(media.getId(), media.getMediaType(), media.getOriginalFilename(), media.getContentType())).toList();
+            return new QuestionPage(q.getId(), q.getContent(), q.getSkill(), q.getQuestionType(), link.getPosition(), itemPages, mediaPages);
         }).toList();
-        return new AttemptPage(attempt.getId(), exam.getTitle(), remainingSeconds(attempt, exam), questionsView);
+        Instant deadline = exam.getDurationMinutes() == null || attempt.getStartedAt() == null ? null
+                : instant(attempt.getStartedAt().plusMinutes(exam.getDurationMinutes()));
+        return new AttemptPage(attempt.getId(), exam.getTitle(), remainingSeconds(attempt, exam), questionsView, deadline);
     }
 
-    public record AttemptPage(Integer attemptId, String title, Long remainingSeconds, List<QuestionPage> questions) {}
+    public record AttemptPage(Integer attemptId, String title, Long remainingSeconds, List<QuestionPage> questions, Instant deadline) {
+        public AttemptPage(Integer attemptId, String title, Long remainingSeconds, List<QuestionPage> questions) {
+            this(attemptId, title, remainingSeconds, questions, null);
+        }
+    }
     public record QuestionPage(Integer questionId, String content, String skill, String type, int position,
-            List<ItemPage> items) {}
+            List<ItemPage> items, List<MediaPage> media) {}
     public record ItemPage(Integer itemId, int position, String content, List<OptionPage> options,
             Integer selectedOptionId, Integer userPosition, String textAnswer) {}
     public record OptionPage(Integer id, String code, String content) {}
+    public record MediaPage(Integer id, String type, String filename, String contentType) {}
+    public record MediaPlayResult(Integer mediaId, int playCount, int maxPlayCount, String contentToken) {}
+    public record MediaResource(Resource resource, String contentType) {}
 
-    private Long remainingSeconds(ExamAttemptEntity attempt, MockExamEntity exam) {
-        Integer duration = exam.getDurationMinutes();
-        if (duration == null) return null;
-        LocalDateTime deadline = attempt.getStartedAt().plusMinutes(duration);
-        return Math.max(0L, Duration.between(LocalDateTime.now(), deadline).getSeconds());
+    private void createSnapshot(ExamAttemptEntity attempt, MockExamEntity exam, List<MockExamQuestionEntity> links) {
+        ExamAttemptSnapshotEntity snapshot = new ExamAttemptSnapshotEntity();
+        snapshot.setAttemptId(attempt.getId()); snapshot.setExamId(exam.getId()); snapshot.setCertificateId(exam.getCertificateId());
+        snapshot.setScoringSchemeId(exam.getScoringSchemeId()); snapshot.setExamType(exam.getExamType()); snapshot.setSkill(exam.getSkill());
+        snapshot.setTargetLevel(exam.getTargetLevel()); snapshot.setTitle(exam.getTitle()); snapshot.setDurationMinutes(exam.getDurationMinutes());
+        snapshot.setAnswerVersion(1); snapshot.setPolicyVersion("scoring-scheme:" + exam.getScoringSchemeId() + ":v1");
+        Map<String, Object> grading = new LinkedHashMap<>(); grading.put("certificateId", exam.getCertificateId()); grading.put("scoringSchemeId", exam.getScoringSchemeId()); grading.put("policyVersion", snapshot.getPolicyVersion()); grading.put("answerVersion", 1);
+        List<Map<String, Object>> lockedQuestions = new ArrayList<>();
+        for (MockExamQuestionEntity link : links) {
+            QuestionEntity question = questions.findById(link.getQuestionId()).orElseThrow(); Map<String, Object> q = new LinkedHashMap<>();
+            q.put("id", question.getId()); q.put("position", link.getPosition()); q.put("content", question.getContent()); q.put("instruction", question.getInstruction()); q.put("type", question.getQuestionType()); q.put("skill", question.getSkill());
+            List<Map<String, Object>> lockedItems = new ArrayList<>();
+            for (QuestionItemEntity item : items.findByQuestionIdOrderByPosition(question.getId())) {
+                Map<String, Object> i = new LinkedHashMap<>(); i.put("id", item.getId()); i.put("position", item.getPosition()); i.put("content", item.getContent()); i.put("correctPosition", item.getCorrectPosition());
+                List<Map<String, Object>> lockedOptions = new ArrayList<>(); options.findByQuestionItemIdOrderByPosition(item.getId()).forEach(option -> { Map<String, Object> o = new LinkedHashMap<>(); o.put("id", option.getId()); o.put("position", option.getPosition()); o.put("content", option.getContent()); o.put("correct", option.getCorrect()); lockedOptions.add(o); });
+                i.put("options", lockedOptions); lockedItems.add(i);
+            }
+            q.put("items", lockedItems); lockedQuestions.add(q);
+        }
+        try { snapshot.setGradingContext(json.writeValueAsString(grading)); snapshot.setLockedQuestionSnapshot(json.writeValueAsString(lockedQuestions)); }
+        catch (RuntimeException exception) { throw new BusinessRuleException("Không thể khóa nội dung đề thi cho lượt làm bài"); }
+        snapshots.save(snapshot);
+    }
+
+    private Map<Integer, JsonNode> lockedQuestions(Integer attemptId) {
+        ExamAttemptSnapshotEntity snapshot = snapshots.findByAttemptId(attemptId)
+                .orElseThrow(() -> new BusinessRuleException("Không tìm thấy snapshot của lượt thi"));
+        try {
+            Map<Integer, JsonNode> result = new LinkedHashMap<>();
+            for (JsonNode question : json.readTree(snapshot.getLockedQuestionSnapshot())) result.put(question.path("id").asInt(), question);
+            return result;
+        } catch (RuntimeException exception) {
+            throw new BusinessRuleException("Snapshot lượt thi không hợp lệ");
+        }
+    }
+
+    private void refreshSnapshotAnswerVersion(ExamAttemptEntity attempt) {
+        Integer attemptId = attempt.getId();
+        int version = answers.findByAttemptIdOrderByQuestionIdAsc(attemptId).stream()
+                    .mapToInt(UserAnswerEntity::getAnswerVersion).max().orElse(1);
+        attempt.setAnswerVersion(version);
+        snapshots.findByAttemptId(attemptId).ifPresent(snapshot -> {
+            snapshot.setAnswerVersion(version);
+            snapshots.save(snapshot);
+        });
     }
 
     private AttemptResult resultView(ExamAttemptEntity attempt, MockExamEntity exam) {
@@ -255,24 +416,36 @@ public class ExamAttemptService implements ExamAttemptContract {
     }
 
     private LockedAttempt lockedAttempt(ExamAttemptEntity attempt, MockExamEntity exam) {
-        List<LockedAnswer> snapshots = answers.findByAttemptIdOrderByQuestionIdAsc(attempt.getId()).stream().map(answer -> {
-            QuestionEntity question = questions.findById(answer.getQuestionId()).orElseThrow();
-            String task = question.getInstruction() == null || question.getInstruction().isBlank()
-                    ? question.getContent() : question.getInstruction() + "\n" + question.getContent();
+        ExamAttemptSnapshotEntity snapshot = snapshots.findByAttemptId(attempt.getId())
+                .orElseThrow(() -> new BusinessRuleException("Không tìm thấy snapshot của lượt thi"));
+        Map<Integer, JsonNode> lockedByQuestion = lockedQuestions(attempt.getId());
+        List<LockedAnswer> lockedAnswers = answers.findByAttemptIdOrderByQuestionIdAsc(attempt.getId()).stream().map(answer -> {
+            JsonNode question = lockedByQuestion.get(answer.getQuestionId());
+            if (question == null) throw new BusinessRuleException("Snapshot không chứa câu hỏi của lượt thi");
+            String instruction = question.path("instruction").asText("");
+            String content = question.path("content").asText("");
+            String task = instruction.isBlank() ? content : instruction + "\n" + content;
             String lockedContent = firstNonBlank(answer.getTextAnswer(), answer.getAudioUrl(), answer.getTranscript());
-            List<LockedItem> lockedItems = items.findByQuestionIdOrderByPosition(question.getId()).stream()
-                    .map(item -> new LockedItem(item.getId(), options.findByQuestionItemIdOrderByPosition(item.getId()).stream()
-                            .filter(option -> Boolean.TRUE.equals(option.getCorrect())).map(QuestionOptionEntity::getId).findFirst().orElse(null),
-                            item.getCorrectPosition()))
-                    .toList();
-            return new LockedAnswer(answer.getId(), question.getId(), question.getSkill(), question.getQuestionType(),
+            List<LockedItem> lockedItems = new ArrayList<>();
+            for (JsonNode item : question.path("items")) {
+                Integer correctOption = null;
+                for (JsonNode option : item.path("options")) {
+                    if (option.path("correct").asBoolean(false)) {
+                        correctOption = option.path("id").asInt();
+                        break;
+                    }
+                }
+                lockedItems.add(new LockedItem(item.path("id").asInt(), correctOption,
+                        item.path("correctPosition").isNull() ? null : item.path("correctPosition").asInt()));
+            }
+            return new LockedAnswer(answer.getId(), answer.getQuestionId(), question.path("skill").asText(), question.path("type").asText(),
                     task, lockedContent, answer.getTranscript(), lockedItems);
         }).toList();
         return new LockedAttempt(attempt.getId(), attempt.getUserId(), exam.getId(), exam.getExamType(),
                 attempt.getAnswerVersion() == null ? 1 : attempt.getAnswerVersion(), instant(attempt.getSubmittedAt()),
                 attempt.getScoringSchemeId() == null ? exam.getScoringSchemeId() : attempt.getScoringSchemeId(),
                 attempt.getPolicyVersion(), attempt.getRubricVersion() == null ? RUBRIC_VERSION : attempt.getRubricVersion(),
-                attempt.getGradingRequestKey(), snapshots);
+                snapshot.getGradingContext(), attempt.getGradingRequestKey(), lockedAnswers);
     }
 
     private ExamAttemptEntity editableAttempt(Integer userId, Integer attemptId) {
@@ -285,15 +458,28 @@ public class ExamAttemptService implements ExamAttemptContract {
         }
         return attempt;
     }
+    private void ensureMediaWindow(ExamAttemptEntity attempt) {
+        if (!"IN_PROGRESS".equals(attempt.getStatus())) throw new BusinessRuleException("Lượt thi đã khóa");
+        MockExamEntity exam = examFor(attempt);
+        if (exam.getDurationMinutes() != null && attempt.getStartedAt() != null
+                && attempt.getStartedAt().plusMinutes(exam.getDurationMinutes()).isBefore(LocalDateTime.now())) {
+            throw new BusinessRuleException("Lượt thi đã hết thời gian");
+        }
+    }
     private QuestionItemEntity chooseItem(Integer questionId, Integer itemId) { return items.findByQuestionIdOrderByPosition(questionId).stream().filter(x -> itemId == null || Objects.equals(x.getId(), itemId)).findFirst().orElseThrow(() -> new ResourceNotFoundException("Câu hỏi chưa có ý hỏi")); }
     private MockExamEntity publishedExam(Integer id) { return exams.findById(id).filter(x -> "PUBLISHED".equals(x.getStatus())).orElseThrow(() -> new ResourceNotFoundException("Đề thi chưa được công bố")); }
     private MockExamEntity examFor(ExamAttemptEntity attempt) { return exams.findById(attempt.getMockExamId()).orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy đề thi")); }
     private User activeUser(Integer id) { User user = users.findById(id).orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy tài khoản")); if (user.getRole() != Role.STUDENT || user.getStatus() != UserStatus.ACTIVE) throw new AccessDeniedException("Tài khoản không còn hoạt động"); return user; }
-    private User requireAdmin(String email){User user=users.findByEmailIgnoreCase(email).orElseThrow(()->new AccessDeniedException("Không có quyền xem kết quả"));if(user.getRole()!=Role.ADMIN||user.getStatus()!=UserStatus.ACTIVE)throw new AccessDeniedException("Chỉ quản trị viên đang hoạt động mới được xem kết quả");return user;}
-    private AttemptHandle handle(ExamAttemptEntity attempt, MockExamEntity exam) {
-        Integer duration = exam.getDurationMinutes();
-        Instant deadline = duration == null ? null : instant(attempt.getStartedAt().plusMinutes(duration));
-        return new AttemptHandle(attempt.getId(), attempt.getStatus(), deadline);
+    private User activeUserForUpdate(Integer id) { User user = users.findByIdForUpdate(id).orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy tài khoản")); if (user.getRole() != Role.STUDENT || user.getStatus() != UserStatus.ACTIVE) throw new AccessDeniedException("Tài khoản không còn hoạt động"); return user; }
+    private User requireAdmin(String email) {
+        User user = users.findByEmailIgnoreCase(email).orElseThrow(() -> new AccessDeniedException("Không có quyền quản trị"));
+        if (user.getRole() != Role.ADMIN || user.getStatus() != UserStatus.ACTIVE) throw new AccessDeniedException("Không có quyền quản trị");
+        return user;
+    }
+    private AttemptHandle handle(ExamAttemptEntity attempt, MockExamEntity exam) { return new AttemptHandle(attempt.getId(), attempt.getStatus(), instant(attempt.getStartedAt().plusMinutes(exam.getDurationMinutes() == null ? 0 : exam.getDurationMinutes()))); }
+    private Long remainingSeconds(ExamAttemptEntity attempt, MockExamEntity exam) {
+        if (exam.getDurationMinutes() == null || attempt.getStartedAt() == null) return null;
+        return Math.max(0L, Duration.between(LocalDateTime.now(), attempt.getStartedAt().plusMinutes(exam.getDurationMinutes())).getSeconds());
     }
     private Instant instant(LocalDateTime value) { return value == null ? null : value.atZone(ZoneId.systemDefault()).toInstant(); }
     private String normalizeRequestKey(String value, Integer userId, Integer examId) { return value == null || value.isBlank() ? "attempt:" + userId + ":" + examId : value.trim(); }
@@ -302,4 +488,12 @@ public class ExamAttemptService implements ExamAttemptContract {
     private String firstNonBlank(String... values) { for (String value : values) if (value != null && !value.isBlank()) return value; return null; }
     private String normalizedFilter(String value) { return value == null || value.isBlank() ? "" : value.trim().toUpperCase(Locale.ROOT); }
     private int levelOrder(String value) { return switch (value == null ? "" : value) { case "A1" -> 1; case "A2" -> 2; case "B1" -> 3; case "B2" -> 4; case "C1" -> 5; case "C2" -> 6; default -> 0; }; }
+    private String hashToken(String value) {
+        try {
+            byte[] digest = MessageDigest.getInstance("SHA-256").digest(value.getBytes(StandardCharsets.UTF_8));
+            StringBuilder result = new StringBuilder(64);
+            for (byte item : digest) result.append(String.format("%02x", item));
+            return result.toString();
+        } catch (java.security.NoSuchAlgorithmException exception) { throw new IllegalStateException("SHA-256 unavailable", exception); }
+    }
 }

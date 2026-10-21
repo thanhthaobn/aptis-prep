@@ -18,7 +18,9 @@ import com.aptisprep.repository.ExamAttemptRepository;
 import com.aptisprep.repository.ExamSkillResultRepository;
 import com.aptisprep.repository.MockExamRepository;
 import com.aptisprep.repository.QuestionRepository;
+import com.aptisprep.repository.ExamAttemptSnapshotRepository;
 import com.aptisprep.repository.UserAnswerRepository;
+import com.aptisprep.service.exam.AttemptOutboxService;
 import com.aptisprep.service.contract.AiAssessmentContract;
 import com.aptisprep.service.contract.ScoringPolicyContract;
 import com.aptisprep.service.contract.ScoringPolicyContract.SkillScore;
@@ -45,24 +47,30 @@ public class AttemptFinalizationService {
     private final MockExamRepository exams;
     private final UserAnswerRepository answers;
     private final QuestionRepository questions;
+    private final ExamAttemptSnapshotRepository snapshots;
     private final AiAssessmentContract ai;
     private final AiAssessmentJobRepository jobs;
     private final ScoringPolicyContract scoring;
+    private final AttemptOutboxService outbox;
     private final ApplicationEventPublisher events;
     private final TransactionTemplate transactions;
 
     public AttemptFinalizationService(ExamAttemptRepository attempts, ExamSkillResultRepository skillResults,
-            MockExamRepository exams, UserAnswerRepository answers, QuestionRepository questions, AiAssessmentContract ai,
-            AiAssessmentJobRepository jobs, ScoringPolicyContract scoring, ApplicationEventPublisher events,
+            MockExamRepository exams, UserAnswerRepository answers, QuestionRepository questions,
+            ExamAttemptSnapshotRepository snapshots, AiAssessmentContract ai,
+            AiAssessmentJobRepository jobs, ScoringPolicyContract scoring, AttemptOutboxService outbox,
+            ApplicationEventPublisher events,
             PlatformTransactionManager transactionManager) {
         this.attempts = attempts;
         this.skillResults = skillResults;
         this.exams = exams;
         this.answers = answers;
         this.questions = questions;
+        this.snapshots = snapshots;
         this.ai = ai;
         this.jobs = jobs;
         this.scoring = scoring;
+        this.outbox = outbox;
         this.events = events;
         this.transactions = new TransactionTemplate(transactionManager);
     }
@@ -88,10 +96,15 @@ public class AttemptFinalizationService {
         attempt.setEstimatedOverallCefr(overall);
         attempt.setCompletedAt(LocalDateTime.now());
         attempt.setGradingStatus("COMPLETED");
-        attempt.setStatus("COMPLETED");
+        attempt.setStatus("EXPIRED".equals(attempt.getStatus()) ? "EXPIRED" : "COMPLETED");
         attempts.save(attempt);
-        events.publishEvent(new AttemptCompletedEvent(attempt.getUserId(), attempt.getId(), exam.getExamType()));
         return true;
+    }
+
+    public void publishCompleted(ExamAttemptEntity attempt, MockExamEntity exam) {
+        AttemptCompletedEvent event = new AttemptCompletedEvent(attempt.getUserId(), attempt.getId(), exam.getExamType());
+        outbox.enqueueCompleted(event);
+        events.publishEvent(event);
     }
 
     @Transactional
@@ -156,7 +169,7 @@ public class AttemptFinalizationService {
             result.setGradingStatus("COMPLETED");
         }
         skillResults.save(result);
-        finalizeIfReady(attempt, exam(attempt));
+        if (finalizeIfReady(attempt, exam(attempt))) publishCompleted(attempt, exam(attempt));
     }
 
     /** Rejects stale, cross-attempt or client-shaped submission snapshots before AI work starts. */
@@ -170,14 +183,21 @@ public class AttemptFinalizationService {
             return false;
         }
         ExamAttemptEntity attempt = attempts.findByIdAndUserId(event.attemptId(), event.userId()).orElse(null);
-        if (attempt == null || "COMPLETED".equals(attempt.getStatus()) || "EXPIRED".equals(attempt.getStatus())) return false;
-        if (!"SUBMITTED".equals(attempt.getStatus()) && !"WAITING_GRADING".equals(attempt.getStatus())) return false;
+        if (attempt == null || "COMPLETED".equals(attempt.getStatus()) || "ERROR".equals(attempt.getStatus())) return false;
+        if (!"SUBMITTED".equals(attempt.getStatus()) && !"WAITING_GRADING".equals(attempt.getStatus())
+                && !("EXPIRED".equals(attempt.getStatus()) && "WAITING".equals(attempt.getGradingStatus()))) return false;
         if (!Objects.equals(attempt.getMockExamId(), event.lockedAttempt().examId())
                 || !Objects.equals(attempt.getAnswerVersion(), event.lockedAttempt().answerVersion())
                 || !Objects.equals(attempt.getGradingRequestKey(), event.lockedAttempt().gradingRequestKey())
                 || !Objects.equals(attempt.getScoringSchemeId(), event.lockedAttempt().scoringSchemeId())
                 || !Objects.equals(attempt.getPolicyVersion(), event.lockedAttempt().policyVersion())
                 || !Objects.equals(attempt.getRubricVersion(), event.lockedAttempt().rubricVersion())) {
+            return false;
+        }
+        var lockedSnapshot = snapshots.findByAttemptId(attempt.getId()).orElse(null);
+        if (lockedSnapshot == null || !Objects.equals(lockedSnapshot.getGradingContext(), event.lockedAttempt().gradingContext())
+                || !Objects.equals(lockedSnapshot.getAnswerVersion(), event.lockedAttempt().answerVersion())
+                || !Objects.equals(lockedSnapshot.getPolicyVersion(), event.lockedAttempt().policyVersion())) {
             return false;
         }
         if (event.lockedAttempt().answers() == null) return false;

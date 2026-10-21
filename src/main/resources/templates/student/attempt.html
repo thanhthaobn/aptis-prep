@@ -23,230 +23,72 @@
 </noscript>
 
 <div th:replace="~{fragments/navbar :: navbar}"></div>
-
-<!-- Sticky Runner Header -->
-<header class="exam-runner-header">
-    <div class="exam-header-inner">
-        <div class="exam-header-title">
-            <h1 th:text="${attempt.title}">Bài thi Aptis</h1>
-        </div>
-        <div class="exam-header-controls">
-            <!-- Đồng hồ đếm ngược (Dùng remainingSeconds từ server, tự động ẩn nếu null) -->
-            <div class="exam-timer-badge" id="exam-timer" style="display: none;" role="timer" aria-live="off">
-                <span class="timer-icon" aria-hidden="true">⏱</span>
-                <span id="timer-display">--:--</span>
-            </div>
-            <!-- Trạng thái Autosave -->
-            <div id="autosave-indicator" class="autosave-indicator" aria-live="polite">✓ Đã lưu bài</div>
-            <!-- Nút mở drawer bảng câu hỏi trên mobile -->
-            <button type="button" class="button button-secondary btn-toggle-palette-drawer" id="btn-toggle-palette-drawer" aria-label="Mở danh sách câu hỏi" aria-expanded="false" style="display: none;">
-                📋 Câu hỏi
-            </button>
-            <!-- Nút mở modal xác nhận nộp bài -->
-            <button type="button" class="button button-primary" id="btn-open-submit-modal">Nộp bài</button>
-        </div>
-    </div>
-</header>
-
-<!-- Main Exam Layout Grid -->
-<main class="exam-runner-container exam-layout-grid" 
-      id="main-content" 
-      tabindex="-1"
-      th:attr="data-attempt-id=${attempt.attemptId}, data-remaining-seconds=${attempt.remainingSeconds}">
-    
-    <!-- Cột Trái: Khu vực hiển thị câu hỏi -->
-    <div class="exam-question-area">
-        <div th:replace="~{fragments/messages :: messages}"></div>
-
-        <div class="exam-cards-viewport">
-            <!-- Từng thẻ câu hỏi (1 câu / màn hình) -->
-            <div th:each="question, qStat : ${attempt.questions}"
-                 class="exam-question-card"
-                 th:classappend="${qStat.first} ? ' active' : ''"
-                 th:attr="data-question-id=${question.questionId}"
-                 th:hidden="${!qStat.first}">
-                
-                <div class="question-meta-row">
-                    <span class="eyebrow" th:text="|Câu ${question.position} · ${question.skill}|"></span>
-                    <span class="badge" th:text="${question.type}"></span>
-                </div>
-
-                <h2 class="question-prompt" th:text="${question.content}"></h2>
-
-                <!-- Dạng LISTENING: Thông báo file âm thanh từ server -->
-                <div th:if="${question.skill == 'LISTENING'}" class="exam-audio-notice alert alert-info ap-alert ap-alert-info" role="status">
-                    <p class="m-0">File âm thanh cho bài nghe sẽ khả dụng khi có tệp đính kèm từ máy chủ.</p>
-                </div>
-
-                <!-- Dạng SINGLE_CHOICE / Radio Options thông thường -->
-                <div th:if="${question.type != 'ORDERING' and question.type != 'MATCHING' and question.type != 'WRITING_TEXT' and question.type != 'SPEAKING_AUDIO'}" 
-                     th:each="item : ${question.items}" class="question-item-body">
-                    <p class="muted mb-2" th:if="${#lists.size(question.items) > 1}" th:text="|Ý ${item.position}: ${item.content}|"></p>
-                    <form class="item-form" method="post" th:action="@{/student/attempts/{id}/answers(id=${attempt.attemptId})}">
-                        <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
-                        <input type="hidden" name="questionId" th:value="${question.questionId}">
-                        <input type="hidden" name="itemId" th:value="${item.itemId}">
-                        <div class="choice-cards-container choice-group" th:if="${!#lists.isEmpty(item.options)}">
-                            <label th:each="option : ${item.options}" 
-                                   class="choice-card"
-                                   th:classappend="${item.selectedOptionId == option.id} ? ' selected' : ''">
-                                <input type="radio" 
-                                       class="choice-card-input" 
-                                       name="selectedOptionId" 
-                                       th:value="${option.id}"
-                                       th:attr="data-item-id=${item.itemId}"
-                                       th:checked="${item.selectedOptionId == option.id}">
-                                <span class="choice-card-text" th:text="${option.code + ' · ' + option.content}"></span>
-                            </label>
-                        </div>
-                        <button type="submit" class="button button-secondary non-js-submit-btn mt-2">Lưu câu này</button>
-                    </form>
-                </div>
-
-                <!-- Dạng ORDERING: Sắp xếp thứ tự (Kéo thả & Nút lên/xuống hỗ trợ a11y) -->
-                <div th:if="${question.type == 'ORDERING'}" class="ordering-container">
-                    <p class="muted">Kéo thả các mục hoặc dùng nút Mũi tên Lên / Xuống để sắp xếp thứ tự đúng.</p>
-                    <div class="ordering-list">
-                        <div th:each="item, itemStat : ${question.items}" 
-                             class="ordering-item"
-                             th:attr="data-item-id=${item.itemId}">
-                            <span class="ordering-drag-handle" aria-hidden="true">⋮⋮</span>
-                            <span class="ordering-position-number" th:text="${item.userPosition != null ? item.userPosition : itemStat.count}">1</span>
-                            <div class="ordering-item-content flex-grow-1" th:text="${item.content}"></div>
-                            <form class="ordering-item-form" method="post" th:action="@{/student/attempts/{id}/answers(id=${attempt.attemptId})}">
-                                <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
-                                <input type="hidden" name="questionId" th:value="${question.questionId}">
-                                <input type="hidden" name="itemId" th:value="${item.itemId}">
-                                <input type="hidden" data-field="userPosition" name="userPosition" th:value="${item.userPosition != null ? item.userPosition : itemStat.count}">
-                                <button type="submit" class="button button-secondary non-js-submit-btn">Lưu vị trí</button>
-                            </form>
-                            <div class="ordering-actions">
-                                <button type="button" class="btn-order-up" aria-label="Di chuyển lên">▲</button>
-                                <button type="button" class="btn-order-down" aria-label="Di chuyển xuống">▼</button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Dạng MATCHING: Ghép cặp (Dropdown lựa chọn) -->
-                <div th:if="${question.type == 'MATCHING'}" class="matching-container">
-                    <div th:each="item : ${question.items}" class="matching-row">
-                        <div class="matching-item-label font-semibold" th:text="${item.content}"></div>
-                        <form class="matching-form" method="post" th:action="@{/student/attempts/{id}/answers(id=${attempt.attemptId})}">
-                            <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
-                            <input type="hidden" name="questionId" th:value="${question.questionId}">
-                            <input type="hidden" name="itemId" th:value="${item.itemId}">
-                            <select name="selectedOptionId" 
-                                    class="matching-select" 
-                                    th:attr="data-item-id=${item.itemId}">
-                                <option value="">-- Chọn ghép cặp --</option>
-                                <option th:each="option : ${item.options}" 
-                                        th:value="${option.id}" 
-                                        th:text="${option.code + ' · ' + option.content}"
-                                        th:selected="${item.selectedOptionId == option.id}">
-                                </option>
-                            </select>
-                            <button type="submit" class="button button-secondary non-js-submit-btn ms-2">Lưu</button>
-                        </form>
-                    </div>
-                </div>
-
-                <!-- Dạng WRITING_TEXT: Textarea kèm đếm từ trực tiếp -->
-                <div th:if="${question.type == 'WRITING_TEXT'}" class="writing-container">
-                    <div th:each="item : ${question.items}" class="writing-item">
-                        <form class="writing-form" method="post" th:action="@{/student/attempts/{id}/answers(id=${attempt.attemptId})}">
-                            <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
-                            <input type="hidden" name="questionId" th:value="${question.questionId}">
-                            <input type="hidden" name="itemId" th:value="${item.itemId}">
-                            <div class="field">
-                                <label th:for="|answer-${item.itemId}|" class="visually-hidden">Bài làm</label>
-                                <textarea class="writing-textarea" 
-                                          th:id="|answer-${item.itemId}|" 
-                                          name="textAnswer" 
-                                          th:attr="data-item-id=${item.itemId}"
-                                          rows="10" 
-                                          placeholder="Nhập bài viết của bạn tại đây..."
-                                          th:text="${item.textAnswer}"></textarea>
-                                <div class="writing-word-counter" aria-live="polite">0 từ</div>
-                            </div>
-                            <button type="submit" class="button button-secondary non-js-submit-btn mt-2">Lưu bài viết</button>
-                        </form>
-                    </div>
-                </div>
-
-                <!-- Dạng SPEAKING_AUDIO: Ẩn recorder khi chưa có endpoint upload và hiển thị thông báo -->
-                <div th:if="${question.type == 'SPEAKING_AUDIO'}" class="speaking-container">
-                    <div class="speaking-unavailable-box alert alert-warning ap-alert ap-alert-warning" role="status">
-                        <p class="m-0">Câu Speaking sẽ khả dụng khi hệ thống hỗ trợ ghi âm.</p>
-                    </div>
-                </div>
-
+<div class="container app-shell"><div th:replace="~{fragments/student-sidebar :: studentSidebar('exams')}"></div>
+<main class="app-main student-content">
+    <header class="page-header"><div><h1 th:text="${attempt.title}"></h1><p>Hãy lưu từng câu trả lời trước khi nộp bài.</p></div></header>
+    <div class="alert alert-error" th:if="${error}" th:text="${error}"></div>
+    <section class="dashboard-panel dashboard-section" th:each="question : ${attempt.questions}">
+        <p class="eyebrow" th:text="|Câu ${question.position} · ${question.skill}|"></p>
+        <h2 th:text="${question.content}"></h2>
+        <div class="attempt-media" th:each="media : ${question.media}">
+            <img th:if="${media.type == 'IMAGE'}" th:src="@{/student/attempts/{id}/media/{mediaId}/content(id=${attempt.attemptId},mediaId=${media.id})}" th:alt="${media.filename}">
+            <div th:if="${media.type == 'AUDIO'}" class="media-player">
+                <button type="button" class="button button-secondary media-play" th:attr="data-play=@{/student/attempts/{id}/media/{mediaId}/play(id=${attempt.attemptId},mediaId=${media.id})},data-content=@{/student/attempts/{id}/media/{mediaId}/content(id=${attempt.attemptId},mediaId=${media.id})}">Nghe audio</button>
+                <audio class="media-audio" preload="none"></audio><span class="media-status muted" aria-live="polite"></span>
             </div>
         </div>
-
-        <!-- Thanh điều hướng chung (Trước / Sau / Đánh dấu xem lại) -->
-        <nav class="question-nav-bar" aria-label="Điều hướng câu hỏi">
-            <button type="button" class="button button-secondary" id="exam-btn-prev">← Câu trước</button>
-            <button type="button" class="button button-secondary" id="exam-btn-review" aria-pressed="false">☆ Đánh dấu xem lại</button>
-            <button type="button" class="button button-primary" id="exam-btn-next">Câu tiếp theo →</button>
-        </nav>
-
-        <!-- Form nộp bài chính (Hỗ trợ cả JS tự động kích hoạt và fallback không có JS) -->
-        <form id="exam-submit-form" method="post" th:action="@{/student/attempts/{id}/submit(id=${attempt.attemptId})}" class="mt-4">
-            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
-            <button class="button button-secondary non-js-submit-btn" type="submit">Nộp bài (Không dùng JavaScript)</button>
-        </form>
-    </div>
-
-    <!-- Cột Phải: Bảng Palette Câu Hỏi -->
-    <aside class="exam-palette-panel" id="exam-palette-drawer" aria-label="Bảng câu hỏi">
-        <div class="palette-drawer-header d-flex justify-content-between align-items-center mb-3">
-            <h3 class="m-0 question-nav-title">Bảng câu hỏi</h3>
-            <button type="button" class="button button-small button-secondary d-lg-none" id="btn-close-palette-drawer" aria-label="Đóng bảng câu hỏi">✕ Đóng</button>
+        <div th:each="item : ${question.items}" class="question-item">
+            <p class="muted" th:text="|Ý ${item.position}: ${item.content}|"></p>
+            <form class="answer-form" method="post" th:attr="data-autosave=@{/student/attempts/{id}/answers/autosave(id=${attempt.attemptId})}" th:action="@{/student/attempts/{id}/answers(id=${attempt.attemptId})}">
+                <input type="hidden" name="questionId" th:value="${question.questionId}"><input type="hidden" name="itemId" th:value="${item.itemId}">
+                <div th:if="${question.type == 'ORDERING'}" class="field"><label th:for="|position-${item.itemId}|">Vị trí trong thứ tự</label><input type="number" min="1" th:max="${#lists.size(question.items)}" name="userPosition" th:id="|position-${item.itemId}|" th:value="${item.userPosition}"></div>
+                <div th:if="${question.type != 'ORDERING' and !#lists.isEmpty(item.options)}" class="catalog-checkbox">
+                    <label th:each="option : ${item.options}"><input type="radio" name="selectedOptionId" th:value="${option.id}" th:checked="${item.selectedOptionId == option.id}"><span th:text="${option.code + ' · ' + option.content}"></span></label>
+                </div>
+                <div class="field" th:if="${question.type == 'WRITING_TEXT'}"><label th:for="|answer-${item.itemId}|">Bài trả lời</label><textarea th:id="|answer-${item.itemId}|" name="textAnswer" rows="6" th:text="${item.textAnswer}"></textarea></div>
+                <button class="button button-secondary" type="submit">Lưu ý trả lời</button>
+                <span class="autosave-status muted" aria-live="polite"></span>
+            </form>
+            <form th:if="${question.type == 'SPEAKING_AUDIO'}" method="post" enctype="multipart/form-data" th:action="@{/student/attempts/{id}/answers/audio(id=${attempt.attemptId})}">
+                <input type="hidden" name="questionId" th:value="${question.questionId}"><input type="hidden" name="itemId" th:value="${item.itemId}">
+                <div class="field"><label th:for="|audio-${item.itemId}|">File ghi âm</label><input type="file" accept="audio/*,.webm,.m4a,.mp3,.wav,.ogg" name="audioFile" th:id="|audio-${item.itemId}|" required></div>
+                <button class="button button-secondary" type="submit">Lưu file ghi âm</button>
+            </form>
         </div>
-
-        <div class="palette-legend">
-            <div class="legend-item"><span class="legend-dot answered"></span><span>Đã làm</span></div>
-            <div class="legend-item"><span class="legend-dot unanswered"></span><span>Chưa làm</span></div>
-            <div class="legend-item"><span class="legend-dot flagged"></span><span>Xem lại</span></div>
-        </div>
-
-        <div class="palette-grid">
-            <button th:each="q, stat : ${attempt.questions}"
-                    type="button"
-                    class="palette-btn"
-                    th:classappend="${q.items != null and !q.items.isEmpty() and (q.items[0].selectedOptionId != null or q.items[0].textAnswer != null or q.items[0].userPosition != null)} ? ' answered' : ''"
-                    th:attr="data-question-id=${q.questionId}, data-index=${stat.index}, aria-label=${'Câu ' + q.position + ': ' + ((q.items != null and !q.items.isEmpty() and (q.items[0].selectedOptionId != null or q.items[0].textAnswer != null or q.items[0].userPosition != null)) ? 'Đã làm' : 'Chưa làm')}"
-                    th:text="${q.position}">1</button>
-        </div>
-    </aside>
-
-</main>
-
-<!-- Modal Xác nhận nộp bài -->
-<div class="exam-modal-overlay" id="exam-submit-modal" role="dialog" aria-modal="true" aria-labelledby="modal-submit-title">
-    <div class="exam-modal-card">
-        <h2 id="modal-submit-title" class="dialog-title">Xác nhận nộp bài thi?</h2>
-        <p class="muted">Hãy kiểm tra lại bài làm trước khi nộp bài để đạt kết quả tốt nhất.</p>
-        <div class="exam-modal-stats">
-            <div class="modal-stat-box">
-                <strong id="modal-unanswered-count">0</strong>
-                <span>Câu chưa làm</span>
-            </div>
-            <div class="modal-stat-box">
-                <strong id="modal-flagged-count">0</strong>
-                <span>Cần xem lại</span>
-            </div>
-        </div>
-        <p class="muted supporting-text dialog-supporting-text">Sau khi nộp bài, hệ thống sẽ tiến hành chấm điểm và lưu kết quả.</p>
-        <div class="d-flex justify-content-center gap-3">
-            <button type="button" class="button button-secondary" id="btn-modal-cancel">Làm bài tiếp</button>
-            <button type="button" class="button button-primary" id="btn-modal-confirm">Đồng ý nộp bài</button>
-        </div>
-    </div>
-</div>
-
-<div th:replace="~{fragments/footer :: footer}"></div>
-<script th:src="@{/js/exam-runner.js}" defer></script>
-</body>
-</html>
+    </section>
+    <form method="post" th:action="@{/student/attempts/{id}/submit(id=${attempt.attemptId})}"><button class="button" type="submit">Nộp bài</button></form>
+</main></div><div th:replace="~{fragments/footer :: footer}"></div>
+<script>
+(() => {
+  const csrf = document.querySelector('input[name="_csrf"]')?.value;
+  document.querySelectorAll('.answer-form').forEach(form => {
+    let timer;
+    const status = form.querySelector('.autosave-status');
+    const save = () => {
+      if (!csrf || !status) return;
+      status.textContent = 'Đang lưu…';
+      fetch(form.dataset.autosave, { method: 'POST', headers: {'X-CSRF-TOKEN': csrf, 'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8'}, body: new URLSearchParams(new FormData(form)) })
+        .then(response => response.json())
+        .then(result => { status.textContent = result.saved ? 'Đã tự động lưu' : (result.message || 'Chưa lưu được'); })
+        .catch(() => { status.textContent = 'Mất kết nối, câu trả lời chưa được lưu'; });
+    };
+    form.addEventListener('input', () => { clearTimeout(timer); timer = setTimeout(save, 700); });
+    form.addEventListener('change', () => { clearTimeout(timer); timer = setTimeout(save, 250); });
+  });
+  document.querySelectorAll('.media-play').forEach(button => button.addEventListener('click', async () => {
+    const player = button.parentElement.querySelector('.media-audio');
+    const status = button.parentElement.querySelector('.media-status');
+    button.disabled = true; status.textContent = 'Đang kiểm tra lượt nghe…';
+    try {
+      const response = await fetch(button.dataset.play, {method: 'POST', headers: {'X-CSRF-TOKEN': csrf}});
+      if (!response.ok) throw new Error((await response.json()).message || 'Không thể phát audio');
+      const result = await response.json();
+      player.src = button.dataset.content + '?token=' + encodeURIComponent(result.contentToken); player.controls = false;
+      player.onended = () => { if (result.playCount < result.maxPlayCount) button.disabled = false; };
+      await player.play();
+      status.textContent = `Đã dùng ${result.playCount}/${result.maxPlayCount} lượt nghe`;
+    } catch (error) { button.disabled = false; status.textContent = error.message; }
+  }));
+})();
+</script>
+</body></html>

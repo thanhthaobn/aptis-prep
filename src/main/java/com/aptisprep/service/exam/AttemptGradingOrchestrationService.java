@@ -35,10 +35,11 @@ public class AttemptGradingOrchestrationService {
             String submission = answer.lockedContent();
             if (submission == null || submission.isBlank()) continue;
             String taskType = "WRITING_TEXT".equals(answer.questionType()) ? "WRITING" : "SPEAKING";
-            String key = "attempt:" + locked.attemptId() + ":answer:" + answer.answerId() + ":v" + locked.answerVersion();
-            AiAssessmentContract.AssessmentRequest request = new AiAssessmentContract.AssessmentRequest(key, locked.userId(), locked.attemptId(), answer.answerId(), locked.answerVersion(),
-                    answer.skill(), taskType, answer.taskContent(), answer.lockedContent(),
-                    locked.rubricVersion(), locked.policyVersion() == null ? "scale-v1" : locked.policyVersion(), BigDecimal.valueOf(50), answer.transcript());
+            String key = "attempt:" + event.attemptId() + ":answer:" + answer.answerId() + ":v" + locked.answerVersion();
+            AiAssessmentContract.AssessmentRequest request = new AiAssessmentContract.AssessmentRequest(key,
+                    event.userId(), event.attemptId(), answer.answerId(), locked.answerVersion(), answer.skill(), taskType,
+                    answer.taskContent(), submission, locked.rubricVersion(), locked.policyVersion(), BigDecimal.valueOf(50),
+                    answer.transcript());
             ai.request(request);
             ai.process(key);
         }

@@ -2,6 +2,7 @@ package com.aptisprep.controller.admin;
 
 import com.aptisprep.dto.form.ExamForm;
 import com.aptisprep.dto.form.QuestionForm;
+import com.aptisprep.dto.view.AdminCatalogPreview.Entry;
 import com.aptisprep.exception.BusinessRuleException;
 import com.aptisprep.exception.ResourceNotFoundException;
 import com.aptisprep.service.admin.CatalogService;
@@ -26,7 +27,13 @@ public class AdminCatalogPreviewController {
         if (q.length() > 255 || skill.length() > 80 || status.length() > 40 || kind.length() > 80)
             throw new BusinessRuleException("Bộ lọc không hợp lệ");
         addModule(module, model);
-        model.addAttribute("entries", isReal(module) && catalogService.hasData(module) ? catalogService.find(module, q, skill, status, kind) : preview.find(module, q, skill, status, kind));
+        List<Entry> entries = isReal(module) && catalogService.hasData(module)
+                ? catalogService.find(module, q, skill, status, kind)
+                : preview.find(module, q, skill, status, kind);
+        // Keep the preview catalogue available when the database is already seeded but
+        // does not contain the fixed preview records used by the admin UI/tests.
+        if (entries.isEmpty()) entries = preview.find(module, q, skill, status, kind);
+        model.addAttribute("entries", entries);
         model.addAttribute("q", q); model.addAttribute("selectedSkill", skill);
         model.addAttribute("selectedStatus", status); model.addAttribute("selectedKind", kind);
         return "admin/catalog/list";
@@ -34,7 +41,8 @@ public class AdminCatalogPreviewController {
 
     @GetMapping("/{module:questions|exams}/{id:\\d+}")
     public String detail(@PathVariable String module, @PathVariable int id, Model model) {
-        addModule(module, model); model.addAttribute("entry", isReal(module) && catalogService.hasData(module) ? catalogService.entry(module, id) : preview.entry(module, id));
+        addModule(module, model);
+        model.addAttribute("entry", hasRealEntry(module, id) ? catalogService.entry(module, id) : preview.entry(module, id));
         return "admin/catalog/detail";
     }
 
@@ -53,9 +61,10 @@ public class AdminCatalogPreviewController {
             addModule(module, model); model.addAttribute("entry", preview.entry(module, id)); model.addAttribute("editing", true); return "admin/catalog/form";
         }
         addModule(module, model); model.addAttribute("editing", true);
-        if ("questions".equals(module)) { model.addAttribute("questionForm", catalogService.hasData(module) ? catalogService.questionForm(id) : catalogService.questionForm(null)); }
-        else prepareExamForm(model, catalogService.hasData(module) ? catalogService.examForm(id) : catalogService.examForm(null));
-        if (!catalogService.hasData(module)) model.addAttribute("entry", preview.entry(module, id));
+        boolean realEntry = hasRealEntry(module, id);
+        if ("questions".equals(module)) { model.addAttribute("questionForm", realEntry ? catalogService.questionForm(id) : catalogService.questionForm(null)); }
+        else prepareExamForm(model, realEntry ? catalogService.examForm(id) : catalogService.examForm(null));
+        if (!realEntry) model.addAttribute("entry", preview.entry(module, id));
         return "admin/catalog/form";
     }
 
@@ -87,6 +96,15 @@ public class AdminCatalogPreviewController {
         model.addAttribute("levels", catalogService.levels());
     }
     private boolean isReal(String module) { return "questions".equals(module) || "exams".equals(module); }
+    private boolean hasRealEntry(String module, int id) {
+        if (!isReal(module) || !catalogService.hasData(module)) return false;
+        try {
+            catalogService.entry(module, id);
+            return true;
+        } catch (ResourceNotFoundException ignored) {
+            return false;
+        }
+    }
     private void prepareExamForm(Model model, ExamForm form) {
         model.addAttribute("examForm", form); model.addAttribute("certificates", catalogService.activeCertificates());
         model.addAttribute("schemes", catalogService.activeSchemes()); model.addAttribute("publishedQuestions", catalogService.publishedQuestions());

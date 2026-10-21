@@ -23,12 +23,12 @@ public final class IntegrationModels {
     /** Backend-only snapshot emitted after the attempt is locked. Never bind this from a form. */
     public record LockedAttempt(Integer attemptId, Integer userId, Integer examId, String examType,
             Integer answerVersion, Instant submittedAt, Integer scoringSchemeId, String policyVersion,
-            String rubricVersion, String gradingRequestKey, List<LockedAnswer> answers) {
+            String rubricVersion, String gradingContext, String gradingRequestKey, List<LockedAnswer> answers) {
         public LockedAttempt(Integer attemptId, Integer userId, Integer examId, String examType,
                 Integer answerVersion, Instant submittedAt, Integer scoringSchemeId, String policyVersion,
                 String gradingRequestKey, List<LockedAnswer> answers) {
             this(attemptId, userId, examId, examType, answerVersion, submittedAt, scoringSchemeId,
-                    policyVersion, "aptis-rubric-v1", gradingRequestKey, answers);
+                    policyVersion, "aptis-rubric-v1", null, gradingRequestKey, answers);
         }
     }
     public record LockedAnswer(Integer answerId, Integer questionId, String skill, String questionType,
