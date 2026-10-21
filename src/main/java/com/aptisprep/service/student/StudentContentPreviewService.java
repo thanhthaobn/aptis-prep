@@ -12,6 +12,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import org.springframework.stereotype.Service;
 
 /** Temporary exam catalog only. Lessons, flashcards and results use persisted data. */
@@ -62,7 +63,7 @@ public class StudentContentPreviewService {
     public List<Entry> find(String module, String q, String skill, String level, String state) {
         if ("exams".equals(module) && exams.count() > 0) return realExams(q, skill, level);
         String term = normalize(q);
-        return exams.stream()
+        return entries.getOrDefault(module, List.of()).stream()
             .filter(e -> normalize(e.title() + " " + e.summary()).contains(term))
             .filter(e -> skill.isBlank() || e.skill().equals(skill))
             .filter(e -> level.isBlank() || e.level().equals(level))
