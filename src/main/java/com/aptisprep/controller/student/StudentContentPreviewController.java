@@ -1,9 +1,8 @@
 package com.aptisprep.controller.student;
 
 import com.aptisprep.exception.BusinessRuleException;
-import com.aptisprep.exception.ResourceNotFoundException;
 import com.aptisprep.service.account.AccountAccessService;
-import com.aptisprep.service.exam.ExamAttemptService;
+import com.aptisprep.service.contract.ExamAttemptContract;
 import com.aptisprep.service.contract.IntegrationModels.HistoryFilter;
 import java.security.Principal;
 import com.aptisprep.service.student.StudentContentPreviewService;
@@ -12,14 +11,14 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
-/** GET-only scaffolding. No attempt creation, submissions, tracking or grading. */
+/** Exam preview routes belong to Trâm; result presentation delegates to the safe attempt contract. */
 @Controller
 @RequestMapping("/student")
 public class StudentContentPreviewController {
     private final StudentContentPreviewService preview;
     private final AccountAccessService accounts;
-    private final ExamAttemptService attempts;
-    public StudentContentPreviewController(StudentContentPreviewService preview, AccountAccessService accounts, ExamAttemptService attempts) {
+    private final ExamAttemptContract attempts;
+    public StudentContentPreviewController(StudentContentPreviewService preview, AccountAccessService accounts, ExamAttemptContract attempts) {
         this.preview = preview; this.accounts = accounts; this.attempts = attempts;
     }
 
@@ -47,24 +46,15 @@ public class StudentContentPreviewController {
         if (page < 0 || size < 1 || size > 50) throw new BusinessRuleException("Phân trang không hợp lệ");
         if (q.length() > 255 || skill.length() > 80 || examType.length() > 40 || state.length() > 40)
             throw new BusinessRuleException("Bộ lọc không hợp lệ");
-        try {
-            Integer userId = accounts.requireActiveStudent(principal.getName());
-            model.addAttribute("history", attempts.history(userId, page, size, new HistoryFilter(q, skill, examType, state)));
-            model.addAttribute("page", page);
-            model.addAttribute("size", size);
-            model.addAttribute("q", q);
-            model.addAttribute("selectedSkill", skill);
-            model.addAttribute("selectedExamType", examType);
-            model.addAttribute("selectedState", state);
-            return "student/results/list";
-        } catch (ResourceNotFoundException ignored) {
-            // Giữ fallback cho tài khoản fixture cũ; tài khoản DB thật luôn dùng lịch sử attempt.
-            common("results", model);
-            model.addAttribute("entries", preview.find("results", q, skill, examType, state));
-            model.addAttribute("q", q); model.addAttribute("selectedSkill", skill);
-            model.addAttribute("selectedLevel", examType); model.addAttribute("selectedState", state);
-            return "student/content/list";
-        }
+        Integer userId = accounts.requireActiveStudent(principal.getName());
+        model.addAttribute("history", attempts.history(userId, page, size, new HistoryFilter(q, skill, examType, state)));
+        model.addAttribute("page", page);
+        model.addAttribute("size", size);
+        model.addAttribute("q", q);
+        model.addAttribute("selectedSkill", skill);
+        model.addAttribute("selectedExamType", examType);
+        model.addAttribute("selectedState", state);
+        return "student/results/list";
     }
     @GetMapping("/{module:exams}/{id:\\d+}")
     public String detail(@PathVariable String module, @PathVariable int id, Model model) {
@@ -73,15 +63,24 @@ public class StudentContentPreviewController {
     }
     @GetMapping("/attempts/{id:\\d+}/result")
     public String result(@PathVariable int id, Principal principal, Model model) {
+        Integer userId = accounts.requireActiveStudent(principal.getName());
+        model.addAttribute("attemptResult", attempts.result(userId, id));
+        return "student/attempt-result";
+    }
+    @PostMapping("/attempts/{id:\\d+}/retry-grading")
+    public String retryGrading(@PathVariable int id, Principal principal,
+            org.springframework.web.servlet.mvc.support.RedirectAttributes redirect) {
+        Integer userId = accounts.requireActiveStudent(principal.getName());
+        var result = attempts.result(userId, id);
+        if (!"ERROR".equals(result.state()) || result.skills().stream().noneMatch(skill -> skill.retryable()))
+            throw new BusinessRuleException("Lượt thi không có phần chấm lỗi có thể thử lại");
         try {
-            Integer userId = accounts.requireActiveStudent(principal.getName());
-            model.addAttribute("attemptResult", attempts.result(userId, id));
-            return "student/attempt-result";
-        } catch (ResourceNotFoundException ignored) {
-            // The preview catalog intentionally supports fixture-only test users.
+            attempts.retryFailedGrading(userId, id, java.util.UUID.randomUUID().toString());
+            redirect.addFlashAttribute("successMessage", "Đã gửi yêu cầu chấm lại phần lỗi trên bài làm đã lưu.");
+        } catch (BusinessRuleException exception) {
+            redirect.addFlashAttribute("error", exception.getMessage());
         }
-        common("results", model); model.addAttribute("entry", preview.entry("results", id));
-        return "student/content/detail";
+        return "redirect:/student/attempts/" + id + "/result";
     }
     private void common(String module, Model model) {
         model.addAttribute("module", module);

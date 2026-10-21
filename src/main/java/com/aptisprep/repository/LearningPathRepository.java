@@ -6,6 +6,7 @@ import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface LearningPathRepository extends JpaRepository<LearningPath, Integer> {
+    boolean existsByUserIdAndSourceAttemptIdAndStatus(Integer userId, Integer attemptId, String status);
     @org.springframework.data.jpa.repository.Query("select p from LearningPath p where p.user.id = :userId and p.status = :status order by p.skill asc, p.createdAt desc")
     List<LearningPath> findByUserIdAndStatusOrderBySkillAscCreatedAtDesc(Integer userId, String status);
     @org.springframework.data.jpa.repository.Query("select p from LearningPath p where p.user.id = :userId and p.skill = :skill and p.status = :status order by p.createdAt desc")

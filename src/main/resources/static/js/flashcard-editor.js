@@ -26,4 +26,6 @@
   blank.forEach(row=>row.remove());parsed.forEach(pair=>add(...pair));document.getElementById('bulk').value='';message.textContent=`Đã thêm ${parsed.length} thẻ. Bấm Lưu bộ thẻ để lưu.`;reindex();
  });
  root.addEventListener('input',event=>{if(event.target.matches('textarea[data-name]'))updateCount(event.target);});reindex();
+ const lesson=document.getElementById('lesson'),level=document.getElementById('level');
+ if(lesson&&level)lesson.addEventListener('change',()=>{const option=lesson.selectedOptions[0];if(option&&option.dataset.level)level.value=option.dataset.level;});
 })();

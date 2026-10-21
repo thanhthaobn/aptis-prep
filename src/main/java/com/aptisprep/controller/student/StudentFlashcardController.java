@@ -17,7 +17,7 @@ public class StudentFlashcardController {
  @PostMapping("/{id}/archive") public String archive(@PathVariable Integer id,Principal p,org.springframework.web.servlet.mvc.support.RedirectAttributes r){service.archivePersonal(id,p.getName());r.addFlashAttribute("message","Đã lưu trữ bộ thẻ. Bạn có thể tạo lại khi cần.");return "redirect:/student/flashcards";}
  private String save(Integer id,com.aptisprep.dto.form.FlashcardSetForm f,org.springframework.validation.BindingResult b,Principal p,Model m){if(!b.hasErrors())try{service.savePersonal(id,f,p.getName());return "redirect:/student/flashcards";}catch(com.aptisprep.exception.BusinessRuleException e){b.reject("invalid",e.getMessage());}return form(m,f,id);}
  private String form(Model m,com.aptisprep.dto.form.FlashcardSetForm f,Integer id){m.addAttribute("form",f);m.addAttribute("setId",id);m.addAttribute("levels",LessonService.LEVELS);m.addAttribute("personal",true);return "flashcard/form";}
- @GetMapping("/{id}") public String study(@PathVariable Integer id,Principal p,Model m){m.addAttribute("cards",service.study(id,p.getName()));m.addAttribute("set",service.requireForStudent(id,p.getName()));return "flashcard/study";}
+ @GetMapping("/{id}") public String study(@PathVariable Integer id,Principal p,Model m){m.addAttribute("cards",service.study(id,p.getName()));m.addAttribute("set",service.studySet(id,p.getName()));return "flashcard/study";}
  @PostMapping("/{setId}/cards/{cardId}/state") @ResponseBody
  public ResponseEntity<Void> mark(@PathVariable Integer setId,@PathVariable Integer cardId,@RequestParam String state,Principal p){service.mark(setId,cardId,state,p.getName());return ResponseEntity.noContent().build();}
 }

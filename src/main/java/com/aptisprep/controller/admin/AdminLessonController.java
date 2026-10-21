@@ -12,9 +12,9 @@ import org.springframework.web.multipart.MultipartFile;
 
 @Controller @RequestMapping("/admin/lessons")
 public class AdminLessonController {
-    private final LessonService service; public AdminLessonController(LessonService s){service=s;}
+    private final LessonService service; private final com.aptisprep.service.learning.FlashcardSetService flashcards; public AdminLessonController(LessonService s,com.aptisprep.service.learning.FlashcardSetService f){service=s;flashcards=f;}
     @GetMapping public String list(Model m){m.addAttribute("tree",service.adminTree());return "admin/lesson/list";}
-    @GetMapping("/{id}") public String detail(@PathVariable Integer id,Model m){m.addAttribute("lesson",service.require(id));m.addAttribute("cards",service.cards(id));m.addAttribute("questions",service.questions(id));m.addAttribute("stats",service.stats(id));return "admin/lesson/detail";}
+    @GetMapping("/{id}") public String detail(@PathVariable Integer id,Model m){m.addAttribute("lesson",service.require(id));m.addAttribute("flashcardSet",flashcards.forLesson(id).orElse(null));m.addAttribute("questions",service.questions(id));m.addAttribute("stats",service.stats(id));return "admin/lesson/detail";}
     @GetMapping("/create") public String create(@RequestParam(defaultValue="Reading") String skill,@RequestParam(defaultValue="A1") String level,@RequestParam(defaultValue="") String topic,Model m){if(topic.length()>160)throw new com.aptisprep.exception.BusinessRuleException("Tên chủ đề tối đa 160 ký tự");var form=service.newForm(skill,level);form.setTopic(topic);formModel(m,form,false,null);return "admin/lesson/form";}
     @PostMapping public String create(@Valid @ModelAttribute("form") LessonForm f,BindingResult b,@RequestParam(required=false) MultipartFile audio,@RequestParam(required=false) MultipartFile image,Model m,RedirectAttributes r){return save(null,f,b,audio,false,image,false,m,r);}
     @GetMapping("/{id}/edit") public String edit(@PathVariable Integer id,Model m){formModel(m,service.form(id),true,id);return "admin/lesson/form";}

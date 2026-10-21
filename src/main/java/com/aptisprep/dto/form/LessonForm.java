@@ -32,8 +32,6 @@ public class LessonForm extends com.aptisprep.entity.LessonMaterial {
     @NotBlank private String cefrLevel;
     @NotNull @Min(1) private Integer displayOrder;
     @NotBlank private String status;
-    @Size(max = 2000) private String flashcardFront;
-    @Size(max = 2000) private String flashcardBack;
     @Size(max = 10000) private String transcript;
     @Min(1) @Max(5000) private Integer minWordCount;
     @Min(1) @Max(5000) private Integer maxWordCount;
@@ -43,8 +41,6 @@ public class LessonForm extends com.aptisprep.entity.LessonMaterial {
     public String getCefrLevel(){return cefrLevel;} public void setCefrLevel(String v){cefrLevel=v;}
     public Integer getDisplayOrder(){return displayOrder;} public void setDisplayOrder(Integer v){displayOrder=v;}
     public String getStatus(){return status;} public void setStatus(String v){status=v;}
-    public String getFlashcardFront(){return flashcardFront;} public void setFlashcardFront(String v){flashcardFront=v;}
-    public String getFlashcardBack(){return flashcardBack;} public void setFlashcardBack(String v){flashcardBack=v;}
     public String getTranscript(){return transcript;} public void setTranscript(String v){transcript=v;}
     public Integer getMinWordCount(){return minWordCount;} public void setMinWordCount(Integer v){minWordCount=v;}
     public Integer getMaxWordCount(){return maxWordCount;} public void setMaxWordCount(Integer v){maxWordCount=v;}

@@ -3,6 +3,7 @@ package com.aptisprep.service.storage;
 import com.aptisprep.config.StorageProperties;
 import com.aptisprep.exception.BusinessRuleException;
 import org.springframework.core.io.Resource;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.UrlResource;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -64,6 +65,11 @@ public class LocalStorageService implements StorageService {
 
     @Override
     public Resource load(String relativePath) {
+        if (isCurriculumAudio(relativePath)) {
+            Resource resource = new ClassPathResource(relativePath);
+            if (!resource.exists()) throw new BusinessRuleException("Không tìm thấy bài nghe");
+            return resource;
+        }
         Path target = safeResolve(relativePath);
         try {
             Resource resource = new UrlResource(target.toUri());
@@ -78,6 +84,9 @@ public class LocalStorageService implements StorageService {
 
     @Override
     public void delete(String relativePath) {
+        // Bundled teaching recordings are read-only; removing/replacing a lesson's
+        // reference must not remove the shared application resource.
+        if (isCurriculumAudio(relativePath)) return;
         try {
             Files.deleteIfExists(safeResolve(relativePath));
         } catch (IOException exception) {
@@ -91,5 +100,9 @@ public class LocalStorageService implements StorageService {
             throw new BusinessRuleException("Đường dẫn file không hợp lệ");
         }
         return resolved;
+    }
+
+    private static boolean isCurriculumAudio(String path) {
+        return path != null && path.matches("curriculum/audio/listening-(a2|b1|b2|c1)\\.wav");
     }
 }

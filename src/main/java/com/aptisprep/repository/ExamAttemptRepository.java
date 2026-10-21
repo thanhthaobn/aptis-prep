@@ -16,6 +16,7 @@ public interface ExamAttemptRepository extends JpaRepository<ExamAttemptEntity, 
     Optional<ExamAttemptEntity> findByIdAndUserId(Integer id, Integer userId);
     Optional<ExamAttemptEntity> findByUserIdAndRequestKey(Integer userId, String requestKey);
     Page<ExamAttemptEntity> findByUserIdOrderByCreatedAtDesc(Integer userId, Pageable pageable);
+    List<ExamAttemptEntity> findByUserId(Integer userId);
     @Query(value = "select a from ExamAttemptEntity a join MockExamEntity e on e.id = a.mockExamId "
             + "where a.userId = :userId "
             + "and (:pattern = '' or lower(e.title) like :pattern) "
