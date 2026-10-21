@@ -18,9 +18,9 @@
                 <section class="learn-unit-banner">
                     <span class="learn-unit-icon" aria-hidden="true">✦</span>
                     <div>
-                        <p class="eyebrow" style="color: rgba(255, 255, 255, 0.85);">LỘ TRÌNH CÁ NHÂN HÓA</p>
+                        <p class="eyebrow">LỘ TRÌNH CÁ NHÂN HÓA</p>
                         <h1>Mỗi ngày một bước nhỏ hướng tới mục tiêu Aptis.</h1>
-                        <span th:text="${hasLearningContent ? 'Tiến độ học tập và bài làm được đồng bộ liên tục.' : 'Chưa có bài học được công bố cho lộ trình.'}"></span>
+                        <span th:if="${!hasLearningContent}">Chưa có bài học được công bố cho lộ trình.</span>
                     </div>
                 </section>
 
@@ -29,8 +29,8 @@
                     <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
                         <div>
                             <span class="badge badge-secondary mb-1" th:text="${nextPath.skill()}"></span>
-                            <h2 class="m-0" style="font-size: 1.2rem; color: var(--color-navy);" th:text="${nextPath.nextLessonTitle()}">Tiếp tục bài học</h2>
-                            <p class="muted m-0 mt-1" style="font-size: .9rem;" th:text="|Tiến độ kỹ năng: ${nextPath.completedLessons()}/${nextPath.totalLessons()} bài (${nextPath.progressPercent() != null ? nextPath.progressPercent() : 0}%)|"></p>
+                            <h2 class="m-0 section-title" th:text="${nextPath.nextLessonTitle()}">Tiếp tục bài học</h2>
+                            <p class="muted m-0 mt-1 supporting-text" th:text="|Tiến độ kỹ năng: ${nextPath.completedLessons()}/${nextPath.totalLessons()} bài (${nextPath.progressPercent() != null ? nextPath.progressPercent() : 0}%)|"></p>
                         </div>
                         <a class="button button-primary" th:href="@{/student/lessons/{id}(id=${nextPath.nextLessonId()})}">Học tiếp ngay →</a>
                     </div>
@@ -60,7 +60,7 @@
                         <a class="learn-node" 
                            th:classappend="${path.skill()=='Reading'?'node-blue':(path.skill()=='Listening'?'node-gold':(path.skill()=='Writing'?'node-purple':(path.skill()=='Speaking'?'node-coral':'node-green')))}" 
                            th:href="@{/student/learning-path/{skill}(skill=${path.skill()})}" 
-                           th:attr="aria-label=|Xem lộ trình ${path.skill()}|" 
+                           th:attr="aria-label=|Xem lộ trình ${path.skill()}|,data-skill=${path.skill()}"
                            th:text="${path.progressPercent() == null ? '0%' : path.progressPercent() + '%'}">0%</a>
                         <div>
                             <h3 th:text="${path.skill()}"></h3>
@@ -78,13 +78,13 @@
                 <article class="learn-rail-card streak-card">
                     <div class="learn-rail-heading">
                         <span aria-hidden="true">🔥</span>
-                        <h2>Chuỗi học tập (Streak)</h2>
+                        <h2>Chuỗi học tập</h2>
                     </div>
                     <div class="d-flex align-items-baseline gap-2 mt-2">
-                        <strong style="font-size: 2.25rem; color: var(--color-primary); line-height: 1;">1</strong>
-                        <span class="muted" style="font-size: .95rem; font-weight: 600;">ngày liên tiếp</span>
+                        <strong class="streak-value" th:text="${activity.currentStreak}">0</strong>
+                        <span class="muted streak-label">ngày liên tiếp</span>
                     </div>
-                    <p class="muted mt-2" style="font-size: .85rem; line-height: 1.5;">Học mỗi ngày tối thiểu 1 bài học hoặc 1 bộ thẻ từ vựng để giữ chuỗi ngọn lửa streak.</p>
+                    <p class="muted supporting-text mt-2">Có ít nhất một hoạt động học tập mỗi ngày để duy trì chuỗi.</p>
                 </article>
 
                 <!-- Trình độ hiện tại & Mục tiêu -->
@@ -112,7 +112,6 @@
                         <span>Kỹ năng đang luyện</span>
                         <strong th:text="${#lists.size(paths)}">0</strong>
                     </div>
-                    <p class="muted mt-2" style="font-size: .85rem;" th:text="${completedLessons > 0 ? 'Dữ liệu được cập nhật tự động khi bạn hoàn thành bài học.' : (hasLearningContent ? 'Bạn chưa hoàn thành bài học nào. Hãy bắt đầu ngay hôm nay!' : 'Chưa có dữ liệu bài học.')}"></p>
                 </article>
             </aside>
         </div>

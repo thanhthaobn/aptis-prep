@@ -63,9 +63,9 @@
 
     <!-- Lưới thẻ chi tiết từng kỹ năng -->
     <section class="dashboard-section">
-        <h2 style="font-size: 1.25rem; color: var(--color-navy); margin-bottom: 1.25rem;">Chi tiết năng lực theo kỹ năng</h2>
+        <h2 class="result-section-title">Chi tiết năng lực theo kỹ năng</h2>
         <div class="skills-result-grid">
-            <div class="skill-result-card" th:each="skill : ${res.skills}">
+            <div class="skill-result-card" th:each="skill : ${res.skills}" th:attr="data-skill=${skill.skill}">
                 <div class="skill-card-top">
                     <span class="skill-card-name">
                         <span th:switch="${skill.skill}">

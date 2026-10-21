@@ -17,13 +17,13 @@ public class LessonService {
     public static final List<String> SKILLS = List.of("Grammar & Vocabulary", "Reading", "Listening", "Writing", "Speaking");
     public static final List<String> LEVELS = List.of("A1", "A2", "B1", "B2", "C1");
     public static final List<String> STATUSES = List.of("DRAFT", "PUBLISHED", "ARCHIVED");
-    private final LessonRepository lessons; private final FlashcardRepository cards;
-    private final LessonProgressRepository progress; private final UserFlashcardProgressRepository cardProgress;
+    private final LessonRepository lessons;
+    private final LessonProgressRepository progress;
     private final UserRepository users; private final LearningPathService learningPaths; private final LessonTeachingService teaching;
     private final StorageService storage;
-    public LessonService(LessonRepository l, FlashcardRepository c, LessonProgressRepository p,
-                         UserFlashcardProgressRepository cp, UserRepository u,LearningPathService lp,LessonTeachingService t,StorageService s) {
-        lessons=l; cards=c; progress=p; cardProgress=cp; users=u; learningPaths=lp; teaching=t; storage=s;
+    public LessonService(LessonRepository l, LessonProgressRepository p,
+                         UserRepository u,LearningPathService lp,LessonTeachingService t,StorageService s) {
+        lessons=l; progress=p; users=u; learningPaths=lp; teaching=t; storage=s;
     }
     public List<Lesson> adminLessons(){ return lessons.findAllByOrderBySkillAscCefrLevelAscDisplayOrderAsc(); }
     public record LevelBranch(String level, List<Lesson> lessons) {
@@ -52,10 +52,9 @@ public class LessonService {
     public List<Lesson> publishedLessons(){ return lessons.findByStatusOrderBySkillAscCefrLevelAscDisplayOrderAsc("PUBLISHED"); }
     public Lesson require(Integer id){ return lessons.findById(id).orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy bài học")); }
     public Lesson requirePublished(Integer id){ var l=require(id); if(!"PUBLISHED".equals(l.getStatus())) throw new ResourceNotFoundException("Bài học chưa được công bố"); return l; }
-    public List<Flashcard> cards(Integer lessonId){ return cards.findByLessonIdOrderByDisplayOrderAsc(lessonId); }
     public List<LessonTeachingService.CheckView> questions(Integer lessonId){return teaching.questions(lessonId);}
     public LessonTeachingService.LessonStats stats(Integer lessonId){return teaching.stats(lessonId);}
-    public LessonForm form(Integer id){ var l=require(id); var f=new LessonForm(); if(l.getMaterial()!=null)org.springframework.beans.BeanUtils.copyProperties(l.getMaterial(),f); f.setChecks(new java.util.ArrayList<>(teaching.editorQuestions(id))); f.setTitle(l.getTitle()); f.setDescription(l.getDescription()); f.setSkill(l.getSkill()); f.setCefrLevel(l.getCefrLevel()); f.setDisplayOrder(l.getDisplayOrder()); f.setStatus(l.getStatus());f.setTranscript(l.getTranscript());f.setMinWordCount(l.getMinWordCount());f.setMaxWordCount(l.getMaxWordCount()); var cs=cards(id); if(!cs.isEmpty()){f.setFlashcardFront(cs.get(0).getFrontContent());f.setFlashcardBack(cs.get(0).getBackContent());} return f; }
+    public LessonForm form(Integer id){ var l=require(id); var f=new LessonForm(); if(l.getMaterial()!=null)org.springframework.beans.BeanUtils.copyProperties(l.getMaterial(),f); f.setChecks(new java.util.ArrayList<>(teaching.editorQuestions(id))); f.setTitle(l.getTitle()); f.setDescription(l.getDescription()); f.setSkill(l.getSkill()); f.setCefrLevel(l.getCefrLevel()); f.setDisplayOrder(l.getDisplayOrder()); f.setStatus(l.getStatus());f.setTranscript(l.getTranscript());f.setMinWordCount(l.getMinWordCount());f.setMaxWordCount(l.getMaxWordCount()); return f; }
     @Transactional public Lesson save(Integer id, LessonForm f){
         return save(id,f,null,false);
     }
@@ -64,7 +63,6 @@ public class LessonService {
     }
     @Transactional public Lesson save(Integer id, LessonForm f, MultipartFile audio, boolean removeAudio, MultipartFile image, boolean removeImage){
         validate(f, id); teaching.validate(f); var l=id==null?new Lesson():require(id); l.setTitle(f.getTitle().trim()); l.setDescription(trim(f.getDescription())); l.setSkill(f.getSkill()); l.setCefrLevel(f.getCefrLevel()); l.setDisplayOrder(f.getDisplayOrder()); l.setStatus(f.getStatus()); l.setMaterial(f.copy());l.setTranscript(trim(f.getTranscript()));l.setMinWordCount(f.getMinWordCount());l.setMaxWordCount(f.getMaxWordCount()); l=lessons.save(l); teaching.saveChecks(l.getId(),f.getChecks());
-        if(has(f.getFlashcardFront()) || has(f.getFlashcardBack())) { if(!has(f.getFlashcardFront()) || !has(f.getFlashcardBack())) throw new BusinessRuleException("Flashcard cần đủ mặt trước và mặt sau"); var existing=cards(l.getId()); var c=existing.isEmpty()?new Flashcard():existing.get(0); c.setLesson(l); c.setFrontContent(f.getFlashcardFront().trim()); c.setBackContent(f.getFlashcardBack().trim()); c.setCefrLevel(l.getCefrLevel()); c.setDisplayOrder(1); cards.save(c); }
         if(removeAudio&&l.getAudioPath()!=null){storage.delete(l.getAudioPath());l.setAudioPath(null);l.setAudioName(null);}
         if(audio!=null&&!audio.isEmpty()){validateAudio(f.getSkill(),audio);String old=l.getAudioPath();String path=storage.store(audio,"lesson-audio/"+l.getId());l.setAudioPath(path);l.setAudioName(cleanName(audio.getOriginalFilename()));if(old!=null)storage.delete(old);}
         if(removeImage&&l.getImagePath()!=null){storage.delete(l.getImagePath());l.setImagePath(null);l.setImageName(null);}
@@ -76,7 +74,6 @@ public class LessonService {
     @Transactional public void move(Integer id,int direction){if(direction!= -1&&direction!=1)throw new BusinessRuleException("Hướng di chuyển không hợp lệ");var current=require(id);var branch=adminLessons().stream().filter(x->x.getSkill().equals(current.getSkill())&&x.getCefrLevel().equals(current.getCefrLevel())).toList();int index=java.util.stream.IntStream.range(0,branch.size()).filter(i->branch.get(i).getId().equals(id)).findFirst().orElseThrow();int target=index+direction;if(target<0||target>=branch.size())return;var other=branch.get(target);int a=current.getDisplayOrder(),b=other.getDisplayOrder(),temp=branch.stream().mapToInt(Lesson::getDisplayOrder).max().orElse(0)+1000;current.setDisplayOrder(temp);lessons.saveAndFlush(current);other.setDisplayOrder(a);lessons.saveAndFlush(other);current.setDisplayOrder(b);lessons.save(current);}
     @Transactional public LessonProgress recordOpen(String email, Integer lessonId){ var u=active(email); var l=requirePublished(lessonId); var p=progress.findByUserIdAndLessonId(u.getId(), l.getId()).orElseGet(() -> {var x=new LessonProgress();x.setUser(u);x.setLesson(l);x.setStatus("IN_PROGRESS");return x;}); p.setLastAccessedAt(LocalDateTime.now()); return progress.save(p); }
     @Transactional public LessonProgress complete(String email, Integer lessonId){ var u=active(email);var state=teaching.completion(lessonId,email);if(!state.eligible())throw new BusinessRuleException(state.message()); learningPaths.completeLesson(u.getId(),lessonId); return progress.findByUserIdAndLessonId(u.getId(),lessonId).orElseThrow(); }
-    @Transactional public void review(String email, Integer lessonId, Integer cardId){ var u=active(email); var l=requirePublished(lessonId); var c=cards.findById(cardId).filter(x -> x.getLesson().getId().equals(l.getId())).orElseThrow(() -> new ResourceNotFoundException("Flashcard không thuộc bài học")); var p=cardProgress.findByUserIdAndFlashcardId(u.getId(), cardId).orElseGet(() -> {var x=new UserFlashcardProgress();x.setUser(u);x.setFlashcard(c);x.setReviewCount(0);return x;}); if(!"REVIEWED".equals(p.getStatus())) p.setReviewCount(1); p.setStatus("REVIEWED"); p.setMasteryLevel(1); p.setLastReviewedAt(LocalDateTime.now()); cardProgress.save(p); }
     public Optional<LessonProgress> progress(String email,Integer lessonId){var u=active(email);return progress.findByUserIdAndLessonId(u.getId(),lessonId);}
     private User active(String email){var u=users.findByEmailIgnoreCase(email).orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy tài khoản"));if(u.getStatus()!=UserStatus.ACTIVE)throw new BusinessRuleException("Tài khoản không hoạt động");return u;}
     public record Neighbors(Lesson previous,Lesson next){}

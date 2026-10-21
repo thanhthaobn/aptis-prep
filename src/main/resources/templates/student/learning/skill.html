@@ -51,6 +51,7 @@
                         <ul class="lesson-leaves">
                             <li th:each="lesson : ${topic.value}">
                                 <a th:href="@{/student/lessons/{id}(id=${lesson.id})}" th:text="${lesson.title}"></a>
+                                <a class="path-set-link" th:if="${lessonSets.containsKey(lesson.id)}" th:href="@{/student/flashcards/{id}(id=${lessonSets.get(lesson.id).id()})}" th:text="|▣ ${lessonSets.get(lesson.id).count()} thẻ từ vựng →|"></a>
                             </li>
                         </ul>
                     </details>

@@ -11,7 +11,6 @@
         <header class="page-header" id="start">
             <div>
                 <h1>Lộ trình học tập cá nhân hóa</h1>
-                <p>Khám phá từng kỹ năng theo cấp độ CEFR, học bài tập trung và làm bài kiểm tra cuối chặng để khẳng định tiến độ.</p>
             </div>
             <div class="page-actions">
                 <form method="post" th:action="@{/student/learning-path/refresh}">
@@ -108,7 +107,7 @@
                 </article>
             </section>
 
-            <!-- Flashcard / Grammar & Vocab -->
+            <!-- Grammar & Vocabulary -->
             <article class="explore-card explore-vocabulary" id="vocabulary">
                 <div class="explore-card-top">
                     <span class="explore-icon" aria-hidden="true">
@@ -119,11 +118,11 @@
                     </span>
                     <span class="explore-number" aria-hidden="true">A1–C1</span>
                 </div>
-                <h2>Flashcard &amp; Từ vựng</h2>
-                <p>Grammar &amp; Vocabulary theo chủ đề Aptis thông dụng với phương pháp lặp lại ngắt quãng.</p>
-                <span class="explore-chip">Ôn tập SRS · Thuật ngữ cốt lõi</span>
-                <a class="button" th:href="@{/student/flashcards}">
-                    Mở các bộ thẻ <span aria-hidden="true">→</span>
+                <h2>Grammar &amp; Vocabulary</h2>
+                <p>Ngữ pháp trong ngữ cảnh và từ vựng theo chủ đề, kèm bộ thẻ ôn riêng của từng bài.</p>
+                <span class="explore-chip">Ngữ pháp · Từ vựng theo bài</span>
+                <a class="button" th:href="@{/student/learning-path/{skill}(skill='Grammar & Vocabulary')}">
+                    Xem bài ngữ pháp &amp; từ vựng <span aria-hidden="true">→</span>
                 </a>
             </article>
         </section>

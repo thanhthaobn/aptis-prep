@@ -1,7 +1,6 @@
 package com.aptisprep.controller.student;
 
 import com.aptisprep.exception.BusinessRuleException;
-import com.aptisprep.exception.ResourceNotFoundException;
 import com.aptisprep.service.account.AccountAccessService;
 import com.aptisprep.service.exam.ExamAttemptService;
 import com.aptisprep.service.contract.IntegrationModels.HistoryFilter;
@@ -47,24 +46,15 @@ public class StudentContentPreviewController {
         if (page < 0 || size < 1 || size > 50) throw new BusinessRuleException("Phân trang không hợp lệ");
         if (q.length() > 255 || skill.length() > 80 || examType.length() > 40 || state.length() > 40)
             throw new BusinessRuleException("Bộ lọc không hợp lệ");
-        try {
-            Integer userId = accounts.requireActiveStudent(principal.getName());
-            model.addAttribute("history", attempts.history(userId, page, size, new HistoryFilter(q, skill, examType, state)));
-            model.addAttribute("page", page);
-            model.addAttribute("size", size);
-            model.addAttribute("q", q);
-            model.addAttribute("selectedSkill", skill);
-            model.addAttribute("selectedExamType", examType);
-            model.addAttribute("selectedState", state);
-            return "student/results/list";
-        } catch (ResourceNotFoundException ignored) {
-            // Giữ fallback cho tài khoản fixture cũ; tài khoản DB thật luôn dùng lịch sử attempt.
-            common("results", model);
-            model.addAttribute("entries", preview.find("results", q, skill, examType, state));
-            model.addAttribute("q", q); model.addAttribute("selectedSkill", skill);
-            model.addAttribute("selectedLevel", examType); model.addAttribute("selectedState", state);
-            return "student/content/list";
-        }
+        Integer userId = accounts.requireActiveStudent(principal.getName());
+        model.addAttribute("history", attempts.history(userId, page, size, new HistoryFilter(q, skill, examType, state)));
+        model.addAttribute("page", page);
+        model.addAttribute("size", size);
+        model.addAttribute("q", q);
+        model.addAttribute("selectedSkill", skill);
+        model.addAttribute("selectedExamType", examType);
+        model.addAttribute("selectedState", state);
+        return "student/results/list";
     }
     @GetMapping("/{module:exams}/{id:\\d+}")
     public String detail(@PathVariable String module, @PathVariable int id, Model model) {
@@ -73,15 +63,9 @@ public class StudentContentPreviewController {
     }
     @GetMapping("/attempts/{id:\\d+}/result")
     public String result(@PathVariable int id, Principal principal, Model model) {
-        try {
-            Integer userId = accounts.requireActiveStudent(principal.getName());
-            model.addAttribute("attemptResult", attempts.result(userId, id));
-            return "student/attempt-result";
-        } catch (ResourceNotFoundException ignored) {
-            // The preview catalog intentionally supports fixture-only test users.
-        }
-        common("results", model); model.addAttribute("entry", preview.entry("results", id));
-        return "student/content/detail";
+        Integer userId = accounts.requireActiveStudent(principal.getName());
+        model.addAttribute("attemptResult", attempts.result(userId, id));
+        return "student/attempt-result";
     }
     private void common(String module, Model model) {
         model.addAttribute("module", module);

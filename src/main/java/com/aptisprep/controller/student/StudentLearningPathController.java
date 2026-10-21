@@ -11,7 +11,8 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 @Controller @RequestMapping("/student/learning-path")
 public class StudentLearningPathController {
     private final LearningPathService service; private final LessonService lessons;
-    public StudentLearningPathController(LearningPathService s,LessonService l){service=s;lessons=l;}
+    private final com.aptisprep.service.learning.FlashcardSetService flashcards;
+    public StudentLearningPathController(LearningPathService s,LessonService l,com.aptisprep.service.learning.FlashcardSetService f){service=s;lessons=l;flashcards=f;}
     @PostMapping("/refresh")
     public String refresh(Principal principal, RedirectAttributes redirect) {
         int changed = service.refreshPaths(principal.getName());
@@ -25,6 +26,7 @@ public class StudentLearningPathController {
         String selected = LessonService.SKILLS.stream().filter(value -> value.equalsIgnoreCase(skill))
                 .findFirst().orElseThrow(() -> new com.aptisprep.exception.ResourceNotFoundException("Không tìm thấy kỹ năng"));
         model.addAttribute("selectedSkill", selected);
+        model.addAttribute("lessonSets",flashcards.lessonSets());
         model.addAttribute("paths", service.ensureAndSummaries(principal.getName()).stream()
                 .filter(path -> path.skill().equals(selected)).toList());
         var published = lessons.publishedLessons().stream().filter(lesson -> lesson.getSkill().equals(selected)).toList();

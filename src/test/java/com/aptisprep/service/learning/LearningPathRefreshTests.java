@@ -22,6 +22,7 @@ class LearningPathRefreshTests {
     @Autowired LearningPathRepository paths;
     @Autowired LearningPathItemRepository items;
     @Autowired LessonProgressRepository progress;
+    @Autowired UserGoalRepository goals;
 
     @Test void refreshEmptyPathThenPreserveCompletionAndHistory() {
         var user = new User();
@@ -29,10 +30,9 @@ class LearningPathRefreshTests {
         user.setPasswordHash("unused"); user.setRole(Role.STUDENT); user.setStatus(UserStatus.ACTIVE);
         users.saveAndFlush(user);
         service.ensurePaths(user.getId());
-        var original = paths.findFirstByUserIdAndSkillAndStatusOrderByCreatedAtDesc(user.getId(), "Reading", "ACTIVE").orElseThrow();
+        assertThat(paths.findFirstByUserIdAndSkillAndStatusOrderByCreatedAtDesc(user.getId(), "Reading", "ACTIVE")).isEmpty();
         var first = lesson("First", 901);
         assertThat(service.refreshPaths(user.getEmail())).isEqualTo(1);
-        assertThat(original.getStatus()).isEqualTo("ARCHIVED");
         service.completeLesson(user.getId(), first.getId());
         var completedAt = progress.findByUserIdAndLessonId(user.getId(), first.getId()).orElseThrow().getCompletedAt();
         var previous = paths.findFirstByUserIdAndSkillAndStatusOrderByCreatedAtDesc(user.getId(), "Reading", "ACTIVE").orElseThrow();
@@ -46,6 +46,26 @@ class LearningPathRefreshTests {
         assertThat(summary.progressPercent()).isEqualTo(50);
         assertThat(progress.findByUserIdAndLessonId(user.getId(), first.getId()).orElseThrow().getCompletedAt()).isEqualTo(completedAt);
         assertThat(service.refreshPaths(user.getEmail())).isZero();
+    }
+
+    @Test void activeGoalCreatesGoalLinkedPathWithoutEmptyBranches() {
+        var user = new User();
+        user.setFullName("Goal learner"); user.setEmail("goal-path@test.local");
+        user.setPasswordHash("unused"); user.setRole(Role.STUDENT); user.setStatus(UserStatus.ACTIVE);
+        users.saveAndFlush(user);
+        lesson("Goal A1", 911);
+        var goal = new UserGoal(); goal.setUser(user); goal.setStatus(GoalStatus.ACTIVE);
+        var target = new UserGoalSkill(); target.setSkill("READING"); target.setTargetLevel("A1"); goal.addSkill(target);
+        goals.saveAndFlush(goal);
+
+        service.ensurePaths(user.getId());
+
+        var path = paths.findFirstByUserIdAndSkillAndStatusOrderByCreatedAtDesc(user.getId(), "Reading", "ACTIVE").orElseThrow();
+        assertThat(path.getPathSource()).isEqualTo("GOAL");
+        assertThat(path.getGoalSkillId()).isEqualTo(target.getId());
+        assertThat(path.getTargetLevel()).isEqualTo("A1");
+        assertThat(items.findByLearningPathIdOrderByPositionAsc(path.getId())).isNotEmpty()
+                .allMatch(item -> item.getLesson().getCefrLevel().equals("A1"));
     }
 
     private Lesson lesson(String title, int order) {

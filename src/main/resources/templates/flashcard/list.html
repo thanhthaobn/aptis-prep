@@ -7,17 +7,37 @@
     <div th:if="${admin}" th:insert="~{fragments/admin-sidebar :: adminSidebar('flashcards')}"></div>
     <div th:unless="${admin}" th:insert="~{fragments/student-sidebar :: studentSidebar('flashcards')}"></div>
     <main id="main-content" tabindex="-1" class="app-main flashcard-library">
-        <header class="page-header"><div><p class="eyebrow">FLASHCARD</p><h1 th:text="${admin?'Quản lý bộ thẻ':'Bộ thẻ của bạn'}"></h1><p th:text="${admin?'Biên soạn thư viện chung cho học viên.':'Học bộ thẻ chung hoặc tự tạo bộ thẻ riêng tư của bạn.'}"></p></div><a class="button" th:href="${admin?'/admin/flashcards/create':'/student/flashcards/create'}" th:text="${admin?'Tạo bộ thẻ':'Tạo bộ thẻ của tôi'}"></a></header>
+        <header class="page-header flashcard-library-header">
+            <div><p class="eyebrow">FLASHCARD</p><h1 th:text="${admin?'Quản lý bộ thẻ':'Bộ thẻ của bạn'}"></h1><p th:if="${admin}">Biên soạn thư viện chung cho học viên.</p></div>
+            <a class="button" th:href="${admin?'/admin/flashcards/create':'/student/flashcards/create'}"><span aria-hidden="true">＋</span><span th:text="${admin?'Tạo bộ thẻ':'Tạo bộ thẻ của tôi'}"></span></a>
+        </header>
         <div th:replace="~{fragments/messages :: messages}"></div>
-        <div class="study-card-grid">
-            <article class="dashboard-panel" th:each="set:${sets}">
-                <div class="set-badges"><span class="badge" th:classappend="${set.level() != null ? 'badge-cefr-' + #strings.toLowerCase(set.level()) : ''}" th:text="${set.level()}"></span><span th:if="${set.personal()}" class="badge personal-badge">Riêng tư</span></div>
-                <h2 th:text="${set.title()}"></h2><p th:text="${set.description()}"></p><p th:text="|${set.count()} thuật ngữ|"></p>
-                <p th:if="${admin}" class="badge set-status" th:text="${set.status()=='PUBLISHED'?'Đã công bố':(set.status()=='DRAFT'?'Bản nháp':'Đã lưu trữ')}"></p>
-                <div class="actions"><a class="button button-secondary" th:href="${admin?'/admin/flashcards/'+set.id()+'/edit':'/student/flashcards/'+set.id()}" th:text="${admin?'Chỉnh sửa':'Bắt đầu học'}"></a><a th:if="${!admin and set.personal()}" class="button button-secondary" th:href="@{/student/flashcards/{id}/edit(id=${set.id()})}">Chỉnh sửa</a><form th:if="${!admin and set.personal()}" method="post" th:action="@{/student/flashcards/{id}/archive(id=${set.id()})}" onsubmit="return confirm('Lưu trữ bộ thẻ này? Tiến độ đã ghi nhận vẫn được giữ lại.');"><input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"><button class="button button-secondary" type="submit">Lưu trữ</button></form></div>
+
+        <section class="flashcard-library-summary" th:unless="${#lists.isEmpty(sets)}">
+            <div><span class="summary-icon" aria-hidden="true">▣</span><span><strong th:text="${#lists.size(sets)}">0</strong><small>Bộ thẻ đang có</small></span></div>
+            <p>Chọn một bộ thẻ để bắt đầu ôn tập hoặc tạo bộ riêng theo nội dung bạn muốn ghi nhớ.</p>
+        </section>
+
+        <section class="flashcard-set-grid" aria-label="Danh sách bộ flashcard">
+            <article class="flashcard-set-card" th:each="set:${sets}" th:attr="data-skill=${set.lessonSkill()}">
+                <div class="flashcard-set-mark" aria-hidden="true"><span>Aa</span></div>
+                <div class="flashcard-set-content">
+                    <div class="set-badges"><span class="badge" th:classappend="${set.level() != null ? 'badge-cefr-' + #strings.toLowerCase(set.level()) : ''}" th:text="${set.level()}"></span><span th:if="${set.personal()}" class="badge personal-badge">Riêng tư</span><span th:if="${admin}" class="badge set-status" th:text="${set.status()=='PUBLISHED'?'Đã công bố':(set.status()=='DRAFT'?'Bản nháp':'Đã lưu trữ')}"></span></div>
+                    <h2 th:text="${set.title()}"></h2>
+                    <a class="set-lesson-source" th:if="${set.lessonId()!=null}" th:href="${admin?'/admin/lessons/'+set.lessonId():'/student/lessons/'+set.lessonId()}"><small th:text="|${set.lessonSkill()} · Bài học nguồn|"></small><span th:text="|${set.lessonTitle()} ↗|"></span></a>
+                    <p class="set-lesson muted" th:if="${admin and !set.personal() and set.lessonTitle()==null}">Chưa gắn với bài học — hãy chỉnh sửa trước khi công bố.</p>
+                    <p class="set-description" th:if="${set.description() != null and !set.description().isBlank()}" th:text="${set.description()}"></p>
+                    <div class="flashcard-set-meta"><span aria-hidden="true">▤</span><strong th:text="|${set.count()} thuật ngữ|"></strong></div>
+                </div>
+                <div class="flashcard-set-actions">
+                    <a class="button button-secondary" th:if="${set.lessonId()!=null}" th:href="${admin?'/admin/lessons/'+set.lessonId():'/student/lessons/'+set.lessonId()}">Mở bài học</a>
+                    <a class="button" th:href="${admin?'/admin/flashcards/'+set.id()+'/edit':'/student/flashcards/'+set.id()}" th:text="${admin?'Chỉnh sửa bộ thẻ':'Ôn bộ thẻ'}"></a>
+                    <a th:if="${!admin and set.personal()}" class="button button-secondary" th:href="@{/student/flashcards/{id}/edit(id=${set.id()})}">Chỉnh sửa</a>
+                    <form th:if="${!admin and set.personal()}" method="post" th:action="@{/student/flashcards/{id}/archive(id=${set.id()})}" onsubmit="return confirm('Lưu trữ bộ thẻ này? Tiến độ đã ghi nhận vẫn được giữ lại.');"><input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"><button class="button button-quiet" type="submit">Lưu trữ</button></form>
+                </div>
             </article>
-        </div>
-        <div class="empty-box" th:if="${#lists.isEmpty(sets)}"><div th:replace="~{fragments/navi :: navi('empty', 'Navi đang chờ bộ thẻ đầu tiên')}"></div><h2>Chưa có bộ thẻ</h2><p>Hãy tạo bộ thẻ đầu tiên từ những từ bạn muốn ghi nhớ.</p></div>
+        </section>
+        <div class="empty-box" th:if="${#lists.isEmpty(sets)}"><div th:replace="~{fragments/navi :: navi('empty', 'Navi đang chờ bộ thẻ đầu tiên')}"></div><h2>Chưa có bộ thẻ</h2><p>Hãy tạo bộ thẻ đầu tiên từ những từ bạn muốn ghi nhớ.</p><a class="button" th:href="${admin?'/admin/flashcards/create':'/student/flashcards/create'}">Tạo bộ thẻ đầu tiên</a></div>
     </main>
 </div>
 <div th:replace="~{fragments/footer :: footer}"></div>

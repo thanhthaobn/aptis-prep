@@ -201,7 +201,7 @@
     <!-- Cột Phải: Bảng Palette Câu Hỏi -->
     <aside class="exam-palette-panel" id="exam-palette-drawer" aria-label="Bảng câu hỏi">
         <div class="palette-drawer-header d-flex justify-content-between align-items-center mb-3">
-            <h3 class="m-0" style="font-size: 1.1rem; font-weight: 700;">Bảng câu hỏi</h3>
+            <h3 class="m-0 question-nav-title">Bảng câu hỏi</h3>
             <button type="button" class="button button-small button-secondary d-lg-none" id="btn-close-palette-drawer" aria-label="Đóng bảng câu hỏi">✕ Đóng</button>
         </div>
 
@@ -226,8 +226,8 @@
 <!-- Modal Xác nhận nộp bài -->
 <div class="exam-modal-overlay" id="exam-submit-modal" role="dialog" aria-modal="true" aria-labelledby="modal-submit-title">
     <div class="exam-modal-card">
-        <h2 id="modal-submit-title" style="color: var(--color-navy); font-size: 1.35rem; margin-bottom: .75rem;">Xác nhận nộp bài thi?</h2>
-        <p style="color: var(--color-muted);">Hãy kiểm tra lại bài làm trước khi nộp bài để đạt kết quả tốt nhất.</p>
+        <h2 id="modal-submit-title" class="dialog-title">Xác nhận nộp bài thi?</h2>
+        <p class="muted">Hãy kiểm tra lại bài làm trước khi nộp bài để đạt kết quả tốt nhất.</p>
         <div class="exam-modal-stats">
             <div class="modal-stat-box">
                 <strong id="modal-unanswered-count">0</strong>
@@ -238,7 +238,7 @@
                 <span>Cần xem lại</span>
             </div>
         </div>
-        <p class="muted" style="font-size: .88rem; margin-bottom: 1.5rem;">Sau khi nộp bài, hệ thống sẽ tiến hành chấm điểm và lưu kết quả.</p>
+        <p class="muted supporting-text dialog-supporting-text">Sau khi nộp bài, hệ thống sẽ tiến hành chấm điểm và lưu kết quả.</p>
         <div class="d-flex justify-content-center gap-3">
             <button type="button" class="button button-secondary" id="btn-modal-cancel">Làm bài tiếp</button>
             <button type="button" class="button button-primary" id="btn-modal-confirm">Đồng ý nộp bài</button>

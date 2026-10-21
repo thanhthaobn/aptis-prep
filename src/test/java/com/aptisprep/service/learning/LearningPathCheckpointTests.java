@@ -26,6 +26,7 @@ class LearningPathCheckpointTests {
     @Mock LessonRepository lessons;
     @Mock LessonProgressRepository progress;
     @Mock UserRepository users;
+    @Mock UserGoalRepository goals;
     @Mock ObjectProvider<ExamAttemptContract> attemptProvider;
     @Mock ExamAttemptContract attempts;
     @Mock ExamCatalogContract catalog;
@@ -54,7 +55,8 @@ class LearningPathCheckpointTests {
         when(progress.findByUserIdAndLessonId(12, 501)).thenReturn(Optional.empty());
         when(paths.save(any(LearningPath.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        LearningPathService service = new LearningPathService(paths, items, lessons, progress, users, attemptProvider, catalog, accounts);
+        LearningPathService service = new LearningPathService(paths, items, lessons, progress, users, goals,
+                attemptProvider, catalog, accounts);
         ReflectionTestUtils.setField(service, "entityManager", entityManager);
         service.applyCheckpoint(12, 99);
         service.applyCheckpoint(12, 99);
