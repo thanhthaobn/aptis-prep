@@ -8,6 +8,10 @@ import com.aptisprep.repository.ExamAttemptRepository;
 import com.aptisprep.repository.MockExamRepository;
 import com.aptisprep.entity.ExamAttemptEntity;
 import com.aptisprep.entity.MockExamEntity;
+import com.aptisprep.entity.ExamSkillResultEntity;
+import com.aptisprep.repository.ExamSkillResultRepository;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import java.math.BigDecimal;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,6 +37,35 @@ class StudentResultFlowTests {
     @Autowired UserRepository users;
     @Autowired ExamAttemptRepository attempts;
     @Autowired MockExamRepository exams;
+    @Autowired ExamSkillResultRepository skills;
+
+    @ParameterizedTest
+    @ValueSource(strings = {"COMPLETED", "WAITING_GRADING", "ERROR", "EXPIRED", "IN_PROGRESS"})
+    void ownersResultAndPlacementResultRenderRealStatesWithoutInventingScores(String state) throws Exception {
+        User learner = learner("render-" + state + "@test.local");
+        MockExamEntity exam = new MockExamEntity(); exam.setCertificateId(1);
+        exam.setTitle("Kết quả thật " + state); exam.setExamType("PLACEMENT"); exam.setSkill("WRITING");
+        exam.setTargetLevel("B1"); exam.setDurationMinutes(20); exam.setStatus("PUBLISHED"); exams.saveAndFlush(exam);
+        ExamAttemptEntity attempt = new ExamAttemptEntity(); attempt.setUserId(learner.getId());
+        attempt.setMockExamId(exam.getId()); attempt.setStatus(state); attempt.setGradingStatus(state);
+        if (!state.equals("IN_PROGRESS")) attempt.setSubmittedAt(java.time.LocalDateTime.now());
+        attempts.saveAndFlush(attempt);
+        ExamSkillResultEntity skill = new ExamSkillResultEntity(); skill.setAttemptId(attempt.getId()); skill.setSkill("WRITING");
+        boolean complete = state.equals("COMPLETED") || state.equals("EXPIRED");
+        skill.setGradingStatus(complete ? "COMPLETED" : state.equals("ERROR") ? "ERROR" : "WAITING");
+        skill.setGradingMethod(state.equals("ERROR") ? "AI_ERROR" : "AI");
+        if (complete) { skill.setRawScore(new BigDecimal("35")); skill.setScaleScore(new BigDecimal("35")); skill.setCefrLevel("B1"); }
+        skills.saveAndFlush(skill);
+        for (String path : new String[]{"/student/attempts/" + attempt.getId() + "/result", "/student/placement/result?attemptId=" + attempt.getId()}) {
+            var result = mvc.perform(get(path).with(user(learner.getEmail()).roles("STUDENT")))
+                    .andExpect(status().isOk()).andExpect(content().string(containsString("Mã lượt thi")));
+            if (state.equals("ERROR")) result.andExpect(content().string(containsString("Chấm lại phần lỗi")));
+            if (state.equals("IN_PROGRESS")) result.andExpect(content().string(containsString("Tiếp tục làm bài")));
+            if (!complete) result.andExpect(content().string(org.hamcrest.Matchers.not(containsString("class=\"score-val\""))));
+        }
+        mvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post("/student/attempts/" + attempt.getId() + "/retry-grading")
+                .with(user(learner.getEmail()).roles("STUDENT"))).andExpect(status().isForbidden());
+    }
 
     @Test
     void databaseLearnerUsesRealEmptyHistoryInsteadOfFixtureResults() throws Exception {
@@ -99,6 +132,23 @@ class StudentResultFlowTests {
 
         mvc.perform(get("/student/attempts/{id}/result", attempt.getId())
                         .with(user(intruder.getEmail()).roles("STUDENT")))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test void adminCanReadRealResultAndRejectsAnInvertedDateRange() throws Exception {
+        User admin=learner("result-admin@test.local"); admin.setRole(Role.ADMIN); users.saveAndFlush(admin);
+        mvc.perform(get("/admin/results").param("from","2026-10-22").param("to","2026-10-21")
+                .with(user(admin.getEmail()).roles("ADMIN"))).andExpect(status().isBadRequest());
+        mvc.perform(get("/admin/results").with(user(admin.getEmail()).roles("ADMIN")))
+                .andExpect(status().isOk()).andExpect(view().name("admin/result/list"));
+        User owner=learner("admin-result-owner@test.local");
+        var exam=new MockExamEntity(); exam.setCertificateId(1); exam.setTitle("Kết quả để quản trị xem");
+        exam.setExamType("PRACTICE"); exam.setSkill("READING"); exam.setStatus("PUBLISHED"); exams.saveAndFlush(exam);
+        var attempt=new ExamAttemptEntity(); attempt.setUserId(owner.getId()); attempt.setMockExamId(exam.getId());
+        attempt.setStatus("ERROR"); attempt.setGradingStatus("ERROR"); attempts.saveAndFlush(attempt);
+        mvc.perform(get("/admin/results/"+attempt.getId()).with(user(admin.getEmail()).roles("ADMIN")))
+                .andExpect(status().isOk()).andExpect(content().string(containsString("Chấm chưa thành công")));
+        mvc.perform(get("/admin/results/"+attempt.getId()).with(user(owner.getEmail()).roles("STUDENT")))
                 .andExpect(status().isForbidden());
     }
 

@@ -12,10 +12,9 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
 import org.springframework.stereotype.Service;
 
-/** Separate fixtures: no admin drafts, learner identities, database access or AI. */
+/** Temporary exam catalog only. Lessons, flashcards and results use persisted data. */
 @Service
 public class StudentContentPreviewService {
     private final MockExamRepository exams;
@@ -59,15 +58,17 @@ public class StudentContentPreviewService {
             new Entry(8003, "Luyện tập Speaking", "Speaking", "Chưa đánh giá", "Luyện tập", "GRADING_FAILED", "Chấm chưa thành công", "Không quy đổi lỗi chấm thành điểm 0.",
                 List.of(new Fact("Điểm", "Chưa có"), new Fact("Ngày làm", "15/10/2026")), List.of()))
     );
+
     public List<Entry> find(String module, String q, String skill, String level, String state) {
         if ("exams".equals(module) && exams.count() > 0) return realExams(q, skill, level);
         String term = normalize(q);
-        return entries.getOrDefault(module, List.of()).stream()
+        return exams.stream()
             .filter(e -> normalize(e.title() + " " + e.summary()).contains(term))
             .filter(e -> skill.isBlank() || e.skill().equals(skill))
             .filter(e -> level.isBlank() || e.level().equals(level))
             .filter(e -> state.isBlank() || e.state().equals(state)).toList();
     }
+
     public Entry entry(String module, int id) {
         if ("exams".equals(module)) {
             if (exams.count() > 0) {

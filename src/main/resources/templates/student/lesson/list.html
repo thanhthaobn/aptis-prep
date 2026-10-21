@@ -7,7 +7,7 @@
     <div th:replace="~{fragments/student-sidebar :: studentSidebar('lessons')}"></div>
     <main id="main-content" tabindex="-1" class="app-main student-content">
         <div th:replace="~{fragments/breadcrumb :: breadcrumb('Tổng quan', @{/student/dashboard}, 'Bài học')}"></div>
-        <header class="page-header"><div><p class="eyebrow">THƯ VIỆN HỌC TẬP</p><h1>Bài học theo kỹ năng</h1><p>Xem nội dung tổng quan và chọn đúng kỹ năng bạn muốn cải thiện.</p></div></header>
+        <header class="page-header"><div><p class="eyebrow">THƯ VIỆN HỌC TẬP</p><h1>Bài học theo kỹ năng</h1></div></header>
         <form class="toolbar" method="get" th:action="@{/student/lessons}">
             <div class="toolbar-search"><label for="q">Tìm kiếm</label><input id="q" name="q" th:value="${q}" maxlength="255" placeholder="Tên bài học hoặc chủ đề"></div>
             <div><label for="skill">Kỹ năng</label><select id="skill" name="skill"><option value="">Tất cả</option><option th:each="v:${skills}" th:value="${v}" th:text="${v}" th:selected="${selectedSkill==v}"></option></select></div>
@@ -24,6 +24,7 @@
                     <p class="lesson-task-type" th:if="${lesson.material!=null and !#strings.isEmpty(lesson.material.taskType)}"><strong>Dạng bài:</strong> <span th:text="${lesson.material.taskType}"></span></p>
                 </div>
                 <a class="button button-secondary" th:href="@{/student/lessons/{id}(id=${lesson.id})}">Bắt đầu bài học →</a>
+                <a class="lesson-set-link" th:if="${lessonSets.containsKey(lesson.id)}" th:href="@{/student/flashcards/{id}(id=${lessonSets.get(lesson.id).id()})}"><span aria-hidden="true">▣</span><span><strong th:text="${lessonSets.get(lesson.id).title()}"></strong><small th:text="|${lessonSets.get(lesson.id).count()} thẻ · Ôn từ của bài này →|"></small></span></a>
             </article>
         </section>
         <div class="empty-box" th:if="${#lists.isEmpty(lessons)}"><div th:replace="~{fragments/navi :: navi('empty', 'Navi đang chờ bài học mới')}"></div><h2>Không tìm thấy bài học phù hợp</h2><p>Thử bộ lọc khác hoặc quay lại sau khi có nội dung mới.</p></div>
