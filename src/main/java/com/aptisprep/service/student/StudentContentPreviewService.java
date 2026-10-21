@@ -1,8 +1,15 @@
 package com.aptisprep.service.student;
 
 import com.aptisprep.dto.view.StudentContentPreview.*;
+import com.aptisprep.entity.MockExamEntity;
+import com.aptisprep.entity.MockExamSectionEntity;
+import com.aptisprep.repository.MockExamQuestionRepository;
+import com.aptisprep.repository.MockExamRepository;
+import com.aptisprep.repository.MockExamSectionRepository;
 import com.aptisprep.exception.ResourceNotFoundException;
 import java.text.Normalizer;
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -11,6 +18,17 @@ import org.springframework.stereotype.Service;
 /** Separate fixtures: no admin drafts, learner identities, database access or AI. */
 @Service
 public class StudentContentPreviewService {
+    private final MockExamRepository exams;
+    private final MockExamSectionRepository sections;
+    private final MockExamQuestionRepository examQuestions;
+
+    public StudentContentPreviewService(MockExamRepository exams, MockExamSectionRepository sections,
+            MockExamQuestionRepository examQuestions) {
+        this.exams = exams;
+        this.sections = sections;
+        this.examQuestions = examQuestions;
+    }
+
     private final Map<String, List<Entry>> entries = Map.of(
         "lessons", List.of(
             new Entry(6001, "Liên kết ý trong bài đọc", "Reading", "B1", "Bài học", "AVAILABLE", "Khám phá", "Nhận biết từ nối và trình tự ý.",
@@ -42,6 +60,7 @@ public class StudentContentPreviewService {
                 List.of(new Fact("Điểm", "Chưa có"), new Fact("Ngày làm", "15/10/2026")), List.of()))
     );
     public List<Entry> find(String module, String q, String skill, String level, String state) {
+        if ("exams".equals(module) && exams.count() > 0) return realExams(q, skill, level);
         String term = normalize(q);
         return entries.getOrDefault(module, List.of()).stream()
             .filter(e -> normalize(e.title() + " " + e.summary()).contains(term))
@@ -50,8 +69,70 @@ public class StudentContentPreviewService {
             .filter(e -> state.isBlank() || e.state().equals(state)).toList();
     }
     public Entry entry(String module, int id) {
+        if ("exams".equals(module)) {
+            if (exams.count() > 0) {
+                var real = exams.findById(id).filter(exam -> "PUBLISHED".equals(exam.getStatus()));
+                if (real.isEmpty()) throw new ResourceNotFoundException("Không tìm thấy đề thi đã công bố");
+                return realExamEntry(real.get());
+            }
+        }
         return entries.getOrDefault(module, List.of()).stream().filter(e -> e.id() == id).findFirst()
             .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy nội dung"));
+    }
+
+    private List<Entry> realExams(String q, String skill, String level) {
+        String term = normalize(q);
+        String requestedSkill = normalizeSkill(skill);
+        return exams.findByStatusOrderByUpdatedAtDesc("PUBLISHED").stream()
+                .filter(exam -> normalize(exam.getTitle() + " " + exam.getDescription()).contains(term))
+                .filter(exam -> requestedSkill.isBlank() || requestedSkill.equals(normalizeSkill(exam.getSkill())))
+                .filter(exam -> level == null || level.isBlank() || level.equalsIgnoreCase(exam.getTargetLevel()))
+                .map(this::realExamEntry)
+                .toList();
+    }
+
+    private Entry realExamEntry(MockExamEntity exam) {
+        List<Block> blocks = new ArrayList<>();
+        List<MockExamSectionEntity> realSections = sections.findByMockExamIdOrderById(exam.getId());
+        if (!realSections.isEmpty()) {
+            realSections.stream().sorted(Comparator.comparingInt(MockExamSectionEntity::getDisplayOrder))
+                    .forEach(section -> blocks.add(new Block(displaySkill(section.getSkill()),
+                            examQuestions.findByMockExamIdOrderByPosition(exam.getId()).stream()
+                                    .filter(link -> section.getId().equals(link.getMockExamSectionId())).count() + " câu hỏi",
+                            section.getDurationMinutes() + " phút")));
+        } else {
+            blocks.add(new Block(displaySkill(exam.getSkill()),
+                    examQuestions.findByMockExamIdOrderByPosition(exam.getId()).size() + " câu hỏi",
+                    exam.getDurationMinutes() + " phút"));
+        }
+        return new Entry(exam.getId(), exam.getTitle(), displaySkill(exam.getSkill()), exam.getTargetLevel(),
+                examTypeLabel(exam.getExamType()), "PUBLISHED", "Đã công bố",
+                exam.getDescription() == null ? "Đề thi đã công bố" : exam.getDescription(),
+                List.of(new Fact("Tổng thời gian", String.valueOf(exam.getDurationMinutes()) + " phút"),
+                        new Fact("Số section", String.valueOf(Math.max(1, realSections.size())))), blocks);
+    }
+
+    private String normalizeSkill(String value) {
+        if (value == null) return "";
+        return value.trim().toUpperCase(Locale.ROOT).replace(" & ", "_").replace(' ', '_');
+    }
+    private String displaySkill(String value) {
+        return switch (normalizeSkill(value)) {
+            case "GRAMMAR_VOCABULARY" -> "Grammar & Vocabulary";
+            case "READING" -> "Reading";
+            case "LISTENING" -> "Listening";
+            case "WRITING" -> "Writing";
+            case "SPEAKING" -> "Speaking";
+            default -> value == null ? "" : value;
+        };
+    }
+    private String examTypeLabel(String value) {
+        return switch (value == null ? "" : value) {
+            case "PLACEMENT" -> "Kiểm tra đầu vào";
+            case "CHECKPOINT" -> "Kiểm tra cuối chặng";
+            case "FULL_MOCK" -> "Thi thử tổng hợp";
+            default -> "Luyện tập";
+        };
     }
     private String normalize(String value) {
         return Normalizer.normalize(value.trim(), Normalizer.Form.NFD).replaceAll("\\p{M}", "")

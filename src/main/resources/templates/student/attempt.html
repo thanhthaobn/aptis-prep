@@ -25,7 +25,7 @@
 <div th:replace="~{fragments/navbar :: navbar}"></div>
 <div class="container app-shell"><div th:replace="~{fragments/student-sidebar :: studentSidebar('exams')}"></div>
 <main class="app-main student-content">
-    <header class="page-header"><div><h1 th:text="${attempt.title}"></h1><p>Hãy lưu từng câu trả lời trước khi nộp bài.</p></div></header>
+    <header class="page-header"><div><h1 th:text="${attempt.title}"></h1><p>Hãy lưu từng câu trả lời trước khi nộp bài.</p></div><div class="exam-timer-badge" id="exam-timer" th:if="${attempt.deadline != null}" th:attr="data-deadline=${attempt.deadline}">Còn <strong id="timer-display">--:--</strong></div></header>
     <div class="alert alert-error" th:if="${error}" th:text="${error}"></div>
     <section class="dashboard-panel dashboard-section" th:each="question : ${attempt.questions}">
         <p class="eyebrow" th:text="|Câu ${question.position} · ${question.skill}|"></p>
@@ -52,42 +52,54 @@
             <form th:if="${question.type == 'SPEAKING_AUDIO'}" method="post" enctype="multipart/form-data" th:action="@{/student/attempts/{id}/answers/audio(id=${attempt.attemptId})}">
                 <input type="hidden" name="questionId" th:value="${question.questionId}"><input type="hidden" name="itemId" th:value="${item.itemId}">
                 <div class="field"><label th:for="|audio-${item.itemId}|">File ghi âm</label><input type="file" accept="audio/*,.webm,.m4a,.mp3,.wav,.ogg" name="audioFile" th:id="|audio-${item.itemId}|" required></div>
+                <span class="muted" th:if="${item.audioSaved}">Đã lưu file ghi âm cho ý hỏi này.</span>
                 <button class="button button-secondary" type="submit">Lưu file ghi âm</button>
             </form>
         </div>
     </section>
-    <form method="post" th:action="@{/student/attempts/{id}/submit(id=${attempt.attemptId})}"><button class="button" type="submit">Nộp bài</button></form>
+    <form id="submit-attempt-form" method="post" th:action="@{/student/attempts/{id}/submit(id=${attempt.attemptId})}"><input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"><button id="submit-attempt" class="button" type="submit">Nộp bài</button></form>
 </main></div><div th:replace="~{fragments/footer :: footer}"></div>
 <script>
 (() => {
-  const csrf = document.querySelector('input[name="_csrf"]')?.value;
-  document.querySelectorAll('.answer-form').forEach(form => {
-    let timer;
+  const csrf = document.querySelector('meta[name="_csrf"]')?.content || document.querySelector('input[name="_csrf"]')?.value || '';
+  const forms = [...document.querySelectorAll('.answer-form')];
+  const timers = new Map();
+  const inFlight = new Set();
+  let submitting = false;
+  const save = form => {
     const status = form.querySelector('.autosave-status');
-    const save = () => {
-      if (!csrf || !status) return;
-      status.textContent = 'Đang lưu…';
-      fetch(form.dataset.autosave, { method: 'POST', headers: {'X-CSRF-TOKEN': csrf, 'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8'}, body: new URLSearchParams(new FormData(form)) })
-        .then(response => response.json())
-        .then(result => { status.textContent = result.saved ? 'Đã tự động lưu' : (result.message || 'Chưa lưu được'); })
-        .catch(() => { status.textContent = 'Mất kết nối, câu trả lời chưa được lưu'; });
-    };
-    form.addEventListener('input', () => { clearTimeout(timer); timer = setTimeout(save, 700); });
-    form.addEventListener('change', () => { clearTimeout(timer); timer = setTimeout(save, 250); });
-  });
+    if (!csrf || !status) return Promise.resolve(true);
+    status.textContent = 'Đang lưu…';
+    const request = fetch(form.dataset.autosave, {method: 'POST', headers: {'X-CSRF-TOKEN': csrf, 'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8', 'Accept': 'application/json'}, body: new URLSearchParams(new FormData(form))})
+      .then(response => response.ok ? response.json() : Promise.reject(new Error('Không thể lưu câu trả lời')))
+      .then(result => { if (!result.saved) throw new Error(result.message || 'Chưa lưu được'); status.textContent = 'Đã tự động lưu'; return true; })
+      .catch(error => { status.textContent = error.message || 'Mất kết nối, câu trả lời chưa được lưu'; throw error; });
+    inFlight.add(request); request.finally(() => inFlight.delete(request));
+    return request;
+  };
+  const schedule = form => { clearTimeout(timers.get(form)); timers.set(form, setTimeout(() => {timers.delete(form); save(form).catch(() => {});}, 700)); };
+  forms.forEach(form => { form.addEventListener('input', () => schedule(form)); form.addEventListener('change', () => schedule(form)); form.addEventListener('submit', event => { event.preventDefault(); save(form).catch(() => {}); }); });
+  const submit = async automatic => {
+    if (submitting) return;
+    if (!automatic && !window.confirm('Bạn chắc chắn muốn nộp bài? Hệ thống sẽ lưu các câu trả lời cuối cùng trước khi nộp.')) return;
+    submitting = true;
+    timers.forEach((timer, form) => { clearTimeout(timer); save(form).catch(() => {}); }); timers.clear();
+    const results = await Promise.allSettled([...inFlight]);
+    if (!automatic && results.some(result => result.status === 'rejected')) { submitting = false; window.alert('Chưa thể lưu đầy đủ đáp án. Vui lòng kiểm tra kết nối và thử lại.'); return; }
+    document.getElementById('submit-attempt-form')?.submit();
+  };
+  document.getElementById('submit-attempt-form')?.addEventListener('submit', event => { event.preventDefault(); submit(false); });
+  const timer = document.getElementById('exam-timer');
+  const display = document.getElementById('timer-display');
+  if (timer && display) {
+    const deadline = Date.parse(timer.dataset.deadline);
+    let interval; const tick = () => { const seconds = Math.max(0, Math.ceil((deadline - Date.now()) / 1000)); display.textContent = String(Math.floor(seconds / 60)).padStart(2, '0') + ':' + String(seconds % 60).padStart(2, '0'); if (!seconds) { if (interval) clearInterval(interval); submit(true); } };
+    tick(); interval = setInterval(tick, 500);
+  }
   document.querySelectorAll('.media-play').forEach(button => button.addEventListener('click', async () => {
-    const player = button.parentElement.querySelector('.media-audio');
-    const status = button.parentElement.querySelector('.media-status');
+    const player = button.parentElement.querySelector('.media-audio'); const status = button.parentElement.querySelector('.media-status');
     button.disabled = true; status.textContent = 'Đang kiểm tra lượt nghe…';
-    try {
-      const response = await fetch(button.dataset.play, {method: 'POST', headers: {'X-CSRF-TOKEN': csrf}});
-      if (!response.ok) throw new Error((await response.json()).message || 'Không thể phát audio');
-      const result = await response.json();
-      player.src = button.dataset.content + '?token=' + encodeURIComponent(result.contentToken); player.controls = false;
-      player.onended = () => { if (result.playCount < result.maxPlayCount) button.disabled = false; };
-      await player.play();
-      status.textContent = `Đã dùng ${result.playCount}/${result.maxPlayCount} lượt nghe`;
-    } catch (error) { button.disabled = false; status.textContent = error.message; }
+    try { const response = await fetch(button.dataset.play, {method: 'POST', headers: {'X-CSRF-TOKEN': csrf, 'Accept': 'application/json'}}); const result = await response.json(); if (!response.ok) throw new Error(result.message || 'Không thể phát audio'); player.src = button.dataset.content + '?token=' + encodeURIComponent(result.contentToken); player.onended = () => { if (result.playCount < result.maxPlayCount) button.disabled = false; }; await player.play(); status.textContent = `Đã dùng ${result.playCount}/${result.maxPlayCount} lượt nghe`; } catch (error) { button.disabled = false; status.textContent = error.message; }
   }));
 })();
 </script>

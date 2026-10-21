@@ -27,6 +27,9 @@ public class QuestionMediaEntity {
     public Integer getMaxPlayCount() { return maxPlayCount; }
     public String getContentType() { return contentType; }
     public String getOriginalFilename() { return originalFilename; }
+    public Long getFileSize() { return fileSize; }
+    public int getPosition() { return position; }
+    public String getAltText() { return altText; }
     public void setQuestionId(Integer v) { questionId = v; }
     public void setMediaType(String v) { mediaType = v; }
     public void setMediaUrl(String v) { mediaUrl = v; }

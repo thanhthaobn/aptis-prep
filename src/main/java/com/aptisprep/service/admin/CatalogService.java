@@ -131,39 +131,89 @@ public class CatalogService {
         ExamForm form = new ExamForm();
         certificates.findByStatusOrderByName(RecordStatus.ACTIVE).stream().findFirst().ifPresent(x -> form.setCertificateId(x.getId()));
         if (form.getCertificateId() != null) schemes.findByCertificateIdAndStatusOrderByVersionDesc(form.getCertificateId(), RecordStatus.ACTIVE).stream().findFirst().ifPresent(x -> form.setScoringSchemeId(x.getId()));
-        if (id == null) return form;
+        if (id == null) {
+            ExamForm.SectionForm section = new ExamForm.SectionForm(); section.setSkill(form.getSectionSkill());
+            section.setDurationMinutes(form.getSectionDurationMinutes()); section.setQuestionIds("");
+            form.setSections(new ArrayList<>(List.of(section))); return form;
+        }
         MockExamEntity exam = exams.findById(id).orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy đề thi"));
         form.setTitle(exam.getTitle()); form.setDescription(exam.getDescription()); form.setExamType(exam.getExamType()); form.setTargetLevel(exam.getTargetLevel());
         form.setSkill(exam.getSkill()); form.setSectionSkill(exam.getSkill()); form.setDurationMinutes(exam.getDurationMinutes()); form.setCertificateId(exam.getCertificateId());
         form.setScoringSchemeId(exam.getScoringSchemeId()); form.setStatus(exam.getStatus());
         form.setQuestionIds(examQuestions.findByMockExamIdOrderByPosition(id).stream().map(x -> "" + getQuestionId(x)).collect(Collectors.joining(",")));
-        sections.findByMockExamIdOrderById(id).stream().findFirst().ifPresent(x -> { form.setSectionSkill(x.getSkill()); });
+        List<ExamForm.SectionForm> sectionForms = new ArrayList<>();
+        for (MockExamSectionEntity section : sections.findByMockExamIdOrderById(id)) {
+            ExamForm.SectionForm sectionForm = new ExamForm.SectionForm();
+            sectionForm.setSkill(section.getSkill()); sectionForm.setDurationMinutes(section.getDurationMinutes());
+            sectionForm.setQuestionIds(examQuestions.findByMockExamIdOrderByPosition(id).stream()
+                    .filter(link -> Objects.equals(link.getMockExamSectionId(), section.getId()))
+                    .map(link -> String.valueOf(link.getQuestionId())).collect(Collectors.joining(",")));
+            sectionForms.add(sectionForm);
+        }
+        if (!sectionForms.isEmpty()) {
+            form.setSections(sectionForms);
+            form.setSectionSkill(sectionForms.get(0).getSkill());
+            form.setSectionDurationMinutes(sectionForms.get(0).getDurationMinutes());
+        }
         return form;
     }
 
     @Transactional
     public Integer saveExam(Integer id, ExamForm form) {
+        normalizeSections(form);
         validateExamBasics(form);
         MockExamEntity exam = id == null ? new MockExamEntity() : exams.findById(id).orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy đề thi"));
         if ("PUBLISHED".equals(exam.getStatus()) && !"PUBLISHED".equals(form.getStatus())) throw new BusinessRuleException("Đề đã công bố không thể quay về bản nháp");
         exam.setTitle(form.getTitle().trim()); exam.setDescription(blankToNull(form.getDescription())); exam.setExamType(form.getExamType()); exam.setTargetLevel(form.getTargetLevel());
-        exam.setSkill(form.getSectionSkill()); exam.setDurationMinutes(form.getDurationMinutes()); exam.setCertificateId(form.getCertificateId()); exam.setScoringSchemeId(form.getScoringSchemeId()); exam.setStatus("PUBLISHED".equals(form.getStatus()) ? "DRAFT" : form.getStatus());
+        exam.setSkill("FULL_MOCK".equals(form.getExamType()) ? "FULL_MOCK" : form.getSections().get(0).getSkill());
+        exam.setDurationMinutes(form.getDurationMinutes()); exam.setCertificateId(form.getCertificateId()); exam.setScoringSchemeId(form.getScoringSchemeId()); exam.setStatus("PUBLISHED".equals(form.getStatus()) ? "DRAFT" : form.getStatus());
         exam = exams.save(exam);
         if (id != null) { examQuestions.deleteByMockExamId(id); sections.deleteByMockExamId(id); }
-        List<Integer> ids = parseIds(form.getQuestionIds());
-        validateQuestionSelection(ids, form.getSectionSkill());
-        MockExamSectionEntity section = null;
-        if (!ids.isEmpty()) { section = new MockExamSectionEntity(); section.setMockExamId(exam.getId()); section.setSkill(form.getSectionSkill()); section.setDisplayOrder(1); section.setDurationMinutes(form.getSectionDurationMinutes()); section.setStatus("ACTIVE"); section = sections.save(section); }
-        int pos = 1; for (Integer questionId : ids) { MockExamQuestionEntity link = new MockExamQuestionEntity(); link.setMockExamId(exam.getId()); link.setMockExamSectionId(section == null ? null : section.getId()); link.setQuestionId(questionId); link.setPosition(pos++); examQuestions.save(link); }
+        int pos = 1; int sectionOrder = 1;
+        Set<Integer> allQuestionIds = new HashSet<>();
+        for (ExamForm.SectionForm sectionForm : form.getSections()) {
+            List<Integer> ids = parseIds(sectionForm.getQuestionIds());
+            validateQuestionSelection(ids, sectionForm.getSkill());
+            if (!allQuestionIds.addAll(ids)) throw new BusinessRuleException("Một câu hỏi không được lặp giữa các section");
+            MockExamSectionEntity section = new MockExamSectionEntity(); section.setMockExamId(exam.getId()); section.setSkill(sectionForm.getSkill());
+            section.setDisplayOrder(sectionOrder++); section.setDurationMinutes(sectionForm.getDurationMinutes()); section.setStatus("ACTIVE"); section = sections.save(section);
+            for (Integer questionId : ids) { MockExamQuestionEntity link = new MockExamQuestionEntity(); link.setMockExamId(exam.getId()); link.setMockExamSectionId(section.getId()); link.setQuestionId(questionId); link.setPosition(pos++); examQuestions.save(link); }
+        }
         return exam.getId();
     }
 
     @Transactional
     public void publishExam(Integer id) {
         MockExamEntity exam = exams.findById(id).orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy đề thi"));
-        ExamForm form = examForm(id); validateExamBasics(form); List<Integer> ids = parseIds(form.getQuestionIds());
-        if (ids.isEmpty()) throw new BusinessRuleException("Không thể công bố đề trống");
-        validateQuestionSelection(ids, form.getSectionSkill()); exam.setStatus("PUBLISHED"); exams.save(exam);
+        ExamForm form = examForm(id); normalizeSections(form); validateExamBasics(form);
+        Set<Integer> all = new HashSet<>();
+        for (ExamForm.SectionForm section : form.getSections()) {
+            List<Integer> ids = parseIds(section.getQuestionIds());
+            if (ids.isEmpty()) throw new BusinessRuleException("Không thể công bố section trống");
+            validateQuestionSelection(ids, section.getSkill());
+            if (!all.addAll(ids)) throw new BusinessRuleException("Một câu hỏi không được lặp giữa các section");
+        }
+        if (all.isEmpty()) throw new BusinessRuleException("Không thể công bố đề trống");
+        exam.setStatus("PUBLISHED"); exams.save(exam);
+    }
+
+    @Transactional
+    public void addMedia(Integer questionId, MultipartFile[] uploads) {
+        QuestionEntity question = questions.findById(questionId).orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy câu hỏi"));
+        if (uploads == null || uploads.length == 0) throw new BusinessRuleException("Chưa chọn media");
+        for (MultipartFile upload : uploads) if (upload != null && !upload.isEmpty()) saveMedia(question, upload);
+    }
+
+    @Transactional
+    public void deleteMedia(Integer questionId, Integer mediaId) {
+        QuestionMediaEntity value = media.findById(mediaId).filter(item -> Objects.equals(item.getQuestionId(), questionId))
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy media của câu hỏi"));
+        // Do not remove the physical object here: active attempts keep a
+        // snapshot of this media and must remain playable after an admin edits
+        // the catalogue. A later retention job can delete unreferenced files.
+        media.delete(value);
+        List<QuestionMediaEntity> remaining = media.findByQuestionIdOrderByPosition(questionId);
+        int position = 1; for (QuestionMediaEntity item : remaining) { item.setPosition(position++); media.save(item); }
     }
 
     public List<Certificate> activeCertificates() { return certificates.findByStatusOrderByName(RecordStatus.ACTIVE); }
@@ -191,21 +241,33 @@ public class CatalogService {
     }
     private void validateExamBasics(ExamForm f) {
         if (f.getTitle() == null || f.getTitle().isBlank() || f.getTitle().length() > 255) throw new BusinessRuleException("Tên đề thi là bắt buộc");
-        if (!EXAM_TYPES.contains(f.getExamType()) || !SKILLS.contains(f.getSectionSkill()) || !LEVELS.contains(f.getTargetLevel())) throw new BusinessRuleException("Loại đề, kỹ năng hoặc cấp độ không hợp lệ");
+        if (!EXAM_TYPES.contains(f.getExamType()) || !LEVELS.contains(f.getTargetLevel())) throw new BusinessRuleException("Loại đề hoặc cấp độ không hợp lệ");
+        if (f.getSections() == null || f.getSections().isEmpty()) throw new BusinessRuleException("Đề phải có ít nhất một section");
+        if (f.getSections().stream().anyMatch(section -> !SKILLS.contains(section.getSkill()))) throw new BusinessRuleException("Kỹ năng section không hợp lệ");
+        if ("FULL_MOCK".equals(f.getExamType()) && f.getSections().stream().map(ExamForm.SectionForm::getSkill).distinct().count() < 2)
+            throw new BusinessRuleException("Full Mock phải có ít nhất hai kỹ năng");
         if (f.getDurationMinutes() == null || f.getDurationMinutes() <= 0 || f.getSectionDurationMinutes() == null || f.getSectionDurationMinutes() <= 0) throw new BusinessRuleException("Thời lượng phải lớn hơn 0");
+        if (f.getSections().stream().anyMatch(section -> section.getDurationMinutes() == null || section.getDurationMinutes() <= 0)) throw new BusinessRuleException("Thời lượng section phải lớn hơn 0");
         if (f.getCertificateId() == null || !certificates.existsById(f.getCertificateId())) throw new BusinessRuleException("Chứng chỉ không hợp lệ");
         if (f.getScoringSchemeId() == null || !schemes.existsById(f.getScoringSchemeId())) throw new BusinessRuleException("Bộ chấm điểm không hợp lệ");
-        certificateSchemes.requireAvailableScheme(f.getCertificateId(), f.getScoringSchemeId(), f.getSectionSkill());
+        for (ExamForm.SectionForm section : f.getSections()) certificateSchemes.requireAvailableScheme(f.getCertificateId(), f.getScoringSchemeId(), section.getSkill());
     }
     private void validateQuestionSelection(List<Integer> ids, String skill) {
         Set<Integer> unique = new HashSet<>(ids); if (unique.size() != ids.size()) throw new BusinessRuleException("Một câu hỏi không được chọn lặp trong cùng đề");
-        for (Integer id : ids) { QuestionEntity q = questions.findById(id).orElseThrow(() -> new BusinessRuleException("Câu hỏi không tồn tại: " + id)); if (!"PUBLISHED".equals(q.getStatus())) throw new BusinessRuleException("Chỉ được đưa câu hỏi đã công bố vào đề"); if (!q.getSkill().equals(skill)) throw new BusinessRuleException("Kỹ năng section không khớp với câu hỏi"); }
+        for (Integer id : ids) { QuestionEntity q = questions.findById(id).orElseThrow(() -> new BusinessRuleException("Câu hỏi không tồn tại: " + id)); if (!"PUBLISHED".equals(q.getStatus())) throw new BusinessRuleException("Chỉ được đưa câu hỏi đã công bố vào đề"); if (!Objects.equals(q.getSkill(), skill)) throw new BusinessRuleException("Kỹ năng section không khớp với câu hỏi"); }
     }
     private void saveMedia(QuestionEntity q, MultipartFile file) {
         String contentType = file.getContentType() == null ? "" : file.getContentType().toLowerCase(Locale.ROOT);
         if (!(contentType.startsWith("image/") || contentType.startsWith("audio/"))) throw new BusinessRuleException("Media câu hỏi chỉ nhận ảnh hoặc âm thanh");
         QuestionMediaEntity m = new QuestionMediaEntity(); m.setQuestionId(q.getId()); m.setMediaType(contentType.startsWith("audio/") ? "AUDIO" : "IMAGE"); m.setMediaUrl(storage.store(file, "questions/"));
         m.setOriginalFilename(file.getOriginalFilename()); m.setContentType(contentType); m.setFileSize(file.getSize()); m.setPosition(media.findByQuestionIdOrderByPosition(q.getId()).size() + 1); media.save(m);
+    }
+
+    private void normalizeSections(ExamForm form) {
+        if (form.getSections() != null && !form.getSections().isEmpty()) return;
+        ExamForm.SectionForm section = new ExamForm.SectionForm(); section.setSkill(form.getSectionSkill());
+        section.setDurationMinutes(form.getSectionDurationMinutes()); section.setQuestionIds(form.getQuestionIds());
+        form.setSections(new ArrayList<>(List.of(section)));
     }
     private boolean usesOptions(String type) { return "SINGLE_CHOICE".equals(type) || "MATCHING".equals(type) || "ORDERING".equals(type); }
     private boolean matches(String term, String... values) { return term.isBlank() || Arrays.stream(values).filter(Objects::nonNull).map(x -> x.toLowerCase(Locale.ROOT)).anyMatch(x -> x.contains(term)); }
@@ -218,8 +280,8 @@ public class CatalogService {
             rows.add(new Row("Ý " + item.getPosition(), item.getContent(), item.getCorrectPosition() == null ? "" : "Đúng vị trí " + item.getCorrectPosition()));
             options.findByQuestionItemIdOrderByPosition(item.getId()).forEach(o -> rows.add(new Row(o.getOptionCode(), o.getContent(), Boolean.TRUE.equals(o.getCorrect()) ? "Đáp án đúng" : "")));
         }
-        media.findByQuestionIdOrderByPosition(q.getId()).forEach(m -> rows.add(new Row("MEDIA", m.getMediaUrl(), m.getMediaType())));
-        return new Entry(q.getId(), q.getContent(), q.getContent(), q.getSkill(), q.getCefrLevel(), q.getQuestionType(), q.getStatus(), statusLabel(q.getStatus()), q.getUpdatedAt().toLocalDate().toString(), List.of(new Field("Phần thi", String.valueOf(q.getPartNo())), new Field("Độ khó", String.valueOf(q.getDifficulty()))), rows);
+        media.findByQuestionIdOrderByPosition(q.getId()).forEach(m -> rows.add(new Row("MEDIA #" + m.getId(), m.getOriginalFilename(), m.getMediaType() + " · " + m.getFileSize() + " bytes")));
+        return new Entry(q.getId(), q.getContent(), q.getContent(), q.getSkill(), q.getCefrLevel(), q.getQuestionType(), q.getStatus(), statusLabel(q.getStatus()), q.getUpdatedAt() == null ? "" : q.getUpdatedAt().toLocalDate().toString(), List.of(new Field("Phần thi", String.valueOf(q.getPartNo())), new Field("Độ khó", String.valueOf(q.getDifficulty()))), rows);
     }
 
     private void normalizeItems(QuestionForm form) {
