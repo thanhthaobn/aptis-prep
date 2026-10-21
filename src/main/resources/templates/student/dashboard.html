@@ -61,7 +61,7 @@
                            th:classappend="${path.skill()=='Reading'?'node-blue':(path.skill()=='Listening'?'node-gold':(path.skill()=='Writing'?'node-purple':(path.skill()=='Speaking'?'node-coral':'node-green')))}" 
                            th:href="@{/student/learning-path/{skill}(skill=${path.skill()})}" 
                            th:attr="aria-label=|Xem lộ trình ${path.skill()}|,data-skill=${path.skill()}"
-                           th:text="${path.progressPercent() == null ? '0%' : path.progressPercent() + '%'}">0%</a>
+                           th:text="${path.progressPercent() == null ? '—' : path.progressPercent() + '%'}">—</a>
                         <div>
                             <h3 th:text="${path.skill()}"></h3>
                             <p th:if="${path.totalLessons() > 0}" th:text="|${path.completedLessons()}/${path.totalLessons()} bài đã hoàn thành|"></p>
@@ -93,8 +93,10 @@
                         <span aria-hidden="true">⚑</span>
                         <h2>Trình độ hiện tại</h2>
                     </div>
-                    <strong>Chưa đánh giá</strong>
-                    <p>Làm bài kiểm tra đầu vào 15 phút để ước lượng trình độ CEFR và mở bài học phù hợp.</p>
+                    <p th:if="${#lists.isEmpty(account.profiles)}">Chưa đánh giá. Làm Placement để ước lượng trình độ từng kỹ năng.</p>
+                    <dl th:unless="${#lists.isEmpty(account.profiles)}"><div th:each="profile : ${account.profiles}"><dt th:text="${#strings.replace(profile.skill, '_', ' ')}"></dt><dd th:text="${profile.currentLevel == null ? 'Chưa đánh giá' : profile.currentLevel}"></dd></div></dl>
+                    <p th:if="${account.goal == null}">Chưa đặt mục tiêu học tập.</p>
+                    <dl th:if="${account.goal != null}"><div th:each="target : ${account.goal.targets}"><dt th:text="|Mục tiêu ${#strings.replace(target.key, '_', ' ')}|"></dt><dd th:text="${target.value}"></dd></div></dl>
                     <a class="button button-secondary button-block mt-3" th:href="@{/student/placement}">Làm kiểm tra đầu vào</a>
                 </article>
 
@@ -102,7 +104,7 @@
                 <article class="learn-rail-card">
                     <div class="learn-rail-heading">
                         <span aria-hidden="true">✦</span>
-                        <h2>Thống kê tích lũy</h2>
+                        <h2>Tổng quan các chặng đang hiển thị</h2>
                     </div>
                     <div class="learn-mini-stat">
                         <span>Bài học hoàn thành</span>

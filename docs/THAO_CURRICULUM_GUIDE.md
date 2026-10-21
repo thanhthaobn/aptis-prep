@@ -28,6 +28,8 @@ Bốn bài Listening A2–C1 mới có tệp WAV đóng gói cùng ứng dụng.
 
 ## Thao tác kiểm tra
 
+Sau tích hợp develop ngày 21/10, phần chặng cá nhân chỉ giao mức tiếp theo từ Profile đến Goal. Thư viện A1–C1 vẫn cho tự ôn và được tách rõ khỏi các bài đang tính tiến độ. Xem thay đổi và phần còn phụ thuộc Thông/Trâm tại [THAO_INTEGRATION_AND_HANDOFF.md](THAO_INTEGRATION_AND_HANDOFF.md).
+
 1. Khởi động bản mới, đăng nhập học viên và mở `/student/lessons`. Lọc lần lượt năm kỹ năng, năm mức: mỗi tổ hợp phải có bài. Ở desktop rộng, thẻ bài học có ba cột; màn hẹp tự giảm cột, menu thu gọn.
 2. Trên thẻ một bài mới, nhấn tên bộ từ vựng ở cuối thẻ. Trang ôn thẻ hiển thị đúng tên bài học nguồn, kỹ năng và mức. Nhấn tên bài nguồn để quay về đúng bài.
 3. Mở `/student/flashcards`: mỗi bộ thư viện có khung Bài học nguồn, nút Mở bài học và nút Ôn bộ thẻ. Bộ cá nhân vẫn có nhãn Riêng tư và không bị ép gắn bài.

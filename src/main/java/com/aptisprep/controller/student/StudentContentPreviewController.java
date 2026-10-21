@@ -2,7 +2,7 @@ package com.aptisprep.controller.student;
 
 import com.aptisprep.exception.BusinessRuleException;
 import com.aptisprep.service.account.AccountAccessService;
-import com.aptisprep.service.exam.ExamAttemptService;
+import com.aptisprep.service.contract.ExamAttemptContract;
 import com.aptisprep.service.contract.IntegrationModels.HistoryFilter;
 import java.security.Principal;
 import com.aptisprep.service.student.StudentContentPreviewService;
@@ -11,14 +11,14 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
-/** GET-only scaffolding. No attempt creation, submissions, tracking or grading. */
+/** Exam preview routes belong to Trâm; result presentation delegates to the safe attempt contract. */
 @Controller
 @RequestMapping("/student")
 public class StudentContentPreviewController {
     private final StudentContentPreviewService preview;
     private final AccountAccessService accounts;
-    private final ExamAttemptService attempts;
-    public StudentContentPreviewController(StudentContentPreviewService preview, AccountAccessService accounts, ExamAttemptService attempts) {
+    private final ExamAttemptContract attempts;
+    public StudentContentPreviewController(StudentContentPreviewService preview, AccountAccessService accounts, ExamAttemptContract attempts) {
         this.preview = preview; this.accounts = accounts; this.attempts = attempts;
     }
 
@@ -66,6 +66,21 @@ public class StudentContentPreviewController {
         Integer userId = accounts.requireActiveStudent(principal.getName());
         model.addAttribute("attemptResult", attempts.result(userId, id));
         return "student/attempt-result";
+    }
+    @PostMapping("/attempts/{id:\\d+}/retry-grading")
+    public String retryGrading(@PathVariable int id, Principal principal,
+            org.springframework.web.servlet.mvc.support.RedirectAttributes redirect) {
+        Integer userId = accounts.requireActiveStudent(principal.getName());
+        var result = attempts.result(userId, id);
+        if (!"ERROR".equals(result.state()) || result.skills().stream().noneMatch(skill -> skill.retryable()))
+            throw new BusinessRuleException("Lượt thi không có phần chấm lỗi có thể thử lại");
+        try {
+            attempts.retryFailedGrading(userId, id, java.util.UUID.randomUUID().toString());
+            redirect.addFlashAttribute("successMessage", "Đã gửi yêu cầu chấm lại phần lỗi trên bài làm đã lưu.");
+        } catch (BusinessRuleException exception) {
+            redirect.addFlashAttribute("error", exception.getMessage());
+        }
+        return "redirect:/student/attempts/" + id + "/result";
     }
     private void common(String module, Model model) {
         model.addAttribute("module", module);

@@ -37,6 +37,9 @@ class LearningPathRefreshTests {
         var completedAt = progress.findByUserIdAndLessonId(user.getId(), first.getId()).orElseThrow().getCompletedAt();
         var previous = paths.findFirstByUserIdAndSkillAndStatusOrderByCreatedAtDesc(user.getId(), "Reading", "ACTIVE").orElseThrow();
         lesson("Second", 902);
+        service.ensureAndSummaries(user.getEmail());
+        assertThat(items.findByLearningPathIdOrderByPositionAsc(previous.getId())).hasSize(1);
+        assertThat(paths.findFirstByUserIdAndSkillAndStatusOrderByCreatedAtDesc(user.getId(), "Reading", "ACTIVE").orElseThrow().getId()).isEqualTo(previous.getId());
         assertThat(service.refreshPaths(user.getEmail())).isEqualTo(1);
         assertThat(previous.getStatus()).isEqualTo("ARCHIVED");
         assertThat(items.findByLearningPathIdOrderByPositionAsc(previous.getId())).hasSize(1);

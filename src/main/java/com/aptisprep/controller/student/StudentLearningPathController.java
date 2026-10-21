@@ -20,7 +20,7 @@ public class StudentLearningPathController {
                 : "Đã cập nhật lộ trình. Các bài đã hoàn thành được giữ lại.");
         return "redirect:/student/learning-path";
     }
-    @GetMapping public String paths(Principal principal,Model model){model.addAttribute("paths",service.ensureAndSummaries(principal.getName()));model.addAttribute("lessons",lessons.publishedLessons());model.addAttribute("levels",LessonService.LEVELS);return "student/learning/path";}
+    @GetMapping public String paths(Principal principal,Model model){model.addAttribute("paths",service.ensureAndSummaries(principal.getName()));model.addAttribute("stages",service.stages(principal.getName(),null));return "student/learning/path";}
     @GetMapping("/{skill}")
     public String skill(@PathVariable String skill, Principal principal, Model model) {
         String selected = LessonService.SKILLS.stream().filter(value -> value.equalsIgnoreCase(skill))
@@ -29,6 +29,7 @@ public class StudentLearningPathController {
         model.addAttribute("lessonSets",flashcards.lessonSets());
         model.addAttribute("paths", service.ensureAndSummaries(principal.getName()).stream()
                 .filter(path -> path.skill().equals(selected)).toList());
+        model.addAttribute("stages",service.stages(principal.getName(),selected));
         var published = lessons.publishedLessons().stream().filter(lesson -> lesson.getSkill().equals(selected)).toList();
         model.addAttribute("lessons", published);
         model.addAttribute("levels", LessonService.LEVELS);
@@ -37,5 +38,5 @@ public class StudentLearningPathController {
         return "student/learning/skill";
     }
     @PostMapping("/{pathId}/checkpoint/start")
-    public String startCheckpoint(@PathVariable Integer pathId,Principal principal,RedirectAttributes redirect){try{var user=service.userId(principal.getName());Integer attemptId=service.startCheckpoint(user,pathId,java.util.UUID.randomUUID().toString());return "redirect:/student/attempts/"+attemptId+"/result";}catch(com.aptisprep.exception.BusinessRuleException|com.aptisprep.exception.ResourceNotFoundException e){redirect.addFlashAttribute("error",e.getMessage());return "redirect:/student/learning-path";}}
+    public String startCheckpoint(@PathVariable Integer pathId,Principal principal,RedirectAttributes redirect){try{var user=service.userId(principal.getName());Integer attemptId=service.startCheckpoint(user,pathId,null);return "redirect:"+service.checkpointDestination(principal.getName(),attemptId);}catch(com.aptisprep.exception.BusinessRuleException|com.aptisprep.exception.ResourceNotFoundException e){redirect.addFlashAttribute("error",e.getMessage());return "redirect:/student/learning-path";}}
 }

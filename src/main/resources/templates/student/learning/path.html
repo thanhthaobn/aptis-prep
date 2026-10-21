@@ -32,6 +32,16 @@
             <div th:replace="~{fragments/navi :: navi('welcome', 'Navi đồng hành cùng bạn')}"></div>
         </section>
 
+        <section class="dashboard-section" aria-label="Các chặng học hiện tại">
+            <h2>Chặng học của bạn</h2>
+            <p class="muted" th:if="${#lists.isEmpty(paths)}">Chưa có chặng học phù hợp hoặc mục tiêu hiện tại đã đạt. Bạn có thể đặt mục tiêu mới hoặc khám phá thư viện bài học.</p>
+            <article class="dashboard-panel" th:each="path : ${paths}" th:attr="data-skill=${path.skill}">
+                <h3 th:text="${path.skill}"></h3>
+                <p th:text="${path.totalLessons == 0 ? 'Chưa có bài học' : path.completedLessons + '/' + path.totalLessons + ' bài · ' + path.progressPercent + '%'}"></p>
+                <p th:if="${path.checkpointState == 'passed'}">Đã vượt qua kiểm tra cuối chặng.</p>
+                <a class="button button-secondary" th:href="@{/student/learning-path/{skill}(skill=${path.skill})}">Xem chặng học</a>
+            </article>
+        </section>
         <section class="explore-grid" aria-label="Khám phá từng kỹ năng">
             <!-- Reading -->
             <article class="explore-card explore-reading" id="reading">
