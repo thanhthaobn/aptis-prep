@@ -143,6 +143,21 @@ class ExamAttemptConcurrencyTests {
         assertEquals(1, attemptRepository.countByUserId(fixture.user().getId()));
     }
 
+    @Test
+    void checkpointCannotBypassLearningPathStartBoundary() {
+        Fixture fixture = fixture("checkpoint-boundary");
+        fixture.exam().setExamType("CHECKPOINT");
+        fixture.exam().setTargetLevel("A1");
+        exams.saveAndFlush(fixture.exam());
+
+        assertThrows(BusinessRuleException.class,
+                () -> attempts.start(fixture.user().getId(), fixture.exam().getId(), "exam:generic"));
+        assertEquals(0, attemptRepository.countByUserId(fixture.user().getId()));
+
+        assertTrue(attempts.start(fixture.user().getId(), fixture.exam().getId(),
+                "checkpoint:" + fixture.user().getId() + ":1:after:0").attemptId() > 0);
+    }
+
     private Fixture fixture(String suffix) {
         User user = new User(); user.setFullName("Concurrent learner"); user.setEmail("attempt-" + suffix + "-" + System.nanoTime() + "@test.local");
         user.setPasswordHash("unused"); user.setRole(Role.STUDENT); user.setStatus(UserStatus.ACTIVE); user = users.saveAndFlush(user);
