@@ -34,6 +34,17 @@ class AudioUploadServiceTests {
     }
 
     @Test
+    void rejectsAudioWithMissingMimeTypeEvenWhenExtensionLooksValid() {
+        byte[] bytes = new byte[16];
+        bytes[0] = 'R'; bytes[1] = 'I'; bytes[2] = 'F'; bytes[3] = 'F';
+        bytes[8] = 'W'; bytes[9] = 'A'; bytes[10] = 'V'; bytes[11] = 'E';
+        var file = new MockMultipartFile("audioFile", "answer.wav", "", bytes);
+
+        assertThrows(BusinessRuleException.class, () -> service.store(file, 10));
+        verifyNoInteractions(storage);
+    }
+
+    @Test
     void acceptsAudioWithValidContainerSignatureAndStoresInAttemptScope() {
         byte[] bytes = new byte[16];
         bytes[0] = 'R'; bytes[1] = 'I'; bytes[2] = 'F'; bytes[3] = 'F';

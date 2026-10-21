@@ -167,10 +167,9 @@
         if (payload.selectedOptionId !== undefined) formData.append('selectedOptionId', payload.selectedOptionId);
         if (payload.userPosition !== undefined) formData.append('userPosition', payload.userPosition);
         if (payload.textAnswer !== undefined) formData.append('textAnswer', payload.textAnswer);
-        if (payload.audioUrl !== undefined) formData.append('audioUrl', payload.audioUrl);
 
         try {
-            const res = await fetch(`/student/attempts/${attemptId}/answers`, {
+            const res = await fetch(`/student/attempts/${attemptId}/answers/autosave`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/x-www-form-urlencoded',
@@ -515,7 +514,7 @@
         const audio = player.querySelector('audio');
         const playBtn = player.querySelector('.btn-audio-play');
         const playCountBadge = player.querySelector('.audio-play-count');
-        const questionId = player.dataset.questionId;
+        const mediaId = player.dataset.mediaId;
 
         const rawRemaining = player.dataset.playsRemaining;
         const rawMaxPlays = player.dataset.maxPlays;
@@ -554,7 +553,7 @@
 
         updateDisplay();
 
-        if (playBtn && audio && questionId) {
+        if (playBtn && audio && mediaId) {
             playBtn.addEventListener('click', async () => {
                 if (playsRemaining === null || playsRemaining <= 0) return;
 
@@ -582,7 +581,7 @@
                     playBtn.textContent = 'Đang xác thực lượt nghe...';
 
                     const token = getCsrfToken();
-                    const res = await fetch(`/student/attempts/${attemptId}/audio-played`, {
+                    const res = await fetch(`/student/attempts/${attemptId}/media/${mediaId}/play`, {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/x-www-form-urlencoded',
@@ -590,7 +589,7 @@
                             'X-Requested-With': 'XMLHttpRequest',
                             'X-CSRF-TOKEN': token
                         },
-                        body: `_csrf=${encodeURIComponent(token)}&questionId=${encodeURIComponent(questionId)}`
+                        body: `_csrf=${encodeURIComponent(token)}`
                     });
 
                     if (!res.ok || res.redirected) {
@@ -603,17 +602,19 @@
                     }
 
                     const data = await res.json().catch(() => null);
-                    if (!data || data.playsRemaining === undefined) {
-                        throw new Error('Phản hồi từ máy chủ không chứa dữ liệu playsRemaining');
+                    if (!data || data.playCount === undefined || data.maxPlayCount === undefined || !data.contentToken) {
+                        throw new Error('Phản hồi từ máy chủ không chứa dữ liệu lượt nghe');
                     }
 
                     // Cập nhật số lượt nghe duy nhất từ server, KHÔNG tự giảm bằng playsRemaining--
-                    playsRemaining = parseInt(data.playsRemaining, 10);
+                    playsRemaining = Math.max(0, parseInt(data.maxPlayCount, 10) - parseInt(data.playCount, 10));
                     player.dataset.playsRemaining = playsRemaining;
                     updateDisplay();
 
                     if (playsRemaining >= 0) {
                         playBtn.disabled = false;
+                        const contentUrl = player.dataset.contentUrl || `/student/attempts/${attemptId}/media/${mediaId}/content`;
+                        audio.src = `${contentUrl}?token=${encodeURIComponent(data.contentToken)}`;
                         await audio.play();
                         playBtn.textContent = '❚❚ Tạm dừng';
                     }

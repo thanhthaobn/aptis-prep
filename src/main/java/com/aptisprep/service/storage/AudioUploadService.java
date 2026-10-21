@@ -27,7 +27,7 @@ public class AudioUploadService {
         String name = file.getOriginalFilename() == null ? "" : file.getOriginalFilename().toLowerCase(Locale.ROOT);
         int dot = name.lastIndexOf('.'); String extension = dot < 0 ? "" : name.substring(dot);
         String contentType = file.getContentType() == null ? "" : file.getContentType().toLowerCase(Locale.ROOT);
-        if (!EXTENSIONS.contains(extension) || !(contentType.startsWith("audio/") || "video/mp4".equals(contentType) || contentType.isBlank())) {
+        if (!EXTENSIONS.contains(extension) || !(contentType.startsWith("audio/") || "video/mp4".equals(contentType))) {
             throw new BusinessRuleException("Chỉ chấp nhận file ghi âm hợp lệ");
         }
         try {
