@@ -200,6 +200,21 @@ class LearningPathCheckpointTests {
         } finally { pool.shutdownNow(); }
     }
 
+    @Test void c1AndLegacyC2ProfilesDoNotCreateC2StagesOrLoseTheirLevel() {
+        for (String level : List.of("C1", "C2")) {
+            var user=learner(level);goal(user,"C2");service.ensurePaths(user.getId());
+            assertThat(paths.findFirstByUserIdAndSkillAndStatusOrderByCreatedAtDesc(user.getId(),"Reading","ACTIVE")).isEmpty();
+            assertThat(profiles.findByUserIdAndSkill(user.getId(),"READING").orElseThrow().getCurrentLevel()).isEqualTo(level);
+        }
+    }
+
+    @Test void b2ProfileWithLegacyC2GoalStillGetsOnlyC1Content() {
+        var user=learner("B2");goal(user,"C2");service.ensurePaths(user.getId());
+        assertThat(current(user).getTargetLevel()).isEqualTo("C1");
+        assertThat(service.stages(user.getEmail(),"Reading").getFirst().lessons())
+                .extracting(LearningPathService.StageLesson::level).containsOnly("C1");
+    }
+
     private User learner(String level) {
         var user=new User(); user.setFullName("Checkpoint learner"); user.setEmail("cp-"+UUID.randomUUID()+"@test.local");
         user.setPasswordHash("unused"); user.setRole(Role.STUDENT); user.setStatus(UserStatus.ACTIVE); user=users.saveAndFlush(user);

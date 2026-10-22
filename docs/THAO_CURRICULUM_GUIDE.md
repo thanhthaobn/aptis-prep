@@ -1,5 +1,9 @@
 # Nội dung học tập và cách kiểm tra luồng Thảo
 
+Chốt phạm vi 23/10/2026: hành trình học A1–C1. Profile C1/C2 không sinh chặng mới C2; mục tiêu/profile C2 cũ vẫn giữ để tra cứu, không tự hạ mức. Lesson/Flashcard vẫn chỉ tạo A1–C1. Giới hạn Goal mới thuộc phần tài khoản của Thông, không sửa trong đợt xử lý luồng Thảo.
+
+Kiểm chứng V039: `mvn clean verify` với `APTIS_SQLSERVER_ISOLATED_TESTS=true` đạt (197 test: 195 đạt, 2 skip tùy chọn); JavaScript 9/9 đạt. Test gồm 89%/90%, tua/nghe lặp/replay, token khác user/hết hạn, thay audio, hoàn thành qua MVC/JPA, C1/legacy C2; SQL Server tạm kiểm migration, Hibernate validate, dữ liệu cũ giữ nguyên và đáp án D/E/F lưu được. Không chạy migration trực tiếp lên DB ứng dụng, không push/merge trong đợt sửa này.
+
 Chương trình hiện hỗ trợ A1, A2, B1, B2 và C1. Sau V024/V025, mỗi kỹ năng có ít nhất một bài giảng và một bộ thẻ liên kết ở mỗi mức. Các mức dùng để tổ chức nội dung học, không phải kết quả đánh giá CEFR của học viên.
 
 ## Các bài học chính

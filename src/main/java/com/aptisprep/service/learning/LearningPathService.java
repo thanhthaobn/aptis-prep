@@ -111,6 +111,8 @@ public class LearningPathService implements LearningPathContract {
         if(required.isEmpty()||required.stream().anyMatch(item->!completed(item)))
             throw new BusinessRuleException("Hãy hoàn thành các bài bắt buộc trước khi làm checkpoint");
         if(path.getTargetLevel()==null) throw new BusinessRuleException("Hãy đặt mục tiêu hoặc làm Placement để có chặng kiểm tra phù hợp");
+        if(!LessonService.LEVELS.contains(path.getTargetLevel()))
+            throw new BusinessRuleException("Hành trình học chỉ hỗ trợ từ A1 đến C1; chặng cũ được giữ để tra cứu");
         var engine=engine();
         if(path.getCheckpointExamId()!=null) {
             var running=checkpointHistory(path,engine).stream().filter(this::unfinished).findFirst();
@@ -281,5 +283,5 @@ public class LearningPathService implements LearningPathContract {
     private static String codeSkill(String value) { return value==null?"":value.trim().toUpperCase(Locale.ROOT).replaceAll("[^A-Z0-9]+","_"); }
     private static int rank(String value) { return value==null?-1:List.of("A1","A2","B1","B2","C1","C2").indexOf(value.toUpperCase(Locale.ROOT)); }
     private static String validLevel(String value) { return rank(value)<0?null:value.toUpperCase(Locale.ROOT); }
-    private static String nextLevel(String value) { int next=rank(value)+1; var levels=List.of("A1","A2","B1","B2","C1","C2"); return next<levels.size()?levels.get(next):null; }
+    private static String nextLevel(String value) { int next=rank(value)+1; var levels=LessonService.LEVELS; return next<levels.size()?levels.get(next):null; }
 }

@@ -13,6 +13,8 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 @Controller @RequestMapping("/student/lessons")
 public class StudentLessonController {
+    @org.springframework.beans.factory.annotation.Autowired
+    private com.aptisprep.service.learning.LessonListeningService listening;
     private final LessonService service; private final LessonTeachingService teaching; private final com.aptisprep.service.learning.FlashcardSetService flashcards;
     public StudentLessonController(LessonService s,LessonTeachingService t,com.aptisprep.service.learning.FlashcardSetService f){service=s;teaching=t;flashcards=f;}
     @GetMapping public String list(@RequestParam(defaultValue="") String q,@RequestParam(defaultValue="") String skill,
@@ -29,9 +31,20 @@ public class StudentLessonController {
     @PostMapping("/{id}/assess") public String assess(@PathVariable Integer id,@RequestParam Integer submissionId,Principal principal,RedirectAttributes redirect){try{return "redirect:/student/assessments/"+teaching.assess(id,submissionId,principal.getName());}catch(com.aptisprep.exception.BusinessRuleException e){redirect.addFlashAttribute("error",e.getMessage());return "redirect:/student/lessons/"+id;}}
     @PostMapping("/{id}/response/autosave") @ResponseBody public void autosave(@PathVariable Integer id,@RequestParam String response,Principal principal){teaching.saveResponse(id,response,principal.getName());}
     @PostMapping("/{id}/complete") public String complete(@PathVariable Integer id,Principal p,RedirectAttributes r){try{service.complete(p.getName(),id);r.addFlashAttribute("message","Đã ghi nhận hoàn thành bài học");}catch(com.aptisprep.exception.BusinessRuleException e){r.addFlashAttribute("error",e.getMessage());}return "redirect:/student/lessons/"+id;}
-    @PostMapping("/{id}/audio-played") @ResponseBody public void audioPlayed(@PathVariable Integer id,@RequestParam double listened,@RequestParam double duration,Principal p){
-        if(!Double.isFinite(listened)||!Double.isFinite(duration)||duration<=0||listened<duration*.9||listened>duration+1)throw new com.aptisprep.exception.BusinessRuleException("Hãy nghe ít nhất 90% bài nghe");
-        teaching.audioPlayed(id,p.getName());
+    @PostMapping("/{id}/listening/start") @ResponseBody
+    public com.aptisprep.service.learning.LessonListeningService.Playback startListening(
+            @PathVariable Integer id, @RequestParam double position, Principal principal) {
+        return listening.start(id, principal.getName(), position);
+    }
+    @PostMapping("/{id}/listening/heartbeat") @ResponseBody
+    public com.aptisprep.service.learning.LessonListeningService.Playback listeningHeartbeat(
+            @PathVariable Integer id, @RequestParam String token, @RequestParam int sequence,
+            @RequestParam double position, @RequestParam boolean playing,
+            @RequestParam(defaultValue="false") boolean discontinuity, Principal principal) {
+        return listening.heartbeat(id, principal.getName(), token, sequence, position, playing, discontinuity);
+    }
+    @PostMapping("/{id}/audio-played") @ResponseBody public void audioPlayed(@PathVariable Integer id){
+        throw new com.aptisprep.exception.BusinessRuleException("Hãy phát audio và nghe đủ 90% qua phiên nghe được xác thực");
     }
     @PostMapping("/{id}/section") @ResponseBody public void section(@PathVariable Integer id,@RequestParam String section,Principal p){teaching.section(id,section,p.getName());}
     @PostMapping("/{id}/recording") public String recording(@PathVariable Integer id,@RequestParam org.springframework.web.multipart.MultipartFile recording,Principal p,RedirectAttributes r){teaching.saveRecording(id,recording,p.getName());r.addFlashAttribute("message","Đã lưu bản ghi luyện nói");return "redirect:/student/lessons/"+id;}

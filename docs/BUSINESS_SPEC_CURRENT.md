@@ -1,5 +1,7 @@
 # APTISPREP — Tài liệu nghiệp vụ và ERD hiện trạng
 
+Cập nhật luồng Thảo sau V038: V039 xác thực phiên nghe 90% phía server, mở rộng CHECK đáp án Lesson A–F và hành trình dừng C1. Không thêm bảng; lesson_engagement thêm 10 cột playback/verification. Hai ERD bên dưới là ảnh chụp schema V038 (404 cột), chưa bao gồm 10 cột mới. Chi tiết tại [LESSON_WORK_AND_MEDIA.md](LESSON_WORK_AND_MEDIA.md). Goal mới đến C1 vẫn cần Thông cập nhật phần tài khoản; dữ liệu C2 cũ được giữ.
+
 Phiên bản tài liệu: 1.0 — ngày 23/10/2026. Phạm vi: source đang làm việc trên nhánh codex/v2-business-cleanup, gồm thay đổi đến migration V038.
 
 Đây là bản viết lại để đọc nghiệp vụ và mô hình dữ liệu hiện tại ở một nơi. Tài liệu gốc [SPEC_V2.md](SPEC_V2.md) vẫn được giữ làm baseline; tài liệu này không tự thay đổi yêu cầu V2 hoặc cam kết mọi chức năng đã nghiệm thu thực tế.
@@ -133,7 +135,7 @@ Bộ Flashcard cá nhân và yêu cầu AI cho bài Lesson là mở rộng của
 2. Học nội dung/media; hiển thị transcript/bài mẫu theo chính sách của bài.
 3. Nếu có knowledge check, làm và lưu lịch sử; cần có ít nhất một lượt đạt 60%.
 4. Với Writing, nộp bài viết đáp ứng yêu cầu; với Speaking, cần có bản ghi được nộp trong lịch sử.
-5. Với Listening có audio, cần mốc xác nhận đã nghe; giao diện hiện gửi mốc sau khi nghe đủ 90%, backend lưu mốc này. Đây không phải bộ đếm hai lượt của bài thi và không phải bằng chứng đo thời gian nghe độc lập phía server.
+5. Với Listening có audio, cần server xác nhận coverage ít nhất 90% bằng phiên/token, thứ tự heartbeat, thời gian server và thời lượng đọc từ file. Tua/gửi lại không cộng tiến độ; các đoạn nghe được hợp nhất không trùng nhau. Đây không phải bộ đếm hai lượt của bài thi, cũng không chứng minh người dùng chú ý/nghe bằng tai.
 6. Khi đủ các điều kiện áp dụng, đánh dấu Lesson Progress và các Path Item liên quan hoàn thành nhất quán.
 7. Học xong Lesson hoặc được AI nhận xét tốt không tự nâng CEFR trong Profile.
 
