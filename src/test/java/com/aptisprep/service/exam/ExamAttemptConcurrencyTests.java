@@ -173,6 +173,20 @@ class ExamAttemptConcurrencyTests {
     }
 
     @Test
+    void listeningContentTokenSupportsBrowserMetadataAndRangeRequests() {
+        Fixture fixture = fixture("media-content");
+        int attemptId = attempts.start(fixture.user().getId(), fixture.exam().getId(), "media-content-key").attemptId();
+        String token = attempts.playMedia(fixture.user().getId(), attemptId, fixture.media().getId()).contentToken();
+
+        var metadata = attempts.mediaContent(fixture.user().getId(), attemptId, fixture.media().getId(), token);
+        var range = attempts.mediaContent(fixture.user().getId(), attemptId, fixture.media().getId(), token);
+
+        assertTrue(metadata.resource().exists());
+        assertTrue(range.resource().exists());
+        assertEquals("audio/wav", metadata.contentType());
+    }
+
+    @Test
     void ownerAndQuestionBoundariesAreEnforcedAndReloadKeepsAnswer() {
         Fixture fixture = fixture("owner");
         User otherDraft = new User();
@@ -455,7 +469,7 @@ class ExamAttemptConcurrencyTests {
         QuestionMediaEntity audio = new QuestionMediaEntity();
         audio.setQuestionId(question.getId());
         audio.setMediaType("AUDIO");
-        audio.setMediaUrl("tests/audio.wav");
+        audio.setMediaUrl("curriculum/audio/listening-a2.wav");
         audio.setOriginalFilename("audio.wav");
         audio.setContentType("audio/wav");
         audio.setPosition(1);

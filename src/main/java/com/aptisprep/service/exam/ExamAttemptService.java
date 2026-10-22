@@ -188,7 +188,10 @@ public class ExamAttemptService implements ExamAttemptContract {
                     || activity.getPlayTokenExpiresAt() == null || activity.getPlayTokenExpiresAt().isBefore(LocalDateTime.now())) {
                 throw new AccessDeniedException("Token phát audio không hợp lệ hoặc đã hết hạn");
             }
-            activity.setPlayTokenHash(null); activity.setPlayTokenExpiresAt(null); mediaActivities.save(activity);
+            // Keep the short-lived token valid for the browser's metadata and
+            // range requests. A browser can request the same audio more than
+            // once while building the native player, so invalidating it after
+            // the first request leaves the player stuck at 0:00 / 0:00.
         }
         return new MediaResource(storage.load(lockedMedia.path("mediaUrl").asText()), lockedMedia.path("contentType").asText("application/octet-stream"));
     }
