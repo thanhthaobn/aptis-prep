@@ -27,6 +27,9 @@
     .reading-passage { margin: 20px 0 24px; padding: 20px 22px; border: 1px solid #c8dce5; border-left: 5px solid #087a9d; border-radius: 12px; background: #f2fbfd; }
     .reading-passage h3 { margin: 0 0 10px; color: #075c78; font-size: 1.05rem; }
     .reading-passage-text { white-space: pre-line; line-height: 1.75; color: #263b50; }
+    .media-player { display: grid; gap: .45rem; margin: 1rem 0 1.25rem; padding: .8rem 1rem; border: 1px solid #c8dce5; border-radius: 13px; background: #f2fbfd; }
+    .media-audio { width: 100%; height: 42px; accent-color: #087a9d; }
+    .media-status { min-height: 1.1rem; font-size: .8rem; }
     .question-item { margin-top: 1rem; padding: 1.25rem 1.35rem 1.35rem; border: 1px solid #dbe7ee; border-radius: 16px; background: linear-gradient(145deg, #ffffff, #f8fbfd); box-shadow: 0 8px 22px rgba(34, 73, 96, .06); }
     .question-item:first-of-type { margin-top: 1.35rem; }
     .question-item-header { display: flex; align-items: flex-start; gap: .85rem; margin-bottom: 1.1rem; }
@@ -64,8 +67,8 @@
         <div class="attempt-media" th:each="media : ${question.media}">
             <img th:if="${media.type == 'IMAGE'}" th:src="@{/student/attempts/{id}/media/{mediaId}/content(id=${attempt.attemptId},mediaId=${media.id})}" th:alt="${media.filename}">
             <div th:if="${media.type == 'AUDIO'}" class="media-player">
-                <button type="button" class="button button-secondary media-play" th:attr="data-play=@{/student/attempts/{id}/media/{mediaId}/play(id=${attempt.attemptId},mediaId=${media.id})},data-content=@{/student/attempts/{id}/media/{mediaId}/content(id=${attempt.attemptId},mediaId=${media.id})}">Nghe audio</button>
-                <audio class="media-audio" preload="none"></audio><span class="media-status muted" aria-live="polite"></span>
+                <audio class="media-audio" controls preload="none" th:attr="data-play=@{/student/attempts/{id}/media/{mediaId}/play(id=${attempt.attemptId},mediaId=${media.id})},data-content=@{/student/attempts/{id}/media/{mediaId}/content(id=${attempt.attemptId},mediaId=${media.id})}">Trình duyệt không hỗ trợ phát audio.</audio>
+                <span class="media-status muted" aria-live="polite">Bấm nút phát để nghe audio.</span>
             </div>
         </div>
         <div th:each="item : ${question.items}" class="question-item">
@@ -136,11 +139,16 @@
     let interval; const tick = () => { const seconds = Math.max(0, Math.ceil((deadline - Date.now()) / 1000)); display.textContent = String(Math.floor(seconds / 60)).padStart(2, '0') + ':' + String(seconds % 60).padStart(2, '0'); if (!seconds) { if (interval) clearInterval(interval); submit(true); } };
     tick(); interval = setInterval(tick, 500);
   }
-  document.querySelectorAll('.media-play').forEach(button => button.addEventListener('click', async () => {
-    const player = button.parentElement.querySelector('.media-audio'); const status = button.parentElement.querySelector('.media-status');
-    button.disabled = true; status.textContent = 'Đang kiểm tra lượt nghe…';
-    try { const response = await fetch(button.dataset.play, {method: 'POST', headers: {'X-CSRF-TOKEN': csrf, 'Accept': 'application/json'}}); const result = await response.json(); if (!response.ok) throw new Error(result.message || 'Không thể phát audio'); player.src = button.dataset.content + '?token=' + encodeURIComponent(result.contentToken); player.onended = () => { if (result.playCount < result.maxPlayCount) button.disabled = false; }; await player.play(); status.textContent = `Đã dùng ${result.playCount}/${result.maxPlayCount} lượt nghe`; } catch (error) { button.disabled = false; status.textContent = error.message; }
-  }));
+  document.querySelectorAll('.media-audio').forEach(player => {
+    const status = player.parentElement.querySelector('.media-status'); let tokenReady = false; let loading = false; let exhausted = false;
+    player.addEventListener('play', async () => {
+      if (tokenReady || loading) return;
+      if (exhausted) { player.pause(); status.textContent = 'Đã dùng hết số lượt nghe cho audio này.'; return; }
+      player.pause(); loading = true; status.textContent = 'Đang kiểm tra lượt nghe…';
+      try { const response = await fetch(player.dataset.play, {method: 'POST', headers: {'X-CSRF-TOKEN': csrf, 'Accept': 'application/json'}}); const result = await response.json(); if (!response.ok) throw new Error(result.message || 'Không thể phát audio'); player.src = player.dataset.content + '?token=' + encodeURIComponent(result.contentToken); tokenReady = true; status.textContent = `Đã dùng ${result.playCount}/${result.maxPlayCount} lượt nghe`; await player.play(); player.dataset.playCount = result.playCount; player.dataset.maxPlayCount = result.maxPlayCount; } catch (error) { status.textContent = error.message || 'Không thể phát audio'; } finally { loading = false; }
+    });
+    player.addEventListener('ended', () => { tokenReady = false; const playCount = Number(player.dataset.playCount || 0); const maxPlayCount = Number(player.dataset.maxPlayCount || 0); exhausted = maxPlayCount > 0 && playCount >= maxPlayCount; if (exhausted) status.textContent = `Đã dùng hết ${maxPlayCount} lượt nghe.`; else status.textContent = `Bạn còn ${Math.max(0, maxPlayCount - playCount)} lượt nghe.`; });
+  });
   document.querySelectorAll('.speaking-recorder').forEach(box => {
     const start = box.querySelector('.recording-start');
     const stop = box.querySelector('.recording-stop');
