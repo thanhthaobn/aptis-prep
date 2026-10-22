@@ -6,6 +6,7 @@ import java.util.List;
 public class QuestionForm {
     private String content;
     private String instruction;
+    private String readingPassage;
     private String questionType = "SINGLE_CHOICE";
     private String skill = "READING";
     private Integer partNo;
@@ -27,6 +28,7 @@ public class QuestionForm {
     }
     public String getContent() { return content; } public void setContent(String v) { content = v; }
     public String getInstruction() { return instruction; } public void setInstruction(String v) { instruction = v; }
+    public String getReadingPassage() { return readingPassage; } public void setReadingPassage(String v) { readingPassage = v; }
     public String getQuestionType() { return questionType; } public void setQuestionType(String v) { questionType = v; }
     public String getSkill() { return skill; } public void setSkill(String v) { skill = v; }
     public Integer getPartNo() { return partNo; } public void setPartNo(Integer v) { partNo = v; }

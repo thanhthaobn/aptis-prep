@@ -22,6 +22,13 @@
     </style>
 </noscript>
 
+<style>
+    .question-instruction { margin: -8px 0 18px; color: #58708f; font-size: 1rem; }
+    .reading-passage { margin: 20px 0 24px; padding: 20px 22px; border: 1px solid #c8dce5; border-left: 5px solid #087a9d; border-radius: 12px; background: #f2fbfd; }
+    .reading-passage h3 { margin: 0 0 10px; color: #075c78; font-size: 1.05rem; }
+    .reading-passage-text { white-space: pre-line; line-height: 1.75; color: #263b50; }
+</style>
+
 <div th:replace="~{fragments/navbar :: navbar}"></div>
 <div class="container app-shell"><div th:replace="~{fragments/student-sidebar :: studentSidebar('exams')}"></div>
 <main class="app-main student-content">
@@ -30,6 +37,11 @@
     <section class="dashboard-panel dashboard-section" th:each="question : ${attempt.questions}">
         <p class="eyebrow" th:text="|Câu ${question.position} · ${question.skill}|"></p>
         <h2 th:text="${question.content}"></h2>
+        <p class="question-instruction" th:if="${question.skill == 'READING' and !#strings.isEmpty(question.instruction)}" th:text="${question.instruction}"></p>
+        <article class="reading-passage" th:if="${question.skill == 'READING' and !#strings.isEmpty(question.readingPassage)}">
+            <h3>Đoạn văn</h3>
+            <div class="reading-passage-text" th:text="${question.readingPassage}"></div>
+        </article>
         <div class="attempt-media" th:each="media : ${question.media}">
             <img th:if="${media.type == 'IMAGE'}" th:src="@{/student/attempts/{id}/media/{mediaId}/content(id=${attempt.attemptId},mediaId=${media.id})}" th:alt="${media.filename}">
             <div th:if="${media.type == 'AUDIO'}" class="media-player">

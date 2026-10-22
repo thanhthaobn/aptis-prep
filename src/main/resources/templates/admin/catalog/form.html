@@ -12,6 +12,7 @@
             <h2>Thông tin câu hỏi</h2>
             <div class="field"><label for="content">Nội dung câu hỏi</label><textarea id="content" th:field="*{content}" rows="4" required></textarea></div>
             <div class="field"><label for="instruction">Hướng dẫn</label><textarea id="instruction" th:field="*{instruction}" rows="2"></textarea></div>
+            <div class="field" id="reading-passage-field"><label for="readingPassage">Đoạn văn Reading (chỉ dùng cho kỹ năng Reading)</label><textarea id="readingPassage" th:field="*{readingPassage}" rows="10" placeholder="Dán đoạn văn nguồn tại đây. Xuống dòng sẽ được giữ khi hiển thị cho học viên."></textarea></div>
             <div class="catalog-form-grid">
                 <div class="field"><label for="skill">Kỹ năng</label><select id="skill" th:field="*{skill}"><option th:each="item : ${skills}" th:value="${item}" th:text="${item}"></option></select></div>
                 <div class="field"><label for="cefrLevel">Cấp độ CEFR</label><select id="cefrLevel" th:field="*{cefrLevel}"><option th:each="item : ${levels}" th:value="${item}" th:text="${item}"></option></select></div>

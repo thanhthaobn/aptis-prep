@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import org.springframework.stereotype.Service;
+import org.springframework.beans.factory.annotation.Value;
 
 /** Temporary exam catalog only. Lessons, flashcards and results use persisted data. */
 @Service
@@ -21,6 +22,8 @@ public class StudentContentPreviewService {
     private final MockExamRepository exams;
     private final MockExamSectionRepository sections;
     private final MockExamQuestionRepository examQuestions;
+    @Value("${app.demo.catalog-fallback:false}")
+    private boolean catalogFallback;
 
     public StudentContentPreviewService(MockExamRepository exams, MockExamSectionRepository sections,
             MockExamQuestionRepository examQuestions) {
@@ -61,7 +64,10 @@ public class StudentContentPreviewService {
     );
 
     public List<Entry> find(String module, String q, String skill, String level, String state) {
-        if ("exams".equals(module) && exams.count() > 0) return realExams(q, skill, level);
+        if ("exams".equals(module)) {
+            if (exams.count() > 0) return realExams(q, skill, level);
+            if (!catalogFallback) return List.of();
+        }
         String term = normalize(q);
         return entries.getOrDefault(module, List.of()).stream()
             .filter(e -> normalize(e.title() + " " + e.summary()).contains(term))
@@ -77,6 +83,7 @@ public class StudentContentPreviewService {
                 if (real.isEmpty()) throw new ResourceNotFoundException("Không tìm thấy đề thi đã công bố");
                 return realExamEntry(real.get());
             }
+            if (!catalogFallback) throw new ResourceNotFoundException("Chưa có đề thi đã công bố");
         }
         return entries.getOrDefault(module, List.of()).stream().filter(e -> e.id() == id).findFirst()
             .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy nội dung"));

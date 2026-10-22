@@ -65,9 +65,9 @@ public class LocalStorageService implements StorageService {
 
     @Override
     public Resource load(String relativePath) {
-        if (isCurriculumAudio(relativePath)) {
+        if (isBundledResource(relativePath)) {
             Resource resource = new ClassPathResource(relativePath);
-            if (!resource.exists()) throw new BusinessRuleException("Không tìm thấy bài nghe");
+            if (!resource.exists()) throw new BusinessRuleException("Không tìm thấy tài nguyên bài thi");
             return resource;
         }
         Path target = safeResolve(relativePath);
@@ -86,7 +86,7 @@ public class LocalStorageService implements StorageService {
     public void delete(String relativePath) {
         // Bundled teaching recordings are read-only; removing/replacing a lesson's
         // reference must not remove the shared application resource.
-        if (isCurriculumAudio(relativePath)) return;
+        if (isBundledResource(relativePath)) return;
         try {
             Files.deleteIfExists(safeResolve(relativePath));
         } catch (IOException exception) {
@@ -102,7 +102,7 @@ public class LocalStorageService implements StorageService {
         return resolved;
     }
 
-    private static boolean isCurriculumAudio(String path) {
-        return path != null && path.matches("curriculum/audio/listening-(a2|b1|b2|c1)\\.wav");
+    private static boolean isBundledResource(String path) {
+        return path != null && path.matches("curriculum/[A-Za-z0-9._/-]+");
     }
 }

@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="title desc">
+  <title id="title">People working in a community garden</title>
+  <desc id="desc">Three people plant vegetables beside a small garden shed.</desc>
+  <rect width="800" height="480" fill="#e7f3e8"/><rect y="330" width="800" height="150" fill="#b9d88f"/>
+  <rect x="560" y="150" width="150" height="180" rx="8" fill="#d88b5b"/><path d="M530 155 635 70 740 155" fill="#8b5145"/>
+  <circle cx="200" cy="185" r="35" fill="#8d5a3a"/><path d="M160 225h80v105h-80z" fill="#4d8c91"/><path d="M175 330 145 425M225 330l30 95M160 255 95 310M240 255l75 15" stroke="#334b4b" stroke-width="18" fill="none"/>
+  <circle cx="390" cy="195" r="35" fill="#493227"/><path d="M350 235h80v95h-80z" fill="#d46a59"/><path d="M365 330 345 425M415 330l28 95M350 260l-70 55M430 260l80 10" stroke="#334b4b" stroke-width="18" fill="none"/>
+  <circle cx="505" cy="220" r="28" fill="#d1a27c"/><path d="M472 250h66v80h-66z" fill="#e9c65d"/><path d="M485 330 470 410M525 330l20 80M472 270l-70 45" stroke="#334b4b" stroke-width="15" fill="none"/>
+  <path d="M80 390h170M300 390h160" stroke="#6c8b42" stroke-width="12"/><circle cx="120" cy="370" r="12" fill="#5a9d52"/><circle cx="280" cy="370" r="12" fill="#5a9d52"/>
+</svg>
