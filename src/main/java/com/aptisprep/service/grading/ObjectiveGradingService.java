@@ -96,7 +96,7 @@ public class ObjectiveGradingService {
                 result.setGradingStatus("WAITING");
             } else {
                 Integer schemeId = locked.scoringSchemeId() == null ? exam.getScoringSchemeId() : locked.scoringSchemeId();
-                applyPolicy(result, schemeId, skill, raw);
+                applyPolicy(result, schemeId, skill, raw, exam);
                 if (result.getCefrLevel() == null) {
                     result.setGradingMethod("POLICY_ERROR");
                     result.setGradingStatus("ERROR");
@@ -109,10 +109,11 @@ public class ObjectiveGradingService {
         skillResults.save(result);
     }
 
-    private void applyPolicy(ExamSkillResultEntity result, Integer schemeId, String skill, BigDecimal raw) {
+    private void applyPolicy(ExamSkillResultEntity result, Integer schemeId, String skill, BigDecimal raw, MockExamEntity exam) {
         result.setRawScore(raw);
         result.setScaleScore(scoring.scale(schemeId, skill, raw));
-        result.setCefrLevel(scoring.estimatedLevel(schemeId, skill, result.getScaleScore()));
+        result.setCefrLevel(com.aptisprep.service.scoring.CheckpointScorePolicy.confirmedLevel(
+                exam.getExamType(), exam.getTargetLevel(), scoring.estimatedLevel(schemeId, skill, result.getScaleScore())));
     }
 
     private BigDecimal rawScore(int correct, int total) {

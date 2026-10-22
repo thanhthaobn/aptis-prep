@@ -28,9 +28,19 @@ Không có key thì để app.ai.enabled=false. Project vẫn chạy, chức nă
 
 ## 2. Trạng thái tích hợp
 
-Hiện giữ service chấm Writing/Speaking, cấu hình OpenAI và kiểm thử HTTP giả lập. Chưa có giao diện gọi chấm AI. Sau khi nhập key, khởi động lại ứng dụng để nạp cấu hình; việc nhập key chưa tự tạo chức năng chấm trên web.
+Ứng dụng đã có giao diện yêu cầu phản hồi AI cho bài học Writing/Speaking và
+trang xem hoặc thử chấm lại kết quả. Nút chỉ xuất hiện sau khi AI được bật,
+key có giá trị, và học viên đã lưu đúng bài làm vào lịch sử. Sau khi thay cấu
+hình phải khởi động lại ứng dụng để nạp key.
 
-Người phụ trách Exam Engine gọi service sau khi học viên nộp bài, lưu điểm và nhận xét vào lượt thi, rồi hiển thị trong trang kết quả. Writing gửi đề và bài làm; Speaking gửi đường dẫn bản ghi đã lưu, tối đa 24 MB.
+Với bài thi, sau khi nộp attempt, câu Writing/Speaking được tạo tác vụ chấm
+sau khi giao dịch lưu bài đã commit. Trạng thái chờ/lỗi/hoàn tất được lưu trong
+DB; lỗi nhà cung cấp không được biến thành điểm 0.
+
+Writing gửi đề và bài làm. Luồng bài học Speaking hiện yêu cầu học viên lưu cả
+bản ghi lẫn transcript, sau đó AI đánh giá transcript; bản ghi dùng để nghe lại.
+Luồng engine thi có thể gửi file âm thanh để phiên âm khi answer được khóa đúng
+cấu trúc. File gửi trực tiếp tới dịch vụ tối đa 24 MB.
 
 Định dạng hỗ trợ: mp3, mp4, mpeg, mpga, m4a, wav, webm, flac, ogg. Dịch vụ OpenAI sẽ kiểm tra khả năng giải mã file; đổi đuôi file không biến file khác thành âm thanh hợp lệ.
 
@@ -62,7 +72,21 @@ GradingResult speakingResult = speakingGradingService.grade(prompt, savedAudioPa
 - Không cho học viên xem prompt nội bộ, API key hay phản hồi lỗi thô từ nhà cung cấp.
 - UI form POST; không mở REST endpoint cho frontend. Redirect sau khi nộp bài và kiểm tra trạng thái attempt để refresh hoặc submit lặp không gây chấm nhiều lần.
 
-## 5. Kiểm thử và giới hạn xác nhận
+## 5. Kiểm tra cấu hình trước khi demo
+
+Không in key ra terminal. Chỉ kiểm tra hai điều kiện sau:
+
+1. `app.ai.enabled=true` trong file dev bị gitignore.
+2. `OPENAI_API_KEY` có giá trị trong Run Configuration hoặc
+   `app.ai.api-key` có giá trị trong file dev.
+
+Sau khi restart, mở bài Writing/ Speaking đã công bố. Lưu bài làm vào lịch sử;
+nếu cấu hình đúng sẽ thấy nút **Yêu cầu AI nhận xét**. Nếu không thấy nút, kiểm
+tra lại hai điều kiện trên và restart toàn bộ process Java.
+
+Kịch bản demo chi tiết nằm trong [DEMO_RUNBOOK.md](DEMO_RUNBOOK.md).
+
+## 6. Kiểm thử và giới hạn xác nhận
 
 OpenAiGradingServiceTests dùng phản hồi HTTP giả lập: không gọi OpenAI thật, không mất phí. Kiểm tra key thiếu, AI tắt, hạn mức, từ chối trả lời, điểm ngoài khoảng và pipeline Speaking.
 
