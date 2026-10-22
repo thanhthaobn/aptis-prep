@@ -46,7 +46,7 @@
                 <div class="field"><label for="scoringSchemeId">Bộ chấm điểm</label><select id="scoringSchemeId" th:field="*{scoringSchemeId}"><option th:each="item : ${schemes}" th:value="${item.id}" th:text="${item.name + ' — v' + item.version}"></option></select></div>
                 <div class="field"><label for="durationMinutes">Tổng thời gian (phút)</label><input id="durationMinutes" type="number" min="1" th:field="*{durationMinutes}" required></div>
             </div>
-            <section class="catalog-form-section"><div class="section-title-row"><h2>Sections và câu hỏi</h2><button class="button button-secondary button-small" type="button" id="add-exam-section">Thêm section</button></div><p class="muted">Full Mock có thể gồm nhiều kỹ năng. Mỗi câu hỏi chỉ được đưa vào đúng một section.</p><div id="exam-sections"><div class="exam-section-editor" th:each="section, sectionStat : *{sections}" th:attr="data-section-index=${sectionStat.index}"><div class="catalog-form-grid"><div class="field"><label th:for="|sections-${sectionStat.index}-skill|">Kỹ năng section</label><select th:id="|sections-${sectionStat.index}-skill|" th:field="*{sections[__${sectionStat.index}__].skill}"><option th:each="item : ${skills}" th:value="${item}" th:text="${item}"></option></select></div><div class="field"><label th:for="|sections-${sectionStat.index}-durationMinutes|">Thời lượng section (phút)</label><input type="number" min="1" required th:id="|sections-${sectionStat.index}-durationMinutes|" th:field="*{sections[__${sectionStat.index}__].durationMinutes}"></div></div><input type="hidden" class="section-question-ids" th:field="*{sections[__${sectionStat.index}__].questionIds}"><div class="catalog-checkbox section-question-picker"><label draggable="true" th:each="question : ${publishedQuestions}"><input type="checkbox" class="section-question" th:attr="data-question-id=${question.id},data-section-index=${sectionStat.index}" th:checked="${section.questionIds != null and #strings.contains(',' + section.questionIds + ',', ',' + question.id + ',')}"><span th:text="${question.id + ' · ' + question.skill + ' · ' + question.content}"></span></label></div></div></div></section>
+            <section class="catalog-form-section"><div class="section-title-row"><h2>Sections và câu hỏi</h2><button class="button button-secondary button-small" type="button" id="add-exam-section">Thêm section</button></div><p class="muted">Full Mock có thể gồm nhiều kỹ năng. Mỗi câu hỏi chỉ được đưa vào đúng một section.</p><div id="exam-sections"><div class="exam-section-editor" th:each="section, sectionStat : *{sections}" th:attr="data-section-index=${sectionStat.index}"><h3 class="exam-section-title"><span class="exam-section-number" th:text="${sectionStat.index + 1}">1</span><span>Section</span></h3><div class="catalog-form-grid"><div class="field"><label th:for="|sections-${sectionStat.index}-skill|">Kỹ năng section</label><select class="section-skill" th:id="|sections-${sectionStat.index}-skill|" th:field="*{sections[__${sectionStat.index}__].skill}"><option th:each="item : ${skills}" th:value="${item}" th:text="${item}"></option></select></div><div class="field"><label th:for="|sections-${sectionStat.index}-durationMinutes|">Thời lượng section (phút)</label><input type="number" min="1" required th:id="|sections-${sectionStat.index}-durationMinutes|" th:field="*{sections[__${sectionStat.index}__].durationMinutes}"></div></div><input type="hidden" class="section-question-ids" th:field="*{sections[__${sectionStat.index}__].questionIds}"><div class="catalog-checkbox section-question-picker"><label class="section-question-label" draggable="true" th:each="question : ${publishedQuestions}" th:attr="data-skill=${question.skill}" th:hidden="${question.skill != section.skill}"><input type="checkbox" class="section-question" th:attr="data-question-id=${question.id},data-section-index=${sectionStat.index},data-skill=${question.skill}" th:checked="${section.questionIds != null and #strings.contains(',' + section.questionIds + ',', ',' + question.id + ',')}"><span th:text="${question.id + ' · ' + question.skill + ' · ' + question.content}"></span></label></div></div></div></section>
             <div class="page-actions"><button class="button" type="submit">Lưu đề thi</button><a class="button button-secondary" th:href="@{/admin/exams}">Hủy</a></div>
         </form>
     </main>
@@ -72,11 +72,30 @@
 (() => {
   const sections = document.getElementById('exam-sections');
   const add = document.getElementById('add-exam-section');
+  const renumberSections = () => sections?.querySelectorAll('.exam-section-editor').forEach((section, index) => {
+    section.dataset.sectionIndex = index;
+    const number = section.querySelector('.exam-section-number');
+    if (number) number.textContent = String(index + 1);
+  });
   const sync = () => sections?.querySelectorAll('.exam-section-editor').forEach(section => {
     const values = [...section.querySelectorAll('.section-question:checked')].map(input => input.dataset.questionId);
     section.querySelector('.section-question-ids').value = values.join(',');
   });
-  sections?.addEventListener('change', sync);
+  const updateQuestionVisibility = section => {
+    const skill = section.querySelector('.section-skill')?.value;
+    section.querySelectorAll('.section-question-label').forEach(label => {
+      const input = label.querySelector('.section-question');
+      const visible = label.dataset.skill === skill;
+      label.hidden = !visible;
+      if (!visible && input) input.checked = false;
+    });
+  };
+  sections?.querySelectorAll('.exam-section-editor').forEach(updateQuestionVisibility);
+  sections?.addEventListener('change', event => {
+    const section = event.target.closest('.exam-section-editor');
+    if (section && event.target.matches('.section-skill')) updateQuestionVisibility(section);
+    sync();
+  });
   document.getElementById('exam-sections')?.closest('form')?.addEventListener('submit', sync);
   add?.addEventListener('click', () => {
     const index = sections.querySelectorAll('.exam-section-editor').length;
@@ -84,10 +103,13 @@
     const clone = source.cloneNode(true);
     clone.dataset.sectionIndex = index;
     clone.querySelectorAll('[id]').forEach(node => node.id = node.id.replace(/sections-\\d+-/, `sections-${index}-`));
+    clone.querySelectorAll('[for]').forEach(node => node.htmlFor = node.htmlFor.replace(/sections-\\d+-/, `sections-${index}-`));
     clone.querySelectorAll('[name]').forEach(node => node.name = node.name.replace(/sections\\[\\d+\\]/g, `sections[${index}]`));
     clone.querySelector('.section-question-ids').value = '';
     clone.querySelectorAll('.section-question').forEach(input => { input.checked = false; input.dataset.sectionIndex = index; });
     sections.appendChild(clone);
+    renumberSections();
+    updateQuestionVisibility(clone);
   });
 })();
 </script>
