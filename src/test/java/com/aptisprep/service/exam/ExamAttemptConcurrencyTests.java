@@ -155,7 +155,7 @@ class ExamAttemptConcurrencyTests {
         exams.saveAndFlush(fixture.exam());
         var band = bands.findBySchemeIdAndSkillOrderByMinScoreAsc(fixture.exam().getScoringSchemeId(), "LISTENING").getFirst();
         band.setCefrLevel("C2"); bands.saveAndFlush(band);
-        int id = attempts.start(fixture.user().getId(), fixture.exam().getId(), "checkpoint-full").attemptId();
+        int id = attempts.start(fixture.user().getId(), fixture.exam().getId(), "checkpoint:" + fixture.user().getId() + ":1:after:0").attemptId();
         attempts.saveAnswer(fixture.user().getId(), id, fixture.question().getId(), fixture.item().getId(), fixture.option().getId(), null, null);
         attempts.submit(fixture.user().getId(), id, "checkpoint-full-submit");
         var result = attempts.result(fixture.user().getId(), id);
@@ -171,7 +171,7 @@ class ExamAttemptConcurrencyTests {
         Fixture fixture = fixture("checkpoint-zero");
         fixture.exam().setExamType("CHECKPOINT"); fixture.exam().setTargetLevel("A1");
         exams.saveAndFlush(fixture.exam());
-        int id = attempts.start(fixture.user().getId(), fixture.exam().getId(), "checkpoint-empty").attemptId();
+        int id = attempts.start(fixture.user().getId(), fixture.exam().getId(), "checkpoint:" + fixture.user().getId() + ":1:after:0").attemptId();
         attempts.submit(fixture.user().getId(), id, "checkpoint-empty-submit");
         var result = attempts.result(fixture.user().getId(), id);
         assertEquals("COMPLETED", result.state());
@@ -203,6 +203,21 @@ class ExamAttemptConcurrencyTests {
         assertEquals("A2", learningPathRepository.findFirstByUserIdAndSkillAndStatusOrderByCreatedAtDesc(fixture.user().getId(), "Listening", "ACTIVE").orElseThrow().getTargetLevel());
         learningPaths.applyCheckpoint(fixture.user().getId(), id);
         assertEquals(1, learningPathRepository.findByUserIdAndStatusOrderBySkillAscCreatedAtDesc(fixture.user().getId(), "ACTIVE").size());
+    }
+
+    @Test
+    void checkpointCannotBypassLearningPathStartBoundary() {
+        Fixture fixture = fixture("checkpoint-boundary");
+        fixture.exam().setExamType("CHECKPOINT");
+        fixture.exam().setTargetLevel("A1");
+        exams.saveAndFlush(fixture.exam());
+
+        assertThrows(BusinessRuleException.class,
+                () -> attempts.start(fixture.user().getId(), fixture.exam().getId(), "exam:generic"));
+        assertEquals(0, attemptRepository.countByUserId(fixture.user().getId()));
+
+        assertTrue(attempts.start(fixture.user().getId(), fixture.exam().getId(),
+                "checkpoint:" + fixture.user().getId() + ":1:after:0").attemptId() > 0);
     }
 
     private Fixture fixture(String suffix) {

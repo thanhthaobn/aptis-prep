@@ -30,9 +30,6 @@ public class AdminCatalogPreviewController {
         List<Entry> entries = isReal(module) && catalogService.hasData(module)
                 ? catalogService.find(module, q, skill, status, kind)
                 : preview.find(module, q, skill, status, kind);
-        // Keep the preview catalogue available when the database is already seeded but
-        // does not contain the fixed preview records used by the admin UI/tests.
-        if (entries.isEmpty()) entries = preview.find(module, q, skill, status, kind);
         model.addAttribute("entries", entries);
         model.addAttribute("q", q); model.addAttribute("selectedSkill", skill);
         model.addAttribute("selectedStatus", status); model.addAttribute("selectedKind", kind);
@@ -42,7 +39,8 @@ public class AdminCatalogPreviewController {
     @GetMapping("/{module:questions|exams}/{id:\\d+}")
     public String detail(@PathVariable String module, @PathVariable int id, Model model) {
         addModule(module, model);
-        model.addAttribute("entry", hasRealEntry(module, id) ? catalogService.entry(module, id) : preview.entry(module, id));
+        model.addAttribute("entry", isReal(module) && catalogService.hasData(module)
+                ? catalogService.entry(module, id) : preview.entry(module, id));
         return "admin/catalog/detail";
     }
 
@@ -60,11 +58,19 @@ public class AdminCatalogPreviewController {
             if (!preview.module(module).editable()) throw new ResourceNotFoundException("Không tìm thấy nội dung");
             addModule(module, model); model.addAttribute("entry", preview.entry(module, id)); model.addAttribute("editing", true); return "admin/catalog/form";
         }
+        if (!catalogService.hasData(module)) {
+            if (!preview.module(module).editable()) throw new ResourceNotFoundException("Không tìm thấy nội dung");
+            addModule(module, model); model.addAttribute("entry", preview.entry(module, id)); model.addAttribute("editing", true);
+            if ("questions".equals(module)) model.addAttribute("questionForm", catalogService.questionForm(null));
+            else prepareExamForm(model, catalogService.examForm(null));
+            return "admin/catalog/form";
+        }
         addModule(module, model); model.addAttribute("editing", true);
         boolean realEntry = hasRealEntry(module, id);
-        if ("questions".equals(module)) { model.addAttribute("questionForm", realEntry ? catalogService.questionForm(id) : catalogService.questionForm(null)); }
-        else prepareExamForm(model, realEntry ? catalogService.examForm(id) : catalogService.examForm(null));
-        if (!realEntry) model.addAttribute("entry", preview.entry(module, id));
+        if (!realEntry) throw new ResourceNotFoundException("Không tìm thấy nội dung");
+        model.addAttribute("entry", catalogService.entry(module, id));
+        if ("questions".equals(module)) model.addAttribute("questionForm", catalogService.questionForm(id));
+        else prepareExamForm(model, catalogService.examForm(id));
         return "admin/catalog/form";
     }
 
@@ -81,11 +87,21 @@ public class AdminCatalogPreviewController {
     @PostMapping("/questions/{id:\\d+}/publish")
     public String publishQuestion(@PathVariable int id) { catalogService.publishQuestion(id); return "redirect:/admin/questions/" + id; }
 
+    @PostMapping("/questions/{id:\\d+}/media")
+    public String addMedia(@PathVariable int id, @RequestParam(name = "files", required = false) MultipartFile[] files) {
+        catalogService.addMedia(id, files); return "redirect:/admin/questions/" + id;
+    }
+
+    @PostMapping("/questions/{id:\\d+}/media/{mediaId:\\d+}/delete")
+    public String deleteMedia(@PathVariable int id, @PathVariable int mediaId) {
+        catalogService.deleteMedia(id, mediaId); return "redirect:/admin/questions/" + id;
+    }
+
     @PostMapping("/exams")
-    public String saveExam(@ModelAttribute ExamForm form, @RequestParam(name = "questionIds", required = false) String[] questionIds) { form.setQuestionIds(joinIds(questionIds)); return "redirect:/admin/exams/" + catalogService.saveExam(null, form); }
+    public String saveExam(@ModelAttribute ExamForm form) { return "redirect:/admin/exams/" + catalogService.saveExam(null, form); }
 
     @PostMapping("/exams/{id:\\d+}/edit")
-    public String updateExam(@PathVariable int id, @ModelAttribute ExamForm form, @RequestParam(name = "questionIds", required = false) String[] questionIds) { form.setQuestionIds(joinIds(questionIds)); catalogService.saveExam(id, form); return "redirect:/admin/exams/" + id; }
+    public String updateExam(@PathVariable int id, @ModelAttribute ExamForm form) { catalogService.saveExam(id, form); return "redirect:/admin/exams/" + id; }
 
     @PostMapping("/exams/{id:\\d+}/publish")
     public String publishExam(@PathVariable int id) { catalogService.publishExam(id); return "redirect:/admin/exams/" + id; }
@@ -110,5 +126,4 @@ public class AdminCatalogPreviewController {
         model.addAttribute("schemes", catalogService.activeSchemes()); model.addAttribute("publishedQuestions", catalogService.publishedQuestions());
         model.addAttribute("examTypes", catalogService.examTypes());
     }
-    private String joinIds(String[] ids) { return ids == null ? "" : String.join(",", ids); }
 }

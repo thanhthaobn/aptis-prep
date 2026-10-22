@@ -1,5 +1,8 @@
 package com.aptisprep.dto.form;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class ExamForm {
     private String title;
     private String description;
@@ -13,6 +16,7 @@ public class ExamForm {
     private Integer sectionDurationMinutes = 35;
     private String questionIds;
     private String status = "DRAFT";
+    private List<SectionForm> sections = new ArrayList<>();
     public String getTitle() { return title; } public void setTitle(String v) { title = v; }
     public String getDescription() { return description; } public void setDescription(String v) { description = v; }
     public String getExamType() { return examType; } public void setExamType(String v) { examType = v; }
@@ -25,4 +29,15 @@ public class ExamForm {
     public Integer getSectionDurationMinutes() { return sectionDurationMinutes; } public void setSectionDurationMinutes(Integer v) { sectionDurationMinutes = v; }
     public String getQuestionIds() { return questionIds; } public void setQuestionIds(String v) { questionIds = v; }
     public String getStatus() { return status; } public void setStatus(String v) { status = v; }
+    public List<SectionForm> getSections() { return sections; }
+    public void setSections(List<SectionForm> value) { sections = value == null ? new ArrayList<>() : value; }
+
+    public static class SectionForm {
+        private String skill;
+        private Integer durationMinutes;
+        private String questionIds;
+        public String getSkill() { return skill; } public void setSkill(String v) { skill = v; }
+        public Integer getDurationMinutes() { return durationMinutes; } public void setDurationMinutes(Integer v) { durationMinutes = v; }
+        public String getQuestionIds() { return questionIds; } public void setQuestionIds(String v) { questionIds = v; }
+    }
 }

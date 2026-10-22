@@ -5,6 +5,7 @@ import com.aptisprep.service.account.AccountAccessService;
 import com.aptisprep.service.exam.ExamAttemptService;
 import java.security.Principal;
 import java.util.Map;
+import java.util.UUID;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.core.io.Resource;
@@ -28,7 +29,7 @@ public class StudentExamController {
     public String start(@PathVariable Integer id, Principal principal, RedirectAttributes redirect) {
         try {
             Integer userId = accounts.requireActiveStudent(principal.getName());
-            return "redirect:/student/attempts/" + attempts.start(userId, id, "exam:" + userId + ":" + id).attemptId();
+            return "redirect:/student/attempts/" + attempts.start(userId, id, "exam:" + userId + ":" + id + ":" + UUID.randomUUID()).attemptId();
         } catch (BusinessRuleException exception) {
             redirect.addFlashAttribute("error", exception.getMessage()); return "redirect:/student/exams/" + id;
         }

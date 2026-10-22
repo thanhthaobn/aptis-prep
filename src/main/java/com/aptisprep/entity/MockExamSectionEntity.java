@@ -13,10 +13,13 @@ public class MockExamSectionEntity {
     @Column(nullable = false, length = 30) private String status = "ACTIVE";
     public MockExamSectionEntity() {}
     public Integer getId() { return id; }
+    public Integer getMockExamId() { return mockExamId; }
     public void setMockExamId(Integer v) { mockExamId = v; }
     public String getSkill() { return skill; }
     public void setSkill(String v) { skill = v; }
+    public int getDisplayOrder() { return displayOrder; }
     public void setDisplayOrder(int v) { displayOrder = v; }
+    public int getDurationMinutes() { return durationMinutes; }
     public void setDurationMinutes(int v) { durationMinutes = v; }
     public void setStatus(String v) { status = v; }
 }

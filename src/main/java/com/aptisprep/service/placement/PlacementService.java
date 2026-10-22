@@ -10,6 +10,7 @@ import com.aptisprep.service.contract.IntegrationModels.AttemptHandle;
 import com.aptisprep.service.contract.IntegrationModels.AttemptResult;
 import java.util.List;
 import java.util.Locale;
+import java.util.UUID;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.stereotype.Service;
 
@@ -41,7 +42,10 @@ public class PlacementService {
         Entry exam = available(skill).stream().filter(value -> examId == null || value.id() == examId).findFirst()
                 .orElseThrow(() -> new BusinessRuleException("Chưa có đề Placement đã công bố cho kỹ năng này"));
         examCatalog.publishedExam(userId, exam.id());
-        return attempt.start(userId, exam.id(), "placement:" + userId + ":" + exam.skill());
+        // A new Placement/Practice run must not reuse the key of a terminal attempt.
+        // Repeated clicks in the same request are still protected by the engine's
+        // active-attempt lookup and the user-row lock.
+        return attempt.start(userId, exam.id(), "placement:" + userId + ":" + exam.id() + ":" + UUID.randomUUID());
     }
 
     public AttemptResult result(String email, Integer attemptId) {
