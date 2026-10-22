@@ -28,6 +28,7 @@ class ScoringAdminServiceTests {
     @Mock UserRepository users;
     @Mock ObjectProvider<ScoringSchemeUsageContract> usageProvider;
     @Mock ScoringSchemeUsageContract usage;
+    @Mock ScoringScaleRuleRepository scaleRules;
 
     @Test
     void usedSchemeCannotBeEditedInPlaceButCanCreateNewVersion() {
@@ -39,13 +40,13 @@ class ScoringAdminServiceTests {
         when(current.getId()).thenReturn(20);
         when(current.getCertificate()).thenReturn(certificate);
         when(current.getVersion()).thenReturn("1");
-        when(schemes.findById(20)).thenReturn(Optional.of(current));
+        when(schemes.findByIdForUpdate(20)).thenReturn(Optional.of(current));
         when(certificates.findById(10)).thenReturn(Optional.of(certificate));
         when(users.findByEmailIgnoreCase("admin@aptis.local")).thenReturn(Optional.of(admin));
         when(usageProvider.getIfAvailable()).thenReturn(usage);
         when(usage.isUsed(20)).thenReturn(true);
 
-        ScoringAdminService service = new ScoringAdminService(certificates, schemes, bands, users, usageProvider);
+        ScoringAdminService service = new ScoringAdminService(certificates, schemes, bands, users, usageProvider, scaleRules);
         ScoringSchemeForm sameVersion = form("1");
         assertThrows(BusinessRuleException.class, () -> service.saveScheme("admin@aptis.local", 20, sameVersion));
         verify(schemes, never()).save(any(ScoringScheme.class));

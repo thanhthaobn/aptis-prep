@@ -15,6 +15,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 public interface ExamAttemptRepository extends JpaRepository<ExamAttemptEntity, Integer> {
+    boolean existsByScoringSchemeId(Integer scoringSchemeId);
     Optional<ExamAttemptEntity> findByIdAndUserId(Integer id, Integer userId);
 
     Optional<ExamAttemptEntity> findByUserIdAndRequestKey(Integer userId, String requestKey);

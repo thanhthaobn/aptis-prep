@@ -5,8 +5,8 @@ import java.util.List;
 /**
  * UI examples only; not learner records or entity contracts.
  */
-public final class StudentContentPreview {
-    private StudentContentPreview() {
+public final class StudentCatalogView {
+    private StudentCatalogView() {
     }
 
     public record Fact(String label, String value) {

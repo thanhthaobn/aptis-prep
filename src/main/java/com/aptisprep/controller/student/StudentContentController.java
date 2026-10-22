@@ -5,21 +5,21 @@ import com.aptisprep.service.account.AccountAccessService;
 import com.aptisprep.service.contract.ExamAttemptContract;
 import com.aptisprep.service.contract.IntegrationModels.HistoryFilter;
 import java.security.Principal;
-import com.aptisprep.service.student.StudentContentPreviewService;
+import com.aptisprep.service.student.StudentExamCatalogService;
 import java.util.List;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
-/** Exam preview routes belong to Trâm; result presentation delegates to the safe attempt contract. */
+/** Published exams from the database; results use the ownership-checked attempt contract. */
 @Controller
 @RequestMapping("/student")
-public class StudentContentPreviewController {
-    private final StudentContentPreviewService preview;
+public class StudentContentController {
+    private final StudentExamCatalogService catalog;
     private final AccountAccessService accounts;
     private final ExamAttemptContract attempts;
-    public StudentContentPreviewController(StudentContentPreviewService preview, AccountAccessService accounts, ExamAttemptContract attempts) {
-        this.preview = preview; this.accounts = accounts; this.attempts = attempts;
+    public StudentContentController(StudentExamCatalogService catalog, AccountAccessService accounts, ExamAttemptContract attempts) {
+        this.catalog = catalog; this.accounts = accounts; this.attempts = attempts;
     }
 
     @GetMapping("/{module:exams}")
@@ -29,7 +29,7 @@ public class StudentContentPreviewController {
         if (q.length() > 255 || skill.length() > 80 || level.length() > 40 || state.length() > 40)
             throw new BusinessRuleException("Bộ lọc không hợp lệ");
         common(module, model);
-        model.addAttribute("entries", preview.find(module, q, skill, level, state));
+        model.addAttribute("entries", catalog.find(module, q, skill, level, state));
         model.addAttribute("q", q); model.addAttribute("selectedSkill", skill);
         model.addAttribute("selectedLevel", level); model.addAttribute("selectedState", state);
         return "student/content/list";
@@ -58,7 +58,7 @@ public class StudentContentPreviewController {
     }
     @GetMapping("/{module:exams}/{id:\\d+}")
     public String detail(@PathVariable String module, @PathVariable int id, Model model) {
-        common(module, model); model.addAttribute("entry", preview.entry(module, id));
+        common(module, model); model.addAttribute("entry", catalog.entry(module, id));
         return "student/content/detail";
     }
     @GetMapping("/attempts/{id:\\d+}/result")

@@ -8,6 +8,11 @@ import java.time.LocalDateTime;
 @Entity
 @Table(name = "user_answers", uniqueConstraints = @UniqueConstraint(name = "uq_user_answers_attempt_question", columnNames = {"exam_attempt_id", "question_id"}))
 public class UserAnswerEntity {
+    @Lob
+    @Column(name = "audio_manifest", columnDefinition = "NVARCHAR(MAX)")
+    private String audioManifest;
+    public String getAudioManifest() { return audioManifest; }
+    public void setAudioManifest(String value) { audioManifest = value; }
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;

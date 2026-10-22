@@ -3,10 +3,10 @@ package com.aptisprep.dto.view;
 import java.util.List;
 
 /**
- * Immutable UI fixture models, not entities or persistence contracts.
+ * Immutable catalogue view models assembled from persisted content.
  */
-public final class AdminCatalogPreview {
-    private AdminCatalogPreview() {
+public final class AdminCatalogView {
+    private AdminCatalogView() {
     }
 
     public record Field(String label, String value) {

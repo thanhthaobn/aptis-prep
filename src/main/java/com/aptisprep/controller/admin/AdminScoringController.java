@@ -16,10 +16,10 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 @Controller
-public class AdminSettingsPreviewController {
+public class AdminScoringController {
     private final ScoringAdminService scoring;
 
-    public AdminSettingsPreviewController(ScoringAdminService scoring) {
+    public AdminScoringController(ScoringAdminService scoring) {
         this.scoring = scoring;
     }
 
@@ -197,8 +197,14 @@ public class AdminSettingsPreviewController {
     }
 
     private String loadScheme(int id, String skill, Integer bandId, boolean readOnly, Model model) {
-        if (!List.of("Grammar & Vocabulary", "Reading", "Listening", "Writing", "Speaking").contains(skill))
-            throw new BusinessRuleException("Kỹ năng không hợp lệ");
+        skill = switch (skill.toUpperCase(java.util.Locale.ROOT).replaceAll("[^A-Z0-9]+", "_")) {
+            case "GRAMMAR_VOCABULARY" -> "Grammar & Vocabulary";
+            case "READING" -> "Reading";
+            case "LISTENING" -> "Listening";
+            case "WRITING" -> "Writing";
+            case "SPEAKING" -> "Speaking";
+            default -> throw new BusinessRuleException("Kỹ năng không hợp lệ");
+        };
         ScoringViews.SchemeView value = scoring.scheme(id);
         schemeOptions(model);
         model.addAttribute("scheme", value);
@@ -207,6 +213,7 @@ public class AdminSettingsPreviewController {
         model.addAttribute("readOnly", readOnly);
         model.addAttribute("selectedSkill", skill);
         model.addAttribute("bands", scoring.bandViews(id, skill));
+        if (!model.containsAttribute("scaleRuleForm")) model.addAttribute("scaleRuleForm", scoring.scaleRule(id, skill));
         if (!model.containsAttribute("bandForm")) {
             ScoreBandForm bandForm = new ScoreBandForm();
             if (bandId != null) {
@@ -220,6 +227,20 @@ public class AdminSettingsPreviewController {
             model.addAttribute("bandForm", bandForm);
         }
         return "admin/settings/scheme";
+    }
+
+    @PostMapping("/admin/scoring-schemes/{schemeId}/scale-rule")
+    public String saveScaleRule(@PathVariable int schemeId, @RequestParam String skill,
+            Principal principal, @Valid @ModelAttribute("scaleRuleForm") ScoringScaleRuleForm form,
+            BindingResult result, Model model, RedirectAttributes redirect) {
+        if (!result.hasErrors()) {
+            try {
+                scoring.saveScaleRule(principal.getName(), schemeId, skill, form);
+                redirect.addFlashAttribute("successMessage", "Đã lưu quy tắc quy đổi điểm.");
+                return "redirect:/admin/scoring-schemes/" + schemeId + "/edit?skill=" + skill;
+            } catch (BusinessRuleException exception) { result.reject("scale.invalid", exception.getMessage()); }
+        }
+        return loadScheme(schemeId, skill, null, false, model);
     }
 
     private void schemeOptions(Model model) {

@@ -84,7 +84,7 @@ public class LearningPathService implements LearningPathContract {
                     item.getLesson().getMaterial()==null?null:item.getLesson().getMaterial().getTopic(),
                     item.isRequired(),completed(item))).toList();
             return new Stage(path.getId(),path.getSkill(),path.getFromLevel(),path.getTargetLevel(),
-                targets.getOrDefault(path.getGoalSkillId(),"C2"),path.getStatus(),assigned);
+                targets.get(path.getGoalSkillId()),path.getStatus(),assigned);
         }).toList();
     }
 
@@ -177,8 +177,8 @@ public class LearningPathService implements LearningPathContract {
             String from=assessed==null?null:validLevel(assessed.estimatedLevel());
             String target=nextLevel(from);
             var current=paths.findFirstByUserIdAndSkillAndStatusOrderByCreatedAtDesc(user.getId(),skill,"ACTIVE").orElse(null);
-            String finalGoal=goal==null?"C2":goal.getTargetLevel();
-            boolean goalReached=from!=null&&rank(from)>=rank(finalGoal);
+            String finalGoal=goal==null?null:goal.getTargetLevel();
+            boolean goalReached=finalGoal!=null&&from!=null&&rank(from)>=rank(finalGoal);
             if(goalReached||target==null) {
                 if(current!=null) { archive(current); changed++; } continue;
             }

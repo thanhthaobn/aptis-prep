@@ -75,6 +75,15 @@ public class ScoringPolicyService implements ScoringPolicyContract {
     public String policyVersion(Integer schemeId) { return requireActiveScheme(schemeId).getVersion(); }
 
     @Override @Transactional(readOnly = true)
+    public void validatePolicy(Integer schemeId, String skill) {
+        requireActiveScheme(schemeId);
+        String normalized = normalizeSkill(skill);
+        requireRule(schemeId, normalized);
+        if (bands.findBySchemeIdAndSkillOrderByMinScoreAsc(schemeId, normalized).isEmpty())
+            throw new BusinessRuleException("Chưa cấu hình khoảng CEFR cho kỹ năng này");
+    }
+
+    @Override @Transactional(readOnly = true)
     public BigDecimal overallScale(Integer schemeId, List<SkillScore> skillScores) {
         requireHistoricalScheme(schemeId);
         if (skillScores == null || skillScores.isEmpty()) return null;

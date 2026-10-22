@@ -53,7 +53,9 @@ public class AccountProfileService {
                         current.getTargetDate(),
                         goalSkills.findByGoalId(current.getId()).stream().collect(Collectors.toMap(
                                 UserGoalSkill::getSkill, UserGoalSkill::getTargetLevel, (left, right) -> right,
-                                LinkedHashMap::new))))
+                                LinkedHashMap::new)),
+                        goalSkills.findByGoalId(current.getId()).stream().filter(item -> item.getTargetScore() != null)
+                                .collect(Collectors.toMap(UserGoalSkill::getSkill, UserGoalSkill::getTargetScore))))
                 .orElse(null);
         var currentProfiles = profiles.findByUserIdOrderBySkillAsc(userId).stream()
                 .map(profile -> new AccountSnapshot.SkillView(profile.getSkill(), levelLabel(profile.getCurrentLevel()), profile.getSourceAttemptId()))
@@ -81,6 +83,10 @@ public class AccountProfileService {
         addTarget(targets, "WRITING", form.getWriting());
         addTarget(targets, "SPEAKING", form.getSpeaking());
         if (targets.isEmpty()) throw new BusinessRuleException("Hãy chọn ít nhất một kỹ năng hoặc bỏ qua mục tiêu");
+        form.getTargetScores().forEach((skill, score) -> {
+            if (!SKILLS.contains(skill) || (score != null && (!targets.containsKey(skill) || score.signum() < 0 || score.compareTo(java.math.BigDecimal.valueOf(50)) > 0)))
+                throw new BusinessRuleException("Điểm mục tiêu phải thuộc kỹ năng đã chọn và nằm trong 0–50");
+        });
         Certificate certificate = null;
         if (form.getCertificateId() != null) {
             certificate = certificates.findById(form.getCertificateId())
@@ -99,6 +105,7 @@ public class AccountProfileService {
             UserGoalSkill item = new UserGoalSkill();
             item.setSkill(skill);
             item.setTargetLevel(level);
+            item.setTargetScore(form.getTargetScores().get(skill));
             goal.addSkill(item);
         });
         goals.save(goal);
@@ -110,6 +117,7 @@ public class AccountProfileService {
         if (snapshot.goal() == null) return form;
         form.setCertificateId(snapshot.goal().certificateId());
         form.setTargetDate(snapshot.goal().targetDate());
+        form.setTargetScores(new LinkedHashMap<>(snapshot.goal().targetScores()));
         form.setGrammarVocabulary(snapshot.goal().targets().getOrDefault("GRAMMAR_VOCABULARY", ""));
         form.setReading(snapshot.goal().targets().getOrDefault("READING", ""));
         form.setListening(snapshot.goal().targets().getOrDefault("LISTENING", ""));

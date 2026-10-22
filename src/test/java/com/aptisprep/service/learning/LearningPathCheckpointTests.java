@@ -78,7 +78,7 @@ class LearningPathCheckpointTests {
     @Test void noGoalStartsAtA1AndCanPassCheckpointToReachA2() {
         var user=learner(null); service.ensurePaths(user.getId()); var foundation=current(user);
         assertThat(foundation.getTargetLevel()).isEqualTo("A1");
-        assertThat(service.stages(user.getEmail(),"Reading").getFirst().goalLevel()).isEqualTo("C2");
+        assertThat(service.stages(user.getEmail(),"Reading").getFirst().goalLevel()).isNull();
         assertThat(service.stages(user.getEmail(),"Reading").getFirst().lessons()).extracting(LearningPathService.StageLesson::level).containsOnly("A1");
         assertThat(service.summary(user.getId(),foundation.getId()).checkpointState()).isEqualTo("locked");
         assertThatThrownBy(()->service.startCheckpoint(user.getId(),foundation.getId(),"ignored")).isInstanceOf(BusinessRuleException.class);

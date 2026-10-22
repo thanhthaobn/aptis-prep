@@ -41,7 +41,7 @@ class AiAssessmentServiceTests {
         service = new AiAssessmentService(jobs, assessments, users, writing, speaking,
                 new DataSourceTransactionManager(dataSource), events);
         job = new AiAssessmentJob(); job.setAssessmentKey("assessment-1"); job.setUserId(1); job.setAttemptId(2);
-        job.setAnswerId(3); job.setAnswerVersion(1); job.setSkill("WRITING"); job.setTaskType("WRITING");
+        job.setAnswerId(3); job.setSourceId(3); job.setAnswerVersion(1); job.setSkill("WRITING"); job.setTaskType("WRITING");
         job.setTaskContent("Write an email"); job.setLockedContent("Dear team"); job.setRubricVersion("r1");
         job.setPolicyVersion("p1"); job.setMaxScore(new BigDecimal("50")); job.setState(AiJobState.PENDING);
         assessment = new AiAssessment(); assessment.setJob(job); assessment.setAssessmentKey("assessment-1");
@@ -126,10 +126,45 @@ class AiAssessmentServiceTests {
     }
 
     @Test
+    void lessonFeedbackNeverPublishesAnExamEventEvenWithCollidingIds() {
+        job.setSourceType("LESSON_SUBMISSION"); job.setSourceId(3);
+        when(writing.grade("Write an email", "Dear team"))
+                .thenReturn(new GradingResult(new BigDecimal("32.5"), "B1", "Feedback", "mock", "test-model"));
+        assertEquals("COMPLETED", service.process("assessment-1").state());
+        verifyNoInteractions(events);
+    }
+
+    @Test
+    void lessonFailureDoesNotPublishAnExamFailure() {
+        job.setSourceType("LESSON_SUBMISSION"); job.setSourceId(3);
+        when(writing.grade("Write an email", "Dear team")).thenThrow(new AiGradingException("Unavailable"));
+        assertEquals("ERROR", service.process("assessment-1").state());
+        verifyNoInteractions(events);
+    }
+
+    @Test
     void nonOwnerCannotReadAndStudentCannotUseAdminFlag() {
         User other = new User(); other.setId(9); other.setRole(Role.STUDENT); other.setStatus(UserStatus.ACTIVE);
         when(users.findById(9)).thenReturn(Optional.of(other));
         assertThrows(com.aptisprep.exception.AccessDeniedException.class, () -> service.get("assessment-1", 9, false));
         assertThrows(com.aptisprep.exception.AccessDeniedException.class, () -> service.get("assessment-1", 1, true));
+    }
+
+    @Test
+    void legacyLessonRequestCanBeReusedWithoutInventingExamIds() {
+        job.setSourceType("LESSON_SUBMISSION");job.setSourceId(42);job.setMaxScore(new BigDecimal("50.00"));
+        service.request(new AssessmentRequest("assessment-1",1,null,null,1,"WRITING","WRITING",
+                "Write an email","Dear team","r1","p1",new BigDecimal("50"),null,"LESSON_SUBMISSION",42));
+        verify(jobs,never()).save(any());verifyNoInteractions(events);
+    }
+
+    @Test
+    void newLessonJobPersistsItsSourceAndKeepsExamIdsNull() {
+        when(jobs.findByAssessmentKeyForUpdate("lesson-new")).thenReturn(Optional.empty());
+        service.request(new AssessmentRequest("lesson-new",1,null,null,1,"WRITING","WRITING",
+                "Write an email","Dear team","r1","p1",new BigDecimal("50"),null,"LESSON_SUBMISSION",42));
+        var captured=org.mockito.ArgumentCaptor.forClass(AiAssessmentJob.class);verify(jobs).save(captured.capture());
+        assertEquals("LESSON_SUBMISSION",captured.getValue().getSourceType());assertEquals(42,captured.getValue().getSourceId());
+        assertNull(captured.getValue().getAttemptId());assertNull(captured.getValue().getAnswerId());verifyNoInteractions(events);
     }
 }

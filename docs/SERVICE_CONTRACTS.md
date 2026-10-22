@@ -4,7 +4,9 @@
 
 Theo [TEAM_ASSIGNMENT_V2.md](TEAM_ASSIGNMENT_V2.md), phương án mới nhất: **1 làm Chứng chỉ, Chấm điểm, AI, tổng hợp kết quả và Profile; 3 làm câu hỏi/đề/media, engine và Placement; 2 làm lịch sử/kết quả UI và hành trình học**.
 
-Interface/DTO tối thiểu tại `com.aptisprep.service.contract` đã có, chưa có implementation/bean hoặc nối preview. AiAssessmentContract, Placement orchestration và DTO mở rộng dưới đây là hợp đồng đề xuất cần làm trong PR đầu, không phải code đã tồn tại. Không bean giả trong cấu hình chạy thật, không gọi Controller/Repository xuyên luồng.
+Interface/DTO tại `com.aptisprep.service.contract` đã có implementation và nối DB thật. Phần phân công/đề xuất bên dưới là lịch sử tích hợp, không có nghĩa hiện chỉ là preview. Trạng thái mới nhất xem [V2_IMPLEMENTATION.md](V2_IMPLEMENTATION.md).
+
+Cập nhật 23/10/2026: ScoringSchemeUsageContract có bean thật kiểm cả đề và attempt; policy đã dùng bất biến, thay đổi qua version mới. AiAssessmentContract có source_type/source_id: EXAM_ANSWER dùng ID attempt/answer thật; LESSON_SUBMISSION dùng submission ID, không phát event hoàn tất Exam. USER_ANSWER giữ bản Writing/Speaking dùng để chấm, detail theo item được giữ/đồng bộ phục vụ sửa và dữ liệu cũ. Không dựng bean giả/fixture trong cấu hình chạy thật.
 
 | Interface/service | Chủ sở hữu | Bên dùng |
 |---|---|---|

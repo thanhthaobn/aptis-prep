@@ -2,12 +2,12 @@ package com.aptisprep.service.admin;
 
 import com.aptisprep.dto.form.ExamForm;
 import com.aptisprep.dto.form.QuestionForm;
-import com.aptisprep.dto.view.AdminCatalogPreview;
-import com.aptisprep.dto.view.AdminCatalogPreview.Entry;
-import com.aptisprep.dto.view.AdminCatalogPreview.Field;
-import com.aptisprep.dto.view.AdminCatalogPreview.Module;
-import com.aptisprep.dto.view.AdminCatalogPreview.Row;
-import com.aptisprep.dto.view.AdminCatalogPreview.CatalogPage;
+import com.aptisprep.dto.view.AdminCatalogView;
+import com.aptisprep.dto.view.AdminCatalogView.Entry;
+import com.aptisprep.dto.view.AdminCatalogView.Field;
+import com.aptisprep.dto.view.AdminCatalogView.Module;
+import com.aptisprep.dto.view.AdminCatalogView.Row;
+import com.aptisprep.dto.view.AdminCatalogView.CatalogPage;
 import com.aptisprep.entity.*;
 import com.aptisprep.enums.RecordStatus;
 import com.aptisprep.exception.BusinessRuleException;
@@ -29,7 +29,7 @@ import org.springframework.web.multipart.MultipartFile;
 public class CatalogService {
     private static final List<String> SKILLS = List.of("GRAMMAR_VOCABULARY", "READING", "LISTENING", "WRITING", "SPEAKING");
     private static final List<String> LEVELS = List.of("A1", "A2", "B1", "B2", "C1", "C2");
-    private static final List<String> TYPES = List.of("SINGLE_CHOICE", "MATCHING", "ORDERING", "WRITING_TEXT", "SPEAKING_AUDIO");
+    private static final List<String> TYPES = Arrays.stream(com.aptisprep.enums.QuestionType.values()).map(Enum::name).toList();
     private static final List<String> EXAM_TYPES = List.of("PLACEMENT", "PRACTICE", "CHECKPOINT", "FULL_MOCK");
     private final QuestionRepository questions;
     private final QuestionItemRepository items;
@@ -254,6 +254,7 @@ public class CatalogService {
 
     @Transactional
     public Integer saveExam(Integer id, ExamForm form) {
+        boolean explicitSections = form.getSections() != null && !form.getSections().isEmpty();
         normalizeSections(form);
         validateExamBasics(form);
         MockExamEntity exam = id == null ? new MockExamEntity() : exams.findById(id).orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy đề thi"));
@@ -265,7 +266,7 @@ public class CatalogService {
         exam.setTitle(form.getTitle().trim());
         exam.setDescription(blankToNull(form.getDescription()));
         exam.setExamType(form.getExamType());
-        exam.setTargetLevel(form.getTargetLevel());
+        exam.setTargetLevel(blankToNull(form.getTargetLevel()));
         exam.setSkill("FULL_MOCK".equals(form.getExamType()) ? "FULL_MOCK" : form.getSections().get(0).getSkill());
         exam.setDurationMinutes(form.getDurationMinutes());
         exam.setCertificateId(form.getCertificateId());
@@ -282,7 +283,7 @@ public class CatalogService {
         for (ExamForm.SectionForm sectionForm : form.getSections()) {
             List<Integer> ids = parseIds(sectionForm.getQuestionIds());
             validateQuestionSelection(ids, sectionForm.getSkill());
-            if (!allQuestionIds.addAll(ids))
+            if (ids.stream().anyMatch(questionId -> !allQuestionIds.add(questionId)))
                 throw new BusinessRuleException("Một câu hỏi không được lặp giữa các section");
             MockExamSectionEntity section = new MockExamSectionEntity();
             section.setMockExamId(exam.getId());
@@ -290,7 +291,7 @@ public class CatalogService {
             section.setDisplayOrder(sectionOrder++);
             section.setDurationMinutes(sectionForm.getDurationMinutes());
             section.setStatus("ACTIVE");
-            section = sections.save(section);
+            if (explicitSections || "FULL_MOCK".equals(form.getExamType())) section = sections.save(section);
             for (Integer questionId : ids) {
                 MockExamQuestionEntity link = new MockExamQuestionEntity();
                 link.setMockExamId(exam.getId());
@@ -314,7 +315,7 @@ public class CatalogService {
             List<Integer> ids = parseIds(section.getQuestionIds());
             if (ids.isEmpty()) throw new BusinessRuleException("Không thể công bố section trống");
             validateQuestionSelection(ids, section.getSkill());
-            if (!all.addAll(ids)) throw new BusinessRuleException("Một câu hỏi không được lặp giữa các section");
+            if (ids.stream().anyMatch(questionId -> !all.add(questionId))) throw new BusinessRuleException("Một câu hỏi không được lặp giữa các section");
         }
         if (all.isEmpty()) throw new BusinessRuleException("Không thể công bố đề trống");
         exam.setStatus("PUBLISHED");
@@ -446,21 +447,28 @@ public class CatalogService {
         return EXAM_TYPES;
     }
 
-    public boolean hasData(String key) {
-        return "questions".equals(key) ? questions.count() > 0 : "exams".equals(key) && exams.count() > 0;
-    }
-
     private void validateQuestion(QuestionForm f) {
         if (f.getContent() == null || f.getContent().isBlank() || f.getContent().length() > 10000)
             throw new BusinessRuleException("Nội dung câu hỏi là bắt buộc");
         if (f.getReadingPassage() != null && f.getReadingPassage().length() > 50000)
             throw new BusinessRuleException("Đoạn văn Reading tối đa 50.000 ký tự");
-        if (!SKILLS.contains(f.getSkill()) || !LEVELS.contains(f.getCefrLevel()) || !TYPES.contains(f.getQuestionType()))
+        if (f.getSkill() == null || f.getCefrLevel() == null || f.getQuestionType() == null
+                || !SKILLS.contains(f.getSkill()) || !LEVELS.contains(f.getCefrLevel()) || !TYPES.contains(f.getQuestionType()))
             throw new BusinessRuleException("Kỹ năng, cấp độ hoặc dạng câu hỏi không hợp lệ");
+        var type = com.aptisprep.enums.QuestionType.valueOf(f.getQuestionType());
+        if (!type.supportsSkill(f.getSkill())) throw new BusinessRuleException("Dạng câu hỏi không phù hợp với kỹ năng");
         if (f.getItems() == null || f.getItems().isEmpty() || f.getItems().stream().anyMatch(x -> x.getContent() == null || x.getContent().isBlank()))
             throw new BusinessRuleException("Câu hỏi phải có ít nhất một ý hỏi");
         if (("MATCHING".equals(f.getQuestionType()) || "ORDERING".equals(f.getQuestionType())) && f.getItems().size() < 2)
             throw new BusinessRuleException("Dạng ghép nối hoặc sắp xếp phải có ít nhất 2 ý hỏi");
+        if (type == com.aptisprep.enums.QuestionType.ORDERING) {
+            Set<Integer> positions = new HashSet<>();
+            for (QuestionForm.ItemForm item : f.getItems()) {
+                Integer position = item.getCorrectPosition();
+                if (position == null || position < 1 || position > f.getItems().size() || !positions.add(position))
+                    throw new BusinessRuleException("Vị trí đúng phải đủ và duy nhất từ 1 đến số ý hỏi");
+            }
+        }
         if (usesOptions(f.getQuestionType())) {
             for (QuestionForm.ItemForm item : f.getItems()) {
                 long count = item.getOptions() == null ? 0 : item.getOptions().stream().filter(x -> x.getContent() != null && !x.getContent().isBlank()).count();
@@ -476,23 +484,28 @@ public class CatalogService {
     private void validateExamBasics(ExamForm f) {
         if (f.getTitle() == null || f.getTitle().isBlank() || f.getTitle().length() > 255)
             throw new BusinessRuleException("Tên đề thi là bắt buộc");
-        if (!EXAM_TYPES.contains(f.getExamType()) || !LEVELS.contains(f.getTargetLevel()))
+        if (!EXAM_TYPES.contains(f.getExamType()) || (f.getTargetLevel() != null && !f.getTargetLevel().isBlank() && !LEVELS.contains(f.getTargetLevel()))
+                || ("CHECKPOINT".equals(f.getExamType()) && (f.getTargetLevel() == null || !LEVELS.contains(f.getTargetLevel()))))
             throw new BusinessRuleException("Loại đề hoặc cấp độ không hợp lệ");
         if (f.getSections() == null || f.getSections().isEmpty())
             throw new BusinessRuleException("Đề phải có ít nhất một section");
         if (f.getSections().stream().anyMatch(section -> !SKILLS.contains(section.getSkill())))
             throw new BusinessRuleException("Kỹ năng section không hợp lệ");
-        if ("FULL_MOCK".equals(f.getExamType()) && f.getSections().stream().map(ExamForm.SectionForm::getSkill).distinct().count() < 2)
-            throw new BusinessRuleException("Full Mock phải có ít nhất hai kỹ năng");
+        if ("FULL_MOCK".equals(f.getExamType()) && !f.getSections().stream().map(ExamForm.SectionForm::getSkill).collect(Collectors.toSet()).containsAll(SKILLS))
+            throw new BusinessRuleException("Full Mock phải có đủ 5 kỹ năng");
+        if (!"FULL_MOCK".equals(f.getExamType()) && f.getSections().stream().map(ExamForm.SectionForm::getSkill).distinct().count() != 1)
+            throw new BusinessRuleException("Đề theo kỹ năng chỉ được chứa một kỹ năng");
         if (f.getDurationMinutes() == null || f.getDurationMinutes() <= 0 || f.getSectionDurationMinutes() == null || f.getSectionDurationMinutes() <= 0)
             throw new BusinessRuleException("Thời lượng phải lớn hơn 0");
         if (f.getSections().stream().anyMatch(section -> section.getDurationMinutes() == null || section.getDurationMinutes() <= 0))
             throw new BusinessRuleException("Thời lượng section phải lớn hơn 0");
         if (f.getCertificateId() == null || !certificates.existsById(f.getCertificateId()))
             throw new BusinessRuleException("Chứng chỉ không hợp lệ");
-        if (f.getScoringSchemeId() == null || !schemes.existsById(f.getScoringSchemeId()))
+        if ("CHECKPOINT".equals(f.getExamType()) && f.getScoringSchemeId() == null)
+            throw new BusinessRuleException("Checkpoint cần bộ chấm điểm để xác nhận CEFR");
+        if (f.getScoringSchemeId() != null && !schemes.existsById(f.getScoringSchemeId()))
             throw new BusinessRuleException("Bộ chấm điểm không hợp lệ");
-        for (ExamForm.SectionForm section : f.getSections())
+        if (f.getScoringSchemeId() != null) for (ExamForm.SectionForm section : f.getSections())
             certificateSchemes.requireAvailableScheme(f.getCertificateId(), f.getScoringSchemeId(), section.getSkill());
     }
 
@@ -581,7 +594,7 @@ public class CatalogService {
     }
 
     private boolean usesOptions(String type) {
-        return "SINGLE_CHOICE".equals(type) || "MATCHING".equals(type) || "ORDERING".equals(type);
+        return com.aptisprep.enums.QuestionType.valueOf(type).usesOptions();
     }
 
     private boolean matches(String term, String... values) {

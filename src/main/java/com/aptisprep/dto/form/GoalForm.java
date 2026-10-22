@@ -9,6 +9,9 @@ import java.time.LocalDate;
 import org.springframework.format.annotation.DateTimeFormat;
 
 public class GoalForm {
+    private java.util.Map<String, java.math.BigDecimal> targetScores = new java.util.LinkedHashMap<>();
+    public java.util.Map<String, java.math.BigDecimal> getTargetScores() { return targetScores; }
+    public void setTargetScores(java.util.Map<String, java.math.BigDecimal> value) { targetScores = value == null ? new java.util.LinkedHashMap<>() : value; }
     private Integer certificateId;
     @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
     @FutureOrPresent(message = "Ngày mục tiêu phải từ hôm nay trở đi")

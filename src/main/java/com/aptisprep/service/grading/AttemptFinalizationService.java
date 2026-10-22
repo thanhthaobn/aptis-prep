@@ -96,8 +96,8 @@ public class AttemptFinalizationService {
         Integer schemeId = attempt.getScoringSchemeId() == null ? exam.getScoringSchemeId() : attempt.getScoringSchemeId();
         List<SkillScore> scores = results.stream()
                 .map(value -> new SkillScore(value.getSkill(), value.getScaleScore(), value.getCefrLevel())).toList();
-        BigDecimal average = scoring.overallScale(schemeId, scores);
-        String overall = scoring.overallLevel(schemeId, scores);
+        BigDecimal average = schemeId == null ? null : scoring.overallScale(schemeId, scores);
+        String overall = schemeId == null ? null : scoring.overallLevel(schemeId, scores);
         attempt.setFinalScaleScore(average);
         attempt.setEstimatedOverallCefr(overall);
         attempt.setCompletedAt(LocalDateTime.now());
@@ -115,6 +115,7 @@ public class AttemptFinalizationService {
 
     @Transactional
     public void applyAiAssessment(AiAssessmentCompletedEvent event) {
+        if (event.attemptId() == null || event.answerId() == null) return;
         ExamAttemptEntity attempt = attempts.findByIdAndUserIdForUpdate(event.attemptId(), event.userId())
                 .orElseThrow(() -> new AccessDeniedException("Bạn không có quyền cập nhật lượt thi này"));
         if ("COMPLETED".equals(attempt.getStatus())) return;
@@ -198,6 +199,12 @@ public class AttemptFinalizationService {
         BigDecimal raw = aggregateRaw(result.getObjectiveRawScore(), subjective);
         result.setRawScore(raw);
         Integer schemeId = attempt.getScoringSchemeId() == null ? exam(attempt).getScoringSchemeId() : attempt.getScoringSchemeId();
+        if (schemeId == null) {
+            result.setScaleScore(null); result.setCefrLevel(null);
+            result.setGradingMethod("UNSCALED"); result.setGradingStatus("COMPLETED"); skillResults.save(result);
+            if (finalizeIfReady(attempt, exam(attempt))) publishCompleted(attempt, exam(attempt));
+            return;
+        }
         result.setScaleScore(scoring.scale(schemeId, question.getSkill(), raw));
         result.setCefrLevel(com.aptisprep.service.scoring.CheckpointScorePolicy.confirmedLevel(
                 exam(attempt).getExamType(), exam(attempt).getTargetLevel(),
@@ -334,6 +341,8 @@ public class AttemptFinalizationService {
     }
 
     private boolean isComplete(ExamSkillResultEntity result) {
+        if ("UNSCALED".equals(result.getGradingMethod()))
+            return result.getRawScore() != null && "COMPLETED".equals(result.getGradingStatus());
         return result.getRawScore() != null
                 && result.getScaleScore() != null
                 && result.getCefrLevel() != null
@@ -341,6 +350,7 @@ public class AttemptFinalizationService {
     }
 
     private boolean hasPolicyError(ExamSkillResultEntity result) {
+        if ("UNSCALED".equals(result.getGradingMethod())) return !isComplete(result);
         return "ERROR".equals(result.getGradingStatus())
                 || ("COMPLETED".equals(result.getGradingStatus())
                         && (result.getRawScore() == null || result.getScaleScore() == null || result.getCefrLevel() == null));

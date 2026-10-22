@@ -1,6 +1,6 @@
 package com.aptisprep.service.placement;
 
-import com.aptisprep.dto.view.AdminCatalogPreview.Entry;
+import com.aptisprep.dto.view.AdminCatalogView.Entry;
 import com.aptisprep.exception.BusinessRuleException;
 import com.aptisprep.service.admin.CatalogService;
 import com.aptisprep.service.contract.AccountAccessContract;
