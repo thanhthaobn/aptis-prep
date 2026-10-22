@@ -34,7 +34,7 @@ public class LessonTeachingService {
  }
  private static String policy(String value,String fallback){return has(value)?value:fallback;}
  private static boolean released(String rule,boolean submitted,boolean completed,boolean played,boolean noSubmission){return switch(rule){case "ALWAYS"->true;case "AFTER_LISTEN"->played;case "AFTER_SUBMIT"->submitted||noSubmission&&completed;case "AFTER_COMPLETE"->completed;default->false;};}
- private static String releaseHint(String rule){return switch(rule){case "AFTER_LISTEN"->"Mở sau khi nghe ít nhất 90% bài nghe.";case "AFTER_SUBMIT"->"Mở sau khi nộp bài; nếu bài không có phần nộp, mở sau khi hoàn thành.";case "AFTER_COMPLETE"->"Mở sau khi hoàn thành bài học.";default->"Có thể xem ngay.";};}
+ private static String releaseHint(String rule){return switch(rule){case "AFTER_LISTEN"->"Mở sau khi nghe ít nhất 90% bài nghe.";case "AFTER_SUBMIT"->"Mở sau khi nộp bài. Nếu bài không có phần nộp, mở sau khi hoàn thành.";case "AFTER_COMPLETE"->"Mở sau khi hoàn thành bài học.";default->"Có thể xem ngay.";};}
  public boolean canAssess(Integer id,String email){
   return aiAvailable()&&!assessableSubmissions(id,email).isEmpty();
  }
@@ -125,7 +125,7 @@ public class LessonTeachingService {
   videoId(f.getVideoUrl());safeLink(f.getSourceUrl());
   if(f.getChecks()==null||f.getChecks().size()>20)throw new BusinessRuleException("Mỗi bài tối đa 20 câu kiểm tra kiến thức");
   for(var q:f.getChecks()){if(empty(q))continue;var opts=options(q);if(!has(q.getPrompt())||opts.size()<2||!has(q.getExplanation())||q.getCorrectOption()==null||q.getCorrectOption()<0||q.getCorrectOption()>=opts.size())throw new BusinessRuleException("Mỗi câu kiểm tra cần câu hỏi, từ 2 đến 6 lựa chọn liên tiếp, đáp án đúng và giải thích");}
-  for(var q:f.getChecks()){boolean gap=false;for(var option:Arrays.asList(q.getOptionA(),q.getOptionB(),q.getOptionC(),q.getOptionD(),q.getOptionE(),q.getOptionF())){if(!has(option))gap=true;else if(gap)throw new BusinessRuleException("Điền lựa chọn liên tiếp từ A, B; không bỏ trống ở giữa");}}
+  for(var q:f.getChecks()){boolean gap=false;for(var option:Arrays.asList(q.getOptionA(),q.getOptionB(),q.getOptionC(),q.getOptionD(),q.getOptionE(),q.getOptionF())){if(!has(option))gap=true;else if(gap)throw new BusinessRuleException("Điền lựa chọn liên tiếp từ A, B. Không bỏ trống ở giữa");}}
   for(var rule:List.of(policy(f.getTranscriptVisibility(),"AFTER_LISTEN"),policy(f.getSampleVisibility(),"AFTER_SUBMIT")))if(!List.of("ALWAYS","AFTER_LISTEN","AFTER_SUBMIT","AFTER_COMPLETE").contains(rule))throw new BusinessRuleException("Thời điểm mở nội dung không hợp lệ");
   if(!"Listening".equals(f.getSkill())&&"AFTER_LISTEN".equals(f.getSampleVisibility()))throw new BusinessRuleException("Chỉ Listening có thể mở bài mẫu sau khi nghe");
   if("PUBLISHED".equals(f.getStatus())&&List.of("Writing","Speaking").contains(f.getSkill())&&!has(f.getPracticePrompt()))throw new BusinessRuleException("Bài Writing / Speaking cần đề thực hành trước khi công bố");

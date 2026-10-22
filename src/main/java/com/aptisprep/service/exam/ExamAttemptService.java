@@ -135,7 +135,7 @@ public class ExamAttemptService implements ExamAttemptContract {
         UserAnswerEntity answer = answers.findByAttemptIdAndQuestionId(attemptId, questionId).orElseThrow(() -> new BusinessRuleException("Câu hỏi không thuộc lượt thi này"));
         JsonNode lockedQuestion = lockedQuestions(attemptId).get(questionId);
         JsonNode lockedItem = chooseLockedItem(lockedQuestion, itemId);
-        QuestionItemEntity item = items.findById(lockedItem.path("id").asInt()).orElseThrow(() -> new ResourceNotFoundException("Ý hỏi không còn tồn tại"));
+        QuestionItemEntity item = items.findById(lockedItem.path("id").asInt()).orElseThrow(() -> new ResourceNotFoundException("Mục câu hỏi không còn tồn tại"));
         String path = audioUploads.store(audioFile, attemptId);
         UserAnswerDetailEntity detail = details.findByUserAnswerIdAndQuestionItemId(answer.getId(), item.getId()).orElseGet(() -> {
             UserAnswerDetailEntity value = new UserAnswerDetailEntity(); value.setUserAnswerId(answer.getId()); value.setQuestionItemId(item.getId()); return value;
@@ -210,7 +210,7 @@ public class ExamAttemptService implements ExamAttemptContract {
         JsonNode lockedQuestion = lockedQuestions(attemptId).get(questionId);
         if (lockedQuestion == null) throw new BusinessRuleException("Câu hỏi không thuộc snapshot của lượt thi");
         JsonNode lockedItem = chooseLockedItem(lockedQuestion, itemId);
-        QuestionItemEntity item = items.findById(lockedItem.path("id").asInt()).orElseThrow(() -> new ResourceNotFoundException("Ý hỏi không còn tồn tại"));
+        QuestionItemEntity item = items.findById(lockedItem.path("id").asInt()).orElseThrow(() -> new ResourceNotFoundException("Mục câu hỏi không còn tồn tại"));
         String questionType = lockedQuestion.path("type").asText();
         UserAnswerDetailEntity detail = details.findByUserAnswerIdAndQuestionItemId(answer.getId(), item.getId()).orElseGet(() -> {
             UserAnswerDetailEntity value = new UserAnswerDetailEntity(); value.setUserAnswerId(answer.getId()); value.setQuestionItemId(item.getId()); return value;
@@ -433,7 +433,7 @@ public class ExamAttemptService implements ExamAttemptContract {
     private JsonNode chooseLockedItem(JsonNode question, Integer itemId) {
         if (question == null || question.isMissingNode()) throw new BusinessRuleException("Câu hỏi không thuộc snapshot của lượt thi");
         for (JsonNode item : question.path("items")) if (itemId == null || item.path("id").asInt() == itemId) return item;
-        throw new ResourceNotFoundException("Ý hỏi không thuộc câu hỏi");
+        throw new ResourceNotFoundException("Mục câu hỏi không thuộc câu hỏi");
     }
 
     private boolean hasLockedOption(JsonNode item, Integer optionId) {
@@ -541,7 +541,7 @@ public class ExamAttemptService implements ExamAttemptContract {
         if (!attempt.getStartedAt().plusMinutes(exam.getDurationMinutes()).isBefore(LocalDateTime.now())) return false;
         attempt.setStatus("EXPIRED"); attempt.setGradingStatus("EXPIRED"); attempts.save(attempt); return true;
     }
-    private QuestionItemEntity chooseItem(Integer questionId, Integer itemId) { return items.findByQuestionIdOrderByPosition(questionId).stream().filter(x -> itemId == null || Objects.equals(x.getId(), itemId)).findFirst().orElseThrow(() -> new ResourceNotFoundException("Câu hỏi chưa có ý hỏi")); }
+    private QuestionItemEntity chooseItem(Integer questionId, Integer itemId) { return items.findByQuestionIdOrderByPosition(questionId).stream().filter(x -> itemId == null || Objects.equals(x.getId(), itemId)).findFirst().orElseThrow(() -> new ResourceNotFoundException("Câu hỏi chưa có mục nào")); }
     private MockExamEntity publishedExam(Integer id) { return exams.findById(id).filter(x -> "PUBLISHED".equals(x.getStatus())).orElseThrow(() -> new ResourceNotFoundException("Đề thi chưa được công bố")); }
     private MockExamEntity examFor(ExamAttemptEntity attempt) { return exams.findById(attempt.getMockExamId()).orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy đề thi")); }
     private User activeUser(Integer id) { User user = users.findById(id).orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy tài khoản")); if (user.getRole() != Role.STUDENT || user.getStatus() != UserStatus.ACTIVE) throw new AccessDeniedException("Tài khoản không còn hoạt động"); return user; }

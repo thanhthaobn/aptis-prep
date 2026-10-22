@@ -4,6 +4,7 @@ import com.aptisprep.dto.view.AdminCatalogPreview.Entry;
 import com.aptisprep.dto.view.AdminCatalogPreview.Field;
 import com.aptisprep.dto.view.AdminCatalogPreview.Module;
 import com.aptisprep.dto.view.AdminCatalogPreview.Row;
+import com.aptisprep.dto.view.AdminCatalogPreview.CatalogPage;
 import com.aptisprep.exception.ResourceNotFoundException;
 import java.text.Normalizer;
 import java.util.List;
@@ -24,7 +25,7 @@ public class AdminCatalogPreviewService {
             new Entry(2003, "Nắm ý chính khi nghe", "Luyện nghe theo chủ đề giao tiếp hằng ngày.", "Listening", "B1", "Bài học", "ARCHIVED", "Đã lưu trữ", "10/10/2026", List.of(new Field("Thời lượng gợi ý", "15 phút")), List.of()))),
         "questions", new Module("questions", "Ngân hàng câu hỏi", "Quản lý nội dung, phương án trả lời và tài nguyên đính kèm.", "câu hỏi", "Thêm câu hỏi", "Dạng câu hỏi", List.of("Chọn một đáp án", "Ghép nối", "Sắp xếp", "Trả lời bằng văn bản", "Trả lời bằng âm thanh"), List.of(
             new Entry(3001, "Chọn từ phù hợp trong câu", "The course provides a very _____ introduction to academic writing.", "Grammar & Vocabulary", "B1", "Chọn một đáp án", "PUBLISHED", "Đã công bố", "16/10/2026",
-                List.of(new Field("Số ý hỏi", "1"), new Field("Phần thi", "1"), new Field("Độ khó", "Trung bình")), List.of(new Row("A. benefit", "Phương án trả lời", ""), new Row("B. useful", "Phương án trả lời", "Đáp án đúng"), new Row("C. success", "Phương án trả lời", ""))),
+                List.of(new Field("Số mục", "1"), new Field("Phần thi", "1"), new Field("Độ khó", "Trung bình")), List.of(new Row("A. benefit", "Phương án trả lời", ""), new Row("B. useful", "Phương án trả lời", "Đáp án đúng"), new Row("C. success", "Phương án trả lời", ""))),
             new Entry(3002, "Viết thư cho câu lạc bộ", "Write an email to your club organiser suggesting a new activity.", "Writing", "B2", "Trả lời bằng văn bản", "DRAFT", "Bản nháp", "15/10/2026", List.of(new Field("Số từ", "120–150 từ"), new Field("Phần thi", "4")), List.of(new Row("Yêu cầu", "Trình bày đề xuất, lý do và lời kết phù hợp.", "Tự luận"))),
             new Entry(3003, "Giới thiệu sở thích", "Tell us about an activity you enjoy in your free time.", "Speaking", "A2", "Trả lời bằng âm thanh", "PUBLISHED", "Đã công bố", "14/10/2026", List.of(new Field("Thời gian trả lời", "30 giây"), new Field("Phần thi", "1")), List.of(new Row("Yêu cầu", "Nêu hoạt động, tần suất và lý do yêu thích.", "Ghi âm"))))),
         "exams", new Module("exams", "Đề thi", "Sắp xếp câu hỏi, thời gian và phạm vi kỹ năng của từng đề.", "đề thi", "Tạo đề thi", "Loại đề", List.of("Kiểm tra đầu vào", "Luyện tập", "Kiểm tra cuối chặng", "Thi thử tổng hợp"), List.of(
@@ -52,6 +53,17 @@ public class AdminCatalogPreviewService {
                 .filter(e -> skill.isBlank() || e.skill().equals(skill))
                 .filter(e -> status.isBlank() || e.status().equals(status))
                 .filter(e -> kind.isBlank() || e.kind().equals(kind)).toList();
+    }
+
+    public CatalogPage findPage(String key, String q, String skill, String status, String kind, int page, int size) {
+        List<Entry> all = find(key, q, skill, status, kind);
+        int safeSize = Math.min(50, Math.max(1, size));
+        int totalItems = all.size();
+        int totalPages = totalItems == 0 ? 0 : (totalItems + safeSize - 1) / safeSize;
+        int safePage = totalPages == 0 ? 0 : Math.min(Math.max(0, page), totalPages - 1);
+        int from = safePage * safeSize;
+        int to = Math.min(from + safeSize, totalItems);
+        return new CatalogPage(all.subList(from, to), safePage, safeSize, totalItems, totalPages);
     }
     private String normalize(String value) {
         return Normalizer.normalize(value.trim(), Normalizer.Form.NFD).replaceAll("\\p{M}", "")

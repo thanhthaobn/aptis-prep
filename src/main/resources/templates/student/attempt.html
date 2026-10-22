@@ -23,10 +23,32 @@
 </noscript>
 
 <style>
-    .question-instruction { margin: -8px 0 18px; color: #58708f; font-size: 1rem; }
-    .reading-passage { margin: 20px 0 24px; padding: 20px 22px; border: 1px solid #c8dce5; border-left: 5px solid #087a9d; border-radius: 12px; background: #f2fbfd; }
-    .reading-passage h3 { margin: 0 0 10px; color: #075c78; font-size: 1.05rem; }
-    .reading-passage-text { white-space: pre-line; line-height: 1.75; color: #263b50; }
+    .question-instruction { margin: 0 0 1.35rem; color: #58708f; font-size: 1rem; line-height: 1.7; letter-spacing: normal; }
+    .reading-passage { margin: 1.5rem 0 1.75rem; padding: 1.25rem 1.4rem; border: 1px solid #c8dce5; border-left: 5px solid #087a9d; border-radius: 14px; background: #f2fbfd; }
+    .reading-passage h3 { margin: 0 0 .7rem; color: #075c78; font-size: 1.05rem; line-height: 1.45; }
+    .reading-passage-text { white-space: pre-line; line-height: 1.8; letter-spacing: normal; color: #263b50; }
+    .media-player { display: grid; gap: .7rem; margin: 1.25rem 0 1.5rem; padding: 1rem 1.1rem; border: 1px solid #c8dce5; border-radius: 14px; background: #f2fbfd; }
+    .media-audio { width: 100%; height: 42px; accent-color: #087a9d; }
+    .media-status { min-height: 1.1rem; font-size: .8rem; }
+    .question-item { margin-top: 1.25rem; padding: 1.45rem 1.5rem 1.55rem; border: 1px solid #dbe7ee; border-radius: 17px; background: linear-gradient(145deg, #ffffff, #f8fbfd); box-shadow: 0 8px 22px rgba(34, 73, 96, .06); }
+    .question-item:first-of-type { margin-top: 1.5rem; }
+    .question-item-header { display: flex; align-items: flex-start; gap: 1rem; margin-bottom: 1.25rem; }
+    .question-item-number { display: grid; flex: 0 0 34px; width: 34px; height: 34px; place-items: center; margin-top: .05rem; color: #fff; background: linear-gradient(135deg, #087a9d, #0f8a78); border-radius: 10px; box-shadow: 0 5px 12px rgba(8, 122, 157, .2); font-size: .95rem; font-weight: 800; }
+    .question-item-prompt { margin: .25rem 0 0; color: #20364d; font-size: 1.02rem; font-weight: 700; line-height: 1.7; letter-spacing: normal; word-spacing: .035em; }
+    .question-item .field { margin-top: 0; }
+    .question-item .field label { margin-bottom: .45rem; color: #50657b; font-size: .82rem; font-weight: 800; letter-spacing: .02em; }
+    .question-item textarea { min-height: 150px; resize: vertical; border-color: #cbdce5; background: #fff; line-height: 1.65; }
+    .question-item textarea:focus { border-color: #087a9d; box-shadow: 0 0 0 3px rgba(8, 122, 157, .12); }
+    .question-item .answer-form { margin: 0; }
+    .question-item .button { margin-top: .9rem; }
+    .question-item .autosave-status { display: inline-block; margin-left: .65rem; font-size: .8rem; }
+    .speaking-recorder { margin: 0; padding: 1rem; border: 1px solid #dbe7ee; border-radius: 13px; background: rgba(255, 255, 255, .78); }
+    .speaking-recorder-label { display: block; margin-bottom: .65rem; color: #50657b; font-size: .82rem; font-weight: 800; letter-spacing: .02em; }
+    .speaking-recorder-actions { display: flex; flex-wrap: wrap; gap: .6rem; align-items: center; }
+    .speaking-recorder-actions .button { margin-top: 0; }
+    .speaking-recorder .recording-status { flex: 1 1 100%; margin: .15rem 0 0; font-size: .82rem; }
+    .speaking-recorder .recording-preview { width: min(100%, 460px); height: 42px; margin-top: .85rem; }
+    @media (max-width: 560px) { .question-item { padding: 1rem; } .question-item-prompt { font-size: .96rem; } .question-item .autosave-status { display: block; margin: .6rem 0 0; } }
 </style>
 
 <div th:replace="~{fragments/navbar :: navbar}"></div>
@@ -45,27 +67,36 @@
         <div class="attempt-media" th:each="media : ${question.media}">
             <img th:if="${media.type == 'IMAGE'}" th:src="@{/student/attempts/{id}/media/{mediaId}/content(id=${attempt.attemptId},mediaId=${media.id})}" th:alt="${media.filename}">
             <div th:if="${media.type == 'AUDIO'}" class="media-player">
-                <button type="button" class="button button-secondary media-play" th:attr="data-play=@{/student/attempts/{id}/media/{mediaId}/play(id=${attempt.attemptId},mediaId=${media.id})},data-content=@{/student/attempts/{id}/media/{mediaId}/content(id=${attempt.attemptId},mediaId=${media.id})}">Nghe audio</button>
-                <audio class="media-audio" preload="none"></audio><span class="media-status muted" aria-live="polite"></span>
+                <audio class="media-audio" controls preload="none" th:attr="data-play=@{/student/attempts/{id}/media/{mediaId}/play(id=${attempt.attemptId},mediaId=${media.id})},data-content=@{/student/attempts/{id}/media/{mediaId}/content(id=${attempt.attemptId},mediaId=${media.id})}">Trình duyệt không hỗ trợ phát audio.</audio>
+                <span class="media-status muted" aria-live="polite">Bấm nút phát để nghe audio.</span>
             </div>
         </div>
         <div th:each="item : ${question.items}" class="question-item">
-            <p class="muted" th:text="|Ý ${item.position}: ${item.content}|"></p>
+            <div class="question-item-header">
+                <span class="question-item-number" th:text="${item.position}" aria-hidden="true"></span>
+                <p class="question-item-prompt" th:text="${item.content}"></p>
+            </div>
             <form class="answer-form" method="post" th:attr="data-autosave=@{/student/attempts/{id}/answers/autosave(id=${attempt.attemptId})}" th:action="@{/student/attempts/{id}/answers(id=${attempt.attemptId})}">
                 <input type="hidden" name="questionId" th:value="${question.questionId}"><input type="hidden" name="itemId" th:value="${item.itemId}">
                 <div th:if="${question.type == 'ORDERING'}" class="field"><label th:for="|position-${item.itemId}|">Vị trí trong thứ tự</label><input type="number" min="1" th:max="${#lists.size(question.items)}" name="userPosition" th:id="|position-${item.itemId}|" th:value="${item.userPosition}"></div>
                 <div th:if="${question.type != 'ORDERING' and !#lists.isEmpty(item.options)}" class="catalog-checkbox">
                     <label th:each="option : ${item.options}"><input type="radio" name="selectedOptionId" th:value="${option.id}" th:checked="${item.selectedOptionId == option.id}"><span th:text="${option.code + ' · ' + option.content}"></span></label>
                 </div>
-                <div class="field" th:if="${question.type == 'WRITING_TEXT'}"><label th:for="|answer-${item.itemId}|">Bài trả lời</label><textarea th:id="|answer-${item.itemId}|" name="textAnswer" rows="6" th:text="${item.textAnswer}"></textarea></div>
-                <button class="button button-secondary" type="submit">Lưu ý trả lời</button>
+                <div class="field" th:if="${question.type == 'WRITING_TEXT'}"><label th:for="|answer-${item.itemId}|">Câu trả lời</label><textarea th:id="|answer-${item.itemId}|" name="textAnswer" rows="6" th:text="${item.textAnswer}"></textarea></div>
+                <button class="button button-secondary" type="submit">Lưu câu trả lời</button>
                 <span class="autosave-status muted" aria-live="polite"></span>
             </form>
-            <form th:if="${question.type == 'SPEAKING_AUDIO'}" method="post" enctype="multipart/form-data" th:action="@{/student/attempts/{id}/answers/audio(id=${attempt.attemptId})}">
-                <input type="hidden" name="questionId" th:value="${question.questionId}"><input type="hidden" name="itemId" th:value="${item.itemId}">
-                <div class="field"><label th:for="|audio-${item.itemId}|">File ghi âm</label><input type="file" accept="audio/*,.webm,.m4a,.mp3,.wav,.ogg" name="audioFile" th:id="|audio-${item.itemId}|" required></div>
-                <span class="muted" th:if="${item.audioSaved}">Đã lưu file ghi âm cho ý hỏi này.</span>
-                <button class="button button-secondary" type="submit">Lưu file ghi âm</button>
+            <form th:if="${question.type == 'SPEAKING_AUDIO'}" class="speaking-recorder" method="post" enctype="multipart/form-data" th:attr="data-audio-action=@{/student/attempts/{id}/answers/audio(id=${attempt.attemptId})},data-question-id=${question.questionId},data-item-id=${item.itemId}">
+                <span class="speaking-recorder-label">Ghi âm câu trả lời trực tiếp</span>
+                <div class="speaking-recorder-actions">
+                    <button class="button button-secondary recording-start" type="button">Bắt đầu ghi</button>
+                    <button class="button button-secondary recording-stop" type="button" disabled>Dừng ghi</button>
+                    <button class="button button-secondary recording-reset" type="button" disabled>Ghi lại</button>
+                    <button class="button recording-save" type="button" disabled>Lưu bản ghi</button>
+                    <span class="recording-status muted" aria-live="polite">Nhấn “Bắt đầu ghi” và cho phép trình duyệt sử dụng microphone.</span>
+                </div>
+                <audio class="recording-preview" controls preload="metadata" hidden></audio>
+                <span class="muted" th:if="${item.audioSaved}">Đã lưu bản ghi cho mục này.</span>
             </form>
         </div>
     </section>
@@ -108,11 +139,52 @@
     let interval; const tick = () => { const seconds = Math.max(0, Math.ceil((deadline - Date.now()) / 1000)); display.textContent = String(Math.floor(seconds / 60)).padStart(2, '0') + ':' + String(seconds % 60).padStart(2, '0'); if (!seconds) { if (interval) clearInterval(interval); submit(true); } };
     tick(); interval = setInterval(tick, 500);
   }
-  document.querySelectorAll('.media-play').forEach(button => button.addEventListener('click', async () => {
-    const player = button.parentElement.querySelector('.media-audio'); const status = button.parentElement.querySelector('.media-status');
-    button.disabled = true; status.textContent = 'Đang kiểm tra lượt nghe…';
-    try { const response = await fetch(button.dataset.play, {method: 'POST', headers: {'X-CSRF-TOKEN': csrf, 'Accept': 'application/json'}}); const result = await response.json(); if (!response.ok) throw new Error(result.message || 'Không thể phát audio'); player.src = button.dataset.content + '?token=' + encodeURIComponent(result.contentToken); player.onended = () => { if (result.playCount < result.maxPlayCount) button.disabled = false; }; await player.play(); status.textContent = `Đã dùng ${result.playCount}/${result.maxPlayCount} lượt nghe`; } catch (error) { button.disabled = false; status.textContent = error.message; }
-  }));
+  document.querySelectorAll('.media-audio').forEach(player => {
+    const status = player.parentElement.querySelector('.media-status'); let tokenReady = false; let loading = false; let exhausted = false;
+    player.addEventListener('play', async () => {
+      if (tokenReady || loading) return;
+      if (exhausted) { player.pause(); status.textContent = 'Đã dùng hết số lượt nghe cho audio này.'; return; }
+      player.pause(); loading = true; status.textContent = 'Đang kiểm tra lượt nghe…';
+      try { const response = await fetch(player.dataset.play, {method: 'POST', headers: {'X-CSRF-TOKEN': csrf, 'Accept': 'application/json'}}); const result = await response.json(); if (!response.ok) throw new Error(result.message || 'Không thể phát audio'); player.src = player.dataset.content + '?token=' + encodeURIComponent(result.contentToken); tokenReady = true; status.textContent = `Đã dùng ${result.playCount}/${result.maxPlayCount} lượt nghe`; await player.play(); player.dataset.playCount = result.playCount; player.dataset.maxPlayCount = result.maxPlayCount; } catch (error) { status.textContent = error.message || 'Không thể phát audio'; } finally { loading = false; }
+    });
+    player.addEventListener('ended', () => { tokenReady = false; const playCount = Number(player.dataset.playCount || 0); const maxPlayCount = Number(player.dataset.maxPlayCount || 0); exhausted = maxPlayCount > 0 && playCount >= maxPlayCount; if (exhausted) status.textContent = `Đã dùng hết ${maxPlayCount} lượt nghe.`; else status.textContent = `Bạn còn ${Math.max(0, maxPlayCount - playCount)} lượt nghe.`; });
+  });
+  document.querySelectorAll('.speaking-recorder').forEach(box => {
+    const start = box.querySelector('.recording-start');
+    const stop = box.querySelector('.recording-stop');
+    const reset = box.querySelector('.recording-reset');
+    const saveRecording = box.querySelector('.recording-save');
+    const preview = box.querySelector('.recording-preview');
+    const status = box.querySelector('.recording-status');
+    let recorder; let stream; let chunks = []; let recordingBlob; let previewUrl;
+    const supportedMime = ['audio/webm;codecs=opus', 'audio/webm', 'audio/mp4', 'audio/ogg;codecs=opus'].find(type => window.MediaRecorder?.isTypeSupported?.(type));
+    const extension = () => recorder?.mimeType.includes('mp4') ? 'm4a' : recorder?.mimeType.includes('ogg') ? 'ogg' : 'webm';
+    const setStatus = message => { status.textContent = message; };
+    const clearPreview = () => { if (previewUrl) URL.revokeObjectURL(previewUrl); previewUrl = null; preview.removeAttribute('src'); preview.hidden = true; };
+    start.addEventListener('click', async () => {
+      if (!navigator.mediaDevices?.getUserMedia || !window.MediaRecorder) { setStatus('Trình duyệt không hỗ trợ ghi âm trực tiếp.'); return; }
+      start.disabled = true; reset.disabled = true; saveRecording.disabled = true; setStatus('Đang chờ quyền microphone…');
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({audio: true});
+        chunks = []; recorder = supportedMime ? new MediaRecorder(stream, {mimeType: supportedMime}) : new MediaRecorder(stream);
+        recorder.ondataavailable = event => { if (event.data.size) chunks.push(event.data); };
+        recorder.onstop = () => {
+          recordingBlob = new Blob(chunks, {type: recorder.mimeType || 'audio/webm'});
+          clearPreview(); previewUrl = URL.createObjectURL(recordingBlob); preview.src = previewUrl; preview.hidden = false;
+          reset.disabled = false; saveRecording.disabled = false; stream?.getTracks().forEach(track => track.stop()); stream = null; setStatus('Đã ghi xong. Hãy nghe lại trước khi lưu.');
+        };
+        recorder.onerror = () => { stream?.getTracks().forEach(track => track.stop()); stream = null; start.disabled = false; stop.disabled = true; setStatus('Không thể hoàn tất bản ghi. Vui lòng thử lại.'); };
+        recorder.start(); stop.disabled = false; setStatus('Đang ghi âm…');
+      } catch (error) { stream?.getTracks().forEach(track => track.stop()); stream = null; start.disabled = false; setStatus('Không thể dùng microphone. Hãy kiểm tra quyền của trình duyệt.'); }
+    });
+    stop.addEventListener('click', () => { if (recorder?.state === 'recording') { recorder.stop(); stop.disabled = true; start.disabled = false; } });
+    reset.addEventListener('click', () => { recordingBlob = null; clearPreview(); reset.disabled = true; saveRecording.disabled = true; start.disabled = false; setStatus('Bản ghi đã được xóa. Bạn có thể ghi lại.'); });
+    saveRecording.addEventListener('click', async () => {
+      if (!recordingBlob) return; saveRecording.disabled = true; reset.disabled = true; setStatus('Đang lưu bản ghi…');
+      const data = new FormData(); data.append('questionId', box.dataset.questionId); data.append('itemId', box.dataset.itemId); data.append('audioFile', recordingBlob, `speaking-${box.dataset.itemId}.${extension()}`);
+      try { const response = await fetch(box.dataset.audioAction, {method: 'POST', headers: {'X-CSRF-TOKEN': csrf}, body: data}); if (!response.ok) throw new Error(); window.location.href = response.url; } catch (error) { saveRecording.disabled = false; reset.disabled = false; setStatus('Chưa thể lưu bản ghi. Vui lòng thử lại.'); }
+    });
+  });
 })();
 </script>
 </body></html>

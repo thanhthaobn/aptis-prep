@@ -32,16 +32,16 @@
         </form>
         <div class="section-title-row"><h2>Danh sách học viên</h2><span class="muted" th:text="|${pageData.totalItems} kết quả|">0 kết quả</span></div>
         <div class="table-wrap" th:if="${!#lists.isEmpty(pageData.items)}">
-            <table class="data-table student-table">
+            <table class="data-table student-table admin-responsive-table">
                 <caption class="student-sr-only">Danh sách học viên</caption>
                 <thead><tr><th scope="col">Học viên</th><th scope="col">Ngày tham gia</th><th scope="col">Mục tiêu</th><th scope="col">Tiến độ</th><th scope="col">Trạng thái</th><th scope="col">Thao tác</th></tr></thead>
                 <tbody><tr th:each="student : ${pageData.items}">
-                    <td><div class="student-identity"><span class="student-avatar" th:text="${student.initials}">MA</span><div><strong th:text="${student.fullName}">Tên học viên</strong><span th:text="${student.email}">Email</span></div></div></td>
-                    <td th:text="${student.joinedDate}"></td>
-                    <td th:text="${student.targetLevel}"></td>
-                    <td><span class="muted">Xem chi tiết để xem tiến độ</span></td>
-                    <td><span class="student-status" th:classappend="${student.statusClass()}" th:text="${student.statusLabel()}"></span></td>
-                    <td><a class="button button-secondary button-small" th:href="@{/admin/students/{id}(id=${student.id})}">Xem chi tiết</a></td>
+                    <td data-label="Học viên"><div class="student-identity"><span class="student-avatar" th:text="${student.initials}">MA</span><div><strong th:text="${student.fullName}">Tên học viên</strong><span th:text="${student.email}">Email</span></div></div></td>
+                    <td data-label="Ngày tham gia" th:text="${student.joinedDate}"></td>
+                    <td data-label="Mục tiêu" th:text="${student.targetLevel}"></td>
+                    <td data-label="Tiến độ"><span class="muted">Xem chi tiết để xem tiến độ</span></td>
+                    <td data-label="Trạng thái"><span class="student-status" th:classappend="${student.statusClass()}" th:text="${student.statusLabel()}"></span></td>
+                    <td data-label="Thao tác"><a class="button button-secondary button-small" th:href="@{/admin/students/{id}(id=${student.id})}">Xem chi tiết</a></td>
                 </tr></tbody>
             </table>
         </div>

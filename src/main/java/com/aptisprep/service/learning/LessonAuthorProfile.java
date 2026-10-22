@@ -22,7 +22,7 @@ public record LessonAuthorProfile(
                             "Gợi ý phân tích bài đọc",
                             "Tiêu chí tự kiểm tra",
                             "Gợi ý đọc hiểu",
-                            "Ảnh đặt cạnh bài đọc. Video hướng dẫn ở trước phần đọc; câu hỏi ở ngay"
+                            "Ảnh đặt cạnh bài đọc. Video hướng dẫn ở trước phần đọc. Câu hỏi ở ngay"
                                 + " sau bài đọc.",
                             List.of("Đọc hiểu", "Đọc tìm thông tin", "Nhận diện ý chính"));
             case "Listening" ->
@@ -66,7 +66,7 @@ public record LessonAuthorProfile(
                             "Giải thích ví dụ",
                             "Tiêu chí tự kiểm tra",
                             "Gợi ý vận dụng",
-                            "Ảnh minh họa đặt cạnh ví dụ. Video hướng dẫn ở trước ví dụ; trắc"
+                            "Ảnh minh họa đặt cạnh ví dụ. Video hướng dẫn ở trước ví dụ. Trắc"
                                 + " nghiệm ở phần luyện tập.",
                             List.of("Ngữ pháp trong ngữ cảnh", "Từ vựng theo chủ đề"));
         };

@@ -79,7 +79,7 @@ public class AdminLessonController {
     @PostMapping("/{id}/archive")
     public String archive(@PathVariable Integer id, RedirectAttributes r) {
         service.archive(id);
-        r.addFlashAttribute("message", "Đã lưu trữ bài học; lịch sử học vẫn được giữ lại");
+        r.addFlashAttribute("message", "Đã lưu trữ bài học. Lịch sử học vẫn được giữ lại");
         return "redirect:/admin/lessons/" + id;
     }
 
