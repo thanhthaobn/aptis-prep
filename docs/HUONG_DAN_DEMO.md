@@ -1,5 +1,9 @@
 # Hướng dẫn demo AptisPrep — phần bài học, flashcard và lộ trình
 
+> Muốn chạy theo checklist ngắn, đúng thứ tự thao tác và có tiêu chí đạt/rớt,
+> dùng [Runbook demo](DEMO_RUNBOOK.md). Cấu hình phản hồi AI xem
+> [AI_SETUP.md](AI_SETUP.md).
+
 > Cập nhật: bộ nội dung tên tự nhiên đã được nhập sẵn. Xem
 > [Bộ nội dung thư viện](BO_NOI_DUNG_THU_VIEN.md) để dùng ID và đáp án thực tế.
 > Không cần tạo thêm các bài `[DEMO]` theo ví dụ dưới đây. Các bài QA 35–39 đã

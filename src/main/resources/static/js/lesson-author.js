@@ -27,7 +27,26 @@
 
  const list=document.getElementById('question-list'),add=document.getElementById('add-question'),template=document.getElementById('question-template'),empty=document.getElementById('no-question');
  function reindex(){const rows=[...list.querySelectorAll('.lesson-question-editor')];rows.forEach((row,index)=>{row.dataset.questionIndex=index;row.querySelector('legend').textContent=`Câu ${index+1}`;row.querySelectorAll('[name]').forEach(el=>el.name=el.name.replace(/checks\[\d+\]/,`checks[${index}]`));row.querySelectorAll('[id]').forEach(el=>el.id=el.id.replace(/checks\d+/,`checks${index}`));});empty.hidden=rows.length>0;add.disabled=rows.length>=20;}
- function wire(row){row.querySelector('.remove-question').addEventListener('click',()=>{row.remove();reindex();});}
+ function optionRows(row){return [...row.querySelectorAll('.question-option')];}
+ function refreshOptions(row){
+  const options=optionRows(row),visible=options.filter(option=>!option.hidden).length,correct=row.querySelector('.correct-option');
+  options.forEach((option,index)=>{const choice=correct?.querySelector(`option[value="${index}"]`);if(choice)choice.hidden=option.hidden;});
+  row.querySelector('.add-option').disabled=visible>=6;
+ }
+ function removeOption(row,index){
+  const options=optionRows(row),correct=row.querySelector('.correct-option'),visible=options.filter(option=>!option.hidden).length;if(index<2||visible<=2)return;
+  for(let i=index;i<options.length-1;i++)options[i].querySelector('textarea').value=options[i+1].hidden?'':options[i+1].querySelector('textarea').value;
+  const lastVisible=visible-1;options[lastVisible].querySelector('textarea').value='';options[lastVisible].hidden=true;
+  if(correct.value!==''&&Number(correct.value)===index)correct.value='';else if(correct.value!==''&&Number(correct.value)>index)correct.value=String(Number(correct.value)-1);
+  refreshOptions(row);
+ }
+ function wire(row){
+  row.querySelector('.remove-question').addEventListener('click',()=>{row.remove();reindex();});
+  const options=optionRows(row);let visible=Math.max(2,options.reduce((count,option,index)=>count+(index<2||option.querySelector('textarea').value.trim()?1:0),0));
+  options.forEach((option,index)=>{option.hidden=index>=visible;option.querySelector('.remove-option')?.addEventListener('click',()=>removeOption(row,index));});
+  row.querySelector('.add-option').addEventListener('click',()=>{const next=options.find(option=>option.hidden);if(next){next.hidden=false;next.querySelector('textarea').focus();refreshOptions(row);}});
+  refreshOptions(row);
+ }
  list.querySelectorAll('.lesson-question-editor').forEach(wire);
  add.addEventListener('click',()=>{if(list.children.length>=20)return;const row=template.content.firstElementChild.cloneNode(true),index=list.children.length;row.querySelectorAll('[data-field]').forEach(el=>{const field=el.dataset.field;el.name=`checks[${index}].${field}`;el.id=`checks${index}.${field}`;});list.appendChild(row);wire(row);reindex();row.querySelector('textarea').focus();});
  reindex();

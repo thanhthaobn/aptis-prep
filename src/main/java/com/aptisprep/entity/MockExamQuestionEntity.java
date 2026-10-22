@@ -8,17 +8,20 @@ public class MockExamQuestionEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
+
     @Column(name = "mock_exam_id", nullable = false)
     private Integer mockExamId;
+
     @Column(name = "mock_exam_section_id")
     private Integer mockExamSectionId;
+
     @Column(name = "question_id", nullable = false)
     private Integer questionId;
+
     @Column(nullable = false)
     private int position;
 
-    public MockExamQuestionEntity() {
-    }
+    public MockExamQuestionEntity() {}
 
     public Integer getId() {
         return id;

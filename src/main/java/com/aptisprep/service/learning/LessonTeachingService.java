@@ -36,9 +36,9 @@ public class LessonTeachingService {
  private static boolean released(String rule,boolean submitted,boolean completed,boolean played,boolean noSubmission){return switch(rule){case "ALWAYS"->true;case "AFTER_LISTEN"->played;case "AFTER_SUBMIT"->submitted||noSubmission&&completed;case "AFTER_COMPLETE"->completed;default->false;};}
  private static String releaseHint(String rule){return switch(rule){case "AFTER_LISTEN"->"Mở sau khi nghe ít nhất 90% bài nghe.";case "AFTER_SUBMIT"->"Mở sau khi nộp bài; nếu bài không có phần nộp, mở sau khi hoàn thành.";case "AFTER_COMPLETE"->"Mở sau khi hoàn thành bài học.";default->"Có thể xem ngay.";};}
  public boolean canAssess(Integer id,String email){
-  if(!aiProperties.isEnabled()||!has(aiProperties.getApiKey()))return false;
-  var work=savedWork(id,email).orElse(null);return work!=null&&has(work.getText())&&submissionHistory(id,email).stream().anyMatch(s->Objects.equals(s.getText(),work.getText())&&Objects.equals(s.getAudioPath(),work.getAudioPath()));
+  return aiAvailable()&&!assessableSubmissions(id,email).isEmpty();
  }
+ public boolean aiAvailable(){return aiProperties.isEnabled()&&has(aiProperties.getApiKey());}
  public record HistoricalMedia(String path,String kind){}
  public HistoricalMedia historicalMedia(Integer lessonId,Integer historyId,String kind,String email,boolean quiz){
   var u=user(email);LessonContextSnapshot snapshot;
@@ -66,9 +66,13 @@ public class LessonTeachingService {
   em.persist(new LessonWorkSubmission(u.getId(),lesson,r));
  }
  public record AttemptView(Integer id,int score,int total,java.time.LocalDateTime submittedAt,List<AnswerFeedback> answers,LessonContextSnapshot context){}
- public record CompletionState(boolean hasQuestions,boolean checkSubmitted,boolean needsResponse,boolean responseSaved,boolean needsAudio,boolean audioPlayed,boolean eligible){public String message(){if(!checkSubmitted&&hasQuestions)return "Hãy đạt ít nhất 60% phần kiểm tra kiến thức";if(needsResponse&&!responseSaved)return "Hãy lưu bài viết hoặc bản ghi Speaking vào lịch sử";if(needsAudio&&!audioPlayed)return "Hãy nghe ít nhất 90% bài nghe";return "Đã đủ điều kiện hoàn thành";}}
+ public record CompletionState(boolean hasQuestions,boolean checkSubmitted,boolean needsResponse,boolean responseSaved,boolean needsAudio,boolean audioPlayed,boolean eligible){public String message(String skill){if(!checkSubmitted&&hasQuestions)return "Hãy đạt ít nhất 60% phần kiểm tra kiến thức";if(needsResponse&&!responseSaved)return "Speaking".equals(skill)?"Hãy ghi âm và lưu bản ghi để hoàn thành bài nói":"Hãy nhập và nộp bài viết để hoàn thành bài học";if(needsAudio&&!audioPlayed)return "Hãy nghe ít nhất 90% bài nghe";return "Đã đủ điều kiện hoàn thành";}}
  public List<AttemptView> history(Integer lessonId,String email){var u=user(email);return attempts.findByUserIdAndLessonIdOrderBySubmittedAtDesc(u.getId(),lessonId).stream().map(a->new AttemptView(a.getId(),a.getScore(),a.getTotal(),a.getSubmittedAt(),has(a.getReviewJson())?List.of(new tools.jackson.databind.ObjectMapper().readValue(a.getReviewJson(),AnswerFeedback[].class)):List.of(),a.getContext())).toList();}
  public List<LessonWorkSubmission> submissionHistory(Integer lessonId,String email){var u=user(email);return em.createQuery("select s from LessonWorkSubmission s where s.userId=:user and s.lessonId=:lesson order by s.submittedAt desc,s.id desc",LessonWorkSubmission.class).setParameter("user",u.getId()).setParameter("lesson",lessonId).getResultList();}
+ public List<LessonWorkSubmission> assessableSubmissions(Integer lessonId,String email){
+  var lesson=lessons.findById(lessonId).orElseThrow();
+  return submissionHistory(lessonId,email).stream().filter(s->has(s.getText())&&(!"Speaking".equals(lesson.getSkill())||has(s.getAudioPath()))).toList();
+ }
  public String submissionAudio(Integer lessonId,Integer submissionId,String email){var u=user(email);var s=em.find(LessonWorkSubmission.class,submissionId);if(s==null||!Objects.equals(s.getUserId(),u.getId())||!Objects.equals(s.getLessonId(),lessonId)||!has(s.getAudioPath()))throw new ResourceNotFoundException("Không tìm thấy bản ghi");return s.getAudioPath();}
  public void submitResponse(Integer lessonId,String text,String email){
   saveResponse(lessonId,text,email);var u=user(email);var lesson=lessons.findById(lessonId).orElseThrow();var work=responses.findByUserIdAndLessonId(u.getId(),lessonId).orElseThrow();
@@ -99,18 +103,18 @@ public class LessonTeachingService {
   var r=responses.findByUserIdAndLessonId(u.getId(),lessonId).orElseGet(LessonResponse::new);if(!java.util.Objects.equals(r.getText(),text)){r.setResponseVersion((r.getResponseVersion()==null?0:r.getResponseVersion())+1);r.setAssessmentKey(null);}r.setUserId(u.getId());r.setLessonId(lessonId);r.setText(text);r.setUpdatedAt(java.time.LocalDateTime.now());responses.save(r);
  }
  @org.springframework.transaction.annotation.Transactional(propagation=org.springframework.transaction.annotation.Propagation.NOT_SUPPORTED)
- public String assess(Integer lessonId,String email){
+ public String assess(Integer lessonId,Integer submissionId,String email){
   if(!aiProperties.isEnabled()||!has(aiProperties.getApiKey()))throw new BusinessRuleException("Phản hồi AI chưa được bật");
   var u=user(email);if(u.getStatus()!=UserStatus.ACTIVE||u.getRole()!=Role.STUDENT)throw new BusinessRuleException("Tài khoản không được phép học");
   var lesson=lessons.findById(lessonId).filter(l->"PUBLISHED".equals(l.getStatus())&&List.of("Writing","Speaking").contains(l.getSkill())).orElseThrow(()->new ResourceNotFoundException("Không tìm thấy bài tự luận"));
   var response=responses.findByUserIdAndLessonId(u.getId(),lessonId).orElseThrow(()->new BusinessRuleException("Hãy lưu bài làm trước khi yêu cầu chấm"));
-  if(!has(response.getText()))throw new BusinessRuleException("Writing cần bài viết; Speaking cần transcript trước khi chấm");
-  if("Speaking".equals(lesson.getSkill())&&!has(response.getAudioPath()))throw new BusinessRuleException("Hãy lưu bản ghi Speaking trước khi yêu cầu chấm");
-  var submitted=submissionHistory(lessonId,email).stream().filter(s->Objects.equals(s.getText(),response.getText())&&Objects.equals(s.getAudioPath(),response.getAudioPath())).findFirst().orElseThrow(()->new BusinessRuleException("Hãy lưu bài viết hoặc transcript vào lịch sử trước khi yêu cầu chấm"));
-  int version=response.getResponseVersion()==null?1:response.getResponseVersion();String key="lesson-"+lessonId+"-user-"+u.getId()+"-v"+version;
+  var submitted=Optional.ofNullable(em.find(LessonWorkSubmission.class,submissionId)).filter(s->Objects.equals(s.getUserId(),u.getId())&&Objects.equals(s.getLessonId(),lessonId)).orElseThrow(()->new BusinessRuleException("Bài làm được chọn không hợp lệ"));
+  if(!has(submitted.getText()))throw new BusinessRuleException("Bài làm được chọn chưa có nội dung để chấm");
+  if("Speaking".equals(lesson.getSkill())&&!has(submitted.getAudioPath()))throw new BusinessRuleException("Bản Speaking được chọn chưa có bản ghi âm");
+  int version=submitted.getId();String key="lesson-"+lessonId+"-submission-"+submitted.getId();
   String prompt=has(submitted.getPrompt())?submitted.getPrompt():lesson.getTitle();
-  var request=new AiAssessmentContract.AssessmentRequest(key,u.getId(),response.getId(),response.getId(),version,lesson.getSkill().toUpperCase(Locale.ROOT),lesson.getSkill().toUpperCase(Locale.ROOT),prompt,response.getText(),"lesson-v1","learning-feedback-v1",BigDecimal.valueOf(50),"Speaking".equals(lesson.getSkill())?response.getText():null);
-  assessments.request(request);response.setAssessmentKey(key);responses.save(response);assessments.process(key);return key;
+  var request=new AiAssessmentContract.AssessmentRequest(key,u.getId(),response.getId(),response.getId(),version,lesson.getSkill().toUpperCase(Locale.ROOT),lesson.getSkill().toUpperCase(Locale.ROOT),prompt,submitted.getText(),"lesson-v1","learning-feedback-v1",BigDecimal.valueOf(50),"Speaking".equals(lesson.getSkill())?submitted.getText():null);
+  assessments.request(request);assessments.process(key);return key;
  }
  public record CheckView(Integer id,String prompt,List<String> options){}
  public record AnswerFeedback(String prompt,String selected,String correct,boolean right,String explanation,List<String> options){}
