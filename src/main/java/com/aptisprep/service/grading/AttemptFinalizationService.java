@@ -7,6 +7,7 @@ import com.aptisprep.entity.MockExamEntity;
 import com.aptisprep.entity.QuestionEntity;
 import com.aptisprep.entity.UserAnswerEntity;
 import com.aptisprep.enums.AiJobState;
+import com.aptisprep.enums.AiAssessmentState;
 import com.aptisprep.event.AiAssessmentCompletedEvent;
 import com.aptisprep.event.AttemptSubmittedEvent;
 import com.aptisprep.event.AttemptCompletedEvent;
@@ -14,6 +15,7 @@ import com.aptisprep.exception.AccessDeniedException;
 import com.aptisprep.exception.BusinessRuleException;
 import com.aptisprep.exception.ResourceNotFoundException;
 import com.aptisprep.repository.AiAssessmentJobRepository;
+import com.aptisprep.repository.AiAssessmentRepository;
 import com.aptisprep.repository.ExamAttemptRepository;
 import com.aptisprep.repository.ExamSkillResultRepository;
 import com.aptisprep.repository.MockExamRepository;
@@ -42,6 +44,7 @@ import org.springframework.transaction.annotation.Transactional;
 /** Owner: Thông. Combines accepted grading components and owns the final attempt state. */
 @Service
 public class AttemptFinalizationService {
+    private static final int MAX_AI_RETRIES = 3;
     private final ExamAttemptRepository attempts;
     private final ExamSkillResultRepository skillResults;
     private final MockExamRepository exams;
@@ -50,6 +53,7 @@ public class AttemptFinalizationService {
     private final ExamAttemptSnapshotRepository snapshots;
     private final AiAssessmentContract ai;
     private final AiAssessmentJobRepository jobs;
+    private final AiAssessmentRepository assessments;
     private final ScoringPolicyContract scoring;
     private final AttemptOutboxService outbox;
     private final ApplicationEventPublisher events;
@@ -58,7 +62,8 @@ public class AttemptFinalizationService {
     public AttemptFinalizationService(ExamAttemptRepository attempts, ExamSkillResultRepository skillResults,
             MockExamRepository exams, UserAnswerRepository answers, QuestionRepository questions,
             ExamAttemptSnapshotRepository snapshots, AiAssessmentContract ai,
-            AiAssessmentJobRepository jobs, ScoringPolicyContract scoring, AttemptOutboxService outbox,
+            AiAssessmentJobRepository jobs, AiAssessmentRepository assessments,
+            ScoringPolicyContract scoring, AttemptOutboxService outbox,
             ApplicationEventPublisher events,
             PlatformTransactionManager transactionManager) {
         this.attempts = attempts;
@@ -69,6 +74,7 @@ public class AttemptFinalizationService {
         this.snapshots = snapshots;
         this.ai = ai;
         this.jobs = jobs;
+        this.assessments = assessments;
         this.scoring = scoring;
         this.outbox = outbox;
         this.events = events;
@@ -155,8 +161,41 @@ public class AttemptFinalizationService {
         if (assessment.transcript() != null) answer.setTranscript(assessment.transcript());
         answers.save(answer);
 
-        result.setSubjectiveRawScore(assessment.score());
-        BigDecimal raw = aggregateRaw(result.getObjectiveRawScore(), assessment.score());
+        List<AiAssessmentJob> skillJobs = jobs.findByAttemptIdAndAnswerVersion(attempt.getId(), attempt.getAnswerVersion()).stream()
+                .filter(job -> question.getSkill().equalsIgnoreCase(job.getSkill()))
+                .toList();
+        List<BigDecimal> subjectiveScores = skillJobs.stream()
+                .map(job -> assessments.findFirstByJobIdAndAnswerVersionOrderByIdDesc(job.getId(), job.getAnswerVersion()).orElse(null))
+                .filter(Objects::nonNull)
+                .filter(value -> value.getState() == AiAssessmentState.COMPLETED && value.getScore() != null)
+                .map(com.aptisprep.entity.AiAssessment::getScore)
+                .toList();
+        long expected = subjectiveAnswers(attempt.getId(), question.getSkill());
+        if (subjectiveScores.size() < expected) {
+            boolean failedAssessment = skillJobs.stream().anyMatch(job -> {
+                if (job.getState() == AiJobState.ERROR) return true;
+                return assessments.findFirstByJobIdAndAnswerVersionOrderByIdDesc(job.getId(), job.getAnswerVersion())
+                        .map(value -> value.getState() == AiAssessmentState.ERROR)
+                        .orElse(false);
+            });
+            if (failedAssessment) {
+                result.setGradingStatus("ERROR");
+                result.setGradingMethod(result.getObjectiveRawScore() == null ? "AI_ERROR" : "OBJECTIVE_ERROR");
+                result.setRawScore(null); result.setScaleScore(null); result.setCefrLevel(null);
+                skillResults.save(result);
+                attempt.setStatus("ERROR"); attempt.setGradingStatus("ERROR"); attempts.save(attempt);
+                return;
+            }
+            result.setGradingStatus("WAITING");
+            result.setGradingMethod("AI_PENDING");
+            result.setRawScore(null); result.setScaleScore(null); result.setCefrLevel(null);
+            skillResults.save(result);
+            return;
+        }
+        BigDecimal subjective = subjectiveScores.stream().reduce(BigDecimal.ZERO, BigDecimal::add)
+                .divide(BigDecimal.valueOf(subjectiveScores.size()), 2, RoundingMode.HALF_UP);
+        result.setSubjectiveRawScore(subjective);
+        BigDecimal raw = aggregateRaw(result.getObjectiveRawScore(), subjective);
         result.setRawScore(raw);
         Integer schemeId = attempt.getScoringSchemeId() == null ? exam(attempt).getScoringSchemeId() : attempt.getScoringSchemeId();
         result.setScaleScore(scoring.scale(schemeId, question.getSkill(), raw));
@@ -172,6 +211,38 @@ public class AttemptFinalizationService {
         }
         skillResults.save(result);
         if (finalizeIfReady(attempt, exam(attempt))) publishCompleted(attempt, exam(attempt));
+    }
+
+    @Transactional
+    public void markSubjectiveUnavailable(AttemptSubmittedEvent event, String reason) {
+        if (event == null || event.lockedAttempt() == null || !accepts(event)) return;
+        Set<String> unavailableSkills = new HashSet<>();
+        for (LockedAnswer answer : event.lockedAttempt().answers()) {
+            if (("WRITING_TEXT".equals(answer.questionType()) || "SPEAKING_AUDIO".equals(answer.questionType()))
+                    && (answer.lockedContent() == null || answer.lockedContent().isBlank())) {
+                unavailableSkills.add(answer.skill());
+            }
+        }
+        if (reason != null) {
+            for (LockedAnswer answer : event.lockedAttempt().answers()) {
+                if ("WRITING_TEXT".equals(answer.questionType()) || "SPEAKING_AUDIO".equals(answer.questionType())) {
+                    unavailableSkills.add(answer.skill());
+                }
+            }
+        }
+        if (unavailableSkills.isEmpty()) return;
+        ExamAttemptEntity attempt = attempts.findByIdAndUserIdForUpdate(event.attemptId(), event.userId()).orElseThrow();
+        for (String skill : unavailableSkills) {
+            ExamSkillResultEntity result = skillResults.findByAttemptIdAndSkill(attempt.getId(), skill).orElseGet(() -> {
+                ExamSkillResultEntity value = new ExamSkillResultEntity(); value.setAttemptId(attempt.getId()); value.setSkill(skill); return value;
+            });
+            result.setGradingMethod(reason == null ? "AI_EMPTY" : reason);
+            result.setGradingStatus("ERROR"); result.setRawScore(null); result.setScaleScore(null); result.setCefrLevel(null);
+            skillResults.save(result);
+        }
+        if (!unavailableSkills.isEmpty()) {
+            attempt.setStatus("ERROR"); attempt.setGradingStatus("ERROR"); attempts.save(attempt);
+        }
     }
 
     /** Rejects stale, cross-attempt or client-shaped submission snapshots before AI work starts. */
@@ -226,7 +297,10 @@ public class AttemptFinalizationService {
         if (!"ERROR".equals(attempt.getStatus())) {
             throw new BusinessRuleException("Lượt thi này không có phần chấm lỗi");
         }
-        List<AiAssessmentJob> failed = jobs.findByAttemptIdAndState(attemptId, AiJobState.ERROR);
+        List<AiAssessmentJob> failed = jobs.findByAttemptIdAndAnswerVersionAndState(
+                        attemptId, attempt.getAnswerVersion(), AiJobState.ERROR).stream()
+                .filter(job -> job.getRetryCount() < MAX_AI_RETRIES)
+                .toList();
         if (failed.isEmpty()) throw new BusinessRuleException("Không tìm thấy tác vụ AI lỗi để thử lại");
         List<String> keys = new ArrayList<>();
         for (AiAssessmentJob job : failed) {
@@ -248,6 +322,15 @@ public class AttemptFinalizationService {
         if (objective == null) return subjective;
         if (subjective == null) return objective;
         return objective.add(subjective).divide(BigDecimal.valueOf(2), 2, RoundingMode.HALF_UP);
+    }
+
+    private long subjectiveAnswers(Integer attemptId, String skill) {
+        return answers.findByAttemptIdOrderByQuestionIdAsc(attemptId).stream()
+                .map(answer -> questions.findById(answer.getQuestionId()).orElse(null))
+                .filter(Objects::nonNull)
+                .filter(question -> skill.equalsIgnoreCase(question.getSkill()))
+                .filter(question -> "WRITING_TEXT".equals(question.getQuestionType()) || "SPEAKING_AUDIO".equals(question.getQuestionType()))
+                .count();
     }
 
     private boolean isComplete(ExamSkillResultEntity result) {

@@ -2,6 +2,7 @@ package com.aptisprep.controller.admin;
 
 import com.aptisprep.dto.form.ExamForm;
 import com.aptisprep.dto.form.QuestionForm;
+import com.aptisprep.dto.view.AdminCatalogPreview.CatalogPage;
 import com.aptisprep.dto.view.AdminCatalogPreview.Entry;
 import com.aptisprep.exception.BusinessRuleException;
 import com.aptisprep.exception.ResourceNotFoundException;
@@ -28,14 +29,17 @@ public class AdminCatalogPreviewController {
     @GetMapping("/{module:questions|exams}")
     public String list(@PathVariable String module, @RequestParam(defaultValue = "") String q,
                        @RequestParam(defaultValue = "") String skill, @RequestParam(defaultValue = "") String status,
-                       @RequestParam(defaultValue = "") String kind, Model model) {
+                       @RequestParam(defaultValue = "") String kind, @RequestParam(defaultValue = "0") int page,
+                       @RequestParam(defaultValue = "10") int size, Model model) {
         if (q.length() > 255 || skill.length() > 80 || status.length() > 40 || kind.length() > 80)
             throw new BusinessRuleException("Bộ lọc không hợp lệ");
         addModule(module, model);
-        List<Entry> entries = isReal(module) && catalogService.hasData(module)
-                ? catalogService.find(module, q, skill, status, kind)
-                : catalogFallback ? preview.find(module, q, skill, status, kind) : List.of();
-        model.addAttribute("entries", entries);
+        CatalogPage pageData = isReal(module) && catalogService.hasData(module)
+                ? catalogService.findPage(module, q, skill, status, kind, page, size)
+                : catalogFallback ? preview.findPage(module, q, skill, status, kind, page, size)
+                : new CatalogPage(List.of(), 0, Math.min(50, Math.max(1, size)), 0, 0);
+        model.addAttribute("pageData", pageData);
+        model.addAttribute("entries", pageData.items());
         model.addAttribute("q", q); model.addAttribute("selectedSkill", skill);
         model.addAttribute("selectedStatus", status); model.addAttribute("selectedKind", kind);
         return "admin/catalog/list";

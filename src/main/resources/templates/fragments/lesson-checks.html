@@ -10,7 +10,7 @@
     <details class="lesson-attempts" th:if="${!#lists.isEmpty(attempts)}"><summary th:text="|Lịch sử làm bài (${#lists.size(attempts)} lần)|"></summary>
         <details class="lesson-work-history" th:each="attempt:${attempts}"><summary th:text="|${#temporals.format(attempt.submittedAt(),'dd/MM/yyyy HH:mm:ss')} — ${attempt.score()}/${attempt.total()} câu đúng|"></summary>
             <div th:replace="~{fragments/lesson-history-context :: context(${attempt.context},${'/student/lessons/'+lesson.id+'/history/attempts/'+attempt.id+'/media'})}"></div>
-            <p th:if="${#lists.isEmpty(attempt.answers)}">Lượt cũ chỉ có điểm và mã đáp án; chưa lưu nội dung câu hỏi tại thời điểm làm bài.</p>
+            <p th:if="${#lists.isEmpty(attempt.answers)}">Lượt cũ chỉ có điểm và mã đáp án. Chưa lưu nội dung câu hỏi tại thời điểm làm bài.</p>
             <article th:each="answer:${attempt.answers}"><strong th:text="${answer.prompt}"></strong><ol type="A" th:if="${answer.options!=null}"><li th:each="option:${answer.options}" th:text="${option}"></li></ol><p th:text="|Bạn chọn: ${answer.selected}|"></p><p th:text="|Đáp án đúng: ${answer.correct}|"></p><p th:text="${answer.explanation}"></p></article>
         </details>
     </details>

@@ -10,29 +10,29 @@ UC-A03–A05 hiện có GET UI danh sách/tạo/xem/sửa chứng chỉ, bộ ch
 
 Đã chốt tài liệu [Placement làm lại](PLACEMENT_RETAKE_POLICY.md): nhiều lượt, một lượt chưa kết thúc/user/skill, dùng kết quả hợp lệ gần nhất và bảo vệ mức checkpoint. Đây là policy/phân công, chưa có code tạo lượt, resume, retry hoặc cập nhật Profile tương ứng.
 
-Nền bổ sung: CI Java 21/verify, interface/DTO liên luồng, GET Hồ sơ/Placement/Cấu hình admin, chặn static uploads và guard extension/dung lượng. Endpoint media/engine attempt thuộc Trâm; khóa session và grading thuộc Thông. Xem SERVICE_CONTRACTS.md.
+Nền bổ sung: CI Java 21/verify, interface/DTO liên luồng (chưa implementation), GET Hồ sơ/Placement/Cấu hình admin, chặn static uploads và guard extension/dung lượng. Chưa có endpoint media theo ownership/listen-limit, chưa có chặn session khóa theo request; các phần này vẫn thuộc luồng 1/2/3. Xem SERVICE_CONTRACTS.md. Kiểm tra máy clone thứ hai và SQL Server mới vẫn cần chạy thực tế trước khi ghi hoàn tất.
 
 | Use case | Phần đã có | Phần thành viên cần hoàn thiện |
 |---|---|---|
 | S01–S03, A01–A02 | Đăng ký, đăng nhập, đăng xuất, phân quyền | Bổ sung các ca lỗi nghiệp vụ khi phát triển |
 | S04 Goal | Schema | Entity, service, form, trang mục tiêu |
-| S05 Placement | Schema đề/attempt/result | Luồng làm bài và cập nhật hồ sơ |
+| S05 Placement | Schema đề/attempt/result | Trâm làm engine/attempt; Thông chấm và cập nhật Profile; Thảo nối path |
 | S06 Skill Profile | Schema và vùng hiển thị rỗng | Đọc dữ liệu thật theo tài khoản |
 | S07 Learning Path | Schema | Sinh lộ trình theo rule, gồm định hướng khi bỏ Goal/Placement |
 | S08 Lesson | Schema | Học bài và lưu tiến độ |
 | S09 Flashcard | Schema | Ôn thẻ, cập nhật lượt ôn và ghi nhớ |
-| S10 Practice | Schema | Làm bài, chấm, không nâng CEFR |
+| S10 Practice | Schema | Trâm làm bài; Thông chấm/quy đổi, không nâng Profile |
 | S11 Checkpoint | Schema | Kiểm tra điều kiện, nâng level một lần, tạo chặng tiếp |
-| S12 Full Mock | Schema, mở rộng section tùy chọn | Thi đủ kỹ năng và kết quả tổng |
-| S13 Submit | Interface và tích hợp chấm AI | Lưu/khóa attempt, chấm khách quan, persistence và retry AI |
-| S14 Result | Schema | Xem kết quả, điểm theo skill và lịch sử |
+| S12 Full Mock | Schema, mở rộng section tùy chọn | Trâm thi đủ kỹ năng; Thông tổng hợp kết quả |
+| S13 Submit | Interface và tích hợp chấm AI | Trâm lưu/khóa attempt; Thông chấm khách quan, AI, persistence và retry |
+| S14 Result | Schema | Thảo xem kết quả/lịch sử bằng DTO; Thông cung cấp điểm theo skill |
 | A03 Certificate | Schema và dữ liệu khởi tạo | CRUD/disable theo V2 |
 | A04–A05 Scoring | Schema và band mẫu | Quản lý version, chống chồng lấn band, chính sách chấm theo skill |
 | A06 Question | Schema và QuestionType enum theo V2 | CRUD, validate từng loại câu hỏi |
 | A07 Media | Service lưu file local | Upload/preview và metadata gắn câu hỏi |
 | A08 Exam | Schema | Tạo đề, chọn câu, sắp xếp và công bố |
 | A09–A10 Lesson/Flashcard | Schema | CRUD phía quản trị |
-| AI mở rộng | Service OpenAI Writing, Speaking qua transcript và cấu hình local; chưa có giao diện gọi chấm | Nối vào attempt/result, kiểm định rubric và nâng CEFR |
+| AI mở rộng | Service Gemini Writing, Speaking qua transcript/audio và cấu hình local; chưa có giao diện gọi chấm | Thông nối assessment vào attempt/result, kiểm định rubric và quy đổi; Thảo hiển thị |
 
 Dashboard hiện chưa đọc số liệu các nghiệp vụ trên. Không dùng số hiển thị tĩnh làm bằng chứng đã hoàn thành use case.
 
@@ -42,7 +42,7 @@ Giao diện Admin cho Bài học, Ngân hàng câu hỏi, Đề thi và Kết qu
 
 ## Phần mở rộng quản lý học viên
 
-Nhóm bổ sung UC-A11–A14 ngoài bản V2 gốc. Thông thay preview bằng dữ liệu thật, thêm phân trang và nghiệp vụ khóa; phối hợp Thảo lấy tiến độ/kết quả và Trâm lấy metadata attempt. Không tạo hoặc xóa học viên. Chi tiết: [STUDENT_MANAGEMENT.md](STUDENT_MANAGEMENT.md).
+Nhóm bổ sung UC-A11–A14 ngoài bản V2 gốc. Đã có Controller GET, preview service chỉ đọc và trang danh sách/chi tiết dùng dữ liệu minh họa; tìm/lọc fixture hoạt động, dialog khóa/mở khóa chưa có POST hoặc thay đổi tài khoản. Người 1 thay preview bằng dữ liệu thật, thêm phân trang và nghiệp vụ khóa; phối hợp Người 2 lấy tiến độ/history/result DTO và Người 3 lấy attempt metadata. Không tạo hoặc xóa học viên. Chi tiết: [STUDENT_MANAGEMENT.md](STUDENT_MANAGEMENT.md).
 
 ## Migration chuyển tiếp V004–V005
 

@@ -15,7 +15,7 @@
 - Nhãn “Dữ liệu minh họa” phải giữ trong bản preview. Khi nối dữ liệu thật, bỏ fixture khỏi luồng chạy rồi mới bỏ nhãn.
 - Người 1 thay nguồn preview bằng service/database theo đặc tả dưới đây, thêm phân trang và POST khóa/mở khóa; giữ layout/component đã có. Cập nhật test từ dữ liệu mẫu sang dữ liệu kiểm thử thật.
 
-Thông chịu trách nhiệm trọn luồng quản lý học viên. Thảo cung cấp dữ liệu tiến độ và lịch sử/kết quả; Trâm cung cấp metadata attempt qua service đọc.
+Người 1 (tài khoản, chấm/kết quả/Profile) chịu trách nhiệm trọn luồng quản lý học viên: Repository → Service → Controller → Thymeleaf → Test. Người 2 cung cấp dữ liệu tiến độ và history/result DTO; Người 3 cung cấp attempt metadata. Các bên không ghi xuyên Entity/Repository của nhau.
 
 Chức năng gồm xem danh sách, tìm kiếm/lọc, xem chi tiết và tiến độ, khóa/mở khóa học viên. Không tạo học viên thay người dùng, không sửa mật khẩu/role, không xóa tài khoản hoặc lịch sử thi.
 
@@ -102,7 +102,7 @@ CustomUserDetailsService hiện chỉ đọc status lúc đăng nhập. Đổi u
 
 Gợi ý: AdminStudentController, AdminStudentService, StudentSummaryView, StudentProgressView; mở rộng UserRepository hiện có, không tạo Entity User thứ hai. Controller gọi Service, không gọi Repository trực tiếp.
 
-Service tổng hợp tiến độ dùng service đọc dữ liệu do Thảo cung cấp và metadata attempt do Trâm cung cấp. Không copy logic tính CEFR hay chấm điểm vào module quản lý học viên. Khi các service chưa xong, hiển thị trạng thái chưa có dữ liệu; không seed điểm giả cho học viên thật.
+Service tổng hợp tiến độ dùng service đọc dữ liệu do Người 2/3 cung cấp; result/score đọc DTO do Người 1 phát hành. Không copy logic tính CEFR hay chấm điểm vào module quản lý học viên. Khi các service chưa xong, hiển thị trạng thái chưa có dữ liệu; không seed điểm giả cho học viên thật.
 
 Schema hiện có đủ dữ liệu cốt lõi và status ACTIVE/INACTIVE/LOCKED. Chưa cần migration mới chỉ để thêm danh sách/tìm kiếm/khóa. Nếu cần bổ sung index hoặc version cho xử lý đồng thời, đăng ký migration tiếp theo, không sửa V001–V005.
 

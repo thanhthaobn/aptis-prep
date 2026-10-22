@@ -98,7 +98,7 @@ F04 cần Trâm phối hợp Thông: PlacementOrchestrationService.onCompleted c
 - Test Lesson/Flashcard/refresh cũ tiếp tục được giữ; bổ sung kiểm chỉ xem dashboard không thay mẫu số trước explicit refresh.
 - Lệnh cuối: `.\mvnw.cmd -B -ntp verify` — **BUILD SUCCESS, 104 test, 0 failure, 0 error, 1 skipped** (103 test thực sự chạy thành công; SQL Server opt-in bị skip). Hoàn tất lúc 21:35 ngày 21/10/2026, múi giờ Asia/Saigon.
 - `git diff --check` đạt và không còn conflict marker. Test riêng `LearningPathCheckpointTests`: 9 ca đạt; `StudentResultFlowTests`: 10 ca đạt; `StudentResultRetryTests`: 1 ca đạt.
-- Chưa chạy SQL Server migration trên DB riêng, OpenAI thật hoặc nghiệm thu trình duyệt/micro/audio desktop/mobile. Không chạy thao tác phá dữ liệu DB local để kiểm thử.
+- Chưa chạy SQL Server migration trên DB riêng, Gemini thật hoặc nghiệm thu trình duyệt/micro/audio desktop/mobile. Không chạy thao tác phá dữ liệu DB local để kiểm thử.
 
 ## Trước khi nghiệm thu toàn hệ thống
 

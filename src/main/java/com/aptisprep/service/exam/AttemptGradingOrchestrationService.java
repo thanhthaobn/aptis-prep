@@ -25,19 +25,31 @@ public class AttemptGradingOrchestrationService {
     private final AttemptFinalizationService finalization;
     private final SpeakingGradingService speaking;
     private final StorageService storage;
+    private final AttemptOutboxService outbox;
 
     public AttemptGradingOrchestrationService(AiProperties properties, AiAssessmentContract ai,
-            AttemptFinalizationService finalization, SpeakingGradingService speaking, StorageService storage) {
+            AttemptFinalizationService finalization, SpeakingGradingService speaking, StorageService storage, AttemptOutboxService outbox) {
         this.properties = properties; this.ai = ai; this.finalization = finalization;
         this.speaking = speaking; this.storage = storage;
+        this.outbox = outbox;
     }
 
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void onSubmitted(AttemptSubmittedEvent event) {
-        if (!properties.isEnabled()) return;
-        if (!finalization.accepts(event)) return;
+        if (!properties.isEnabled()) {
+            finalization.markSubjectiveUnavailable(event, "AI_DISABLED");
+            outbox.markDelivered(event);
+            return;
+        }
+        if (!finalization.accepts(event)) {
+            outbox.markDelivered(event);
+            return;
+        }
         LockedAttempt locked = event.lockedAttempt();
-        if (locked == null) return;
+        if (locked == null) {
+            outbox.markDelivered(event);
+            return;
+        }
         for (LockedAnswer answer : locked.answers()) {
             if (!"WRITING_TEXT".equals(answer.questionType()) && !"SPEAKING_AUDIO".equals(answer.questionType())) continue;
             String submission = answer.lockedContent();
@@ -55,6 +67,8 @@ public class AttemptGradingOrchestrationService {
             ai.request(request);
             ai.process(key);
         }
+        finalization.markSubjectiveUnavailable(event, null);
+        outbox.markDelivered(event);
     }
 
     private String transcribeSubmission(String submission) {

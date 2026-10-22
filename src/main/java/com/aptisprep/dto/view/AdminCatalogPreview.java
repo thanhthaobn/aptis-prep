@@ -20,6 +20,9 @@ public final class AdminCatalogPreview {
                         List<Field> facts, List<Row> rows) {
     }
 
+    public record CatalogPage(List<Entry> items, int page, int size, int totalItems, int totalPages) {
+    }
+
     public record Module(String key, String title, String description, String singular,
                          String createLabel, String typeLabel, List<String> kinds, List<Entry> entries) {
         public boolean editable() {

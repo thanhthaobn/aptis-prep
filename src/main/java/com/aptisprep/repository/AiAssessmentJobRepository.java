@@ -16,6 +16,8 @@ public interface AiAssessmentJobRepository extends JpaRepository<AiAssessmentJob
     Optional<AiAssessmentJob> findByAssessmentKey(String assessmentKey);
 
     List<AiAssessmentJob> findByAttemptIdAndState(Integer attemptId, AiJobState state);
+    List<AiAssessmentJob> findByAttemptIdAndAnswerVersion(Integer attemptId, Integer answerVersion);
+    List<AiAssessmentJob> findByAttemptIdAndAnswerVersionAndState(Integer attemptId, Integer answerVersion, AiJobState state);
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("select job from AiAssessmentJob job where job.assessmentKey = :assessmentKey")

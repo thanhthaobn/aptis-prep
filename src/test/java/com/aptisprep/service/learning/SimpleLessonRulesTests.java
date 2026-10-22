@@ -397,8 +397,7 @@ class SimpleLessonRulesTests {
         assertThat(html)
                 .contains(
                         "Đã hoàn thành 1/2 bài bắt buộc.",
-                        "Còn 1 bài cần hoàn thành",
-                        "Flashcard là phần ôn riêng, không bắt buộc.");
+                        "Còn 1 bài cần hoàn thành");
         var missing =
                 java.util.regex.Pattern.compile(
                                 "<ul class=\"checkpoint-missing-list\">(.*?)</ul>",

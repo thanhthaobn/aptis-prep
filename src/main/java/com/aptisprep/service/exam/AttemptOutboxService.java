@@ -8,14 +8,10 @@ import com.aptisprep.service.contract.IntegrationModels.LockedAttempt;
 import java.time.LocalDateTime;
 import java.util.List;
 import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.core.annotation.Order;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.annotation.Propagation;
-import org.springframework.transaction.event.TransactionPhase;
-import org.springframework.transaction.event.TransactionalEventListener;
-import org.springframework.core.Ordered;
 import tools.jackson.databind.json.JsonMapper;
 
 /** Durable replay queue for attempt events. Handlers are idempotent by attempt/event keys. */
@@ -73,16 +69,17 @@ public class AttemptOutboxService {
         }
     }
 
-    @Order(Ordered.LOWEST_PRECEDENCE)
-    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public void markDelivered(Object event) {
-        String key = switch (event) {
-            case AttemptSubmittedEvent submitted -> "attempt:" + submitted.attemptId() + ":submitted";
-            case AttemptCompletedEvent completed -> "attempt:" + completed.attemptId() + ":completed";
-            default -> null;
-        };
-        if (key == null) return;
+    public void markDelivered(AttemptSubmittedEvent event) {
+        markDeliveredKey("attempt:" + event.attemptId() + ":submitted");
+    }
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void markDelivered(AttemptCompletedEvent event) {
+        markDeliveredKey("attempt:" + event.attemptId() + ":completed");
+    }
+
+    private void markDeliveredKey(String key) {
         outbox.findByEventKey(key).ifPresent(row -> {
             row.setStatus("DISPATCHED"); row.setProcessedAt(LocalDateTime.now()); row.setLastError(null); outbox.save(row);
         });

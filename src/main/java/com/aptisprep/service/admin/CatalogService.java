@@ -7,6 +7,7 @@ import com.aptisprep.dto.view.AdminCatalogPreview.Entry;
 import com.aptisprep.dto.view.AdminCatalogPreview.Field;
 import com.aptisprep.dto.view.AdminCatalogPreview.Module;
 import com.aptisprep.dto.view.AdminCatalogPreview.Row;
+import com.aptisprep.dto.view.AdminCatalogPreview.CatalogPage;
 import com.aptisprep.entity.*;
 import com.aptisprep.enums.RecordStatus;
 import com.aptisprep.exception.BusinessRuleException;
@@ -86,6 +87,20 @@ public class CatalogService {
         throw new ResourceNotFoundException("Không tìm thấy nội dung");
     }
 
+    public CatalogPage findPage(String key, String q, String skill, String status, String kind, int page, int size) {
+        return paginate(find(key, q, skill, status, kind), page, size);
+    }
+
+    private CatalogPage paginate(List<Entry> all, int page, int size) {
+        int safeSize = Math.min(50, Math.max(1, size));
+        int totalItems = all.size();
+        int totalPages = totalItems == 0 ? 0 : (totalItems + safeSize - 1) / safeSize;
+        int safePage = totalPages == 0 ? 0 : Math.min(Math.max(0, page), totalPages - 1);
+        int from = safePage * safeSize;
+        int to = Math.min(from + safeSize, totalItems);
+        return new CatalogPage(all.subList(from, to), safePage, safeSize, totalItems, totalPages);
+    }
+
     public Entry entry(String key, int id) {
         if ("questions".equals(key))
             return questionEntry(questions.findById(id).orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy câu hỏi")));
@@ -136,7 +151,7 @@ public class CatalogService {
         validateQuestion(form);
         QuestionEntity q = id == null ? new QuestionEntity() : questions.findById(id).orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy câu hỏi"));
         if (id != null && answers.existsByQuestionId(id)) {
-            throw new BusinessRuleException("Câu hỏi đã có trong lịch sử làm bài; hãy lưu trữ và tạo phiên bản câu hỏi mới");
+            throw new BusinessRuleException("Câu hỏi đã có trong lịch sử làm bài. Hãy lưu trữ và tạo phiên bản câu hỏi mới");
         }
         if ("PUBLISHED".equals(q.getStatus()) && !"PUBLISHED".equals(form.getStatus()))
             throw new BusinessRuleException("Câu hỏi đã công bố không thể quay về bản nháp");
@@ -243,7 +258,7 @@ public class CatalogService {
         validateExamBasics(form);
         MockExamEntity exam = id == null ? new MockExamEntity() : exams.findById(id).orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy đề thi"));
         if (id != null && attempts.existsByMockExamId(id)) {
-            throw new BusinessRuleException("Đề thi đã có lịch sử làm bài; hãy tạo phiên bản đề mới");
+            throw new BusinessRuleException("Đề thi đã có lịch sử làm bài. Hãy tạo phiên bản đề mới");
         }
         if ("PUBLISHED".equals(exam.getStatus()) && !"PUBLISHED".equals(form.getStatus()))
             throw new BusinessRuleException("Đề đã công bố không thể quay về bản nháp");
@@ -552,7 +567,7 @@ public class CatalogService {
 
     private void assertQuestionNotAnswered(Integer questionId) {
         if (answers.existsByQuestionId(questionId)) {
-            throw new BusinessRuleException("Câu hỏi đã có trong lịch sử làm bài; hãy lưu trữ và tạo phiên bản câu hỏi mới");
+            throw new BusinessRuleException("Câu hỏi đã có trong lịch sử làm bài. Hãy lưu trữ và tạo phiên bản câu hỏi mới");
         }
     }
 
@@ -597,7 +612,7 @@ public class CatalogService {
             rows.add(new Row("ĐOẠN VĂN", passage == null || passage.isBlank() ? "Chưa có đoạn văn nguồn." : passage, "Văn bản nguồn"));
         }
         for (QuestionItemEntity item : items.findByQuestionIdOrderByPosition(q.getId())) {
-            rows.add(new Row("Ý " + item.getPosition(), item.getContent(), item.getCorrectPosition() == null ? "" : "Đúng vị trí " + item.getCorrectPosition()));
+            rows.add(new Row(String.valueOf(item.getPosition()), item.getContent(), item.getCorrectPosition() == null ? "" : "Đúng vị trí " + item.getCorrectPosition()));
             options.findByQuestionItemIdOrderByPosition(item.getId()).forEach(o -> rows.add(new Row(o.getOptionCode(), o.getContent(), Boolean.TRUE.equals(o.getCorrect()) ? "Đáp án đúng" : "")));
         }
         media.findByQuestionIdOrderByPosition(q.getId()).forEach(m -> rows.add(new Row("MEDIA #" + m.getId(), m.getOriginalFilename(), m.getMediaType() + " · " + m.getFileSize() + " bytes")));

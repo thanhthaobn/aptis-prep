@@ -52,7 +52,7 @@
             <ol>
                 <li>Đọc câu hỏi, xác định thông tin cần nghe như thời gian, ngày hoặc đồ vật.</li>
                 <li>Nghe lượt đầu để nắm ý chính, rồi chọn đáp án phù hợp.</li>
-                <li>Nghe lại để kiểm tra chi tiết trước khi bấm Kiểm tra đáp án; chỉ mở transcript khi đã được phép.</li>
+                <li>Nghe lại để kiểm tra chi tiết trước khi bấm Kiểm tra đáp án. Chỉ mở transcript khi đã được phép.</li>
             </ol>
             <a th:if="${lesson.audioPath!=null}" class="path-set-link" href="#lesson-audio">Đến bài nghe ↓</a>
         </section>
@@ -91,7 +91,7 @@
 
         <section class="dashboard-panel dashboard-section ai-grading-panel" th:if="${lesson.skill=='Writing' or lesson.skill=='Speaking'}">
             <h2>AI chấm và nhận xét bài thực hành</h2>
-            <p th:text="${lesson.skill=='Speaking'?'AI đánh giá nội dung và ngôn ngữ của transcript đang hiển thị bên dưới; chưa chấm phát âm hoặc ngữ điệu.':'AI ước lượng điểm 0–50, mức CEFR và góp ý cho đúng bài viết đang hiển thị bên dưới.'}"></p>
+            <p th:text="${lesson.skill=='Speaking'?'AI đánh giá nội dung và ngôn ngữ của transcript đang hiển thị bên dưới. Chưa chấm phát âm hoặc ngữ điệu.':'AI ước lượng điểm 0–50, mức CEFR và góp ý cho đúng bài viết đang hiển thị bên dưới.'}"></p>
             <form method="post" th:action="@{/student/lessons/{id}/assess(id=${lesson.id})}">
             <div class="ai-grading-target">
                 <div class="ai-grading-target-head">
@@ -109,7 +109,7 @@
             <p id="ai-grading-status" class="muted" th:if="${aiAvailable and !canAssess}">Nút chấm AI sẽ được bật sau khi bạn hoàn tất và lưu bài làm theo các bước trên.</p>
             <p id="ai-grading-status" class="muted" th:unless="${aiAvailable}">Nút chấm AI đang tạm khóa vì máy chủ chưa được cấu hình API key. Bạn vẫn có thể lưu bài và hoàn thành bài học.</p>
         </section>
-        <section class="dashboard-panel dashboard-section lesson-source" th:if="${lesson.material!=null and !#strings.isEmpty(lesson.material.sourceUrl)}"><h2>Nguồn tham khảo</h2><a th:href="${lesson.material.sourceUrl}" th:text="${lesson.material.sourceName}" target="_blank" rel="noopener noreferrer"></a><p>Hướng dẫn, ví dụ và bài tập được biên soạn riêng; video thuộc tác giả nguồn.</p></section>
+        <section class="dashboard-panel dashboard-section lesson-source" th:if="${lesson.material!=null and !#strings.isEmpty(lesson.material.sourceUrl)}"><h2>Nguồn tham khảo</h2><a th:href="${lesson.material.sourceUrl}" th:text="${lesson.material.sourceName}" target="_blank" rel="noopener noreferrer"></a><p>Hướng dẫn, ví dụ và bài tập được biên soạn riêng. Video thuộc tác giả nguồn.</p></section>
         <section class="dashboard-panel dashboard-section" th:if="${!#lists.isEmpty(submissions)}">
             <h2>Bài làm đã lưu</h2>
             <details class="lesson-work-history" th:each="submission:${submissions}">
