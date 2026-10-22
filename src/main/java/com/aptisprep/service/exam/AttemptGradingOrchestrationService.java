@@ -18,18 +18,29 @@ public class AttemptGradingOrchestrationService {
     private final AiProperties properties;
     private final AiAssessmentContract ai;
     private final AttemptFinalizationService finalization;
+    private final AttemptOutboxService outbox;
 
     public AttemptGradingOrchestrationService(AiProperties properties, AiAssessmentContract ai,
-            AttemptFinalizationService finalization) {
-        this.properties = properties; this.ai = ai; this.finalization = finalization;
+            AttemptFinalizationService finalization, AttemptOutboxService outbox) {
+        this.properties = properties; this.ai = ai; this.finalization = finalization; this.outbox = outbox;
     }
 
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void onSubmitted(AttemptSubmittedEvent event) {
-        if (!properties.isEnabled()) return;
-        if (!finalization.accepts(event)) return;
+        if (!properties.isEnabled()) {
+            finalization.markSubjectiveUnavailable(event, "AI_DISABLED");
+            outbox.markDelivered(event);
+            return;
+        }
+        if (!finalization.accepts(event)) {
+            outbox.markDelivered(event);
+            return;
+        }
         LockedAttempt locked = event.lockedAttempt();
-        if (locked == null) return;
+        if (locked == null) {
+            outbox.markDelivered(event);
+            return;
+        }
         for (LockedAnswer answer : locked.answers()) {
             if (!"WRITING_TEXT".equals(answer.questionType()) && !"SPEAKING_AUDIO".equals(answer.questionType())) continue;
             String submission = answer.lockedContent();
@@ -43,6 +54,8 @@ public class AttemptGradingOrchestrationService {
             ai.request(request);
             ai.process(key);
         }
+        finalization.markSubjectiveUnavailable(event, null);
+        outbox.markDelivered(event);
     }
 
     @EventListener

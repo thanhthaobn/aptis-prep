@@ -99,7 +99,7 @@ public class StudentManagementService {
         return goals.findFirstByUserIdAndStatusOrderByCreatedAtDesc(userId, GoalStatus.ACTIVE)
                 .map(goal -> new AccountSnapshot.GoalView(goal.getCertificate() == null ? null : goal.getCertificate().getId(),
                         goal.getCertificate() == null ? null : goal.getCertificate().getName(), goal.getTargetDate(),
-                        goalSkills.findByGoalUserId(userId).stream().collect(Collectors.toMap(UserGoalSkill::getSkill, UserGoalSkill::getTargetLevel, (left, right) -> right, LinkedHashMap::new))))
+                        goalSkills.findByGoalId(goal.getId()).stream().collect(Collectors.toMap(UserGoalSkill::getSkill, UserGoalSkill::getTargetLevel, (left, right) -> right, LinkedHashMap::new))))
                 .orElse(null);
     }
 

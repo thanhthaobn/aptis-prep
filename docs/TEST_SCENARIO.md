@@ -161,7 +161,7 @@ Kỳ vọng: tất cả bị từ chối quyền truy cập.
 
 ## 9. AI assessment
 
-Mặc định `app.ai.enabled=false`, vì vậy không gọi OpenAI thật trong smoke test.
+Mặc định `app.ai.enabled=false`, vì vậy không gọi Gemini thật trong smoke test.
 
 | ID | Thao tác | Kết quả mong đợi | Kết quả thực tế |
 |---|---|---|---|
@@ -170,7 +170,7 @@ Mặc định `app.ai.enabled=false`, vì vậy không gọi OpenAI thật trong
 | AI-03 | Retry một assessment lỗi | Job retry theo giới hạn; không tạo bản ghi assessment trùng version | [ ] |
 | AI-04 | Mở trang assessment bằng Student/Admin đúng quyền | Chỉ người có quyền xem được assessment tương ứng | [ ] |
 
-Không bật AI thật trong bài test thường. Nếu cần kiểm thử OpenAI thật, dùng API key riêng, giới hạn chi phí và ghi rõ đó là test có phát sinh phí.
+Không bật AI thật trong bài test thường. Nếu cần kiểm thử Gemini thật, dùng API key riêng, giới hạn chi phí và ghi rõ đó là test có phát sinh phí.
 
 ## 10. Kết thúc và báo lỗi
 

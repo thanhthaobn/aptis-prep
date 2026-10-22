@@ -14,11 +14,13 @@ feature/tram  ─┘                   tích hợp                  ổn định
 |---|---|---|
 | main | Chủ repo duyệt/merge | Bản ổn định, không chứa phần đang làm dở |
 | develop | Tích hợp cả nhóm qua PR | Nguồn cập nhật thường xuyên cho nhánh thành viên |
-| feature/thong | Thông | Tài khoản/Goal, scoring/AI và grading/kết quả dữ liệu |
-| feature/thao | Thảo | Lesson/Flashcard, lộ trình/checkpoint và giao diện kết quả |
-| feature/tram | Trâm | Câu hỏi/media/đề, Placement và engine attempt |
+| feature/thong | Thông | Tài khoản/Goal/học viên, Chứng chỉ & Chấm điểm, AI |
+| feature/thao | Thảo | Lesson/Flashcard, lộ trình/tiến độ/checkpoint |
+| feature/tram | Trâm | Câu hỏi/media/đề, engine thi, Placement |
 
 Không push trực tiếp main/develop, không force push hoặc xóa các nhánh đang dùng chung. Nhánh cá nhân đã tạo sẵn, không tạo lại từ main. Một PR chỉ bao gồm phần nhỏ có thể kiểm tra; không chờ xong toàn bộ luồng.
+
+`feature/duong` là nhánh lịch sử của Dương, chỉ đọc để tra cứu; không mở PR mới từ nhánh này. Phần engine được Trâm tiếp quản, còn chấm khách quan/AI/quy đổi/tổng hợp/Profile do Thông tiếp quản.
 
 Chủ repo phụ trách duyệt/merge develop → main; PR thành viên → develop cần người khác review, người merge theo thống nhất của nhóm. Tên nhánh không tự giới hạn quyền người push/merge. Nếu gói GitHub hỗ trợ, bảo vệ cả main/develop: yêu cầu PR, ít nhất một approval, check verify đạt, giải quyết conversation, không force push/xóa. Quy ước nhóm không thay thế việc bảo vệ kỹ thuật; repo private GitHub Free có giới hạn tính năng này. Đặt default branch develop nếu phù hợp và luôn kiểm tra base khi tạo PR.
 
@@ -131,7 +133,7 @@ Nếu buộc phải hotfix từ main, tạo nhánh riêng và PR vào main do ch
 
 ## 7. CI, database và Definition of Done
 
-- .github/workflows/build.yml chạy Java 21 + Maven verify cho push/PR, gồm cả develop và nhánh cá nhân; không cần SQL Server/OpenAI key trên CI. Không thêm secret thật chỉ để test chạy.
+- .github/workflows/build.yml chạy Java 21 + Maven verify cho push/PR, gồm cả develop và nhánh cá nhân; không cần SQL Server/Gemini key trên CI. Không thêm secret thật chỉ để test chạy.
 - CI dùng H2/mock không thay kiểm migration/constraint/concurrency trên SQL Server thật. Actions xanh không tự chứng minh nghiệp vụ hoặc giao diện đúng.
 - Không sửa migration đã merge/đã chạy, đặc biệt V001–V005. Migration mới lấy số theo thứ tự merge, không chia số theo người; PR đi cùng Entity/test và thông báo người sở hữu bảng.
 - Kiểm migration trên DB thử nghiệm rỗng/đúng quy trình, không chạy test phá dữ liệu trên DB dùng chung. Cập nhật ERD/PROJECT_DECISIONS nếu đổi mô hình đã chốt.

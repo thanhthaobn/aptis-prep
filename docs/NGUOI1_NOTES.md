@@ -14,10 +14,10 @@
 
 ## Cần chốt với nhóm
 
-- Người 4 cần cung cấp implementation `ExamAttemptContract.result/history` với `submittedAt`, `SkillResult.passed`, `answerVersion` và trạng thái hoàn tất. Profile service không tự đọc repository attempt/result.
+- Người 3 cần cung cấp implementation `ExamAttemptContract`/`LockedAttempt` với `submittedAt`, `SkillResult.passed`, `answerVersion` và trạng thái hoàn tất. Profile/grading service không tự đọc repository attempt/result.
 - Người 2 cần cung cấp `LearningPathContract` để admin học viên hiển thị summary thật; khi chưa có bean, giao diện hiển thị `Chưa có dữ liệu lộ trình`, không dùng fixture.
-- Raw → scale chính thức theo từng skill/scheme/version chưa có trong schema V001–V005. V006 chưa thêm bảng conversion; công thức 0–50 giữ nguyên là phương án an toàn tạm thời, cần Người 4 review trước khi dùng cho điểm Aptis.
-- AI request cần payload bài đã khóa do Người 4 cấp qua `AiAssessmentContract`; service không nhận CEFR hoặc file path từ form frontend.
+- Raw → scale chính thức theo từng skill/scheme/version chưa có trong schema V001–V005. V006 chưa thêm bảng conversion; công thức 0–50 giữ nguyên là phương án an toàn tạm thời, cần Người 3 review trước khi dùng cho điểm Aptis.
+- AI request cần payload bài đã khóa do Người 3 cấp qua `AiAssessmentContract`; service không nhận CEFR hoặc file path từ form frontend.
 - Speaking hiện dùng transcript để đánh giá ngôn ngữ và task fulfilment; không đánh giá phát âm/ngữ điệu/acoustic fluency.
 - Checkpoint không đạt vẫn được claim bền nhưng không thay đổi Profile; trạng thái chờ/lỗi hoặc thiếu dữ liệu hợp lệ không tạo mức CEFR.
 - Contract Certificate/Scheme trả cả skill đã có band và từ chối scheme thiếu band cho skill được yêu cầu; Grammar & Vocabulary vì vậy không được tự suy ra CEFR.

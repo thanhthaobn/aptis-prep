@@ -8,12 +8,12 @@ import org.springframework.web.client.RestClient;
 
 @Configuration
 public class AiClientConfig {
-    @Bean("openAiClient")
-    RestClient openAiClient() {
+    @Bean("geminiClient")
+    RestClient geminiClient() {
         var factory = new SimpleClientHttpRequestFactory();
         factory.setConnectTimeout(Duration.ofSeconds(10));
         factory.setReadTimeout(Duration.ofSeconds(90));
-        return RestClient.builder().baseUrl("https://api.openai.com/v1")
+        return RestClient.builder().baseUrl("https://generativelanguage.googleapis.com/v1beta")
                 .requestFactory(factory).build();
     }
 }

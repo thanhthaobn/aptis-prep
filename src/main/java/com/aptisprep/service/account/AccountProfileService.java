@@ -44,7 +44,7 @@ public class AccountProfileService {
                         current.getCertificate() == null ? null : current.getCertificate().getId(),
                         current.getCertificate() == null ? null : current.getCertificate().getName(),
                         current.getTargetDate(),
-                        goalSkills.findByGoalUserId(userId).stream().collect(Collectors.toMap(
+                        goalSkills.findByGoalId(current.getId()).stream().collect(Collectors.toMap(
                                 UserGoalSkill::getSkill, UserGoalSkill::getTargetLevel, (left, right) -> right,
                                 LinkedHashMap::new))))
                 .orElse(null);

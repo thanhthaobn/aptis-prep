@@ -87,7 +87,7 @@ Mở `http://localhost:8080`.
 .\mvnw.cmd verify
 ```
 
-Test thường dùng H2/Flyway tắt/OpenAI giả lập, không chứng minh SQL Server migration chạy đúng. GitHub Actions chạy Java 21 và verify, không cần key hay DB secret.
+Test thường dùng H2/Flyway tắt/Gemini giả lập, không chứng minh SQL Server migration chạy đúng. GitHub Actions chạy Java 21 và verify, không cần key hay DB secret.
 
 SqlServerMigrationTests là opt-in, gọi Flyway migrate nên có thay đổi schema. Chỉ chạy trên DB kiểm thử riêng: cấu hình datasource local trỏ đúng DB đó, đặt APTIS_SQLSERVER_TESTS=true, chạy `.\mvnw.cmd -Dtest=SqlServerMigrationTests test`, sau đó bỏ biến và khôi phục datasource. Không chạy trên DB có dữ liệu cần giữ.
 

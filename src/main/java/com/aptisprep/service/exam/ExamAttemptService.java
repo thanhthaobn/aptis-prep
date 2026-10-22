@@ -455,9 +455,11 @@ public class ExamAttemptService implements ExamAttemptContract {
             if (state == null) state = value.getScaleScore() == null ? "PENDING" : "COMPLETED";
             else if ("WAITING".equals(state)) state = "PENDING";
             else if ("ERROR".equals(state)) state = "ERROR";
+            boolean retryable = "ERROR".equals(state)
+                    && ("AI_ERROR".equals(value.getGradingMethod())
+                    || "OBJECTIVE_ERROR".equals(value.getGradingMethod()));
             return new SkillResult(value.getSkill(), value.getRawScore(), value.getScaleScore(), value.getCefrLevel(), state,
-                    feedbackFor(attempt.getId(), value.getSkill()), passed,
-                    "ERROR".equals(state) && !"POLICY_ERROR".equals(value.getGradingMethod()));
+                    feedbackFor(attempt.getId(), value.getSkill()), passed, retryable);
         }).toList();
         Integer schemeId = attempt.getScoringSchemeId() == null ? exam.getScoringSchemeId() : attempt.getScoringSchemeId();
         return new AttemptResult(attempt.getId(), attempt.getUserId(), exam.getId(), exam.getExamType(), exam.getTitle(), schemeId,
