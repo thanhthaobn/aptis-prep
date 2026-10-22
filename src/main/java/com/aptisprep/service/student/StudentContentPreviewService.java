@@ -15,6 +15,9 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
+import org.springframework.stereotype.Service;
+import org.springframework.beans.factory.annotation.Value;
 
 /** Temporary exam catalog only. Lessons, flashcards and results use persisted data. */
 @Service
@@ -22,6 +25,8 @@ public class StudentContentPreviewService {
     private final MockExamRepository exams;
     private final MockExamSectionRepository sections;
     private final MockExamQuestionRepository examQuestions;
+    @Value("${app.demo.catalog-fallback:false}")
+    private boolean catalogFallback;
 
     public StudentContentPreviewService(
             MockExamRepository exams,
@@ -86,11 +91,11 @@ public class StudentContentPreviewService {
                                             "Phần 4"))));
 
     public List<Entry> find(String module, String q, String skill, String level, String state) {
-        if (!"exams".equals(module)) {
+        if ("exams".equals(module)) {
+            if (exams.count() > 0) return realExams(q, skill, level);
+            if (!catalogFallback) return List.of();
+        } else {
             return List.of();
-        }
-        if (exams.count() > 0) {
-            return realExams(q, skill, level);
         }
         String term = normalize(q);
         return fallbackExams.stream()
@@ -102,23 +107,21 @@ public class StudentContentPreviewService {
     }
 
     public Entry entry(String module, int id) {
-        if (!"exams".equals(module)) {
-            throw new ResourceNotFoundException("Không tìm thấy nội dung");
+        if ("exams".equals(module)) {
+            if (exams.count() > 0) {
+                var real = exams.findById(id).filter(exam -> "PUBLISHED".equals(exam.getStatus()));
+                if (real.isEmpty()) throw new ResourceNotFoundException("Không tìm thấy đề thi đã công bố");
+                return realExamEntry(real.get());
+            }
+            if (!catalogFallback) throw new ResourceNotFoundException("Chưa có đề thi đã công bố");
         }
-        if (exams.count() > 0) {
-            var exam =
-                    exams.findById(id)
-                            .filter(candidate -> "PUBLISHED".equals(candidate.getStatus()))
-                            .orElseThrow(
-                                    () ->
-                                            new ResourceNotFoundException(
-                                                    "Không tìm thấy đề thi đã công bố"));
-            return realExamEntry(exam);
+        if ("exams".equals(module)) {
+            return fallbackExams.stream()
+                    .filter(e -> e.id() == id)
+                    .findFirst()
+                    .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy nội dung"));
         }
-        return fallbackExams.stream()
-                .filter(e -> e.id() == id)
-                .findFirst()
-                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy nội dung"));
+        throw new ResourceNotFoundException("Không tìm thấy nội dung");
     }
 
     private List<Entry> realExams(String q, String skill, String level) {

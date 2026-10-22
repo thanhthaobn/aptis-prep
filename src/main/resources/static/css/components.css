@@ -181,6 +181,9 @@
 .catalog-content-list h3 { margin-top: .8rem; font-size: 1.15rem; }
 .catalog-content-list p { margin-bottom: 0; }
 .catalog-answer { display: flex; justify-content: space-between; align-items: center; gap: .7rem; padding: 1rem; margin-top: .8rem; border: 1px solid var(--color-border); border-radius: var(--radius-sm); }
+.admin-reading-passage { margin-top: 1.2rem; padding: 1.1rem 1.2rem; border: 1px solid #c8dce5; border-left: 5px solid #087a9d; border-radius: 12px; background: #f2fbfd; }
+.admin-reading-passage h3 { margin: 0 0 .6rem; color: #075c78; font-size: 1.05rem; }
+.admin-reading-passage-text { white-space: pre-line; line-height: 1.75; color: #263b50; }
 .catalog-answer p { margin-bottom: 0; }
 .catalog-actions-panel { display: flex; justify-content: space-between; align-items: center; gap: 1rem; }
 .catalog-actions-panel h2 { font-size: 1.4rem; }.catalog-actions-panel p { margin-bottom: 0; }

@@ -58,9 +58,16 @@ public class OpenAiGradingService implements WritingGradingService, SpeakingGrad
         requireConfiguration();
         validateText(prompt, 10000, "Đề bài");
         validateAudio(audioFile);
-        String transcript = transcribe(audioFile);
+        String transcript = transcribeAudio(audioFile);
         validateText(transcript, 20000, "Nội dung bản ghi");
         return gradeText("Speaking transcript", prompt, transcript, transcript);
+    }
+
+    @Override
+    public String transcribe(Path audioFile) {
+        requireConfiguration();
+        validateAudio(audioFile);
+        return transcribeAudio(audioFile);
     }
 
     @Override
@@ -122,7 +129,7 @@ public class OpenAiGradingService implements WritingGradingService, SpeakingGrad
         }
     }
 
-    private String transcribe(Path audioFile) {
+    private String transcribeAudio(Path audioFile) {
         var parts = new LinkedMultiValueMap<String, Object>();
         parts.add("file", new FileSystemResource(audioFile));
         parts.add("model", properties.getTranscriptionModel());

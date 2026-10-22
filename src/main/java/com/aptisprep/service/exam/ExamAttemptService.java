@@ -353,7 +353,7 @@ public class ExamAttemptService implements ExamAttemptContract {
             }
             List<MediaPage> mediaPages = new ArrayList<>();
             for (JsonNode media : q.path("media")) mediaPages.add(new MediaPage(media.path("id").asInt(), media.path("type").asText(), media.path("filename").asText(), media.path("contentType").asText()));
-            return new QuestionPage(questionId, q.path("content").asText(), q.path("skill").asText(), q.path("type").asText(), q.path("position").asInt(), itemPages, mediaPages);
+            return new QuestionPage(questionId, q.path("content").asText(), q.path("instruction").asText(), q.path("readingPassage").asText(null), q.path("skill").asText(), q.path("type").asText(), q.path("position").asInt(), itemPages, mediaPages);
         }).toList();
         Instant deadline = exam.getDurationMinutes() == null || attempt.getStartedAt() == null ? null
                 : instant(attempt.getStartedAt().plusMinutes(exam.getDurationMinutes()));
@@ -365,7 +365,7 @@ public class ExamAttemptService implements ExamAttemptContract {
             this(attemptId, title, remainingSeconds, questions, null);
         }
     }
-    public record QuestionPage(Integer questionId, String content, String skill, String type, int position,
+    public record QuestionPage(Integer questionId, String content, String instruction, String readingPassage, String skill, String type, int position,
             List<ItemPage> items, List<MediaPage> media) {}
     public record ItemPage(Integer itemId, int position, String content, List<OptionPage> options,
             Integer selectedOptionId, Integer userPosition, String textAnswer, boolean audioSaved) {}
@@ -384,7 +384,7 @@ public class ExamAttemptService implements ExamAttemptContract {
         List<Map<String, Object>> lockedQuestions = new ArrayList<>();
         for (MockExamQuestionEntity link : links) {
             QuestionEntity question = questions.findById(link.getQuestionId()).orElseThrow(); Map<String, Object> q = new LinkedHashMap<>();
-            q.put("id", question.getId()); q.put("position", link.getPosition()); q.put("content", question.getContent()); q.put("instruction", question.getInstruction()); q.put("type", question.getQuestionType()); q.put("skill", question.getSkill());
+            q.put("id", question.getId()); q.put("position", link.getPosition()); q.put("content", question.getContent()); q.put("instruction", question.getInstruction()); q.put("readingPassage", question.getReadingPassage()); q.put("type", question.getQuestionType()); q.put("skill", question.getSkill());
             List<Map<String, Object>> lockedItems = new ArrayList<>();
             for (QuestionItemEntity item : items.findByQuestionIdOrderByPosition(question.getId())) {
                 Map<String, Object> i = new LinkedHashMap<>(); i.put("id", item.getId()); i.put("position", item.getPosition()); i.put("content", item.getContent()); i.put("correctPosition", item.getCorrectPosition());
