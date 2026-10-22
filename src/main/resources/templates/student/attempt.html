@@ -39,6 +39,12 @@
     .question-item .answer-form { margin: 0; }
     .question-item .button { margin-top: .9rem; }
     .question-item .autosave-status { display: inline-block; margin-left: .65rem; font-size: .8rem; }
+    .speaking-recorder { margin: 0; padding: 1rem; border: 1px solid #dbe7ee; border-radius: 13px; background: rgba(255, 255, 255, .78); }
+    .speaking-recorder-label { display: block; margin-bottom: .65rem; color: #50657b; font-size: .82rem; font-weight: 800; letter-spacing: .02em; }
+    .speaking-recorder-actions { display: flex; flex-wrap: wrap; gap: .6rem; align-items: center; }
+    .speaking-recorder-actions .button { margin-top: 0; }
+    .speaking-recorder .recording-status { flex: 1 1 100%; margin: .15rem 0 0; font-size: .82rem; }
+    .speaking-recorder .recording-preview { width: min(100%, 460px); height: 42px; margin-top: .85rem; }
     @media (max-width: 560px) { .question-item { padding: 1rem; } .question-item-prompt { font-size: .96rem; } .question-item .autosave-status { display: block; margin: .6rem 0 0; } }
 </style>
 
@@ -77,11 +83,17 @@
                 <button class="button button-secondary" type="submit">Lưu câu trả lời</button>
                 <span class="autosave-status muted" aria-live="polite"></span>
             </form>
-            <form th:if="${question.type == 'SPEAKING_AUDIO'}" method="post" enctype="multipart/form-data" th:action="@{/student/attempts/{id}/answers/audio(id=${attempt.attemptId})}">
-                <input type="hidden" name="questionId" th:value="${question.questionId}"><input type="hidden" name="itemId" th:value="${item.itemId}">
-                <div class="field"><label th:for="|audio-${item.itemId}|">File ghi âm</label><input type="file" accept="audio/*,.webm,.m4a,.mp3,.wav,.ogg" name="audioFile" th:id="|audio-${item.itemId}|" required></div>
-                <span class="muted" th:if="${item.audioSaved}">Đã lưu file ghi âm cho mục này.</span>
-                <button class="button button-secondary" type="submit">Lưu file ghi âm</button>
+            <form th:if="${question.type == 'SPEAKING_AUDIO'}" class="speaking-recorder" method="post" enctype="multipart/form-data" th:attr="data-audio-action=@{/student/attempts/{id}/answers/audio(id=${attempt.attemptId})},data-question-id=${question.questionId},data-item-id=${item.itemId}">
+                <span class="speaking-recorder-label">Ghi âm câu trả lời trực tiếp</span>
+                <div class="speaking-recorder-actions">
+                    <button class="button button-secondary recording-start" type="button">Bắt đầu ghi</button>
+                    <button class="button button-secondary recording-stop" type="button" disabled>Dừng ghi</button>
+                    <button class="button button-secondary recording-reset" type="button" disabled>Ghi lại</button>
+                    <button class="button recording-save" type="button" disabled>Lưu bản ghi</button>
+                    <span class="recording-status muted" aria-live="polite">Nhấn “Bắt đầu ghi” và cho phép trình duyệt sử dụng microphone.</span>
+                </div>
+                <audio class="recording-preview" controls preload="metadata" hidden></audio>
+                <span class="muted" th:if="${item.audioSaved}">Đã lưu bản ghi cho mục này.</span>
             </form>
         </div>
     </section>
@@ -129,6 +141,42 @@
     button.disabled = true; status.textContent = 'Đang kiểm tra lượt nghe…';
     try { const response = await fetch(button.dataset.play, {method: 'POST', headers: {'X-CSRF-TOKEN': csrf, 'Accept': 'application/json'}}); const result = await response.json(); if (!response.ok) throw new Error(result.message || 'Không thể phát audio'); player.src = button.dataset.content + '?token=' + encodeURIComponent(result.contentToken); player.onended = () => { if (result.playCount < result.maxPlayCount) button.disabled = false; }; await player.play(); status.textContent = `Đã dùng ${result.playCount}/${result.maxPlayCount} lượt nghe`; } catch (error) { button.disabled = false; status.textContent = error.message; }
   }));
+  document.querySelectorAll('.speaking-recorder').forEach(box => {
+    const start = box.querySelector('.recording-start');
+    const stop = box.querySelector('.recording-stop');
+    const reset = box.querySelector('.recording-reset');
+    const saveRecording = box.querySelector('.recording-save');
+    const preview = box.querySelector('.recording-preview');
+    const status = box.querySelector('.recording-status');
+    let recorder; let stream; let chunks = []; let recordingBlob; let previewUrl;
+    const supportedMime = ['audio/webm;codecs=opus', 'audio/webm', 'audio/mp4', 'audio/ogg;codecs=opus'].find(type => window.MediaRecorder?.isTypeSupported?.(type));
+    const extension = () => recorder?.mimeType.includes('mp4') ? 'm4a' : recorder?.mimeType.includes('ogg') ? 'ogg' : 'webm';
+    const setStatus = message => { status.textContent = message; };
+    const clearPreview = () => { if (previewUrl) URL.revokeObjectURL(previewUrl); previewUrl = null; preview.removeAttribute('src'); preview.hidden = true; };
+    start.addEventListener('click', async () => {
+      if (!navigator.mediaDevices?.getUserMedia || !window.MediaRecorder) { setStatus('Trình duyệt không hỗ trợ ghi âm trực tiếp.'); return; }
+      start.disabled = true; reset.disabled = true; saveRecording.disabled = true; setStatus('Đang chờ quyền microphone…');
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({audio: true});
+        chunks = []; recorder = supportedMime ? new MediaRecorder(stream, {mimeType: supportedMime}) : new MediaRecorder(stream);
+        recorder.ondataavailable = event => { if (event.data.size) chunks.push(event.data); };
+        recorder.onstop = () => {
+          recordingBlob = new Blob(chunks, {type: recorder.mimeType || 'audio/webm'});
+          clearPreview(); previewUrl = URL.createObjectURL(recordingBlob); preview.src = previewUrl; preview.hidden = false;
+          reset.disabled = false; saveRecording.disabled = false; stream?.getTracks().forEach(track => track.stop()); stream = null; setStatus('Đã ghi xong. Hãy nghe lại trước khi lưu.');
+        };
+        recorder.onerror = () => { stream?.getTracks().forEach(track => track.stop()); stream = null; start.disabled = false; stop.disabled = true; setStatus('Không thể hoàn tất bản ghi. Vui lòng thử lại.'); };
+        recorder.start(); stop.disabled = false; setStatus('Đang ghi âm…');
+      } catch (error) { stream?.getTracks().forEach(track => track.stop()); stream = null; start.disabled = false; setStatus('Không thể dùng microphone. Hãy kiểm tra quyền của trình duyệt.'); }
+    });
+    stop.addEventListener('click', () => { if (recorder?.state === 'recording') { recorder.stop(); stop.disabled = true; start.disabled = false; } });
+    reset.addEventListener('click', () => { recordingBlob = null; clearPreview(); reset.disabled = true; saveRecording.disabled = true; start.disabled = false; setStatus('Bản ghi đã được xóa. Bạn có thể ghi lại.'); });
+    saveRecording.addEventListener('click', async () => {
+      if (!recordingBlob) return; saveRecording.disabled = true; reset.disabled = true; setStatus('Đang lưu bản ghi…');
+      const data = new FormData(); data.append('questionId', box.dataset.questionId); data.append('itemId', box.dataset.itemId); data.append('audioFile', recordingBlob, `speaking-${box.dataset.itemId}.${extension()}`);
+      try { const response = await fetch(box.dataset.audioAction, {method: 'POST', headers: {'X-CSRF-TOKEN': csrf}, body: data}); if (!response.ok) throw new Error(); window.location.href = response.url; } catch (error) { saveRecording.disabled = false; reset.disabled = false; setStatus('Chưa thể lưu bản ghi. Vui lòng thử lại.'); }
+    });
+  });
 })();
 </script>
 </body></html>
