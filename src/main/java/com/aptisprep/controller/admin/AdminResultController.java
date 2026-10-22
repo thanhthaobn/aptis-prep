@@ -25,7 +25,7 @@ public class AdminResultController {
     public String list(@RequestParam(defaultValue = "") String q, @RequestParam(defaultValue = "") String skill,
                        @RequestParam(defaultValue = "") String examType, @RequestParam(defaultValue = "") String state,
                        @RequestParam(defaultValue = "") String from, @RequestParam(defaultValue = "") String to,
-                       @RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "20") int size, Principal principal, Model model) {
+                       @RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "10") int size, Principal principal, Model model) {
         if (q.length() > 255 || skill.length() > 40 || examType.length() > 40 || state.length() > 40 || page < 0 || size < 1 || size > 100)
             throw new BusinessRuleException("Bộ lọc kết quả không hợp lệ");
         Instant fromValue = parseDate(from, false), toValue = parseDate(to, true);
