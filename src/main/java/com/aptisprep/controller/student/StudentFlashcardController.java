@@ -43,5 +43,5 @@ public class StudentFlashcardController {
  private String form(Model m,com.aptisprep.dto.form.FlashcardSetForm f,Integer id){m.addAttribute("form",f);m.addAttribute("setId",id);m.addAttribute("levels",LessonService.LEVELS);m.addAttribute("personal",true);return "flashcard/form";}
  @GetMapping("/{id}") public String study(@PathVariable Integer id,Principal p,Model m){m.addAttribute("cards",service.study(id,p.getName()));m.addAttribute("set",service.studySet(id,p.getName()));return "flashcard/study";}
  @PostMapping("/{setId}/cards/{cardId}/state") @ResponseBody
- public ResponseEntity<Void> mark(@PathVariable Integer setId,@PathVariable Integer cardId,@RequestParam String state,Principal p){service.mark(setId,cardId,state,p.getName());return ResponseEntity.noContent().build();}
+ public ResponseEntity<Void> mark(@PathVariable Integer setId,@PathVariable Integer cardId,@RequestParam String state,@RequestParam String reviewKey,Principal p){service.mark(setId,cardId,state,p.getName(),reviewKey);return ResponseEntity.noContent().build();}
 }

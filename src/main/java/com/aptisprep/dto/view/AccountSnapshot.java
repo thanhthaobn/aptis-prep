@@ -6,7 +6,10 @@ import java.util.Map;
 
 public record AccountSnapshot(String fullName, String email, GoalView goal, List<SkillView> profiles) {
     public record GoalView(Integer certificateId, String certificateName, LocalDate targetDate,
-                           Map<String, String> targets) {
+                           Map<String, String> targets, Map<String, java.math.BigDecimal> targetScores) {
+        public GoalView(Integer certificateId, String certificateName, LocalDate targetDate, Map<String,String> targets) {
+            this(certificateId, certificateName, targetDate, targets, Map.of());
+        }
     }
 
     public record SkillView(String skill, String currentLevel, Integer sourceAttemptId) {

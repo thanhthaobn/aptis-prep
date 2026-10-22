@@ -113,7 +113,7 @@ public class LessonTeachingService {
   if("Speaking".equals(lesson.getSkill())&&!has(submitted.getAudioPath()))throw new BusinessRuleException("Bản Speaking được chọn chưa có bản ghi âm");
   int version=submitted.getId();String key="lesson-"+lessonId+"-submission-"+submitted.getId();
   String prompt=has(submitted.getPrompt())?submitted.getPrompt():lesson.getTitle();
-  var request=new AiAssessmentContract.AssessmentRequest(key,u.getId(),response.getId(),response.getId(),version,lesson.getSkill().toUpperCase(Locale.ROOT),lesson.getSkill().toUpperCase(Locale.ROOT),prompt,submitted.getText(),"lesson-v1","learning-feedback-v1",BigDecimal.valueOf(50),"Speaking".equals(lesson.getSkill())?submitted.getText():null);
+  var request=new AiAssessmentContract.AssessmentRequest(key,u.getId(),null,null,version,lesson.getSkill().toUpperCase(Locale.ROOT),lesson.getSkill().toUpperCase(Locale.ROOT),prompt,submitted.getText(),"lesson-v1","learning-feedback-v1",BigDecimal.valueOf(50),"Speaking".equals(lesson.getSkill())?submitted.getText():null,"LESSON_SUBMISSION",submitted.getId());
   assessments.request(request);assessments.process(key);return key;
  }
  public record CheckView(Integer id,String prompt,List<String> options){}

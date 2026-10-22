@@ -17,13 +17,31 @@ import static org.hamcrest.Matchers.*;
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_CLASS)
 class StudentContentPreviewTests {
     @Autowired MockMvc mvc;
+    @Autowired com.aptisprep.repository.MockExamRepository exams;
+    @Autowired com.aptisprep.repository.MockExamSectionRepository sections;
+    @Autowired com.aptisprep.repository.CertificateRepository certificates;
+    private final java.util.List<Integer> examIds = new java.util.ArrayList<>();
+
+    @org.junit.jupiter.api.BeforeEach
+    void databaseCatalog() {
+        var certificate = new com.aptisprep.entity.Certificate(); certificate.setCode("STUDENT-UI-" + System.nanoTime());
+        certificate.setName("Test certificate"); certificate.setStatus(com.aptisprep.enums.RecordStatus.ACTIVE); certificate = certificates.saveAndFlush(certificate);
+        String[] skills = {"FULL_MOCK", "READING", "WRITING"};
+        String[] titles = {"Thi thử tổng hợp số 01", "Luyện tập Reading", "Luyện tập Writing"};
+        for (int i=0;i<skills.length;i++) {
+            var exam = new com.aptisprep.entity.MockExamEntity(); exam.setTitle(titles[i]); exam.setCertificateId(certificate.getId());
+            exam.setExamType(i==0?"FULL_MOCK":"PRACTICE"); exam.setSkill(skills[i]); exam.setTargetLevel(i==1?"B1":"B2");
+            exam.setDurationMinutes(35); exam.setStatus("PUBLISHED"); exam = exams.saveAndFlush(exam); examIds.add(exam.getId());
+            if(i==0){var section=new com.aptisprep.entity.MockExamSectionEntity();section.setMockExamId(exam.getId());section.setSkill("LISTENING");section.setDisplayOrder(1);section.setDurationMinutes(20);section.setStatus("ACTIVE");sections.saveAndFlush(section);}
+        }
+    }
     @Test void temporaryExamCatalogUsesCompactSharedSkillTheme() throws Exception {
-        for(String path : new String[]{"/student/exams", "/student/exams/7002"}) {
+        for(String path : new String[]{"/student/exams", "/student/exams/"+examIds.get(1)}) {
             mvc.perform(get(path).with(user("student").roles("STUDENT")))
                 .andExpect(status().isOk()).andExpect(content().string(containsString("compact-catalog")))
                 .andExpect(content().string(containsString("data-skill=\"Reading\"")));
         }
-        mvc.perform(get("/student/exams/7001").with(user("student").roles("STUDENT")))
+        mvc.perform(get("/student/exams/"+examIds.getFirst()).with(user("student").roles("STUDENT")))
             .andExpect(status().isOk()).andExpect(content().string(containsString("data-skill=\"Tổng hợp\"")))
             .andExpect(content().string(containsString("data-skill=\"Listening\"")));
     }
@@ -36,8 +54,8 @@ class StudentContentPreviewTests {
         mvc.perform(get("/student/exams").with(user("new@student.local").roles("STUDENT")))
             .andExpect(status().isOk()).andExpect(view().name("student/content/list"))
             .andExpect(content().string(not(containsString("minhanh@example.com"))));
-        for(int i=1;i<=3;i++) {
-            mvc.perform(get("/student/exams/"+(7000+i)).with(user("new@student.local").roles("STUDENT")))
+        for(int id:examIds) {
+            mvc.perform(get("/student/exams/"+id).with(user("new@student.local").roles("STUDENT")))
                 .andExpect(status().isOk()).andExpect(view().name("student/content/detail"));
         }
     }

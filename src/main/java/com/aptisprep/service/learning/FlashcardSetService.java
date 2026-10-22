@@ -29,7 +29,7 @@ public class FlashcardSetService {
   }
   return List.copyOf(branches);
  }
- public record CardView(Integer id,String term,String definition,String state){}
+ public record CardView(Integer id,String term,String definition,String state,LocalDateTime nextReviewAt){}
  public record LessonLink(Integer id,String title,String skill){}
  public record StudySetView(Integer id,String title,String description,String cefrLevel,LessonLink lesson){}
  @Transactional(readOnly=true)
@@ -65,10 +65,51 @@ public class FlashcardSetService {
  public FlashcardSetForm personalForm(Integer id,String email){var set=requireForStudent(id,email);if(set.getOwner()==null)throw new BusinessRuleException("Không thể sửa bộ thẻ thư viện");return toForm(set);}
  public Integer savePersonal(Integer id,FlashcardSetForm f,String email){var u=learner(email);if(id!=null&&requireForStudent(id,email).getOwner()==null)throw new BusinessRuleException("Không thể sửa bộ thẻ thư viện");f.setStatus("PUBLISHED");f.setLessonId(null);return save(id,f,null,u);}
  public void archivePersonal(Integer id,String email){var u=learner(email);var set=sets.findById(id).filter(s->s.getOwner()!=null&&s.getOwner().getId().equals(u.getId())&&!"ARCHIVED".equals(s.getStatus())).orElseThrow(()->new ResourceNotFoundException("Không tìm thấy bộ thẻ cá nhân"));set.setStatus("ARCHIVED");sets.save(set);}
- public List<CardView> study(Integer id,String email){var u=learner(email);requireForStudent(id,email);return cards.findBySetIdAndStatusOrderByDisplayOrderAsc(id,"ACTIVE").stream().map(c->new CardView(c.getId(),c.getFrontContent(),c.getBackContent(),progress.findByUserIdAndFlashcardId(u.getId(),c.getId()).map(UserFlashcardProgress::getStatus).orElse("LEARNING"))).toList();}
+ public List<CardView> study(Integer id,String email){var u=learner(email);requireForStudent(id,email);return cards.findBySetIdAndStatusOrderByDisplayOrderAsc(id,"ACTIVE").stream().map(c->{var p=progress.findByUserIdAndFlashcardId(u.getId(),c.getId()).orElse(null);return new CardView(c.getId(),c.getFrontContent(),c.getBackContent(),p==null?"LEARNING":p.getStatus(),p==null?null:p.getNextReviewAt());}).sorted(Comparator.comparing(CardView::nextReviewAt,Comparator.nullsFirst(Comparator.naturalOrder()))).toList();}
  public Optional<FlashcardSet> publishedForLesson(Integer lessonId){return sets.findFirstByLessonIdAndOwnerIsNullAndStatusOrderByIdDesc(lessonId,"PUBLISHED");}
  public Optional<FlashcardSet> forLesson(Integer lessonId){return sets.findFirstByLessonIdAndOwnerIsNullOrderByIdDesc(lessonId);}
  public List<Lesson> availableLessons(){return lessons.findAllByOrderBySkillAscCefrLevelAscDisplayOrderAsc().stream().filter(l->!"ARCHIVED".equals(l.getStatus())).toList();}
  public void prepareForLesson(FlashcardSetForm form,Integer lessonId){if(lessonId==null)return;var lesson=lessons.findById(lessonId).filter(l->!"ARCHIVED".equals(l.getStatus())).orElseThrow(()->new ResourceNotFoundException("Không tìm thấy bài học"));form.setLessonId(lesson.getId());form.setCefrLevel(lesson.getCefrLevel());}
- public void mark(Integer setId,Integer cardId,String state,String email){if(!List.of("LEARNING","MASTERED").contains(state))throw new BusinessRuleException("Trạng thái không hợp lệ");var u=learner(email);em.lock(u,LockModeType.PESSIMISTIC_WRITE);requireForStudent(setId,email);var c=cards.findById(cardId).filter(x->x.getSet()!=null&&x.getSet().getId().equals(setId)&&"ACTIVE".equals(x.getStatus())).orElseThrow(()->new ResourceNotFoundException("Không tìm thấy thẻ"));var p=progress.findByUserIdAndFlashcardId(u.getId(),cardId).orElseGet(()->{var n=new UserFlashcardProgress();n.setUser(u);n.setFlashcard(c);n.setReviewCount(0);return n;});if(!state.equals(p.getStatus()))p.setReviewCount(p.getReviewCount()+1);p.setLastReviewedAt(LocalDateTime.now());p.setStatus(state);p.setMasteryLevel("MASTERED".equals(state)?5:1);progress.save(p);}
+ public void mark(Integer setId, Integer cardId, String state, String email) {
+  mark(setId, cardId, state, email, UUID.randomUUID().toString());
+ }
+
+ public void mark(Integer setId, Integer cardId, String state, String email, String reviewKey) {
+  if (!"LEARNING".equals(state) && !"MASTERED".equals(state))
+   throw new BusinessRuleException("Trạng thái không hợp lệ");
+  if (reviewKey == null || !reviewKey.matches("[A-Za-z0-9-]{16,80}"))
+   throw new BusinessRuleException("Mã lượt ôn không hợp lệ");
+
+  var user = learner(email);
+  em.lock(user, LockModeType.PESSIMISTIC_WRITE);
+  requireForStudent(setId, email);
+  var card = cards.findById(cardId)
+    .filter(value -> value.getSet() != null && value.getSet().getId().equals(setId)
+      && "ACTIVE".equals(value.getStatus()))
+    .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy thẻ"));
+  String key = user.getId() + ":" + cardId + ":" + reviewKey;
+  var prior = em.find(FlashcardReview.class, key);
+  if (prior != null) {
+   if (!state.equals(prior.getState()))
+    throw new BusinessRuleException("Mã lượt ôn đã được dùng cho nội dung khác");
+   return;
+  }
+
+  var value = progress.findByUserIdAndFlashcardId(user.getId(), cardId).orElseGet(() -> {
+   var created = new UserFlashcardProgress();
+   created.setUser(user); created.setFlashcard(card); created.setReviewCount(0);
+   return created;
+  });
+  var now = LocalDateTime.now();
+  value.setReviewCount(value.getReviewCount() + 1);
+  value.setLastReviewedAt(now); value.setStatus(state);
+  value.setMasteryLevel("MASTERED".equals(state) ? 5 : 1);
+  int previous = value.getIntervalDays() == null ? 0 : value.getIntervalDays();
+  double ease = value.getEaseFactor() == null ? 2.5 : value.getEaseFactor().doubleValue();
+  int days = "MASTERED".equals(state) ? Math.min(365, previous == 0 ? 1 : (int) Math.ceil(previous * ease)) : 0;
+  value.setIntervalDays(days);
+  value.setNextReviewAt(days == 0 ? now.plusMinutes(10) : now.plusDays(days));
+  progress.save(value);
+  em.persist(new FlashcardReview(key, user.getId(), cardId, state, now));
+ }
 }

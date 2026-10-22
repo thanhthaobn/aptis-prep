@@ -24,6 +24,7 @@ class CertificateSchemeServiceTests {
     @Mock CertificateRepository certificates;
     @Mock ScoringSchemeRepository schemes;
     @Mock ScoreBandRepository bands;
+    @Mock com.aptisprep.repository.ScoringScaleRuleRepository scaleRules;
 
     private Certificate certificate;
     private ScoringScheme scheme;
@@ -40,7 +41,7 @@ class CertificateSchemeServiceTests {
         lenient().when(scheme.getStatus()).thenReturn(RecordStatus.ACTIVE);
         lenient().when(scheme.getVersion()).thenReturn("1.0");
         lenient().when(scheme.getName()).thenReturn("Test scheme");
-        service = new CertificateSchemeService(certificates, schemes, bands);
+        service = new CertificateSchemeService(certificates, schemes, bands, scaleRules);
     }
 
     @Test
@@ -50,6 +51,7 @@ class CertificateSchemeServiceTests {
         when(band.getSkill()).thenReturn("READING");
         when(bands.findBySchemeIdAndSkillOrderByMinScoreAsc(2, "READING")).thenReturn(List.of(band));
         when(bands.findBySchemeIdOrderBySkillAscMinScoreAsc(2)).thenReturn(List.of(band));
+        when(scaleRules.findBySchemeIdAndSkillIgnoreCase(2, "READING")).thenReturn(Optional.of(new com.aptisprep.entity.ScoringScaleRule()));
 
         var option = service.requireAvailableScheme(1, 2, "Reading");
 

@@ -15,11 +15,11 @@ class CheckpointScorePolicyTests {
     }
 
     @Test
-    void passThresholdIsSixtyPercentOfFifty() {
+    void confirmedCefrFromTheConfiguredBandDecidesPassWithoutASecondHardCodedThreshold() {
         assertThat(CheckpointScorePolicy.passed("CHECKPOINT", "A1", "A1", new BigDecimal("30")))
                 .isTrue();
         assertThat(CheckpointScorePolicy.passed("CHECKPOINT", "A1", "A1", new BigDecimal("29.99")))
-                .isFalse();
+                .isTrue();
         assertThat(CheckpointScorePolicy.passed("CHECKPOINT", "A1", "A1", BigDecimal.ZERO))
                 .isFalse();
     }

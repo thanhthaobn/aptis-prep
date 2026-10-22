@@ -33,7 +33,7 @@
         </section>
         <form id="csrf-holder" method="post" th:action="@{/student/flashcards/{id}/cards/0/state(id=${set.id})}" hidden></form>
         <section id="study-data" hidden><div th:each="card:${cards}" th:attr="data-id=${card.id()},data-state=${card.state()}"><span class="term" th:text="${card.term()}"></span><span class="definition" th:text="${card.definition()}"></span></div></section>
-        <details class="dashboard-panel dashboard-section term-overview"><summary>Xem toàn bộ thuật ngữ</summary><dl class="term-list"><div th:each="card:${cards}"><dt th:text="${card.term()}"></dt><dd th:text="${card.definition()}"></dd></div></dl></details>
+        <details class="dashboard-panel dashboard-section term-overview"><summary>Xem toàn bộ thuật ngữ</summary><dl class="term-list"><div th:each="card:${cards}"><dt th:text="${card.term()}"></dt><dd th:text="${card.definition()}"></dd><dd class="muted" th:if="${card.nextReviewAt != null}" th:text="|Ôn tiếp: ${#temporals.format(card.nextReviewAt,'dd/MM/yyyy HH:mm')}|"></dd></div></dl></details>
     </main>
 </div>
 <div th:replace="~{fragments/footer :: footer}"></div>

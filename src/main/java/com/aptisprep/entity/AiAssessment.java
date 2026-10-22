@@ -17,7 +17,7 @@ public class AiAssessment {
     private AiAssessmentJob job;
     @Column(name = "assessment_key", nullable = false, length = 255)
     private String assessmentKey;
-    @Column(name = "answer_id", nullable = false)
+    @Column(name = "answer_id")
     private Integer answerId;
     @Column(name = "answer_version", nullable = false)
     private Integer answerVersion;

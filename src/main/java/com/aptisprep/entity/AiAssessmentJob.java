@@ -16,10 +16,19 @@ public class AiAssessmentJob {
     private String assessmentKey;
     @Column(name = "user_id", nullable = false)
     private Integer userId;
-    @Column(name = "attempt_id", nullable = false)
+    @Column(name = "attempt_id")
     private Integer attemptId;
-    @Column(name = "answer_id", nullable = false)
+    @Column(name = "answer_id")
     private Integer answerId;
+    @Column(name = "source_type", nullable = false, length = 30)
+    private String sourceType = "EXAM_ANSWER";
+    @Column(name = "source_id")
+    private Integer sourceId;
+
+    public String getSourceType() { return sourceType; }
+    public void setSourceType(String value) { sourceType = value; }
+    public Integer getSourceId() { return sourceId; }
+    public void setSourceId(Integer value) { sourceId = value; }
     @Column(name = "answer_version", nullable = false)
     private Integer answerVersion;
     @Column(nullable = false, length = 30)

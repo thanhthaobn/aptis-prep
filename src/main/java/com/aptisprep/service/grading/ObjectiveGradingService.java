@@ -83,7 +83,7 @@ public class ObjectiveGradingService {
             result.setGradingStatus(subjective ? "WAITING" : "COMPLETED");
         } else {
             Integer schemeId = locked.scoringSchemeId() == null ? exam.getScoringSchemeId() : locked.scoringSchemeId();
-            BigDecimal raw = scoring.raw(schemeId, skill, correct, total);
+            BigDecimal raw = schemeId == null ? BigDecimal.valueOf(correct) : scoring.raw(schemeId, skill, correct, total);
             result.setCorrectCount(correct);
             result.setTotalItems(total);
             result.setObjectiveRawScore(raw);
@@ -96,7 +96,9 @@ public class ObjectiveGradingService {
                 result.setGradingStatus("WAITING");
             } else {
                 applyPolicy(result, schemeId, skill, raw, exam);
-                if (result.getCefrLevel() == null) {
+                if (schemeId == null) {
+                    result.setGradingMethod("UNSCALED"); result.setGradingStatus("COMPLETED");
+                } else if (result.getCefrLevel() == null) {
                     result.setGradingMethod("POLICY_ERROR");
                     result.setGradingStatus("ERROR");
                 } else {
@@ -110,6 +112,7 @@ public class ObjectiveGradingService {
 
     private void applyPolicy(ExamSkillResultEntity result, Integer schemeId, String skill, BigDecimal raw, MockExamEntity exam) {
         result.setRawScore(raw);
+        if (schemeId == null) { result.setScaleScore(null); result.setCefrLevel(null); return; }
         result.setScaleScore(scoring.scale(schemeId, skill, raw));
         result.setCefrLevel(com.aptisprep.service.scoring.CheckpointScorePolicy.confirmedLevel(
                 exam.getExamType(), exam.getTargetLevel(), scoring.estimatedLevel(schemeId, skill, result.getScaleScore())));
@@ -117,7 +120,7 @@ public class ObjectiveGradingService {
 
     private boolean isCorrect(String type, LockedItem item, UserAnswerDetailEntity detail) {
         if (detail == null) return false;
-        if ("ORDERING".equals(type)) return Objects.equals(detail.getUserPosition(), item.correctPosition());
+        if ("ORDERING".equals(type)) return detail.getUserPosition() != null && item.correctPosition() != null && Objects.equals(detail.getUserPosition(), item.correctPosition());
         if ("SINGLE_CHOICE".equals(type) || "MATCHING".equals(type)) {
             return detail.getSelectedOptionId() != null
                     && Objects.equals(detail.getSelectedOptionId(), item.correctOptionId());

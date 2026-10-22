@@ -16,11 +16,11 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 @Controller
-public class StudentAccountPreviewController {
+public class StudentAccountController {
     private final PlacementService placement;
     private final AccountProfileService accounts;
     private final LearningActivityService activity;
-    public StudentAccountPreviewController(PlacementService placement, AccountProfileService accounts, LearningActivityService activity) {
+    public StudentAccountController(PlacementService placement, AccountProfileService accounts, LearningActivityService activity) {
         this.placement = placement; this.accounts = accounts; this.activity = activity;
     }
     @GetMapping("/student/profile")

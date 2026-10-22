@@ -59,7 +59,7 @@ public class StudentDashboardController {
             String current=account.profiles().stream().filter(profile->code.equals(profile.skill()))
                 .map(com.aptisprep.dto.view.AccountSnapshot.SkillView::currentLevel)
                 .filter(java.util.Objects::nonNull).findFirst().orElse("—");
-            String goal=account.goal()==null?"C2":account.goal().targets().getOrDefault(code,"C2");
+            String goal=account.goal()==null?"Chưa đặt mục tiêu":account.goal().targets().getOrDefault(code,"Chưa đặt mục tiêu");
             skillOverview.add(new SkillOverview(label,current,goal));
         }
         model.addAttribute("skillOverview",skillOverview);

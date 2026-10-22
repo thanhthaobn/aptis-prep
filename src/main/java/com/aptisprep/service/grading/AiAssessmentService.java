@@ -52,6 +52,7 @@ public class AiAssessmentService implements AiAssessmentContract {
                 }
                 User user = activeUser(request.userId());
                 AiAssessmentJob job = new AiAssessmentJob();
+                job.setSourceType(request.sourceType()); job.setSourceId(request.sourceId());
                 job.setAssessmentKey(request.assessmentKey()); job.setUserId(user.getId()); job.setAttemptId(request.attemptId()); job.setAnswerId(request.answerId()); job.setAnswerVersion(request.answerVersion());
                 job.setSkill(normalizeSkill(request.skill())); job.setTaskType(normalizeTask(request.taskType())); job.setTaskContent(request.taskContent().trim()); job.setLockedContent(request.lockedContent().trim());
                 job.setRubricVersion(request.rubricVersion().trim()); job.setPolicyVersion(request.policyVersion().trim()); job.setMaxScore(request.maxScore()); job.setTranscript(blankToNull(request.transcript())); job.setState(AiJobState.PENDING); job.setRetryCount(0);
@@ -137,6 +138,11 @@ public class AiAssessmentService implements AiAssessmentContract {
     }
 
     private void publishAfterCommit(AiAssessmentCompletedEvent event) {
+        // Lesson feedback is not an exam result, even when numeric IDs happen to match.
+        boolean examSource = Boolean.TRUE.equals(transactions.execute(status ->
+                jobs.findByAssessmentKey(event.assessmentKey())
+                        .map(job -> "EXAM_ANSWER".equals(job.getSourceType())).orElse(false)));
+        if (!examSource) return;
         if (!TransactionSynchronizationManager.isSynchronizationActive()) {
             events.publishEvent(event);
             return;
@@ -163,15 +169,26 @@ public class AiAssessmentService implements AiAssessmentContract {
     }
 
     private void validateRequest(AssessmentRequest request) {
-        if (request == null || blank(request.assessmentKey()) || request.assessmentKey().length() > 255 || request.userId() == null || request.attemptId() == null || request.answerId() == null || request.answerVersion() == null || request.answerVersion() < 1) throw new BusinessRuleException("Yêu cầu đánh giá không hợp lệ");
+        if (request == null || blank(request.assessmentKey()) || request.assessmentKey().length() > 255 || request.userId() == null || request.answerVersion() == null || request.answerVersion() < 1)
+            throw new BusinessRuleException("Yêu cầu đánh giá không hợp lệ");
+        boolean exam = "EXAM_ANSWER".equals(request.sourceType());
+        boolean lesson = "LESSON_SUBMISSION".equals(request.sourceType());
+        if ((!exam && !lesson) || request.sourceId() == null || request.sourceId() < 1
+                || (exam && (request.attemptId() == null || request.answerId() == null))
+                || (lesson && (request.attemptId() != null || request.answerId() != null)))
+            throw new BusinessRuleException("Nguồn bài đánh giá không hợp lệ");
         if (blank(request.taskContent()) || request.taskContent().length() > 10000 || blank(request.lockedContent()) || request.lockedContent().length() > 20000) throw new BusinessRuleException("Nội dung bài đã khóa không hợp lệ");
         if (blank(request.rubricVersion()) || blank(request.policyVersion()) || request.maxScore() == null || request.maxScore().compareTo(BigDecimal.ZERO) <= 0 || request.maxScore().compareTo(BigDecimal.valueOf(50)) > 0) throw new BusinessRuleException("Thiếu phiên bản rubric/policy hoặc thang điểm không hợp lệ");
         normalizeSkill(request.skill()); normalizeTask(request.taskType());
     }
     private boolean sameRequest(AiAssessmentJob job, AssessmentRequest request) {
         return Objects.equals(job.getUserId(), request.userId())
-                && Objects.equals(job.getAttemptId(), request.attemptId())
-                && Objects.equals(job.getAnswerId(), request.answerId())
+                && Objects.equals(job.getSourceType(), request.sourceType())
+                && Objects.equals(job.getSourceId(), request.sourceId())
+                // Legacy lesson jobs used submission IDs in these exam-only columns.
+                && ("LESSON_SUBMISSION".equals(request.sourceType())
+                    || (Objects.equals(job.getAttemptId(), request.attemptId())
+                        && Objects.equals(job.getAnswerId(), request.answerId())))
                 && Objects.equals(job.getAnswerVersion(), request.answerVersion())
                 && Objects.equals(job.getSkill(), normalizeSkill(request.skill()))
                 && Objects.equals(job.getTaskType(), normalizeTask(request.taskType()))
@@ -179,7 +196,7 @@ public class AiAssessmentService implements AiAssessmentContract {
                 && Objects.equals(job.getLockedContent(), request.lockedContent().trim())
                 && Objects.equals(job.getRubricVersion(), request.rubricVersion().trim())
                 && Objects.equals(job.getPolicyVersion(), request.policyVersion().trim())
-                && Objects.equals(job.getMaxScore(), request.maxScore())
+                && job.getMaxScore() != null && job.getMaxScore().compareTo(request.maxScore()) == 0
                 && Objects.equals(job.getTranscript(), blankToNull(request.transcript()));
     }
     private User activeUser(Integer id) {
