@@ -116,10 +116,14 @@ public class AttemptFinalizationService {
     @Transactional
     public void applyAiAssessment(AiAssessmentCompletedEvent event) {
         if (event.attemptId() == null || event.answerId() == null) return;
+        AiAssessmentJob callbackJob = jobs.findByAssessmentKey(event.assessmentKey()).orElse(null);
+        if (!isCurrentExamCallback(callbackJob, event)) return;
         ExamAttemptEntity attempt = attempts.findByIdAndUserIdForUpdate(event.attemptId(), event.userId())
                 .orElseThrow(() -> new AccessDeniedException("Bạn không có quyền cập nhật lượt thi này"));
         if ("COMPLETED".equals(attempt.getStatus())) return;
-        if (!Objects.equals(event.answerVersion(), attempt.getAnswerVersion())) return;
+        if (!Objects.equals(event.answerVersion(), attempt.getAnswerVersion())
+                || !Objects.equals(callbackJob.getPolicyVersion(), attempt.getPolicyVersion())
+                || !Objects.equals(callbackJob.getRubricVersion(), attempt.getRubricVersion())) return;
         UserAnswerEntity answer = answers.findByIdAndAttemptId(event.answerId(), attempt.getId())
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy câu trả lời cần chấm"));
         QuestionEntity question = questions.findById(answer.getQuestionId())
@@ -162,8 +166,10 @@ public class AttemptFinalizationService {
         if (assessment.transcript() != null) answer.setTranscript(assessment.transcript());
         answers.save(answer);
 
-        List<AiAssessmentJob> skillJobs = jobs.findByAttemptIdAndAnswerVersion(attempt.getId(), attempt.getAnswerVersion()).stream()
+        List<AiAssessmentJob> skillJobs = jobs.findExamJobs(attempt.getUserId(), attempt.getId(),
+                        attempt.getAnswerVersion(), attempt.getPolicyVersion(), attempt.getRubricVersion()).stream()
                 .filter(job -> question.getSkill().equalsIgnoreCase(job.getSkill()))
+                .filter(job -> isSubjectiveAnswerJob(job, attempt.getId(), question.getSkill()))
                 .toList();
         List<BigDecimal> subjectiveScores = skillJobs.stream()
                 .map(job -> assessments.findFirstByJobIdAndAnswerVersionOrderByIdDesc(job.getId(), job.getAnswerVersion()).orElse(null))
@@ -304,9 +310,10 @@ public class AttemptFinalizationService {
         if (!"ERROR".equals(attempt.getStatus())) {
             throw new BusinessRuleException("Lượt thi này không có phần chấm lỗi");
         }
-        List<AiAssessmentJob> failed = jobs.findByAttemptIdAndAnswerVersionAndState(
-                        attemptId, attempt.getAnswerVersion(), AiJobState.ERROR).stream()
+        List<AiAssessmentJob> failed = jobs.findExamJobsByState(attempt.getUserId(), attemptId,
+                        attempt.getAnswerVersion(), attempt.getPolicyVersion(), attempt.getRubricVersion(), AiJobState.ERROR).stream()
                 .filter(job -> job.getRetryCount() < MAX_AI_RETRIES)
+                .filter(job -> isRetryableExamJob(job, attemptId))
                 .toList();
         if (failed.isEmpty()) throw new BusinessRuleException("Không tìm thấy tác vụ AI lỗi để thử lại");
         List<String> keys = new ArrayList<>();
@@ -338,6 +345,33 @@ public class AttemptFinalizationService {
                 .filter(question -> skill.equalsIgnoreCase(question.getSkill()))
                 .filter(question -> "WRITING_TEXT".equals(question.getQuestionType()) || "SPEAKING_AUDIO".equals(question.getQuestionType()))
                 .count();
+    }
+
+    private boolean isCurrentExamCallback(AiAssessmentJob job, AiAssessmentCompletedEvent event) {
+        if (job == null || !"EXAM_ANSWER".equals(job.getSourceType())) return false;
+        if (!Objects.equals(job.getUserId(), event.userId())
+                || !Objects.equals(job.getAttemptId(), event.attemptId())
+                || !Objects.equals(job.getAnswerId(), event.answerId())
+                || !Objects.equals(job.getSourceId(), event.answerId())
+                || !Objects.equals(job.getAnswerVersion(), event.answerVersion())) return false;
+        if ("COMPLETED".equalsIgnoreCase(event.state())) return job.getState() == AiJobState.COMPLETED;
+        if ("ERROR".equalsIgnoreCase(event.state())) return job.getState() == AiJobState.ERROR;
+        return false;
+    }
+
+    private boolean isSubjectiveAnswerJob(AiAssessmentJob job, Integer attemptId, String skill) {
+        if (!"EXAM_ANSWER".equals(job.getSourceType()) || job.getAnswerId() == null
+                || !Objects.equals(job.getSourceId(), job.getAnswerId())) return false;
+        return answers.findByIdAndAttemptId(job.getAnswerId(), attemptId)
+                .flatMap(answer -> questions.findById(answer.getQuestionId()))
+                .filter(question -> skill.equalsIgnoreCase(question.getSkill()))
+                .filter(question -> "WRITING_TEXT".equals(question.getQuestionType())
+                        || "SPEAKING_AUDIO".equals(question.getQuestionType()))
+                .isPresent();
+    }
+
+    private boolean isRetryableExamJob(AiAssessmentJob job, Integer attemptId) {
+        return isSubjectiveAnswerJob(job, attemptId, job.getSkill());
     }
 
     private boolean isComplete(ExamSkillResultEntity result) {

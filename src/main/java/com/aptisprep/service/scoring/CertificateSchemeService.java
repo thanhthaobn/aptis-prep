@@ -50,11 +50,9 @@ public class CertificateSchemeService implements CertificateSchemeContract {
         if (scheme.getStatus() != RecordStatus.ACTIVE || scheme.getCertificate().getStatus() != RecordStatus.ACTIVE) {
             throw new BusinessRuleException("Bộ chấm điểm hoặc chứng chỉ đã ngừng sử dụng");
         }
-        if (bands.findBySchemeIdAndSkillOrderByMinScoreAsc(scheme.getId(), normalizedSkill).isEmpty()) {
-            throw new BusinessRuleException("Bộ chấm điểm chưa cấu hình kỹ năng này");
-        }
-        if (scaleRules.findBySchemeIdAndSkillIgnoreCase(schemeId, normalizedSkill).isEmpty())
-            throw new BusinessRuleException("Bộ chấm điểm chưa cấu hình quy đổi raw-to-scale cho kỹ năng này");
+        ScoringScaleRule rule = scaleRules.findBySchemeIdAndSkillIgnoreCase(schemeId, normalizedSkill)
+                .orElseThrow(() -> new BusinessRuleException("Bộ chấm điểm chưa cấu hình quy đổi raw-to-scale cho kỹ năng này"));
+        ScoreBandCoverage.requireComplete(rule, bands.findBySchemeIdAndSkillOrderByMinScoreAsc(scheme.getId(), normalizedSkill));
         return option(scheme);
     }
 

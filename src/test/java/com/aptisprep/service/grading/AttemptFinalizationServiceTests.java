@@ -1,12 +1,17 @@
 package com.aptisprep.service.grading;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 
 import com.aptisprep.entity.AiAssessment;
 import com.aptisprep.entity.AiAssessmentJob;
@@ -86,12 +91,14 @@ class AttemptFinalizationServiceTests {
         AiAssessment successfulAssessment = assessment(successfulJob, AiAssessmentState.COMPLETED, new BigDecimal("35"));
 
         when(attempts.findByIdAndUserIdForUpdate(1, 2)).thenReturn(Optional.of(attempt));
+        when(jobs.findByAssessmentKey("successful")).thenReturn(Optional.of(successfulJob));
+        when(answers.findByIdAndAttemptId(10, 1)).thenReturn(Optional.of(failedAnswer));
         when(answers.findByIdAndAttemptId(11, 1)).thenReturn(Optional.of(successfulAnswer));
         when(answers.findByAttemptIdOrderByQuestionIdAsc(1)).thenReturn(List.of(failedAnswer, successfulAnswer));
         when(questions.findById(100)).thenReturn(Optional.of(failedQuestion));
         when(questions.findById(101)).thenReturn(Optional.of(successfulQuestion));
         when(skillResults.findByAttemptIdAndSkill(1, "WRITING")).thenReturn(Optional.of(result));
-        when(jobs.findByAttemptIdAndAnswerVersion(1, 2)).thenReturn(List.of(failedJob, successfulJob));
+        when(jobs.findExamJobs(2, 1, 2, "p1", "r1")).thenReturn(List.of(failedJob, successfulJob));
         when(assessments.findFirstByJobIdAndAnswerVersionOrderByIdDesc(20, 2)).thenReturn(Optional.of(failedAssessment));
         when(assessments.findFirstByJobIdAndAnswerVersionOrderByIdDesc(21, 2)).thenReturn(Optional.of(successfulAssessment));
         when(ai.getForGrading("successful")).thenReturn(new AiAssessmentContract.AssessmentView(
@@ -104,6 +111,32 @@ class AttemptFinalizationServiceTests {
         assertEquals("AI_ERROR", result.getGradingMethod());
         assertEquals("ERROR", attempt.getStatus());
         verify(scoring, never()).scale(any(), any(), any());
+    }
+
+    @Test
+    void lessonCallbackWithCollidingExamIdsCannotChangeExam() {
+        AiAssessmentJob lessonJob = job(20, "lesson", AiJobState.ERROR);
+        lessonJob.setSourceType("LESSON_SUBMISSION");
+        when(jobs.findByAssessmentKey("lesson")).thenReturn(Optional.of(lessonJob));
+
+        service.applyAiAssessment(new AiAssessmentCompletedEvent("lesson", 2, 1, 10, "ERROR", "failed", 2));
+
+        verifyNoInteractions(attempts, skillResults, ai);
+    }
+
+    @Test
+    void retryDoesNotSelectLessonFailureWithMatchingLegacyMetadata() {
+        ExamAttemptEntity attempt = new ExamAttemptEntity();
+        attempt.setUserId(2); attempt.setStatus("ERROR"); attempt.setAnswerVersion(2);
+        attempt.setPolicyVersion("p1"); attempt.setRubricVersion("r1");
+        ReflectionTestUtils.setField(attempt, "id", 1);
+        AiAssessmentJob lessonJob = job(20, "lesson", AiJobState.ERROR);
+        lessonJob.setSourceType("LESSON_SUBMISSION");
+        when(attempts.findByIdAndUserIdForUpdate(1, 2)).thenReturn(Optional.of(attempt));
+        when(jobs.findExamJobsByState(2, 1, 2, "p1", "r1", AiJobState.ERROR)).thenReturn(List.of(lessonJob));
+
+        assertThrows(com.aptisprep.exception.BusinessRuleException.class, () -> service.retryFailedGrading(2, 1));
+        verify(ai, never()).retry(anyString(), anyInt(), anyBoolean());
     }
 
     private UserAnswerEntity answer(int id, int questionId) {
@@ -123,7 +156,8 @@ class AttemptFinalizationServiceTests {
     private AiAssessmentJob job(int id, String key, AiJobState state) {
         AiAssessmentJob job = new AiAssessmentJob();
         ReflectionTestUtils.setField(job, "id", id);
-        job.setAssessmentKey(key); job.setAttemptId(1); job.setAnswerVersion(2); job.setAnswerId(id - 10);
+        job.setAssessmentKey(key); job.setUserId(2); job.setAttemptId(1); job.setAnswerVersion(2); job.setAnswerId(id - 10); job.setSourceId(id - 10);
+        job.setPolicyVersion("p1"); job.setRubricVersion("r1");
         job.setSkill("WRITING"); job.setState(state);
         return job;
     }

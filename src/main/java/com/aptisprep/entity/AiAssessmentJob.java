@@ -63,6 +63,8 @@ public class AiAssessmentJob {
     private LocalDateTime updatedAt;
     @Column(name = "next_retry_at")
     private LocalDateTime nextRetryAt;
+    @Column(name = "processing_token", length = 64)
+    private String processingToken;
 
     @PrePersist
     void onCreate() {
@@ -156,6 +158,10 @@ public class AiAssessmentJob {
         return nextRetryAt;
     }
 
+    public String getProcessingToken() {
+        return processingToken;
+    }
+
     public void setAssessmentKey(String value) {
         assessmentKey = value;
     }
@@ -222,5 +228,9 @@ public class AiAssessmentJob {
 
     public void setNextRetryAt(LocalDateTime value) {
         nextRetryAt = value;
+    }
+
+    public void setProcessingToken(String value) {
+        processingToken = value;
     }
 }

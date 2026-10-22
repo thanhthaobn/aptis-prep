@@ -1,6 +1,7 @@
 package com.aptisprep.service.exam;
 
 import com.aptisprep.entity.AttemptOutboxEntity;
+import com.aptisprep.event.AiAssessmentCompletedEvent;
 import com.aptisprep.event.AttemptCompletedEvent;
 import com.aptisprep.event.AttemptSubmittedEvent;
 import com.aptisprep.repository.AttemptOutboxRepository;
@@ -30,6 +31,17 @@ public class AttemptOutboxService {
     @Transactional
     public void enqueueCompleted(AttemptCompletedEvent event) { enqueue("attempt:" + event.attemptId() + ":completed", "ATTEMPT_COMPLETED", event.attemptId(), event.userId() + "|" + event.attemptId() + "|" + event.examType()); }
 
+    @Transactional
+    public void enqueueAiAssessmentCompleted(AiAssessmentCompletedEvent event) {
+        saveAiEvent(event, true);
+    }
+
+    /** Backfills callback delivery for completed jobs created before the AI outbox was introduced. */
+    @Transactional
+    public void ensureAiAssessmentCompleted(AiAssessmentCompletedEvent event) {
+        saveAiEvent(event, false);
+    }
+
     @Scheduled(fixedDelayString = "${app.attempt-outbox.recovery-ms:30000}")
     @Transactional
     public void recoverPending() {
@@ -52,6 +64,21 @@ public class AttemptOutboxService {
         if (outbox.findByEventKey(key).isPresent()) return;
         AttemptOutboxEntity row = new AttemptOutboxEntity(); row.setEventKey(key); row.setEventType(type); row.setAggregateId(aggregateId); row.setPayload(payload); row.setStatus("PENDING"); outbox.save(row);
     }
+
+    private void saveAiEvent(AiAssessmentCompletedEvent event, boolean replaceExisting) {
+        String key = aiEventKey(event);
+        AttemptOutboxEntity row = outbox.findByEventKey(key).orElseGet(AttemptOutboxEntity::new);
+        if (row.getEventKey() != null && !replaceExisting) return;
+        row.setEventKey(key); row.setEventType("AI_ASSESSMENT_COMPLETED"); row.setAggregateId(event.attemptId());
+        row.setPayload(json.writeValueAsString(new AiPayload(event.assessmentKey(), event.userId(), event.attemptId(),
+                event.answerId(), event.state(), event.errorMessage(), event.answerVersion())));
+        row.setStatus("PENDING"); row.setAttempts(0); row.setNextAttemptAt(LocalDateTime.now()); row.setLastError(null); row.setProcessedAt(null);
+        outbox.save(row);
+    }
+
+    private String aiEventKey(AiAssessmentCompletedEvent event) {
+        return "ai:" + event.assessmentKey() + ":v" + event.answerVersion() + ":" + event.state();
+    }
     private void dispatch(AttemptOutboxEntity row) {
         if ("ATTEMPT_SUBMITTED".equals(row.getEventType())) {
             SubmittedPayload payload;
@@ -66,6 +93,10 @@ public class AttemptOutboxService {
         } else if ("ATTEMPT_COMPLETED".equals(row.getEventType())) {
             String[] values = row.getPayload().split("\\|", -1);
             events.publishEvent(new AttemptCompletedEvent(Integer.valueOf(values[0]), Integer.valueOf(values[1]), values[2]));
+        } else if ("AI_ASSESSMENT_COMPLETED".equals(row.getEventType())) {
+            AiPayload payload = json.readValue(row.getPayload(), AiPayload.class);
+            events.publishEvent(new AiAssessmentCompletedEvent(payload.assessmentKey(), payload.userId(), payload.attemptId(),
+                    payload.answerId(), payload.state(), payload.errorMessage(), payload.answerVersion()));
         }
     }
 
@@ -79,6 +110,11 @@ public class AttemptOutboxService {
         markDeliveredKey("attempt:" + event.attemptId() + ":completed");
     }
 
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void markDelivered(AiAssessmentCompletedEvent event) {
+        markDeliveredKey(aiEventKey(event));
+    }
+
     private void markDeliveredKey(String key) {
         outbox.findByEventKey(key).ifPresent(row -> {
             row.setStatus("DISPATCHED"); row.setProcessedAt(LocalDateTime.now()); row.setLastError(null); outbox.save(row);
@@ -87,4 +123,6 @@ public class AttemptOutboxService {
     private long backoff(int attempts) { return Math.min(900, Math.max(30, attempts * 30L)); }
     private String clean(String value) { return value == null || value.isBlank() ? "Không thể phát event" : value.substring(0, Math.min(1000, value.length())); }
     private record SubmittedPayload(Integer userId, Integer attemptId, Integer examId, String examType, LockedAttempt lockedAttempt) {}
+    private record AiPayload(String assessmentKey, Integer userId, Integer attemptId, Integer answerId,
+            String state, String errorMessage, Integer answerVersion) {}
 }

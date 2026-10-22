@@ -78,9 +78,8 @@ public class ScoringPolicyService implements ScoringPolicyContract {
     public void validatePolicy(Integer schemeId, String skill) {
         requireActiveScheme(schemeId);
         String normalized = normalizeSkill(skill);
-        requireRule(schemeId, normalized);
-        if (bands.findBySchemeIdAndSkillOrderByMinScoreAsc(schemeId, normalized).isEmpty())
-            throw new BusinessRuleException("Chưa cấu hình khoảng CEFR cho kỹ năng này");
+        ScoringScaleRule rule = requireRule(schemeId, normalized);
+        ScoreBandCoverage.requireComplete(rule, bands.findBySchemeIdAndSkillOrderByMinScoreAsc(schemeId, normalized));
     }
 
     @Override @Transactional(readOnly = true)
