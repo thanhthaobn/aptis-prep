@@ -107,6 +107,17 @@ class GeminiGradingServiceTests {
     }
 
     @Test
+    void transcribeSupportsTheExamAudioPipeline(@TempDir Path directory) throws Exception {
+        Path audio = directory.resolve("sample.wav");
+        Files.write(audio, new byte[]{82, 73, 70, 70});
+        server.expect(requestTo("https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash-lite:generateContent"))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("inlineData")))
+                .andRespond(withSuccess(response("{\"score\":30,\"cefr\":\"B1\",\"feedback\":\"Nội dung bản ghi.\",\"transcript\":\"I enjoy reading books.\"}"), MediaType.APPLICATION_JSON));
+        assertEquals("I enjoy reading books.", service.transcribe(audio));
+        server.verify();
+    }
+
+    @Test
     void invalidAudioIsRejectedBeforeNetwork(@TempDir Path directory) throws Exception {
         Path audio = directory.resolve("file.exe");
         Files.writeString(audio, "not audio");

@@ -199,7 +199,9 @@ public class AttemptFinalizationService {
         result.setRawScore(raw);
         Integer schemeId = attempt.getScoringSchemeId() == null ? exam(attempt).getScoringSchemeId() : attempt.getScoringSchemeId();
         result.setScaleScore(scoring.scale(schemeId, question.getSkill(), raw));
-        result.setCefrLevel(scoring.estimatedLevel(schemeId, question.getSkill(), result.getScaleScore()));
+        result.setCefrLevel(com.aptisprep.service.scoring.CheckpointScorePolicy.confirmedLevel(
+                exam(attempt).getExamType(), exam(attempt).getTargetLevel(),
+                scoring.estimatedLevel(schemeId, question.getSkill(), result.getScaleScore())));
         if (result.getCefrLevel() == null) {
             result.setGradingMethod("POLICY_ERROR");
             result.setGradingStatus("ERROR");

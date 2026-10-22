@@ -73,6 +73,11 @@ public class GeminiGradingService implements WritingGradingService, SpeakingGrad
     }
 
     @Override
+    public String transcribe(Path audioFile) {
+        return grade("Transcribe the learner's English audio faithfully for subsequent assessment.", audioFile).transcript();
+    }
+
+    @Override
     public GradingResult gradeTranscript(String prompt, String transcript) {
         requireConfiguration();
         validateText(prompt, 10000, "Đề bài");

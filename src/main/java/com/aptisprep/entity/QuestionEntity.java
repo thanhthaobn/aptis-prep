@@ -10,6 +10,7 @@ public class QuestionEntity {
     private Integer id;
     @Column(nullable = false, columnDefinition = "nvarchar(max)") private String content;
     @Column(columnDefinition = "nvarchar(max)") private String instruction;
+    @Column(name = "reading_passage", columnDefinition = "nvarchar(max)") private String readingPassage;
     @Column(name = "question_type", nullable = false, length = 30) private String questionType;
     @Column(nullable = false, length = 30) private String skill;
     @Column(name = "part_no") private Integer partNo;
@@ -29,6 +30,8 @@ public class QuestionEntity {
     public void setContent(String v) { content = v; }
     public String getInstruction() { return instruction; }
     public void setInstruction(String v) { instruction = v; }
+    public String getReadingPassage() { return readingPassage; }
+    public void setReadingPassage(String v) { readingPassage = v; }
     public String getQuestionType() { return questionType; }
     public void setQuestionType(String v) { questionType = v; }
     public String getSkill() { return skill; }

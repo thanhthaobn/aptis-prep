@@ -48,6 +48,7 @@ public interface ExamAttemptRepository extends JpaRepository<ExamAttemptEntity, 
             @Param("submittedFrom") java.time.LocalDateTime submittedFrom, @Param("submittedTo") java.time.LocalDateTime submittedTo,
             Pageable pageable);
     long countByUserId(Integer userId);
+    boolean existsByMockExamId(Integer mockExamId);
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("select a from ExamAttemptEntity a where a.id = :id and a.userId = :userId")

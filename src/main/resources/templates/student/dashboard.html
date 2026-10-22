@@ -89,16 +89,17 @@
                 </article>
 
                 <!-- Trình độ hiện tại & Mục tiêu -->
-                <article class="learn-rail-card">
+                <article class="learn-rail-card skill-overview-card">
                     <div class="learn-rail-heading">
                         <span aria-hidden="true">⚑</span>
-                        <h2>Trình độ hiện tại</h2>
+                        <h2>Trình độ &amp; mục tiêu</h2>
                     </div>
-                    <p th:if="${#lists.isEmpty(account.profiles)}">Chưa đánh giá. Làm Placement để ước lượng trình độ từng kỹ năng.</p>
-                    <dl th:unless="${#lists.isEmpty(account.profiles)}"><div th:each="profile : ${account.profiles}"><dt th:text="${#strings.replace(profile.skill, '_', ' ')}"></dt><dd th:text="${profile.currentLevel == null ? 'Chưa đánh giá' : profile.currentLevel}"></dd></div></dl>
-                    <p th:if="${account.goal == null}">Chưa đặt mục tiêu học tập.</p>
-                    <dl th:if="${account.goal != null}"><div th:each="target : ${account.goal.targets}"><dt th:text="|Mục tiêu ${#strings.replace(target.key, '_', ' ')}|"></dt><dd th:text="${target.value}"></dd></div></dl>
-                    <a class="button button-secondary button-block mt-3" th:href="@{/student/placement}">Làm kiểm tra đầu vào</a>
+                    <table class="skill-overview-table">
+                        <thead><tr><th scope="col">Kỹ năng</th><th scope="col">Hiện tại</th><th scope="col">Mục tiêu</th></tr></thead>
+                        <tbody><tr th:each="skill:${skillOverview}"><th scope="row" th:text="${skill.label}"></th><td th:text="${skill.current}"></td><td><span class="skill-goal-level" th:text="${skill.goal}"></span></td></tr></tbody>
+                    </table>
+                    <p class="skill-overview-note" th:if="${#lists.isEmpty(account.profiles)}">Chưa có đánh giá đầu vào.</p>
+                    <a class="button button-secondary button-block mt-3" th:href="@{/student/placement}">Kiểm tra đầu vào</a>
                 </article>
 
                 <!-- Thống kê tổng quan -->

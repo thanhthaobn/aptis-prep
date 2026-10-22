@@ -66,7 +66,7 @@
         <a class="button" th:href="@{/student/attempts/{id}(id=${res.attemptId})}">Tiếp tục làm bài</a>
     </div>
     <div th:if="${res.state == 'ERROR' or !#lists.isEmpty(res.skills.?[gradingState == 'ERROR'])}" class="alert alert-error" role="alert">
-        <p>Chấm điểm chưa thành công. Bài làm được giữ lại; lỗi chấm không được tính là điểm 0 hoặc kết quả trượt.</p>
+        <p>Chấm điểm chưa thành công. Bài làm được giữ lại. Lỗi chấm không được tính là điểm 0 hoặc kết quả trượt.</p>
         <form th:if="${res.state == 'ERROR' and !#lists.isEmpty(res.skills.?[retryable == true])}" method="post" th:action="@{/student/attempts/{id}/retry-grading(id=${res.attemptId})}">
             <button class="button button-secondary" type="submit">Chấm lại phần lỗi</button>
         </form>

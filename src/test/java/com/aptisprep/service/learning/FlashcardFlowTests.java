@@ -21,6 +21,51 @@ import static org.springframework.security.test.web.servlet.request.SecurityMock
 @SpringBootTest @AutoConfigureMockMvc @Transactional
 @TestExecutionListeners({DependencyInjectionTestExecutionListener.class,TransactionalTestExecutionListener.class})
 class FlashcardFlowTests {
+ @Test void sharedTreeOrdersSkillsAndLevelsAndExcludesPersonalSets(){
+  var a2=new FlashcardSetService.SetView(1,"Reading A2",null,"A2","DRAFT",2,false,1,"Lesson","Reading");
+  var a1=new FlashcardSetService.SetView(2,"Reading A1",null,"A1","PUBLISHED",3,false,2,"Lesson","Reading");
+  var grammar=new FlashcardSetService.SetView(3,"Grammar",null,"B1","PUBLISHED",1,false,3,"Lesson","Grammar & Vocabulary");
+  var mine=new FlashcardSetService.SetView(4,"Private",null,"A1","PUBLISHED",1,true,null,null,null);
+  var tree=FlashcardSetService.groupBySkillAndLevel(java.util.List.of(a2,mine,a1,grammar));
+  assertThat(tree).extracting(FlashcardSetService.SkillSets::skill).containsExactly("Grammar & Vocabulary","Reading");
+  assertThat(tree.get(1).levels()).extracting(FlashcardSetService.LevelSets::level).containsExactly("A1","A2");
+  assertThat(tree.get(1).count()).isEqualTo(2);
+  assertThat(tree.get(1).levels().getFirst().sets()).containsExactly(a1);
+ }
+ @Test void adminTreeKeepsDraftsUnassignedSetsAndEditLinks() throws Exception {
+  var id=create();var set=sets.findById(id).orElseThrow();set.setStatus("DRAFT");sets.saveAndFlush(set);
+  var orphan=new com.aptisprep.entity.FlashcardSet();orphan.setTitle("Unassigned legacy draft");orphan.setCefrLevel("A1");orphan.setStatus("DRAFT");sets.saveAndFlush(orphan);
+  var result=mvc.perform(get("/admin/flashcards").with(user("admin").roles("ADMIN"))).andExpect(status().isOk())
+   .andExpect(content().string(org.hamcrest.Matchers.containsString("flashcard-skill-branch")))
+   .andExpect(content().string(org.hamcrest.Matchers.containsString("flashcard-level-branch")))
+   .andExpect(content().string(org.hamcrest.Matchers.containsString("Chưa phân loại")))
+   .andExpect(content().string(org.hamcrest.Matchers.containsString("Unassigned legacy draft")))
+   .andExpect(content().string(org.hamcrest.Matchers.containsString("Bản nháp")))
+   .andExpect(content().string(org.hamcrest.Matchers.containsString("/admin/flashcards/"+id+"/edit"))).andReturn();
+  @SuppressWarnings("unchecked") var tree=(java.util.List<FlashcardSetService.SkillSets>)result.getModelAndView().getModel().get("lessonBranches");
+  assertThat(tree.stream().flatMap(s->s.levels().stream()).flatMap(l->l.sets().stream())).extracting(FlashcardSetService.SetView::id).contains(id).doesNotContain(orphan.getId());
+  assertThat(result.getResponse().getContentAsString()).doesNotContain("<details class=\"flashcard-skill-branch\" open");
+ }
+ @Test void personalSectionStaysVisibleWhenEmptyOrFilteredOut() throws Exception {
+  var a=learner("cards-empty-mine@test.local");create();
+  mvc.perform(get("/student/flashcards").with(user(a.getEmail()).roles("STUDENT")))
+   .andExpect(status().isOk()).andExpect(content().string(org.hamcrest.Matchers.containsString("Bộ thẻ của tôi")))
+   .andExpect(content().string(org.hamcrest.Matchers.not(org.hamcrest.Matchers.containsString("Bạn chưa có bộ thẻ cá nhân đang hoạt động"))));
+  var f=new FlashcardSetForm();f.setTitle("Private practice");f.setCefrLevel("A1");
+  var row=new FlashcardSetForm.Row();row.setTerm("learn");row.setDefinition("học");f.getRows().add(row);service.savePersonal(null,f,a.getEmail());
+  mvc.perform(get("/student/flashcards").param("source","lesson").with(user(a.getEmail()).roles("STUDENT")))
+   .andExpect(status().isOk()).andExpect(content().string(org.hamcrest.Matchers.containsString("Bộ lọc hiện tại đang ẩn các bộ thẻ của bạn")));
+ }
+ @Test void searchFiltersAndOverviewUseOnlyVisibleSets() throws Exception {
+  var a=learner("cards-search@test.local"); var id=create();
+  var result=mvc.perform(get("/student/flashcards").param("q","DAILY").param("skill","Grammar & Vocabulary").param("level","A1")
+   .with(user(a.getEmail()).roles("STUDENT"))).andExpect(status().isOk()).andReturn();
+  @SuppressWarnings("unchecked") var found=(java.util.List<FlashcardSetService.SetView>)result.getModelAndView().getModel().get("sets");
+  assertThat(found).extracting(FlashcardSetService.SetView::id).containsExactly(id);
+  assertThat(result.getModelAndView().getModel()).containsEntry("totalSets",1).containsEntry("totalCards",1);
+  mvc.perform(get("/student/flashcards").param("q","no-such-flashcard").with(user(a.getEmail()).roles("STUDENT")))
+   .andExpect(status().isOk()).andExpect(content().string(org.hamcrest.Matchers.containsString("Không có bộ thẻ phù hợp")));
+ }
  @Autowired FlashcardSetService service; @Autowired UserRepository users; @Autowired LessonRepository lessons;
  @Autowired UserFlashcardProgressRepository progress; @Autowired MockMvc mvc;
  @Autowired FlashcardSetRepository sets;

@@ -15,6 +15,20 @@ public class FlashcardSetService {
  @PersistenceContext private EntityManager em;
  public FlashcardSetService(FlashcardSetRepository s,FlashcardRepository c,UserRepository u,UserFlashcardProgressRepository p,LessonRepository l){sets=s;cards=c;users=u;progress=p;lessons=l;}
  public record SetView(Integer id,String title,String description,String level,String status,int count,boolean personal,Integer lessonId,String lessonTitle,String lessonSkill){}
+ public record LevelSets(String level,List<SetView> sets){}
+ public record SkillSets(String skill,int count,List<LevelSets> levels){}
+ public static List<SkillSets> groupBySkillAndLevel(List<SetView> values){
+  var branches=new ArrayList<SkillSets>();
+  for(var skill:LessonService.SKILLS){
+   var levels=new ArrayList<LevelSets>();
+   for(var level:LessonService.LEVELS){
+    var grouped=values.stream().filter(s->!s.personal()&&skill.equals(s.lessonSkill())&&level.equals(s.level())).toList();
+    if(!grouped.isEmpty())levels.add(new LevelSets(level,grouped));
+   }
+   if(!levels.isEmpty())branches.add(new SkillSets(skill,levels.stream().mapToInt(l->l.sets().size()).sum(),levels));
+  }
+  return List.copyOf(branches);
+ }
  public record CardView(Integer id,String term,String definition,String state){}
  public record LessonLink(Integer id,String title,String skill){}
  public record StudySetView(Integer id,String title,String description,String cefrLevel,LessonLink lesson){}
@@ -39,7 +53,7 @@ public class FlashcardSetService {
   if(f.getRows()==null||f.getRows().isEmpty()||f.getRows().size()>200)throw new BusinessRuleException("Bộ thẻ cần từ 1 đến 200 cặp từ và nghĩa");
   var set=id==null?new FlashcardSet():sets.findById(id).orElseThrow(()->new ResourceNotFoundException("Không tìm thấy bộ thẻ"));if(id!=null)em.lock(set,LockModeType.PESSIMISTIC_WRITE);
   var existing=id==null?List.<Flashcard>of():cards.findBySetIdAndStatusOrderByDisplayOrderAsc(id,"ACTIVE");var byId=new HashMap<Integer,Flashcard>();existing.forEach(c->byId.put(c.getId(),c));var seen=new HashSet<Integer>();
-  for(var row:f.getRows()){if(row.getTerm()==null||row.getTerm().isBlank()||row.getDefinition()==null||row.getDefinition().isBlank()||row.getTerm().length()>200||row.getDefinition().length()>1000)throw new BusinessRuleException("Mỗi thẻ cần thuật ngữ và định nghĩa; tối đa 200 ký tự cho thuật ngữ, 1000 cho định nghĩa");if(row.getId()!=null&&(!byId.containsKey(row.getId())||!seen.add(row.getId())))throw new BusinessRuleException("Thẻ không thuộc bộ này hoặc bị lặp");}
+  for(var row:f.getRows()){if(row.getTerm()==null||row.getTerm().isBlank()||row.getDefinition()==null||row.getDefinition().isBlank()||row.getTerm().length()>200||row.getDefinition().length()>1000)throw new BusinessRuleException("Mỗi thẻ cần thuật ngữ và định nghĩa. Tối đa 200 ký tự cho thuật ngữ và 1000 cho định nghĩa");if(row.getId()!=null&&(!byId.containsKey(row.getId())||!seen.add(row.getId())))throw new BusinessRuleException("Thẻ không thuộc bộ này hoặc bị lặp");}
   if(lesson!=null){var linked=sets.findFirstByLessonIdAndOwnerIsNullOrderByIdDesc(lesson.getId()).orElse(null);if(linked!=null&&!Objects.equals(linked.getId(),id))throw new BusinessRuleException("Bài học này đã có một bộ thẻ");}
   set.setTitle(f.getTitle().trim());set.setDescription(f.getDescription());set.setCefrLevel(f.getCefrLevel());set.setStatus(f.getStatus());set.setLesson(lesson);set.setOwner(owner);set.setVisibility(owner==null?"PUBLIC":"PRIVATE");sets.save(set);
   int position=existing.stream().mapToInt(Flashcard::getDisplayOrder).max().orElse(0)+1;

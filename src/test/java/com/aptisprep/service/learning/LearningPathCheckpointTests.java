@@ -75,14 +75,35 @@ class LearningPathCheckpointTests {
             .andExpect(status().isOk());
     }
 
-    @Test void noAssessmentStartsAtFoundationAndOrientationCannotStartCheckpoint() {
-        var user=learner(null); service.ensurePaths(user.getId()); var orientation=current(user);
-        assertThat(orientation.getTargetLevel()).isNull();
+    @Test void noGoalStartsAtA1AndCanPassCheckpointToReachA2() {
+        var user=learner(null); service.ensurePaths(user.getId()); var foundation=current(user);
+        assertThat(foundation.getTargetLevel()).isEqualTo("A1");
+        assertThat(service.stages(user.getEmail(),"Reading").getFirst().goalLevel()).isEqualTo("C2");
         assertThat(service.stages(user.getEmail(),"Reading").getFirst().lessons()).extracting(LearningPathService.StageLesson::level).containsOnly("A1");
-        complete(user,orientation);
-        assertThatThrownBy(()->service.startCheckpoint(user.getId(),orientation.getId(),"ignored")).isInstanceOf(BusinessRuleException.class);
-        goal(user,"B2"); service.ensurePaths(user.getId());
-        assertThat(current(user).getTargetLevel()).isEqualTo("A1");
+        assertThat(service.summary(user.getId(),foundation.getId()).checkpointState()).isEqualTo("locked");
+        assertThatThrownBy(()->service.startCheckpoint(user.getId(),foundation.getId(),"ignored")).isInstanceOf(BusinessRuleException.class);
+        complete(user,foundation); var exam=checkpoint("A1");
+        assertThat(service.summary(user.getId(),foundation.getId()).checkpointState()).isEqualTo("available");
+        start(user,foundation,exam,1010,"IN_PROGRESS");
+        when(engine.result(user.getId(),1010)).thenReturn(result(user,exam,1010,"COMPLETED","A1",true));
+        service.applyCheckpoint(user.getId(),1010);
+        assertThat(paths.findById(foundation.getId()).orElseThrow().getStatus()).isEqualTo("COMPLETED");
+        assertThat(current(user).getTargetLevel()).isEqualTo("A2");
+        assertThat(profiles.findByUserIdAndSkill(user.getId(),"READING").orElseThrow().getCurrentLevel()).isEqualTo("A1");
+        assertThat(goals.findFirstByUserIdAndStatusOrderByCreatedAtDesc(user.getId(),GoalStatus.ACTIVE)).isEmpty();
+    }
+
+    @Test void failedFirstCheckpointWithoutGoalDoesNotCreateAnAssessedLevel() {
+        var user=learner(null); service.ensurePaths(user.getId()); var path=current(user);
+        complete(user,path); var exam=checkpoint("A1"); start(user,path,exam,1011,"IN_PROGRESS");
+        var failed=result(user,exam,1011,"COMPLETED","A1",false);
+        when(engine.result(user.getId(),1011)).thenReturn(failed);
+        when(engine.history(eq(user.getId()),eq(0),eq(100),any())).thenReturn(new HistoryPage(List.of(failed),0,100,1));
+        service.applyCheckpoint(user.getId(),1011);
+        assertThat(current(user).getId()).isEqualTo(path.getId());
+        assertThat(profiles.findByUserIdAndSkill(user.getId(),"READING")).isEmpty();
+        assertThat(service.summary(user.getId(),path.getId()).checkpointState()).isEqualTo("failed");
+        start(user,path,exam,1012,"IN_PROGRESS");
     }
 
     @Test void passedCheckpointClosesStageAndOpensNextOnlyOnceUsingProductionTransaction() {

@@ -21,7 +21,7 @@ Thay đổi test local trước merge đã được bảo toàn; bản stash d�
 
 - Đọc trình độ hiệu lực qua AccountAccessContract; không ghi Profile trực tiếp. Source attempt NULL không gây NPE.
 - Liên kết đúng `goal_skill_id`. Trình độ B1, Goal B2 chỉ được giao bài B2 trong chặng hiện tại, không lấy cả A1–C1.
-- Chưa có đánh giá: chặng nền tảng A1. Không có Goal/Placement thì chặng định hướng chưa có target checkpoint; thư viện tất cả mức vẫn có thể tự học.
+- Cập nhật 22/10/2026: chưa có đánh giá bắt đầu chặng A1; chưa đặt Goal dùng đích mặc định C2, không tạo Goal hay Profile giả. Hoàn tất bài bắt buộc được làm checkpoint đúng skill/target nếu đề đã công bố. Pass A1 xác nhận Profile A1 và mở chặng A2; fail giữ nguyên chặng và cho làm lại. Thư viện tất cả mức vẫn có thể tự học.
 - Có Goal nhưng chưa có Placement: bắt đầu chặng A1 và tiến dần tới Goal, không mặc định đã biết toàn bộ các mức thấp hơn Goal.
 - Goal đã đạt thì không mở chặng vượt Goal. Hoàn tất chặng cuối vẫn hiển thị trạng thái đã đạt checkpoint.
 - Khóa user trong transaction khi tạo/refresh/hoàn thành để tránh hai request tạo hai path active hoặc tăng tiến độ lặp.
