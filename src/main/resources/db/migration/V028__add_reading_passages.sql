@@ -2,6 +2,7 @@
    can show the passage while preserving the question and item structure. */
 IF COL_LENGTH('questions', 'reading_passage') IS NULL
     ALTER TABLE questions ADD reading_passage NVARCHAR(MAX) NULL;
+GO
 
 UPDATE questions
 SET reading_passage = N'Town Centre Guide' + NCHAR(13) + NCHAR(10) + NCHAR(13) + NCHAR(10) + N'The public library is on King Street and lends books to residents. The swimming pool is next to the sports centre; its first lesson begins at six o''clock. The Riverside Café is opposite the bus station and is a popular place to meet friends for coffee.'
