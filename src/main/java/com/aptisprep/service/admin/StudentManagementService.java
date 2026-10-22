@@ -11,10 +11,12 @@ import com.aptisprep.repository.*;
 import com.aptisprep.service.contract.ExamAttemptContract;
 import com.aptisprep.service.contract.IntegrationModels.*;
 import com.aptisprep.service.contract.LearningPathContract;
+
 import java.math.BigDecimal;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
+
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
@@ -31,15 +33,20 @@ public class StudentManagementService {
     private final ObjectProvider<ExamAttemptContract> attempts;
 
     public StudentManagementService(UserRepository users, UserGoalRepository goals,
-            UserGoalSkillRepository goalSkills, UserSkillProfileRepository profiles,
-            ObjectProvider<LearningPathContract> paths, ObjectProvider<ExamAttemptContract> attempts) {
-        this.users = users; this.goals = goals; this.goalSkills = goalSkills; this.profiles = profiles;
-        this.paths = paths; this.attempts = attempts;
+                                    UserGoalSkillRepository goalSkills, UserSkillProfileRepository profiles,
+                                    ObjectProvider<LearningPathContract> paths, ObjectProvider<ExamAttemptContract> attempts) {
+        this.users = users;
+        this.goals = goals;
+        this.goalSkills = goalSkills;
+        this.profiles = profiles;
+        this.paths = paths;
+        this.attempts = attempts;
     }
 
     @Transactional(readOnly = true)
     public AdminStudentView.Page list(String query, UserStatus status, int page, int size) {
-        int safePage = Math.max(0, page); int safeSize = Math.min(100, Math.max(1, size));
+        int safePage = Math.max(0, page);
+        int safeSize = Math.min(100, Math.max(1, size));
         String term = query == null ? "" : query.trim();
         if (term.length() > 255) throw new BusinessRuleException("Từ khóa tìm kiếm tối đa 255 ký tự");
         String pattern = term.isBlank() ? "%" : "%" + escapeLike(term.toLowerCase(Locale.ROOT)) + "%";
@@ -51,7 +58,8 @@ public class StudentManagementService {
     @Transactional(readOnly = true)
     public AdminStudentView.Detail detail(Integer id, int attemptPage, int attemptSize) {
         User user = studentsOnly(id);
-        int safePage = Math.max(0, attemptPage); int safeSize = Math.min(100, Math.max(1, attemptSize));
+        int safePage = Math.max(0, attemptPage);
+        int safeSize = Math.min(100, Math.max(1, attemptSize));
         AccountSnapshot.GoalView goal = goalView(user.getId());
         Map<String, String> targetMap = goal == null ? Map.of() : goal.targets();
         Map<String, UserSkillProfile> profileMap = profiles.findByUserIdOrderBySkillAsc(user.getId()).stream()
@@ -70,22 +78,39 @@ public class StudentManagementService {
     }
 
     @Transactional
-    public void lock(String adminEmail, Integer id) { changeStatus(adminEmail, id, UserStatus.ACTIVE, UserStatus.LOCKED, "khóa"); }
-    @Transactional
-    public void unlock(String adminEmail, Integer id) { changeStatus(adminEmail, id, UserStatus.LOCKED, UserStatus.ACTIVE, "mở khóa"); }
+    public void lock(String adminEmail, Integer id) {
+        changeStatus(adminEmail, id, UserStatus.ACTIVE, UserStatus.LOCKED, "khóa");
+    }
 
-    public long totalStudents() { return users.countByRole(Role.STUDENT); }
-    public long activeStudents() { return users.countByRoleAndStatus(Role.STUDENT, UserStatus.ACTIVE); }
-    public long lockedStudents() { return users.countByRoleAndStatus(Role.STUDENT, UserStatus.LOCKED); }
+    @Transactional
+    public void unlock(String adminEmail, Integer id) {
+        changeStatus(adminEmail, id, UserStatus.LOCKED, UserStatus.ACTIVE, "mở khóa");
+    }
+
+    public long totalStudents() {
+        return users.countByRole(Role.STUDENT);
+    }
+
+    public long activeStudents() {
+        return users.countByRoleAndStatus(Role.STUDENT, UserStatus.ACTIVE);
+    }
+
+    public long lockedStudents() {
+        return users.countByRoleAndStatus(Role.STUDENT, UserStatus.LOCKED);
+    }
 
     private void changeStatus(String adminEmail, Integer id, UserStatus expected, UserStatus next, String action) {
         User admin = users.findByEmailIgnoreCase(adminEmail).orElseThrow(() -> new AccessDeniedException("Không có quyền thực hiện thao tác"));
-        if (admin.getRole() != Role.ADMIN) throw new AccessDeniedException("Chỉ quản trị viên mới được quản lý học viên");
+        if (admin.getRole() != Role.ADMIN)
+            throw new AccessDeniedException("Chỉ quản trị viên mới được quản lý học viên");
         User target = users.findByIdForUpdate(id).orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy học viên"));
-        if (Objects.equals(admin.getId(), target.getId())) throw new BusinessRuleException("Không thể khóa tài khoản của chính mình");
+        if (Objects.equals(admin.getId(), target.getId()))
+            throw new BusinessRuleException("Không thể khóa tài khoản của chính mình");
         if (target.getRole() != Role.STUDENT) throw new ResourceNotFoundException("Không tìm thấy học viên");
-        if (target.getStatus() == UserStatus.INACTIVE) throw new BusinessRuleException("Tài khoản ngừng hoạt động không thể " + action);
-        if (target.getStatus() != expected) throw new BusinessRuleException("Trạng thái tài khoản không phù hợp để " + action);
+        if (target.getStatus() == UserStatus.INACTIVE)
+            throw new BusinessRuleException("Tài khoản ngừng hoạt động không thể " + action);
+        if (target.getStatus() != expected)
+            throw new BusinessRuleException("Trạng thái tài khoản không phù hợp để " + action);
         target.setStatus(next);
     }
 
@@ -135,10 +160,50 @@ public class StudentManagementService {
         if (user.getRole() != Role.STUDENT) throw new ResourceNotFoundException("Không tìm thấy học viên");
         return user;
     }
-    private String escapeLike(String value) { return value.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_"); }
-    private String initials(String value) { return Arrays.stream(Optional.ofNullable(value).orElse("").trim().split("\\s+")).filter(part -> !part.isBlank()).map(part -> part.substring(0, 1).toUpperCase(Locale.ROOT)).limit(2).collect(Collectors.joining()); }
-    private String skillLabel(String value) { if (value == null) return "Kỹ năng"; return switch (value.toUpperCase(Locale.ROOT)) { case "GRAMMAR_VOCABULARY" -> "Grammar & Vocabulary"; case "READING" -> "Reading"; case "LISTENING" -> "Listening"; case "WRITING" -> "Writing"; case "SPEAKING" -> "Speaking"; default -> value; }; }
-    private String checkpointLabel(String value) { if (value == null) return "Chưa cấu hình"; return switch (value.toUpperCase(Locale.ROOT)) { case "AVAILABLE" -> "Có thể kiểm tra"; case "LOCKED" -> "Chưa mở"; case "GRADING" -> "Đang chờ chấm"; case "PASSED" -> "Đã đạt"; case "FAILED" -> "Chưa đạt"; default -> "Chưa cấu hình"; }; }
-    private String statusLabel(String value) { if (value == null) return "Chưa có trạng thái"; return switch (value.toUpperCase(Locale.ROOT)) { case "COMPLETED" -> "Đã hoàn thành"; case "PENDING", "GRADING" -> "Đang chờ chấm"; case "ERROR" -> "Lỗi chấm"; default -> value; }; }
-    private String levelLabel(String value) { return value == null || value.isBlank() ? "Chưa đánh giá" : value; }
+
+    private String escapeLike(String value) {
+        return value.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_");
+    }
+
+    private String initials(String value) {
+        return Arrays.stream(Optional.ofNullable(value).orElse("").trim().split("\\s+")).filter(part -> !part.isBlank()).map(part -> part.substring(0, 1).toUpperCase(Locale.ROOT)).limit(2).collect(Collectors.joining());
+    }
+
+    private String skillLabel(String value) {
+        if (value == null) return "Kỹ năng";
+        return switch (value.toUpperCase(Locale.ROOT)) {
+            case "GRAMMAR_VOCABULARY" -> "Grammar & Vocabulary";
+            case "READING" -> "Reading";
+            case "LISTENING" -> "Listening";
+            case "WRITING" -> "Writing";
+            case "SPEAKING" -> "Speaking";
+            default -> value;
+        };
+    }
+
+    private String checkpointLabel(String value) {
+        if (value == null) return "Chưa cấu hình";
+        return switch (value.toUpperCase(Locale.ROOT)) {
+            case "AVAILABLE" -> "Có thể kiểm tra";
+            case "LOCKED" -> "Chưa mở";
+            case "GRADING" -> "Đang chờ chấm";
+            case "PASSED" -> "Đã đạt";
+            case "FAILED" -> "Chưa đạt";
+            default -> "Chưa cấu hình";
+        };
+    }
+
+    private String statusLabel(String value) {
+        if (value == null) return "Chưa có trạng thái";
+        return switch (value.toUpperCase(Locale.ROOT)) {
+            case "COMPLETED" -> "Đã hoàn thành";
+            case "PENDING", "GRADING" -> "Đang chờ chấm";
+            case "ERROR" -> "Lỗi chấm";
+            default -> value;
+        };
+    }
+
+    private String levelLabel(String value) {
+        return value == null || value.isBlank() ? "Chưa đánh giá" : value;
+    }
 }

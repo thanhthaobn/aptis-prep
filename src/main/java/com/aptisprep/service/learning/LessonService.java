@@ -87,6 +87,17 @@ public class LessonService {
     @Transactional public LessonProgress recordOpen(String email, Integer lessonId){ var u=active(email); var l=requirePublished(lessonId); var p=progress.findByUserIdAndLessonId(u.getId(), l.getId()).orElseGet(() -> {var x=new LessonProgress();x.setUser(u);x.setLesson(l);x.setStatus("IN_PROGRESS");return x;}); p.setLastAccessedAt(LocalDateTime.now()); return progress.save(p); }
     @Transactional public LessonProgress complete(String email, Integer lessonId){ var u=active(email);var lesson=requirePublished(lessonId);var state=teaching.completion(lessonId,email);if(!state.eligible())throw new BusinessRuleException(state.message(lesson.getSkill())); learningPaths.completeLesson(u.getId(),lessonId); return progress.findByUserIdAndLessonId(u.getId(),lessonId).orElseThrow(); }
     public Optional<LessonProgress> progress(String email,Integer lessonId){var u=active(email);return progress.findByUserIdAndLessonId(u.getId(),lessonId);}
+    @Transactional(readOnly = true)
+    public Map<Integer, String> lessonStatuses(String email, Collection<Integer> lessonIds) {
+        var user = active(email);
+        if (lessonIds.isEmpty()) return Map.of();
+        var statuses = new HashMap<Integer, String>();
+        for (var value : progress.findByUserIdAndLessonIdIn(user.getId(), lessonIds)) {
+            boolean completed = "COMPLETED".equals(value.getStatus()) && value.getCompletedAt() != null;
+            statuses.put(value.getLesson().getId(), completed ? "COMPLETED" : "IN_PROGRESS");
+        }
+        return Map.copyOf(statuses);
+    }
     private User active(String email){var u=users.findByEmailIgnoreCase(email).orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy tài khoản"));if(u.getStatus()!=UserStatus.ACTIVE)throw new BusinessRuleException("Tài khoản không hoạt động");return u;}
     public record Neighbors(Lesson previous,Lesson next){}
     public Neighbors neighbors(Lesson lesson){var all=publishedLessons().stream().filter(x->x.getSkill().equals(lesson.getSkill())&&x.getCefrLevel().equals(lesson.getCefrLevel())).toList();int i=java.util.stream.IntStream.range(0,all.size()).filter(x->all.get(x).getId().equals(lesson.getId())).findFirst().orElse(-1);return new Neighbors(i>0?all.get(i-1):null,i>=0&&i+1<all.size()?all.get(i+1):null);}
