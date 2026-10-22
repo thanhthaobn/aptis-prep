@@ -37,11 +37,11 @@ public class LearningPathService implements LearningPathContract {
     }
 
     @Override @Transactional
-    public void ensurePaths(Integer userId) { syncPaths(lock(active(userId)), false); }
+    public void ensurePaths(Integer userId) { syncPaths(lock(active(userId)), true); }
 
     @Transactional
     public List<PathProgress> ensureAndSummaries(String email) {
-        User user=lock(active(email)); syncPaths(user,false); return summaries(user.getId());
+        User user=lock(active(email)); syncPaths(user,true); return summaries(user.getId());
     }
 
     @Transactional public int refreshPaths(String email) { return syncPaths(lock(active(email)),true); }
@@ -62,8 +62,13 @@ public class LearningPathService implements LearningPathContract {
     public PathProgress summary(Integer userId,Integer pathId) { return summaryOf(owned(userId,pathId)); }
 
     public record Stage(Integer pathId,String skill,String fromLevel,String targetLevel,String goalLevel,
-            String status,List<StageLesson> lessons) {}
-    public record StageLesson(Integer id,String title,String level,String status,boolean available,String topic) {}
+            String status,List<StageLesson> lessons) {
+        public List<StageLesson> missingRequiredLessons() {
+            return lessons.stream().filter(lesson->lesson.required()&&!lesson.completed()).toList();
+        }
+    }
+    public record StageLesson(Integer id,String title,String level,String status,boolean available,String topic,
+            boolean required,boolean completed) {}
 
     @Transactional(readOnly=true)
     public List<Stage> stages(String email,String skill) {
@@ -76,9 +81,10 @@ public class LearningPathService implements LearningPathContract {
             var assigned=items.findByLearningPathIdOrderByPositionAsc(path.getId()).stream()
                 .map(item->new StageLesson(item.getLesson().getId(),item.getLesson().getTitle(),
                     item.getLesson().getCefrLevel(),item.getStatus(),"PUBLISHED".equals(item.getLesson().getStatus()),
-                    item.getLesson().getMaterial()==null?null:item.getLesson().getMaterial().getTopic())).toList();
+                    item.getLesson().getMaterial()==null?null:item.getLesson().getMaterial().getTopic(),
+                    item.isRequired(),completed(item))).toList();
             return new Stage(path.getId(),path.getSkill(),path.getFromLevel(),path.getTargetLevel(),
-                targets.get(path.getGoalSkillId()),path.getStatus(),assigned);
+                targets.getOrDefault(path.getGoalSkillId(),"C2"),path.getStatus(),assigned);
         }).toList();
     }
 
@@ -169,18 +175,18 @@ public class LearningPathService implements LearningPathContract {
             var goal=targets.get(codeSkill(skill));
             var assessed=levels.stream().filter(value->codeSkill(skill).equals(codeSkill(value.skill()))).findFirst().orElse(null);
             String from=assessed==null?null:validLevel(assessed.estimatedLevel());
-            boolean orientation=goal==null&&from==null;
-            String target=orientation?null:nextLevel(from);
+            String target=nextLevel(from);
             var current=paths.findFirstByUserIdAndSkillAndStatusOrderByCreatedAtDesc(user.getId(),skill,"ACTIVE").orElse(null);
-            boolean goalReached=goal!=null&&from!=null&&rank(from)>=rank(goal.getTargetLevel());
-            if(goalReached||(!orientation&&target==null)) {
+            String finalGoal=goal==null?"C2":goal.getTargetLevel();
+            boolean goalReached=from!=null&&rank(from)>=rank(finalGoal);
+            if(goalReached||target==null) {
                 if(current!=null) { archive(current); changed++; } continue;
             }
-            String contentLevel=orientation?"A1":target;
+            String contentLevel=target;
             var selected=published.stream().filter(lesson->skill.equals(lesson.getSkill()))
                 .filter(lesson->Objects.equals(contentLevel,lesson.getCefrLevel())).toList();
             if(selected.isEmpty()&&current==null) continue;
-            var desired=new Desired(skill,orientation?"ORIENTATION":goal!=null?"GOAL":"PLACEMENT",
+            var desired=new Desired(skill,goal!=null?"GOAL":from==null?"DEFAULT":"PLACEMENT",
                 goal==null?null:goal.getId(),from,target,assessed==null?null:assessed.sourceAttemptId(),selected);
             boolean same=current!=null&&Objects.equals(current.getGoalSkillId(),desired.goalSkillId())
                 &&Objects.equals(current.getFromLevel(),desired.fromLevel())

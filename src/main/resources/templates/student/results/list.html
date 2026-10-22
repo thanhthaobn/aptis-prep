@@ -10,7 +10,7 @@
         <div><p class="eyebrow">THEO DÕI TIẾN BỘ</p><h1>Kết quả học tập</h1></div>
     </header>
 
-    <form class="dashboard-panel result-filters" method="get" th:action="@{/student/results}">
+    <form class="toolbar result-filters" method="get" th:action="@{/student/results}">
         <div class="field"><label for="result-q">Tên đề</label><input id="result-q" name="q" maxlength="255" th:value="${q}" placeholder="Ví dụ: Reading Part 1"></div>
         <div class="field"><label for="result-skill">Kỹ năng</label><select id="result-skill" name="skill"><option value="">Tất cả</option><option th:each="value : ${T(java.util.List).of('GRAMMAR_VOCABULARY','READING','LISTENING','WRITING','SPEAKING')}" th:value="${value}" th:text="${#strings.replace(value,'_',' & ')}" th:selected="${selectedSkill == value}"></option></select></div>
         <div class="field"><label for="result-type">Loại bài</label><select id="result-type" name="examType"><option value="">Tất cả</option><option value="PLACEMENT" th:selected="${selectedExamType == 'PLACEMENT'}">Kiểm tra đầu vào</option><option value="PRACTICE" th:selected="${selectedExamType == 'PRACTICE'}">Luyện tập</option><option value="CHECKPOINT" th:selected="${selectedExamType == 'CHECKPOINT'}">Kiểm tra cuối chặng</option><option value="FULL_MOCK" th:selected="${selectedExamType == 'FULL_MOCK'}">Thi thử tổng hợp</option></select></div>
