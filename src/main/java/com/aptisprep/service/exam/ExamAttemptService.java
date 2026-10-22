@@ -476,7 +476,8 @@ public class ExamAttemptService implements ExamAttemptContract {
                     exam.getExamType(), exam.getTargetLevel(), confirmedLevel, value.getScaleScore());
             return new SkillResult(value.getSkill(), value.getRawScore(), value.getScaleScore(), confirmedLevel, state,
                     feedbackFor(attempt.getId(), value.getSkill()), passed,
-                    "ERROR".equals(state) && !"POLICY_ERROR".equals(value.getGradingMethod()));
+                    "ERROR".equals(state) && ("AI_ERROR".equals(value.getGradingMethod())
+                            || "OBJECTIVE_ERROR".equals(value.getGradingMethod())));
         }).toList();
         Integer schemeId = attempt.getScoringSchemeId() == null ? exam.getScoringSchemeId() : attempt.getScoringSchemeId();
         return new AttemptResult(attempt.getId(), attempt.getUserId(), exam.getId(), exam.getExamType(), exam.getTitle(), schemeId,

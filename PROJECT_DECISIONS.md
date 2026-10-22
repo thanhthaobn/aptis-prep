@@ -4,7 +4,7 @@
 
 [docs/SPEC_V2.md](docs/SPEC_V2.md) là bản yêu cầu nghiệp vụ chuẩn, được đưa vào repository từ v2.md do nhóm cung cấp. Tài liệu này thay thế các quyết định trước đây khi có khác biệt về schema và nghiệp vụ.
 
-Project hiện do ba thành viên Thông, Thảo và Trâm phát triển. Dương đã rời dự án ngày 20/10/2026; phạm vi cũ đã được chia lại trong [docs/TEAM_ASSIGNMENT_V2.md](docs/TEAM_ASSIGNMENT_V2.md). Có database, giao diện và interface không đồng nghĩa đã hoàn tất use case.
+Project hiện là nền tảng để bốn thành viên phát triển các luồng. Có database, giao diện và interface không đồng nghĩa đã hoàn tất use case. Theo dõi phần còn thiếu trong [docs/V2_IMPLEMENTATION.md](docs/V2_IMPLEMENTATION.md).
 
 ## 2. Công nghệ và cấu trúc
 
@@ -71,17 +71,17 @@ Nhóm chọn bật phần mở rộng AI của V2 bằng OpenAI.
 - Chấm AI được tích hợp vào luồng nộp bài thi; không có trang chấm riêng trong khu vực quản trị. Hiện service và cấu hình đã có, phần nối attempt/result do luồng thi triển khai.
 - Hướng dẫn bật AI: [docs/AI_SETUP.md](docs/AI_SETUP.md).
 
-## 6. Ba luồng và quyền sở hữu
+## 6. Ba luồng chính và quyền sở hữu
 
 | Người | Luồng | Phạm vi |
 |---|---|---|
-| 1 — Thông | Tài khoản, scoring và grading | Hồ sơ/Goal/Profile; Certificate/Scoring; chấm khách quan/AI và tổng hợp skill result |
-| 2 — Thảo | Hành trình học và kết quả | Lesson/Flashcard, Progress/Path/Checkpoint; lịch sử và giao diện kết quả Student/Admin |
-| 3 — Trâm | Nội dung đề và engine attempt | Question/Media/Exam, Placement; start/resume/save/timer/submit và khóa Answer |
+| 1 | Tài khoản, chấm và kết quả | Hồ sơ, Goal, Skill Profile; Certificate/Scoring, objective/AI grading, quy đổi và tổng hợp result; quản trị học viên |
+| 2 | Nội dung học và cuối chặng | CRUD Lesson/Flashcard phía Admin; học tập, Progress, Learning Path và Checkpoint phía Student |
+| 3 | Nội dung đề và engine thi | Question/Media, cấu hình đề, Attempt/Answer, Placement và media attempt |
 
-Placement và Checkpoint cùng dùng engine attempt của Trâm, không tạo engine riêng. Chuỗi chuẩn là Trâm khóa bài → Thông chấm/tổng hợp → Thảo hiển thị và cập nhật hành trình. Chi tiết tại [docs/TEAM_ASSIGNMENT_V2.md](docs/TEAM_ASSIGNMENT_V2.md).
+Người 2 làm cả CRUD Lesson/Flashcard phía Admin và hành trình học phía Student để cân bằng khối lượng, giữ đầu mối Entity/Repository của hai bảng này; đồng thời nhận history/result UI và checkpoint. Placement và Checkpoint cùng dùng Exam Engine người 3, không tạo engine riêng. Công việc chi tiết, contract phối hợp và tiêu chí nghiệm thu ở [docs/TEAM_ASSIGNMENT_V2.md](docs/TEAM_ASSIGNMENT_V2.md).
 
-Nhóm bổ sung UC-A11–A14 quản lý học viên ngoài V2 gốc: xem danh sách, tìm kiếm/lọc, xem tiến độ và khóa/mở khóa. Không tạo/xóa học viên hoặc sửa điểm. Thông giữ đầu mối; Thảo cung cấp tiến độ và giao diện lịch sử/kết quả; Trâm cung cấp metadata attempt. Đặc tả tại [docs/STUDENT_MANAGEMENT.md](docs/STUDENT_MANAGEMENT.md).
+Nhóm bổ sung UC-A11–A14 quản lý học viên ngoài V2 gốc: xem danh sách, tìm kiếm/lọc, xem tiến độ và khóa/mở khóa. Không tạo/xóa học viên hoặc sửa điểm. Người 1 giữ đầu mối, Người 2 cung cấp tiến độ/history/result DTO, Người 3 cung cấp attempt metadata. Đặc tả tại [docs/STUDENT_MANAGEMENT.md](docs/STUDENT_MANAGEMENT.md). Hiện có giao diện GET và dữ liệu minh họa, chưa nối database/POST khóa. Khi làm nghiệp vụ, khóa phải chặn cả đăng nhập mới và yêu cầu tiếp theo của session đang hoạt động, không chỉ đổi users.status.
 
 ## 7. Giao diện và làm việc nhóm
 

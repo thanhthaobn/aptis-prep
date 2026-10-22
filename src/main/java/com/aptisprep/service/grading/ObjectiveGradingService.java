@@ -13,7 +13,6 @@ import com.aptisprep.service.contract.IntegrationModels.LockedAnswer;
 import com.aptisprep.service.contract.IntegrationModels.LockedItem;
 import com.aptisprep.service.contract.ScoringPolicyContract;
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -83,7 +82,8 @@ public class ObjectiveGradingService {
             result.setGradingMethod(subjective ? "PENDING" : "OBJECTIVE_EMPTY");
             result.setGradingStatus(subjective ? "WAITING" : "COMPLETED");
         } else {
-            BigDecimal raw = rawScore(correct, total);
+            Integer schemeId = locked.scoringSchemeId() == null ? exam.getScoringSchemeId() : locked.scoringSchemeId();
+            BigDecimal raw = scoring.raw(schemeId, skill, correct, total);
             result.setCorrectCount(correct);
             result.setTotalItems(total);
             result.setObjectiveRawScore(raw);
@@ -95,7 +95,6 @@ public class ObjectiveGradingService {
                 result.setGradingMethod("OBJECTIVE_PENDING");
                 result.setGradingStatus("WAITING");
             } else {
-                Integer schemeId = locked.scoringSchemeId() == null ? exam.getScoringSchemeId() : locked.scoringSchemeId();
                 applyPolicy(result, schemeId, skill, raw, exam);
                 if (result.getCefrLevel() == null) {
                     result.setGradingMethod("POLICY_ERROR");
@@ -114,12 +113,6 @@ public class ObjectiveGradingService {
         result.setScaleScore(scoring.scale(schemeId, skill, raw));
         result.setCefrLevel(com.aptisprep.service.scoring.CheckpointScorePolicy.confirmedLevel(
                 exam.getExamType(), exam.getTargetLevel(), scoring.estimatedLevel(schemeId, skill, result.getScaleScore())));
-    }
-
-    private BigDecimal rawScore(int correct, int total) {
-        if (total == 0) return BigDecimal.ZERO.setScale(2);
-        return BigDecimal.valueOf(correct).multiply(BigDecimal.valueOf(50))
-                .divide(BigDecimal.valueOf(total), 2, RoundingMode.HALF_UP);
     }
 
     private boolean isCorrect(String type, LockedItem item, UserAnswerDetailEntity detail) {

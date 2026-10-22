@@ -50,7 +50,7 @@ public class AccountAccessService implements AccountAccessContract {
     public LearnerContext context(Integer userId) {
         User user = activeStudent(userId);
         List<SkillTarget> targets = goals.findFirstByUserIdAndStatusOrderByCreatedAtDesc(user.getId(), GoalStatus.ACTIVE)
-                .map(goal -> goalSkills.findByGoalUserId(user.getId()).stream()
+                .map(goal -> goalSkills.findByGoalId(goal.getId()).stream()
                         .map(skill -> new SkillTarget(skill.getSkill(), skill.getTargetLevel())).toList())
                 .orElseGet(List::of);
         List<SkillLevel> levels = profiles.findByUserIdOrderBySkillAsc(user.getId()).stream()
@@ -126,8 +126,12 @@ public class AccountAccessService implements AccountAccessContract {
             }
         }
         if (type.equals("CHECKPOINT") && !result.passed()) {
-            // A failed first checkpoint records the application without inventing an assessed level.
-            if (profile.getCurrentLevel() != null) profiles.save(profile);
+            // A failed first checkpoint is evidence of an attempt, not a CEFR
+            // profile. user_skill_profiles.current_level is NOT NULL, so do
+            // not persist a newly-created empty profile or invent A1.
+            if (profile.getId() != null && profile.getCurrentLevel() != null) {
+                profiles.save(profile);
+            }
             saveApplication(user, attemptId, skill);
             return;
         }
