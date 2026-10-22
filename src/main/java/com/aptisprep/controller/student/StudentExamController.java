@@ -10,6 +10,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.multipart.MultipartFile;
@@ -89,7 +90,10 @@ public class StudentExamController {
     public ResponseEntity<Resource> mediaContent(@PathVariable Integer id, @PathVariable Integer mediaId,
             @RequestParam(required = false) String token, Principal principal) {
         var media = attempts.mediaContent(accounts.requireActiveStudent(principal.getName()), id, mediaId, token);
-        return ResponseEntity.ok().contentType(resolveType(media.contentType())).body(media.resource());
+        return ResponseEntity.ok().contentType(resolveType(media.contentType()))
+                .header(HttpHeaders.CONTENT_DISPOSITION, "inline")
+                .header(HttpHeaders.CACHE_CONTROL, "private, no-store")
+                .body(media.resource());
     }
 
     @GetMapping("/student/attempts/{id:\\d+}/answers/{answerId:\\d+}/audio")

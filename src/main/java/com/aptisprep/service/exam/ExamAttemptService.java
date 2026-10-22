@@ -188,7 +188,10 @@ public class ExamAttemptService implements ExamAttemptContract {
                     || activity.getPlayTokenExpiresAt() == null || activity.getPlayTokenExpiresAt().isBefore(LocalDateTime.now())) {
                 throw new AccessDeniedException("Token phát audio không hợp lệ hoặc đã hết hạn");
             }
-            activity.setPlayTokenHash(null); activity.setPlayTokenExpiresAt(null); mediaActivities.save(activity);
+            // Keep the short-lived token valid for the browser's metadata and
+            // range requests. A browser can request the same audio more than
+            // once while building the native player, so invalidating it after
+            // the first request leaves the player stuck at 0:00 / 0:00.
         }
         return new MediaResource(storage.load(lockedMedia.path("mediaUrl").asText()), lockedMedia.path("contentType").asText("application/octet-stream"));
     }
@@ -357,12 +360,21 @@ public class ExamAttemptService implements ExamAttemptContract {
         }).toList();
         Instant deadline = exam.getDurationMinutes() == null || attempt.getStartedAt() == null ? null
                 : instant(attempt.getStartedAt().plusMinutes(exam.getDurationMinutes()));
-        return new AttemptPage(attempt.getId(), exam.getTitle(), remainingSeconds(attempt, exam), questionsView, deadline);
+        return new AttemptPage(attempt.getId(), exam.getTitle(), exam.getExamType(), remainingSeconds(attempt, exam), questionsView, deadline);
     }
 
-    public record AttemptPage(Integer attemptId, String title, Long remainingSeconds, List<QuestionPage> questions, Instant deadline) {
+    public record AttemptPage(Integer attemptId, String title, String examType, Long remainingSeconds, List<QuestionPage> questions, Instant deadline) {
+        public AttemptPage(Integer attemptId, String title, Long remainingSeconds, List<QuestionPage> questions, Instant deadline) {
+            this(attemptId, title, null, remainingSeconds, questions, deadline);
+        }
         public AttemptPage(Integer attemptId, String title, Long remainingSeconds, List<QuestionPage> questions) {
-            this(attemptId, title, remainingSeconds, questions, null);
+            this(attemptId, title, null, remainingSeconds, questions, null);
+        }
+        public int totalItems() {
+            return questions == null ? 0 : questions.stream().mapToInt(question -> question.items() == null ? 0 : question.items().size()).sum();
+        }
+        public int answeredItems() {
+            return questions == null ? 0 : questions.stream().flatMap(question -> question.items() == null ? java.util.stream.Stream.empty() : question.items().stream()).mapToInt(item -> item.selectedOptionId() != null || item.userPosition() != null || (item.textAnswer() != null && !item.textAnswer().isBlank()) || item.audioSaved() ? 1 : 0).sum();
         }
     }
     public record QuestionPage(Integer questionId, String content, String instruction, String readingPassage, String skill, String type, int position,
