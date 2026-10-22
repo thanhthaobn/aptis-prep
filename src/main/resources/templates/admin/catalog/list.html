@@ -8,11 +8,6 @@
     <main id="main-content" tabindex="-1" class="app-main admin-catalog">
         <div th:replace="~{fragments/breadcrumb :: breadcrumb('Tổng quan', @{/admin/dashboard}, ${catalog.title})}"></div>
         <header class="page-header"><div><p class="eyebrow">QUẢN TRỊ</p><h1 th:text="${catalog.title}"></h1></div><div class="page-actions"><a th:if="${catalog.editable()}" class="button" th:href="@{${catalog.baseUrl() + '/create'}}" th:text="${catalog.createLabel}"></a></div></header>
-        <section class="catalog-overview" aria-label="Tổng quan">
-            <article class="dashboard-panel"><span th:text="${catalog.key == 'results' ? 'Lượt thi' : 'Tổng nội dung'}"></span><strong th:text="${pageData.totalItems}"></strong></article>
-            <article class="dashboard-panel"><span>Kỹ năng</span><strong th:text="${catalog.key == 'results' ? 'Theo từng lượt thi' : '5 kỹ năng Aptis'}"></strong></article>
-            <article class="dashboard-panel"><span>Phạm vi</span><strong th:text="${catalog.key == 'results' ? 'Điểm ước lượng' : 'A1 – C1'}"></strong></article>
-        </section>
         <form class="toolbar catalog-toolbar" method="get" th:action="@{${catalog.baseUrl()}}" role="search">
             <div class="toolbar-search"><label for="catalogQuery">Tìm kiếm</label><input id="catalogQuery" name="q" type="search" th:value="${q}" maxlength="255" th:placeholder="${catalog.key == 'results' ? 'Tên học viên, email hoặc bài thi…' : 'Tên hoặc nội dung…'}"></div>
             <div><label for="catalogSkill">Kỹ năng</label><select id="catalogSkill" name="skill"><option value="">Tất cả kỹ năng</option><option th:each="skill : ${skills}" th:value="${skill}" th:text="${skill}" th:selected="${selectedSkill == skill}"></option></select></div>
