@@ -25,15 +25,16 @@
                             <section class="library-topic" th:each="group:${tier.topics}">
                                 <header><span class="library-topic-kind" th:text="${group.independent?'TỰ HỌC':'CHỦ ĐỀ'}"></span><h3 th:text="${group.name}"></h3><span class="library-count" th:text="|${#lists.size(group.lessons)} bài|"></span></header>
                                 <ol class="library-lessons">
-                                    <li th:each="lesson,lessonStat:${group.lessons}">
+                                    <li th:each="lesson,lessonStat:${group.lessons}" th:with="learningStatus=${lessonStatuses.getOrDefault(lesson.id, 'NOT_STARTED')}" th:attr="data-lesson-id=${lesson.id},data-learning-status=${learningStatus}">
                                         <span class="library-lesson-number" th:text="${lessonStat.count}" aria-hidden="true"></span>
                                         <div class="library-lesson-body">
                                             <a class="library-lesson-title" th:href="@{/student/lessons/{id}(id=${lesson.id})}" th:text="${lesson.title}"></a>
+                                            <div class="library-learning-status"><span class="badge badge-success" th:if="${learningStatus == 'COMPLETED'}">Đã hoàn thành</span><span class="badge" th:if="${learningStatus == 'IN_PROGRESS'}">Đang học</span><span class="muted" th:if="${learningStatus == 'NOT_STARTED'}">Chưa học</span></div>
                                             <p th:if="${!#strings.isEmpty(lesson.description)}" th:text="${lesson.description}"></p>
                                             <span class="library-task" th:if="${lesson.material!=null and !#strings.isEmpty(lesson.material.taskType)}" th:text="${lesson.material.taskType}"></span>
                                             <a class="library-flashcards" th:if="${lessonSets.containsKey(lesson.id)}" th:href="@{/student/flashcards/{id}(id=${lessonSets.get(lesson.id).id()})}"><span class="library-flashcard-mark" aria-hidden="true">▣</span><span><strong th:text="${lessonSets.get(lesson.id).title()}"></strong><small th:text="|${lessonSets.get(lesson.id).count()} thẻ từ vựng · Ôn flashcard →|"></small></span></a>
                                         </div>
-                                        <a class="button button-secondary button-small library-open" th:href="@{/student/lessons/{id}(id=${lesson.id})}">Học bài →</a>
+                                        <a class="button button-secondary button-small library-open" th:href="@{/student/lessons/{id}(id=${lesson.id})}" th:text="${learningStatus == 'COMPLETED' ? 'Ôn lại →' : (learningStatus == 'IN_PROGRESS' ? 'Học tiếp →' : 'Học bài →')}">Học bài →</a>
                                     </li>
                                 </ol>
                             </section>

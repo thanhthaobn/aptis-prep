@@ -10,7 +10,10 @@ import org.springframework.transaction.event.TransactionalEventListener;
 @Component
 public class GoalPathListener {
     private final ObjectProvider<LearningPathContract> paths;
-    public GoalPathListener(ObjectProvider<LearningPathContract> paths) { this.paths = paths; }
+
+    public GoalPathListener(ObjectProvider<LearningPathContract> paths) {
+        this.paths = paths;
+    }
 
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void onGoalChanged(GoalChangedEvent event) {

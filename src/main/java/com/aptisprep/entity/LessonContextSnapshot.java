@@ -1,6 +1,8 @@
 package com.aptisprep.entity;
 
-/** Immutable stimulus snapshot. Deliberately excludes transcripts, models and answer keys. */
+/**
+ * Immutable stimulus snapshot. Deliberately excludes transcripts, models and answer keys.
+ */
 public record LessonContextSnapshot(
         String title,
         String skill,
@@ -44,6 +46,6 @@ public record LessonContextSnapshot(
         return json == null || json.isBlank() || !json.stripLeading().startsWith("{")
                 ? null
                 : new tools.jackson.databind.ObjectMapper()
-                        .readValue(json, LessonContextSnapshot.class);
+                .readValue(json, LessonContextSnapshot.class);
     }
 }

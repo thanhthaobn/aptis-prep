@@ -9,8 +9,10 @@ import com.aptisprep.repository.*;
 import com.aptisprep.service.contract.AccountAccessContract;
 import com.aptisprep.service.contract.ExamAttemptContract;
 import com.aptisprep.service.contract.IntegrationModels.*;
+
 import java.util.*;
 import java.util.stream.Collectors;
+
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,10 +27,14 @@ public class AccountAccessService implements AccountAccessContract {
     private final ObjectProvider<ExamAttemptContract> attempts;
 
     public AccountAccessService(UserRepository users, UserGoalRepository goals,
-            UserGoalSkillRepository goalSkills, UserSkillProfileRepository profiles,
-            ProfileApplicationRepository applications, ObjectProvider<ExamAttemptContract> attempts) {
-        this.users = users; this.goals = goals; this.goalSkills = goalSkills;
-        this.profiles = profiles; this.applications = applications; this.attempts = attempts;
+                                UserGoalSkillRepository goalSkills, UserSkillProfileRepository profiles,
+                                ProfileApplicationRepository applications, ObjectProvider<ExamAttemptContract> attempts) {
+        this.users = users;
+        this.goals = goals;
+        this.goalSkills = goalSkills;
+        this.profiles = profiles;
+        this.applications = applications;
+        this.attempts = attempts;
     }
 
     @Override
@@ -43,7 +49,9 @@ public class AccountAccessService implements AccountAccessContract {
     }
 
     @Transactional(readOnly = true)
-    public User requireActiveStudentById(Integer userId) { return activeStudent(userId); }
+    public User requireActiveStudentById(Integer userId) {
+        return activeStudent(userId);
+    }
 
     @Override
     @Transactional(readOnly = true)
@@ -100,7 +108,9 @@ public class AccountAccessService implements AccountAccessContract {
         }
         UserSkillProfile profile = profiles.findByUserIdAndSkill(user.getId(), skill).orElseGet(() -> {
             UserSkillProfile created = new UserSkillProfile();
-            created.setUser(user); created.setSkill(skill); return created;
+            created.setUser(user);
+            created.setSkill(skill);
+            return created;
         });
         java.time.LocalDateTime submittedAtUtc = submittedAt == null ? null
                 : java.time.LocalDateTime.ofInstant(submittedAt, java.time.ZoneOffset.UTC);
@@ -145,14 +155,17 @@ public class AccountAccessService implements AccountAccessContract {
 
     private void saveApplication(User user, Integer attemptId, String skill) {
         ProfileApplication application = new ProfileApplication();
-        application.setUserId(user.getId()); application.setAttemptId(attemptId); application.setSkill(skill);
+        application.setUserId(user.getId());
+        application.setAttemptId(attemptId);
+        application.setSkill(skill);
         applications.save(application);
     }
 
     private boolean isNewer(java.time.Instant incoming, Integer incomingAttemptId,
-            java.time.LocalDateTime current, Integer currentAttemptId) {
+                            java.time.LocalDateTime current, Integer currentAttemptId) {
         if (current == null) return true;
-        if (incoming == null) return incomingAttemptId != null && (currentAttemptId == null || incomingAttemptId > currentAttemptId);
+        if (incoming == null)
+            return incomingAttemptId != null && (currentAttemptId == null || incomingAttemptId > currentAttemptId);
         java.time.LocalDateTime incomingUtc = java.time.LocalDateTime.ofInstant(incoming, java.time.ZoneOffset.UTC);
         int time = incomingUtc.compareTo(current);
         return time > 0 || (time == 0 && incomingAttemptId != null
@@ -175,7 +188,10 @@ public class AccountAccessService implements AccountAccessContract {
         return user;
     }
 
-    private String normalizeEmail(String email) { return email == null ? "" : email.trim().toLowerCase(Locale.ROOT); }
+    private String normalizeEmail(String email) {
+        return email == null ? "" : email.trim().toLowerCase(Locale.ROOT);
+    }
+
     private String normalizeSkill(String value) {
         if (value == null) return null;
         String normalized = value.trim().toUpperCase(Locale.ROOT).replaceAll("[^A-Z0-9]+", "_");
