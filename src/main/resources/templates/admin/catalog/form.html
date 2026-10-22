@@ -22,11 +22,11 @@
                 <div class="field"><label for="status">Trạng thái lưu</label><select id="status" th:field="*{status}"><option value="DRAFT">Bản nháp</option><option value="ARCHIVED">Đã lưu trữ</option></select></div>
             </div>
             <section class="catalog-form-section">
-                <div class="section-title-row"><h2>Ý hỏi</h2><button class="button button-secondary button-small" type="button" id="add-item">Thêm ý hỏi</button></div>
+                <div class="section-title-row"><h2>Các mục câu hỏi</h2><button class="button button-secondary button-small" type="button" id="add-item">Thêm mục</button></div>
                 <div id="question-items">
                     <div class="question-item-editor" th:each="item, itemStat : *{items}" th:attr="data-item-index=${itemStat.index}">
-                        <h3 th:text="|Ý hỏi ${itemStat.index + 1}|">Ý hỏi 1</h3>
-                        <div class="field"><label th:for="|items-${itemStat.index}-content|">Nội dung ý hỏi</label><textarea th:id="|items-${itemStat.index}-content|" th:field="*{items[__${itemStat.index}__].content}" rows="3" required></textarea></div>
+                        <h3 class="question-item-editor-title"><span class="question-item-editor-number" th:text="${itemStat.index + 1}">1</span><span class="sr-only">Mục câu hỏi</span></h3>
+                        <div class="field"><label th:for="|items-${itemStat.index}-content|">Nội dung mục câu hỏi</label><textarea th:id="|items-${itemStat.index}-content|" th:field="*{items[__${itemStat.index}__].content}" rows="3" required></textarea></div>
                         <div class="catalog-form-grid"><div class="field"><label>Vị trí/đáp án đúng</label><input type="number" min="1" th:field="*{items[__${itemStat.index}__].correctPosition}"></div><div class="field"><label>Số từ tối thiểu</label><input type="number" min="0" th:field="*{items[__${itemStat.index}__].minWordCount}"></div><div class="field"><label>Số từ tối đa</label><input type="number" min="0" th:field="*{items[__${itemStat.index}__].maxWordCount}"></div><div class="field"><label>Thời gian trả lời (giây)</label><input type="number" min="1" th:field="*{items[__${itemStat.index}__].responseSeconds}"></div></div>
                         <fieldset class="catalog-option-fields"><legend>Phương án</legend><div th:each="option, optionStat : ${item.options}"><label th:text="|Phương án ${option.code}|" th:for="|items-${itemStat.index}-options-${optionStat.index}-content|"></label><input type="text" th:id="|items-${itemStat.index}-options-${optionStat.index}-content|" th:field="*{items[__${itemStat.index}__].options[__${optionStat.index}__].content}"><label><input type="radio" th:field="*{items[__${itemStat.index}__].correctPosition}" th:value="${optionStat.index + 1}"> Đáp án đúng / vị trí đúng</label><input type="hidden" th:field="*{items[__${itemStat.index}__].options[__${optionStat.index}__].code}"></div></fieldset>
                     </div>
@@ -62,8 +62,8 @@
     const block = document.createElement('div');
     block.className = 'question-item-editor';
     block.dataset.itemIndex = index;
-    block.innerHTML = `<h3>Ý hỏi ${index + 1}</h3>
-      <div class="field"><label>Nội dung ý hỏi</label><textarea name="items[${index}].content" rows="3" required></textarea></div>
+    block.innerHTML = `<h3 class="question-item-editor-title"><span class="question-item-editor-number">${index + 1}</span><span class="sr-only">Mục câu hỏi</span></h3>
+      <div class="field"><label>Nội dung mục câu hỏi</label><textarea name="items[${index}].content" rows="3" required></textarea></div>
       <div class="catalog-form-grid"><div class="field"><label>Vị trí/đáp án đúng</label><input type="number" min="1" name="items[${index}].correctPosition"></div><div class="field"><label>Số từ tối thiểu</label><input type="number" min="0" name="items[${index}].minWordCount"></div><div class="field"><label>Số từ tối đa</label><input type="number" min="0" name="items[${index}].maxWordCount"></div><div class="field"><label>Thời gian trả lời (giây)</label><input type="number" min="1" name="items[${index}].responseSeconds"></div></div>
       <fieldset class="catalog-option-fields"><legend>Phương án</legend>${['A','B','C'].map((code, optionIndex) => `<div><label>Phương án ${code}</label><input type="text" name="items[${index}].options[${optionIndex}].content"><label><input type="radio" name="items[${index}].correctPosition" value="${optionIndex + 1}"> Đáp án đúng / vị trí đúng</label><input type="hidden" name="items[${index}].options[${optionIndex}].code" value="${code}"></div>`).join('')}</fieldset>`;
     root.appendChild(block);

@@ -298,13 +298,13 @@ public class CatalogService {
         if (f.getContent() == null || f.getContent().isBlank() || f.getContent().length() > 10000) throw new BusinessRuleException("Nội dung câu hỏi là bắt buộc");
         if (f.getReadingPassage() != null && f.getReadingPassage().length() > 50000) throw new BusinessRuleException("Đoạn văn Reading tối đa 50.000 ký tự");
         if (!SKILLS.contains(f.getSkill()) || !LEVELS.contains(f.getCefrLevel()) || !TYPES.contains(f.getQuestionType())) throw new BusinessRuleException("Kỹ năng, cấp độ hoặc dạng câu hỏi không hợp lệ");
-        if (f.getItems() == null || f.getItems().isEmpty() || f.getItems().stream().anyMatch(x -> x.getContent() == null || x.getContent().isBlank())) throw new BusinessRuleException("Câu hỏi phải có ít nhất một ý hỏi");
-        if (("MATCHING".equals(f.getQuestionType()) || "ORDERING".equals(f.getQuestionType())) && f.getItems().size() < 2) throw new BusinessRuleException("Dạng ghép nối hoặc sắp xếp phải có ít nhất 2 ý hỏi");
+        if (f.getItems() == null || f.getItems().isEmpty() || f.getItems().stream().anyMatch(x -> x.getContent() == null || x.getContent().isBlank())) throw new BusinessRuleException("Câu hỏi phải có ít nhất một mục");
+        if (("MATCHING".equals(f.getQuestionType()) || "ORDERING".equals(f.getQuestionType())) && f.getItems().size() < 2) throw new BusinessRuleException("Dạng ghép nối hoặc sắp xếp phải có ít nhất 2 mục");
         if (usesOptions(f.getQuestionType())) {
             for (QuestionForm.ItemForm item : f.getItems()) {
                 long count = item.getOptions() == null ? 0 : item.getOptions().stream().filter(x -> x.getContent() != null && !x.getContent().isBlank()).count();
                 boolean correct = item.getCorrectPosition() != null && item.getCorrectPosition() >= 1 && item.getCorrectPosition() <= count;
-                if (count < 2 || !correct) throw new BusinessRuleException("Mỗi ý hỏi phải có ít nhất 2 phương án và đúng 1 đáp án đúng");
+                if (count < 2 || !correct) throw new BusinessRuleException("Mỗi mục phải có ít nhất 2 phương án và đúng 1 đáp án đúng");
             }
         }
         if (f.getItems().stream().anyMatch(x -> x.getMinWordCount() != null && x.getMaxWordCount() != null && x.getMinWordCount() > x.getMaxWordCount())) throw new BusinessRuleException("Số từ tối thiểu không được lớn hơn tối đa");
@@ -396,7 +396,7 @@ public class CatalogService {
             rows.add(new Row("ĐOẠN VĂN", passage == null || passage.isBlank() ? "Chưa có đoạn văn nguồn." : passage, "Văn bản nguồn"));
         }
         for (QuestionItemEntity item : items.findByQuestionIdOrderByPosition(q.getId())) {
-            rows.add(new Row("Ý " + item.getPosition(), item.getContent(), item.getCorrectPosition() == null ? "" : "Đúng vị trí " + item.getCorrectPosition()));
+            rows.add(new Row(String.valueOf(item.getPosition()), item.getContent(), item.getCorrectPosition() == null ? "" : "Đúng vị trí " + item.getCorrectPosition()));
             options.findByQuestionItemIdOrderByPosition(item.getId()).forEach(o -> rows.add(new Row(o.getOptionCode(), o.getContent(), Boolean.TRUE.equals(o.getCorrect()) ? "Đáp án đúng" : "")));
         }
         media.findByQuestionIdOrderByPosition(q.getId()).forEach(m -> rows.add(new Row("MEDIA #" + m.getId(), m.getOriginalFilename(), m.getMediaType() + " · " + m.getFileSize() + " bytes")));

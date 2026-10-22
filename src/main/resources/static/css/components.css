@@ -192,6 +192,9 @@
 .catalog-preview-form > h2,.catalog-form-section > h2 { font-size: 1.4rem; }
 .catalog-form-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 0 1.5rem; }
 .catalog-form-section { margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid var(--color-border); }
+.question-item-editor { margin-top: 1rem; padding: 1.1rem 1.2rem .35rem; border: 1px solid var(--color-border); border-radius: 14px; background: linear-gradient(145deg, #fff, #f8fbfd); }
+.question-item-editor-title { display: flex; align-items: center; min-height: 34px; margin: 0 0 1rem; }
+.question-item-editor-number { display: grid; width: 34px; height: 34px; place-items: center; color: #fff; background: linear-gradient(135deg, #087a9d, #0f8a78); border-radius: 10px; box-shadow: 0 5px 12px rgba(8, 122, 157, .2); font-size: .95rem; }
 .catalog-option-fields { margin: 0 0 1.3rem; padding: 1rem; border: 1px solid var(--color-border); border-radius: var(--radius-sm); }
 .catalog-option-fields legend { padding-inline: .4rem; font-weight: 700; }
 .catalog-option-fields > div { display: grid; grid-template-columns: 110px minmax(0,1fr) 130px; align-items: center; gap: .7rem; margin-bottom: .7rem; }
@@ -243,7 +246,7 @@
 .student-confirm-dialog h2 { font-size: 1.5rem; }
 .student-confirm-dialog .modal-actions form { margin: 0; }
 .student-confirm-dialog button:disabled { opacity: .45; cursor: not-allowed; box-shadow: none; }
-.student-sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.sr-only,.student-sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 @media (max-width: 760px) { .student-profile-heading,.student-account-panel { align-items: flex-start; flex-direction: column; } .student-management .student-summary { grid-template-columns: 1fr; } .student-management .skill-list > div { grid-template-columns: minmax(0, 1fr) auto; } .student-management .skill-target { grid-column: 1 / -1; text-align: left; } }
 .dashboard-page { padding-top: 2.25rem; }
 .dashboard-page .dashboard-header h1 { font-size: clamp(2.35rem,3.5vw,3.5rem); }

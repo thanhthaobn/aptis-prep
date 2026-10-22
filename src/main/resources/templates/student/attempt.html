@@ -80,7 +80,7 @@
             <form th:if="${question.type == 'SPEAKING_AUDIO'}" method="post" enctype="multipart/form-data" th:action="@{/student/attempts/{id}/answers/audio(id=${attempt.attemptId})}">
                 <input type="hidden" name="questionId" th:value="${question.questionId}"><input type="hidden" name="itemId" th:value="${item.itemId}">
                 <div class="field"><label th:for="|audio-${item.itemId}|">File ghi âm</label><input type="file" accept="audio/*,.webm,.m4a,.mp3,.wav,.ogg" name="audioFile" th:id="|audio-${item.itemId}|" required></div>
-                <span class="muted" th:if="${item.audioSaved}">Đã lưu file ghi âm cho ý hỏi này.</span>
+                <span class="muted" th:if="${item.audioSaved}">Đã lưu file ghi âm cho mục này.</span>
                 <button class="button button-secondary" type="submit">Lưu file ghi âm</button>
             </form>
         </div>
