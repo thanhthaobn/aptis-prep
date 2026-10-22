@@ -28,6 +28,7 @@ class V2SqlServerPreservationTests {
                 int answerId,jobId;
                 try(var connection=DriverManager.getConnection(url,login,password);var sql=connection.createStatement()) {
                     int user=insert(sql,"INSERT INTO users(full_name,email,password_hash,role,status) OUTPUT INSERTED.id VALUES(N'Preserved learner','preserved@test.local','unused','STUDENT','ACTIVE')");
+                    sql.executeUpdate("INSERT INTO lesson_engagement(user_id,lesson_id,audio_played_at) SELECT TOP 1 "+user+",id,SYSDATETIME() FROM lessons ORDER BY id");
                     int exam=insert(sql,"INSERT INTO mock_exams(certificate_id,title,exam_type,status) OUTPUT INSERTED.id SELECT TOP 1 id,N'Preserved exam','PRACTICE','DRAFT' FROM certificates ORDER BY id");
                     int question=insert(sql,"INSERT INTO questions(content,question_type,skill,status) OUTPUT INSERTED.id VALUES(N'Preserved writing','WRITING_TEXT','WRITING','DRAFT')");
                     int item=insert(sql,"INSERT INTO question_items(question_id,content,position) OUTPUT INSERTED.id VALUES("+question+",N'Preserved item',1)");
@@ -52,6 +53,8 @@ class V2SqlServerPreservationTests {
                     try(var rows=sql.executeQuery("SELECT source_type,source_id,attempt_id,answer_id FROM ai_assessment_jobs WHERE id="+jobId)) {
                         assertTrue(rows.next());assertEquals("LESSON_SUBMISSION",rows.getString(1));assertEquals(42,rows.getInt(2));assertEquals(99,rows.getInt(3));assertEquals(99,rows.getInt(4));
                     }
+                    for (int correct=3;correct<=5;correct++) assertEquals(1,sql.executeUpdate(sixOptionCheck(correct)));
+                    assertThrows(SQLException.class,()->sql.executeUpdate(sixOptionCheck(6)));
                 }
             } finally {
                 // The only drop target is the validated UUID-named database created by this test.
@@ -62,6 +65,10 @@ class V2SqlServerPreservationTests {
     }
     private static int insert(Statement sql,String query) throws SQLException {
         try(var rows=sql.executeQuery(query)){assertTrue(rows.next());return rows.getInt(1);}
+    }
+    private static String sixOptionCheck(int correct) {
+        return "INSERT INTO lesson_checks(lesson_id,position,prompt,option_a,option_b,option_c,option_d,option_e,option_f,correct_option,explanation) "
+                +"SELECT TOP 1 id,"+(9000+correct)+",N'Six options',N'A',N'B',N'C',N'D',N'E',N'F',"+correct+",N'Explanation' FROM lessons ORDER BY id";
     }
     private static void validateEntityMappings(String url,String login,String password) {
         var factory=new org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean();

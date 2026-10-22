@@ -25,7 +25,7 @@ public class LessonTeachingService {
  public ReleaseState releaseState(Integer id,String email){
   var u=user(email);var l=lessons.findById(id).orElseThrow();var m=l.getMaterial();
   boolean completed=progress.findByUserIdAndLessonId(u.getId(),id).map(p->"COMPLETED".equals(p.getStatus())).orElse(false);
-  boolean played=has(l.getAudioPath())&&engagements.findByUserIdAndLessonId(u.getId(),id).map(e->e.getAudioPlayedAt()!=null).orElse(false);
+  boolean played=engagements.findByUserIdAndLessonId(u.getId(),id).map(e->LessonListeningService.verified(l,e)).orElse(false);
   boolean productive=List.of("Writing","Speaking").contains(l.getSkill());
   boolean submitted=productive?!submissionHistory(id,email).isEmpty():!attempts.findByUserIdAndLessonIdOrderBySubmittedAtDesc(u.getId(),id).isEmpty();
   boolean noSubmission=!productive&&checks.countByLessonId(id)==0;
@@ -86,10 +86,9 @@ public class LessonTeachingService {
   boolean h=checks.countByLessonId(lessonId)>0,c=attempts.findByUserIdAndLessonIdOrderBySubmittedAtDesc(u.getId(),lessonId).stream().anyMatch(a->a.getTotal()>0&&a.getScore()*100>=a.getTotal()*60);
   boolean nr=List.of("Writing","Speaking").contains(l.getSkill());
   boolean rs=submissionHistory(lessonId,email).stream().anyMatch(s->"Speaking".equals(l.getSkill())?has(s.getAudioPath()):has(s.getText()));
-  boolean na="Listening".equals(l.getSkill())&&has(l.getAudioPath()),ap=engagements.findByUserIdAndLessonId(u.getId(),lessonId).map(x->x.getAudioPlayedAt()!=null).orElse(false);
+  boolean na="Listening".equals(l.getSkill())&&has(l.getAudioPath()),ap=engagements.findByUserIdAndLessonId(u.getId(),lessonId).map(x->LessonListeningService.verified(l,x)).orElse(false);
   return new CompletionState(h,c,nr,rs,na,ap,(!h||c)&&(!nr||rs)&&(!na||ap));
  }
- public void audioPlayed(Integer lessonId,String email){var u=user(email);lessons.findById(lessonId).filter(l->"PUBLISHED".equals(l.getStatus())&&has(l.getAudioPath())).orElseThrow(()->new ResourceNotFoundException("Không tìm thấy bài nghe"));var e=engagements.findByUserIdAndLessonId(u.getId(),lessonId).orElseGet(LessonEngagement::new);e.setUserId(u.getId());e.setLessonId(lessonId);e.setAudioPlayedAt(java.time.LocalDateTime.now());engagements.save(e);}
  public void section(Integer lessonId,String section,String email){if(!Set.of("overview","media","method","example","practice").contains(section))throw new BusinessRuleException("Phần bài học không hợp lệ");var u=user(email);lessons.findById(lessonId).filter(l->"PUBLISHED".equals(l.getStatus())).orElseThrow();var e=engagements.findByUserIdAndLessonId(u.getId(),lessonId).orElseGet(LessonEngagement::new);e.setUserId(u.getId());e.setLessonId(lessonId);e.setLastSection(section);engagements.save(e);}
  public String lastSection(Integer lessonId,String email){var u=user(email);return engagements.findByUserIdAndLessonId(u.getId(),lessonId).map(LessonEngagement::getLastSection).orElse(null);}
  public record LessonStats(long started,long completed,long audioListeners,long attempts,double averagePercent){}

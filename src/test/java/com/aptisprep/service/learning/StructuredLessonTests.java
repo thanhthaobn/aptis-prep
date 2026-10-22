@@ -106,8 +106,8 @@ class StructuredLessonTests {
   String url="/student/lessons/"+l.getId()+"/audio-played";
   mvc.perform(post(url).with(csrf()).with(user(a.getEmail()).roles("STUDENT")).param("duration","100").param("listened","1")).andExpect(status().isBadRequest());
   assertThat(teaching.completion(l.getId(),a.getEmail()).audioPlayed()).isFalse();
-  mvc.perform(post(url).with(csrf()).with(user(a.getEmail()).roles("STUDENT")).param("duration","100").param("listened","90")).andExpect(status().isOk());
-  assertThat(teaching.completion(l.getId(),a.getEmail()).audioPlayed()).isTrue();
+  mvc.perform(post(url).with(csrf()).with(user(a.getEmail()).roles("STUDENT")).param("duration","100").param("listened","90")).andExpect(status().isBadRequest());
+  assertThat(teaching.completion(l.getId(),a.getEmail()).audioPlayed()).isFalse();
   for(String skill:java.util.List.of("Reading","Listening","Grammar & Vocabulary")){
    var lesson=create(skill);
    mvc.perform(get("/student/lessons/"+lesson.getId()).with(user(a.getEmail()).roles("STUDENT"))).andExpect(status().isOk())

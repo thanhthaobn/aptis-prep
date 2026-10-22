@@ -7,6 +7,47 @@ import java.time.LocalDateTime;
 @Entity
 @Table(name = "lesson_engagement", uniqueConstraints = @UniqueConstraint(columnNames = {"user_id", "lesson_id"}))
 public class LessonEngagement {
+    @Column(name = "playback_token_hash", length = 64)
+    private String playbackTokenHash;
+    @Column(name = "playback_audio_path", length = 500)
+    private String playbackAudioPath;
+    @Column(name = "playback_duration_seconds")
+    private Double playbackDurationSeconds;
+    @Column(name = "playback_position_seconds")
+    private Double playbackPositionSeconds;
+    @Column(name = "playback_last_ping_at")
+    private LocalDateTime playbackLastPingAt;
+    @Column(name = "playback_expires_at")
+    private LocalDateTime playbackExpiresAt;
+    @Column(name = "playback_ranges_json", columnDefinition = "nvarchar(max)")
+    private String playbackRangesJson;
+    @Column(name = "playback_sequence", nullable = false)
+    private int playbackSequence;
+    @Column(name = "playback_running", nullable = false)
+    private boolean playbackRunning;
+    @Column(name = "verified_audio_path", length = 500)
+    private String verifiedAudioPath;
+
+    public String getPlaybackTokenHash() { return playbackTokenHash; }
+    public void setPlaybackTokenHash(String value) { playbackTokenHash = value; }
+    public String getPlaybackAudioPath() { return playbackAudioPath; }
+    public void setPlaybackAudioPath(String value) { playbackAudioPath = value; }
+    public Double getPlaybackDurationSeconds() { return playbackDurationSeconds; }
+    public void setPlaybackDurationSeconds(Double value) { playbackDurationSeconds = value; }
+    public Double getPlaybackPositionSeconds() { return playbackPositionSeconds; }
+    public void setPlaybackPositionSeconds(Double value) { playbackPositionSeconds = value; }
+    public LocalDateTime getPlaybackLastPingAt() { return playbackLastPingAt; }
+    public void setPlaybackLastPingAt(LocalDateTime value) { playbackLastPingAt = value; }
+    public LocalDateTime getPlaybackExpiresAt() { return playbackExpiresAt; }
+    public void setPlaybackExpiresAt(LocalDateTime value) { playbackExpiresAt = value; }
+    public String getPlaybackRangesJson() { return playbackRangesJson; }
+    public void setPlaybackRangesJson(String value) { playbackRangesJson = value; }
+    public int getPlaybackSequence() { return playbackSequence; }
+    public void setPlaybackSequence(int value) { playbackSequence = value; }
+    public boolean isPlaybackRunning() { return playbackRunning; }
+    public void setPlaybackRunning(boolean value) { playbackRunning = value; }
+    public String getVerifiedAudioPath() { return verifiedAudioPath; }
+    public void setVerifiedAudioPath(String value) { verifiedAudioPath = value; }
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;

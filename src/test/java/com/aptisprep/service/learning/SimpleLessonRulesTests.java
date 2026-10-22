@@ -162,7 +162,10 @@ class SimpleLessonRulesTests {
         assertThat(page(l.getId(), u.getEmail()))
                 .contains("HIDDEN_MODEL")
                 .doesNotContain("HIDDEN_TRANSCRIPT");
-        teaching.audioPlayed(l.getId(), u.getEmail());
+        // Fixture for this release-policy test; playback verification has its own service tests.
+        var verified = new LessonEngagement(); verified.setUserId(u.getId()); verified.setLessonId(l.getId());
+        verified.setAudioPlayedAt(java.time.LocalDateTime.now()); verified.setVerifiedAudioPath(l.getAudioPath());
+        em.persist(verified);
         assertThat(page(l.getId(), u.getEmail())).contains("HIDDEN_TRANSCRIPT");
         var edit = lessons.form(l.getId());
         lessons.save(l.getId(), edit, audio(new byte[] {4, 5, 6}), false);
