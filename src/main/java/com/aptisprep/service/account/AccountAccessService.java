@@ -126,7 +126,8 @@ public class AccountAccessService implements AccountAccessContract {
             }
         }
         if (type.equals("CHECKPOINT") && !result.passed()) {
-            profiles.save(profile);
+            // A failed first checkpoint records the application without inventing an assessed level.
+            if (profile.getCurrentLevel() != null) profiles.save(profile);
             saveApplication(user, attemptId, skill);
             return;
         }

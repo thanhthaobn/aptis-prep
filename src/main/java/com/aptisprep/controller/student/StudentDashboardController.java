@@ -46,13 +46,31 @@ public class StudentDashboardController {
         model.addAttribute("totalLessons", totalLessons);
         model.addAttribute("recommendation", recommendation);
         model.addAttribute("hasLearningContent", totalLessons > 0);
-        model.addAttribute("account", accounts.snapshot(principal.getName()));
+        var account=accounts.snapshot(principal.getName());
+        model.addAttribute("account", account);
+        var skillOverview=new java.util.ArrayList<SkillOverview>();
+        for(var skill:com.aptisprep.enums.Skill.values()) {
+            String code=skill.name();
+            String label=switch(skill) {
+                case GRAMMAR_VOCABULARY -> "Ngữ pháp & từ vựng";
+                case READING -> "Reading"; case LISTENING -> "Listening";
+                case WRITING -> "Writing"; case SPEAKING -> "Speaking";
+            };
+            String current=account.profiles().stream().filter(profile->code.equals(profile.skill()))
+                .map(com.aptisprep.dto.view.AccountSnapshot.SkillView::currentLevel)
+                .filter(java.util.Objects::nonNull).findFirst().orElse("—");
+            String goal=account.goal()==null?"C2":account.goal().targets().getOrDefault(code,"C2");
+            skillOverview.add(new SkillOverview(label,current,goal));
+        }
+        model.addAttribute("skillOverview",skillOverview);
         model.addAttribute("activity", activity.activity(principal.getName()));
         ExamAttemptContract attemptService=attempts.getIfAvailable();
         var latestResult=attemptService==null?null:attemptService.history(learningPaths.userId(principal.getName()),0,1).items().stream().findFirst().orElse(null);
         model.addAttribute("latestResult",latestResult);
         return "student/dashboard";
     }
+
+    public record SkillOverview(String label,String current,String goal) {}
 
     /** Read-only orientation preview: no goals, attempts or progress are created. */
     @GetMapping("/orientation")

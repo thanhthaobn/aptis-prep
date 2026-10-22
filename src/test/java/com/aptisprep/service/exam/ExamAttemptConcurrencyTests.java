@@ -59,6 +59,10 @@ class ExamAttemptConcurrencyTests {
     @Autowired ExamAttemptSnapshotRepository snapshots;
     @Autowired AttemptOutboxRepository outbox;
     @Autowired AttemptOutboxService outboxService;
+    @Autowired com.aptisprep.service.learning.LessonService lessonService;
+    @Autowired com.aptisprep.service.learning.LearningPathService learningPaths;
+    @Autowired com.aptisprep.repository.LearningPathRepository learningPathRepository;
+    @Autowired com.aptisprep.repository.UserSkillProfileRepository skillProfiles;
 
     @Test
     void concurrentStartWithSameRequestKeyCreatesOneAttemptAndSnapshot() throws Exception {
@@ -141,6 +145,64 @@ class ExamAttemptConcurrencyTests {
         int second = attempts.start(fixture.user().getId(), fixture.exam().getId(), "same-terminal-key").attemptId();
         assertEquals(first, second);
         assertEquals(1, attemptRepository.countByUserId(fixture.user().getId()));
+    }
+
+    @Test
+    @org.springframework.transaction.annotation.Transactional
+    void a1CheckpointWithFullMarksPersistsA1AndPassesInsteadOfJumpingToC2() {
+        Fixture fixture = fixture("checkpoint-cap");
+        fixture.exam().setExamType("CHECKPOINT"); fixture.exam().setTargetLevel("A1");
+        exams.saveAndFlush(fixture.exam());
+        var band = bands.findBySchemeIdAndSkillOrderByMinScoreAsc(fixture.exam().getScoringSchemeId(), "LISTENING").getFirst();
+        band.setCefrLevel("C2"); bands.saveAndFlush(band);
+        int id = attempts.start(fixture.user().getId(), fixture.exam().getId(), "checkpoint:" + fixture.user().getId() + ":1:after:0").attemptId();
+        attempts.saveAnswer(fixture.user().getId(), id, fixture.question().getId(), fixture.item().getId(), fixture.option().getId(), null, null);
+        attempts.submit(fixture.user().getId(), id, "checkpoint-full-submit");
+        var result = attempts.result(fixture.user().getId(), id);
+        assertEquals("COMPLETED", result.state());
+        assertEquals("A1", result.skills().getFirst().estimatedLevel());
+        assertTrue(result.skills().getFirst().passed());
+        assertEquals("A1", attemptRepository.findById(id).orElseThrow().getEstimatedOverallCefr());
+    }
+
+    @Test
+    @org.springframework.transaction.annotation.Transactional
+    void a1CheckpointWithNoCorrectAnswersDoesNotPassDespiteLowestA1Band() {
+        Fixture fixture = fixture("checkpoint-zero");
+        fixture.exam().setExamType("CHECKPOINT"); fixture.exam().setTargetLevel("A1");
+        exams.saveAndFlush(fixture.exam());
+        int id = attempts.start(fixture.user().getId(), fixture.exam().getId(), "checkpoint:" + fixture.user().getId() + ":1:after:0").attemptId();
+        attempts.submit(fixture.user().getId(), id, "checkpoint-empty-submit");
+        var result = attempts.result(fixture.user().getId(), id);
+        assertEquals("COMPLETED", result.state());
+        assertEquals(0, result.skills().getFirst().scaleScore().signum());
+        org.junit.jupiter.api.Assertions.assertFalse(result.skills().getFirst().passed());
+    }
+
+    @Test
+    void passingRealA1CheckpointCreatesOnlyTheA2Stage() {
+        Fixture fixture = fixture("checkpoint-path");
+        fixture.exam().setExamType("CHECKPOINT"); fixture.exam().setTargetLevel("A1");
+        exams.saveAndFlush(fixture.exam());
+        var band = bands.findBySchemeIdAndSkillOrderByMinScoreAsc(fixture.exam().getScoringSchemeId(), "LISTENING").getFirst();
+        band.setCefrLevel("C2"); bands.saveAndFlush(band);
+        var a1 = lessonService.newForm("Listening", "A1");
+        a1.setTitle("A1 listening foundation"); a1.setStatus("PUBLISHED");
+        var first = lessonService.save(null, a1);
+        var a2 = lessonService.newForm("Listening", "A2");
+        a2.setTitle("A2 listening continuation"); a2.setStatus("PUBLISHED");
+        lessonService.save(null, a2);
+        learningPaths.ensurePaths(fixture.user().getId());
+        lessonService.complete(fixture.user().getEmail(), first.getId());
+        var old = learningPathRepository.findFirstByUserIdAndSkillAndStatusOrderByCreatedAtDesc(fixture.user().getId(), "Listening", "ACTIVE").orElseThrow();
+        int id = learningPaths.startCheckpoint(fixture.user().getId(), old.getId(), null);
+        attempts.saveAnswer(fixture.user().getId(), id, fixture.question().getId(), fixture.item().getId(), fixture.option().getId(), null, null);
+        attempts.submit(fixture.user().getId(), id, "checkpoint-path-submit");
+        assertEquals("A1", skillProfiles.findByUserIdAndSkill(fixture.user().getId(), "LISTENING").orElseThrow().getCurrentLevel());
+        assertEquals("COMPLETED", learningPathRepository.findById(old.getId()).orElseThrow().getStatus());
+        assertEquals("A2", learningPathRepository.findFirstByUserIdAndSkillAndStatusOrderByCreatedAtDesc(fixture.user().getId(), "Listening", "ACTIVE").orElseThrow().getTargetLevel());
+        learningPaths.applyCheckpoint(fixture.user().getId(), id);
+        assertEquals(1, learningPathRepository.findByUserIdAndStatusOrderBySkillAscCreatedAtDesc(fixture.user().getId(), "ACTIVE").size());
     }
 
     @Test

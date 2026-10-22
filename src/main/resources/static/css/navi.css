@@ -14,10 +14,17 @@
 .cta-card .navi svg { width: 130px; }
 .cta-card .navi figcaption { display: none; }
 .cta-card .navi-body { fill: #5bc4a5; }
+/* A light medallion keeps Navi's dark arms and antenna visible on the CTA. */
+.cta-card .cta-mascot { flex: 0 0 160px; }
+.cta-card .on-dark .navi { width: 160px; padding: 16px 10px; border: 2px solid #c4e8d7; border-radius: 50%; background: #f4f8e9; box-shadow: 0 8px 20px #032d2440; }
+.cta-card .on-dark .navi svg { width: 136px; max-width: 100%; height: auto; }
+.cta-card .on-dark .navi-body { fill: #69d2b0; stroke: #155745; }
+.cta-card .on-dark .navi-arm,.cta-card .on-dark .navi-antenna,.cta-card .on-dark .navi-mouth { stroke: #155745; }
+.cta-card .on-dark .confetti { stroke: #b76b00; }
 .error-page .navi svg { width: 150px; }
 .error-page .navi figcaption { display: none; }
 .result-navi { display: grid; justify-items: center; margin: 1.25rem 0; }
 .result-navi .navi svg { width: 120px; }
 .result-navi .navi figcaption { display: none; }
-@media (max-width: 900px) { .cta-card .navi { flex-basis: auto; } }
+@media (max-width: 900px) { .cta-card .navi,.cta-card .cta-mascot { flex-basis: auto; } }
 @media (prefers-reduced-motion: reduce) { .navi * { animation: none !important; } }
