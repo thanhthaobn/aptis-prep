@@ -390,12 +390,15 @@ public class ExamAttemptService implements ExamAttemptContract {
 
     private AttemptResult resultView(ExamAttemptEntity attempt, MockExamEntity exam) {
         List<SkillResult> skills = skillResults.findByAttemptIdOrderBySkillAsc(attempt.getId()).stream().map(value -> {
-            boolean passed = value.getCefrLevel() != null && exam.getTargetLevel() != null && levelOrder(value.getCefrLevel()) >= levelOrder(exam.getTargetLevel());
+            String confirmedLevel = com.aptisprep.service.scoring.CheckpointScorePolicy.confirmedLevel(
+                    exam.getExamType(), exam.getTargetLevel(), value.getCefrLevel());
             String state = value.getGradingStatus();
             if (state == null) state = value.getScaleScore() == null ? "PENDING" : "COMPLETED";
             else if ("WAITING".equals(state)) state = "PENDING";
             else if ("ERROR".equals(state)) state = "ERROR";
-            return new SkillResult(value.getSkill(), value.getRawScore(), value.getScaleScore(), value.getCefrLevel(), state,
+            boolean passed = "COMPLETED".equals(state) && com.aptisprep.service.scoring.CheckpointScorePolicy.passed(
+                    exam.getExamType(), exam.getTargetLevel(), confirmedLevel, value.getScaleScore());
+            return new SkillResult(value.getSkill(), value.getRawScore(), value.getScaleScore(), confirmedLevel, state,
                     feedbackFor(attempt.getId(), value.getSkill()), passed,
                     "ERROR".equals(state) && !"POLICY_ERROR".equals(value.getGradingMethod()));
         }).toList();

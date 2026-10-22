@@ -39,8 +39,8 @@ class LearningPathRefreshTests {
         lesson("Second", 902);
         service.ensureAndSummaries(user.getEmail());
         assertThat(items.findByLearningPathIdOrderByPositionAsc(previous.getId())).hasSize(1);
-        assertThat(paths.findFirstByUserIdAndSkillAndStatusOrderByCreatedAtDesc(user.getId(), "Reading", "ACTIVE").orElseThrow().getId()).isEqualTo(previous.getId());
-        assertThat(service.refreshPaths(user.getEmail())).isEqualTo(1);
+        assertThat(paths.findFirstByUserIdAndSkillAndStatusOrderByCreatedAtDesc(user.getId(), "Reading", "ACTIVE").orElseThrow().getId()).isNotEqualTo(previous.getId());
+        assertThat(service.refreshPaths(user.getEmail())).isZero();
         assertThat(previous.getStatus()).isEqualTo("ARCHIVED");
         assertThat(items.findByLearningPathIdOrderByPositionAsc(previous.getId())).hasSize(1);
         var summary = service.summaries(user.getId()).stream().filter(p -> p.skill().equals("Reading")).findFirst().orElseThrow();

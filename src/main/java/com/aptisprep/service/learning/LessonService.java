@@ -47,14 +47,14 @@ public class LessonService {
                 .mapToInt(Lesson::getDisplayOrder).max().orElse(0);
         if (max == Integer.MAX_VALUE) throw new BusinessRuleException("Không thể gợi ý thêm thứ tự cho nhánh này");
         var form = new LessonForm(); form.setSkill(skill); form.setCefrLevel(level);
-        form.setDisplayOrder(max + 1); form.setStatus("DRAFT"); return form;
+        form.setDisplayOrder(max + 1); form.setStatus("DRAFT"); form.setTranscriptVisibility("AFTER_LISTEN");form.setSampleVisibility("AFTER_SUBMIT");return form;
     }
     public List<Lesson> publishedLessons(){ return lessons.findByStatusOrderBySkillAscCefrLevelAscDisplayOrderAsc("PUBLISHED"); }
     public Lesson require(Integer id){ return lessons.findById(id).orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy bài học")); }
     public Lesson requirePublished(Integer id){ var l=require(id); if(!"PUBLISHED".equals(l.getStatus())) throw new ResourceNotFoundException("Bài học chưa được công bố"); return l; }
     public List<LessonTeachingService.CheckView> questions(Integer lessonId){return teaching.questions(lessonId);}
     public LessonTeachingService.LessonStats stats(Integer lessonId){return teaching.stats(lessonId);}
-    public LessonForm form(Integer id){ var l=require(id); var f=new LessonForm(); if(l.getMaterial()!=null)org.springframework.beans.BeanUtils.copyProperties(l.getMaterial(),f); f.setChecks(new java.util.ArrayList<>(teaching.editorQuestions(id))); f.setTitle(l.getTitle()); f.setDescription(l.getDescription()); f.setSkill(l.getSkill()); f.setCefrLevel(l.getCefrLevel()); f.setDisplayOrder(l.getDisplayOrder()); f.setStatus(l.getStatus());f.setTranscript(l.getTranscript());f.setMinWordCount(l.getMinWordCount());f.setMaxWordCount(l.getMaxWordCount()); return f; }
+    public LessonForm form(Integer id){ var l=require(id); var f=new LessonForm(); if(l.getMaterial()!=null)org.springframework.beans.BeanUtils.copyProperties(l.getMaterial(),f); f.setChecks(new java.util.ArrayList<>(teaching.editorQuestions(id))); f.setTitle(l.getTitle()); f.setDescription(l.getDescription()); f.setSkill(l.getSkill()); f.setCefrLevel(l.getCefrLevel()); f.setDisplayOrder(l.getDisplayOrder()); f.setStatus(l.getStatus());f.setTranscript(l.getTranscript());f.setMinWordCount(l.getMinWordCount());f.setMaxWordCount(l.getMaxWordCount());if(f.getTranscriptVisibility()==null)f.setTranscriptVisibility("AFTER_LISTEN");if(f.getSampleVisibility()==null)f.setSampleVisibility("AFTER_SUBMIT");return f; }
     @Transactional public Lesson save(Integer id, LessonForm f){
         return save(id,f,null,false);
     }
@@ -62,11 +62,23 @@ public class LessonService {
         return save(id,f,audio,removeAudio,null,false);
     }
     @Transactional public Lesson save(Integer id, LessonForm f, MultipartFile audio, boolean removeAudio, MultipartFile image, boolean removeImage){
+        return save(id,f,audio,removeAudio,image,removeImage,null,false);
+    }
+    @Transactional public Lesson save(Integer id, LessonForm f, MultipartFile audio, boolean removeAudio, MultipartFile image, boolean removeImage, MultipartFile video, boolean removeVideo){
+        if(video!=null&&!video.isEmpty())validateVideo(video);
+        if("PUBLISHED".equals(f.getStatus())&&"Listening".equals(f.getSkill())){
+            boolean available=audio!=null&&!audio.isEmpty()||id!=null&&!removeAudio&&has(require(id).getAudioPath());
+            boolean transcriptAfterListen=has(f.getTranscript())&&(!has(f.getTranscriptVisibility())||"AFTER_LISTEN".equals(f.getTranscriptVisibility()));
+            boolean sampleAfterListen=has(f.getSampleResponse())&&"AFTER_LISTEN".equals(f.getSampleVisibility());
+            if(!available&&(transcriptAfterListen||sampleAfterListen))throw new BusinessRuleException("Cần tải audio để mở transcript / bài mẫu sau khi nghe, hoặc chọn thời điểm mở khác");
+        }
         validate(f, id); teaching.validate(f); var l=id==null?new Lesson():require(id); l.setTitle(f.getTitle().trim()); l.setDescription(trim(f.getDescription())); l.setSkill(f.getSkill()); l.setCefrLevel(f.getCefrLevel()); l.setDisplayOrder(f.getDisplayOrder()); l.setStatus(f.getStatus()); l.setMaterial(f.copy());l.setTranscript(trim(f.getTranscript()));l.setMinWordCount(f.getMinWordCount());l.setMaxWordCount(f.getMaxWordCount()); l=lessons.save(l); teaching.saveChecks(l.getId(),f.getChecks());
-        if(removeAudio&&l.getAudioPath()!=null){storage.delete(l.getAudioPath());l.setAudioPath(null);l.setAudioName(null);}
-        if(audio!=null&&!audio.isEmpty()){validateAudio(f.getSkill(),audio);String old=l.getAudioPath();String path=storage.store(audio,"lesson-audio/"+l.getId());l.setAudioPath(path);l.setAudioName(cleanName(audio.getOriginalFilename()));if(old!=null)storage.delete(old);}
-        if(removeImage&&l.getImagePath()!=null){storage.delete(l.getImagePath());l.setImagePath(null);l.setImageName(null);}
-        if(image!=null&&!image.isEmpty()){validateImage(image);String old=l.getImagePath();String path=storage.store(image,"lesson-images/"+l.getId());l.setImagePath(path);l.setImageName(cleanName(image.getOriginalFilename()));if(old!=null)storage.delete(old);}
+        if(removeAudio&&l.getAudioPath()!=null){teaching.resetAudioEngagement(l.getId());l.setAudioPath(null);l.setAudioName(null);}
+        if(audio!=null&&!audio.isEmpty()){validateAudio(f.getSkill(),audio);teaching.resetAudioEngagement(l.getId());String path=storage.store(audio,"lesson-audio/"+l.getId());l.setAudioPath(path);l.setAudioName(cleanName(audio.getOriginalFilename()));}
+        if(removeImage&&l.getImagePath()!=null){l.setImagePath(null);l.setImageName(null);}
+        if(image!=null&&!image.isEmpty()){validateImage(image);String path=storage.store(image,"lesson-images/"+l.getId());l.setImagePath(path);l.setImageName(cleanName(image.getOriginalFilename()));}
+        if(removeVideo)l.setVideoPath(null);
+        if(video!=null&&!video.isEmpty())l.setVideoPath(storage.store(video,"lesson-video/"+l.getId()));
         return lessons.save(l);
     }
     @Transactional public void archive(Integer id){ var l=require(id); l.setStatus("ARCHIVED"); lessons.save(l); }
@@ -81,6 +93,16 @@ public class LessonService {
     private void validate(LessonForm f,Integer id){if(!SKILLS.contains(f.getSkill())||!LEVELS.contains(f.getCefrLevel())||!STATUSES.contains(f.getStatus()))throw new BusinessRuleException("Kỹ năng, CEFR hoặc trạng thái không hợp lệ");if(f.getMinWordCount()!=null&&f.getMaxWordCount()!=null&&f.getMinWordCount()>f.getMaxWordCount())throw new BusinessRuleException("Số từ tối thiểu không được lớn hơn số từ tối đa");if(lessons.existsBySkillAndCefrLevelAndDisplayOrderAndIdNot(f.getSkill(),f.getCefrLevel(),f.getDisplayOrder(),id==null?-1:id))throw new BusinessRuleException("Thứ tự bài học đã tồn tại trong kỹ năng và cấp độ này");}
     private static void validateAudio(String skill,MultipartFile file){String name=cleanName(file.getOriginalFilename()).toLowerCase(Locale.ROOT);String type=file.getContentType()==null?"":file.getContentType().toLowerCase(Locale.ROOT);if(!"Listening".equals(skill))throw new BusinessRuleException("Tệp âm thanh chỉ dùng cho bài Listening");if(file.getSize()>20L*1024*1024)throw new BusinessRuleException("Tệp âm thanh tối đa 20 MB");if(!(name.endsWith(".mp3")||name.endsWith(".wav")||name.endsWith(".m4a")||name.endsWith(".ogg")||name.endsWith(".webm"))||!type.startsWith("audio/"))throw new BusinessRuleException("Chỉ chấp nhận tệp âm thanh MP3, WAV, M4A, OGG hoặc WEBM");}
     private static void validateImage(MultipartFile file){String name=cleanName(file.getOriginalFilename()).toLowerCase(Locale.ROOT);String type=file.getContentType()==null?"":file.getContentType().toLowerCase(Locale.ROOT);if(file.getSize()>8L*1024*1024)throw new BusinessRuleException("Hình ảnh tối đa 8 MB");if(!(name.endsWith(".jpg")||name.endsWith(".jpeg")||name.endsWith(".png")||name.endsWith(".webp")||name.endsWith(".gif"))||!type.startsWith("image/"))throw new BusinessRuleException("Chỉ chấp nhận hình JPG, PNG, WEBP hoặc GIF");}
+    private static void validateVideo(MultipartFile file){
+        String name=cleanName(file.getOriginalFilename()).toLowerCase(Locale.ROOT),type=Objects.toString(file.getContentType(),"");
+        if(file.getSize()>50L*1024*1024||!(name.endsWith(".mp4")&&type.equals("video/mp4")||name.endsWith(".webm")&&type.equals("video/webm")))throw new BusinessRuleException("Video chỉ nhận MP4 hoặc WEBM, tối đa 50 MB");
+        try(var input=file.getInputStream()){
+            byte[] head=input.readNBytes(12);
+            boolean mp4=head.length>=12&&head[4]=='f'&&head[5]=='t'&&head[6]=='y'&&head[7]=='p';
+            boolean webm=head.length>=4&&(head[0]&255)==0x1a&&(head[1]&255)==0x45&&(head[2]&255)==0xdf&&(head[3]&255)==0xa3;
+            if(name.endsWith(".mp4")?!mp4:!webm)throw new BusinessRuleException("Nội dung tệp video không đúng định dạng");
+        }catch(java.io.IOException ex){throw new BusinessRuleException("Không đọc được video tải lên");}
+    }
     private static String cleanName(String value){if(value==null||value.isBlank())return "audio";String normalized=value.replace('\\','/');String name=normalized.substring(normalized.lastIndexOf('/')+1);return name.length()>255?name.substring(name.length()-255):name;}
     private static boolean has(String s){return s!=null&&!s.isBlank();} private static String trim(String s){return s==null?null:s.trim();}
 }

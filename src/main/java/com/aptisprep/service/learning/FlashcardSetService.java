@@ -15,6 +15,20 @@ public class FlashcardSetService {
  @PersistenceContext private EntityManager em;
  public FlashcardSetService(FlashcardSetRepository s,FlashcardRepository c,UserRepository u,UserFlashcardProgressRepository p,LessonRepository l){sets=s;cards=c;users=u;progress=p;lessons=l;}
  public record SetView(Integer id,String title,String description,String level,String status,int count,boolean personal,Integer lessonId,String lessonTitle,String lessonSkill){}
+ public record LevelSets(String level,List<SetView> sets){}
+ public record SkillSets(String skill,int count,List<LevelSets> levels){}
+ public static List<SkillSets> groupBySkillAndLevel(List<SetView> values){
+  var branches=new ArrayList<SkillSets>();
+  for(var skill:LessonService.SKILLS){
+   var levels=new ArrayList<LevelSets>();
+   for(var level:LessonService.LEVELS){
+    var grouped=values.stream().filter(s->!s.personal()&&skill.equals(s.lessonSkill())&&level.equals(s.level())).toList();
+    if(!grouped.isEmpty())levels.add(new LevelSets(level,grouped));
+   }
+   if(!levels.isEmpty())branches.add(new SkillSets(skill,levels.stream().mapToInt(l->l.sets().size()).sum(),levels));
+  }
+  return List.copyOf(branches);
+ }
  public record CardView(Integer id,String term,String definition,String state){}
  public record LessonLink(Integer id,String title,String skill){}
  public record StudySetView(Integer id,String title,String description,String cefrLevel,LessonLink lesson){}
