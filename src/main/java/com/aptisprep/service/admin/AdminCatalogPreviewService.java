@@ -4,6 +4,7 @@ import com.aptisprep.dto.view.AdminCatalogPreview.Entry;
 import com.aptisprep.dto.view.AdminCatalogPreview.Field;
 import com.aptisprep.dto.view.AdminCatalogPreview.Module;
 import com.aptisprep.dto.view.AdminCatalogPreview.Row;
+import com.aptisprep.dto.view.AdminCatalogPreview.CatalogPage;
 import com.aptisprep.exception.ResourceNotFoundException;
 import java.text.Normalizer;
 import java.util.List;
@@ -52,6 +53,17 @@ public class AdminCatalogPreviewService {
                 .filter(e -> skill.isBlank() || e.skill().equals(skill))
                 .filter(e -> status.isBlank() || e.status().equals(status))
                 .filter(e -> kind.isBlank() || e.kind().equals(kind)).toList();
+    }
+
+    public CatalogPage findPage(String key, String q, String skill, String status, String kind, int page, int size) {
+        List<Entry> all = find(key, q, skill, status, kind);
+        int safeSize = Math.min(50, Math.max(1, size));
+        int totalItems = all.size();
+        int totalPages = totalItems == 0 ? 0 : (totalItems + safeSize - 1) / safeSize;
+        int safePage = totalPages == 0 ? 0 : Math.min(Math.max(0, page), totalPages - 1);
+        int from = safePage * safeSize;
+        int to = Math.min(from + safeSize, totalItems);
+        return new CatalogPage(all.subList(from, to), safePage, safeSize, totalItems, totalPages);
     }
     private String normalize(String value) {
         return Normalizer.normalize(value.trim(), Normalizer.Form.NFD).replaceAll("\\p{M}", "")

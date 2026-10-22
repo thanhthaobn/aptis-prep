@@ -7,6 +7,7 @@ import com.aptisprep.dto.view.AdminCatalogPreview.Entry;
 import com.aptisprep.dto.view.AdminCatalogPreview.Field;
 import com.aptisprep.dto.view.AdminCatalogPreview.Module;
 import com.aptisprep.dto.view.AdminCatalogPreview.Row;
+import com.aptisprep.dto.view.AdminCatalogPreview.CatalogPage;
 import com.aptisprep.entity.*;
 import com.aptisprep.enums.RecordStatus;
 import com.aptisprep.exception.BusinessRuleException;
@@ -69,6 +70,20 @@ public class CatalogService {
                 .filter(x -> skill.isBlank() || Objects.equals(x.getSkill(), skill)).filter(x -> status.isBlank() || x.getStatus().equals(status))
                 .filter(x -> kind.isBlank() || x.getExamType().equals(kind)).sorted(Comparator.comparing(MockExamEntity::getUpdatedAt).reversed()).map(this::examEntry).toList();
         throw new ResourceNotFoundException("Không tìm thấy nội dung");
+    }
+
+    public CatalogPage findPage(String key, String q, String skill, String status, String kind, int page, int size) {
+        return paginate(find(key, q, skill, status, kind), page, size);
+    }
+
+    private CatalogPage paginate(List<Entry> all, int page, int size) {
+        int safeSize = Math.min(50, Math.max(1, size));
+        int totalItems = all.size();
+        int totalPages = totalItems == 0 ? 0 : (totalItems + safeSize - 1) / safeSize;
+        int safePage = totalPages == 0 ? 0 : Math.min(Math.max(0, page), totalPages - 1);
+        int from = safePage * safeSize;
+        int to = Math.min(from + safeSize, totalItems);
+        return new CatalogPage(all.subList(from, to), safePage, safeSize, totalItems, totalPages);
     }
 
     public Entry entry(String key, int id) {
