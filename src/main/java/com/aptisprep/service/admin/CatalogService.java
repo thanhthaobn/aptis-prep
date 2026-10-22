@@ -105,7 +105,7 @@ public class CatalogService {
         validateQuestion(form);
         QuestionEntity q = id == null ? new QuestionEntity() : questions.findById(id).orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy câu hỏi"));
         if (id != null && answers.existsByQuestionId(id)) {
-            throw new BusinessRuleException("Câu hỏi đã có trong lịch sử làm bài; hãy lưu trữ và tạo phiên bản câu hỏi mới");
+            throw new BusinessRuleException("Câu hỏi đã có trong lịch sử làm bài. Hãy lưu trữ và tạo phiên bản câu hỏi mới");
         }
         if ("PUBLISHED".equals(q.getStatus()) && !"PUBLISHED".equals(form.getStatus())) throw new BusinessRuleException("Câu hỏi đã công bố không thể quay về bản nháp");
         q.setContent(form.getContent().trim()); q.setInstruction(blankToNull(form.getInstruction())); q.setReadingPassage("READING".equals(form.getSkill()) ? blankToNull(form.getReadingPassage()) : null); q.setQuestionType(form.getQuestionType()); q.setSkill(form.getSkill());
@@ -173,7 +173,7 @@ public class CatalogService {
         validateExamBasics(form);
         MockExamEntity exam = id == null ? new MockExamEntity() : exams.findById(id).orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy đề thi"));
         if (id != null && attempts.existsByMockExamId(id)) {
-            throw new BusinessRuleException("Đề thi đã có lịch sử làm bài; hãy tạo phiên bản đề mới");
+            throw new BusinessRuleException("Đề thi đã có lịch sử làm bài. Hãy tạo phiên bản đề mới");
         }
         if ("PUBLISHED".equals(exam.getStatus()) && !"PUBLISHED".equals(form.getStatus())) throw new BusinessRuleException("Đề đã công bố không thể quay về bản nháp");
         exam.setTitle(form.getTitle().trim()); exam.setDescription(blankToNull(form.getDescription())); exam.setExamType(form.getExamType()); exam.setTargetLevel(form.getTargetLevel());
@@ -374,7 +374,7 @@ public class CatalogService {
 
     private void assertQuestionNotAnswered(Integer questionId) {
         if (answers.existsByQuestionId(questionId)) {
-            throw new BusinessRuleException("Câu hỏi đã có trong lịch sử làm bài; hãy lưu trữ và tạo phiên bản câu hỏi mới");
+            throw new BusinessRuleException("Câu hỏi đã có trong lịch sử làm bài. Hãy lưu trữ và tạo phiên bản câu hỏi mới");
         }
     }
 

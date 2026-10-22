@@ -6,6 +6,159 @@
     background-color: var(--color-background);
 }
 
+/* Student exam readability */
+.exam-page,
+.exam-page button,
+.exam-page input,
+.exam-page textarea,
+.exam-page select {
+    letter-spacing: normal;
+}
+
+.exam-page .app-main {
+    padding-block: 2.5rem 4.5rem;
+}
+
+.exam-page .page-header {
+    align-items: center;
+    gap: 2rem;
+    margin-bottom: 1.75rem;
+    padding: 1.35rem 1.55rem;
+    border: 1px solid var(--color-border);
+    border-radius: 20px;
+    background: rgba(255, 255, 255, .92);
+    box-shadow: 0 8px 24px rgba(35, 55, 77, .07);
+}
+
+.exam-page .page-header h1,
+.exam-page .page-header h2,
+.exam-page .dashboard-section h2,
+.exam-page .dashboard-section h3 {
+    letter-spacing: normal;
+    line-height: 1.38;
+    overflow-wrap: anywhere;
+    word-spacing: .035em;
+}
+
+.exam-page .page-header h1 {
+    margin-bottom: .55rem;
+}
+
+.exam-page .page-header p {
+    line-height: 1.65;
+}
+
+.exam-page .dashboard-section {
+    margin-top: 1.5rem;
+    padding: 2rem 2.2rem;
+    border-radius: 22px;
+    box-shadow: 0 8px 26px rgba(35, 55, 77, .07);
+}
+
+.exam-page .dashboard-section > .eyebrow {
+    margin-bottom: .8rem;
+    line-height: 1.45;
+    letter-spacing: .09em;
+}
+
+.exam-page .dashboard-section > h2 {
+    max-width: 62ch;
+    margin-bottom: 1rem;
+    font-size: clamp(1.55rem, 2.4vw, 2.2rem);
+}
+
+.exam-page .question-instruction {
+    max-width: 75ch;
+    margin: 0 0 1.35rem;
+    line-height: 1.7;
+    word-spacing: .025em;
+}
+
+.exam-page .catalog-checkbox {
+    gap: .75rem;
+    margin-top: 1.15rem;
+    padding: 1rem;
+    border: 1px solid var(--color-border);
+    border-radius: 16px;
+    background: #f7fbfa;
+}
+
+.exam-page .catalog-checkbox label {
+    display: flex;
+    align-items: flex-start;
+    gap: .75rem;
+    margin: 0;
+    padding: .85rem .95rem;
+    border: 1px solid #dbe7ee;
+    border-radius: 12px;
+    background: #ffffff;
+    line-height: 1.6;
+    word-spacing: .025em;
+    transition: border-color .15s ease, background-color .15s ease, transform .15s ease;
+}
+
+.exam-page .catalog-checkbox label:hover {
+    border-color: var(--color-primary-light);
+    background: var(--color-primary-soft);
+    transform: translateY(-1px);
+}
+
+.exam-page .catalog-checkbox input {
+    flex: 0 0 auto;
+    width: 18px;
+    height: 18px;
+    margin-top: .2rem;
+}
+
+.exam-page .answer-form {
+    margin-top: 1rem;
+}
+
+.exam-page .question-item-prompt {
+    letter-spacing: normal;
+    line-height: 1.7;
+    word-spacing: .035em;
+}
+
+.exam-page #submit-attempt-form {
+    margin-top: 2rem;
+    text-align: right;
+}
+
+.exam-page #submit-attempt {
+    min-width: 160px;
+}
+
+@media (max-width: 680px) {
+    .exam-page .app-main {
+        padding-block: 1.25rem 3rem;
+    }
+
+    .exam-page .page-header {
+        align-items: flex-start;
+        gap: 1rem;
+        padding: 1.15rem;
+    }
+
+    .exam-page .dashboard-section {
+        padding: 1.35rem 1.15rem;
+        border-radius: 18px;
+    }
+
+    .exam-page .dashboard-section > h2 {
+        font-size: 1.4rem;
+        line-height: 1.42;
+    }
+
+    .exam-page .catalog-checkbox {
+        padding: .75rem;
+    }
+
+    .exam-page .catalog-checkbox label {
+        padding: .75rem;
+    }
+}
+
 /* Progressive enhancement: Ẩn các nút submit fallback khi có JS */
 .js-enabled .non-js-submit-btn {
     display: none !important;
