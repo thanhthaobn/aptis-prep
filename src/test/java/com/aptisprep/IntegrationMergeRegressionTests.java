@@ -118,6 +118,7 @@ class IntegrationMergeRegressionTests {
                         mock(MockExamRepository.class),
                         mock(MockExamSectionRepository.class),
                         mock(MockExamQuestionRepository.class));
+        ReflectionTestUtils.setField(service, "catalogFallback", true);
 
         assertEquals(3, service.find("exams", "", "", "", "").size());
         assertEquals("Luyện tập Reading", service.entry("exams", 7002).title());
