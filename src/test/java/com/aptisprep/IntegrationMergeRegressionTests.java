@@ -12,29 +12,38 @@ import com.aptisprep.repository.MockExamQuestionRepository;
 import com.aptisprep.repository.MockExamRepository;
 import com.aptisprep.repository.MockExamSectionRepository;
 import com.aptisprep.service.student.StudentContentPreviewService;
+
+import org.flywaydb.core.api.MigrationVersion;
+import org.junit.jupiter.api.Test;
+import org.springframework.test.util.ReflectionTestUtils;
+
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
-import org.flywaydb.core.api.MigrationVersion;
-import org.junit.jupiter.api.Test;
-import org.springframework.test.util.ReflectionTestUtils;
 
 class IntegrationMergeRegressionTests {
     @Test
     void migrationVersionsAreUniqueIncludingFlywayNumericNormalization() throws Exception {
         var versions = new HashSet<MigrationVersion>();
         try (var paths = Files.list(Path.of("src/main/resources/db/migration"))) {
-            for (Path path : paths.filter(file -> file.getFileName().toString().startsWith("V")).toList()) {
+            for (Path path :
+                    paths.filter(file -> file.getFileName().toString().startsWith("V")).toList()) {
                 String name = path.getFileName().toString();
                 var version = MigrationVersion.fromVersion(name.substring(1, name.indexOf("__")));
                 assertTrue(versions.add(version), "Duplicate migration version: " + name);
             }
         }
-        assertTrue(Files.exists(Path.of("src/main/resources/db/migration/V026__lesson_submission_history.sql")));
-        assertTrue(Files.exists(Path.of("src/main/resources/db/migration/V029__seed_tram_exam_catalog.sql")));
+        assertTrue(
+                Files.exists(
+                        Path.of(
+                                "src/main/resources/db/migration/V026__lesson_submission_history.sql")));
+        assertTrue(
+                Files.exists(
+                        Path.of(
+                                "src/main/resources/db/migration/V029__seed_tram_exam_catalog.sql")));
     }
 
     @Test
@@ -94,7 +103,9 @@ class IntegrationMergeRegressionTests {
         when(exams.findByStatusOrderByUpdatedAtDesc("PUBLISHED")).thenReturn(List.of(published));
         when(exams.findById(12)).thenReturn(Optional.of(published));
 
-        assertEquals("Published reading exam", service.find("exams", "", "Reading", "A1", "").getFirst().title());
+        assertEquals(
+                "Published reading exam",
+                service.find("exams", "", "Reading", "A1", "").getFirst().title());
         assertEquals("Published reading exam", service.entry("exams", 12).title());
         published.setStatus("DRAFT");
         assertThrows(ResourceNotFoundException.class, () -> service.entry("exams", 12));
@@ -102,8 +113,11 @@ class IntegrationMergeRegressionTests {
 
     @Test
     void emptyDatabaseFallbackDoesNotRestoreFakeLessonsOrResults() {
-        var service = new StudentContentPreviewService(mock(MockExamRepository.class),
-                mock(MockExamSectionRepository.class), mock(MockExamQuestionRepository.class));
+        var service =
+                new StudentContentPreviewService(
+                        mock(MockExamRepository.class),
+                        mock(MockExamSectionRepository.class),
+                        mock(MockExamQuestionRepository.class));
 
         assertEquals(3, service.find("exams", "", "", "", "").size());
         assertEquals("Luyện tập Reading", service.entry("exams", 7002).title());

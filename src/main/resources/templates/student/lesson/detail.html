@@ -84,15 +84,30 @@
                 <button class="button button-secondary" type="submit" th:text="${lesson.skill=='Writing'?'Lưu bài viết vào lịch sử':'Lưu transcript vào lịch sử'}"></button>
             </form>
             <th:block th:if="${lesson.material!=null}">
-                <th:block th:if="${!#strings.isEmpty(lesson.material.sampleResponse)}"><details th:if="${release.sample}" class="lesson-model"><summary th:text="${lesson.skill=='Writing'?'Xem bài viết tham khảo':(lesson.skill=='Speaking'?'Xem gợi ý triển khai bài nói':'Xem gợi ý sau khi tự làm')}"></summary><p class="lesson-prose" th:text="${lesson.material.sampleResponse}"></p></details><p th:unless="${release.sample}" class="lesson-locked-content" th:text="|Bài mẫu / gợi ý: ${release.sampleHint}|"></p></th:block>
+                <th:block th:if="${!#strings.isEmpty(lesson.material.sampleResponse)}"><details th:if="${release.sample}" class="lesson-model"><summary th:text="${lesson.skill=='Writing'?'Xem bài viết tham khảo':(lesson.skill=='Speaking'?'Xem gợi ý triển khai bài nói':'Xem gợi ý sau khi tự làm')}"></summary><p class="lesson-prose" th:text="${lesson.material.sampleResponse}"></p></details></th:block>
                 <div th:if="${!#strings.isEmpty(lesson.material.checklist)}"><h3 th:text="${lesson.skill=='Writing'?'Tự rà soát bài viết':(lesson.skill=='Speaking'?'Tự đánh giá bài nói':'Tự kiểm tra')}"></h3><p class="lesson-prose" th:text="${lesson.material.checklist}"></p></div>
             </th:block>
         </section>
 
-        <section class="dashboard-panel dashboard-section" th:if="${(lesson.skill=='Writing' or lesson.skill=='Speaking') and savedWork!=null and (canAssess or savedWork.assessmentKey!=null)}">
-            <h2>Phản hồi AI cho bài thực hành</h2><p th:text="${lesson.skill=='Speaking'?'AI đánh giá transcript bạn đã lưu; bản ghi âm dùng để tự nghe lại.':'Nhận điểm ước lượng CEFR và góp ý cải thiện bài viết.'}"></p>
-            <div class="actions"><form th:if="${canAssess}" method="post" th:action="@{/student/lessons/{id}/assess(id=${lesson.id})}"><button class="button" type="submit">Yêu cầu AI nhận xét</button></form><a th:if="${savedWork.assessmentKey!=null}" class="button button-secondary" th:href="@{/student/assessments/{key}(key=${savedWork.assessmentKey})}">Xem phản hồi gần nhất</a></div>
-            <p class="muted">Kết quả phục vụ học tập, không phải điểm Aptis chính thức.</p>
+        <section class="dashboard-panel dashboard-section ai-grading-panel" th:if="${lesson.skill=='Writing' or lesson.skill=='Speaking'}">
+            <h2>AI chấm và nhận xét bài thực hành</h2>
+            <p th:text="${lesson.skill=='Speaking'?'AI đánh giá nội dung và ngôn ngữ của transcript đang hiển thị bên dưới; chưa chấm phát âm hoặc ngữ điệu.':'AI ước lượng điểm 0–50, mức CEFR và góp ý cho đúng bài viết đang hiển thị bên dưới.'}"></p>
+            <form method="post" th:action="@{/student/lessons/{id}/assess(id=${lesson.id})}">
+            <div class="ai-grading-target">
+                <div class="ai-grading-target-head">
+                    <div><span class="eyebrow">Chọn một bài đã lưu để chấm</span><strong th:text="${lesson.title}"></strong></div>
+                    <span class="badge" th:text="|${lesson.skill} · ${lesson.cefrLevel}|"></span>
+                </div>
+                <label class="ai-submission-choice" th:each="submission,status:${aiSubmissions}">
+                    <input type="radio" name="submissionId" th:value="${submission.id}" th:checked="${status.first}" required>
+                    <span class="ai-submission-choice-body"><strong th:text="|Bài lưu lúc ${#temporals.format(submission.submittedAt,'dd/MM/yyyy HH:mm:ss')}|"></strong><small th:if="${lesson.skill=='Speaking'}">Có transcript và bản ghi âm</small><span class="ai-submission-excerpt" th:text="${submission.text}"></span></span>
+                </label>
+                <p class="muted" th:if="${#lists.isEmpty(aiSubmissions)}" th:text="${lesson.skill=='Speaking'?'Chưa có lượt nộp gồm cả transcript và bản ghi âm.':'Chưa có bài viết đã lưu để gửi chấm.'}"></p>
+            </div>
+            <div class="actions"><button class="button" type="submit" th:disabled="${!canAssess}" th:attr="aria-describedby=${!canAssess?'ai-grading-status':null}" th:text="${lesson.skill=='Speaking'?'Chấm transcript đã chọn bằng AI':'Chấm bài viết đã chọn bằng AI'}"></button></div>
+            </form>
+            <p id="ai-grading-status" class="muted" th:if="${aiAvailable and !canAssess}">Nút chấm AI sẽ được bật sau khi bạn hoàn tất và lưu bài làm theo các bước trên.</p>
+            <p id="ai-grading-status" class="muted" th:unless="${aiAvailable}">Nút chấm AI đang tạm khóa vì máy chủ chưa được cấu hình API key. Bạn vẫn có thể lưu bài và hoàn thành bài học.</p>
         </section>
         <section class="dashboard-panel dashboard-section lesson-source" th:if="${lesson.material!=null and !#strings.isEmpty(lesson.material.sourceUrl)}"><h2>Nguồn tham khảo</h2><a th:href="${lesson.material.sourceUrl}" th:text="${lesson.material.sourceName}" target="_blank" rel="noopener noreferrer"></a><p>Hướng dẫn, ví dụ và bài tập được biên soạn riêng; video thuộc tác giả nguồn.</p></section>
         <section class="dashboard-panel dashboard-section" th:if="${!#lists.isEmpty(submissions)}">
@@ -105,7 +120,7 @@
                 <audio th:if="${submission.audioPath!=null}" controls preload="none" th:src="@{/student/lessons/{id}/submissions/{submissionId}/audio(id=${lesson.id},submissionId=${submission.id})}"></audio>
             </details>
         </section>
-        <p class="completion-hint" th:text="${completion.message()}"></p>
+        <p class="completion-hint" th:text="${completion.message(lesson.skill)}"></p>
         <div class="actions lesson-complete">
             <a th:if="${neighbors.previous()!=null}" class="button button-secondary" th:href="@{/student/lessons/{id}(id=${neighbors.previous().id})}">← Bài trước</a>
             <form method="post" th:action="@{/student/lessons/{id}/complete(id=${lesson.id})}"><button class="button" type="submit" th:disabled="${(progress!=null and progress.status=='COMPLETED') or !completion.eligible()}" th:text="${progress!=null and progress.status=='COMPLETED'?'Đã hoàn thành':'Hoàn thành bài học'}"></button></form>

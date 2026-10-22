@@ -17,9 +17,10 @@ public final class CheckpointScorePolicy {
 
     public static boolean passed(String type, String target, String estimated, BigDecimal score) {
         if (rank(target) < 0 || rank(estimated) < rank(target)) return false;
-        return !"CHECKPOINT".equals(type)
-                || score != null && score.compareTo(PASS_SCORE) >= 0;
+        return !"CHECKPOINT".equals(type) || score != null && score.compareTo(PASS_SCORE) >= 0;
     }
 
-    private static int rank(String level) { return level == null ? -1 : LEVELS.indexOf(level); }
+    private static int rank(String level) {
+        return level == null ? -1 : LEVELS.indexOf(level);
+    }
 }
