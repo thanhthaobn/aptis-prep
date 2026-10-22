@@ -141,12 +141,14 @@
   }
   document.querySelectorAll('.media-audio').forEach(player => {
     const status = player.parentElement.querySelector('.media-status'); let tokenReady = false; let loading = false; let exhausted = false;
-    player.addEventListener('play', async () => {
+    const requestPlayback = async () => {
       if (tokenReady || loading) return;
       if (exhausted) { player.pause(); status.textContent = 'Đã dùng hết số lượt nghe cho audio này.'; return; }
       player.pause(); loading = true; status.textContent = 'Đang kiểm tra lượt nghe…';
-      try { const response = await fetch(player.dataset.play, {method: 'POST', headers: {'X-CSRF-TOKEN': csrf, 'Accept': 'application/json'}}); const result = await response.json(); if (!response.ok) throw new Error(result.message || 'Không thể phát audio'); player.src = player.dataset.content + '?token=' + encodeURIComponent(result.contentToken); tokenReady = true; status.textContent = `Đã dùng ${result.playCount}/${result.maxPlayCount} lượt nghe`; await player.play(); player.dataset.playCount = result.playCount; player.dataset.maxPlayCount = result.maxPlayCount; } catch (error) { status.textContent = error.message || 'Không thể phát audio'; } finally { loading = false; }
-    });
+      try { const response = await fetch(player.dataset.play, {method: 'POST', headers: {'X-CSRF-TOKEN': csrf, 'Accept': 'application/json'}}); const result = await response.json(); if (!response.ok) throw new Error(result.message || 'Không thể phát audio'); if (!result.contentToken) throw new Error('Máy chủ chưa cấp quyền phát audio'); player.src = player.dataset.content + '?token=' + encodeURIComponent(result.contentToken); tokenReady = true; status.textContent = `Đã dùng ${result.playCount}/${result.maxPlayCount} lượt nghe`; await player.play(); player.dataset.playCount = result.playCount; player.dataset.maxPlayCount = result.maxPlayCount; } catch (error) { tokenReady = false; status.textContent = error.message || 'Không thể phát audio'; } finally { loading = false; }
+    };
+    player.addEventListener('click', event => { if (!tokenReady) { event.preventDefault(); requestPlayback(); } });
+    player.addEventListener('play', () => { if (!tokenReady) { player.pause(); requestPlayback(); } });
     player.addEventListener('ended', () => { tokenReady = false; const playCount = Number(player.dataset.playCount || 0); const maxPlayCount = Number(player.dataset.maxPlayCount || 0); exhausted = maxPlayCount > 0 && playCount >= maxPlayCount; if (exhausted) status.textContent = `Đã dùng hết ${maxPlayCount} lượt nghe.`; else status.textContent = `Bạn còn ${Math.max(0, maxPlayCount - playCount)} lượt nghe.`; });
   });
   document.querySelectorAll('.speaking-recorder').forEach(box => {
