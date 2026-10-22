@@ -6,16 +6,16 @@
 - Trước nâng cấp đã backup COPY_ONLY/CHECKSUM và RESTORE VERIFYONLY thành công:
   `backups/aptisprep_before_startup_20261022.bak`.
 - Backup media: `backups/uploads_before_startup_20261022.zip`.
-- DB trước nâng cấp đã chạy V026 lịch sử bài làm, V027 và V028; seed catalogue V029 chưa chạy.
-- Khởi động ứng dụng: Flyway validate 29 migration và áp dụng V029 thành công.
+- Bộ migration được giữ tương thích với cả database đã chạy seed Trâm ở V026–V028 và database mới.
+- V026–V028 giữ nguyên seed/catalogue/reading passage của Trâm; các migration lesson sau merge chạy ở V032–V034.
 - Không sửa checksum hoặc repair lịch sử migration; không clean/drop database.
 - Đối chiếu toàn bộ bản ghi cũ ở 37 bảng bằng số lượng và SHA-256 của JSON theo id:
-  không có bản ghi cũ bị mất hoặc thay đổi. Dữ liệu catalogue mới được thêm bởi V029.
+  không có bản ghi cũ bị mất hoặc thay đổi. Dữ liệu catalogue mới được thêm bởi bộ V026–V028.
 - Đối chiếu 13 file uploads với backup: không file nào bị thiếu/thay đổi.
 - DBCC CHECKDB hoàn tất không báo lỗi.
 
 Backup nằm trong thư mục Git đã ignore, không đưa DB/media hoặc credentials lên remote.
-Máy khác đã chạy seed Trâm dưới số V026 cần đối chiếu lịch sử riêng trước khi nâng cấp.
+Máy đã chạy seed Trâm dưới V026–V028 có thể tiếp tục migrate mà không cần đổi checksum hoặc chạy repair.
 
 ## Dọn code
 

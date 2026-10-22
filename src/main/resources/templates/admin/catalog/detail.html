@@ -22,7 +22,11 @@
             <div class="dashboard-grid">
                 <article class="dashboard-panel">
                     <h2>Nội dung câu hỏi</h2><p th:text="${entry.subtitle}"></p>
-                    <div class="catalog-answer" th:each="row : ${entry.rows}" th:if="${!#strings.startsWith(row.title, 'MEDIA #')}">
+                    <div class="admin-reading-passage" th:if="${entry.skill == 'READING'}">
+                        <h3>Đoạn văn nguồn</h3>
+                        <div class="admin-reading-passage-text" th:each="row : ${entry.rows}" th:if="${row.title == 'ĐOẠN VĂN'}" th:text="${row.description}"></div>
+                    </div>
+                    <div class="catalog-answer" th:each="row : ${entry.rows}" th:if="${!#strings.startsWith(row.title, 'MEDIA #') and row.title != 'ĐOẠN VĂN'}">
                         <div><strong th:text="${row.title}"></strong><p class="muted" th:if="${row.description != 'Phương án trả lời'}" th:text="${row.description}"></p></div>
                         <span class="badge" th:if="${!#strings.isEmpty(row.value)}" th:text="${row.value}"></span>
                     </div>

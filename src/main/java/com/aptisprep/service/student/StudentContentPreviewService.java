@@ -94,6 +94,8 @@ public class StudentContentPreviewService {
         if ("exams".equals(module)) {
             if (exams.count() > 0) return realExams(q, skill, level);
             if (!catalogFallback) return List.of();
+        } else {
+            return List.of();
         }
         String term = normalize(q);
         return fallbackExams.stream()
@@ -113,10 +115,13 @@ public class StudentContentPreviewService {
             }
             if (!catalogFallback) throw new ResourceNotFoundException("Chưa có đề thi đã công bố");
         }
-        return fallbackExams.stream()
-                .filter(e -> e.id() == id)
-                .findFirst()
-                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy nội dung"));
+        if ("exams".equals(module)) {
+            return fallbackExams.stream()
+                    .filter(e -> e.id() == id)
+                    .findFirst()
+                    .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy nội dung"));
+        }
+        throw new ResourceNotFoundException("Không tìm thấy nội dung");
     }
 
     private List<Entry> realExams(String q, String skill, String level) {

@@ -391,6 +391,10 @@ public class CatalogService {
     private Integer getQuestionId(MockExamQuestionEntity e) { return e.getQuestionId(); }
     private Entry questionEntry(QuestionEntity q) {
         List<Row> rows = new ArrayList<>();
+        if ("READING".equals(q.getSkill())) {
+            String passage = q.getReadingPassage();
+            rows.add(new Row("ĐOẠN VĂN", passage == null || passage.isBlank() ? "Chưa có đoạn văn nguồn." : passage, "Văn bản nguồn"));
+        }
         for (QuestionItemEntity item : items.findByQuestionIdOrderByPosition(q.getId())) {
             rows.add(new Row("Ý " + item.getPosition(), item.getContent(), item.getCorrectPosition() == null ? "" : "Đúng vị trí " + item.getCorrectPosition()));
             options.findByQuestionItemIdOrderByPosition(item.getId()).forEach(o -> rows.add(new Row(o.getOptionCode(), o.getContent(), Boolean.TRUE.equals(o.getCorrect()) ? "Đáp án đúng" : "")));

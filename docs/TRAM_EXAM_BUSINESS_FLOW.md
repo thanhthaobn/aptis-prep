@@ -30,7 +30,7 @@ Trâm không ghi `exam_skill_results`, điểm/CEFR, Profile hoặc Learning Pat
 | `user_media_activities` | Số lượt phát audio và token phát tạm thời |
 | `attempt_outbox` | Yêu cầu submit/grading cần được xử lý lại khi tiến trình bị gián đoạn |
 
-Migration seed mẫu: [V029__seed_tram_exam_catalog.sql](../src/main/resources/db/migration/V029__seed_tram_exam_catalog.sql). Migration này tạo câu hỏi đủ năm kỹ năng, audio Listening, Placement/Practice, Checkpoint A1–C2, Full Mock nhiều section và bản ghi Draft cho Admin. Giữ nguyên V026 lịch sử bài làm và V027–V028 đã phát hành; seed catalogue chuyển sang V029 để không trùng phiên bản. Máy đã chạy seed Trâm dưới số V026 cần đối chiếu flyway_schema_history trước khi nâng cấp, không tự repair hoặc chạy lại seed.
+Migration seed mẫu: [V026__seed_tram_exam_catalog.sql](../src/main/resources/db/migration/V026__seed_tram_exam_catalog.sql), mở rộng Aptis ở [V027](../src/main/resources/db/migration/V027__expand_tram_aptis_question_bank.sql) và passage Reading ở [V028](../src/main/resources/db/migration/V028__add_reading_passages.sql). Bộ này tạo câu hỏi đủ năm kỹ năng, audio Listening, Placement/Practice, Checkpoint A1–C2, Full Mock nhiều section và bản ghi Draft cho Admin. Các migration lesson sau merge dùng V032–V034 để không đổi checksum của database đã chạy bộ Trâm.
 
 ## 3. Luồng Admin quản lý câu hỏi và đề
 
