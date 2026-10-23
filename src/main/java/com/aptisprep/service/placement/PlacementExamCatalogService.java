@@ -25,6 +25,7 @@ public class PlacementExamCatalogService {
     public List<PlacementExam> findPublished(String skill) {
         String normalized = skill == null ? "" : skill.trim().toUpperCase(Locale.ROOT);
         return exams.findBySkillAndStatusOrderByUpdatedAtDesc(normalized, "PUBLISHED").stream()
+                .filter(exam -> !exam.isDemoOnly())
                 .filter(exam -> "PLACEMENT".equals(exam.getExamType()))
                 .filter(this::hasPublishedQuestions)
                 .map(exam -> new PlacementExam(exam.getId(), exam.getTitle(), exam.getDescription()))

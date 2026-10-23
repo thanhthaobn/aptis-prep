@@ -28,6 +28,7 @@ public class StudentExamCatalogService {
         if (!"exams".equals(module)) return List.of();
         String term = normalize(query);
         return exams.findByStatusOrderByUpdatedAtDesc("PUBLISHED").stream()
+                .filter(exam -> !exam.isDemoOnly())
                 .filter(exam -> normalize(exam.getTitle() + " " + Objects.toString(exam.getDescription(), "")).contains(term))
                 .filter(exam -> normalize(skill).isBlank() || normalizeSkill(skill).equals(normalizeSkill(exam.getSkill())))
                 .filter(exam -> level == null || level.isBlank() || level.equalsIgnoreCase(exam.getTargetLevel()))
@@ -37,7 +38,7 @@ public class StudentExamCatalogService {
 
     public Entry entry(String module, int id) {
         if (!"exams".equals(module)) throw new ResourceNotFoundException("Không tìm thấy nội dung");
-        return entry(exams.findById(id).filter(exam -> "PUBLISHED".equals(exam.getStatus()))
+        return entry(exams.findById(id).filter(exam -> "PUBLISHED".equals(exam.getStatus()) && !exam.isDemoOnly())
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy đề thi đã công bố")));
     }
 

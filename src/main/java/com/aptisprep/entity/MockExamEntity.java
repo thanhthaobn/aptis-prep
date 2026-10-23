@@ -28,6 +28,11 @@ public class MockExamEntity {
     private Integer durationMinutes;
     @Column(nullable = false, length = 30)
     private String status = "DRAFT";
+    @Column(name = "demo_only", nullable = false)
+    private boolean demoOnly;
+
+    public boolean isDemoOnly() { return demoOnly; }
+    public void setDemoOnly(boolean value) { demoOnly = value; }
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
     @Column(name = "updated_at", nullable = false)

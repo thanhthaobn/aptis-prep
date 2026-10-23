@@ -8,7 +8,8 @@ public final class GradingTextLimits {
     public static final int MAX_QUESTION_CHARS = 50_000;
     public static final int MAX_AI_TASK_CHARS = 50_000;
     public static final int MAX_AI_SUBMISSION_CHARS = 50_000;
-    public static final int MAX_AI_PAYLOAD_CHARS = 100_000;
+    // Count task + submission, including item labels/separators, before locking the attempt.
+    public static final int MAX_AI_PAYLOAD_CHARS = MAX_QUESTION_CHARS;
 
     public static int length(String value) {
         return value == null ? 0 : value.length();

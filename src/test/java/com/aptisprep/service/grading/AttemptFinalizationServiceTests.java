@@ -166,6 +166,7 @@ class AttemptFinalizationServiceTests {
         AiAssessment assessment = new AiAssessment();
         assessment.setJob(job); assessment.setAssessmentKey(job.getAssessmentKey()); assessment.setAnswerId(job.getAnswerId());
         assessment.setAnswerVersion(2); assessment.setState(state); assessment.setScore(score);
+        assessment.setPolicyVersion("p1"); assessment.setRubricVersion("r1");
         return assessment;
     }
 }

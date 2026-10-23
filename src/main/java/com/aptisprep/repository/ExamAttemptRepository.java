@@ -66,7 +66,7 @@ public interface ExamAttemptRepository extends JpaRepository<ExamAttemptEntity, 
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("select a from ExamAttemptEntity a join MockExamEntity e on e.id = a.mockExamId "
-            + "where a.userId = :userId and e.examType = 'PLACEMENT' and e.skill = :skill and a.status in :states")
+            + "where a.userId = :userId and e.examType = 'PLACEMENT' and e.demoOnly = false and e.skill = :skill and a.status in :states")
     Optional<ExamAttemptEntity> findActivePlacement(@Param("userId") Integer userId, @Param("skill") String skill,
                                                     @Param("states") Collection<String> states);
 }

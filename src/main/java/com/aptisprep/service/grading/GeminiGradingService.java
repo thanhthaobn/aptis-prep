@@ -2,6 +2,7 @@ package com.aptisprep.service.grading;
 
 import com.aptisprep.config.AiProperties;
 import com.aptisprep.exception.AiGradingException;
+import com.aptisprep.service.contract.GradingTextLimits;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.nio.file.Files;
@@ -53,15 +54,14 @@ public class GeminiGradingService implements WritingGradingService, SpeakingGrad
     @Override
     public GradingResult grade(String prompt, String answer) {
         requireConfiguration();
-        validateText(prompt, 10000, "Đề bài");
-        validateText(answer, 20000, "Bài làm");
+        validatePayload(prompt, answer, "Bài làm");
         return gradeContent("Writing", prompt, answer, null, null, null);
     }
 
     @Override
     public GradingResult grade(String prompt, Path audioFile) {
         requireConfiguration();
-        validateText(prompt, 10000, "Đề bài");
+        validateText(prompt, GradingTextLimits.MAX_AI_TASK_CHARS, "Đề bài");
         String mimeType = validateAudio(audioFile);
         try {
             return gradeContent("Speaking audio", prompt,
@@ -80,8 +80,7 @@ public class GeminiGradingService implements WritingGradingService, SpeakingGrad
     @Override
     public GradingResult gradeTranscript(String prompt, String transcript) {
         requireConfiguration();
-        validateText(prompt, 10000, "Đề bài");
-        validateText(transcript, 20000, "Nội dung bản ghi");
+        validatePayload(prompt, transcript, "Nội dung bản ghi");
         return gradeContent("Speaking transcript", prompt, transcript, null, null, transcript);
     }
 
@@ -171,6 +170,15 @@ public class GeminiGradingService implements WritingGradingService, SpeakingGrad
     private void validateText(String value, int max, String label) {
         if (value == null || value.isBlank() || value.length() > max) {
             throw new AiGradingException(label + " không được để trống và tối đa " + max + " ký tự.");
+        }
+    }
+
+    private void validatePayload(String prompt, String submission, String label) {
+        validateText(prompt, GradingTextLimits.MAX_AI_TASK_CHARS, "Đề bài");
+        validateText(submission, GradingTextLimits.MAX_AI_SUBMISSION_CHARS, label);
+        if (prompt.length() + submission.length() > GradingTextLimits.MAX_AI_PAYLOAD_CHARS) {
+            throw new AiGradingException("Đề bài và bài làm vượt giới hạn "
+                    + GradingTextLimits.MAX_QUESTION_CHARS + " ký tự");
         }
     }
 

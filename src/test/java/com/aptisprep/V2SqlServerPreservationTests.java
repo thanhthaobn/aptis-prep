@@ -57,6 +57,15 @@ class V2SqlServerPreservationTests {
                                     + " SELECT TOP 1 "
                                     + user
                                     + ",id,SYSDATETIME() FROM lessons ORDER BY id");
+                    assertEquals(
+                            1,
+                            sql.executeUpdate(
+                                    "INSERT INTO"
+                                        + " exam_attempts(user_id,mock_exam_id,status,started_at)"
+                                        + " SELECT TOP 1 "
+                                            + user
+                                            + ",id,'COMPLETED',SYSDATETIME() FROM mock_exams WHERE"
+                                            + " title = N'AptisPrep Demo · Writing · 2 câu AI'"));
                     int exam =
                             insert(
                                     sql,
@@ -146,6 +155,19 @@ class V2SqlServerPreservationTests {
                 try (var connection = DriverManager.getConnection(url, login, password);
                         var sql = connection.createStatement()) {
                     verifyDocumentedSchema(connection);
+                    try (var demoRows =
+                            sql.executeQuery(
+                                    "SELECT COUNT(*) FROM mock_exams WHERE demo_only = 1")) {
+                        assertTrue(demoRows.next());
+                        assertEquals(3, demoRows.getInt(1));
+                    }
+                    try (var realRows =
+                            sql.executeQuery(
+                                    "SELECT demo_only FROM mock_exams WHERE title = N'Preserved"
+                                            + " exam'")) {
+                        assertTrue(realRows.next());
+                        assertFalse(realRows.getBoolean(1));
+                    }
                     for (var entry : before.entrySet()) {
                         var after = read(connection, entry.getKey(), entry.getValue().columns());
                         assertEquals(
@@ -240,9 +262,9 @@ class V2SqlServerPreservationTests {
         assertEquals(
                 actual,
                 documented,
-                "Mermaid must list every physical table and column through V040");
+                "Mermaid must list every physical table and column through V041");
         assertEquals(39, documented.size());
-        assertEquals(415, documented.values().stream().mapToInt(Set::size).sum());
+        assertEquals(416, documented.values().stream().mapToInt(Set::size).sum());
     }
 
     /** Real repositories and service operations against the isolated SQL Server, not H2. */
@@ -353,6 +375,10 @@ class V2SqlServerPreservationTests {
                     // attempts.
                     assertEquals(6, teaching.questions(lesson.getId()).getFirst().options().size());
                     assertEquals(4, attempts.findByLessonId(lesson.getId()).size());
+                    verifyAiRecoveryQueries(
+                            em,
+                            repositories,
+                            users.findByEmailIgnoreCase(email).orElseThrow().getId());
                     em.getTransaction().commit();
                 } finally {
                     if (em.getTransaction().isActive()) em.getTransaction().rollback();
@@ -361,6 +387,100 @@ class V2SqlServerPreservationTests {
         } finally {
             if (factory.getObject() != null) factory.destroy();
         }
+    }
+
+    private static void verifyAiRecoveryQueries(
+            jakarta.persistence.EntityManager em,
+            org.springframework.data.jpa.repository.support.JpaRepositoryFactory repositories,
+            int owner) {
+        var jobs = repositories.getRepository(AiAssessmentJobRepository.class);
+        var answer =
+                em.createQuery("from UserAnswerEntity", com.aptisprep.entity.UserAnswerEntity.class)
+                        .getResultList()
+                        .getFirst();
+        var examJob = sqlJob("sql-recovery-exam", owner, answer, "EXAM_ANSWER");
+        var lessonJob = sqlJob("sql-recovery-lesson", owner, answer, "LESSON_SUBMISSION");
+        em.persist(examJob);
+        em.persist(lessonJob);
+        em.flush();
+        assertEquals(
+                List.of(examJob.getAssessmentKey()),
+                jobs.findExamJobs(owner, answer.getAttemptId(), 1, "p1", "r1").stream()
+                        .map(com.aptisprep.entity.AiAssessmentJob::getAssessmentKey)
+                        .toList());
+        assertTrue(
+                jobs.findRecoverableKeys(
+                                com.aptisprep.enums.AiJobState.PENDING,
+                                com.aptisprep.enums.AiJobState.PROCESSING,
+                                java.time.LocalDateTime.now(),
+                                java.time.LocalDateTime.now().minusMinutes(15),
+                                org.springframework.data.domain.PageRequest.of(0, 50))
+                        .contains(examJob.getAssessmentKey()));
+        examJob.setState(com.aptisprep.enums.AiJobState.ERROR);
+        lessonJob.setState(com.aptisprep.enums.AiJobState.ERROR);
+        em.flush();
+        assertEquals(
+                List.of(examJob.getAssessmentKey()),
+                jobs
+                        .findExamJobsByState(
+                                owner,
+                                answer.getAttemptId(),
+                                1,
+                                "p1",
+                                "r1",
+                                com.aptisprep.enums.AiJobState.ERROR)
+                        .stream()
+                        .map(com.aptisprep.entity.AiAssessmentJob::getAssessmentKey)
+                        .toList());
+        examJob.setState(com.aptisprep.enums.AiJobState.COMPLETED);
+        var assessment = new com.aptisprep.entity.AiAssessment();
+        assessment.setJob(examJob);
+        assessment.setAssessmentKey(examJob.getAssessmentKey());
+        assessment.setAnswerId(answer.getId());
+        assessment.setAnswerVersion(1);
+        assessment.setPolicyVersion("p1");
+        assessment.setRubricVersion("r1");
+        assessment.setState(com.aptisprep.enums.AiAssessmentState.COMPLETED);
+        assessment.setScore(java.math.BigDecimal.valueOf(20));
+        em.persist(assessment);
+        em.flush();
+        assertTrue(
+                jobs.findCompletedWithoutCallback(
+                                org.springframework.data.domain.PageRequest.of(0, 50))
+                        .contains(examJob.getAssessmentKey()));
+        var row = new com.aptisprep.entity.AttemptOutboxEntity();
+        row.setEventKey("ai:sql-recovery-exam:v1:COMPLETED");
+        row.setEventType("AI_ASSESSMENT_COMPLETED");
+        row.setAggregateId(answer.getAttemptId());
+        row.setPayload("{}");
+        row.setStatus("DISPATCHED");
+        em.persist(row);
+        em.flush();
+        assertFalse(
+                jobs.findCompletedWithoutCallback(
+                                org.springframework.data.domain.PageRequest.of(0, 50))
+                        .contains(examJob.getAssessmentKey()));
+    }
+
+    private static com.aptisprep.entity.AiAssessmentJob sqlJob(
+            String key, int owner, com.aptisprep.entity.UserAnswerEntity answer, String source) {
+        var job = new com.aptisprep.entity.AiAssessmentJob();
+        job.setAssessmentKey(key);
+        job.setUserId(owner);
+        job.setAttemptId(answer.getAttemptId());
+        job.setAnswerId(answer.getId());
+        job.setSourceType(source);
+        job.setSourceId(answer.getId());
+        job.setAnswerVersion(1);
+        job.setPolicyVersion("p1");
+        job.setRubricVersion("r1");
+        job.setSkill("WRITING");
+        job.setTaskType("WRITING");
+        job.setTaskContent("SQL regression task");
+        job.setLockedContent("Preserved response");
+        job.setMaxScore(java.math.BigDecimal.valueOf(50));
+        job.setState(com.aptisprep.enums.AiJobState.PENDING);
+        return job;
     }
 
     private static LessonForm checkForm(int count, int correct) {
