@@ -6,7 +6,9 @@ import com.aptisprep.exception.AiGradingException;
 import com.aptisprep.event.AiAssessmentCompletedEvent;
 import com.aptisprep.repository.*;
 import com.aptisprep.service.contract.AiAssessmentContract.*;
+import com.aptisprep.service.exam.AttemptOutboxService;
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.Optional;
 import javax.sql.DataSource;
 import org.h2.jdbcx.JdbcDataSource;
@@ -15,6 +17,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.jdbc.datasource.DataSourceTransactionManager;
+import org.springframework.test.util.ReflectionTestUtils;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
@@ -29,6 +32,7 @@ class AiAssessmentServiceTests {
     @Mock WritingGradingService writing;
     @Mock SpeakingGradingService speaking;
     @Mock ApplicationEventPublisher events;
+    @Mock AttemptOutboxService outbox;
 
     private AiAssessmentService service;
     private AiAssessmentJob job;
@@ -39,7 +43,7 @@ class AiAssessmentServiceTests {
         DataSource dataSource = new JdbcDataSource();
         ((JdbcDataSource) dataSource).setURL("jdbc:h2:mem:ai_tx;DB_CLOSE_DELAY=-1");
         service = new AiAssessmentService(jobs, assessments, users, writing, speaking,
-                new DataSourceTransactionManager(dataSource), events);
+                new DataSourceTransactionManager(dataSource), events, outbox);
         job = new AiAssessmentJob(); job.setAssessmentKey("assessment-1"); job.setUserId(1); job.setAttemptId(2);
         job.setAnswerId(3); job.setSourceId(3); job.setAnswerVersion(1); job.setSkill("WRITING"); job.setTaskType("WRITING");
         job.setTaskContent("Write an email"); job.setLockedContent("Dear team"); job.setRubricVersion("r1");
@@ -70,7 +74,7 @@ class AiAssessmentServiceTests {
         assertEquals("B1", first.estimatedCefr());
         assertEquals(first.state(), second.state());
         verify(writing, times(1)).grade("Write an email", "Dear team");
-        verify(events, times(1)).publishEvent(any(AiAssessmentCompletedEvent.class));
+        verify(events, times(2)).publishEvent(any(AiAssessmentCompletedEvent.class));
     }
 
     @Test
@@ -84,8 +88,8 @@ class AiAssessmentServiceTests {
         assertNull(failed.score());
         assertNotNull(failed.errorMessage());
         var eventCaptor = org.mockito.ArgumentCaptor.forClass(AiAssessmentCompletedEvent.class);
-        verify(events).publishEvent(eventCaptor.capture());
-        assertEquals("ERROR", eventCaptor.getValue().state());
+        verify(events, times(2)).publishEvent(eventCaptor.capture());
+        assertEquals("ERROR", eventCaptor.getAllValues().getFirst().state());
 
         AssessmentView retried = service.retry("assessment-1", 1, false);
         assertEquals("COMPLETED", retried.state());
@@ -105,6 +109,20 @@ class AiAssessmentServiceTests {
         assertEquals("COMPLETED", result.state());
         assertEquals("I enjoy reading books.", result.transcript());
         verify(speaking).gradeTranscript("Talk about hobbies", "I enjoy reading books.");
+    }
+
+    @Test
+    void staleProcessingJobIsReclaimedAfterRestart() {
+        job.setState(AiJobState.PROCESSING); job.setProcessingToken("old-token");
+        job.setRetryCount(1); ReflectionTestUtils.setField(job, "updatedAt", LocalDateTime.now().minusMinutes(30));
+        when(writing.grade("Write an email", "Dear team"))
+                .thenReturn(new GradingResult(new BigDecimal("30"), "B1", "Feedback", "mock", "test-model"));
+
+        AssessmentView result = service.process("assessment-1");
+
+        assertEquals("COMPLETED", result.state());
+        assertNull(job.getProcessingToken());
+        verify(writing).grade("Write an email", "Dear team");
     }
 
     @Test

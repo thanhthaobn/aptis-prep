@@ -85,6 +85,9 @@ public class AttemptGradingOrchestrationService {
                 .collect(Collectors.joining("\n"));
     }
 
-    @EventListener
-    public void onAssessmentCompleted(AiAssessmentCompletedEvent event) { finalization.applyAiAssessment(event); }
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
+    public void onAssessmentCompleted(AiAssessmentCompletedEvent event) {
+        finalization.applyAiAssessment(event);
+        outbox.markDelivered(event);
+    }
 }

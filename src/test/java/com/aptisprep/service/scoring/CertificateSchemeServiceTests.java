@@ -3,6 +3,7 @@ package com.aptisprep.service.scoring;
 import com.aptisprep.entity.Certificate;
 import com.aptisprep.entity.ScoreBand;
 import com.aptisprep.entity.ScoringScheme;
+import com.aptisprep.entity.ScoringScaleRule;
 import com.aptisprep.enums.RecordStatus;
 import com.aptisprep.exception.BusinessRuleException;
 import com.aptisprep.exception.ResourceNotFoundException;
@@ -47,11 +48,13 @@ class CertificateSchemeServiceTests {
     @Test
     void requiresMatchingActiveCertificateAndConfiguredSkill() {
         when(schemes.findByIdAndCertificateId(2, 1)).thenReturn(Optional.of(scheme));
-        ScoreBand band = mock(ScoreBand.class);
-        when(band.getSkill()).thenReturn("READING");
+        ScoreBand band = new ScoreBand();
+        band.setSkill("READING"); band.setMinScore(java.math.BigDecimal.ZERO); band.setMaxScore(java.math.BigDecimal.valueOf(50));
         when(bands.findBySchemeIdAndSkillOrderByMinScoreAsc(2, "READING")).thenReturn(List.of(band));
         when(bands.findBySchemeIdOrderBySkillAscMinScoreAsc(2)).thenReturn(List.of(band));
-        when(scaleRules.findBySchemeIdAndSkillIgnoreCase(2, "READING")).thenReturn(Optional.of(new com.aptisprep.entity.ScoringScaleRule()));
+        ScoringScaleRule rule = new ScoringScaleRule();
+        rule.setScaleMin(java.math.BigDecimal.ZERO); rule.setScaleMax(java.math.BigDecimal.valueOf(50));
+        when(scaleRules.findBySchemeIdAndSkillIgnoreCase(2, "READING")).thenReturn(Optional.of(rule));
 
         var option = service.requireAvailableScheme(1, 2, "Reading");
 
