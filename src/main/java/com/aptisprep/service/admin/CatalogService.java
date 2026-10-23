@@ -29,6 +29,7 @@ import org.springframework.web.multipart.MultipartFile;
 public class CatalogService {
     private static final List<String> SKILLS = List.of("GRAMMAR_VOCABULARY", "READING", "LISTENING", "WRITING", "SPEAKING");
     private static final List<String> LEVELS = List.of("A1", "A2", "B1", "B2", "C1", "C2");
+    private static final List<String> DIFFICULTIES = List.of("EASY", "MEDIUM", "HARD");
     private static final List<String> TYPES = Arrays.stream(com.aptisprep.enums.QuestionType.values()).map(Enum::name).toList();
     private static final List<String> EXAM_TYPES = List.of("PLACEMENT", "PRACTICE", "CHECKPOINT", "FULL_MOCK");
     private final QuestionRepository questions;
@@ -148,6 +149,7 @@ public class CatalogService {
     @Transactional
     public Integer saveQuestion(Integer id, QuestionForm form, MultipartFile upload) {
         normalizeItems(form);
+        normalizeQuestionFields(form);
         validateQuestion(form);
         QuestionEntity q = id == null ? new QuestionEntity() : questions.findById(id).orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy câu hỏi"));
         if (id != null && answers.existsByQuestionId(id)) {
@@ -165,7 +167,7 @@ public class CatalogService {
         q.setDifficulty(form.getDifficulty());
         q.setAllowOptionReuse(form.isAllowOptionReuse());
         q.setPreparationSeconds(form.getPreparationSeconds());
-        q.setStatus("PUBLISHED".equals(form.getStatus()) ? "DRAFT" : form.getStatus());
+        q.setStatus(form.getStatus());
         q = questions.save(q);
         if (id != null) {
             for (QuestionItemEntity old : items.findByQuestionIdOrderByPosition(id)) {
@@ -184,17 +186,18 @@ public class CatalogService {
             item.setMaxWordCount(value.getMaxWordCount());
             item.setResponseSeconds(value.getResponseSeconds());
             item = items.save(item);
-            int optionPosition = 1;
-            if (usesOptions(form.getQuestionType())) for (QuestionForm.OptionForm option : value.getOptions())
+            if (usesOptions(form.getQuestionType())) for (int optionIndex = 0; optionIndex < value.getOptions().size(); optionIndex++) {
+                QuestionForm.OptionForm option = value.getOptions().get(optionIndex);
                 if (option.getContent() != null && !option.getContent().isBlank()) {
                     QuestionOptionEntity entity = new QuestionOptionEntity();
                     entity.setQuestionItemId(item.getId());
                     entity.setContent(option.getContent().trim());
                     entity.setOptionCode(option.getCode());
-                    entity.setCorrect(Objects.equals(optionPosition, value.getCorrectPosition()));
-                    entity.setPosition(optionPosition++);
+                    entity.setCorrect(Objects.equals(optionIndex + 1, value.getCorrectPosition()));
+                    entity.setPosition(optionIndex + 1);
                     options.save(entity);
                 }
+            }
         }
         if (upload != null && !upload.isEmpty()) saveMedia(q, upload);
         return q.getId();
@@ -453,8 +456,11 @@ public class CatalogService {
         if (f.getReadingPassage() != null && f.getReadingPassage().length() > 50000)
             throw new BusinessRuleException("Đoạn văn Reading tối đa 50.000 ký tự");
         if (f.getSkill() == null || f.getCefrLevel() == null || f.getQuestionType() == null
-                || !SKILLS.contains(f.getSkill()) || !LEVELS.contains(f.getCefrLevel()) || !TYPES.contains(f.getQuestionType()))
-            throw new BusinessRuleException("Kỹ năng, cấp độ hoặc dạng câu hỏi không hợp lệ");
+                || !SKILLS.contains(f.getSkill()) || !LEVELS.contains(f.getCefrLevel()) || !TYPES.contains(f.getQuestionType())
+                || !DIFFICULTIES.contains(f.getDifficulty()))
+            throw new BusinessRuleException("Kỹ năng, cấp độ, độ khó hoặc dạng câu hỏi không hợp lệ");
+        if (f.getStatus() == null || !List.of("DRAFT", "PUBLISHED", "ARCHIVED").contains(f.getStatus()))
+            throw new BusinessRuleException("Trạng thái lưu không hợp lệ");
         var type = com.aptisprep.enums.QuestionType.valueOf(f.getQuestionType());
         if (!type.supportsSkill(f.getSkill())) throw new BusinessRuleException("Dạng câu hỏi không phù hợp với kỹ năng");
         if (f.getItems() == null || f.getItems().isEmpty() || f.getItems().stream().anyMatch(x -> x.getContent() == null || x.getContent().isBlank()))
@@ -471,14 +477,34 @@ public class CatalogService {
         }
         if (usesOptions(f.getQuestionType())) {
             for (QuestionForm.ItemForm item : f.getItems()) {
-                long count = item.getOptions() == null ? 0 : item.getOptions().stream().filter(x -> x.getContent() != null && !x.getContent().isBlank()).count();
-                boolean correct = item.getCorrectPosition() != null && item.getCorrectPosition() >= 1 && item.getCorrectPosition() <= count;
-                if (count < 2 || !correct)
-                    throw new BusinessRuleException("Mỗi ý hỏi phải có ít nhất 2 phương án và đúng 1 đáp án đúng");
+                List<QuestionForm.OptionForm> itemOptions = item.getOptions() == null ? List.of() : item.getOptions();
+                int lastFilled = 0;
+                boolean gap = false;
+                for (int index = 0; index < itemOptions.size(); index++) {
+                    boolean filled = itemOptions.get(index).getContent() != null && !itemOptions.get(index).getContent().isBlank();
+                    if (filled) {
+                        if (gap) throw new BusinessRuleException("Phương án phải được nhập liên tục từ A trở đi");
+                        lastFilled = index + 1;
+                    } else {
+                        gap = true;
+                    }
+                }
+                boolean correct = f.getItems() != null && item.getCorrectPosition() != null
+                        && item.getCorrectPosition() >= 1 && item.getCorrectPosition() <= lastFilled
+                        && itemOptions.get(item.getCorrectPosition() - 1).getContent() != null
+                        && !itemOptions.get(item.getCorrectPosition() - 1).getContent().isBlank();
+                if (lastFilled < 2 || !correct)
+                    throw new BusinessRuleException("Mỗi ý hỏi phải có ít nhất 2 phương án và một đáp án đúng");
             }
         }
+        if (f.getItems().stream().anyMatch(x -> x.getMinWordCount() != null && x.getMinWordCount() < 0
+                || x.getMaxWordCount() != null && x.getMaxWordCount() < 0
+                || x.getResponseSeconds() != null && x.getResponseSeconds() <= 0))
+            throw new BusinessRuleException("Giới hạn số từ không được âm và thời gian trả lời phải lớn hơn 0");
         if (f.getItems().stream().anyMatch(x -> x.getMinWordCount() != null && x.getMaxWordCount() != null && x.getMinWordCount() > x.getMaxWordCount()))
             throw new BusinessRuleException("Số từ tối thiểu không được lớn hơn tối đa");
+        if (f.getPreparationSeconds() != null && f.getPreparationSeconds() < 0)
+            throw new BusinessRuleException("Thời gian chuẩn bị không được âm");
     }
 
     private void validateExamBasics(ExamForm f) {
@@ -643,6 +669,22 @@ public class CatalogService {
         if (first.getResponseSeconds() == null) first.setResponseSeconds(form.getResponseSeconds());
         if ((first.getOptions() == null || first.getOptions().isEmpty()) && form.getOptions() != null)
             first.setOptions(form.getOptions());
+    }
+
+    private void normalizeQuestionFields(QuestionForm form) {
+        String type = form.getQuestionType();
+        if (type == null || !TYPES.contains(type)) return;
+        if (!"READING".equals(form.getSkill())) form.setReadingPassage(null);
+        for (QuestionForm.ItemForm item : form.getItems()) {
+            if (!usesOptions(type)) item.setOptions(new ArrayList<>());
+            if (!"ORDERING".equals(type) && !usesOptions(type)) item.setCorrectPosition(null);
+            if (!"WRITING_TEXT".equals(type)) {
+                item.setMinWordCount(null);
+                item.setMaxWordCount(null);
+            }
+            if (!Set.of("WRITING_TEXT", "SPEAKING_AUDIO").contains(type)) item.setResponseSeconds(null);
+        }
+        if (!"SPEAKING_AUDIO".equals(type)) form.setPreparationSeconds(null);
     }
 
     private Entry examEntry(MockExamEntity e) {

@@ -46,6 +46,8 @@ class V2BusinessRegressionTests {
     @Autowired MockExamSectionRepository sections;
     @Autowired UserAnswerRepository answers;
     @Autowired QuestionRepository questions;
+    @Autowired QuestionItemRepository questionItems;
+    @Autowired QuestionOptionRepository questionOptions;
     @Autowired UserFlashcardProgressRepository progress;
     @Autowired MockMvc mvc;
     User admin, learner;
@@ -98,6 +100,32 @@ class V2BusinessRegressionTests {
     @Test void skillAndQuestionTypeMustMatchAtTheBackend() {
         assertThrows(BusinessRuleException.class,()->catalog.saveQuestion(null,question("SINGLE_CHOICE","WRITING"),null));
         assertThrows(BusinessRuleException.class,()->catalog.saveQuestion(null,question("SPEAKING_AUDIO","READING"),null));
+    }
+    @Test void questionDifficultyAndPublishedStatusArePersistedFromTheAdminForm() {
+        var form = question("SINGLE_CHOICE", "READING");
+        form.setDifficulty("HARD");
+        form.setStatus("PUBLISHED");
+        int id = catalog.saveQuestion(null, form, null);
+        var saved = questions.findById(id).orElseThrow();
+        assertEquals("HARD", saved.getDifficulty());
+        assertEquals("PUBLISHED", saved.getStatus());
+        form.setDifficulty("IMPOSSIBLE");
+        assertThrows(BusinessRuleException.class, () -> catalog.saveQuestion(null, form, null));
+    }
+    @Test void questionEditorClearsFieldsThatDoNotBelongToTheSelectedType() {
+        var form = question("WRITING_TEXT", "WRITING");
+        form.setReadingPassage("This passage does not belong to Writing");
+        form.setPreparationSeconds(30);
+        form.getItems().getFirst().setMinWordCount(20);
+        form.getItems().getFirst().setMaxWordCount(80);
+        int id = catalog.saveQuestion(null, form, null);
+        var item = questionItems.findByQuestionIdOrderByPosition(id).getFirst();
+        assertNull(item.getCorrectPosition());
+        assertEquals(20, item.getMinWordCount());
+        assertEquals(80, item.getMaxWordCount());
+        assertTrue(questionOptions.findByQuestionItemIdOrderByPosition(item.getId()).isEmpty());
+        assertNull(questions.findById(id).orElseThrow().getReadingPassage());
+        assertNull(questions.findById(id).orElseThrow().getPreparationSeconds());
     }
     @Test void writingKeepsAllItemsInCanonicalAnswerAndDoesNotEraseEarlierItems() {
         var form=question("WRITING_TEXT","WRITING");var second=new QuestionForm.ItemForm();second.setContent("Second");form.getItems().add(second);

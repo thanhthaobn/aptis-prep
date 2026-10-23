@@ -39,15 +39,19 @@ class IntegrationMergeRegressionTests {
         assertTrue(
                 Files.exists(
                         Path.of(
-                                "src/main/resources/db/migration/V026__lesson_submission_history.sql")));
+                                "src/main/resources/db/migration/V026__seed_tram_exam_catalog.sql")));
         assertTrue(
                 Files.exists(
                         Path.of(
-                                "src/main/resources/db/migration/V029__seed_tram_exam_catalog.sql")));
+                                "src/main/resources/db/migration/V028__add_reading_passages.sql")));
         assertTrue(
                 Files.exists(
                         Path.of(
-                                "src/main/resources/db/migration/V031__add_reading_passages.sql")));
+                                "src/main/resources/db/migration/V032__lesson_submission_history.sql")));
+        assertTrue(
+                Files.exists(
+                        Path.of(
+                                "src/main/resources/db/migration/V034__simple_lesson_release_rules.sql")));
         assertTrue(Files.exists(Path.of(
                 "src/main/resources/db/migration/V039__lesson_playback_verification_and_six_options.sql")));
         assertTrue(Files.exists(Path.of(
