@@ -68,7 +68,24 @@ class CertificateSchemeServiceTests {
         assertThrows(ResourceNotFoundException.class, () -> service.requireAvailableScheme(9, 2, "Reading"));
 
         when(schemes.findByIdAndCertificateId(2, 1)).thenReturn(Optional.of(scheme));
+        ScoringScaleRule rule = new ScoringScaleRule();
+        rule.setScaleMin(java.math.BigDecimal.ZERO);
+        rule.setScaleMax(java.math.BigDecimal.valueOf(50));
+        when(scaleRules.findBySchemeIdAndSkillIgnoreCase(2, "GRAMMAR_VOCABULARY"))
+                .thenReturn(Optional.of(rule));
         when(bands.findBySchemeIdAndSkillOrderByMinScoreAsc(2, "GRAMMAR_VOCABULARY")).thenReturn(List.of());
         assertThrows(BusinessRuleException.class, () -> service.requireAvailableScheme(1, 2, "Grammar & Vocabulary"));
+    }
+
+    @Test
+    void rejectsMissingScaleRuleBeforeCheckingBands() {
+        when(schemes.findByIdAndCertificateId(2, 1)).thenReturn(Optional.of(scheme));
+        when(scaleRules.findBySchemeIdAndSkillIgnoreCase(2, "READING")).thenReturn(Optional.empty());
+
+        var error = assertThrows(BusinessRuleException.class,
+                () -> service.requireAvailableScheme(1, 2, "Reading"));
+
+        assertTrue(error.getMessage().contains("raw-to-scale"));
+        verifyNoInteractions(bands);
     }
 }
