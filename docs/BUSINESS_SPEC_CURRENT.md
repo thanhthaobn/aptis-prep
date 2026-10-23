@@ -1065,7 +1065,20 @@ Kiểm chứng chính: TramBusinessCompletionTests (snapshot → outbox → requ
 
 Kết quả 23/10/2026: `mvn -o clean verify` và lượt `mvn -o verify` cuối với `APTIS_SQLSERVER_ISOLATED_TESTS=true` thành công. Bản cuối có 223 Java test: 221 đạt, 2 skip (Gemini live và migration trực tiếp DB ứng dụng), không failure/error; JavaScript 9/9 đạt. Database ứng dụng vẫn ở V031, chưa chạy V041; không dùng Flyway repair/clean trên dữ liệu đang dùng. SQL Server tạm nâng đến V041, kiểm toàn bộ cột cũ không đổi, lịch sử demo vẫn còn, đúng 3 đề được đánh dấu và ERD đủ 39 bảng/416 cột. Lượt Placement thật không tự resume demo cũ; cờ demo vẫn giữ khi admin đổi tên đề.
 
-### 11.4 Đọc và cập nhật tài liệu
+### 11.4 Cách ly nguồn AI và phục hồi G01–G02
+
+- Luồng Exam chỉ tổng hợp/retry job EXAM_ANSWER đúng owner, attempt, answer, answer version, policy và rubric. Assessment phải khớp metadata của job. Job Lesson legacy trùng ID không được tính điểm hoặc làm Exam lỗi; không sửa ID legacy để né lỗi.
+- Recovery quét cả PENDING đến hạn và PROCESSING quá 15 phút, tối đa 50 job/lượt. Thu hồi trực tiếp dưới khóa job và cấp processing_token mới; kết quả thành công/lỗi từ worker cũ không được ghi đè worker mới. Hết 3 lượt xử lý thì ghi ERROR và phát sự kiện lỗi bền vững, không để PENDING bị kẹt, không gán điểm 0 hay CEFR mặc định.
+- PENDING gặp lỗi DB tạm thời được hoãn 30 giây nếu DB còn ghi được. Khi cấu hình AI tắt, scheduler không tiêu hao lượt xử lý; phần sửa callback COMPLETED vẫn hoạt động.
+- Job Exam COMPLETED có điểm nhưng thiếu bản ghi callback được bổ sung outbox trong cùng transaction giữ khóa job. Query chỉ lấy callback còn thiếu, không liên tục chọn lại 50 job đã giao xong. Outbox lưu thời điểm retry trước khi phát sự kiện để phục hồi cả trường hợp crash trước listener hoặc trước đánh dấu đã giao.
+- Một callback hợp lệ đồng bộ các câu đã có assessment hoàn tất của cùng skill trước khi tổng hợp. Replay không cộng điểm, tạo kết quả hoặc áp Profile hai lần. Listener Profile sau commit tạm ngưng transaction cũ, mở transaction mới cho cập nhật Profile/path.
+- Provider có thể được gọi lại sau timeout/restart; không cam kết exactly-once đối với dịch vụ ngoài. Cam kết kiểm thử là chỉ kết quả của token hiện hành được nhận và replay không áp nghiệp vụ trùng.
+
+Kiểm chứng: AiRecoveryBusinessTests gồm 19 ca tích hợp (bốn tình huống G01, metadata sai, pending/stale sau restart, callback thất lạc, replay Profile, provider cũ trả chậm/thất bại, retry và backfill đồng thời, hàng đợi trên 50 job, AI tắt, lỗi DB tạm thời). AttemptOutboxLeaseTests kiểm thời điểm lưu lease trước publication. V2SqlServerPreservationTests chạy query nguồn Exam/recovery/callback trên SQL Server UUID tạm và kiểm bảo toàn dữ liệu qua migration. Đợt sửa này không thêm migration, không đổi ERD V041 và không nâng database ứng dụng.
+
+Nghiệm thu G01–G02 ngày 23/10/2026: `mvn -o -q clean verify` với `APTIS_SQLSERVER_ISOLATED_TESTS=true` thành công: 243 Java test, 241 đạt, 2 skip, không failure/error; JavaScript 9/9 đạt. Hai test opt-in bỏ qua là gọi Gemini live và migration trực tiếp database ứng dụng; SQL Server UUID tạm thực sự đã chạy. Các tình huống restart được mô phỏng bằng trạng thái đã lưu và service mới, không phải tắt đột ngột tiến trình SQL Server. Kiểm tra chỉ đọc xác nhận database ứng dụng vẫn ở V031.
+
+### 11.5 Đọc và cập nhật tài liệu
 
 Các block mermaid được đặt trực tiếp trong Markdown, không cần plugin Figma. Có thể xem ở GitHub hoặc Markdown preview có hỗ trợ Mermaid; trình xem không hỗ trợ sẽ chỉ hiện code. Tên cột/quan hệ kỹ thuật phải được cập nhật theo migration mới; không sửa ERD bằng suy đoán từ tên class.
 
