@@ -26,7 +26,7 @@ public class PublishedExamCatalogService implements ExamCatalogContract {
 
     @Override
     public ExamView publishedExam(Integer userId, Integer examId) {
-        MockExamEntity exam = exams.findById(examId).filter(x -> "PUBLISHED".equals(x.getStatus()))
+        MockExamEntity exam = exams.findById(examId).filter(x -> "PUBLISHED".equals(x.getStatus()) && !x.isDemoOnly())
                 .orElseThrow(() -> new ResourceNotFoundException("Đề thi chưa được công bố hoặc không tồn tại"));
         var summary = summary(exam);
         var views = examQuestions.findByMockExamIdOrderByPosition(examId).stream().map(link -> questions.findById(link.getQuestionId())
@@ -39,6 +39,7 @@ public class PublishedExamCatalogService implements ExamCatalogContract {
     @Override
     public ExamSummary checkpoint(String skill, String targetLevel) {
         return exams.findByStatusOrderByUpdatedAtDesc("PUBLISHED").stream()
+                .filter(x -> !x.isDemoOnly())
                 .filter(x -> "CHECKPOINT".equals(x.getExamType()) && skill.equals(x.getSkill()) && targetLevel.equals(x.getTargetLevel()))
                 .filter(x -> !examQuestions.findByMockExamIdOrderByPosition(x.getId()).isEmpty()).findFirst().map(this::summary)
                 .orElseThrow(() -> new ResourceNotFoundException("Chưa có đề checkpoint phù hợp"));

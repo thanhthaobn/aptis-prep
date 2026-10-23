@@ -93,6 +93,9 @@ public class ExamAttemptService implements ExamAttemptContract {
             }
             return handle(byKey.get(), examFor(byKey.get()));
         }
+        if (exam.isDemoOnly()) {
+            throw new BusinessRuleException("Đề demo chỉ dành cho kiểm thử, không thể bắt đầu lượt thi mới");
+        }
         if ("PLACEMENT".equals(exam.getExamType())) {
             Optional<ExamAttemptEntity> active = attempts.findActivePlacement(userId, exam.getSkill(), ACTIVE_STATES);
             if (active.isPresent()) {

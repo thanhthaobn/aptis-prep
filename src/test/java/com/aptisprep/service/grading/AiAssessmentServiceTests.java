@@ -176,6 +176,11 @@ class AiAssessmentServiceTests {
         assertThrows(com.aptisprep.exception.BusinessRuleException.class, () -> service.request(request));
         verifyNoInteractions(jobs, assessments);
 
+        AssessmentRequest combined = new AssessmentRequest("combined-too-large", 1, 2, 3, 1, "WRITING", "WRITING",
+                "t".repeat(25_000), "a".repeat(25_001), "r1", "p1", new BigDecimal("50"), null);
+        assertThrows(com.aptisprep.exception.BusinessRuleException.class, () -> service.request(combined));
+        verifyNoInteractions(jobs, assessments);
+
     }
 
     @Test

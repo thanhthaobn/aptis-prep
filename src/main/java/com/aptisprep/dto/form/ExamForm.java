@@ -16,6 +16,10 @@ public class ExamForm {
     private Integer sectionDurationMinutes = 35;
     private String questionIds;
     private String status = "DRAFT";
+    private boolean demoOnly;
+
+    public boolean isDemoOnly() { return demoOnly; }
+    public void setDemoOnly(boolean value) { demoOnly = value; }
     private List<SectionForm> sections = new ArrayList<>();
 
     public String getTitle() {

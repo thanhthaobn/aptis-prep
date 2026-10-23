@@ -17,6 +17,8 @@ import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.annotation.Propagation;
 
 @Component
 public class AttemptGradingOrchestrationService {
@@ -35,6 +37,7 @@ public class AttemptGradingOrchestrationService {
     }
 
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
     public void onSubmitted(AttemptSubmittedEvent event) {
         if (!properties.isEnabled()) {
             finalization.markSubjectiveUnavailable(event, "AI_DISABLED");
@@ -92,6 +95,7 @@ public class AttemptGradingOrchestrationService {
     }
 
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
     public void onAssessmentCompleted(AiAssessmentCompletedEvent event) {
         finalization.applyAiAssessment(event);
         outbox.markDelivered(event);

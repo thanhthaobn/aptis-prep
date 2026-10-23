@@ -20,6 +20,35 @@ import static org.springframework.test.web.client.match.MockRestRequestMatchers.
 import static org.springframework.test.web.client.response.MockRestResponseCreators.*;
 
 class GeminiGradingServiceTests {
+    @Test
+    void twoElevenThousandCharacterAnswersReachGeminiWithoutTruncation() {
+        String submission = "Mục 1:\n" + "a".repeat(11_000) + "\n\nMục 2:\n" + "b".repeat(11_000);
+        server.expect(method(HttpMethod.POST))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("a".repeat(11_000))))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("b".repeat(11_000))))
+                .andRespond(withSuccess(response("{\"score\":30,\"cefr\":\"B1\",\"feedback\":\"Đã đọc đủ hai mục.\",\"transcript\":\"\"}"), MediaType.APPLICATION_JSON));
+        assertEquals(new BigDecimal("30"), service.grade("Two prompts", submission).estimatedScore());
+        server.verify();
+    }
+
+    @Test
+    void combinedBoundaryIncludesTaskAndRejectsOneExtraCharacterBeforeHttp() {
+        String prompt = "t".repeat(11_000);
+        assertThrows(AiGradingException.class, () -> service.grade(prompt, "a".repeat(39_001)));
+        server.expect(method(HttpMethod.POST))
+                .andRespond(withSuccess(response("{\"score\":30,\"cefr\":\"B1\",\"feedback\":\"Valid boundary.\",\"transcript\":\"\"}"), MediaType.APPLICATION_JSON));
+        assertEquals(new BigDecimal("30"), service.grade(prompt, "a".repeat(39_000)).estimatedScore());
+        server.verify();
+    }
+
+    @Test
+    void speakingTranscriptUsesTheSameSharedBoundary() {
+        server.expect(method(HttpMethod.POST))
+                .andRespond(withSuccess(response("{\"score\":30,\"cefr\":\"B1\",\"feedback\":\"Chưa đánh giá phát âm.\",\"transcript\":\"Accepted transcript\"}"), MediaType.APPLICATION_JSON));
+        assertNotNull(service.gradeTranscript("Task", "a".repeat(22_000)));
+        assertThrows(AiGradingException.class, () -> service.gradeTranscript("Task", "a".repeat(50_000)));
+        server.verify();
+    }
     private final AiProperties properties = new AiProperties();
     private MockRestServiceServer server;
     private GeminiGradingService service;

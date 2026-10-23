@@ -4,7 +4,7 @@ Chốt phạm vi 23/10/2026: hành trình học A1–C1. Profile C1/C2 không si
 
 Kiểm chứng bản tích hợp V040: `mvn -o clean verify` với `APTIS_SQLSERVER_ISOLATED_TESTS=true` đạt (203 test: 201 đạt, không có failure/error; 2 skip là Gemini live và migration trực tiếp DB ứng dụng); JavaScript 9/9 đạt. Test gồm 89%/90%, tua/nghe lặp/replay, token khác user/hết hạn, thay audio, hoàn thành qua MVC/JPA, C1/legacy C2; SQL Server tạm kiểm migration V037 → V039 → V040, Hibernate validate, bảo toàn dữ liệu, đáp án D/E/F, chấm đúng/sai, validation và đối chiếu schema ERD. Test AI xác nhận event ERROR trước retry rồi COMPLETED sau retry; test scoring kiểm riêng thiếu scale rule và thiếu khoảng CEFR. Cờ `-o` dùng dependency đã cache. Không chạy migration trực tiếp lên DB ứng dụng; bản sửa được đưa lên feature/thao, chưa merge vào develop.
 
-### Checklist SQL Server cho L01 và ERD V040
+### Checklist SQL Server cho L01 và ERD hiện tại
 
 `V2SqlServerPreservationTests` dùng database UUID riêng, chạy migration đến V037, thêm fixture A/B/C và dấu nghe cũ, chụp toàn bộ cột cũ rồi nâng lên V039. Sau đó lưu trạng thái playback thử nghiệm, chụp tiếp dữ liệu và nâng lên V040; kiểm tra cả hai snapshot để bảo đảm migration AI không đổi dữ liệu đã có. Test tự dọn đúng database đã tạo trong `finally`; không chạy `clean` hoặc migration trên database ứng dụng.
 
@@ -15,9 +15,9 @@ Kiểm chứng bản tích hợp V040: `mvn -o clean verify` với `APTIS_SQLSER
 | Chỉ số âm hoặc vượt số lựa chọn, thiếu câu trả lời | Service từ chối; DB cũng từ chối correct_option = -1 và 6 |
 | Lựa chọn bị khuyết ở giữa | Validation từ chối; câu hợp lệ và số attempt không bị thay đổi |
 | Bảo toàn dữ liệu A/B/C và dữ liệu cũ khác | So sánh snapshot trước/sau migration trên tất cả bảng và các cột cũ |
-| ERD có thuộc tính | So sánh toàn bộ tên bảng/cột trong Mermaid với metadata SQL Server sau V040: 39 bảng, 415 cột |
+| ERD có thuộc tính | So sánh toàn bộ tên bảng/cột trong Mermaid với metadata SQL Server sau V041: 39 bảng, 416 cột |
 
-Hai ERD trong [BUSINESS_SPEC_CURRENT.md](BUSINESS_SPEC_CURRENT.md) và ảnh SVG được cập nhật theo V040. Sơ đồ không thuộc tính không đổi quan hệ (62 FK); sơ đồ có thuộc tính gồm 10 cột phiên nghe của lesson_engagement (V039) và processing_token của ai_assessment_jobs (V040). Các cột/bảng legacy vẫn được giữ, không tự drop.
+Hai ERD trong [BUSINESS_SPEC_CURRENT.md](BUSINESS_SPEC_CURRENT.md) và ảnh SVG được cập nhật theo V041. Sơ đồ không thuộc tính không đổi quan hệ (62 FK); sơ đồ có thuộc tính gồm 10 cột phiên nghe của lesson_engagement (V039), processing_token của ai_assessment_jobs (V040) và demo_only của mock_exams (V041). Các cột/bảng legacy vẫn được giữ, không tự drop.
 
 Sau merge PR #30/#31, migration AI bị trùng số V039. Giữ nguyên V039 của Lesson và chuyển file AI chưa chạy trên database hiện tại sang V040. Không dùng Flyway repair, không sửa lịch sử migration. Nếu máy khác đã chạy bản AI mang số V039 thì cần kiểm tra lịch sử riêng, không áp dụng cách đổi tên hoặc repair mù quáng.
 

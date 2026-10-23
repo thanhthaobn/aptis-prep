@@ -19,7 +19,6 @@ import com.aptisprep.service.contract.CertificateSchemeContract;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import java.io.IOException;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -225,6 +224,7 @@ public class CatalogService {
         MockExamEntity exam = exams.findById(id).orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy đề thi"));
         form.setTitle(exam.getTitle());
         form.setDescription(exam.getDescription());
+        form.setDemoOnly(exam.isDemoOnly());
         form.setExamType(exam.getExamType());
         form.setTargetLevel(exam.getTargetLevel());
         form.setSkill(exam.getSkill());
@@ -265,6 +265,7 @@ public class CatalogService {
             throw new BusinessRuleException("Đề đã công bố không thể quay về bản nháp");
         exam.setTitle(form.getTitle().trim());
         exam.setDescription(blankToNull(form.getDescription()));
+        exam.setDemoOnly(form.isDemoOnly());
         exam.setExamType(form.getExamType());
         exam.setTargetLevel(blankToNull(form.getTargetLevel()));
         exam.setSkill("FULL_MOCK".equals(form.getExamType()) ? "FULL_MOCK" : form.getSections().get(0).getSkill());
@@ -523,59 +524,7 @@ public class CatalogService {
     }
 
     private void saveMedia(QuestionEntity q, MultipartFile file) {
-        String contentType = file.getContentType() == null ? "" : file.getContentType().toLowerCase(Locale.ROOT);
-        if (!(contentType.startsWith("image/") || contentType.startsWith("audio/")))
-            throw new BusinessRuleException("Media câu hỏi chỉ nhận ảnh hoặc âm thanh");
-        boolean audio = contentType.startsWith("audio/");
-        long maxBytes = audio ? 25L * 1024 * 1024 : 8L * 1024 * 1024;
-        if (file.getSize() <= 0 || file.getSize() > maxBytes)
-            throw new BusinessRuleException("Media vượt quá dung lượng cho phép");
-        try {
-            byte[] header = file.getInputStream().readNBytes(16);
-            if (audio ? !looksLikeAudio(header) : !looksLikeImage(header))
-                throw new BusinessRuleException("Nội dung file không khớp với định dạng media");
-        } catch (IOException exception) {
-            throw new BusinessRuleException("Không thể đọc file media");
-        }
-        QuestionMediaEntity m = new QuestionMediaEntity();
-        m.setQuestionId(q.getId());
-        m.setMediaType(audio ? "AUDIO" : "IMAGE");
-        m.setMediaUrl(storage.store(file, "questions/"));
-        m.setOriginalFilename(cleanFilename(file.getOriginalFilename()));
-        m.setContentType(contentType);
-        m.setFileSize(file.getSize());
-        m.setMaxPlayCount(audio ? 2 : null);
-        m.setAltText(cleanFilename(file.getOriginalFilename()));
-        m.setPosition(media.findByQuestionIdOrderByPosition(q.getId()).size() + 1);
-        media.save(m);
-    }
-
-    private boolean looksLikeAudio(byte[] bytes) {
-        return bytes.length >= 12 && ascii(bytes, 0, "RIFF") && ascii(bytes, 8, "WAVE")
-                || bytes.length >= 4 && ascii(bytes, 0, "OggS")
-                || bytes.length >= 3 && ascii(bytes, 0, "ID3")
-                || bytes.length >= 2 && (bytes[0] & 0xFF) == 0xFF && (bytes[1] & 0xE0) == 0xE0
-                || bytes.length >= 8 && ascii(bytes, 4, "ftyp");
-    }
-
-    private boolean looksLikeImage(byte[] bytes) {
-        return bytes.length >= 8 && (bytes[0] & 0xFF) == 0x89 && bytes[1] == 0x50 && bytes[2] == 0x4E && bytes[3] == 0x47
-                || bytes.length >= 3 && (bytes[0] & 0xFF) == 0xFF && (bytes[1] & 0xFF) == 0xD8 && (bytes[2] & 0xFF) == 0xFF
-                || bytes.length >= 6 && (ascii(bytes, 0, "GIF87a") || ascii(bytes, 0, "GIF89a"))
-                || bytes.length >= 12 && ascii(bytes, 0, "RIFF") && ascii(bytes, 8, "WEBP");
-    }
-
-    private boolean ascii(byte[] bytes, int offset, String value) {
-        if (bytes.length < offset + value.length()) return false;
-        for (int i = 0; i < value.length(); i++) if (bytes[offset + i] != (byte) value.charAt(i)) return false;
-        return true;
-    }
-
-    private String cleanFilename(String value) {
-        if (value == null || value.isBlank()) return "media";
-        String name = value.replace('\\', '/');
-        name = name.substring(name.lastIndexOf('/') + 1).trim();
-        return name.length() > 255 ? name.substring(0, 255) : name;
+        new QuestionMediaWriter(media, storage).save(q.getId(), file);
     }
 
     private void assertQuestionNotAnswered(Integer questionId) {

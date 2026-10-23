@@ -57,6 +57,15 @@ class V2SqlServerPreservationTests {
                                     + " SELECT TOP 1 "
                                     + user
                                     + ",id,SYSDATETIME() FROM lessons ORDER BY id");
+                    assertEquals(
+                            1,
+                            sql.executeUpdate(
+                                    "INSERT INTO"
+                                        + " exam_attempts(user_id,mock_exam_id,status,started_at)"
+                                        + " SELECT TOP 1 "
+                                            + user
+                                            + ",id,'COMPLETED',SYSDATETIME() FROM mock_exams WHERE"
+                                            + " title = N'AptisPrep Demo · Writing · 2 câu AI'"));
                     int exam =
                             insert(
                                     sql,
@@ -146,6 +155,19 @@ class V2SqlServerPreservationTests {
                 try (var connection = DriverManager.getConnection(url, login, password);
                         var sql = connection.createStatement()) {
                     verifyDocumentedSchema(connection);
+                    try (var demoRows =
+                            sql.executeQuery(
+                                    "SELECT COUNT(*) FROM mock_exams WHERE demo_only = 1")) {
+                        assertTrue(demoRows.next());
+                        assertEquals(3, demoRows.getInt(1));
+                    }
+                    try (var realRows =
+                            sql.executeQuery(
+                                    "SELECT demo_only FROM mock_exams WHERE title = N'Preserved"
+                                        + " exam'")) {
+                        assertTrue(realRows.next());
+                        assertFalse(realRows.getBoolean(1));
+                    }
                     for (var entry : before.entrySet()) {
                         var after = read(connection, entry.getKey(), entry.getValue().columns());
                         assertEquals(
@@ -240,9 +262,9 @@ class V2SqlServerPreservationTests {
         assertEquals(
                 actual,
                 documented,
-                "Mermaid must list every physical table and column through V040");
+                "Mermaid must list every physical table and column through V041");
         assertEquals(39, documented.size());
-        assertEquals(415, documented.values().stream().mapToInt(Set::size).sum());
+        assertEquals(416, documented.values().stream().mapToInt(Set::size).sum());
     }
 
     /** Real repositories and service operations against the isolated SQL Server, not H2. */

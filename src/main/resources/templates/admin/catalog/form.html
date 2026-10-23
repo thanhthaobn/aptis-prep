@@ -37,6 +37,7 @@
         </form>
         <form th:if="${catalog.key == 'exams'}" class="dashboard-panel catalog-preview-form" method="post" th:object="${examForm}" th:action="${editing ? '/admin/exams/' + entry.id + '/edit' : '/admin/exams'}">
             <h2>Thông tin đề thi</h2>
+            <div class="field"><label><input type="checkbox" th:field="*{demoOnly}"> Chỉ dùng cho demo/kiểm thử — không cho học viên bắt đầu lượt mới</label></div>
             <div class="field"><label for="title">Tên đề thi</label><input id="title" th:field="*{title}" maxlength="255" required></div>
             <div class="field"><label for="description">Mô tả</label><textarea id="description" th:field="*{description}" rows="3"></textarea></div>
             <div class="catalog-form-grid">

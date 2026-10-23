@@ -1,12 +1,12 @@
 # APTISPREP — Tài liệu nghiệp vụ và ERD hiện trạng
 
-Cập nhật V040: hai ERD phản ánh 39 bảng, 415 cột, 62 quan hệ FK. V039 xác thực phiên nghe 90% phía server và mở rộng CHECK đáp án Lesson A–F; lesson_engagement thêm 10 cột playback/verification. V040 thêm processing_token vào ai_assessment_jobs để bảo vệ lượt xử lý AI, không thêm bảng/FK. Migration AI được chuyển từ số V039 bị trùng sang V040; giữ nguyên V039 của Lesson. Chi tiết bài học tại [LESSON_WORK_AND_MEDIA.md](LESSON_WORK_AND_MEDIA.md). Hành trình dừng C1; Goal mới đến C1 vẫn cần Thông cập nhật phần tài khoản, dữ liệu C2 cũ được giữ.
+Cập nhật V041: hai ERD phản ánh 39 bảng, 416 cột, 62 quan hệ FK. V041 thêm cờ demo_only cho mock_exams và đánh dấu ba đề demo V037; không xóa đề/lịch sử hay thay đổi cột cũ. V039 giữ phiên nghe và đáp án A–F; V040 giữ processing_token của AI. Hành trình dừng C1; Goal mới đến C1 vẫn thuộc phần tài khoản của Thông, dữ liệu C2 cũ được giữ.
 
-Phiên bản tài liệu: 1.2 — ngày 23/10/2026. Phạm vi: schema trong source đến migration V040.
+Phiên bản tài liệu: 1.3 — ngày 23/10/2026. Phạm vi: schema trong source đến migration V041.
 
 Đây là bản viết lại để đọc nghiệp vụ và mô hình dữ liệu hiện tại ở một nơi. Tài liệu gốc [SPEC_V2.md](SPEC_V2.md) vẫn được giữ làm baseline; tài liệu này không tự thay đổi yêu cầu V2 hoặc cam kết mọi chức năng đã nghiệm thu thực tế.
 
-Nguồn đối chiếu: SPEC_V2, [PROJECT_DECISIONS.md](../PROJECT_DECISIONS.md), migration V001–V040, entity và các service AccountAccess/AccountProfile, LearningPath/LessonTeaching/FlashcardSet, Catalog, ExamAttempt, ScoringPolicy/ScoringAdmin, AiAssessment/AttemptFinalization. ERD dưới đây phản ánh schema được khai báo trong source, không khẳng định database ứng dụng trên máy đã nâng V040.
+Nguồn đối chiếu: SPEC_V2, [PROJECT_DECISIONS.md](../PROJECT_DECISIONS.md), migration V001–V041, entity và các service AccountAccess/AccountProfile, LearningPath/LessonTeaching/FlashcardSet, Catalog, ExamAttempt, ScoringPolicy/ScoringAdmin, AiAssessment/AttemptFinalization. ERD phản ánh schema trong source, không khẳng định database ứng dụng đã nâng V041.
 
 ## Mục lục
 
@@ -273,7 +273,7 @@ Không tính flyway_schema_history là bảng nghiệp vụ. LessonMaterial là 
 
 [Mở bản SVG để phóng to sơ đồ không thuộc tính](diagrams/erd-current-1.svg).
 
-Sơ đồ toàn bộ 39 bảng sau V040, chỉ có bảng và quan hệ FK thật. Tên ở hộp là tên bảng SQL. Không thêm quan hệ giả đến Exam cho AI Lesson. V039/V040 không thay đổi các quan hệ nên sơ đồ không thuộc tính giữ nguyên cấu trúc.
+Sơ đồ toàn bộ 39 bảng sau V041, chỉ có bảng và quan hệ FK thật. Tên ở hộp là tên bảng SQL. Không thêm quan hệ giả đến Exam cho AI Lesson. V039–V041 không thay đổi quan hệ nên sơ đồ không thuộc tính giữ nguyên cấu trúc.
 
 Ký hiệu: || = đúng 1; |o hoặc o| = 0 hoặc 1; o{ = 0 đến nhiều. Dấu .. là quan hệ không định danh: bảng con có PK riêng, FK không cấu thành PK. Cardinality thể hiện ràng buộc lưu trữ, nên đề nháp có thể chưa có câu, attempt đang tạo có thể chưa có result. Điều kiện “đủ câu/đủ skill trước công bố” nằm ở quy tắc nghiệp vụ, không được suy diễn thành mọi parent luôn phải có child.
 
@@ -391,7 +391,7 @@ erDiagram
 
 [Mở bản SVG để phóng to sơ đồ có thuộc tính](diagrams/erd-current-2.svg).
 
-Cùng 39 bảng, 415 cột được đối chiếu từ DDL V001–V040. Có cả cột legacy/audit để phản ánh đúng schema, không chỉ các field JPA đang sử dụng. CHECK của lesson_checks.correct_option là 0–5; validation ở service vẫn yêu cầu đáp án nằm trong số lựa chọn thực tế và không bỏ trống lựa chọn ở giữa.
+Cùng 39 bảng, 416 cột được đối chiếu từ DDL V001–V041. Có cả cột legacy/audit để phản ánh đúng schema, không chỉ các field JPA đang sử dụng. CHECK của lesson_checks.correct_option là 0–5; validation ở service vẫn yêu cầu đáp án nằm trong số lựa chọn thực tế và không bỏ trống lựa chọn ở giữa.
 
 Kiểu Mermaid được rút gọn cho dễ đọc; phần ghi chú trong mỗi thuộc tính giữ kiểu SQL, kích thước và NULL/NOT NULL. PK = khóa chính; FK = thuộc một FK thật; UK = unique một cột, không bao gồm unique ghép. Các unique ghép/filtered index ở mục 10.1; APP_REF trong ghi chú không phải FK SQL.
 
@@ -495,6 +495,7 @@ erDiagram
         string exam_type "VARCHAR(30); NOT NULL"
         string target_level "VARCHAR(10); NULL"
         string status "VARCHAR(30); NOT NULL"
+        boolean demo_only "BIT; NOT NULL; DEFAULT 0"
         datetime created_at "DATETIME2; NOT NULL"
         datetime updated_at "DATETIME2; NOT NULL"
         string skill "VARCHAR(30); NULL"
@@ -1028,7 +1029,7 @@ Một Goal ACTIVE/user và một Placement chưa kết thúc/user/skill là quy 
 
 ### 11.1 Giới hạn cần hiểu đúng
 
-1. Tài liệu mô tả source hiện tại đến V040, không tự chạy migration hoặc thay dữ liệu ứng dụng. Database nào đã từng chạy bản AI mang số V039 cần kiểm tra lịch sử riêng trước khi nâng cấp; không tự sửa checksum hoặc dùng Flyway repair để che khác biệt.
+1. Tài liệu mô tả source hiện tại đến V041, không tự chạy migration hoặc thay dữ liệu ứng dụng. Database nào đã từng chạy bản AI mang số V039 cần kiểm tra lịch sử riêng trước khi nâng cấp; không tự sửa checksum hoặc dùng Flyway repair để che khác biệt.
 2. Mermaid vẽ FK từ DDL, còn quy tắc CEFR/skill/type/ownership/trạng thái nằm ở service; ERD không thay thế kiểm nghiệp vụ.
 3. AI thật cần cấu hình/key/quota; test mock không chứng minh chất lượng chấm thật. Thiếu/lỗi AI phải báo trạng thái, không dựng điểm mẫu.
 4. Rule raw→scale hiện là ước lượng tuyến tính cấu hình, tổng hợp nội bộ; chưa tái tạo thang chấm chính thức.
@@ -1051,7 +1052,20 @@ Một Goal ACTIVE/user và một Placement chưa kết thúc/user/skill là quy 
 - AI lỗi giữ bài/NULL; retry không tính trùng, không áp Profile hai lần.
 - Nâng migration mới không sửa checksum cũ hoặc xóa dữ liệu đã có.
 
-### 11.3 Đọc và cập nhật tài liệu
+### 11.3 Hoàn thiện E01–E03 (V041)
+
+- Ngữ cảnh chấm lấy từ snapshot đầu lượt: instruction, nội dung và yêu cầu từng item (thứ tự, giới hạn từ/thời gian). Prompt và câu trả lời được ghép theo cùng nhãn Mục 1/Mục 2; outbox lưu nguyên snapshot. DTO học viên không chứa đáp án đúng.
+- Giới hạn ứng dụng dùng chung ở Exam, AiAssessment và Gemini: 20.000 ký tự/item; 50.000 ký tự cho tổng prompt + bài làm sau khi thêm nhãn, yêu cầu và phân cách. Đây là giới hạn ký tự của ứng dụng, không phải cam kết token/quota của provider. Không cắt văn bản. Validation trước khi đặt submittedAt; lỗi vẫn giữ IN_PROGRESS và bài đã lưu để sửa. Speaking transcript sau nhận dạng cũng qua giới hạn chung, không tự cắt.
+- V041 thêm mock_exams.demo_only (mặc định false), chỉ đánh dấu ba tiêu đề demo cụ thể của V037. Runtime dùng cờ này, không dò chữ Demo trong tên. Admin vẫn thấy và có checkbox khi tạo/sửa đề chưa có lịch sử; đề có lịch sử vẫn chịu quy tắc không sửa nội dung.
+- Đề demo không được chọn từ thư viện học viên, Placement, checkpoint hoặc bắt đầu lượt mới bằng URL/API. Lượt đã tồn tại vẫn xem, tiếp tục lưu/nộp và đọc kết quả như trước; không xóa/hạ Profile hoặc sửa kết quả lịch sử.
+- Catalog giữ vai trò điều phối CRUD/read model. Xử lý upload, chữ ký file, dung lượng và lưu metadata chuyển sang QuestionMediaWriter; Placement dùng read model riêng, không thêm interface trung gian.
+- Listener sau commit tạm ngưng context transaction cũ (NOT_SUPPORTED); các service được gọi tự mở transaction mới. Không giữ transaction DB trong lúc gọi provider.
+
+Kiểm chứng chính: TramBusinessCompletionTests (snapshot → outbox → request AI, DTO trang làm bài, 2 × 11.000 ký tự, biên 50.000/50.001 gồm overhead, giữ bài khi lỗi, demo và lịch sử), GeminiGradingServiceTests (HTTP mock thật của adapter, không gọi API live), QuestionMediaWriterTests và V2SqlServerPreservationTests (schema/row snapshot/flag demo).
+
+Kết quả 23/10/2026: `mvn -o clean verify` và lượt `mvn -o verify` cuối với `APTIS_SQLSERVER_ISOLATED_TESTS=true` thành công. Bản cuối có 223 Java test: 221 đạt, 2 skip (Gemini live và migration trực tiếp DB ứng dụng), không failure/error; JavaScript 9/9 đạt. Database ứng dụng vẫn ở V031, chưa chạy V041; không dùng Flyway repair/clean trên dữ liệu đang dùng. SQL Server tạm nâng đến V041, kiểm toàn bộ cột cũ không đổi, lịch sử demo vẫn còn, đúng 3 đề được đánh dấu và ERD đủ 39 bảng/416 cột. Lượt Placement thật không tự resume demo cũ; cờ demo vẫn giữ khi admin đổi tên đề.
+
+### 11.4 Đọc và cập nhật tài liệu
 
 Các block mermaid được đặt trực tiếp trong Markdown, không cần plugin Figma. Có thể xem ở GitHub hoặc Markdown preview có hỗ trợ Mermaid; trình xem không hỗ trợ sẽ chỉ hiện code. Tên cột/quan hệ kỹ thuật phải được cập nhật theo migration mới; không sửa ERD bằng suy đoán từ tên class.
 
