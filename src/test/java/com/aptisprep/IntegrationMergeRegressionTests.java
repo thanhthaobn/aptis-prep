@@ -48,6 +48,10 @@ class IntegrationMergeRegressionTests {
                 Files.exists(
                         Path.of(
                                 "src/main/resources/db/migration/V031__add_reading_passages.sql")));
+        assertTrue(Files.exists(Path.of(
+                "src/main/resources/db/migration/V039__lesson_playback_verification_and_six_options.sql")));
+        assertTrue(Files.exists(Path.of(
+                "src/main/resources/db/migration/V040__protect_ai_processing_claims.sql")));
     }
 
     @Test

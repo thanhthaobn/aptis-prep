@@ -88,13 +88,22 @@ class AiAssessmentServiceTests {
         assertNull(failed.score());
         assertNotNull(failed.errorMessage());
         var eventCaptor = org.mockito.ArgumentCaptor.forClass(AiAssessmentCompletedEvent.class);
-        verify(events, times(2)).publishEvent(eventCaptor.capture());
+        verify(events).publishEvent(eventCaptor.capture());
         assertEquals("ERROR", eventCaptor.getAllValues().getFirst().state());
+        verify(outbox).enqueueAiAssessmentCompleted(eventCaptor.getValue());
 
         AssessmentView retried = service.retry("assessment-1", 1, false);
         assertEquals("COMPLETED", retried.state());
         assertEquals(new BigDecimal("30"), retried.score());
         verify(writing, times(2)).grade("Write an email", "Dear team");
+        var retriedEvents = org.mockito.ArgumentCaptor.forClass(AiAssessmentCompletedEvent.class);
+        verify(events, times(2)).publishEvent(retriedEvents.capture());
+        assertEquals(java.util.List.of("ERROR", "COMPLETED"),
+                retriedEvents.getAllValues().stream().map(AiAssessmentCompletedEvent::state).toList());
+        verify(outbox).enqueueAiAssessmentCompleted(retriedEvents.getAllValues().getLast());
+        assertEquals(2, job.getRetryCount());
+        assertNull(job.getProcessingToken());
+        verifyNoMoreInteractions(events, outbox);
     }
 
     @Test

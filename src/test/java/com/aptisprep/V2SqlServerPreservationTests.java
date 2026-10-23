@@ -119,6 +119,22 @@ class V2SqlServerPreservationTests {
                     }
                     before = snapshot(connection);
                 }
+                // Also exercise an installation that already applied Lesson V039 before AI V040.
+                Flyway.configure()
+                        .dataSource(url, login, password)
+                        .cleanDisabled(true)
+                        .target("39")
+                        .load()
+                        .migrate();
+                Map<String, Snapshot> beforeAiMigration;
+                try (var connection = DriverManager.getConnection(url, login, password);
+                        var sql = connection.createStatement()) {
+                    sql.executeUpdate(
+                            "UPDATE lesson_engagement SET playback_token_hash = 'retained-token', "
+                                    + "playback_sequence = 7, playback_ranges_json = '[[0,45]]' "
+                                    + "WHERE audio_played_at IS NOT NULL");
+                    beforeAiMigration = snapshot(connection);
+                }
                 var flyway =
                         Flyway.configure()
                                 .dataSource(url, login, password)
@@ -136,6 +152,12 @@ class V2SqlServerPreservationTests {
                                 entry.getValue().json(),
                                 after.json(),
                                 "Pre-existing data changed in " + entry.getKey());
+                    }
+                    for (var entry : beforeAiMigration.entrySet()) {
+                        assertEquals(
+                                entry.getValue().json(),
+                                read(connection, entry.getKey(), entry.getValue().columns()).json(),
+                                "V040 changed pre-existing data in " + entry.getKey());
                     }
                     try (var rows =
                             sql.executeQuery(
@@ -218,9 +240,9 @@ class V2SqlServerPreservationTests {
         assertEquals(
                 actual,
                 documented,
-                "Mermaid must list every physical table and column through V039");
+                "Mermaid must list every physical table and column through V040");
         assertEquals(39, documented.size());
-        assertEquals(414, documented.values().stream().mapToInt(Set::size).sum());
+        assertEquals(415, documented.values().stream().mapToInt(Set::size).sum());
     }
 
     /** Real repositories and service operations against the isolated SQL Server, not H2. */
