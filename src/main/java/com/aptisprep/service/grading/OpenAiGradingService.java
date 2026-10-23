@@ -2,6 +2,7 @@ package com.aptisprep.service.grading;
 
 import com.aptisprep.config.AiProperties;
 import com.aptisprep.exception.AiGradingException;
+import com.aptisprep.service.contract.GradingTextLimits;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.nio.file.Files;
@@ -48,18 +49,20 @@ public class OpenAiGradingService implements WritingGradingService, SpeakingGrad
     @Override
     public GradingResult grade(String prompt, String answer) {
         requireConfiguration();
-        validateText(prompt, 10000, "Đề bài");
-        validateText(answer, 20000, "Bài làm");
+        validateText(prompt, GradingTextLimits.MAX_AI_TASK_CHARS, "Đề bài");
+        validateText(answer, GradingTextLimits.MAX_AI_SUBMISSION_CHARS, "Bài làm");
+        validatePayload(prompt, answer);
         return gradeText("Writing", prompt, answer, null);
     }
 
     @Override
     public GradingResult grade(String prompt, Path audioFile) {
         requireConfiguration();
-        validateText(prompt, 10000, "Đề bài");
+        validateText(prompt, GradingTextLimits.MAX_AI_TASK_CHARS, "Đề bài");
         validateAudio(audioFile);
         String transcript = transcribeAudio(audioFile);
-        validateText(transcript, 20000, "Nội dung bản ghi");
+        validateText(transcript, GradingTextLimits.MAX_AI_SUBMISSION_CHARS, "Nội dung bản ghi");
+        validatePayload(prompt, transcript);
         return gradeText("Speaking transcript", prompt, transcript, transcript);
     }
 
@@ -73,8 +76,9 @@ public class OpenAiGradingService implements WritingGradingService, SpeakingGrad
     @Override
     public GradingResult gradeTranscript(String prompt, String transcript) {
         requireConfiguration();
-        validateText(prompt, 10000, "Đề bài");
-        validateText(transcript, 20000, "Nội dung bản ghi");
+        validateText(prompt, GradingTextLimits.MAX_AI_TASK_CHARS, "Đề bài");
+        validateText(transcript, GradingTextLimits.MAX_AI_SUBMISSION_CHARS, "Nội dung bản ghi");
+        validatePayload(prompt, transcript);
         return gradeText("Speaking transcript", prompt, transcript, transcript);
     }
 
@@ -159,6 +163,12 @@ public class OpenAiGradingService implements WritingGradingService, SpeakingGrad
     private void validateText(String value, int max, String label) {
         if (value == null || value.isBlank() || value.length() > max) {
             throw new AiGradingException(label + " không được để trống và tối đa " + max + " ký tự.");
+        }
+    }
+
+    private void validatePayload(String task, String submission) {
+        if (task.length() + submission.length() > GradingTextLimits.MAX_AI_PAYLOAD_CHARS) {
+            throw new AiGradingException("Ngữ cảnh chấm AI vượt quá " + GradingTextLimits.MAX_AI_PAYLOAD_CHARS + " ký tự.");
         }
     }
 

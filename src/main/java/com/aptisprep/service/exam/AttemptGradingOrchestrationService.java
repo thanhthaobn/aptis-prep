@@ -4,13 +4,13 @@ import com.aptisprep.config.AiProperties;
 import com.aptisprep.event.AiAssessmentCompletedEvent;
 import com.aptisprep.event.AttemptSubmittedEvent;
 import com.aptisprep.service.contract.AiAssessmentContract;
+import com.aptisprep.service.contract.GradingContextFormatter;
 import com.aptisprep.service.contract.IntegrationModels.LockedAnswer;
 import com.aptisprep.service.contract.IntegrationModels.LockedAttempt;
 import com.aptisprep.service.grading.AttemptFinalizationService;
 import com.aptisprep.service.grading.SpeakingGradingService;
 import com.aptisprep.service.storage.StorageService;
 import java.math.BigDecimal;
-import java.util.Arrays;
 import java.util.Objects;
 import java.util.stream.Collectors;
 import org.springframework.context.event.EventListener;
@@ -40,35 +40,41 @@ public class AttemptGradingOrchestrationService {
         if (locked == null) return;
         for (LockedAnswer answer : locked.answers()) {
             if (!"WRITING_TEXT".equals(answer.questionType()) && !"SPEAKING_AUDIO".equals(answer.questionType())) continue;
-            String submission = answer.lockedContent();
-            if (submission == null || submission.isBlank()) continue;
+            if (!GradingContextFormatter.hasSubmission(answer)) continue;
+            String submission = GradingContextFormatter.submission(answer);
             String taskType = "WRITING_TEXT".equals(answer.questionType()) ? "WRITING" : "SPEAKING";
             String transcript = answer.transcript();
             if ("SPEAKING".equals(taskType) && (transcript == null || transcript.isBlank())) {
-                transcript = transcribeSubmission(submission);
+                transcript = transcribeSubmission(answer);
             }
             String key = "attempt:" + event.attemptId() + ":answer:" + answer.answerId() + ":v" + locked.answerVersion();
             AiAssessmentContract.AssessmentRequest request = new AiAssessmentContract.AssessmentRequest(key,
                     event.userId(), event.attemptId(), answer.answerId(), locked.answerVersion(), answer.skill(), taskType,
-                    answer.taskContent(), submission, locked.rubricVersion(), locked.policyVersion(), BigDecimal.valueOf(50),
+                    GradingContextFormatter.task(answer), submission, locked.rubricVersion(), locked.policyVersion(), BigDecimal.valueOf(50),
                     transcript);
             ai.request(request);
             ai.process(key);
         }
     }
 
-    private String transcribeSubmission(String submission) {
-        return Arrays.stream(submission.split("\\n--- ITEM ---\\n"))
-                .map(String::trim).filter(value -> !value.isBlank())
-                .map(path -> {
-                    try {
-                        return speaking.transcribe(storage.localPath(path));
-                    } catch (RuntimeException exception) {
-                        return null;
-                    }
+    private String transcribeSubmission(LockedAnswer answer) {
+        if (answer.items() == null || answer.items().isEmpty()) return transcribePath(answer.lockedContent());
+        return answer.items().stream()
+                .map(item -> {
+                    String transcript = transcribePath(item.lockedContent());
+                    return transcript == null || transcript.isBlank() ? null : "Mục " + item.position() + ":\n" + transcript;
                 })
-                .filter(Objects::nonNull).filter(value -> !value.isBlank())
-                .collect(Collectors.joining("\n"));
+                .filter(Objects::nonNull)
+                .collect(Collectors.joining("\n\n"));
+    }
+
+    private String transcribePath(String path) {
+        if (path == null || path.isBlank()) return null;
+        try {
+            return speaking.transcribe(storage.localPath(path));
+        } catch (RuntimeException exception) {
+            return null;
+        }
     }
 
     @EventListener

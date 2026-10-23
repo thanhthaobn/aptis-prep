@@ -9,6 +9,7 @@ import com.aptisprep.exception.BusinessRuleException;
 import com.aptisprep.exception.ResourceNotFoundException;
 import com.aptisprep.repository.*;
 import com.aptisprep.service.contract.AiAssessmentContract;
+import com.aptisprep.service.contract.GradingTextLimits;
 import java.math.BigDecimal;
 import java.time.*;
 import java.util.*;
@@ -164,7 +165,11 @@ public class AiAssessmentService implements AiAssessmentContract {
 
     private void validateRequest(AssessmentRequest request) {
         if (request == null || blank(request.assessmentKey()) || request.assessmentKey().length() > 255 || request.userId() == null || request.attemptId() == null || request.answerId() == null || request.answerVersion() == null || request.answerVersion() < 1) throw new BusinessRuleException("Yêu cầu đánh giá không hợp lệ");
-        if (blank(request.taskContent()) || request.taskContent().length() > 10000 || blank(request.lockedContent()) || request.lockedContent().length() > 20000) throw new BusinessRuleException("Nội dung bài đã khóa không hợp lệ");
+        if (blank(request.taskContent()) || request.taskContent().length() > GradingTextLimits.MAX_AI_TASK_CHARS
+                || blank(request.lockedContent()) || request.lockedContent().length() > GradingTextLimits.MAX_AI_SUBMISSION_CHARS
+                || request.taskContent().length() + request.lockedContent().length() > GradingTextLimits.MAX_AI_PAYLOAD_CHARS) {
+            throw new BusinessRuleException("Nội dung bài đã khóa vượt giới hạn ngữ cảnh chấm AI");
+        }
         if (blank(request.rubricVersion()) || blank(request.policyVersion()) || request.maxScore() == null || request.maxScore().compareTo(BigDecimal.ZERO) <= 0 || request.maxScore().compareTo(BigDecimal.valueOf(50)) > 0) throw new BusinessRuleException("Thiếu phiên bản rubric/policy hoặc thang điểm không hợp lệ");
         normalizeSkill(request.skill()); normalizeTask(request.taskType());
     }

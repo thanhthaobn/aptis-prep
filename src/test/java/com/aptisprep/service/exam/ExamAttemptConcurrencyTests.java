@@ -255,6 +255,21 @@ class ExamAttemptConcurrencyTests {
     }
 
     @Test
+    void attemptKeepsQuestionAndItemSnapshotAfterCatalogContentChanges() {
+        Fixture fixture = fixture("snapshot-content");
+        int attemptId = attempts.start(fixture.user().getId(), fixture.exam().getId(), "snapshot-content-key").attemptId();
+
+        fixture.question().setContent("Edited question after the attempt started");
+        questions.saveAndFlush(fixture.question());
+        fixture.item().setContent("Edited item after the attempt started");
+        items.saveAndFlush(fixture.item());
+
+        var page = attempts.page(fixture.user().getId(), attemptId);
+        assertEquals("Audio question", page.questions().getFirst().content());
+        assertEquals("Choose the answer", page.questions().getFirst().items().getFirst().content());
+    }
+
+    @Test
     void terminalRequestKeyIsIdempotentInsteadOfCreatingRetake() {
         Fixture fixture = fixture("retake");
         int first =
