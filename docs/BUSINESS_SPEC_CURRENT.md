@@ -1,12 +1,12 @@
 # APTISPREP — Tài liệu nghiệp vụ và ERD hiện trạng
 
-Cập nhật luồng Thảo sau V038: V039 xác thực phiên nghe 90% phía server, mở rộng CHECK đáp án Lesson A–F và hành trình dừng C1. Không thêm bảng; lesson_engagement thêm 10 cột playback/verification. Hai ERD bên dưới là ảnh chụp schema V038 (404 cột), chưa bao gồm 10 cột mới. Chi tiết tại [LESSON_WORK_AND_MEDIA.md](LESSON_WORK_AND_MEDIA.md). Goal mới đến C1 vẫn cần Thông cập nhật phần tài khoản; dữ liệu C2 cũ được giữ.
+Cập nhật V039: xác thực phiên nghe 90% phía server, mở rộng CHECK đáp án Lesson A–F và hành trình dừng C1. Hai ERD bên dưới phản ánh schema V039: 39 bảng, 414 cột, 62 quan hệ FK. V039 không thêm bảng hoặc FK; lesson_engagement thêm 10 cột playback/verification. Chi tiết tại [LESSON_WORK_AND_MEDIA.md](LESSON_WORK_AND_MEDIA.md). Goal mới đến C1 vẫn cần Thông cập nhật phần tài khoản; dữ liệu C2 cũ được giữ.
 
-Phiên bản tài liệu: 1.0 — ngày 23/10/2026. Phạm vi: source đang làm việc trên nhánh codex/v2-business-cleanup, gồm thay đổi đến migration V038.
+Phiên bản tài liệu: 1.1 — ngày 23/10/2026. Phạm vi: schema trong source đến migration V039.
 
 Đây là bản viết lại để đọc nghiệp vụ và mô hình dữ liệu hiện tại ở một nơi. Tài liệu gốc [SPEC_V2.md](SPEC_V2.md) vẫn được giữ làm baseline; tài liệu này không tự thay đổi yêu cầu V2 hoặc cam kết mọi chức năng đã nghiệm thu thực tế.
 
-Nguồn đối chiếu: SPEC_V2, [PROJECT_DECISIONS.md](../PROJECT_DECISIONS.md), migration V001–V038, entity và các service AccountAccess/AccountProfile, LearningPath/LessonTeaching/FlashcardSet, Catalog, ExamAttempt, ScoringPolicy/ScoringAdmin, AiAssessment/AttemptFinalization. ERD dưới đây phản ánh schema được khai báo trong source, không khẳng định database ứng dụng trên máy đã nâng V038.
+Nguồn đối chiếu: SPEC_V2, [PROJECT_DECISIONS.md](../PROJECT_DECISIONS.md), migration V001–V039, entity và các service AccountAccess/AccountProfile, LearningPath/LessonTeaching/FlashcardSet, Catalog, ExamAttempt, ScoringPolicy/ScoringAdmin, AiAssessment/AttemptFinalization. ERD dưới đây phản ánh schema được khai báo trong source, không khẳng định database ứng dụng trên máy đã nâng V039.
 
 ## Mục lục
 
@@ -273,7 +273,7 @@ Không tính flyway_schema_history là bảng nghiệp vụ. LessonMaterial là 
 
 [Mở bản SVG để phóng to sơ đồ không thuộc tính](diagrams/erd-current-1.svg).
 
-Sơ đồ toàn bộ 39 bảng sau V038, chỉ có bảng và quan hệ FK thật. Tên ở hộp là tên bảng SQL. Không thêm quan hệ giả đến Exam cho AI Lesson.
+Sơ đồ toàn bộ 39 bảng sau V039, chỉ có bảng và quan hệ FK thật. Tên ở hộp là tên bảng SQL. Không thêm quan hệ giả đến Exam cho AI Lesson. V039 không thay đổi các quan hệ nên sơ đồ không thuộc tính giữ nguyên cấu trúc.
 
 Ký hiệu: || = đúng 1; |o hoặc o| = 0 hoặc 1; o{ = 0 đến nhiều. Dấu .. là quan hệ không định danh: bảng con có PK riêng, FK không cấu thành PK. Cardinality thể hiện ràng buộc lưu trữ, nên đề nháp có thể chưa có câu, attempt đang tạo có thể chưa có result. Điều kiện “đủ câu/đủ skill trước công bố” nằm ở quy tắc nghiệp vụ, không được suy diễn thành mọi parent luôn phải có child.
 
@@ -391,7 +391,7 @@ erDiagram
 
 [Mở bản SVG để phóng to sơ đồ có thuộc tính](diagrams/erd-current-2.svg).
 
-Cùng 39 bảng, 404 cột được đối chiếu từ DDL V001–V038. Có cả cột legacy/audit để phản ánh đúng schema, không chỉ các field JPA đang sử dụng.
+Cùng 39 bảng, 414 cột được đối chiếu từ DDL V001–V039. Có cả cột legacy/audit để phản ánh đúng schema, không chỉ các field JPA đang sử dụng. CHECK của lesson_checks.correct_option là 0–5; validation ở service vẫn yêu cầu đáp án nằm trong số lựa chọn thực tế và không bỏ trống lựa chọn ở giữa.
 
 Kiểu Mermaid được rút gọn cho dễ đọc; phần ghi chú trong mỗi thuộc tính giữ kiểu SQL, kích thước và NULL/NOT NULL. PK = khóa chính; FK = thuộc một FK thật; UK = unique một cột, không bao gồm unique ghép. Các unique ghép/filtered index ở mục 10.1; APP_REF trong ghi chú không phải FK SQL.
 
@@ -817,6 +817,16 @@ erDiagram
         datetime audio_played_at "DATETIME2; NULL"
         string last_section "VARCHAR(40); NULL"
         datetime updated_at "DATETIME2; NOT NULL"
+        string playback_token_hash "VARCHAR(64); NULL"
+        string playback_audio_path "NVARCHAR(500); NULL"
+        float playback_duration_seconds "FLOAT; NULL"
+        float playback_position_seconds "FLOAT; NULL"
+        datetime playback_last_ping_at "DATETIME2; NULL"
+        datetime playback_expires_at "DATETIME2; NULL"
+        text playback_ranges_json "NVARCHAR(MAX); NULL"
+        int playback_sequence "INT; NOT NULL; DEFAULT 0"
+        boolean playback_running "BIT; NOT NULL; DEFAULT 0"
+        string verified_audio_path "NVARCHAR(500); NULL"
     }
     examAttemptSnapshots["exam_attempt_snapshots"] {
         int id PK "INT; NOT NULL"
@@ -1017,7 +1027,7 @@ Một Goal ACTIVE/user và một Placement chưa kết thúc/user/skill là quy 
 
 ### 11.1 Giới hạn cần hiểu đúng
 
-1. Tài liệu mô tả source hiện tại đến V038, không tự chạy migration hoặc thay dữ liệu ứng dụng.
+1. Tài liệu mô tả source hiện tại đến V039, không tự chạy migration hoặc thay dữ liệu ứng dụng.
 2. Mermaid vẽ FK từ DDL, còn quy tắc CEFR/skill/type/ownership/trạng thái nằm ở service; ERD không thay thế kiểm nghiệp vụ.
 3. AI thật cần cấu hình/key/quota; test mock không chứng minh chất lượng chấm thật. Thiếu/lỗi AI phải báo trạng thái, không dựng điểm mẫu.
 4. Rule raw→scale hiện là ước lượng tuyến tính cấu hình, tổng hợp nội bộ; chưa tái tạo thang chấm chính thức.
