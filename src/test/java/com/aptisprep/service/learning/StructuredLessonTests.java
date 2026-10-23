@@ -26,6 +26,30 @@ class StructuredLessonTests {
  @Autowired LessonService lessons; @Autowired LessonTeachingService teaching; @Autowired UserRepository users; @Autowired MockMvc mvc;
  @Autowired jakarta.persistence.EntityManager entityManager;
  @Autowired LessonResponseRepository responseRepository;
+ @Autowired LearningPathService learningPaths;
+ @Test void libraryShowsCompletedLessonsFromPathAndKeepsProgressPrivate() throws Exception {
+  var student=learner("library-progress@test.local");
+  var other=learner("library-other@test.local");
+  var lesson=create("Reading");
+  learningPaths.ensurePaths(student.getId());
+  learningPaths.completeLesson(student.getId(),lesson.getId());
+  assertThat(learningPaths.stages(student.getEmail(),"Reading").stream()
+      .flatMap(stage->stage.lessons().stream()).filter(item->item.id().equals(lesson.getId())))
+      .allMatch(LearningPathService.StageLesson::completed).hasSize(1);
+  mvc.perform(get("/student/lessons").param("skill","Reading").param("level","A1")
+      .with(user(student.getEmail()).roles("STUDENT")))
+      .andExpect(status().isOk())
+      .andExpect(content().string(containsString("data-lesson-id=\""+lesson.getId()+"\" data-learning-status=\"COMPLETED\"")))
+      .andExpect(content().string(containsString("Đã hoàn thành")))
+      .andExpect(content().string(containsString("Ôn lại →")));
+  mvc.perform(get("/student/lessons").param("skill","Reading").param("level","A1")
+      .with(user(other.getEmail()).roles("STUDENT")))
+      .andExpect(status().isOk())
+      .andExpect(content().string(containsString("data-lesson-id=\""+lesson.getId()+"\" data-learning-status=\"NOT_STARTED\"")));
+  lessons.recordOpen(other.getEmail(),lesson.getId());
+  assertThat(lessons.lessonStatuses(other.getEmail(),java.util.List.of(lesson.getId())))
+      .containsEntry(lesson.getId(),"IN_PROGRESS");
+ }
  @Test void writingSubmissionsKeepExactTextAndDraftsDoNotCreateHistory() throws Exception {
   var a=learner("writing-history@test.local");var l=create("Writing");
   teaching.saveResponse(l.getId(),"Draft only",a.getEmail());
@@ -82,8 +106,8 @@ class StructuredLessonTests {
   String url="/student/lessons/"+l.getId()+"/audio-played";
   mvc.perform(post(url).with(csrf()).with(user(a.getEmail()).roles("STUDENT")).param("duration","100").param("listened","1")).andExpect(status().isBadRequest());
   assertThat(teaching.completion(l.getId(),a.getEmail()).audioPlayed()).isFalse();
-  mvc.perform(post(url).with(csrf()).with(user(a.getEmail()).roles("STUDENT")).param("duration","100").param("listened","90")).andExpect(status().isOk());
-  assertThat(teaching.completion(l.getId(),a.getEmail()).audioPlayed()).isTrue();
+  mvc.perform(post(url).with(csrf()).with(user(a.getEmail()).roles("STUDENT")).param("duration","100").param("listened","90")).andExpect(status().isBadRequest());
+  assertThat(teaching.completion(l.getId(),a.getEmail()).audioPlayed()).isFalse();
   for(String skill:java.util.List.of("Reading","Listening","Grammar & Vocabulary")){
    var lesson=create(skill);
    mvc.perform(get("/student/lessons/"+lesson.getId()).with(user(a.getEmail()).roles("STUDENT"))).andExpect(status().isOk())

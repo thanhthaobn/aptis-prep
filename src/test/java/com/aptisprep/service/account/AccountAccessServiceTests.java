@@ -81,6 +81,17 @@ class AccountAccessServiceTests {
     }
 
     @Test
+    void failedFirstCheckpointDoesNotCreateProfileWithNullCurrentLevel() {
+        when(profiles.findByUserIdAndSkill(1, "READING")).thenReturn(Optional.empty());
+        when(attempts.result(eq(1), eq(45))).thenReturn(result(45, "CHECKPOINT", "B1", Instant.parse("2026-01-05T00:00:00Z"), false));
+
+        service.applyAssessment(1, 45);
+
+        verify(profiles, never()).save(any(UserSkillProfile.class));
+        verify(applications).save(any());
+    }
+
+    @Test
     void alreadyClaimedAttemptDoesNotWriteProfileAgain() {
         when(applications.existsByUserIdAndAttemptIdAndSkill(1, 20, "READING")).thenReturn(true);
         when(attempts.result(eq(1), eq(20))).thenReturn(result(20, "PLACEMENT", "B2", Instant.parse("2026-01-02T00:00:00Z"), false));

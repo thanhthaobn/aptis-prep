@@ -4,17 +4,23 @@ import com.aptisprep.event.GoalChangedEvent;
 import com.aptisprep.service.contract.LearningPathContract;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.support.TransactionTemplate;
 import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;
 
 @Component
 public class GoalPathListener {
     private final ObjectProvider<LearningPathContract> paths;
-    public GoalPathListener(ObjectProvider<LearningPathContract> paths) { this.paths = paths; }
+    private final TransactionTemplate transactions;
+    public GoalPathListener(ObjectProvider<LearningPathContract> paths, PlatformTransactionManager transactionManager) {
+        this.paths = paths;
+        this.transactions = new TransactionTemplate(transactionManager);
+    }
 
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void onGoalChanged(GoalChangedEvent event) {
         LearningPathContract contract = paths.getIfAvailable();
-        if (contract != null) contract.ensurePaths(event.userId());
+        if (contract != null) transactions.executeWithoutResult(status -> contract.ensurePaths(event.userId()));
     }
 }

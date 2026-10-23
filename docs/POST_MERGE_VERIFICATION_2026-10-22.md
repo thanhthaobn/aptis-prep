@@ -6,16 +6,16 @@
 - Trước nâng cấp đã backup COPY_ONLY/CHECKSUM và RESTORE VERIFYONLY thành công:
   `backups/aptisprep_before_startup_20261022.bak`.
 - Backup media: `backups/uploads_before_startup_20261022.zip`.
-- Bộ migration được giữ tương thích với cả database đã chạy seed Trâm ở V026–V028 và database mới.
-- V026–V028 giữ nguyên seed/catalogue/reading passage của Trâm; các migration lesson sau merge chạy ở V032–V034.
+- Bộ migration giữ nguyên lịch sử đã áp dụng trên database: lesson ở V026–V028 và seed catalogue Trâm ở V029.
+- Các phần mở rộng question bank và reading passage mới lần lượt chạy ở V030–V031.
 - Không sửa checksum hoặc repair lịch sử migration; không clean/drop database.
 - Đối chiếu toàn bộ bản ghi cũ ở 37 bảng bằng số lượng và SHA-256 của JSON theo id:
-  không có bản ghi cũ bị mất hoặc thay đổi. Dữ liệu catalogue mới được thêm bởi bộ V026–V028.
+  không có bản ghi cũ bị mất hoặc thay đổi. Dữ liệu catalogue mở rộng được thêm bởi V030–V031.
 - Đối chiếu 13 file uploads với backup: không file nào bị thiếu/thay đổi.
 - DBCC CHECKDB hoàn tất không báo lỗi.
 
 Backup nằm trong thư mục Git đã ignore, không đưa DB/media hoặc credentials lên remote.
-Máy đã chạy seed Trâm dưới V026–V028 có thể tiếp tục migrate mà không cần đổi checksum hoặc chạy repair.
+Máy đã chạy lesson V026–V028 và seed Trâm V029 có thể tiếp tục migrate mà không cần đổi checksum hoặc chạy repair.
 
 ## Dọn code
 

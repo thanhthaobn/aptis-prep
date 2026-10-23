@@ -65,6 +65,7 @@
             <!-- The listening recording and comprehension questions share one work area. -->
             <div class="listening-player" th:if="${lesson.skill=='Listening' and lesson.audioPath!=null}">
                 <h3>Bài nghe</h3><audio id="lesson-audio" controls preload="metadata" th:src="@{/lesson-media/{id}/audio(id=${lesson.id})}">Trình duyệt không hỗ trợ phát âm thanh.</audio><small th:text="${lesson.audioName}"></small>
+                <p id="listening-status" role="status" aria-live="polite">Nghe đủ 90% nội dung ở tốc độ 1x. Đoạn tua qua không được tính; tiến trình được xác nhận phía máy chủ.</p>
             </div>
             <div th:unless="${productive}" th:insert="~{fragments/lesson-checks :: lessonChecks(${lesson.skill=='Listening'?'Câu hỏi nghe hiểu':(lesson.skill=='Reading'?'Câu hỏi đọc hiểu':'Bài tập vận dụng')})}"></div>
             <th:block th:if="${lesson.skill=='Listening' and !#strings.isEmpty(lesson.transcript)}"><details class="lesson-model" th:if="${release.transcript}"><summary>Xem transcript</summary><p class="lesson-prose" th:text="${lesson.transcript}"></p></details><p th:unless="${release.transcript}" class="lesson-locked-content" th:text="|Transcript: ${release.transcriptHint}|"></p></th:block>

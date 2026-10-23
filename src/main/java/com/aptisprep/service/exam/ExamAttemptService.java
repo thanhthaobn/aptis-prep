@@ -3,14 +3,12 @@ package com.aptisprep.service.exam;
 import com.aptisprep.entity.*;
 import com.aptisprep.enums.Role;
 import com.aptisprep.enums.UserStatus;
-import com.aptisprep.event.AiAssessmentCompletedEvent;
 import com.aptisprep.event.AttemptSubmittedEvent;
 import com.aptisprep.exception.AccessDeniedException;
 import com.aptisprep.exception.BusinessRuleException;
 import com.aptisprep.exception.ResourceNotFoundException;
 import com.aptisprep.repository.*;
 import com.aptisprep.service.contract.ExamAttemptContract;
-import com.aptisprep.service.contract.AiAssessmentContract;
 import com.aptisprep.service.contract.IntegrationModels.*;
 import com.aptisprep.service.contract.GradingContextFormatter;
 import com.aptisprep.service.contract.GradingTextLimits;
@@ -27,7 +25,6 @@ import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.time.*;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
@@ -37,8 +34,6 @@ import org.springframework.transaction.annotation.Transactional;
 public class ExamAttemptService implements ExamAttemptContract {
     private static final String RUBRIC_VERSION = "aptis-rubric-v1";
     private static final Set<String> ACTIVE_STATES = Set.of("IN_PROGRESS", "SUBMITTED", "WAITING_GRADING");
-    private static final Set<String> TERMINAL_STATES = Set.of("COMPLETED", "ERROR", "EXPIRED", "CANCELLED");
-    private static final ConcurrentHashMap<String, Object> START_LOCKS = new ConcurrentHashMap<>();
     private final UserRepository users;
     private final MockExamRepository exams;
     private final MockExamQuestionRepository examQuestions;
@@ -53,7 +48,6 @@ public class ExamAttemptService implements ExamAttemptContract {
     private final UserAnswerDetailRepository details;
     private final ExamSkillResultRepository skillResults;
     private final ScoringPolicyContract scoring;
-    private final AiAssessmentContract ai;
     private final AudioUploadService audioUploads;
     private final StorageService storage;
     private final AttemptOutboxService outbox;
@@ -66,14 +60,14 @@ public class ExamAttemptService implements ExamAttemptContract {
             QuestionRepository questions, QuestionItemRepository items, QuestionOptionRepository options,
             QuestionMediaRepository questionMedia, UserMediaActivityRepository mediaActivities, ExamAttemptSnapshotRepository snapshots,
             ExamAttemptRepository attempts, UserAnswerRepository answers, UserAnswerDetailRepository details,
-            ExamSkillResultRepository skillResults, ScoringPolicyContract scoring, AiAssessmentContract ai,
+            ExamSkillResultRepository skillResults, ScoringPolicyContract scoring,
             AudioUploadService audioUploads, StorageService storage, AttemptOutboxService outbox,
             AttemptFinalizationService finalization, ObjectiveGradingService objectiveGrading,
             ApplicationEventPublisher events) {
         this.users = users; this.exams = exams; this.examQuestions = examQuestions; this.questions = questions;
         this.items = items; this.options = options; this.questionMedia = questionMedia; this.mediaActivities = mediaActivities; this.snapshots = snapshots;
         this.attempts = attempts; this.answers = answers; this.details = details;
-        this.skillResults = skillResults; this.scoring = scoring; this.ai = ai; this.audioUploads = audioUploads; this.storage = storage;
+        this.skillResults = skillResults; this.scoring = scoring; this.audioUploads = audioUploads; this.storage = storage;
         this.outbox = outbox; this.finalization = finalization; this.objectiveGrading = objectiveGrading; this.events = events;
     }
 
@@ -92,41 +86,46 @@ public class ExamAttemptService implements ExamAttemptContract {
         List<MockExamQuestionEntity> links = examQuestions.findByMockExamIdOrderByPosition(examId);
         if (links.isEmpty()) throw new BusinessRuleException("Đề thi chưa có câu hỏi");
         String key = normalizeRequestKey(requestKey, userId, examId);
-        Object lock = START_LOCKS.computeIfAbsent(userId + ":" + key, ignored -> new Object());
-        synchronized (lock) {
-            Optional<ExamAttemptEntity> byKey = attempts.findByUserIdAndRequestKey(userId, key);
-            if (byKey.isPresent()) {
-                if (!Objects.equals(byKey.get().getMockExamId(), examId)) {
-                    throw new BusinessRuleException("Request key đã được dùng cho một đề thi khác");
-                }
-                return handle(byKey.get(), examFor(byKey.get()));
+        Optional<ExamAttemptEntity> byKey = attempts.findByUserIdAndRequestKey(userId, key);
+        if (byKey.isPresent()) {
+            if (!Objects.equals(byKey.get().getMockExamId(), examId)) {
+                throw new BusinessRuleException("Request key đã được dùng cho một đề thi khác");
             }
-            if ("PLACEMENT".equals(exam.getExamType())) {
-                Optional<ExamAttemptEntity> active = attempts.findActivePlacement(userId, exam.getSkill(), ACTIVE_STATES);
-                if (active.isPresent()) {
-                    MockExamEntity activeExam = examFor(active.get());
-                    if (!expireIfNeeded(active.get(), activeExam)) return handle(active.get(), activeExam);
-                }
-            }
-            ExamAttemptEntity attempt = new ExamAttemptEntity(); attempt.setUserId(userId); attempt.setMockExamId(examId);
-            attempt.setRequestKey(key); attempt.setStatus("IN_PROGRESS"); attempt.setGradingStatus("NOT_STARTED");
-            attempt.setAnswerVersion(1); attempt.setScoringSchemeId(exam.getScoringSchemeId());
-            attempt.setPolicyVersion("scoring-scheme:" + exam.getScoringSchemeId() + ":v1");
-            attempt.setRubricVersion(RUBRIC_VERSION);
-            attempt = attempts.save(attempt);
-            createSnapshot(attempt, exam, links);
-            Integer newAttemptId = attempt.getId();
-            for (MockExamQuestionEntity link : links) {
-                UserAnswerEntity answer = new UserAnswerEntity(); answer.setAttemptId(newAttemptId); answer.setQuestionId(link.getQuestionId());
-                answer.setStatus("NOT_STARTED"); answers.save(answer);
-                questionMedia.findByQuestionIdOrderByPosition(link.getQuestionId()).stream()
-                        .filter(media -> "AUDIO".equals(media.getMediaType())).forEach(media -> {
-                            UserMediaActivityEntity activity = new UserMediaActivityEntity();
-                            activity.setAttemptId(newAttemptId); activity.setMediaId(media.getId()); mediaActivities.save(activity);
-                        });
-            }
-            return handle(attempt, exam);
+            return handle(byKey.get(), examFor(byKey.get()));
         }
+        if ("PLACEMENT".equals(exam.getExamType())) {
+            Optional<ExamAttemptEntity> active = attempts.findActivePlacement(userId, exam.getSkill(), ACTIVE_STATES);
+            if (active.isPresent()) {
+                MockExamEntity activeExam = examFor(active.get());
+                if (!expireIfNeeded(active.get(), activeExam)) return handle(active.get(), activeExam);
+            }
+        }
+        ExamAttemptEntity attempt = new ExamAttemptEntity();
+        attempt.setUserId(userId); attempt.setMockExamId(examId);
+        if (exam.getScoringSchemeId() != null) {
+            for (var link : links) {
+                scoring.validatePolicy(exam.getScoringSchemeId(), questions.findById(link.getQuestionId()).orElseThrow().getSkill());
+            }
+        }
+        attempt.setRequestKey(key); attempt.setStatus("IN_PROGRESS"); attempt.setGradingStatus("NOT_STARTED");
+        attempt.setAnswerVersion(1); attempt.setScoringSchemeId(exam.getScoringSchemeId());
+        attempt.setPolicyVersion(exam.getScoringSchemeId() == null ? "unscaled-v1"
+                : "scoring-scheme:" + exam.getScoringSchemeId() + ":" + scoring.policyVersion(exam.getScoringSchemeId()));
+        attempt.setRubricVersion(RUBRIC_VERSION);
+        attempt = attempts.save(attempt);
+        createSnapshot(attempt, exam, links);
+        Integer newAttemptId = attempt.getId();
+        for (MockExamQuestionEntity link : links) {
+            UserAnswerEntity answer = new UserAnswerEntity();
+            answer.setAttemptId(newAttemptId); answer.setQuestionId(link.getQuestionId());
+            answer.setStatus("NOT_STARTED"); answers.save(answer);
+            questionMedia.findByQuestionIdOrderByPosition(link.getQuestionId()).stream()
+                    .filter(media -> "AUDIO".equals(media.getMediaType())).forEach(media -> {
+                        UserMediaActivityEntity activity = new UserMediaActivityEntity();
+                        activity.setAttemptId(newAttemptId); activity.setMediaId(media.getId()); mediaActivities.save(activity);
+                    });
+        }
+        return handle(attempt, exam);
     }
 
     @Transactional
@@ -143,13 +142,10 @@ public class ExamAttemptService implements ExamAttemptContract {
             UserAnswerDetailEntity value = new UserAnswerDetailEntity(); value.setUserAnswerId(answer.getId()); value.setQuestionItemId(item.getId()); return value;
         });
         detail.setAudioPath(path); detail.setGradingStatus("PENDING");
-        // Keep the legacy answer-level pointer for the single-item endpoint,
-        // but never delete or overwrite a previous item's recording.
-        if (answer.getAudioUrl() == null || answer.getAudioUrl().isBlank()) answer.setAudioUrl(path);
         answer.setStatus("ANSWERED");
         if (answer.getStartedAt() == null) answer.setStartedAt(LocalDateTime.now());
         answer.setAnswerVersion(answer.getAnswerVersion() + 1);
-        details.save(detail); answers.save(answer);
+        details.saveAndFlush(detail); syncSubjectiveContent(answer, "SPEAKING_AUDIO"); answers.save(answer);
     }
 
     @Transactional
@@ -236,13 +232,27 @@ public class ExamAttemptService implements ExamAttemptContract {
             // The detail row is the source of truth: a question may contain
             // several writing items, so an answer-level field must not replace
             // the text of another item.
+            // Item rows retain the editable structure; the answer-level representation
+            // is rebuilt in the same transaction and is the grading source.
             detail.setAnswerText(value);
         } else if ("SPEAKING_AUDIO".equals(questionType)) {
             throw new BusinessRuleException("Speaking phải tải file bằng multipart upload");
         }
         if (answer.getStartedAt() == null) answer.setStartedAt(LocalDateTime.now());
         answer.setAnswerVersion(answer.getAnswerVersion() + 1);
-        answer.setStatus("ANSWERED"); details.save(detail); answers.save(answer);
+        answer.setStatus("ANSWERED"); details.saveAndFlush(detail); syncSubjectiveContent(answer, questionType); answers.save(answer);
+    }
+
+    private void syncSubjectiveContent(UserAnswerEntity answer, String type) {
+        var values = details.findByUserAnswerIdOrderByQuestionItemIdAsc(answer.getId());
+        if ("WRITING_TEXT".equals(type)) {
+            answer.setTextAnswer(values.stream().map(UserAnswerDetailEntity::getAnswerText)
+                    .filter(Objects::nonNull).collect(java.util.stream.Collectors.joining("\n--- ITEM ---\n")));
+        } else if ("SPEAKING_AUDIO".equals(type)) {
+            var paths = values.stream().map(UserAnswerDetailEntity::getAudioPath).filter(Objects::nonNull).filter(path -> !path.isBlank()).toList();
+            answer.setAudioUrl(paths.isEmpty() ? null : paths.getFirst());
+            answer.setAudioManifest(json.writeValueAsString(paths.stream().map(path -> Map.of("path", path)).toList()));
+        }
     }
 
     @Override
@@ -271,7 +281,7 @@ public class ExamAttemptService implements ExamAttemptContract {
         attempt.setSubmittedAt(now); attempt.setGradingStatus("GRADING"); attempt.setStatus(expired ? "EXPIRED" : "SUBMITTED");
         LockedAttempt locked = lockedAttempt(attempt, exam);
         objectiveGrading.gradeObjective(locked, exam);
-        boolean waiting = skillResults.findByAttemptIdOrderBySkillAsc(attempt.getId()).stream().anyMatch(x -> x.getScaleScore() == null);
+        boolean waiting = skillResults.findByAttemptIdOrderBySkillAsc(attempt.getId()).stream().anyMatch(x -> !"COMPLETED".equals(x.getGradingStatus()));
         if (waiting) { attempt.setStatus(expired ? "EXPIRED" : "WAITING_GRADING"); attempt.setGradingStatus("WAITING"); }
         boolean completed = !waiting && finalization.finalizeIfReady(attempt, exam);
         attempts.save(attempt);
@@ -329,14 +339,6 @@ public class ExamAttemptService implements ExamAttemptContract {
     @Override
     public void retryFailedGrading(Integer userId, Integer attemptId, String requestKey) {
         finalization.retryFailedGrading(userId, attemptId);
-    }
-
-    @Transactional(readOnly = true)
-    public boolean ownsAttempt(Integer userId, Integer attemptId) { return attempts.findByIdAndUserId(attemptId, userId).isPresent(); }
-
-    @Transactional
-    public void applyAiAssessment(AiAssessmentCompletedEvent event) {
-        finalization.applyAiAssessment(event);
     }
 
     @Transactional
@@ -397,7 +399,7 @@ public class ExamAttemptService implements ExamAttemptContract {
         snapshot.setAttemptId(attempt.getId()); snapshot.setExamId(exam.getId()); snapshot.setCertificateId(exam.getCertificateId());
         snapshot.setScoringSchemeId(exam.getScoringSchemeId()); snapshot.setExamType(exam.getExamType()); snapshot.setSkill(exam.getSkill());
         snapshot.setTargetLevel(exam.getTargetLevel()); snapshot.setTitle(exam.getTitle()); snapshot.setDurationMinutes(exam.getDurationMinutes());
-        snapshot.setAnswerVersion(1); snapshot.setPolicyVersion("scoring-scheme:" + exam.getScoringSchemeId() + ":v1");
+        snapshot.setAnswerVersion(1); snapshot.setPolicyVersion(attempt.getPolicyVersion());
         Map<String, Object> grading = new LinkedHashMap<>(); grading.put("certificateId", exam.getCertificateId()); grading.put("scoringSchemeId", exam.getScoringSchemeId()); grading.put("policyVersion", snapshot.getPolicyVersion()); grading.put("answerVersion", 1);
         List<Map<String, Object>> lockedQuestions = new ArrayList<>();
         for (MockExamQuestionEntity link : links) {
@@ -483,7 +485,8 @@ public class ExamAttemptService implements ExamAttemptContract {
                     exam.getExamType(), exam.getTargetLevel(), confirmedLevel, value.getScaleScore());
             return new SkillResult(value.getSkill(), value.getRawScore(), value.getScaleScore(), confirmedLevel, state,
                     feedbackFor(attempt.getId(), value.getSkill()), passed,
-                    "ERROR".equals(state) && !"POLICY_ERROR".equals(value.getGradingMethod()));
+                    "ERROR".equals(state) && ("AI_ERROR".equals(value.getGradingMethod())
+                            || "OBJECTIVE_ERROR".equals(value.getGradingMethod())));
         }).toList();
         Integer schemeId = attempt.getScoringSchemeId() == null ? exam.getScoringSchemeId() : attempt.getScoringSchemeId();
         return new AttemptResult(attempt.getId(), attempt.getUserId(), exam.getId(), exam.getExamType(), exam.getTitle(), schemeId,
@@ -511,6 +514,18 @@ public class ExamAttemptService implements ExamAttemptContract {
             String instruction = question.path("instruction").asText("");
             String content = question.path("content").asText("");
             String task = instruction.isBlank() ? content : instruction + "\n" + content;
+            List<UserAnswerDetailEntity> answerDetails = details.findByUserAnswerIdOrderByQuestionItemIdAsc(answer.getId());
+            String legacyLockedContent = firstNonBlank(answer.getTextAnswer(), answer.getAudioUrl(), answer.getTranscript());
+            if ("SPEAKING_AUDIO".equals(question.path("type").asText()) && answer.getAudioManifest() != null) {
+                List<String> paths = new ArrayList<>();
+                for (JsonNode entry : json.readTree(answer.getAudioManifest())) paths.add(entry.path("path").asText());
+                legacyLockedContent = String.join("\n--- ITEM ---\n", paths);
+            }
+            // Read compatibility for historical answers; existing detail data is preserved.
+            if (legacyLockedContent == null || legacyLockedContent.isBlank()) legacyLockedContent = answerDetails.stream()
+                    .map(detail -> firstNonBlank(detail.getAnswerText(), detail.getAudioPath(), detail.getTranscript()))
+                    .filter(Objects::nonNull)
+                    .collect(java.util.stream.Collectors.joining("\n--- ITEM ---\n"));
             List<LockedItem> lockedItems = new ArrayList<>();
             for (JsonNode item : question.path("items")) {
                 UserAnswerDetailEntity detail = details.findByUserAnswerIdAndQuestionItemId(answer.getId(), item.path("id").asInt()).orElse(null);
@@ -527,7 +542,7 @@ public class ExamAttemptService implements ExamAttemptContract {
             }
             String lockedContent = lockedItems.stream().map(LockedItem::lockedContent).filter(Objects::nonNull)
                     .filter(value -> !value.isBlank()).collect(java.util.stream.Collectors.joining("\n--- ITEM ---\n"));
-            if (lockedContent.isBlank()) lockedContent = firstNonBlank(answer.getTextAnswer(), answer.getAudioUrl(), answer.getTranscript());
+            if (lockedContent.isBlank()) lockedContent = legacyLockedContent;
             return new LockedAnswer(answer.getId(), answer.getQuestionId(), question.path("skill").asText(), question.path("type").asText(),
                     task, lockedContent, answer.getTranscript(), lockedItems);
         }).toList();

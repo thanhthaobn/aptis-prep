@@ -16,10 +16,12 @@ public class CertificateSchemeService implements CertificateSchemeContract {
     private final CertificateRepository certificates;
     private final ScoringSchemeRepository schemes;
     private final ScoreBandRepository bands;
+    private final ScoringScaleRuleRepository scaleRules;
 
     public CertificateSchemeService(CertificateRepository certificates, ScoringSchemeRepository schemes,
-            ScoreBandRepository bands) {
+            ScoreBandRepository bands, ScoringScaleRuleRepository scaleRules) {
         this.certificates = certificates; this.schemes = schemes; this.bands = bands;
+        this.scaleRules = scaleRules;
     }
 
     @Override @Transactional(readOnly = true)
@@ -39,7 +41,7 @@ public class CertificateSchemeService implements CertificateSchemeContract {
                 .map(this::option).toList();
     }
 
-    @Override @Transactional(readOnly = true)
+    @Override @Transactional
     public SchemeOption requireAvailableScheme(Integer certificateId, Integer schemeId, String skill) {
         String normalizedSkill = skill == null ? "" : skill.trim().toUpperCase(Locale.ROOT).replaceAll("[^A-Z0-9]+", "_");
         if (!SKILLS.contains(normalizedSkill)) throw new BusinessRuleException("Kỹ năng không hợp lệ");
@@ -48,9 +50,9 @@ public class CertificateSchemeService implements CertificateSchemeContract {
         if (scheme.getStatus() != RecordStatus.ACTIVE || scheme.getCertificate().getStatus() != RecordStatus.ACTIVE) {
             throw new BusinessRuleException("Bộ chấm điểm hoặc chứng chỉ đã ngừng sử dụng");
         }
-        if (bands.findBySchemeIdAndSkillOrderByMinScoreAsc(scheme.getId(), normalizedSkill).isEmpty()) {
-            throw new BusinessRuleException("Bộ chấm điểm chưa cấu hình kỹ năng này");
-        }
+        ScoringScaleRule rule = scaleRules.findBySchemeIdAndSkillIgnoreCase(schemeId, normalizedSkill)
+                .orElseThrow(() -> new BusinessRuleException("Bộ chấm điểm chưa cấu hình quy đổi raw-to-scale cho kỹ năng này"));
+        ScoreBandCoverage.requireComplete(rule, bands.findBySchemeIdAndSkillOrderByMinScoreAsc(scheme.getId(), normalizedSkill));
         return option(scheme);
     }
 

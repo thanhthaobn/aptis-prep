@@ -162,7 +162,10 @@ class SimpleLessonRulesTests {
         assertThat(page(l.getId(), u.getEmail()))
                 .contains("HIDDEN_MODEL")
                 .doesNotContain("HIDDEN_TRANSCRIPT");
-        teaching.audioPlayed(l.getId(), u.getEmail());
+        // Fixture for this release-policy test; playback verification has its own service tests.
+        var verified = new LessonEngagement(); verified.setUserId(u.getId()); verified.setLessonId(l.getId());
+        verified.setAudioPlayedAt(java.time.LocalDateTime.now()); verified.setVerifiedAudioPath(l.getAudioPath());
+        em.persist(verified);
         assertThat(page(l.getId(), u.getEmail())).contains("HIDDEN_TRANSCRIPT");
         var edit = lessons.form(l.getId());
         lessons.save(l.getId(), edit, audio(new byte[] {4, 5, 6}), false);
@@ -397,8 +400,7 @@ class SimpleLessonRulesTests {
         assertThat(html)
                 .contains(
                         "Đã hoàn thành 1/2 bài bắt buộc.",
-                        "Còn 1 bài cần hoàn thành",
-                        "Flashcard là phần ôn riêng, không bắt buộc.");
+                        "Còn 1 bài cần hoàn thành");
         var missing =
                 java.util.regex.Pattern.compile(
                                 "<ul class=\"checkpoint-missing-list\">(.*?)</ul>",

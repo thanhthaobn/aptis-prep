@@ -78,7 +78,7 @@ class LearningPathCheckpointTests {
     @Test void noGoalStartsAtA1AndCanPassCheckpointToReachA2() {
         var user=learner(null); service.ensurePaths(user.getId()); var foundation=current(user);
         assertThat(foundation.getTargetLevel()).isEqualTo("A1");
-        assertThat(service.stages(user.getEmail(),"Reading").getFirst().goalLevel()).isEqualTo("C2");
+        assertThat(service.stages(user.getEmail(),"Reading").getFirst().goalLevel()).isNull();
         assertThat(service.stages(user.getEmail(),"Reading").getFirst().lessons()).extracting(LearningPathService.StageLesson::level).containsOnly("A1");
         assertThat(service.summary(user.getId(),foundation.getId()).checkpointState()).isEqualTo("locked");
         assertThatThrownBy(()->service.startCheckpoint(user.getId(),foundation.getId(),"ignored")).isInstanceOf(BusinessRuleException.class);
@@ -198,6 +198,21 @@ class LearningPathCheckpointTests {
             for(var task:tasks) task.get();
             assertThat(paths.findByUserIdAndStatusOrderBySkillAscCreatedAtDesc(user.getId(),"ACTIVE")).hasSize(1);
         } finally { pool.shutdownNow(); }
+    }
+
+    @Test void c1AndLegacyC2ProfilesDoNotCreateC2StagesOrLoseTheirLevel() {
+        for (String level : List.of("C1", "C2")) {
+            var user=learner(level);goal(user,"C2");service.ensurePaths(user.getId());
+            assertThat(paths.findFirstByUserIdAndSkillAndStatusOrderByCreatedAtDesc(user.getId(),"Reading","ACTIVE")).isEmpty();
+            assertThat(profiles.findByUserIdAndSkill(user.getId(),"READING").orElseThrow().getCurrentLevel()).isEqualTo(level);
+        }
+    }
+
+    @Test void b2ProfileWithLegacyC2GoalStillGetsOnlyC1Content() {
+        var user=learner("B2");goal(user,"C2");service.ensurePaths(user.getId());
+        assertThat(current(user).getTargetLevel()).isEqualTo("C1");
+        assertThat(service.stages(user.getEmail(),"Reading").getFirst().lessons())
+                .extracting(LearningPathService.StageLesson::level).containsOnly("C1");
     }
 
     private User learner(String level) {

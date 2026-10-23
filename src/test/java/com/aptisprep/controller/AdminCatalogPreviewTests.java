@@ -23,19 +23,43 @@ import static org.hamcrest.Matchers.not;
 class AdminCatalogPreviewTests {
     @Autowired MockMvc mvc;
     @Autowired UserRepository users;
+    @Autowired com.aptisprep.repository.QuestionRepository questions;
+    @Autowired com.aptisprep.repository.MockExamRepository exams;
+    @Autowired com.aptisprep.repository.CertificateRepository certificates;
+    private final java.util.List<Integer> questionIds = new java.util.ArrayList<>();
+    private final java.util.List<Integer> examIds = new java.util.ArrayList<>();
+
+    @BeforeEach
+    void seedDatabaseContent() {
+        var certificate = new com.aptisprep.entity.Certificate(); certificate.setCode("UI-" + System.nanoTime());
+        certificate.setName("Test certificate"); certificate.setStatus(com.aptisprep.enums.RecordStatus.ACTIVE);
+        certificate = certificates.saveAndFlush(certificate);
+        for (int i = 0; i < 3; i++) {
+            var question = new com.aptisprep.entity.QuestionEntity();
+            question.setContent(i == 1 ? "Viết thư cho câu lạc bộ" : "Chọn từ phù hợp trong câu");
+            question.setSkill(i == 1 ? "WRITING" : "READING"); question.setCefrLevel("B1");
+            question.setQuestionType(i == 1 ? "WRITING_TEXT" : "SINGLE_CHOICE"); question.setStatus("DRAFT");
+            questionIds.add(questions.saveAndFlush(question).getId());
+            var exam = new com.aptisprep.entity.MockExamEntity(); exam.setCertificateId(certificate.getId());
+            exam.setTitle("Database exam " + System.nanoTime()); exam.setExamType("PRACTICE");
+            exam.setSkill("READING"); exam.setTargetLevel("B1"); exam.setDurationMinutes(35); exam.setStatus("DRAFT");
+            examIds.add(exams.saveAndFlush(exam).getId());
+        }
+    }
 
     @BeforeEach void seedAdmin(){if(users.findByEmailIgnoreCase("admin@aptis.local").isEmpty()){User value=new User();value.setFullName("Test Admin");value.setEmail("admin@aptis.local");value.setPasswordHash("test");value.setRole(Role.ADMIN);value.setStatus(UserStatus.ACTIVE);users.save(value);}}
 
     @Test
     void allCatalogPagesAndFormsRenderForAdmin() throws Exception {
         String[] modules = {"questions", "exams"};
-        int[] ids = {3001, 4001};
+        int[] ids = {questionIds.getFirst(), examIds.getFirst()};
         for (int i = 0; i < modules.length; i++) {
             String base = "/admin/" + modules[i];
             mvc.perform(get(base).with(user("admin@aptis.local").roles("ADMIN")))
                     .andExpect(status().isOk()).andExpect(view().name("admin/catalog/list"));
             for (int offset = 0; offset < 3; offset++) {
-                mvc.perform(get(base + "/" + (ids[i] + offset)).with(user("admin@aptis.local").roles("ADMIN")))
+                int id = i == 0 ? questionIds.get(offset) : examIds.get(offset);
+                mvc.perform(get(base + "/" + id).with(user("admin@aptis.local").roles("ADMIN")))
                         .andExpect(status().isOk()).andExpect(view().name("admin/catalog/detail"));
             }
             if (!modules[i].equals("results")) {
@@ -51,7 +75,7 @@ class AdminCatalogPreviewTests {
 
     @Test
     void searchFiltersAndEmptyStateRender() throws Exception {
-        mvc.perform(get("/admin/questions").param("skill", "Writing").param("status", "DRAFT")
+        mvc.perform(get("/admin/questions").param("skill", "WRITING").param("status", "DRAFT")
                         .with(user("admin@aptis.local").roles("ADMIN")))
                 .andExpect(status().isOk()).andExpect(content().string(containsString("Viết thư cho câu lạc bộ")))
                 .andExpect(content().string(not(containsString("Chọn từ phù hợp trong câu"))));

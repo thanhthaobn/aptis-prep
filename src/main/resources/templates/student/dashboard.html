@@ -30,7 +30,6 @@
                         <div>
                             <span class="badge badge-secondary mb-1" th:text="${recommendation.skill()}"></span>
                             <h2 class="m-0 section-title" th:text="${recommendation.title()}">Tiếp tục bài học</h2>
-                            <p class="muted m-0 mt-1 supporting-text" th:text="${recommendation.reason()}"></p>
                             <p class="muted m-0 mt-1 supporting-text" th:if="${recommendation.path() != null}" th:text="|Tiến độ chặng: ${recommendation.path().completedLessons()}/${recommendation.path().totalLessons()} bài (${recommendation.path().progressPercent()}%)|"></p>
                         </div>
                         <a class="button button-primary" th:href="@{/student/lessons/{id}(id=${recommendation.lessonId()})}">Học tiếp ngay →</a>
@@ -74,6 +73,12 @@
 
             <!-- Cột bên phải: Gamification & Thống kê học tập -->
             <aside class="learn-rail" aria-label="Tổng quan học tập">
+                <article class="learn-rail-card" th:if="${latestResult != null}">
+                    <div class="learn-rail-heading"><h2>Lượt thi gần nhất</h2></div>
+                    <p th:text="${latestResult.examTitle}"></p>
+                    <p class="muted" th:text="${@resultLabels.state(latestResult.state)}"></p>
+                    <a class="button button-secondary button-block" th:href="@{/student/attempts/{id}/result(id=${latestResult.attemptId})}">Xem kết quả</a>
+                </article>
                 
                 <!-- Chuỗi học tập (Streak) -->
                 <article class="learn-rail-card streak-card">

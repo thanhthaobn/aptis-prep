@@ -45,7 +45,7 @@ Test thường dùng H2 in-memory và không cần SQL Server. V001–V003 đã 
 
 ## Nguyên tắc kiến trúc
 
-Giao diện học viên dùng bản đồ chặng và phong cách học tập vui. Sau đăng nhập mở `/student/orientation` để xem lộ trình định hướng minh họa không yêu cầu mục tiêu/bài đầu vào; sinh/lưu lộ trình và tiến độ thực tế còn chờ luồng học tập triển khai.
+Giao diện học viên dùng bản đồ chặng. Goal và Placement có thể bỏ qua; các service học tập đã lưu lộ trình và tiến độ thật. Trạng thái hiện tại và phần mở rộng được ghi trong tài liệu nghiệp vụ bên dưới.
 
 Phân công cập nhật cho ba thành viên Thông, Thảo và Trâm: [TEAM_ASSIGNMENT_V2.md](docs/TEAM_ASSIGNMENT_V2.md).
 
@@ -60,13 +60,13 @@ Controller -> Service -> Repository
 
 Đọc [PROJECT_DECISIONS.md](PROJECT_DECISIONS.md) trước khi phát triển module.
 
-Yêu cầu chuẩn: [V2](docs/SPEC_V2.md). Xem [đối chiếu triển khai](docs/V2_IMPLEMENTATION.md) để phân biệt nền tảng đã có và nghiệp vụ còn thiếu. Service và cấu hình OpenAI được giữ để tích hợp vào luồng nộp bài thi theo [AI_SETUP.md](docs/AI_SETUP.md); hiện chưa có giao diện gọi chấm AI.
+Tài liệu nghiệp vụ hiện trạng và ERD Mermaid (không thuộc tính/có thuộc tính): [BUSINESS_SPEC_CURRENT.md](docs/BUSINESS_SPEC_CURRENT.md). Yêu cầu gốc giữ tại [V2](docs/SPEC_V2.md); trạng thái code tại [đối chiếu triển khai](docs/V2_IMPLEMENTATION.md). AI tùy chọn hiện dùng Gemini cho bài thi và phản hồi Lesson, có phân biệt nguồn; cấu hình và giới hạn xem [AI_SETUP.md](docs/AI_SETUP.md).
 
 Trước khi tạo hoặc sửa giao diện, đọc [docs/UI_GUIDE.md](docs/UI_GUIDE.md) và giữ đúng route trong [docs/ROUTES.md](docs/ROUTES.md).
 
-Phần mở rộng [Quản lý học viên cho Admin](docs/STUDENT_MANAGEMENT.md) có giao diện tại `/admin/students`, hỗ trợ xem/tìm/lọc hồ sơ minh họa. Nút khóa/mở khóa chỉ mở xác nhận, chưa thay đổi tài khoản; thành viên tiếp tục nối database, phân trang và nghiệp vụ theo tài liệu.
+Phần mở rộng [Quản lý học viên cho Admin](docs/STUDENT_MANAGEMENT.md) tại `/admin/students` đọc hồ sơ/tiến độ thật và có nghiệp vụ khóa/mở khóa; không tạo/xóa học viên hoặc sửa điểm.
 
-Admin còn có khung Bài học (`/admin/lessons`), Ngân hàng câu hỏi (`/admin/questions`), Đề thi (`/admin/exams`) và Kết quả (`/admin/results`). Đây là dữ liệu minh họa; bàn giao và phần việc chưa nối backend xem [ADMIN_UI_HANDOFF.md](docs/ADMIN_UI_HANDOFF.md).
+Admin quản lý Bài học (`/admin/lessons`), Ngân hàng câu hỏi (`/admin/questions`), Đề thi (`/admin/exams`) và xem Kết quả (`/admin/results`) bằng dữ liệu DB. Các tài liệu handoff cũ là lịch sử phân công, không phải bằng chứng trạng thái triển khai hiện tại.
 
 ## Giao diện học viên mới
 

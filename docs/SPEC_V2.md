@@ -1,5 +1,9 @@
 **HSF302 – APTIS LEARNING SYSTEM**
 
+Bản nghiệp vụ hiện trạng và hai ERD theo source đến V038: [BUSINESS_SPEC_CURRENT.md](BUSINESS_SPEC_CURRENT.md). Giữ các sơ đồ/yêu cầu bên dưới làm baseline V2 để đối chiếu, không coi chúng là ERD vật lý đầy đủ của bản triển khai hiện tại.
+
+Ghi chú đối chiếu 23/10/2026: tài liệu này giữ vai trò đặc tả nghiệp vụ; không phải ERD toàn bộ database triển khai. Phần mở rộng, quyết định tương thích dữ liệu và trạng thái code được tách tại [V2_IMPLEMENTATION.md](V2_IMPLEMENTATION.md) và [V2_CLEANUP_VERIFICATION_2026-10-23.md](V2_CLEANUP_VERIFICATION_2026-10-23.md), không thay các use case gốc để khớp lỗi code.
+
 **TÀI LIỆU PHÂN TÍCH HỆ THỐNG  
 ERD – USE CASE – FLOWCHART – SWIMLANE**
 

@@ -13,7 +13,47 @@
  function move(delta){if(busy||index+delta<0||index+delta>=queue.length)return;busy=true;const direction=delta>0?'left':'right';stage.classList.add(`slide-out-${direction}`);setTimeout(()=>{index+=delta;flipped=false;render();stage.className=`flashcard-stage slide-in-${direction}`;requestAnimationFrame(()=>requestAnimationFrame(()=>stage.className='flashcard-stage'));setTimeout(()=>{busy=false;render();},260);},180);}
  get('previous').addEventListener('click',()=>move(-1));get('next').addEventListener('click',()=>move(1));
  get('reverse').addEventListener('change',()=>{flipped=false;render();});get('unlearned').addEventListener('change',()=>startRound(get('unlearned').checked?all.filter(c=>c.state!=='MASTERED'):all));get('shuffle').addEventListener('click',()=>{for(let i=queue.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[queue[i],queue[j]]=[queue[j],queue[i]];}index=0;flipped=false;stage.classList.add('shuffle-pulse');setTimeout(()=>stage.classList.remove('shuffle-pulse'),350);render();});
- async function mark(state){const current=queue[index];if(!current||busy)return;busy=true;render();message.textContent='Đang lưu…';const csrf=get('csrf-holder').querySelector('input[type="hidden"]'),body=new URLSearchParams({state});if(csrf)body.set(csrf.name,csrf.value);try{const response=await fetch(`/student/flashcards/${main.dataset.setId}/cards/${current.id}/state`,{method:'POST',body,credentials:'same-origin',headers:{Accept:'application/json'}});if(!response.ok||response.redirected)throw Error();current.state=state;reviewed.add(current.id);message.textContent=state==='MASTERED'?'Đã lưu vào nhóm đã nhớ.':'Đã lưu vào nhóm cần học lại.';if(reviewed.size>=queue.length){roundComplete=true;}else{let next=index+1;while(next<queue.length&&reviewed.has(queue[next].id))next++;if(next>=queue.length){next=0;while(next<queue.length&&reviewed.has(queue[next].id))next++;}index=Math.min(next,queue.length-1);}flipped=false;}catch{message.textContent='Chưa lưu được. Hãy kiểm tra kết nối rồi thử lại.';}finally{busy=false;render();}}
+ async function mark(state) {
+  const current = queue[index];
+  if (!current || busy) return;
+  busy = true;
+  render();
+  message.textContent = 'Đang lưu…';
+  // A network retry reuses its action key; a different choice is a new action.
+  if (!current.pendingReview || current.pendingReview.state !== state) {
+   current.pendingReview = { state, key: crypto.randomUUID() };
+  }
+  const csrf = get('csrf-holder').querySelector('input[type="hidden"]');
+  const body = new URLSearchParams({ state, reviewKey: current.pendingReview.key });
+  if (csrf) body.set(csrf.name, csrf.value);
+  try {
+   const response = await fetch(`/student/flashcards/${main.dataset.setId}/cards/${current.id}/state`, {
+    method: 'POST', body, credentials: 'same-origin', headers: { Accept: 'application/json' }
+   });
+   if (!response.ok || response.redirected) throw Error();
+   current.pendingReview = null;
+   current.state = state;
+   reviewed.add(current.id);
+   message.textContent = state === 'MASTERED' ? 'Đã lưu vào nhóm đã nhớ.' : 'Đã lưu vào nhóm cần học lại.';
+   if (reviewed.size >= queue.length) {
+    roundComplete = true;
+   } else {
+    let next = index + 1;
+    while (next < queue.length && reviewed.has(queue[next].id)) next++;
+    if (next >= queue.length) {
+     next = 0;
+     while (next < queue.length && reviewed.has(queue[next].id)) next++;
+    }
+    index = Math.min(next, queue.length - 1);
+   }
+   flipped = false;
+  } catch {
+   message.textContent = 'Chưa lưu được. Hãy kiểm tra kết nối rồi thử lại.';
+  } finally {
+   busy = false;
+   render();
+  }
+ }
  get('learning').addEventListener('click',()=>mark('LEARNING'));get('mastered').addEventListener('click',()=>mark('MASTERED'));get('review-learning').addEventListener('click',()=>{get('unlearned').checked=true;startRound(all.filter(c=>c.state!=='MASTERED'));});get('restart-all').addEventListener('click',()=>{get('unlearned').checked=false;startRound(all);});
  document.addEventListener('keydown',event=>{if(['INPUT','TEXTAREA','SELECT','BUTTON','A','SUMMARY'].includes(document.activeElement.tagName))return;if(event.code==='Space'){event.preventDefault();cardEl.click();}if(event.key==='ArrowLeft')move(-1);if(event.key==='ArrowRight')move(1);});render();
 })();

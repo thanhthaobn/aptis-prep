@@ -1,11 +1,11 @@
 package com.aptisprep.controller;
 
-import com.aptisprep.controller.student.StudentContentPreviewController;
+import com.aptisprep.controller.student.StudentContentController;
 import com.aptisprep.exception.BusinessRuleException;
 import com.aptisprep.service.account.AccountAccessService;
 import com.aptisprep.service.contract.ExamAttemptContract;
 import com.aptisprep.service.contract.IntegrationModels.*;
-import com.aptisprep.service.student.StudentContentPreviewService;
+import com.aptisprep.service.student.StudentExamCatalogService;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.springframework.web.servlet.mvc.support.RedirectAttributesModelMap;
@@ -17,7 +17,7 @@ class StudentResultRetryTests {
     @Test void retryDelegatesOnlyAnOwnersRetryableErrorToTheExistingGradingContract() {
         var accounts = mock(AccountAccessService.class);
         var attempts = mock(ExamAttemptContract.class);
-        var controller = new StudentContentPreviewController(mock(StudentContentPreviewService.class), accounts, attempts);
+        var controller = new StudentContentController(mock(StudentExamCatalogService.class), accounts, attempts);
         when(accounts.requireActiveStudent("learner@test.local")).thenReturn(12);
         when(attempts.result(12, 99)).thenReturn(new AttemptResult(99, 12, 5, "PRACTICE", 1, "ERROR",
                 List.of(new SkillResult("WRITING", null, null, null, "ERROR", null, false, true))));

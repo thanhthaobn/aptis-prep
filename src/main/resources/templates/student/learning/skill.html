@@ -51,7 +51,6 @@
                 <div class="dashboard-section final-test-section">
                     <h3>Bài kiểm tra cuối chặng</h3>
                     <p th:if="${path.totalRequiredLessons() > 0}" class="checkpoint-requirements" th:text="|Đã hoàn thành ${path.completedRequiredLessons()}/${path.totalRequiredLessons()} bài bắt buộc.|"></p>
-                    <p class="muted">Mở khi hoàn thành tất cả bài bắt buộc và có đề phù hợp đã công bố. Flashcard là phần ôn riêng, không bắt buộc.</p>
                     <div th:if="${path.completedRequiredLessons() < path.totalRequiredLessons()}" class="checkpoint-missing">
                         <strong th:text="|Còn ${path.totalRequiredLessons() - path.completedRequiredLessons()} bài cần hoàn thành|"></strong>
                         <th:block th:each="stage : ${stages}" th:if="${stage.pathId == path.pathId}">
@@ -60,9 +59,7 @@
                                 <span th:unless="${lesson.available}" th:text="|${lesson.title} · Chưa thể truy cập, cần quản trị cập nhật|"></span>
                             </li></ul>
                         </th:block>
-                        <small>Bấm vào bài còn thiếu, đáp ứng yêu cầu trong bài rồi chọn Hoàn thành bài học.</small>
                     </div>
-                    <p class="muted">Để vượt qua: đạt ít nhất 60% điểm và cấp độ của chặng. Kết quả chỉ xác nhận tối đa cấp đang kiểm tra.</p>
                     <div th:if="${path.checkpointState() == 'passed'}" class="alert alert-success ap-alert ap-alert-success" role="status">
                         Bạn đã vượt qua bài kiểm tra cuối chặng của kỹ năng này.
                     </div>

@@ -5,9 +5,11 @@ import java.util.List;
 
 /** Owner: Thông. Backend-only, versioned policy; not a universal percent formula. */
 public interface ScoringPolicyContract {
+    BigDecimal raw(Integer schemeId, String skill, int correct, int total);
     BigDecimal scale(Integer schemeId, String skill, BigDecimal rawScore);
     String estimatedLevel(Integer schemeId, String skill, BigDecimal scaleScore);
     String policyVersion(Integer schemeId);
+    void validatePolicy(Integer schemeId, String skill);
     BigDecimal overallScale(Integer schemeId, List<SkillScore> skillScores);
     String overallLevel(Integer schemeId, List<SkillScore> skillScores);
 

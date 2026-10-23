@@ -1,3 +1,4 @@
 package com.aptisprep.event;
 
-public record GoalChangedEvent(Integer userId) {}
+public record GoalChangedEvent(Integer userId) {
+}

@@ -25,10 +25,13 @@ public class ScoringAdminService {
     private final ScoreBandRepository bands;
     private final UserRepository users;
     private final ObjectProvider<ScoringSchemeUsageContract> usage;
+    private final ScoringScaleRuleRepository scaleRules;
 
     public ScoringAdminService(CertificateRepository certificates, ScoringSchemeRepository schemes,
-            ScoreBandRepository bands, UserRepository users, ObjectProvider<ScoringSchemeUsageContract> usage) {
+            ScoreBandRepository bands, UserRepository users, ObjectProvider<ScoringSchemeUsageContract> usage,
+            ScoringScaleRuleRepository scaleRules) {
         this.certificates = certificates; this.schemes = schemes; this.bands = bands; this.users = users; this.usage = usage;
+        this.scaleRules = scaleRules;
     }
 
     @Transactional(readOnly = true)
@@ -79,10 +82,20 @@ public class ScoringAdminService {
         if (id == null) {
             ensureSchemeVersion(certificate.getId(), version, null); ScoringScheme value = new ScoringScheme(); setScheme(value, certificate, form, version); return schemes.save(value).getId();
         }
-        ScoringScheme current = schemes.findById(id).orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy bộ chấm điểm"));
+        ScoringScheme current = requireSchemeForUpdate(id);
         if (!current.getCertificate().getId().equals(certificate.getId()) || !current.getVersion().equalsIgnoreCase(version)) {
             ensureSchemeVersion(certificate.getId(), version, null);
-            ScoringScheme replacement = new ScoringScheme(); setScheme(replacement, certificate, form, version); return schemes.save(replacement).getId();
+            ScoringScheme replacement = new ScoringScheme(); setScheme(replacement, certificate, form, version);
+            replacement = schemes.save(replacement);
+            for (ScoreBand old : bands.findBySchemeIdOrderBySkillAscMinScoreAsc(id)) {
+                ScoreBand copy = new ScoreBand(); copy.setScheme(replacement); copy.setSkill(old.getSkill());
+                copy.setCefrLevel(old.getCefrLevel()); copy.setMinScore(old.getMinScore()); copy.setMaxScore(old.getMaxScore()); bands.save(copy);
+            }
+            for (ScoringScaleRule old : scaleRules.findBySchemeId(id)) {
+                ScoringScaleRule copy = new ScoringScaleRule(); copy.setScheme(replacement); copy.setSkill(old.getSkill());
+                copy.setRawMin(old.getRawMin()); copy.setRawMax(old.getRawMax()); copy.setScaleMin(old.getScaleMin()); copy.setScaleMax(old.getScaleMax()); scaleRules.save(copy);
+            }
+            return replacement.getId();
         }
         if (schemeIsUsed(current.getId())) {
             throw new BusinessRuleException("Bộ chấm điểm đã được sử dụng. Hãy tạo phiên bản mới để bảo toàn lịch sử");
@@ -95,11 +108,17 @@ public class ScoringAdminService {
 
     @Transactional
     public void saveBand(String adminEmail, Integer schemeId, Integer id, ScoreBandForm form) {
-        requireAdmin(adminEmail); ScoringScheme scheme = requireScheme(schemeId); String skill = normalizeSkill(form.getSkill()); String level = normalizeLevel(form.getCefrLevel());
+        requireAdmin(adminEmail); ScoringScheme scheme = requireSchemeForUpdate(schemeId); String skill = normalizeSkill(form.getSkill()); String level = normalizeLevel(form.getCefrLevel());
         if (scheme.getStatus() != RecordStatus.ACTIVE) throw new BusinessRuleException("Không thể sửa bộ chấm điểm đã ngừng sử dụng");
         if (schemeIsUsed(schemeId)) throw new BusinessRuleException("Bộ chấm điểm đã được sử dụng. Hãy tạo phiên bản mới để bảo toàn lịch sử");
         BigDecimal min = decimal(form.getMinScore()); BigDecimal max = decimal(form.getMaxScore());
         if (min == null || max == null || min.compareTo(max) > 0) throw new BusinessRuleException("Khoảng điểm phải có min ≤ max");
+        if (min.signum() < 0 || max.compareTo(BigDecimal.valueOf(50)) > 0)
+            throw new BusinessRuleException("Khoảng điểm CEFR phải nằm trong 0–50");
+        scaleRules.findBySchemeIdAndSkillIgnoreCase(schemeId, skill).ifPresent(rule -> {
+            if (min.compareTo(rule.getScaleMin()) < 0 || max.compareTo(rule.getScaleMax()) > 0)
+                throw new BusinessRuleException("Khoảng điểm CEFR nằm ngoài thang điểm đã cấu hình");
+        });
         if (id == null && bands.existsBySchemeIdAndSkillAndCefrLevelIgnoreCase(schemeId, skill, level)) throw new BusinessRuleException("CEFR này đã có khoảng điểm");
         if (id != null && bands.existsBySchemeIdAndSkillAndCefrLevelIgnoreCaseAndIdNot(schemeId, skill, level, id)) throw new BusinessRuleException("CEFR này đã có khoảng điểm");
         List<ScoreBand> overlaps = bands.findBySchemeIdAndSkillAndMaxScoreGreaterThanEqualAndMinScoreLessThanEqual(schemeId, skill, min, max).stream()
@@ -111,7 +130,7 @@ public class ScoringAdminService {
     @Transactional
     public void deleteBand(String adminEmail, Integer schemeId, Integer id) {
         requireAdmin(adminEmail);
-        requireScheme(schemeId);
+        requireSchemeForUpdate(schemeId);
         if (schemeIsUsed(schemeId)) throw new BusinessRuleException("Bộ chấm điểm đã được sử dụng. Hãy tạo phiên bản mới để bảo toàn lịch sử");
         ScoreBand value = bands.findByIdAndSchemeId(id, schemeId).orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy khoảng điểm"));
         bands.delete(value);
@@ -122,9 +141,44 @@ public class ScoringAdminService {
     private User requireAdmin(String email) { User user = users.findByEmailIgnoreCase(email).orElseThrow(() -> new AccessDeniedException("Không có quyền thực hiện thao tác")); if (user.getRole() != Role.ADMIN) throw new AccessDeniedException("Chỉ quản trị viên mới được ghi cấu hình chấm điểm"); return user; }
     private Certificate requireCertificate(Integer id) { return certificates.findById(id).orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy chứng chỉ")); }
     private ScoringScheme requireScheme(Integer id) { return schemes.findById(id).orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy bộ chấm điểm")); }
+    private ScoringScheme requireSchemeForUpdate(Integer id) { return schemes.findByIdForUpdate(id).orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy bộ chấm điểm")); }
     private boolean schemeIsUsed(Integer schemeId) {
         ScoringSchemeUsageContract contract = usage.getIfAvailable();
-        return contract != null && contract.isUsed(schemeId);
+        if (contract == null) throw new IllegalStateException("Thiếu dịch vụ bảo vệ lịch sử chấm điểm");
+        return contract.isUsed(schemeId);
+    }
+
+    @Transactional(readOnly = true)
+    public ScoringScaleRuleForm scaleRule(Integer schemeId, String skill) {
+        requireScheme(schemeId);
+        var form = new ScoringScaleRuleForm();
+        scaleRules.findBySchemeIdAndSkillIgnoreCase(schemeId, normalizeSkill(skill)).ifPresent(rule -> {
+            form.setRawMin(rule.getRawMin()); form.setRawMax(rule.getRawMax());
+            form.setScaleMin(rule.getScaleMin()); form.setScaleMax(rule.getScaleMax());
+        });
+        return form;
+    }
+
+    @Transactional
+    public void saveScaleRule(String adminEmail, Integer schemeId, String skill, ScoringScaleRuleForm form) {
+        requireAdmin(adminEmail);
+        ScoringScheme scheme = requireSchemeForUpdate(schemeId);
+        if (scheme.getStatus() != RecordStatus.ACTIVE || schemeIsUsed(schemeId))
+            throw new BusinessRuleException("Hãy tạo phiên bản mới trước khi thay quy tắc của bộ chấm điểm đã dùng");
+        String normalized = normalizeSkill(skill);
+        BigDecimal rawMin = decimal(form.getRawMin()), rawMax = decimal(form.getRawMax());
+        BigDecimal scaleMin = decimal(form.getScaleMin()), scaleMax = decimal(form.getScaleMax());
+        if (rawMin == null || rawMax == null || scaleMin == null || scaleMax == null
+                || rawMin.signum() < 0 || rawMax.compareTo(new BigDecimal("9999.99")) > 0
+                || rawMin.compareTo(rawMax) >= 0 || scaleMin.signum() < 0
+                || scaleMin.compareTo(scaleMax) >= 0 || scaleMax.compareTo(BigDecimal.valueOf(50)) > 0)
+            throw new BusinessRuleException("Khoảng raw/scale không hợp lệ; scale phải nằm trong 0–50");
+        if (bands.findBySchemeIdAndSkillOrderByMinScoreAsc(schemeId, normalized).stream()
+                .anyMatch(band -> band.getMinScore().compareTo(scaleMin) < 0 || band.getMaxScore().compareTo(scaleMax) > 0))
+            throw new BusinessRuleException("Khoảng scale phải chứa các khoảng điểm CEFR đã cấu hình");
+        ScoringScaleRule rule = scaleRules.findBySchemeIdAndSkillIgnoreCase(schemeId, normalized).orElseGet(ScoringScaleRule::new);
+        rule.setScheme(scheme); rule.setSkill(normalized); rule.setRawMin(rawMin); rule.setRawMax(rawMax);
+        rule.setScaleMin(scaleMin); rule.setScaleMax(scaleMax); scaleRules.save(rule);
     }
     private ScoringViews.CertificateView certificateView(Certificate value) { return new ScoringViews.CertificateView(value.getId(), value.getName(), value.getCode(), value.getDescription(), value.getStatus().name(), statusLabel(value.getStatus())); }
     private ScoringViews.SchemeView schemeView(ScoringScheme value) { return new ScoringViews.SchemeView(value.getId(), value.getCertificate().getId(), value.getCertificate().getName(), value.getName(), value.getVersion(), value.getStatus().name(), statusLabel(value.getStatus()), value.getEffectiveFrom()); }

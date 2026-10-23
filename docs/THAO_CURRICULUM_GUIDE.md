@@ -1,5 +1,28 @@
 # Nội dung học tập và cách kiểm tra luồng Thảo
 
+Chốt phạm vi 23/10/2026: hành trình học A1–C1. Profile C1/C2 không sinh chặng mới C2; mục tiêu/profile C2 cũ vẫn giữ để tra cứu, không tự hạ mức. Lesson/Flashcard vẫn chỉ tạo A1–C1. Giới hạn Goal mới thuộc phần tài khoản của Thông, không sửa trong đợt xử lý luồng Thảo.
+
+Kiểm chứng bản tích hợp V040: `mvn -o clean verify` với `APTIS_SQLSERVER_ISOLATED_TESTS=true` đạt (203 test: 201 đạt, không có failure/error; 2 skip là Gemini live và migration trực tiếp DB ứng dụng); JavaScript 9/9 đạt. Test gồm 89%/90%, tua/nghe lặp/replay, token khác user/hết hạn, thay audio, hoàn thành qua MVC/JPA, C1/legacy C2; SQL Server tạm kiểm migration V037 → V039 → V040, Hibernate validate, bảo toàn dữ liệu, đáp án D/E/F, chấm đúng/sai, validation và đối chiếu schema ERD. Test AI xác nhận event ERROR trước retry rồi COMPLETED sau retry; test scoring kiểm riêng thiếu scale rule và thiếu khoảng CEFR. Cờ `-o` dùng dependency đã cache. Không chạy migration trực tiếp lên DB ứng dụng; bản sửa được đưa lên feature/thao, chưa merge vào develop.
+
+### Checklist SQL Server cho L01 và ERD V040
+
+`V2SqlServerPreservationTests` dùng database UUID riêng, chạy migration đến V037, thêm fixture A/B/C và dấu nghe cũ, chụp toàn bộ cột cũ rồi nâng lên V039. Sau đó lưu trạng thái playback thử nghiệm, chụp tiếp dữ liệu và nâng lên V040; kiểm tra cả hai snapshot để bảo đảm migration AI không đổi dữ liệu đã có. Test tự dọn đúng database đã tạo trong `finally`; không chạy `clean` hoặc migration trên database ứng dụng.
+
+| Ca kiểm tra | Cách kiểm chứng |
+|---|---|
+| 4 lựa chọn, đáp án D; 6 lựa chọn, đáp án F | Gọi validation và saveChecks thật, flush/clear JPA rồi đọc lại từ SQL Server |
+| Nộp đúng/sai, lưu điểm và lịch sử | Gọi grade thật; kiểm score, total, feedback và đọc lại các attempt đã lưu |
+| Chỉ số âm hoặc vượt số lựa chọn, thiếu câu trả lời | Service từ chối; DB cũng từ chối correct_option = -1 và 6 |
+| Lựa chọn bị khuyết ở giữa | Validation từ chối; câu hợp lệ và số attempt không bị thay đổi |
+| Bảo toàn dữ liệu A/B/C và dữ liệu cũ khác | So sánh snapshot trước/sau migration trên tất cả bảng và các cột cũ |
+| ERD có thuộc tính | So sánh toàn bộ tên bảng/cột trong Mermaid với metadata SQL Server sau V040: 39 bảng, 415 cột |
+
+Hai ERD trong [BUSINESS_SPEC_CURRENT.md](BUSINESS_SPEC_CURRENT.md) và ảnh SVG được cập nhật theo V040. Sơ đồ không thuộc tính không đổi quan hệ (62 FK); sơ đồ có thuộc tính gồm 10 cột phiên nghe của lesson_engagement (V039) và processing_token của ai_assessment_jobs (V040). Các cột/bảng legacy vẫn được giữ, không tự drop.
+
+Sau merge PR #30/#31, migration AI bị trùng số V039. Giữ nguyên V039 của Lesson và chuyển file AI chưa chạy trên database hiện tại sang V040. Không dùng Flyway repair, không sửa lịch sử migration. Nếu máy khác đã chạy bản AI mang số V039 thì cần kiểm tra lịch sử riêng, không áp dụng cách đổi tên hoặc repair mù quáng.
+
+Format bằng google-java-format theo indent 4 spaces cho các service học tập, controller Lesson, entity phiên nghe, service đọc thời lượng và các test phiên nghe/SQL liên quan; không tách thêm service hoặc đổi quy tắc nghiệp vụ trong bước format.
+
 Chương trình hiện hỗ trợ A1, A2, B1, B2 và C1. Sau V024/V025, mỗi kỹ năng có ít nhất một bài giảng và một bộ thẻ liên kết ở mỗi mức. Các mức dùng để tổ chức nội dung học, không phải kết quả đánh giá CEFR của học viên.
 
 ## Các bài học chính

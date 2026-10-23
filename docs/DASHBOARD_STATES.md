@@ -39,9 +39,9 @@ Làm lại đầu vào theo [PLACEMENT_RETAKE_POLICY.md](PLACEMENT_RETAKE_POLICY
 1. Người 1 cung cấp AccountAccessContract.context: user, Goal và Skill Profile; thông báo thay đổi Goal sau commit. Tiếp nhận form Goal/Profile; Placement chuyển sang Người 3 theo phân công mới.
 2. Người 2 sở hữu view-model tổng quan và controller/template dashboard: kết hợp context của 1 với LearningPathContract.summary/summaries, chọn đúng path đang xem và CTA theo bảng. Nối bài tiếp theo vào lesson cụ thể, không trỏ danh sách chung khi đã có nextLessonId.
 3. Người 3 cung cấp đề công bố đúng skill/target, không để draft xuất hiện/lộ đáp án; điều phối Placement → service Profile 1 → path 2. Nội dung Lesson do Người 2 cung cấp.
-4. Người 4 cung cấp attempt/result đúng user/trạng thái; Người 3 xử lý Placement, Người 2 xử lý checkpoint, cả hai gọi 1 ghi Profile. AI do 1 cung cấp đánh giá cho 4 tổng hợp; 4 không tự ghi Goal/Profile/Path.
+4. Người 3 cung cấp attempt metadata/result state đúng user; Người 3 xử lý Placement, Người 2 xử lý checkpoint và history/result UI. Người 1 chấm objective/AI, quy đổi/tổng hợp và ghi Profile; 3/2 gọi service 1 theo nguồn hợp lệ, không tự ghi Goal/Profile/Path ngoài phần của mình.
 
-Interface tối thiểu hiện có chưa có view-model dashboard/implementation. Người 2 bổ sung DTO dashboard trong PR, thống nhất nguồn từng field với Người 1/4; không trộn fixture với dữ liệu thật. Bên đọc không gọi repository của bên khác.
+Interface tối thiểu hiện có chưa có view-model dashboard/implementation. Người 2 bổ sung DTO dashboard trong PR, thống nhất nguồn từng field với Người 1/3; không trộn fixture với dữ liệu thật. Bên đọc không gọi repository của bên khác.
 
 ## Kiểm thử nghiệm thu
 

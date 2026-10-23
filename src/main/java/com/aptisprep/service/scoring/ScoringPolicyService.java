@@ -2,10 +2,12 @@ package com.aptisprep.service.scoring;
 
 import com.aptisprep.entity.ScoreBand;
 import com.aptisprep.entity.ScoringScheme;
+import com.aptisprep.entity.ScoringScaleRule;
 import com.aptisprep.enums.RecordStatus;
 import com.aptisprep.exception.BusinessRuleException;
 import com.aptisprep.exception.ResourceNotFoundException;
 import com.aptisprep.repository.ScoreBandRepository;
+import com.aptisprep.repository.ScoringScaleRuleRepository;
 import com.aptisprep.repository.ScoringSchemeRepository;
 import com.aptisprep.service.contract.ScoringPolicyContract;
 import com.aptisprep.service.contract.ScoringPolicyContract.SkillScore;
@@ -16,30 +18,53 @@ import java.util.Locale;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-/** Estimated internal policy. Raw input is defined as a 0..50 skill score; no official Aptis claim. */
+/** Estimated internal policy. Raw and scale ranges come from the skill/version rule; no official Aptis claim. */
 @Service
 public class ScoringPolicyService implements ScoringPolicyContract {
     private final ScoringSchemeRepository schemes;
     private final ScoreBandRepository bands;
-    public ScoringPolicyService(ScoringSchemeRepository schemes, ScoreBandRepository bands) { this.schemes = schemes; this.bands = bands; }
+    private final ScoringScaleRuleRepository scaleRules;
+    public ScoringPolicyService(ScoringSchemeRepository schemes, ScoreBandRepository bands,
+            ScoringScaleRuleRepository scaleRules) {
+        this.schemes = schemes; this.bands = bands; this.scaleRules = scaleRules;
+    }
+
+    @Override @Transactional(readOnly = true)
+    public BigDecimal raw(Integer schemeId, String skill, int correct, int total) {
+        String normalized = normalizeSkill(skill);
+        if (total <= 0 || correct < 0 || correct > total) {
+            throw new BusinessRuleException("Số câu đúng/tổng số câu không hợp lệ");
+        }
+        ScoringScaleRule rule = requireRule(schemeId, normalized);
+        return rule.getRawMin().add(rule.getRawMax().subtract(rule.getRawMin())
+                .multiply(BigDecimal.valueOf(correct))
+                .divide(BigDecimal.valueOf(total), 8, RoundingMode.HALF_UP))
+                .setScale(2, RoundingMode.HALF_UP);
+    }
 
     @Override @Transactional(readOnly = true)
     public BigDecimal scale(Integer schemeId, String skill, BigDecimal rawScore) {
-        requireHistoricalScheme(schemeId); normalizeSkill(skill);
+        String normalized = normalizeSkill(skill);
         if (rawScore == null) return null;
-        if (rawScore.compareTo(BigDecimal.ZERO) < 0 || rawScore.compareTo(BigDecimal.valueOf(50)) > 0) {
-            throw new BusinessRuleException("Điểm raw phải trong khoảng 0 đến 50");
+        ScoringScaleRule rule = requireRule(schemeId, normalized);
+        if (rawScore.compareTo(rule.getRawMin()) < 0 || rawScore.compareTo(rule.getRawMax()) > 0) {
+            throw new BusinessRuleException("Điểm raw nằm ngoài policy của kỹ năng");
         }
-        // The V2 schema has no raw-to-scale table. Version 1 deliberately keeps the declared 0..50 scale.
-        return rawScore.setScale(2, RoundingMode.HALF_UP);
+        BigDecimal rawRange = rule.getRawMax().subtract(rule.getRawMin());
+        if (rawRange.signum() <= 0) throw new BusinessRuleException("Policy raw không hợp lệ");
+        return rule.getScaleMin().add(rule.getScaleMax().subtract(rule.getScaleMin())
+                .multiply(rawScore.subtract(rule.getRawMin()))
+                .divide(rawRange, 8, RoundingMode.HALF_UP))
+                .setScale(2, RoundingMode.HALF_UP);
     }
 
     @Override @Transactional(readOnly = true)
     public String estimatedLevel(Integer schemeId, String skill, BigDecimal scaleScore) {
-        requireHistoricalScheme(schemeId); String normalized = normalizeSkill(skill);
+        String normalized = normalizeSkill(skill);
         if (scaleScore == null) return null;
-        if (scaleScore.compareTo(BigDecimal.ZERO) < 0 || scaleScore.compareTo(BigDecimal.valueOf(50)) > 0) {
-            throw new BusinessRuleException("Điểm scale phải trong khoảng 0 đến 50");
+        ScoringScaleRule rule = requireRule(schemeId, normalized);
+        if (scaleScore.compareTo(rule.getScaleMin()) < 0 || scaleScore.compareTo(rule.getScaleMax()) > 0) {
+            throw new BusinessRuleException("Điểm scale nằm ngoài policy của kỹ năng");
         }
         return bands.findBySchemeIdAndSkillOrderByMinScoreAsc(schemeId, normalized).stream()
                 .filter(band -> scaleScore.compareTo(band.getMinScore()) >= 0 && scaleScore.compareTo(band.getMaxScore()) <= 0)
@@ -48,6 +73,14 @@ public class ScoringPolicyService implements ScoringPolicyContract {
 
     @Override @Transactional(readOnly = true)
     public String policyVersion(Integer schemeId) { return requireActiveScheme(schemeId).getVersion(); }
+
+    @Override @Transactional(readOnly = true)
+    public void validatePolicy(Integer schemeId, String skill) {
+        requireActiveScheme(schemeId);
+        String normalized = normalizeSkill(skill);
+        ScoringScaleRule rule = requireRule(schemeId, normalized);
+        ScoreBandCoverage.requireComplete(rule, bands.findBySchemeIdAndSkillOrderByMinScoreAsc(schemeId, normalized));
+    }
 
     @Override @Transactional(readOnly = true)
     public BigDecimal overallScale(Integer schemeId, List<SkillScore> skillScores) {
@@ -79,6 +112,11 @@ public class ScoringPolicyService implements ScoringPolicyContract {
     private ScoringScheme requireHistoricalScheme(Integer id) {
         if (id == null) throw new BusinessRuleException("Thiếu phiên bản bộ chấm điểm");
         return schemes.findById(id).orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy bộ chấm điểm"));
+    }
+    private ScoringScaleRule requireRule(Integer schemeId, String skill) {
+        requireHistoricalScheme(schemeId);
+        return scaleRules.findBySchemeIdAndSkillIgnoreCase(schemeId, skill)
+                .orElseThrow(() -> new BusinessRuleException("Chưa cấu hình raw-to-scale cho kỹ năng và version này"));
     }
     private String normalizeSkill(String skill) {
         if (skill == null) throw new BusinessRuleException("Thiếu kỹ năng");

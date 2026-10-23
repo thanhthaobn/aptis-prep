@@ -29,7 +29,8 @@ class AttemptGradingOrchestrationServiceTests {
         AttemptFinalizationService finalization = mock(AttemptFinalizationService.class);
         when(finalization.accepts(any())).thenReturn(true);
         AttemptGradingOrchestrationService service = new AttemptGradingOrchestrationService(
-                properties, ai, finalization, mock(SpeakingGradingService.class), mock(StorageService.class));
+                properties, ai, finalization, mock(SpeakingGradingService.class), mock(StorageService.class),
+                mock(AttemptOutboxService.class));
 
         LockedAnswer answer = new LockedAnswer(11, 21, "WRITING", "WRITING_TEXT",
                 "Write two messages", "first answer\n--- ITEM ---\nsecond answer", null,

@@ -3,6 +3,7 @@ package com.aptisprep.service.scoring;
 import com.aptisprep.entity.Certificate;
 import com.aptisprep.entity.ScoreBand;
 import com.aptisprep.entity.ScoringScheme;
+import com.aptisprep.entity.ScoringScaleRule;
 import com.aptisprep.enums.RecordStatus;
 import com.aptisprep.exception.BusinessRuleException;
 import com.aptisprep.exception.ResourceNotFoundException;
@@ -24,6 +25,7 @@ class CertificateSchemeServiceTests {
     @Mock CertificateRepository certificates;
     @Mock ScoringSchemeRepository schemes;
     @Mock ScoreBandRepository bands;
+    @Mock com.aptisprep.repository.ScoringScaleRuleRepository scaleRules;
 
     private Certificate certificate;
     private ScoringScheme scheme;
@@ -40,16 +42,19 @@ class CertificateSchemeServiceTests {
         lenient().when(scheme.getStatus()).thenReturn(RecordStatus.ACTIVE);
         lenient().when(scheme.getVersion()).thenReturn("1.0");
         lenient().when(scheme.getName()).thenReturn("Test scheme");
-        service = new CertificateSchemeService(certificates, schemes, bands);
+        service = new CertificateSchemeService(certificates, schemes, bands, scaleRules);
     }
 
     @Test
     void requiresMatchingActiveCertificateAndConfiguredSkill() {
         when(schemes.findByIdAndCertificateId(2, 1)).thenReturn(Optional.of(scheme));
-        ScoreBand band = mock(ScoreBand.class);
-        when(band.getSkill()).thenReturn("READING");
+        ScoreBand band = new ScoreBand();
+        band.setSkill("READING"); band.setMinScore(java.math.BigDecimal.ZERO); band.setMaxScore(java.math.BigDecimal.valueOf(50));
         when(bands.findBySchemeIdAndSkillOrderByMinScoreAsc(2, "READING")).thenReturn(List.of(band));
         when(bands.findBySchemeIdOrderBySkillAscMinScoreAsc(2)).thenReturn(List.of(band));
+        ScoringScaleRule rule = new ScoringScaleRule();
+        rule.setScaleMin(java.math.BigDecimal.ZERO); rule.setScaleMax(java.math.BigDecimal.valueOf(50));
+        when(scaleRules.findBySchemeIdAndSkillIgnoreCase(2, "READING")).thenReturn(Optional.of(rule));
 
         var option = service.requireAvailableScheme(1, 2, "Reading");
 
@@ -63,7 +68,24 @@ class CertificateSchemeServiceTests {
         assertThrows(ResourceNotFoundException.class, () -> service.requireAvailableScheme(9, 2, "Reading"));
 
         when(schemes.findByIdAndCertificateId(2, 1)).thenReturn(Optional.of(scheme));
+        ScoringScaleRule rule = new ScoringScaleRule();
+        rule.setScaleMin(java.math.BigDecimal.ZERO);
+        rule.setScaleMax(java.math.BigDecimal.valueOf(50));
+        when(scaleRules.findBySchemeIdAndSkillIgnoreCase(2, "GRAMMAR_VOCABULARY"))
+                .thenReturn(Optional.of(rule));
         when(bands.findBySchemeIdAndSkillOrderByMinScoreAsc(2, "GRAMMAR_VOCABULARY")).thenReturn(List.of());
         assertThrows(BusinessRuleException.class, () -> service.requireAvailableScheme(1, 2, "Grammar & Vocabulary"));
+    }
+
+    @Test
+    void rejectsMissingScaleRuleBeforeCheckingBands() {
+        when(schemes.findByIdAndCertificateId(2, 1)).thenReturn(Optional.of(scheme));
+        when(scaleRules.findBySchemeIdAndSkillIgnoreCase(2, "READING")).thenReturn(Optional.empty());
+
+        var error = assertThrows(BusinessRuleException.class,
+                () -> service.requireAvailableScheme(1, 2, "Reading"));
+
+        assertTrue(error.getMessage().contains("raw-to-scale"));
+        verifyNoInteractions(bands);
     }
 }

@@ -6,7 +6,9 @@ import com.aptisprep.exception.AiGradingException;
 import com.aptisprep.event.AiAssessmentCompletedEvent;
 import com.aptisprep.repository.*;
 import com.aptisprep.service.contract.AiAssessmentContract.*;
+import com.aptisprep.service.exam.AttemptOutboxService;
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.Optional;
 import javax.sql.DataSource;
 import org.h2.jdbcx.JdbcDataSource;
@@ -15,6 +17,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.jdbc.datasource.DataSourceTransactionManager;
+import org.springframework.test.util.ReflectionTestUtils;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
@@ -29,6 +32,7 @@ class AiAssessmentServiceTests {
     @Mock WritingGradingService writing;
     @Mock SpeakingGradingService speaking;
     @Mock ApplicationEventPublisher events;
+    @Mock AttemptOutboxService outbox;
 
     private AiAssessmentService service;
     private AiAssessmentJob job;
@@ -39,9 +43,9 @@ class AiAssessmentServiceTests {
         DataSource dataSource = new JdbcDataSource();
         ((JdbcDataSource) dataSource).setURL("jdbc:h2:mem:ai_tx;DB_CLOSE_DELAY=-1");
         service = new AiAssessmentService(jobs, assessments, users, writing, speaking,
-                new DataSourceTransactionManager(dataSource), events);
+                new DataSourceTransactionManager(dataSource), events, outbox);
         job = new AiAssessmentJob(); job.setAssessmentKey("assessment-1"); job.setUserId(1); job.setAttemptId(2);
-        job.setAnswerId(3); job.setAnswerVersion(1); job.setSkill("WRITING"); job.setTaskType("WRITING");
+        job.setAnswerId(3); job.setSourceId(3); job.setAnswerVersion(1); job.setSkill("WRITING"); job.setTaskType("WRITING");
         job.setTaskContent("Write an email"); job.setLockedContent("Dear team"); job.setRubricVersion("r1");
         job.setPolicyVersion("p1"); job.setMaxScore(new BigDecimal("50")); job.setState(AiJobState.PENDING);
         assessment = new AiAssessment(); assessment.setJob(job); assessment.setAssessmentKey("assessment-1");
@@ -70,7 +74,7 @@ class AiAssessmentServiceTests {
         assertEquals("B1", first.estimatedCefr());
         assertEquals(first.state(), second.state());
         verify(writing, times(1)).grade("Write an email", "Dear team");
-        verify(events, times(1)).publishEvent(any(AiAssessmentCompletedEvent.class));
+        verify(events, times(2)).publishEvent(any(AiAssessmentCompletedEvent.class));
     }
 
     @Test
@@ -85,12 +89,21 @@ class AiAssessmentServiceTests {
         assertNotNull(failed.errorMessage());
         var eventCaptor = org.mockito.ArgumentCaptor.forClass(AiAssessmentCompletedEvent.class);
         verify(events).publishEvent(eventCaptor.capture());
-        assertEquals("ERROR", eventCaptor.getValue().state());
+        assertEquals("ERROR", eventCaptor.getAllValues().getFirst().state());
+        verify(outbox).enqueueAiAssessmentCompleted(eventCaptor.getValue());
 
         AssessmentView retried = service.retry("assessment-1", 1, false);
         assertEquals("COMPLETED", retried.state());
         assertEquals(new BigDecimal("30"), retried.score());
         verify(writing, times(2)).grade("Write an email", "Dear team");
+        var retriedEvents = org.mockito.ArgumentCaptor.forClass(AiAssessmentCompletedEvent.class);
+        verify(events, times(2)).publishEvent(retriedEvents.capture());
+        assertEquals(java.util.List.of("ERROR", "COMPLETED"),
+                retriedEvents.getAllValues().stream().map(AiAssessmentCompletedEvent::state).toList());
+        verify(outbox).enqueueAiAssessmentCompleted(retriedEvents.getAllValues().getLast());
+        assertEquals(2, job.getRetryCount());
+        assertNull(job.getProcessingToken());
+        verifyNoMoreInteractions(events, outbox);
     }
 
     @Test
@@ -105,6 +118,20 @@ class AiAssessmentServiceTests {
         assertEquals("COMPLETED", result.state());
         assertEquals("I enjoy reading books.", result.transcript());
         verify(speaking).gradeTranscript("Talk about hobbies", "I enjoy reading books.");
+    }
+
+    @Test
+    void staleProcessingJobIsReclaimedAfterRestart() {
+        job.setState(AiJobState.PROCESSING); job.setProcessingToken("old-token");
+        job.setRetryCount(1); ReflectionTestUtils.setField(job, "updatedAt", LocalDateTime.now().minusMinutes(30));
+        when(writing.grade("Write an email", "Dear team"))
+                .thenReturn(new GradingResult(new BigDecimal("30"), "B1", "Feedback", "mock", "test-model"));
+
+        AssessmentView result = service.process("assessment-1");
+
+        assertEquals("COMPLETED", result.state());
+        assertNull(job.getProcessingToken());
+        verify(writing).grade("Write an email", "Dear team");
     }
 
     @Test
@@ -148,6 +175,24 @@ class AiAssessmentServiceTests {
 
         assertThrows(com.aptisprep.exception.BusinessRuleException.class, () -> service.request(request));
         verifyNoInteractions(jobs, assessments);
+
+    }
+
+    @Test
+    void lessonFeedbackNeverPublishesAnExamEventEvenWithCollidingIds() {
+        job.setSourceType("LESSON_SUBMISSION"); job.setSourceId(3);
+        when(writing.grade("Write an email", "Dear team"))
+                .thenReturn(new GradingResult(new BigDecimal("32.5"), "B1", "Feedback", "mock", "test-model"));
+        assertEquals("COMPLETED", service.process("assessment-1").state());
+        verifyNoInteractions(events);
+    }
+
+    @Test
+    void lessonFailureDoesNotPublishAnExamFailure() {
+        job.setSourceType("LESSON_SUBMISSION"); job.setSourceId(3);
+        when(writing.grade("Write an email", "Dear team")).thenThrow(new AiGradingException("Unavailable"));
+        assertEquals("ERROR", service.process("assessment-1").state());
+        verifyNoInteractions(events);
     }
 
     @Test
@@ -156,5 +201,23 @@ class AiAssessmentServiceTests {
         when(users.findById(9)).thenReturn(Optional.of(other));
         assertThrows(com.aptisprep.exception.AccessDeniedException.class, () -> service.get("assessment-1", 9, false));
         assertThrows(com.aptisprep.exception.AccessDeniedException.class, () -> service.get("assessment-1", 1, true));
+    }
+
+    @Test
+    void legacyLessonRequestCanBeReusedWithoutInventingExamIds() {
+        job.setSourceType("LESSON_SUBMISSION");job.setSourceId(42);job.setMaxScore(new BigDecimal("50.00"));
+        service.request(new AssessmentRequest("assessment-1",1,null,null,1,"WRITING","WRITING",
+                "Write an email","Dear team","r1","p1",new BigDecimal("50"),null,"LESSON_SUBMISSION",42));
+        verify(jobs,never()).save(any());verifyNoInteractions(events);
+    }
+
+    @Test
+    void newLessonJobPersistsItsSourceAndKeepsExamIdsNull() {
+        when(jobs.findByAssessmentKeyForUpdate("lesson-new")).thenReturn(Optional.empty());
+        service.request(new AssessmentRequest("lesson-new",1,null,null,1,"WRITING","WRITING",
+                "Write an email","Dear team","r1","p1",new BigDecimal("50"),null,"LESSON_SUBMISSION",42));
+        var captured=org.mockito.ArgumentCaptor.forClass(AiAssessmentJob.class);verify(jobs).save(captured.capture());
+        assertEquals("LESSON_SUBMISSION",captured.getValue().getSourceType());assertEquals(42,captured.getValue().getSourceId());
+        assertNull(captured.getValue().getAttemptId());assertNull(captured.getValue().getAnswerId());verifyNoInteractions(events);
     }
 }

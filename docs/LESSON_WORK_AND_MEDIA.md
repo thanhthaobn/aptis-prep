@@ -1,5 +1,15 @@
 # Bài làm và media bài học — 22/10/2026
 
+## Cập nhật 23/10/2026 — V039
+
+- Listening bắt buộc được server xác nhận đã nghe ít nhất 90% nội dung audio. Server đọc thời lượng từ file; không dùng duration/listened của học viên. Phiên nghe gắn user/lesson/file, có token, thứ tự request và hạn sử dụng; các đoạn được hợp nhất, không cộng trùng khi nghe lặp. Tua không được tính, thời gian được cộng không vượt thời gian server. Giao diện xác thực ở tốc độ 1x và chờ cấp phiên trước khi phát.
+- Endpoint audio-played cũ từ chối đánh dấu trực tiếp. Lesson hoàn thành và transcript AFTER_LISTEN chỉ dùng verified_audio_path khớp audio hiện tại. Dấu nghe legacy được giữ nguyên trong DB nhưng không được coi là bằng chứng xác thực mới; Lesson Progress và lịch sử hoàn thành cũ không bị xóa.
+- V039 bổ sung 10 cột playback/verification vào lesson_engagement, không thêm bảng và không xóa dữ liệu cũ. Đồng thời thay constraint correct_option để cho phép 0–5, phù hợp A–F; service vẫn kiểm số lựa chọn thực tế.
+- Metadata MP3/WAV/M4A/OGG được đọc phía Java khi hỗ trợ; WEBM hoặc file không đọc được cần ffprobe trên PATH hoặc biến FFPROBE_PATH. Không đọc được thời lượng thì báo lỗi và không tự mở khóa. Tài nguyên trong JAR được đọc qua file tạm riêng rồi dọn, không sửa file media nguồn.
+- Trình duyệt vẫn báo vị trí/trạng thái phát; server kiểm tính khả thi theo thời gian và coverage, không thể chứng minh người dùng thực sự chú ý/nghe bằng tai.
+
+API đọc thời lượng chính xác của thư viện: [AudioHeader.getPreciseTrackLength](https://javadoc.io/static/net.jthink/jaudiotagger/3.0.1/org/jaudiotagger/audio/AudioHeader.html).
+
 ## Mẫu nhập đơn giản theo kỹ năng (V028)
 
 Không có trình chia khối. Giữ các trường cố định và đổi nhãn/gợi ý theo kỹ năng; hướng dẫn, phân tích, mục tiêu và tiêu chí bổ sung không bị bắt buộc nhập đủ. Writing/Speaking phải có đề thực hành trước khi công bố. Trắc nghiệm cần 2–6 lựa chọn liên tiếp, đáp án đúng và giải thích; tối đa 20 câu.

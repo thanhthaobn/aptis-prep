@@ -8,7 +8,7 @@ Thanh tìm kiếm/bộ lọc dùng chung `.toolbar` của Student/Admin: padding
 
 Navbar hiện có active state theo URL qua NavigationModelAdvice.navSection: `/` → Trang chủ; `/student/**` → Học tập; `/admin/**` → Quản trị; login/register → đúng mục. Không chọn theo role khi user đang ở trang chủ. Link active có nền màu nhẹ, chữ màu theme đậm và aria-current, không viền, không đổ bóng; vẫn hiện trên mobile. Menu bo góc 8px, cùng padding và độ đậm chữ ở cả trạng thái thường/active để không đổi kích thước khi chuyển trang. Nút Đăng ký active dùng nền đậm hơn, không thêm khung ngoài. Không sửa active riêng từng template; không loại bỏ viền focus dành cho bàn phím.
 
-Menu “Chứng chỉ & Chấm điểm” thay “Cấu hình”, liên kết `/admin/certificates` và dùng activePage `settings`. Template admin/settings/index, certificate, scheme tuân theme teal/tiêu đề không khung. Không hiển thị cấu hình kỹ thuật hay trạng thái OpenAI ở đây. Bàn giao UC-A03–A05: SCORING_UI_HANDOFF.md.
+Menu “Chứng chỉ & Chấm điểm” thay “Cấu hình”, liên kết `/admin/certificates` và dùng activePage `settings`. Template admin/settings/index, certificate, scheme tuân theme teal/tiêu đề không khung. Không hiển thị cấu hình kỹ thuật hay trạng thái Gemini ở đây. Bàn giao UC-A03–A05: SCORING_UI_HANDOFF.md.
 
 Tiêu đề học viên cũng bỏ toàn bộ nền/viền/bóng/bo góc bao quanh như admin, padding 0 và giữ khoảng dưới 18px. Áp dụng Placement, Khám phá, Bài học, Đề thi, Kết quả, Hồ sơ, các chi tiết và banner tiêu đề tổng quan. Chữ dùng font chung; tiêu đề chi tiết kế thừa màu đậm của skill, trang chung màu xanh lá. Các quy tắc khung tiêu đề Student cũ (padding 12px 16px/bo 14px) được thay thế. Không xóa thẻ header ngữ nghĩa hoặc thay màu/khung card nội dung, bản đồ kỹ năng bên dưới.
 

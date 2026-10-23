@@ -23,7 +23,7 @@ public record LessonAuthorProfile(
                             "Tiêu chí tự kiểm tra",
                             "Gợi ý đọc hiểu",
                             "Ảnh đặt cạnh bài đọc. Video hướng dẫn ở trước phần đọc. Câu hỏi ở ngay"
-                                + " sau bài đọc.",
+                                    + " sau bài đọc.",
                             List.of("Đọc hiểu", "Đọc tìm thông tin", "Nhận diện ý chính"));
             case "Listening" ->
                     new LessonAuthorProfile(
@@ -45,7 +45,7 @@ public record LessonAuthorProfile(
                             "Tiêu chí đánh giá bài viết",
                             "Bài viết tham khảo",
                             "Ảnh đề bài đặt trên ô viết. Video hướng dẫn đặt trước phần viết. Bài"
-                                + " mẫu mở theo thời điểm đã chọn.",
+                                    + " mẫu mở theo thời điểm đã chọn.",
                             List.of("Viết ngắn", "Email", "Bài luận"));
             case "Speaking" ->
                     new LessonAuthorProfile(
@@ -56,7 +56,7 @@ public record LessonAuthorProfile(
                             "Tiêu chí đánh giá bài nói",
                             "Gợi ý bài nói",
                             "Ảnh mô tả đặt ngay trên bộ ghi âm. Video hướng dẫn đặt trước phần nói."
-                                + " Học viên phải lưu bản ghi âm.",
+                                    + " Học viên phải lưu bản ghi âm.",
                             List.of("Trả lời câu hỏi", "Mô tả ảnh", "So sánh trong một ảnh ghép"));
             default ->
                     new LessonAuthorProfile(
@@ -67,7 +67,7 @@ public record LessonAuthorProfile(
                             "Tiêu chí tự kiểm tra",
                             "Gợi ý vận dụng",
                             "Ảnh minh họa đặt cạnh ví dụ. Video hướng dẫn ở trước ví dụ. Trắc"
-                                + " nghiệm ở phần luyện tập.",
+                                    + " nghiệm ở phần luyện tập.",
                             List.of("Ngữ pháp trong ngữ cảnh", "Từ vựng theo chủ đề"));
         };
     }

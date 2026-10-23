@@ -1,48 +1,93 @@
-# Hợp đồng service cho 3 thành viên
+# Hợp đồng service cho ba luồng chính
 
-## 1. Chủ sở hữu
+## 1. Chủ sở hữu theo phân công mới
 
-| Contract/service | Chủ | Trách nhiệm |
+Theo [TEAM_ASSIGNMENT_V2.md](TEAM_ASSIGNMENT_V2.md), phương án mới nhất: **1 làm Chứng chỉ, Chấm điểm, AI, tổng hợp kết quả và Profile; 3 làm câu hỏi/đề/media, engine và Placement; 2 làm lịch sử/kết quả UI và hành trình học**.
+
+Interface/DTO tại `com.aptisprep.service.contract` đã có implementation và nối DB thật. Phần phân công/đề xuất bên dưới là lịch sử tích hợp, không có nghĩa hiện chỉ là preview. Trạng thái mới nhất xem [V2_IMPLEMENTATION.md](V2_IMPLEMENTATION.md).
+
+Cập nhật 23/10/2026: ScoringSchemeUsageContract có bean thật kiểm cả đề và attempt; policy đã dùng bất biến, thay đổi qua version mới. AiAssessmentContract có source_type/source_id: EXAM_ANSWER dùng ID attempt/answer thật; LESSON_SUBMISSION dùng submission ID, không phát event hoàn tất Exam. USER_ANSWER giữ bản Writing/Speaking dùng để chấm, detail theo item được giữ/đồng bộ phục vụ sửa và dữ liệu cũ. Không dựng bean giả/fixture trong cấu hình chạy thật.
+
+| Interface/service | Chủ sở hữu | Bên dùng |
 |---|---|---|
-| `AccountAccessContract` / Profile | Thông | ACTIVE/context, áp Placement/Checkpoint hợp lệ |
-| `ScoringPolicyContract` | Thông | raw → scale → CEFR theo policy version |
-| Grading/Result service | Thông | chấm objective/AI, ghi skill result, finalize |
-| `LearningPathContract` | Thảo | complete Lesson, refresh/archive path, checkpoint transition |
-| Result query/presentation | Thảo | lịch sử/chi tiết Student/Admin từ DTO an toàn |
-| `ExamCatalogContract` | Trâm | đề công bố, question view và grading context backend |
-| `ExamAttemptContract` | Trâm | start/resume/save/deadline/submit/locked attempt |
-| Placement orchestration | Trâm | result → Profile Thông → path Thảo |
-| Media helper | Trâm | MIME/content/size/path; chủ đối tượng vẫn kiểm quyền |
+| AccountAccessContract | 1 | 2/3: ACTIVE/context; 3 yêu cầu áp Placement, 2 yêu cầu áp checkpoint |
+| LearningPathContract | 2 | 1 đổi Goal, 3 Placement; 1 đọc summary |
+| ExamCatalogContract | 3 | 2/3: đề công bố; DTO an toàn và grading context backend tách biệt |
+| ScoringPolicyContract | 1 | 1 chấm raw → scale → CEFR theo version; 3 gửi context/policy version; không để engine tự ghi điểm |
+| Service đọc Certificate/Scheme — cần bổ sung | 1 | 3 lấy lựa chọn/kiểm tương thích certificate-scheme khi tạo/publish đề; 2 đọc metadata nếu cần |
+| ExamAttemptContract và service đọc | 3 | 2/3 Placement/checkpoint dùng engine; 1 nhận `LockedAttempt`/grading context có kiểm quyền |
+| ExamResult/GradingContract — cần bổ sung | 1 | 2 đọc `ResultView`/`HistoryPage`; 3 nhận trạng thái grading; 1 ghi result/score/CEFR |
+| AiAssessmentContract — cần bổ sung | 1 | 3 gửi context sau commit; 1 giữ assessment/job/provider/retry và thông báo sau commit |
+| Placement orchestration — cần bổ sung | 3 | Nhận kết quả 1 → gọi Profile 1 → path 2 |
+| Media helper — cần hoàn thiện | 3 | 2/3 kiểm/đọc file; chủ luồng vẫn kiểm quyền đối tượng |
 
-## 2. Quyền ghi
+IntegrationModels là DTO không phải Entity/enum DB; ID Integer, deadline Instant. Mã skill/type/state theo V2, nhãn trình bày theo UI_GUIDE. QuestionView hiện tối thiểu; 3 phải chốt item/option/media trước render, không trả Entity chứa đáp án đúng lên HTML.
 
-- Thông ghi User/Goal/Profile, Certificate/Scheme/Band, assessment và `exam_skill_results`; chỉ Thông finalize grading.
-- Thảo ghi Lesson/Flashcard/progress/path; chỉ đọc attempt/result qua contract.
-- Trâm ghi question/media/exam, `exam_attempts`, answer/detail/media activity; không ghi Profile/path/skill result.
-- Trâm sở hữu trạng thái attempt đến khi bài đã khóa; Thông sở hữu chuyển trạng thái trong grading/finalization. Hai bên phải dùng method có precondition/version, không `setStatus` tùy ý ở Controller.
+## 2. Quyền, NULL và lỗi
 
-## 3. DTO bàn giao tối thiểu
+- Student controller lấy email từ Principal, gọi requireActiveStudent; không tin userId từ form. Mọi ghi phải kiểm ACTIVE/ownership lại ở service.
+- Context/summary/result/history/assessment chỉ đúng owner hoặc ADMIN có quyền; worker nội bộ dùng ngữ cảnh hệ thống được kiểm, không mở endpoint công khai nhận ID tùy ý. Không trả password hash, secret hoặc grading context.
+- Goal/Profile chưa có trả rỗng; không gán B2. progressPercent NULL khi N=0; nextLesson NULL nếu không có bài. C/N theo REAL_PROGRESS_CONTRACT.md.
+- Điểm/CEFR/feedback chưa chấm hoặc lỗi giữ NULL, không thành 0. Deadline không đổi khi reload; NULL chỉ nếu policy cho phép.
+- Page bắt đầu 0, size mặc định 20, giới hạn 1–100; rỗng trả items rỗng, lỗi DB không thay bằng fixture.
+- Không tìm thấy → ResourceNotFoundException/404; sai nghiệp vụ → BusinessRuleException/400; sai quyền → AccessDeniedException/403. Không đưa SQL/provider/secret ra FE.
+- Người 1 triển khai kiểm tài khoản khóa ở request tiếp theo của session cũ; Người 2/3 kiểm ACTIVE trước ghi. Interface chưa phải filter hoạt động.
 
-`LockedAttempt`: attemptId, userId, exam/type, requestKey, submittedAt, deadline, certificate/scheme/policyVersion, answerVersion và grading context backend. Không lấy nội dung/điểm từ client.
+## 3. Quyền ghi không chồng chéo
 
-`GradingResult`: attemptId, skill, state, raw/scale/CEFR hoặc NULL, policy/rubric/answerVersion, feedback đã làm sạch và thời gian. Sự kiện cũ/sai version bị từ chối.
+- Người 1 duy nhất ghi User/Goal/Profile, Certificate/ScoringScheme/ScoreBand, assessment/job, `exam_skill_results`, score/CEFR và sở hữu tác vụ/đánh giá AI; triển khai phép quy đổi.
+- Người 2 ghi Lesson/Flashcard/progress/path; không ghi Profile.
+- Người 3 ghi question/media/đề, attempt/answer/media activity và điều phối Placement; chỉ tham chiếu certificate/scheme qua service 1, không Repository/Entity trùng hoặc ghi band/Profile/path/result.
+- Người 2 ghi Lesson/Flashcard/progress/path và chỉ đọc result DTO; không ghi answer/skill result hoặc tự tính điểm.
 
-`ResultView`: metadata bài thi, trạng thái, điểm theo skill, pending/error, feedback được phép xem. Không chứa đáp án đúng, secret, file path hoặc Entity.
+### AI schema/writer — chốt trong PR đầu với người giữ nền
 
-## 4. Chuỗi nghiệp vụ
+Ưu tiên migration mới cho job/assessment riêng do Người 1 sở hữu khi được duyệt phù hợp V2. Nếu giữ các trường AI trong user_answers theo schema hiện tại: Người 3 giữ Entity/Repository attempt và cung cấp writer nội bộ giới hạn trường AI, kiểm answer/version; Người 1 gọi writer, không tạo Entity/Repository thứ hai. Không để cả hai phương án cùng ghi. Không sửa V001–V005.
 
-1. Trâm lưu và khóa đáp án trong transaction; phát sự kiện/request bền sau commit.
-2. Thông claim idempotent, chấm objective; AI chạy ngoài transaction và lưu assessment riêng.
-3. Thông kiểm answer/policy version, ghi skill result một lần và finalize khi đủ kết quả; pending/error không thành 0.
-4. Thảo đọc kết quả qua guard owner/admin, hiển thị lịch sử và áp checkpoint một lần.
-5. Placement do Trâm nhận kết quả cuối, gọi Thông ghi Profile rồi Thảo cập nhật path.
+DTO yêu cầu AI tối thiểu: assessmentKey, user/attempt/answerId, answerVersion, skill/task, nội dung đã khóa, rubricVersion/policyVersion, thang điểm và transcript nếu có. Tra ngữ cảnh/bản ghi từ server qua 3; không tin đường dẫn hoặc nội dung client làm căn cứ bài đã nộp.
 
-## 5. Quy tắc chung
+DTO assessment tối thiểu: assessmentId/key, answer/version, jobState (cần ánh xạ trạng thái thật), score đúng đơn vị hoặc NULL, feedback/transcript, rubric/policyVersion, provider/model, thời gian và lỗi đã làm sạch. Chốt enum/đơn vị/độ chính xác/biên với 1/3; không nhận CEFR tùy ý từ FE.
 
-- Student lấy email từ `Principal`; service kiểm ACTIVE/ownership lại, không tin userId từ form.
-- Not found → 404, sai nghiệp vụ → 400, sai quyền → 403; không lộ SQL/provider/secret.
-- Deadline không đổi khi reload; requestKey/assessmentKey lưu DB, không dùng `Set` RAM để chống trùng.
-- Điểm/CEFR/feedback chưa chấm giữ NULL. Profile không nhận CEFR tùy ý từ frontend.
-- `/uploads/**` không public. Range/retry Listening không được đếm lượt sai; Speaking gắn user/attempt/answer.
-- Không tạo engine riêng cho Placement hoặc Checkpoint; cả hai dùng engine Trâm.
-- Không tạo vòng bean: ưu tiên read contract và event sau commit. Test mock giúp phát triển nhưng không thay test tích hợp SQL Server.
+## 4. Chuỗi nộp bài → AI → kết quả
+
+1. **3:** lưu/khóa đáp án trong transaction, tạo `LockedAttempt`/yêu cầu bền sau commit; gửi context cho 1 theo version gắn với attempt.
+2. **1:** nhận/claim task idempotent sau commit, gọi Gemini ngoài transaction DB, validate response, lưu assessment trong transaction riêng. AI tắt/lỗi giữ NULL và retry phần lỗi.
+3. **1 → 3:** 1 kiểm version/source, chấm/đánh giá, quy đổi, upsert skill result và tổng hợp. Nếu áp kết quả lỗi chỉ retry áp, không gọi provider lại.
+4. **1 → 3:** 1 hoàn tất attempt khi đủ kết quả theo policy; pending/error không thành điểm 0; báo trạng thái grading accepted/completed idempotent.
+5. **2 + 1:** trang history/result do 2; feedback AI và form retry đọc capability/DTO của 1. Chốt route riêng, CSRF/owner/admin, không có trang chấm mẫu Admin.
+
+requestKey/assessmentKey lưu bền, chống đồng thời bằng transaction/constraint/claim, không Set RAM. Duplicate notification không chấm/tổng hợp hai lần; response cũ không ghi đè version mới. Provider timeout có thể đã xử lý: không cam kết exactly-once phía mạng; retry có kiểm soát, không vô hạn, lưu đủ metadata.
+
+Retry grading là entry point của service 1 qua request từ UI Thảo: kiểm quyền/trạng thái/version rồi điều phối AI; Trâm chỉ cung cấp context đã khóa và không triển khai provider retry trùng Người 1.
+
+## 5. Placement, checkpoint và chống vòng phụ thuộc
+
+Certificate/Scheme: Người 1 trả DTO id/code/status/version/skill phạm vi và phép kiểm certificate-scheme; Người 3 kiểm lại khi ghi/publish đề, không chỉ dropdown. Người 3 kiểm policy phù hợp khi start, giữ version/snapshot cho lịch sử. Scheme đã dùng không hard delete/đổi ngưỡng tại chỗ; trạng thái ngừng dùng không xóa căn cứ chấm bài cũ. Schema chưa có raw→scale riêng thì 1/3 chốt công thức/mapping theo skill/version và migration mới nếu cần. Không dùng band scale→CEFR để mặc định raw→scale đã hoàn tất. Tách scoring read/evaluation khỏi Profile/AI orchestration của 1 để 3 gọi không tạo vòng bean.
+
+- Placement theo [PLACEMENT_RETAKE_POLICY.md](PLACEMENT_RETAKE_POLICY.md): **3 điều phối và thực thi engine**, 1 bảo vệ Profile/floor, 2 cung cấp căn cứ checkpoint/path. Kết quả hợp lệ mới nhất theo submittedAt/id, không max score hoặc thứ tự AI trả về.
+- 3 nhận kết quả → gọi AccountAccessContract.applyAssessment của 1 → gọi ensurePaths của 2; lưu dấu bước đã xử lý để retry/crash không bỏ mất path. 1 tự kiểm lại ownership/type/policy/newest/floor, không nhận CEFR tùy ý.
+- 2 kiểm điều kiện checkpoint/skill/target, gọi engine 3; applyCheckpoint xác nhận kết quả rồi gọi 1 ghi Profile một lần và đóng/mở chặng. Practice/Full Mock không nâng Profile.
+- ensurePaths idempotent; Goal thay đổi archive path/tạo mới và kế thừa completion hợp lệ. completeLesson kiểm quyền/mở khóa, ghi progress/item nhất quán; submit lặp không tăng C.
+- Tách read service khỏi orchestration, thông báo sau commit và dấu xử lý lưu bền. Không tạo vòng bean 1↔3 hoặc 1↔2 rồi che bằng lazy.
+- Không bắt buộc broker/cloud: cơ chế phục hồi local chốt trong PR contract. Không coi event trong RAM là đủ chống crash.
+- Không REST frontend; Thymeleaf/form/session/CSRF. Backend gọi Gemini theo tích hợp đã được chọn.
+
+## 6. Media và cấu hình
+
+/uploads/** đã denyAll, không static handler; StorageService mới thao tác file. Guard extension/50MB/tên ngẫu nhiên/path traversal hiện có không thay MIME thực/kiểm quyền/giới hạn từng mục đích.
+
+- 3 làm helper MIME/content/size và media đề; 2/3 dùng helper và vẫn kiểm ownership đối tượng.
+- 3 sở hữu Speaking upload, gắn user/attempt/answer, endpoint nghe/phát; Listening kiểm media thuộc đề, trạng thái/giờ và hai lượt, chốt Range/retry.
+- 1 lấy transcript/ngữ cảnh đã được cấp quyền, không nhận file path client để grade/load/delete. Speaking qua transcript không chứng minh phát âm; chưa tự bổ sung speech-to-text.
+- Không mở uploads để tránh kiểm quyền. Không dùng demo audio thay media đề thật.
+- Admin Chứng chỉ & Chấm điểm thuộc 1, không hiển thị/sửa key/password/datasource/path/properties. Key local/biến môi trường; test provider mock không cần key thật.
+
+## 7. Thứ tự bàn giao không phải chờ nhau
+
+1. Cả nhóm chốt DTO/state/ownership/routes; 1+3 chốt Certificate/Scheme và raw→scale→CEFR/version, schema AI/writer; 1+2+3 chốt Placement/Profile/checkpoint.
+2. Làm đồng thời: 1 policy nhỏ trước, account/CRUD scoring/AI bằng mock submitted-answer/provider; 2 lesson/progress/path/result UI với context mock; 3 đề/engine/Placement với mock policy/grading.
+3. Bàn giao sớm: 1 → 3 Certificate/scheme khả dụng và validator; 1 → 3 ScoringPolicy + test biên/điểm dự kiến; 3 → 1 `LockedAttempt`; 1 → 3 AI/result status; 1 → 2 result/history DTO; 1 → cả nhóm ACTIVE/context; 2 → 1 checkpoint context. Không đợi CRUD hoàn chỉnh.
+4. Nối policy 1 → đề 3 → engine 3 → grading/kết quả 1 trước; mạch học 2↔1; AI 3→1→3; Placement 3→1→2 sau kết quả 1; checkpoint 2→3→1→2. Merge PR nhỏ sau từng mạch.
+5. Test tích hợp thật pending/error/retake/khóa session/concurrency/SQL Server. Mock chỉ giúp phát triển song song, không thay nghiệm thu hoặc làm bean giả ở cấu hình chạy thật.
+
+Người giữ nền review contract/config/Security/CSS/fragment/migration. Đây là tài liệu phân công, không tự triển khai nghiệp vụ hoặc đổi interface Java trong lần cập nhật này.
