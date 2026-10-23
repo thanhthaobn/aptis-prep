@@ -10,6 +10,8 @@ import com.aptisprep.exception.ResourceNotFoundException;
 import com.aptisprep.repository.*;
 import com.aptisprep.service.contract.ExamAttemptContract;
 import com.aptisprep.service.contract.IntegrationModels.*;
+import com.aptisprep.service.contract.GradingContextFormatter;
+import com.aptisprep.service.contract.GradingTextLimits;
 import com.aptisprep.service.contract.ScoringPolicyContract;
 import com.aptisprep.service.grading.AttemptFinalizationService;
 import com.aptisprep.service.grading.ObjectiveGradingService;
@@ -224,7 +226,12 @@ public class ExamAttemptService implements ExamAttemptContract {
             detail.setSelectedOptionId(selectedOptionId);
         } else if ("WRITING_TEXT".equals(questionType)) {
             String value = textAnswer == null ? "" : textAnswer.trim();
-            if (value.length() > 20000) throw new BusinessRuleException("Bài viết quá dài");
+            if (value.length() > GradingTextLimits.MAX_ITEM_CHARS) {
+                throw new BusinessRuleException("Bài viết ở mục " + item.getPosition() + " vượt quá " + GradingTextLimits.MAX_ITEM_CHARS + " ký tự");
+            }
+            // The detail row is the source of truth: a question may contain
+            // several writing items, so an answer-level field must not replace
+            // the text of another item.
             // Item rows retain the editable structure; the answer-level representation
             // is rebuilt in the same transaction and is the grading source.
             detail.setAnswerText(value);
@@ -269,6 +276,8 @@ public class ExamAttemptService implements ExamAttemptContract {
         attempt.setPolicyVersion(attempt.getPolicyVersion() == null ? "scoring-scheme:" + exam.getScoringSchemeId() + ":v1" : attempt.getPolicyVersion());
         attempt.setRubricVersion(attempt.getRubricVersion() == null ? RUBRIC_VERSION : attempt.getRubricVersion());
         attempt.setGradingRequestKey("attempt:" + attemptId + ":grading:v" + attempt.getAnswerVersion());
+        LockedAttempt draftLocked = lockedAttempt(attempt, exam);
+        validateAiPayload(draftLocked);
         attempt.setSubmittedAt(now); attempt.setGradingStatus("GRADING"); attempt.setStatus(expired ? "EXPIRED" : "SUBMITTED");
         LockedAttempt locked = lockedAttempt(attempt, exam);
         objectiveGrading.gradeObjective(locked, exam);
@@ -399,6 +408,7 @@ public class ExamAttemptService implements ExamAttemptContract {
             List<Map<String, Object>> lockedItems = new ArrayList<>();
             for (QuestionItemEntity item : items.findByQuestionIdOrderByPosition(question.getId())) {
                 Map<String, Object> i = new LinkedHashMap<>(); i.put("id", item.getId()); i.put("position", item.getPosition()); i.put("content", item.getContent()); i.put("correctPosition", item.getCorrectPosition());
+                i.put("minWordCount", item.getMinWordCount()); i.put("maxWordCount", item.getMaxWordCount()); i.put("responseSeconds", item.getResponseSeconds());
                 List<Map<String, Object>> lockedOptions = new ArrayList<>(); options.findByQuestionItemIdOrderByPosition(item.getId()).forEach(option -> { Map<String, Object> o = new LinkedHashMap<>(); o.put("id", option.getId()); o.put("code", option.getOptionCode()); o.put("position", option.getPosition()); o.put("content", option.getContent()); o.put("correct", option.getCorrect()); lockedOptions.add(o); });
                 i.put("options", lockedOptions); lockedItems.add(i);
             }
@@ -505,19 +515,21 @@ public class ExamAttemptService implements ExamAttemptContract {
             String content = question.path("content").asText("");
             String task = instruction.isBlank() ? content : instruction + "\n" + content;
             List<UserAnswerDetailEntity> answerDetails = details.findByUserAnswerIdOrderByQuestionItemIdAsc(answer.getId());
-            String lockedContent = firstNonBlank(answer.getTextAnswer(), answer.getAudioUrl(), answer.getTranscript());
+            String legacyLockedContent = firstNonBlank(answer.getTextAnswer(), answer.getAudioUrl(), answer.getTranscript());
             if ("SPEAKING_AUDIO".equals(question.path("type").asText()) && answer.getAudioManifest() != null) {
                 List<String> paths = new ArrayList<>();
                 for (JsonNode entry : json.readTree(answer.getAudioManifest())) paths.add(entry.path("path").asText());
-                lockedContent = String.join("\n--- ITEM ---\n", paths);
+                legacyLockedContent = String.join("\n--- ITEM ---\n", paths);
             }
             // Read compatibility for historical answers; existing detail data is preserved.
-            if (lockedContent == null || lockedContent.isBlank()) lockedContent = answerDetails.stream()
+            if (legacyLockedContent == null || legacyLockedContent.isBlank()) legacyLockedContent = answerDetails.stream()
                     .map(detail -> firstNonBlank(detail.getAnswerText(), detail.getAudioPath(), detail.getTranscript()))
                     .filter(Objects::nonNull)
                     .collect(java.util.stream.Collectors.joining("\n--- ITEM ---\n"));
             List<LockedItem> lockedItems = new ArrayList<>();
             for (JsonNode item : question.path("items")) {
+                UserAnswerDetailEntity detail = details.findByUserAnswerIdAndQuestionItemId(answer.getId(), item.path("id").asInt()).orElse(null);
+                String itemContent = detail == null ? null : firstNonBlank(detail.getAnswerText(), detail.getAudioPath(), detail.getTranscript());
                 Integer correctOption = null;
                 for (JsonNode option : item.path("options")) {
                     if (option.path("correct").asBoolean(false)) {
@@ -525,9 +537,12 @@ public class ExamAttemptService implements ExamAttemptContract {
                         break;
                     }
                 }
-                lockedItems.add(new LockedItem(item.path("id").asInt(), correctOption,
-                        item.path("correctPosition").isNull() ? null : item.path("correctPosition").asInt()));
+                lockedItems.add(new LockedItem(item.path("id").asInt(), item.path("position").asInt(), itemPrompt(item), itemContent,
+                        correctOption, item.path("correctPosition").isNull() ? null : item.path("correctPosition").asInt()));
             }
+            String lockedContent = lockedItems.stream().map(LockedItem::lockedContent).filter(Objects::nonNull)
+                    .filter(value -> !value.isBlank()).collect(java.util.stream.Collectors.joining("\n--- ITEM ---\n"));
+            if (lockedContent.isBlank()) lockedContent = legacyLockedContent;
             return new LockedAnswer(answer.getId(), answer.getQuestionId(), question.path("skill").asText(), question.path("type").asText(),
                     task, lockedContent, answer.getTranscript(), lockedItems);
         }).toList();
@@ -536,6 +551,39 @@ public class ExamAttemptService implements ExamAttemptContract {
                 attempt.getScoringSchemeId() == null ? exam.getScoringSchemeId() : attempt.getScoringSchemeId(),
                 attempt.getPolicyVersion(), attempt.getRubricVersion() == null ? RUBRIC_VERSION : attempt.getRubricVersion(),
                 snapshot.getGradingContext(), attempt.getGradingRequestKey(), lockedAnswers);
+    }
+
+    private void validateAiPayload(LockedAttempt locked) {
+        for (LockedAnswer answer : locked.answers()) {
+            if (!Set.of("WRITING_TEXT", "SPEAKING_AUDIO").contains(answer.questionType())) continue;
+            String task = GradingContextFormatter.task(answer);
+            String submission = GradingContextFormatter.submission(answer);
+            for (LockedItem item : answer.items()) {
+                if (GradingTextLimits.length(item.lockedContent()) > GradingTextLimits.MAX_ITEM_CHARS) {
+                    throw new BusinessRuleException("Bài làm ở mục " + item.position() + " vượt quá " + GradingTextLimits.MAX_ITEM_CHARS + " ký tự");
+                }
+            }
+            if (GradingTextLimits.length(task) + GradingTextLimits.length(submission) > GradingTextLimits.MAX_QUESTION_CHARS) {
+                throw new BusinessRuleException("Nội dung câu " + answer.questionId() + " vượt quá " + GradingTextLimits.MAX_QUESTION_CHARS + " ký tự cho phép");
+            }
+            if (GradingTextLimits.length(task) > GradingTextLimits.MAX_AI_TASK_CHARS
+                    || GradingTextLimits.length(submission) > GradingTextLimits.MAX_AI_SUBMISSION_CHARS
+                    || GradingTextLimits.length(task) + GradingTextLimits.length(submission) > GradingTextLimits.MAX_AI_PAYLOAD_CHARS) {
+                throw new BusinessRuleException("Nội dung câu " + answer.questionId() + " vượt giới hạn ngữ cảnh chấm AI");
+            }
+        }
+    }
+
+    private String itemPrompt(JsonNode item) {
+        StringBuilder prompt = new StringBuilder(item.path("content").asText(""));
+        if (item.path("minWordCount").isNumber() || item.path("maxWordCount").isNumber()) {
+            prompt.append("\nGiới hạn từ: ");
+            if (item.path("minWordCount").isNumber()) prompt.append("tối thiểu ").append(item.path("minWordCount").asInt()).append(" ");
+            if (item.path("maxWordCount").isNumber()) prompt.append("tối đa ").append(item.path("maxWordCount").asInt()).append(" ");
+            prompt.append("từ.");
+        }
+        if (item.path("responseSeconds").isNumber()) prompt.append("\nThời gian trả lời: ").append(item.path("responseSeconds").asInt()).append(" giây.");
+        return prompt.toString();
     }
 
     private ExamAttemptEntity editableAttempt(Integer userId, Integer attemptId) {

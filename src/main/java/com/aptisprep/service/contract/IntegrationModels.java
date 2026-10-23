@@ -38,8 +38,13 @@ public final class IntegrationModels {
             this(answerId, questionId, skill, questionType, taskContent, lockedContent, transcript, List.of());
         }
     }
-    /** Backend-only answer key snapshot; never serialize this record to a learner-facing view. */
-    public record LockedItem(Integer itemId, Integer correctOptionId, Integer correctPosition) {}
+    /** Backend-only item snapshot. Never serialize this record to a learner-facing view. */
+    public record LockedItem(Integer itemId, int position, String taskContent, String lockedContent,
+            Integer correctOptionId, Integer correctPosition) {
+        public LockedItem(Integer itemId, Integer correctOptionId, Integer correctPosition) {
+            this(itemId, 0, null, null, correctOptionId, correctPosition);
+        }
+    }
     public record SkillResult(String skill, BigDecimal rawScore, BigDecimal scaleScore,
             String estimatedLevel, String gradingState, String feedback, boolean passed, boolean retryable) {
         public SkillResult(String skill, BigDecimal rawScore, BigDecimal scaleScore,

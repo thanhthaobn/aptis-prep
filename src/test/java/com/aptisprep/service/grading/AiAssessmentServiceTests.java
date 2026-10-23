@@ -153,6 +153,32 @@ class AiAssessmentServiceTests {
     }
 
     @Test
+    void acceptsTwoWritingItemsWhenEachItemIsWithinLimit() {
+        User user = new User(); user.setId(1); user.setRole(Role.STUDENT); user.setStatus(UserStatus.ACTIVE);
+        when(users.findById(1)).thenReturn(Optional.of(user));
+        when(jobs.findByAssessmentKeyForUpdate("two-items")).thenReturn(Optional.empty());
+
+        String first = "a".repeat(11_000);
+        String second = "b".repeat(11_000);
+        AssessmentRequest request = new AssessmentRequest("two-items", 1, 2, 3, 1, "WRITING", "WRITING",
+                "Write message one\nWrite message two", first + "\n\n" + second,
+                "r1", "p1", new BigDecimal("50"), null);
+
+        assertDoesNotThrow(() -> service.request(request));
+        verify(jobs).save(any(AiAssessmentJob.class));
+    }
+
+    @Test
+    void rejectsPayloadAfterTaskAndSubmissionAreCombined() {
+        AssessmentRequest request = new AssessmentRequest("too-large", 1, 2, 3, 1, "WRITING", "WRITING",
+                "t".repeat(50_000), "a".repeat(50_001), "r1", "p1", new BigDecimal("50"), null);
+
+        assertThrows(com.aptisprep.exception.BusinessRuleException.class, () -> service.request(request));
+        verifyNoInteractions(jobs, assessments);
+
+    }
+
+    @Test
     void lessonFeedbackNeverPublishesAnExamEventEvenWithCollidingIds() {
         job.setSourceType("LESSON_SUBMISSION"); job.setSourceId(3);
         when(writing.grade("Write an email", "Dear team"))

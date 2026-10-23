@@ -1,6 +1,6 @@
 # Rà soát nghiệp vụ, ERD as-built và độ lệch so với SPEC V2
 
-Ngày rà soát: 22/10/2026  
+Ngày rà soát: 22/10/2026
 Phạm vi: source Java, Flyway `V001`–`V031`, metadata SQL Server `aptisprep_db`, `SPEC_V2.md`, `PROJECT_DECISIONS.md` và các contract bàn giao.
 
 ## 1. Kết luận điều hành
@@ -302,4 +302,3 @@ Các dấu hiệu chất lượng nên dọn nhưng không phải dead code:
 - Flyway hiện đã chạy đến `V031` thành công.
 - So sánh baseline lấy từ 24 mục entity trong `docs/SPEC_V2.md`.
 - Đánh giá hàm không dùng dựa trên call-site search toàn `src/main/java` và `src/test/java`; vẫn cần Maven compile/test sau khi thực sự xóa.
-
