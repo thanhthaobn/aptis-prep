@@ -8,31 +8,33 @@
     <main id="main-content" tabindex="-1" class="app-main admin-catalog">
         <div th:replace="~{fragments/breadcrumb :: breadcrumb(${catalog.title}, @{${catalog.baseUrl()}}, ${editing ? 'Chỉnh sửa' : catalog.createLabel})}"></div>
         <header class="page-header"><div><h1 th:text="${editing ? 'Chỉnh sửa ' + catalog.singular : catalog.createLabel}"></h1><p class="muted">Dữ liệu được lưu trực tiếp vào ngân hàng nội dung.</p></div></header>
-        <form th:if="${catalog.key == 'questions'}" class="dashboard-panel catalog-preview-form" method="post" enctype="multipart/form-data" th:object="${questionForm}" th:action="${editing ? '/admin/questions/' + entry.id + '/edit' : '/admin/questions'}">
-            <h2>Thông tin câu hỏi</h2>
-            <div class="field"><label for="content">Nội dung câu hỏi</label><textarea id="content" th:field="*{content}" rows="4" required></textarea></div>
-            <div class="field"><label for="instruction">Hướng dẫn</label><textarea id="instruction" th:field="*{instruction}" rows="2"></textarea></div>
-            <div class="field" id="reading-passage-field"><label for="readingPassage">Đoạn văn Reading (chỉ dùng cho kỹ năng Reading)</label><textarea id="readingPassage" th:field="*{readingPassage}" rows="10" placeholder="Dán đoạn văn nguồn tại đây. Xuống dòng sẽ được giữ khi hiển thị cho học viên."></textarea></div>
+        <form th:if="${catalog.key == 'questions'}" class="dashboard-panel catalog-preview-form question-editor-form" method="post" enctype="multipart/form-data" th:object="${questionForm}" th:action="${editing ? '/admin/questions/' + entry.id + '/edit' : '/admin/questions'}">
+            <div class="catalog-form-intro"><span class="catalog-form-step">1</span><div><h2>Thông tin câu hỏi</h2><p class="muted">Chọn kỹ năng và dạng câu hỏi trước. Hệ thống sẽ chỉ hiển thị các trường phù hợp.</p></div></div>
+            <div class="alert alert-error" th:if="${formError}" th:text="${formError}" role="alert"></div>
+            <div class="field"><label for="content">Nội dung câu hỏi</label><textarea id="content" th:field="*{content}" rows="4" required placeholder="Ví dụ: Listen to the announcement and choose the correct answer."></textarea><small class="field-help">Đây là tiêu đề hoặc yêu cầu chung của câu hỏi.</small></div>
+            <div class="field"><label for="instruction">Hướng dẫn làm bài</label><textarea id="instruction" th:field="*{instruction}" rows="2" placeholder="Ví dụ: Choose one answer for each item."></textarea><small class="field-help">Dùng cho hướng dẫn chung. Không nhập đáp án đúng ở trường này.</small></div>
+            <div class="field conditional-field" id="reading-passage-field" data-only-skills="READING"><label for="readingPassage">Đoạn văn Reading</label><textarea id="readingPassage" th:field="*{readingPassage}" rows="10" placeholder="Dán đoạn văn nguồn tại đây. Xuống dòng sẽ được giữ khi hiển thị cho học viên."></textarea><small class="field-help">Chỉ xuất hiện với Reading và được hiển thị trước các ý hỏi.</small></div>
             <div class="catalog-form-grid">
-                <div class="field"><label for="skill">Kỹ năng</label><select id="skill" th:field="*{skill}"><option th:each="item : ${skills}" th:value="${item}" th:text="${item}"></option></select></div>
+                <div class="field"><label for="skill">Kỹ năng</label><select id="skill" th:field="*{skill}"><option th:each="item : ${skills}" th:value="${item}" th:text="${item}"></option></select><small id="skill-help" class="field-help">Kỹ năng quyết định dạng câu hỏi có thể sử dụng.</small></div>
                 <div class="field"><label for="cefrLevel">Cấp độ CEFR</label><select id="cefrLevel" th:field="*{cefrLevel}"><option th:each="item : ${levels}" th:value="${item}" th:text="${item}"></option></select></div>
-                <div class="field"><label for="questionType">Dạng câu hỏi</label><select id="questionType" th:field="*{questionType}"><option value="SINGLE_CHOICE">Chọn một đáp án</option><option value="MATCHING">Ghép nối</option><option value="ORDERING">Sắp xếp</option><option value="WRITING_TEXT">Trả lời bằng văn bản</option><option value="SPEAKING_AUDIO">Trả lời bằng âm thanh</option></select></div>
-                <div class="field"><label for="difficulty">Độ khó</label><input id="difficulty" th:field="*{difficulty}" maxlength="30"></div>
+                <div class="field"><label for="questionType">Dạng câu hỏi</label><select id="questionType" th:field="*{questionType}"><option value="SINGLE_CHOICE">Chọn một đáp án</option><option value="MATCHING">Ghép nối</option><option value="ORDERING">Sắp xếp</option><option value="WRITING_TEXT">Trả lời bằng văn bản</option><option value="SPEAKING_AUDIO">Trả lời bằng âm thanh</option></select><small id="question-type-help" class="field-help">Mỗi dạng câu hỏi có cách nhập đáp án riêng.</small></div>
+                <div class="field"><label for="difficulty">Độ khó</label><select id="difficulty" th:field="*{difficulty}"><option value="EASY">Dễ</option><option value="MEDIUM">Trung bình</option><option value="HARD">Khó</option></select></div>
                 <div class="field"><label for="partNo">Phần thi</label><input id="partNo" type="number" min="1" th:field="*{partNo}"></div>
-                <div class="field"><label for="status">Trạng thái lưu</label><select id="status" th:field="*{status}"><option value="DRAFT">Bản nháp</option><option value="ARCHIVED">Đã lưu trữ</option></select></div>
+                <div class="field"><label for="status">Trạng thái lưu</label><select id="status" th:field="*{status}"><option value="DRAFT">Bản nháp</option><option value="PUBLISHED">Đã công bố</option><option value="ARCHIVED">Đã lưu trữ</option></select><small class="field-help">Chỉ chọn “Đã công bố” khi nội dung, đáp án và media đã sẵn sàng.</small></div>
             </div>
+            <aside id="question-type-guide" class="catalog-guided-help" aria-live="polite"></aside>
             <section class="catalog-form-section">
-                <div class="section-title-row"><h2>Các mục câu hỏi</h2><button class="button button-secondary button-small" type="button" id="add-item">Thêm mục</button></div>
+                <div class="catalog-form-intro catalog-form-intro-small"><span class="catalog-form-step">2</span><div><h2>Các mục câu hỏi</h2><p class="muted">Mỗi mục là một ý hỏi hoặc một câu trả lời riêng của học viên.</p></div><button class="button button-secondary button-small" type="button" id="add-item">Thêm mục</button></div>
                 <div id="question-items">
                     <div class="question-item-editor" th:each="item, itemStat : *{items}" th:attr="data-item-index=${itemStat.index}">
-                        <h3 class="question-item-editor-title"><span class="question-item-editor-number" th:text="${itemStat.index + 1}">1</span><span class="sr-only">Mục câu hỏi</span></h3>
+                        <div class="question-item-editor-title"><div class="question-item-editor-heading"><span class="question-item-editor-number" th:text="${itemStat.index + 1}">1</span><h3>Mục câu hỏi</h3></div><button class="button button-secondary button-small remove-item" type="button">Xóa mục</button></div>
                         <div class="field"><label th:for="|items-${itemStat.index}-content|">Nội dung mục câu hỏi</label><textarea th:id="|items-${itemStat.index}-content|" th:field="*{items[__${itemStat.index}__].content}" rows="3" required></textarea></div>
-                        <div class="catalog-form-grid"><div class="field"><label>Vị trí/đáp án đúng</label><input type="number" min="1" th:field="*{items[__${itemStat.index}__].correctPosition}"></div><div class="field"><label>Số từ tối thiểu</label><input type="number" min="0" th:field="*{items[__${itemStat.index}__].minWordCount}"></div><div class="field"><label>Số từ tối đa</label><input type="number" min="0" th:field="*{items[__${itemStat.index}__].maxWordCount}"></div><div class="field"><label>Thời gian trả lời (giây)</label><input type="number" min="1" th:field="*{items[__${itemStat.index}__].responseSeconds}"></div></div>
-                        <fieldset class="catalog-option-fields"><legend>Phương án</legend><div th:each="option, optionStat : ${item.options}"><label th:text="|Phương án ${option.code}|" th:for="|items-${itemStat.index}-options-${optionStat.index}-content|"></label><input type="text" th:id="|items-${itemStat.index}-options-${optionStat.index}-content|" th:field="*{items[__${itemStat.index}__].options[__${optionStat.index}__].content}"><label><input type="radio" th:field="*{items[__${itemStat.index}__].correctPosition}" th:value="${optionStat.index + 1}"> Đáp án đúng / vị trí đúng</label><input type="hidden" th:field="*{items[__${itemStat.index}__].options[__${optionStat.index}__].code}"></div></fieldset>
+                        <div class="catalog-form-grid item-rules-grid"><div class="field conditional-field correct-position-field" data-only-types="ORDERING"><label>Vị trí đúng trong thứ tự</label><input type="number" min="1" th:field="*{items[__${itemStat.index}__].correctPosition}"><small class="field-help">Mỗi mục phải có một vị trí khác nhau từ 1 đến số lượng mục.</small></div><div class="field conditional-field item-writing-rule" data-only-types="WRITING_TEXT"><label>Số từ tối thiểu</label><input type="number" min="0" th:field="*{items[__${itemStat.index}__].minWordCount}"></div><div class="field conditional-field item-writing-rule" data-only-types="WRITING_TEXT"><label>Số từ tối đa</label><input type="number" min="0" th:field="*{items[__${itemStat.index}__].maxWordCount}"></div><div class="field conditional-field item-response-rule" data-only-types="WRITING_TEXT,SPEAKING_AUDIO"><label>Thời gian trả lời (giây)</label><input type="number" min="1" th:field="*{items[__${itemStat.index}__].responseSeconds}"></div></div>
+                        <fieldset class="catalog-option-fields conditional-field" data-only-types="SINGLE_CHOICE,MATCHING"><legend>Phương án trả lời</legend><p class="field-help">Nhập phương án liên tục từ A trở đi rồi chọn đúng một đáp án đúng.</p><div th:each="option, optionStat : ${item.options}"><label class="option-code-label" th:text="|Phương án ${option.code}|" th:for="|items-${itemStat.index}-options-${optionStat.index}-content|"></label><input type="text" th:id="|items-${itemStat.index}-options-${optionStat.index}-content|" th:field="*{items[__${itemStat.index}__].options[__${optionStat.index}__].content}"><label class="option-correct-label"><input type="radio" th:field="*{items[__${itemStat.index}__].correctPosition}" th:value="${optionStat.index + 1}"><span class="option-correct-text">Đáp án đúng</span></label><input type="hidden" th:field="*{items[__${itemStat.index}__].options[__${optionStat.index}__].code}"></div></fieldset>
                     </div>
                 </div>
             </section>
-            <div class="field"><label for="contentFile">Ảnh hoặc âm thanh đính kèm</label><input id="contentFile" name="file" type="file" accept="image/*,audio/*"></div>
+            <div class="field upload-field"><label for="contentFile">Tài nguyên đính kèm mới <span class="muted">(không bắt buộc)</span></label><input id="contentFile" name="file" type="file" accept="image/*,audio/*"><small class="field-help">Có thể tải thêm một audio hoặc hình ảnh ở đây. Sau khi lưu, dùng trang chi tiết để xem trước, sửa metadata và quản lý nhiều media.</small></div>
             <div class="page-actions"><button class="button" type="submit">Lưu câu hỏi</button><a class="button button-secondary" th:href="@{/admin/questions}">Hủy</a></div>
         </form>
         <form th:if="${catalog.key == 'exams'}" class="dashboard-panel catalog-preview-form" method="post" th:object="${examForm}" th:action="${editing ? '/admin/exams/' + entry.id + '/edit' : '/admin/exams'}">
@@ -47,7 +49,19 @@
                 <div class="field"><label for="scoringSchemeId">Bộ chấm điểm</label><select id="scoringSchemeId" th:field="*{scoringSchemeId}"><option value="">Không quy đổi CEFR (chỉ điểm raw)</option><option th:each="item : ${schemes}" th:value="${item.id}" th:text="${item.name + ' — v' + item.version}"></option></select></div>
                 <div class="field"><label for="durationMinutes">Tổng thời gian (phút)</label><input id="durationMinutes" type="number" min="1" th:field="*{durationMinutes}" required></div>
             </div>
-            <section class="catalog-form-section"><div class="section-title-row"><h2>Sections và câu hỏi</h2><button class="button button-secondary button-small" type="button" id="add-exam-section">Thêm section</button></div><p class="muted">Full Mock có thể gồm nhiều kỹ năng. Mỗi câu hỏi chỉ được đưa vào đúng một section.</p><div id="exam-sections"><div class="exam-section-editor" th:each="section, sectionStat : *{sections}" th:attr="data-section-index=${sectionStat.index}"><h3 class="exam-section-title"><span class="exam-section-number" th:text="${sectionStat.index + 1}">1</span><span>Section</span></h3><div class="catalog-form-grid"><div class="field"><label th:for="|sections-${sectionStat.index}-skill|">Kỹ năng section</label><select class="section-skill" th:id="|sections-${sectionStat.index}-skill|" th:field="*{sections[__${sectionStat.index}__].skill}"><option th:each="item : ${skills}" th:value="${item}" th:text="${item}"></option></select></div><div class="field"><label th:for="|sections-${sectionStat.index}-durationMinutes|">Thời lượng section (phút)</label><input type="number" min="1" required th:id="|sections-${sectionStat.index}-durationMinutes|" th:field="*{sections[__${sectionStat.index}__].durationMinutes}"></div></div><input type="hidden" class="section-question-ids" th:field="*{sections[__${sectionStat.index}__].questionIds}"><div class="catalog-checkbox section-question-picker"><label class="section-question-label" draggable="true" th:each="question : ${publishedQuestions}" th:attr="data-skill=${question.skill}" th:hidden="${question.skill != section.skill}"><input type="checkbox" class="section-question" th:attr="data-question-id=${question.id},data-section-index=${sectionStat.index},data-skill=${question.skill}" th:checked="${section.questionIds != null and #strings.contains(',' + section.questionIds + ',', ',' + question.id + ',')}"><span th:text="${question.id + ' · ' + question.skill + ' · ' + question.content}"></span></label></div></div></div></section>
+            <section class="catalog-form-section">
+                <div class="section-title-row"><h2>Sections và câu hỏi</h2></div>
+                <p class="muted">Full Mock có thể gồm nhiều kỹ năng. Mỗi câu hỏi chỉ được đưa vào đúng một section.</p>
+                <div id="exam-sections">
+                    <div class="exam-section-editor" th:each="section, sectionStat : *{sections}" th:attr="data-section-index=${sectionStat.index}">
+                        <h3 class="exam-section-title"><span class="exam-section-number" th:text="${sectionStat.index + 1}">1</span><span>Section</span></h3>
+                        <div class="catalog-form-grid"><div class="field"><label th:for="|sections-${sectionStat.index}-skill|">Kỹ năng section</label><select class="section-skill" th:id="|sections-${sectionStat.index}-skill|" th:field="*{sections[__${sectionStat.index}__].skill}"><option th:each="item : ${skills}" th:value="${item}" th:text="${item}"></option></select></div><div class="field"><label th:for="|sections-${sectionStat.index}-durationMinutes|">Thời lượng section (phút)</label><input type="number" min="1" required th:id="|sections-${sectionStat.index}-durationMinutes|" th:field="*{sections[__${sectionStat.index}__].durationMinutes}"></div></div>
+                        <input type="hidden" class="section-question-ids" th:field="*{sections[__${sectionStat.index}__].questionIds}">
+                        <div class="catalog-checkbox section-question-picker"><label class="section-question-label" draggable="true" th:each="question : ${publishedQuestions}" th:attr="data-skill=${question.skill}" th:hidden="${question.skill != section.skill}"><input type="checkbox" class="section-question" th:attr="data-question-id=${question.id},data-section-index=${sectionStat.index},data-skill=${question.skill}" th:checked="${section.questionIds != null and #strings.contains(',' + section.questionIds + ',', ',' + question.id + ',')}"><span th:text="${question.id + ' · ' + question.skill + ' · ' + question.content}"></span></label></div>
+                    </div>
+                </div>
+                <div class="section-add-action"><button class="button button-secondary button-small" type="button" id="add-exam-section">Thêm section</button></div>
+            </section>
             <div class="page-actions"><button class="button" type="submit">Lưu đề thi</button><a class="button button-secondary" th:href="@{/admin/exams}">Hủy</a></div>
         </form>
     </main>
@@ -58,26 +72,89 @@
   const root = document.getElementById('question-items');
   const add = document.getElementById('add-item');
   if (!root || !add) return;
-  const updateQuestionType = () => {
-    const type = document.getElementById('questionType').value;
-    root.querySelectorAll('.catalog-option-fields').forEach(field => {
-      const visible = ['SINGLE_CHOICE','MATCHING'].includes(type); field.hidden = !visible; field.disabled = !visible;
+  const skillTypes = {
+    GRAMMAR_VOCABULARY: ['SINGLE_CHOICE', 'MATCHING', 'ORDERING'],
+    READING: ['SINGLE_CHOICE', 'MATCHING', 'ORDERING'],
+    LISTENING: ['SINGLE_CHOICE', 'MATCHING', 'ORDERING'],
+    WRITING: ['WRITING_TEXT'],
+    SPEAKING: ['SPEAKING_AUDIO']
+  };
+  const typeGuides = {
+    SINGLE_CHOICE: 'Mỗi mục có từ hai phương án trở lên. Nhập các phương án từ A trở đi rồi chọn một đáp án đúng.',
+    MATCHING: 'Mỗi mục là một ý cần ghép với phương án phù hợp. Nhập các phương án và chọn vị trí ghép đúng cho từng ý.',
+    ORDERING: 'Nhập nhiều mục rồi đặt vị trí đúng cho từng mục. Các vị trí phải đủ và không được trùng nhau.',
+    WRITING_TEXT: 'Mỗi mục là một yêu cầu viết. Học viên sẽ trả lời bằng ô văn bản nên không cần nhập phương án hay đáp án đúng.',
+    SPEAKING_AUDIO: 'Mỗi mục là một yêu cầu nói. Học viên sẽ ghi âm trực tiếp nên không cần nhập phương án hay đáp án đúng.'
+  };
+  const skillHelp = {
+    GRAMMAR_VOCABULARY: 'Có thể dùng chọn đáp án, ghép nối hoặc sắp xếp.',
+    READING: 'Có thể dùng đoạn văn kèm chọn đáp án, ghép nối hoặc sắp xếp.',
+    LISTENING: 'Nên gắn audio ở phần tài nguyên đính kèm rồi chọn dạng trả lời phù hợp.',
+    WRITING: 'Chỉ dùng dạng trả lời bằng văn bản.',
+    SPEAKING: 'Chỉ dùng dạng trả lời bằng âm thanh và microphone của học viên.'
+  };
+  const selectedType = () => document.getElementById('questionType')?.value || 'SINGLE_CHOICE';
+  const selectedSkill = () => document.getElementById('skill')?.value || 'READING';
+  const setFieldState = (field, visible) => {
+    field.hidden = !visible;
+    field.querySelectorAll('input, select, textarea').forEach(input => input.disabled = !visible);
+  };
+  const renumberItems = () => {
+    root.querySelectorAll('.question-item-editor').forEach((block, index) => {
+      block.dataset.itemIndex = index;
+      const number = block.querySelector('.question-item-editor-number');
+      if (number) number.textContent = String(index + 1);
+      block.querySelectorAll('[name]').forEach(input => input.name = input.name.replace(/items\[\d+\]/g, `items[${index}]`));
+      block.querySelectorAll('[id]').forEach(input => input.id = input.id.replace(/items-\d+-/, `items-${index}-`));
+      block.querySelectorAll('[for]').forEach(label => label.htmlFor = label.htmlFor.replace(/items-\d+-/, `items-${index}-`));
     });
   };
-  document.getElementById('questionType').addEventListener('change', updateQuestionType);
-  updateQuestionType();
-  add.addEventListener('click', () => {
-    const index = root.querySelectorAll('.question-item-editor').length;
+  const updateQuestionType = () => {
+    const skill = selectedSkill();
+    const allowed = skillTypes[skill] || skillTypes.READING;
+    const typeSelect = document.getElementById('questionType');
+    if (typeSelect && !allowed.includes(typeSelect.value)) typeSelect.value = allowed[0];
+    const type = selectedType();
+    typeSelect?.querySelectorAll('option').forEach(option => option.hidden = !allowed.includes(option.value));
+    const readingField = document.getElementById('reading-passage-field');
+    if (readingField) setFieldState(readingField, skill === 'READING');
+    const skillText = document.getElementById('skill-help');
+    if (skillText) skillText.textContent = skillHelp[skill] || '';
+    const typeText = document.getElementById('question-type-help');
+    if (typeText) typeText.textContent = typeGuides[type] || '';
+    const guide = document.getElementById('question-type-guide');
+    if (guide) guide.textContent = typeGuides[type] || '';
+    root.querySelectorAll('.question-item-editor').forEach(block => {
+      block.querySelectorAll('[data-only-types]').forEach(field => {
+        const types = field.dataset.onlyTypes.split(',');
+        setFieldState(field, types.includes(type));
+      });
+      block.querySelectorAll('.option-correct-text').forEach(text => text.textContent = type === 'MATCHING' ? 'Vị trí ghép đúng' : 'Đáp án đúng');
+      const remove = block.querySelector('.remove-item');
+      if (remove) remove.disabled = root.querySelectorAll('.question-item-editor').length === 1;
+    });
+  };
+  const createItem = index => {
     const block = document.createElement('div');
     block.className = 'question-item-editor';
     block.dataset.itemIndex = index;
-    block.innerHTML = `<h3 class="question-item-editor-title"><span class="question-item-editor-number">${index + 1}</span><span class="sr-only">Mục câu hỏi</span></h3>
-      <div class="field"><label>Nội dung mục câu hỏi</label><textarea name="items[${index}].content" rows="3" required></textarea></div>
-      <div class="catalog-form-grid"><div class="field"><label>Vị trí/đáp án đúng</label><input type="number" min="1" name="items[${index}].correctPosition"></div><div class="field"><label>Số từ tối thiểu</label><input type="number" min="0" name="items[${index}].minWordCount"></div><div class="field"><label>Số từ tối đa</label><input type="number" min="0" name="items[${index}].maxWordCount"></div><div class="field"><label>Thời gian trả lời (giây)</label><input type="number" min="1" name="items[${index}].responseSeconds"></div></div>
-      <fieldset class="catalog-option-fields"><legend>Phương án</legend>${['A','B','C'].map((code, optionIndex) => `<div><label>Phương án ${code}</label><input type="text" name="items[${index}].options[${optionIndex}].content"><label><input type="radio" name="items[${index}].correctPosition" value="${optionIndex + 1}"> Đáp án đúng / vị trí đúng</label><input type="hidden" name="items[${index}].options[${optionIndex}].code" value="${code}"></div>`).join('')}</fieldset>`;
-    root.appendChild(block);
+    block.innerHTML = `<div class="question-item-editor-title"><div class="question-item-editor-heading"><span class="question-item-editor-number">${index + 1}</span><h3>Mục câu hỏi</h3></div><button class="button button-secondary button-small remove-item" type="button">Xóa mục</button></div>
+      <div class="field"><label for="items-${index}-content">Nội dung mục câu hỏi</label><textarea id="items-${index}-content" name="items[${index}].content" rows="3" required></textarea></div>
+      <div class="catalog-form-grid item-rules-grid"><div class="field conditional-field correct-position-field" data-only-types="ORDERING"><label>Vị trí đúng trong thứ tự</label><input type="number" min="1" name="items[${index}].correctPosition"><small class="field-help">Mỗi mục phải có một vị trí khác nhau từ 1 đến số lượng mục.</small></div><div class="field conditional-field item-writing-rule" data-only-types="WRITING_TEXT"><label>Số từ tối thiểu</label><input type="number" min="0" name="items[${index}].minWordCount"></div><div class="field conditional-field item-writing-rule" data-only-types="WRITING_TEXT"><label>Số từ tối đa</label><input type="number" min="0" name="items[${index}].maxWordCount"></div><div class="field conditional-field item-response-rule" data-only-types="WRITING_TEXT,SPEAKING_AUDIO"><label>Thời gian trả lời (giây)</label><input type="number" min="1" name="items[${index}].responseSeconds"></div></div>
+      <fieldset class="catalog-option-fields conditional-field" data-only-types="SINGLE_CHOICE,MATCHING"><legend>Phương án trả lời</legend><p class="field-help">Nhập phương án liên tục từ A trở đi rồi chọn đúng một đáp án đúng.</p>${['A','B','C'].map((code, optionIndex) => `<div><label class="option-code-label" for="items-${index}-options-${optionIndex}-content">Phương án ${code}</label><input id="items-${index}-options-${optionIndex}-content" type="text" name="items[${index}].options[${optionIndex}].content"><label class="option-correct-label"><input type="radio" name="items[${index}].correctPosition" value="${optionIndex + 1}"><span class="option-correct-text">Đáp án đúng</span></label><input type="hidden" name="items[${index}].options[${optionIndex}].code" value="${code}"></div>`).join('')}</fieldset>`;
+    return block;
+  };
+  document.getElementById('skill')?.addEventListener('change', updateQuestionType);
+  document.getElementById('questionType')?.addEventListener('change', updateQuestionType);
+  root.addEventListener('click', event => {
+    const remove = event.target.closest('.remove-item');
+    if (!remove || remove.disabled) return;
+    remove.closest('.question-item-editor')?.remove();
+    renumberItems();
     updateQuestionType();
   });
+  add.addEventListener('click', () => { root.appendChild(createItem(root.querySelectorAll('.question-item-editor').length)); updateQuestionType(); });
+  updateQuestionType();
 })();
 (() => {
   const sections = document.getElementById('exam-sections');

@@ -66,13 +66,23 @@ public class AdminCatalogController {
     }
 
     @PostMapping("/questions")
-    public String saveQuestion(@ModelAttribute QuestionForm form, @RequestParam(name = "file", required = false) MultipartFile file) {
-        return "redirect:/admin/questions/" + catalogService.saveQuestion(null, form, file);
+    public String saveQuestion(@ModelAttribute QuestionForm form, @RequestParam(name = "file", required = false) MultipartFile file, Model model) {
+        try {
+            return "redirect:/admin/questions/" + catalogService.saveQuestion(null, form, file);
+        } catch (BusinessRuleException exception) {
+            prepareQuestionError(model, form, false, exception.getMessage(), null);
+            return "admin/catalog/form";
+        }
     }
 
     @PostMapping("/questions/{id:\\d+}/edit")
-    public String updateQuestion(@PathVariable int id, @ModelAttribute QuestionForm form, @RequestParam(name = "file", required = false) MultipartFile file) {
-        catalogService.saveQuestion(id, form, file); return "redirect:/admin/questions/" + id;
+    public String updateQuestion(@PathVariable int id, @ModelAttribute QuestionForm form, @RequestParam(name = "file", required = false) MultipartFile file, Model model) {
+        try {
+            catalogService.saveQuestion(id, form, file); return "redirect:/admin/questions/" + id;
+        } catch (BusinessRuleException exception) {
+            prepareQuestionError(model, form, true, exception.getMessage(), id);
+            return "admin/catalog/form";
+        }
     }
 
     @PostMapping("/questions/{id:\\d+}/publish")
@@ -134,5 +144,13 @@ public class AdminCatalogController {
         model.addAttribute("examForm", form); model.addAttribute("certificates", catalogService.activeCertificates());
         model.addAttribute("schemes", catalogService.activeSchemes()); model.addAttribute("publishedQuestions", catalogService.publishedQuestions());
         model.addAttribute("examTypes", catalogService.examTypes());
+    }
+
+    private void prepareQuestionError(Model model, QuestionForm form, boolean editing, String message, Integer id) {
+        addModule("questions", model);
+        model.addAttribute("editing", editing);
+        model.addAttribute("questionForm", form);
+        model.addAttribute("formError", message);
+        if (id != null) model.addAttribute("entry", catalogService.entry("questions", id));
     }
 }
