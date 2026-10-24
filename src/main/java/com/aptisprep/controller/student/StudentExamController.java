@@ -27,7 +27,7 @@ public class StudentExamController {
         this.attempts = attempts;
     }
 
-    @PostMapping("/student/exams/{id:\\d+}/start")
+    @PostMapping("/student/exams/{id}/start")
     public String start(
             @PathVariable Integer id, Principal principal, RedirectAttributes redirect) {
         try {
@@ -44,14 +44,14 @@ public class StudentExamController {
         }
     }
 
-    @GetMapping("/student/attempts/{id:\\d+}")
+    @GetMapping("/student/attempts/{id}")
     public String attempt(@PathVariable Integer id, Principal principal, Model model) {
         Integer userId = accounts.requireActiveStudent(principal.getName());
         model.addAttribute("attempt", attempts.page(userId, id));
         return "student/attempt";
     }
 
-    @PostMapping("/student/attempts/{id:\\d+}/answers")
+    @PostMapping("/student/attempts/{id}/answers")
     public String answer(
             @PathVariable Integer id,
             @RequestParam Integer questionId,
@@ -71,7 +71,7 @@ public class StudentExamController {
         return "redirect:/student/attempts/" + id;
     }
 
-    @PostMapping("/student/attempts/{id:\\d+}/answers/autosave")
+    @PostMapping("/student/attempts/{id}/answers/autosave")
     @ResponseBody
     public ResponseEntity<Map<String, Object>> autosave(
             @PathVariable Integer id,
@@ -93,7 +93,7 @@ public class StudentExamController {
     }
 
     @PostMapping(
-            value = "/student/attempts/{id:\\d+}/answers/audio",
+            value = "/student/attempts/{id}/answers/audio",
             consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public String audio(
             @PathVariable Integer id,
@@ -111,7 +111,7 @@ public class StudentExamController {
         return "redirect:/student/attempts/" + id;
     }
 
-    @PostMapping("/student/attempts/{id:\\d+}/media/{mediaId:\\d+}/play")
+    @PostMapping("/student/attempts/{id}/media/{mediaId}/play")
     @ResponseBody
     public ResponseEntity<ExamAttemptService.MediaPlayResult> playMedia(
             @PathVariable Integer id, @PathVariable Integer mediaId, Principal principal) {
@@ -120,7 +120,7 @@ public class StudentExamController {
                         accounts.requireActiveStudent(principal.getName()), id, mediaId));
     }
 
-    @GetMapping("/student/attempts/{id:\\d+}/media/{mediaId:\\d+}/content")
+    @GetMapping("/student/attempts/{id}/media/{mediaId}/content")
     public ResponseEntity<Resource> mediaContent(
             @PathVariable Integer id,
             @PathVariable Integer mediaId,
@@ -136,7 +136,7 @@ public class StudentExamController {
                 .body(media.resource());
     }
 
-    @GetMapping("/student/attempts/{id:\\d+}/answers/{answerId:\\d+}/audio")
+    @GetMapping("/student/attempts/{id}/answers/{answerId}/audio")
     public ResponseEntity<Resource> speakingAudio(
             @PathVariable Integer id, @PathVariable Integer answerId, Principal principal) {
         var media =
@@ -147,7 +147,7 @@ public class StudentExamController {
                 .body(media.resource());
     }
 
-    @PostMapping("/student/attempts/{id:\\d+}/submit")
+    @PostMapping("/student/attempts/{id}/submit")
     public String submit(
             @PathVariable Integer id, Principal principal, RedirectAttributes redirect) {
         try {

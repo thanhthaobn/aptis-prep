@@ -11,6 +11,8 @@ import com.aptisprep.entity.Lesson;
 import com.aptisprep.entity.User;
 import com.aptisprep.enums.*;
 import com.aptisprep.repository.*;
+import com.aptisprep.service.storage.StorageService;
+import com.aptisprep.support.TestAudio;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -191,6 +193,7 @@ class FlashcardFlowTests {
     @Autowired UserFlashcardProgressRepository progress;
     @Autowired MockMvc mvc;
     @Autowired FlashcardSetRepository sets;
+    @Autowired StorageService storage;
 
     @Test
     void sourceFilterSeparatesMySetsFromLessonSetsAndHidesOtherOwners() throws Exception {
@@ -280,7 +283,7 @@ class FlashcardFlowTests {
     }
 
     @Test
-    void bundledAudioSupportsPlaybackButRemainsProtected() throws Exception {
+    void uploadedAudioSupportsPlaybackButRemainsProtected() throws Exception {
         var student = learner("bundled-audio@test.local");
         var lesson = new Lesson();
         lesson.setTitle("Travel announcement");
@@ -288,7 +291,7 @@ class FlashcardFlowTests {
         lesson.setCefrLevel("A2");
         lesson.setDisplayOrder(4001);
         lesson.setStatus("PUBLISHED");
-        lesson.setAudioPath("curriculum/audio/listening-a2.wav");
+        lesson.setAudioPath(TestAudio.store(storage));
         lesson.setAudioName("Travel announcement.wav");
         lessons.saveAndFlush(lesson);
         String url = "/lesson-media/" + lesson.getId() + "/audio";
@@ -301,8 +304,7 @@ class FlashcardFlowTests {
                 .andExpect(
                         content()
                                 .bytes(
-                                        new org.springframework.core.io.ClassPathResource(
-                                                        lesson.getAudioPath())
+                                        storage.load(lesson.getAudioPath())
                                                 .getInputStream()
                                                 .readNBytes(44)));
         lesson.setStatus("ARCHIVED");

@@ -9,10 +9,9 @@
           <div th:replace="~{fragments/navi :: navi('welcome', 'Navi đồng hành cùng bạn')}"></div>
           <p class="eyebrow">BẮT ĐẦU TỪ HÔM NAY</p>
           <h2>Một thói quen nhỏ. Một hành trình mới.</h2>
-          <p
-            >Khám phá trước, chọn mục tiêu sau. Bạn không cần làm bài đầu vào để bắt đầu tìm
-            hiểu.</p
-          >
+          <p>
+            Khám phá trước, chọn mục tiêu sau. Bạn không cần làm bài đầu vào để bắt đầu tìm hiểu.
+          </p>
         </section>
         <div class="form-card">
           <span class="form-logo" aria-hidden="true"
@@ -38,6 +37,8 @@
                 th:field="*{fullName}"
                 autocomplete="name"
                 placeholder="Nguyễn Văn An"
+                maxlength="255"
+                required
               />
               <span class="field-error" th:errors="*{fullName}"></span>
             </div>
@@ -49,6 +50,8 @@
                 type="email"
                 autocomplete="email"
                 placeholder="name@example.com"
+                maxlength="255"
+                required
               />
               <span class="field-error" th:errors="*{email}"></span>
             </div>
@@ -60,6 +63,9 @@
                 type="password"
                 autocomplete="new-password"
                 placeholder="Tối thiểu 8 ký tự"
+                minlength="8"
+                maxlength="72"
+                required
               />
               <span class="field-error" th:errors="*{password}"></span>
             </div>
@@ -71,6 +77,7 @@
                 type="password"
                 autocomplete="new-password"
                 placeholder="Nhập lại mật khẩu"
+                required
               />
               <span class="field-error" th:errors="*{confirmPassword}"></span>
             </div>

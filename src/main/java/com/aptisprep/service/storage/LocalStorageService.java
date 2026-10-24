@@ -10,7 +10,6 @@ import java.nio.file.StandardCopyOption;
 import java.util.Locale;
 import java.util.Set;
 import java.util.UUID;
-import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
 import org.springframework.stereotype.Service;
@@ -69,12 +68,6 @@ public class LocalStorageService implements StorageService {
 
     @Override
     public Resource load(String relativePath) {
-        if (isBundledResource(relativePath)) {
-            Resource resource = new ClassPathResource(relativePath);
-            if (!resource.exists())
-                throw new BusinessRuleException("Không tìm thấy tài nguyên bài thi");
-            return resource;
-        }
         Path target = safeResolve(relativePath);
         try {
             Resource resource = new UrlResource(target.toUri());
@@ -89,9 +82,6 @@ public class LocalStorageService implements StorageService {
 
     @Override
     public void delete(String relativePath) {
-        // Bundled teaching recordings are read-only; removing/replacing a lesson's
-        // reference must not remove the shared application resource.
-        if (isBundledResource(relativePath)) return;
         try {
             Files.deleteIfExists(safeResolve(relativePath));
         } catch (IOException exception) {
@@ -105,9 +95,5 @@ public class LocalStorageService implements StorageService {
             throw new BusinessRuleException("Đường dẫn file không hợp lệ");
         }
         return resolved;
-    }
-
-    private static boolean isBundledResource(String path) {
-        return path != null && path.matches("curriculum/[A-Za-z0-9._/-]+");
     }
 }

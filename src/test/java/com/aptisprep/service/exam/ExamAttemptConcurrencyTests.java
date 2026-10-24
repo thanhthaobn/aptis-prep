@@ -34,6 +34,8 @@ import com.aptisprep.repository.ScoreBandRepository;
 import com.aptisprep.repository.ScoringScaleRuleRepository;
 import com.aptisprep.repository.ScoringSchemeRepository;
 import com.aptisprep.repository.UserRepository;
+import com.aptisprep.service.storage.StorageService;
+import com.aptisprep.support.TestAudio;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -62,6 +64,7 @@ class ExamAttemptConcurrencyTests {
     @Autowired ExamAttemptSnapshotRepository snapshots;
     @Autowired AttemptOutboxRepository outbox;
     @Autowired AttemptOutboxService outboxService;
+    @Autowired StorageService storage;
     @Autowired com.aptisprep.service.learning.LessonService lessonService;
     @Autowired com.aptisprep.service.learning.LearningPathService learningPaths;
     @Autowired com.aptisprep.repository.LearningPathRepository learningPathRepository;
@@ -506,7 +509,7 @@ class ExamAttemptConcurrencyTests {
         QuestionMediaEntity audio = new QuestionMediaEntity();
         audio.setQuestionId(question.getId());
         audio.setMediaType("AUDIO");
-        audio.setMediaUrl("curriculum/audio/listening-a2.wav");
+        audio.setMediaUrl(TestAudio.store(storage));
         audio.setOriginalFilename("audio.wav");
         audio.setContentType("audio/wav");
         audio.setPosition(1);

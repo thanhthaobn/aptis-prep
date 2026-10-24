@@ -2,6 +2,72 @@
 
 Tài liệu này là hợp đồng giao diện cho mọi Pull Request có Thymeleaf/CSS.
 
+## Đọc source và theo dõi form hiện tại (25/10/2026)
+
+Phần này mô tả source đang chạy; những mô tả preview trong các quyết định cũ
+bên dưới là lịch sử triển khai, không phải danh sách chức năng còn thiếu.
+
+| Khi cần sửa | Đọc ở đâu |
+| --- | --- |
+| Trang và form | `src/main/resources/templates/`, chia `auth`, `admin`, `student`, `flashcard` |
+| Header/sidebar/thông báo dùng lại | `templates/fragments/` |
+| Menu mobile | `static/js/navigation.js` được navbar nạp bằng `defer` |
+| Thêm ý hỏi/phần thi ở Admin | `static/js/catalog-editor.js` được `admin/catalog/form.html` nạp |
+| Autosave, timer, audio, ghi âm khi thi | `static/js/exam-runner.js` được `student/attempt.html` nạp |
+| Soạn bài học / học bài | `static/js/lesson-author.js` / `lesson-player.js` |
+| Soạn và ôn Flashcard | `static/js/flashcard-editor.js` / `flashcard-study.js` |
+| Biểu đồ hoạt động hồ sơ | `static/js/profile-activity.js` |
+
+Luồng form cơ bản: GET vào controller → service đọc dữ liệu → controller đặt
+model → Thymeleaf render HTML. Khi nhấn lưu: trình duyệt gửi POST + CSRF →
+controller nhận DTO trong `dto/form` → service kiểm nghiệp vụ và lưu qua
+repository → redirect về GET. Lỗi nhập liệu phải quay lại form và giữ thông tin
+có thể sửa; JavaScript chỉ hỗ trợ hiển thị và lưu nháp, backend vẫn kiểm lại.
+
+Ví dụ đăng ký: `auth/register.html` → POST `/register` →
+`AuthController.register` + `RegisterForm` → `UserService.registerStudent` →
+`UserRepository`. Backend trả lỗi từng trường nếu thiếu dữ liệu hoặc xác nhận
+mật khẩu khác nhau; form có `required`, giới hạn độ dài tương ứng DTO.
+
+Ví dụ bài học: `StudentLessonController` render `student/lesson/detail.html`;
+`lesson-player.js` hỗ trợ phiên nghe/autosave. Các POST `/check`, `/response`,
+`/assess` được chuyển vào `LessonTeachingService`; điều kiện nghe đủ được xử lý
+riêng bởi `LessonListeningService`, không tin phần trăm do client khai báo.
+
+Ví dụ bài thi: `StudentExamController` → `ExamAttemptService` tạo snapshot và
+lượt thi → `student/attempt.html` + `exam-runner.js`. Lưu đáp án qua
+`/answers/autosave`; nộp qua `/submit`. Sau khi lưu bài, outbox/orchestration
+chuyển phần chấm sang grading; kết quả được đọc lại ở trang result. Không đưa
+lệnh gọi Gemini hoặc đáp án đúng vào JavaScript của học viên.
+
+### Package nên giữ và mức độ phức tạp
+
+`controller`, `dto`, `service`, `repository`, `entity` vẫn là các tầng MVC quen
+thuộc. Các nhánh `service/learning`, `exam`, `grading`, `scoring`, `account`,
+`placement`, `storage`, `catalog`, `admin`, `auth`, `student` đều đang có lớp
+được sử dụng; chưa có bằng chứng cần bỏ hoặc thêm package nghiệp vụ.
+
+- `event` dùng cho thông báo sau giao dịch, liên kết cập nhật Goal/lộ trình
+  và kết quả AI; không thay bằng việc gọi mạng trong transaction.
+- `exception` giữ lỗi nghiệp vụ, quyền truy cập và không tìm thấy dữ liệu,
+  cùng cách trả thông báo phù hợp.
+- `service/contract` chứa giao tiếp giữa các luồng; không cần thêm interface
+  cho mọi service chỉ để có cấu trúc `service/impl`.
+- Bean `resultLabels` được Thymeleaf gọi dù có thể không thấy lời gọi từ Java;
+  không xóa bean chỉ dựa trên Find Usages trong Java.
+
+Phần khó chủ yếu nằm ở `AiAssessmentService`, `AttemptFinalizationService`,
+`ExamAttemptService`, `LessonTeachingService`, `CatalogService` và
+`LearningPathService`. Chúng vẫn lớn; khi sửa tiếp nên tách theo một trách nhiệm
+cụ thể và giữ ranh giới transaction/lock. Việc di chuyển file sang package mới
+không tự làm các luồng này dễ hiểu hơn.
+
+HTML hiện đã tách các script dài ra file riêng. Formatter dùng
+`htmlWhitespaceSensitivity: css` để thẻ block dễ đọc hơn; dùng
+`npm run format:web` / `npm run format:web:check` và kiểm tra lại các vùng text
+inline sau khi sửa template. Bootstrap vẫn phụ trách collapse của sidebar,
+các trang vẫn dùng CSS chung trong head fragment.
+
 Thanh tìm kiếm/bộ lọc dùng chung `.toolbar` của Student/Admin: padding 10px 12px, gap 8px, nhãn 13px, ô nhập/select/nút 14px cao 38px desktop, viền mảnh và không shadow. Ô tìm kiếm co giãn cùng hàng với bộ lọc nếu đủ chỗ, không ép chiếm cả hàng trên desktop. Mobile ≤760px xếp ô lọc theo hàng riêng và giữ vùng thao tác tối thiểu 44px. Không áp các kích thước này lên form tạo/sửa hoặc đăng nhập.
 
 ## Quyết định giao diện mới nhất

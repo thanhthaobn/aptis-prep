@@ -30,9 +30,8 @@ public class StudentContentController {
         this.attempts = attempts;
     }
 
-    @GetMapping("/{module:exams}")
+    @GetMapping("/exams")
     public String list(
-            @PathVariable String module,
             @RequestParam(defaultValue = "") String q,
             @RequestParam(defaultValue = "") String skill,
             @RequestParam(defaultValue = "") String level,
@@ -40,8 +39,8 @@ public class StudentContentController {
             Model model) {
         if (q.length() > 255 || skill.length() > 80 || level.length() > 40 || state.length() > 40)
             throw new BusinessRuleException("Bộ lọc không hợp lệ");
-        common(module, model);
-        model.addAttribute("entries", catalog.find(module, q, skill, level, state));
+        examModel(model);
+        model.addAttribute("entries", catalog.find("exams", q, skill, level, state));
         model.addAttribute("q", q);
         model.addAttribute("selectedSkill", skill);
         model.addAttribute("selectedLevel", level);
@@ -78,21 +77,21 @@ public class StudentContentController {
         return "student/results/list";
     }
 
-    @GetMapping("/{module:exams}/{id:\\d+}")
-    public String detail(@PathVariable String module, @PathVariable int id, Model model) {
-        common(module, model);
-        model.addAttribute("entry", catalog.entry(module, id));
+    @GetMapping("/exams/{id}")
+    public String detail(@PathVariable int id, Model model) {
+        examModel(model);
+        model.addAttribute("entry", catalog.entry("exams", id));
         return "student/content/detail";
     }
 
-    @GetMapping("/attempts/{id:\\d+}/result")
+    @GetMapping("/attempts/{id}/result")
     public String result(@PathVariable int id, Principal principal, Model model) {
         Integer userId = accounts.requireActiveStudent(principal.getName());
         model.addAttribute("attemptResult", attempts.result(userId, id));
         return "student/attempt-result";
     }
 
-    @PostMapping("/attempts/{id:\\d+}/retry-grading")
+    @PostMapping("/attempts/{id}/retry-grading")
     public String retryGrading(
             @PathVariable int id, Principal principal, RedirectAttributes redirect) {
         Integer userId = accounts.requireActiveStudent(principal.getName());
@@ -110,15 +109,9 @@ public class StudentContentController {
         return "redirect:/student/attempts/" + id + "/result";
     }
 
-    private void common(String module, Model model) {
-        model.addAttribute("module", module);
-        model.addAttribute(
-                "title",
-                switch (module) {
-                    case "lessons" -> "Bài học";
-                    case "exams" -> "Đề thi";
-                    default -> "Kết quả";
-                });
+    private void examModel(Model model) {
+        model.addAttribute("module", "exams");
+        model.addAttribute("title", "Đề thi");
         model.addAttribute(
                 "skills",
                 List.of(

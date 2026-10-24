@@ -26,6 +26,19 @@ Setup chi tiết SQL Server TCP/IP, IntelliJ/JDK 21, kiểm thử và checklist 
 
 Không tự tạo tài khoản/nội dung demo. Đăng ký người dùng thật và cấp quyền quản trị trên DB do bạn quản lý theo [SETUP_LOCAL.md](docs/SETUP_LOCAL.md).
 
+## Lưu ảnh, video và audio
+
+Toàn bộ media nằm trên ổ đĩa trong `uploads/`, không đóng gói trong JAR.
+Admin tải file mới vào các nhánh `lesson-images`, `lesson-video`, `lesson-audio`,
+`questions`; bản ghi học viên nằm trong các nhánh recording/attempt tương ứng.
+Các tài nguyên giáo trình cũ nằm trong `uploads/curriculum/`. DB và snapshot
+giữ nguyên đường dẫn tương đối `curriculum/...` để lịch sử vẫn đọc được.
+
+Khi chuyển máy/deploy hoặc khôi phục DB, phải mang theo **cả database và thư mục
+uploads**. Git không chứa media riêng; clone source hoặc chạy schema không tự
+khôi phục chúng. Backend kiểm quyền trước khi trả file, không công khai `/uploads/**`.
+Xem hướng dẫn sao lưu/chuyển máy trong [SETUP_LOCAL.md](docs/SETUP_LOCAL.md#9-media-local-và-chuyển-máy).
+
 ## Kiểm thử
 
 ```powershell

@@ -10,9 +10,9 @@
               class="eyebrow"
               th:text="${isPlacement ? 'KIỂM TRA ĐẦU VÀO · APTIS CEFR' : 'KẾT QUẢ ĐÁNH GIÁ BÀI THI'}"
             ></p>
-            <h1 th:text="${isPlacement ? 'Đánh giá năng lực đầu vào' : 'Kết quả bài thi Aptis'}"
-              >Kết quả bài thi</h1
-            >
+            <h1 th:text="${isPlacement ? 'Đánh giá năng lực đầu vào' : 'Kết quả bài thi Aptis'}">
+              Kết quả bài thi
+            </h1>
             <div class="result-meta-list">
               <span class="result-meta-item">
                 <strong>Mã lượt thi:</strong>
@@ -50,18 +50,18 @@
               th:if="${res.overallScaleScore != null}"
               th:text="|Điểm tổng: ${res.overallScaleScore}/50|"
             ></strong>
-            <p th:if="${res.state == 'COMPLETED'}"
-              >Kết quả đánh giá theo khung tham chiếu trình độ ngôn ngữ chung Châu Âu (CEFR).</p
-            >
-            <p th:if="${res.state == 'WAITING_GRADING' or res.state == 'SUBMITTED'}"
-              >Bài làm đã được ghi nhận. Đang tiến hành chấm điểm các phần tự luận.</p
-            >
-            <p th:if="${res.state == 'ERROR'}"
-              >Có lỗi trong quá trình chấm. Điểm lỗi không được quy đổi thành 0.</p
-            >
-            <p th:if="${res.state == 'EXPIRED'}"
-              >Bài làm đã quá thời gian quy định tại thời điểm nộp bài.</p
-            >
+            <p th:if="${res.state == 'COMPLETED'}">
+              Kết quả đánh giá theo khung tham chiếu trình độ ngôn ngữ chung Châu Âu (CEFR).
+            </p>
+            <p th:if="${res.state == 'WAITING_GRADING' or res.state == 'SUBMITTED'}">
+              Bài làm đã được ghi nhận. Đang tiến hành chấm điểm các phần tự luận.
+            </p>
+            <p th:if="${res.state == 'ERROR'}">
+              Có lỗi trong quá trình chấm. Điểm lỗi không được quy đổi thành 0.
+            </p>
+            <p th:if="${res.state == 'EXPIRED'}">
+              Bài làm đã quá thời gian quy định tại thời điểm nộp bài.
+            </p>
           </div>
         </div>
       </section>
@@ -81,10 +81,10 @@
         <span class="pending-icon" aria-hidden="true">⏳</span>
         <div>
           <strong>Đang xử lý chấm điểm phần tự luận</strong>
-          <p
-            >Bài làm đã được lưu. Điểm và CEFR còn thiếu sẽ xuất hiện khi dịch vụ chấm hoàn tất. Tải
-            lại trang để xem trạng thái mới nhất.</p
-          >
+          <p>
+            Bài làm đã được lưu. Điểm và CEFR còn thiếu sẽ xuất hiện khi dịch vụ chấm hoàn tất. Tải
+            lại trang để xem trạng thái mới nhất.
+          </p>
         </div>
       </div>
 
@@ -99,10 +99,10 @@
         class="alert alert-error"
         role="alert"
       >
-        <p
-          >Chấm điểm chưa thành công. Bài làm được giữ lại. Lỗi chấm không được tính là điểm 0 hoặc
-          kết quả trượt.</p
-        >
+        <p>
+          Chấm điểm chưa thành công. Bài làm được giữ lại. Lỗi chấm không được tính là điểm 0 hoặc
+          kết quả trượt.
+        </p>
         <form
           th:if="${res.state == 'ERROR' and !#lists.isEmpty(res.skills.?[retryable == true])}"
           method="post"
@@ -157,8 +157,7 @@
                 <div
                   class="skill-progress-bar"
                   th:style="|width: ${skill.scaleScore != null ? (skill.scaleScore * 2) : 0}%;|"
-                >
-                </div>
+                ></div>
               </div>
 
               <div class="skill-raw-score" th:if="${skill.rawScore != null}">

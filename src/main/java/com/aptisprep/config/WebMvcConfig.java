@@ -6,5 +6,5 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 @Configuration
 public class WebMvcConfig implements WebMvcConfigurer {
 
-    // uploads is private. Media is served only by future authorized MVC controllers.
+    // uploads is private. Media is served only by authorized MVC controllers.
 }

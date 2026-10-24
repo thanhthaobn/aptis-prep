@@ -4,34 +4,35 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 import com.aptisprep.exception.BusinessRuleException;
+import com.aptisprep.support.TestAudio;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 import org.springframework.core.io.ByteArrayResource;
-import org.springframework.core.io.ClassPathResource;
+import org.springframework.core.io.FileSystemResource;
 
 class AudioDurationServiceTests {
+    @TempDir Path root;
+
     @Test
-    void readsDurationFromServerFileRatherThanAClientParameter() {
+    void readsDurationFromServerFileRatherThanAClientParameter() throws Exception {
+        var file = Files.write(root.resolve("test.wav"), TestAudio.wav());
         var storage = mock(StorageService.class);
-        when(storage.load("curriculum/audio/listening-a2.wav"))
-                .thenReturn(new ClassPathResource("curriculum/audio/listening-a2.wav"));
+        when(storage.load("audio/test.wav")).thenReturn(new FileSystemResource(file));
         double duration =
                 new AudioDurationService(storage, "missing-ffprobe-for-test")
-                        .seconds("curriculum/audio/listening-a2.wav");
-        assertTrue(duration > 0 && duration < 86400);
+                        .seconds("audio/test.wav");
+        assertEquals(1.0, duration, 0.01);
     }
 
     @Test
-    void bundledJarResourcesCanBeProbedWithoutARealFilesystemFile() throws Exception {
-        byte[] bytes;
-        try (var input =
-                new ClassPathResource("curriculum/audio/listening-a2.wav").getInputStream()) {
-            bytes = input.readAllBytes();
-        }
+    void streamResourcesCanBeProbedThroughATemporaryFile() {
+        byte[] bytes = TestAudio.wav();
         var storage = mock(StorageService.class);
-        when(storage.load("inside-jar.wav")).thenReturn(new ByteArrayResource(bytes));
+        when(storage.load("stream.wav")).thenReturn(new ByteArrayResource(bytes));
         assertTrue(
-                new AudioDurationService(storage, "missing-ffprobe-for-test")
-                                .seconds("inside-jar.wav")
+                new AudioDurationService(storage, "missing-ffprobe-for-test").seconds("stream.wav")
                         > 0);
     }
 

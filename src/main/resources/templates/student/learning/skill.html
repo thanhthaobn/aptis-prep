@@ -28,10 +28,10 @@
         </div>
 
         <section class="curriculum-tree" aria-label="Kỹ năng, cấp độ và bài học">
-          <p th:if="${#lists.isEmpty(paths)}" class="empty-box"
-            >Chưa có chặng phù hợp hoặc mục tiêu hiện tại đã đạt. Bạn vẫn có thể ôn bài trong thư
-            viện.</p
-          >
+          <p th:if="${#lists.isEmpty(paths)}" class="empty-box">
+            Chưa có chặng phù hợp hoặc mục tiêu hiện tại đã đạt. Bạn vẫn có thể ôn bài trong thư
+            viện.
+          </p>
           <a class="button button-secondary" th:href="@{/student/lessons(skill=${selectedSkill})}"
             >Xem tất cả bài học của kỹ năng</a
           >
@@ -49,8 +49,8 @@
             <div th:replace="~{fragments/path-stage :: stageScale(${path.skill()})}"></div>
             <div th:each="stage : ${stages}" th:if="${stage.pathId == path.pathId}">
               <h2>Bài học được giao trong chặng</h2>
-              <ol class="lesson-leaves"
-                ><li th:each="lesson : ${stage.lessons}">
+              <ol class="lesson-leaves">
+                <li th:each="lesson : ${stage.lessons}">
                   <div class="path-lesson-content">
                     <small
                       class="muted"
@@ -78,8 +78,9 @@
                       th:href="@{/student/flashcards/{id}(id=${lessonSets.get(lesson.id).id()})}"
                       th:text="|Ôn ${lessonSets.get(lesson.id).count()} thẻ từ vựng →|"
                     ></a>
-                  </div> </li
-              ></ol>
+                  </div>
+                </li>
+              </ol>
             </div>
 
             <!-- Khu vực Bài kiểm tra cuối chặng -->
@@ -98,8 +99,8 @@
                   th:text="|Còn ${path.totalRequiredLessons() - path.completedRequiredLessons()} bài cần hoàn thành|"
                 ></strong>
                 <th:block th:each="stage : ${stages}" th:if="${stage.pathId == path.pathId}">
-                  <ul class="checkpoint-missing-list"
-                    ><li th:each="lesson : ${stage.missingRequiredLessons()}">
+                  <ul class="checkpoint-missing-list">
+                    <li th:each="lesson : ${stage.missingRequiredLessons()}">
                       <a
                         th:if="${lesson.available}"
                         th:href="@{/student/lessons/{id}(id=${lesson.id})}"
@@ -108,8 +109,9 @@
                       <span
                         th:unless="${lesson.available}"
                         th:text="|${lesson.title} · Chưa thể truy cập, cần quản trị cập nhật|"
-                      ></span> </li
-                  ></ul>
+                      ></span>
+                    </li>
+                  </ul>
                 </th:block>
               </div>
               <div
@@ -120,23 +122,23 @@
                 Bạn đã vượt qua bài kiểm tra cuối chặng của kỹ năng này.
               </div>
               <th:block th:if="${path.checkpointState == 'not_configured'}">
-                <p th:if="${path.totalRequiredLessons() == 0}"
-                  >Chặng chưa có bài học bắt buộc để mở kiểm tra.</p
-                >
-                <p th:if="${path.totalRequiredLessons() > 0}"
-                  >Chưa có đề kiểm tra phù hợp với kỹ năng và cấp độ của chặng. Quản trị viên cần
-                  cấu hình và công bố đề.</p
-                >
+                <p th:if="${path.totalRequiredLessons() == 0}">
+                  Chặng chưa có bài học bắt buộc để mở kiểm tra.
+                </p>
+                <p th:if="${path.totalRequiredLessons() > 0}">
+                  Chưa có đề kiểm tra phù hợp với kỹ năng và cấp độ của chặng. Quản trị viên cần cấu
+                  hình và công bố đề.
+                </p>
               </th:block>
-              <p th:if="${path.checkpointState == 'grading'}"
-                >Bài đã nộp và đang chờ chấm hoặc xác nhận kết quả. Không cần tạo lượt mới.</p
-              >
-              <p th:if="${path.checkpointState == 'failed'}"
-                >Chưa đạt cấp độ của chặng. Trình độ và các bài đã hoàn thành được giữ lại.</p
-              >
-              <p th:if="${path.checkpointState == 'error'}"
-                >Chấm chưa thành công. Mở lịch sử kết quả để thử lại phần lỗi trên bài đã lưu.</p
-              >
+              <p th:if="${path.checkpointState == 'grading'}">
+                Bài đã nộp và đang chờ chấm hoặc xác nhận kết quả. Không cần tạo lượt mới.
+              </p>
+              <p th:if="${path.checkpointState == 'failed'}">
+                Chưa đạt cấp độ của chặng. Trình độ và các bài đã hoàn thành được giữ lại.
+              </p>
+              <p th:if="${path.checkpointState == 'error'}">
+                Chấm chưa thành công. Mở lịch sử kết quả để thử lại phần lỗi trên bài đã lưu.
+              </p>
               <a
                 th:if="${path.checkpointState == 'error'}"
                 class="button button-secondary"

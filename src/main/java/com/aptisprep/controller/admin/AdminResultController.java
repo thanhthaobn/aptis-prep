@@ -60,7 +60,7 @@ public class AdminResultController {
         return "admin/result/list";
     }
 
-    @GetMapping("/{id:\\d+}")
+    @GetMapping("/{id}")
     public String detail(@PathVariable Integer id, Principal principal, Model model) {
         model.addAttribute("attemptResult", attempts.adminResult(principal.getName(), id));
         return "admin/result/detail";

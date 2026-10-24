@@ -4,6 +4,7 @@ import static org.springframework.security.test.web.servlet.request.SecurityMock
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.model;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.view;
@@ -72,6 +73,40 @@ class SecurityFlowTests {
     @Test
     void publicHomeIsAccessible() throws Exception {
         mockMvc.perform(get("/")).andExpect(status().isOk()).andExpect(view().name("index"));
+    }
+
+    @Test
+    void registrationWithoutPasswordsReturnsValidationErrorsWithoutCreatingAnAccount()
+            throws Exception {
+        long before = users.count();
+        mockMvc.perform(
+                        post("/register")
+                                .with(csrf())
+                                .param("fullName", "Form validation")
+                                .param("email", "missing-password@example.com"))
+                .andExpect(status().isOk())
+                .andExpect(view().name("auth/register"))
+                .andExpect(
+                        model().attributeHasFieldErrors(
+                                        "registerForm", "password", "confirmPassword"));
+        org.junit.jupiter.api.Assertions.assertEquals(before, users.count());
+    }
+
+    @Test
+    void registrationWithDifferentPasswordsReturnsAFieldErrorWithoutCreatingAnAccount()
+            throws Exception {
+        long before = users.count();
+        mockMvc.perform(
+                        post("/register")
+                                .with(csrf())
+                                .param("fullName", "Form validation")
+                                .param("email", "mismatched-password@example.com")
+                                .param("password", "Test-password-123")
+                                .param("confirmPassword", "Test-password-456"))
+                .andExpect(status().isOk())
+                .andExpect(view().name("auth/register"))
+                .andExpect(model().attributeHasFieldErrors("registerForm", "confirmPassword"));
+        org.junit.jupiter.api.Assertions.assertEquals(before, users.count());
     }
 
     @Test

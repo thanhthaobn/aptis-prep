@@ -47,7 +47,7 @@ Ví dụ, câu hỏi và bài mẫu được AptisPrep tự biên soạn. Video 
 - [Writing](https://www.britishcouncil.org/exam/aptis/take-test/writing-video)
 - [Speaking](https://www.britishcouncil.org/exam/aptis/take-test/speaking-video)
 
-Bốn bài Listening A2–C1 mới có tệp WAV đóng gói cùng ứng dụng. Lời thoại là nội dung tự biên soạn, đọc bằng Microsoft David Desktop (giọng tổng hợp Windows). Không tải hoặc sao chép âm thanh của bên thứ ba. Transcript khớp tệp nghe và được ẩn để người học tự nghe trước. Dữ liệu biên soạn nằm ở `docs/content/curriculum-a1-c1.json`; có thể tái tạo âm thanh bằng `scripts/build-curriculum-audio.ps1` trên Windows có giọng tiếng Anh.
+Bốn bài Listening A2–C1 có tệp WAV local tại `uploads/curriculum/audio`, không còn đóng gói trong JAR kể từ 25/10/2026. DB/snapshot giữ đường dẫn tương đối cũ nên không phải sửa lịch sử bài làm. Lời thoại là nội dung tự biên soạn, đọc bằng Microsoft David Desktop (giọng tổng hợp Windows). Không tải hoặc sao chép âm thanh của bên thứ ba. Transcript khớp tệp nghe và được ẩn để người học tự nghe trước. Dữ liệu biên soạn nằm ở `docs/content/curriculum-a1-c1.json`; script `scripts/build-curriculum-audio.ps1` trên Windows có giọng tiếng Anh chỉ tạo audio còn thiếu và giữ file đã có. Khi chuyển máy phải mang theo uploads cùng database.
 
 ## Thao tác kiểm tra
 

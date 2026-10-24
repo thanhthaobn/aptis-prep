@@ -18,7 +18,9 @@ JDK 21, SQL Server Developer/Express, Maven Wrapper và IntelliJ. Mở thư mụ
 
 **Không xóa/recreate database để vượt lỗi validate.** Sao lưu DB bằng SQL Server Backup và đối chiếu schema trước khi nâng cấp thủ công có kiểm chứng.
 
-Kiểm tra chỉ đọc ngày 24/10/2026: `aptisprep_db` đang có 37 bảng nghiệp vụ, lịch sử cũ ở V031; chưa có `mock_exams.demo_only`, `ai_assessment_jobs.processing_token` và các cột playback mới. Vì vậy **không thể coi DB này đã sẵn sàng chạy source mới**. Đợt dọn source không sửa DB đó.
+Ngày 25/10/2026, DB local `aptisprep_db` đã được backup COPY_ONLY/CHECKSUM, restore thử và nâng schema có kiểm chứng. Schema nghiệp vụ hiện khớp source tại commit `0ec2019`; Hibernate validate và DBCC CHECKDB đều đạt. Toàn bộ 1.530 dòng trong 38 bảng cũ được đối chiếu hash trước/sau và giữ nguyên. Xem [báo cáo nâng schema](DATABASE_UPGRADE_2026-10-25.md).
+
+Thông tin này chỉ xác nhận DB local đã kiểm tra trên máy chủ project; các máy khác vẫn phải backup và đối chiếu riêng. Bảng `flyway_schema_history` cũ giữ nguyên để tra cứu, không phải phiên bản schema hiện tại. Ứng dụng không còn dùng Flyway.
 
 Các file SQL/config nguồn cũ được lưu trong thư mục `backups/` bị Git ignore. Đây là bản sao file nguồn, **không phải backup database**. Cấu hình riêng cũ nằm ở `backups/local-config.properties`, không được Spring nạp và không đưa lên Git.
 
@@ -42,7 +44,7 @@ Hoặc mở PowerShell ở gốc project, đặt các biến môi trường trê
 .\mvnw.cmd spring-boot:run
 ```
 
-Chỉ mở localhost:8080 sau khi log có Started AptisPrepApplication. Dừng ứng dụng cũ trước khi chạy bản khác cùng cổng. Không khởi động source mới trên DB V031 trước khi đối chiếu/nâng schema.
+Chỉ mở localhost:8080 sau khi log có Started AptisPrepApplication. Dừng ứng dụng cũ trước khi chạy bản khác cùng cổng. DB local đã nâng như mục 3; không khởi động source mới trên DB ở máy khác còn schema cũ trước khi đối chiếu/nâng cấp.
 
 ## 5. Tài khoản và nội dung
 
@@ -69,7 +71,7 @@ Remove-Item Env:APTIS_SQLSERVER_ISOLATED_TESTS
 
 Test chỉ tạo/xóa DB UUID của chính nó, kiểm schema, đáp án A-F, query AI và từ chối ghi đè DB có dữ liệu.
 
-`SqlServerMigrationTests` giữ tên cũ để tương thích lệnh, nhưng nay chỉ **validate**, không migrate. Bật riêng bằng APTIS_SQLSERVER_TESTS=true và DB_URL rõ ràng; DB V031 chưa được nâng sẽ thất bại đúng theo thiết kế.
+`SqlServerMigrationTests` giữ tên cũ để tương thích lệnh, nhưng nay chỉ **validate**, không migrate. Bật riêng bằng APTIS_SQLSERVER_TESTS=true và DB_URL rõ ràng. DB local sau nâng đã qua test này; DB cũ ở máy khác chưa được nâng sẽ thất bại đúng theo thiết kế.
 
 ## 7. Thay đổi schema về sau
 
@@ -93,4 +95,46 @@ npm run format:web:check
 npm run test:web
 ```
 
-Prettier giữ whitespace HTML ở chế độ strict để hạn chế ảnh hưởng Thymeleaf, đồng thời format cả JavaScript trong các thẻ script hiện có. CI kiểm cả Java, HTML/JavaScript và test JavaScript. `.editorconfig` và `.gitattributes` thống nhất encoding, thụt lề và xuống dòng giữa các máy.
+Prettier dùng `htmlWhitespaceSensitivity: css` để thẻ block dễ đọc, kiểm tra lại phần chữ inline khi sửa template. Script dài đã tách sang `static/js`; formatter vẫn hỗ trợ script nhúng nếu có. CI kiểm cả Java, HTML/JavaScript và test JavaScript. `.editorconfig` và `.gitattributes` thống nhất encoding, thụt lề và xuống dòng giữa các máy.
+
+## 9. Media local và chuyển máy
+
+Ứng dụng dùng một nơi lưu file: thư mục `uploads/` tại working directory của
+process Java (`app.storage.upload-dir`). Các thư mục con là cách phân loại,
+không phải nhiều hệ thống lưu trữ:
+
+```text
+uploads/
+├── curriculum/          # Media giáo trình đã chuyển ra khỏi JAR
+│   ├── audio/
+│   └── images/
+├── lesson-images/       # Ảnh Admin tải lên, chia theo lesson ID
+├── lesson-video/        # Video Admin tải lên, chia theo lesson ID
+├── lesson-audio/        # Audio Admin tải lên, chia theo lesson ID
+├── questions/           # Media câu hỏi
+├── lesson-recordings/   # Bản ghi bài học
+└── attempts/            # Bản ghi bài thi
+```
+
+Không cần đổi DB hoặc snapshot khi gộp hai nơi lưu cũ: ví dụ đường dẫn trong DB
+`curriculum/audio/listening-a2.wav` nay được đọc từ
+`uploads/curriculum/audio/listening-a2.wav`. Không thêm tiền tố `uploads/` vào
+đường dẫn tương đối đã lưu. Không còn fallback sang classpath/JAR.
+
+Khi chuyển máy/deploy, sao lưu và khôi phục đồng bộ database với **toàn bộ uploads**,
+giữ cấu trúc con và tên file. Không dùng riêng Git clone/JAR như bản sao lưu media.
+`mvn clean` chỉ dọn output build, không dọn thư mục uploads ở gốc project.
+Không xóa file chỉ vì bài hiện tại không tham chiếu: lịch sử/snapshot có thể vẫn
+đang dùng file đó. Backend tiếp tục kiểm quyền qua các route media; `/uploads/**`
+không phải đường dẫn công khai cho trình duyệt truy cập trực tiếp.
+
+Đợt gộp ngày 25/10/2026 đã sao lưu cả media cũ và uploads trong file
+`backups/media-before-consolidation-7afb6371a9464749a7d6b9772eacebb7.zip`, đối chiếu
+hash 7 file được chuyển và 13 file upload có sẵn. File ZIP này chỉ ở máy hiện tại,
+bị Git ignore. Khi khôi phục từ ZIP, thư mục `curriculum` của bản sao lưu đặt
+bên trong uploads; không đưa trở lại src/main/resources.
+
+Script `scripts/build-curriculum-audio.ps1` có thể tạo audio còn thiếu vào
+`uploads/curriculum/audio`, giữ nguyên file đã tồn tại. Không tự chạy script này
+khi khởi động ứng dụng. Test dùng audio tự tạo trong `target/test-uploads` hoặc
+thư mục tạm, không cần và không sửa media thật.

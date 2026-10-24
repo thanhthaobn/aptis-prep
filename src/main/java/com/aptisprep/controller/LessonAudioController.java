@@ -98,7 +98,7 @@ public class LessonAudioController {
         if (lesson.getImagePath() == null)
             throw new ResourceNotFoundException("Bài học chưa có hình ảnh");
         return ResponseEntity.ok()
-                .contentType(imageType(lesson.getImageName()))
+                .contentType(imageType(lesson.getImagePath()))
                 .header(HttpHeaders.CONTENT_DISPOSITION, "inline")
                 .body(storage.load(lesson.getImagePath()));
     }
@@ -144,6 +144,7 @@ public class LessonAudioController {
         if (n.endsWith(".png")) return MediaType.IMAGE_PNG;
         if (n.endsWith(".gif")) return MediaType.IMAGE_GIF;
         if (n.endsWith(".webp")) return MediaType.parseMediaType("image/webp");
+        if (n.endsWith(".svg")) return MediaType.parseMediaType("image/svg+xml");
         return MediaType.IMAGE_JPEG;
     }
 }
