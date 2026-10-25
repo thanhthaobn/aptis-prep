@@ -56,6 +56,7 @@
 .alert-danger, .ap-alert-danger { color: var(--color-danger); background: var(--color-danger-bg); border-color: var(--color-danger-border); }
 .alert-warning, .ap-alert-warning { color: var(--color-warning); background: var(--color-warning-bg); border-color: var(--color-warning-border); }
 .alert-info, .ap-alert-info { color: var(--color-info); background: var(--color-info-bg); border-color: var(--color-info-border); }
+.alert[hidden], .ap-alert[hidden] { display: none !important; }
 
 .hero-visual { position: relative; padding: 1rem; }
 .preview-card { position: relative; padding: 1.4rem; background: rgba(255,255,255,.9); border: 1px solid #fff; border-radius: var(--radius-lg); box-shadow: 0 30px 80px rgba(30,41,59,.16); backdrop-filter: blur(14px); }
@@ -307,11 +308,14 @@
 .student-account-actions form { margin: 0; }
 .student-lock-button { background: var(--color-danger); border-color: var(--color-danger); box-shadow: none; }
 .student-lock-button:hover { background: var(--color-danger); }
-.student-confirm-dialog { width: min(calc(100% - 2rem),480px); padding: 2rem; border: 1px solid var(--color-border); border-radius: var(--radius); color: var(--color-text); background: var(--color-surface); box-shadow: var(--shadow); }
-.student-confirm-dialog::backdrop { background: rgba(15,23,42,.5); }
-.student-confirm-dialog h2 { font-size: 1.5rem; }
-.student-confirm-dialog .modal-actions form { margin: 0; }
-.student-confirm-dialog button:disabled { opacity: .45; cursor: not-allowed; box-shadow: none; }
+.app-confirm-dialog { width: min(calc(100% - 2rem),480px); max-height: calc(100dvh - 2rem); padding: clamp(1.25rem,4vw,2rem); border: 1px solid var(--color-border); border-radius: var(--radius); color: var(--color-text); background: var(--color-surface); box-shadow: var(--shadow); }
+.app-confirm-dialog::backdrop { background: rgba(15,23,42,.5); }
+.app-confirm-dialog h2 { font-size: 1.35rem; line-height: 1.4; }
+.app-confirm-dialog p { margin: .75rem 0 0; color: var(--color-muted); line-height: 1.7; overflow-wrap: anywhere; }
+.app-confirm-dialog .modal-actions { flex-wrap: wrap; }
+.app-confirm-dialog button { min-height: 44px; }
+.app-confirm-dialog .is-destructive { background: var(--color-danger); border-color: var(--color-danger); box-shadow: none; }
+@media(max-width:480px) { .app-confirm-dialog .modal-actions { flex-direction: column-reverse; } .app-confirm-dialog .button { width:100%; } }
 .sr-only,.student-sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 @media (max-width: 760px) { .student-profile-heading,.student-account-panel { align-items: flex-start; flex-direction: column; } .student-management .student-summary { grid-template-columns: 1fr; } .student-management .skill-list > div { grid-template-columns: minmax(0, 1fr) auto; } .student-management .skill-target { grid-column: 1 / -1; text-align: left; } }
 .dashboard-page { padding-top: 2.25rem; }

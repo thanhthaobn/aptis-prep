@@ -182,11 +182,9 @@
                         th:if="${!admin and set.personal()}"
                         method="post"
                         th:action="@{/student/flashcards/{id}/archive(id=${set.id()})}"
-                        onsubmit="
-                          return confirm(
-                            'Lưu trữ bộ thẻ này? Tiến độ đã ghi nhận vẫn được giữ lại.',
-                          );
-                        "
+                        data-confirm-title="Lưu trữ bộ thẻ?"
+                        data-confirm-message="Tiến độ đã ghi nhận vẫn được giữ lại. Bộ thẻ sẽ được chuyển sang trạng thái lưu trữ."
+                        data-confirm-button="Lưu trữ"
                       >
                         <input
                           type="hidden"

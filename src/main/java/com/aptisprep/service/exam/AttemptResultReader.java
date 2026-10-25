@@ -43,8 +43,8 @@ public class AttemptResultReader {
         // History is also rendered by the admin's student-detail view, including
         // locked/inactive students. Student-facing endpoints validate the active
         // principal before calling this contract.
-        int safePage = Math.max(0, page);
         int safeSize = Math.min(100, Math.max(1, size));
+        int safePage = Math.min(Math.max(0, page), Integer.MAX_VALUE / safeSize);
         HistoryFilter safeFilter = filter == null ? HistoryFilter.empty() : filter;
         String pattern =
                 safeFilter.query() == null || safeFilter.query().isBlank()
@@ -61,6 +61,17 @@ public class AttemptResultReader {
                         examType,
                         state,
                         PageRequest.of(safePage, safeSize));
+        if (result.isEmpty() && result.getTotalElements() > 0 && safePage > 0) {
+            safePage = (int) ((result.getTotalElements() - 1) / safeSize);
+            result =
+                    attempts.searchHistory(
+                            userId,
+                            pattern,
+                            skill,
+                            examType,
+                            state,
+                            PageRequest.of(safePage, safeSize));
+        }
         List<AttemptResult> values = result.stream().map(a -> view(a, examFor(a))).toList();
         return new HistoryPage(values, safePage, safeSize, result.getTotalElements());
     }
