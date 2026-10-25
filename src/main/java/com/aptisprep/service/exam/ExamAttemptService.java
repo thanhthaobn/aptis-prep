@@ -93,6 +93,7 @@ public class ExamAttemptService implements ExamAttemptContract {
             }
             return handle(byKey.get(), examFor(byKey.get()));
         }
+        validateExamForStart(exam, links);
         if ("PLACEMENT".equals(exam.getExamType())) {
             Optional<ExamAttemptEntity> active = attempts.findActivePlacement(userId, exam.getSkill(), ACTIVE_STATES);
             if (active.isPresent()) {
@@ -102,11 +103,6 @@ public class ExamAttemptService implements ExamAttemptContract {
         }
         ExamAttemptEntity attempt = new ExamAttemptEntity();
         attempt.setUserId(userId); attempt.setMockExamId(examId);
-        if (exam.getScoringSchemeId() != null) {
-            for (var link : links) {
-                scoring.validatePolicy(exam.getScoringSchemeId(), questions.findById(link.getQuestionId()).orElseThrow().getSkill());
-            }
-        }
         attempt.setRequestKey(key); attempt.setStatus("IN_PROGRESS"); attempt.setGradingStatus("NOT_STARTED");
         attempt.setAnswerVersion(1); attempt.setScoringSchemeId(exam.getScoringSchemeId());
         attempt.setPolicyVersion(exam.getScoringSchemeId() == null ? "unscaled-v1"
@@ -608,6 +604,31 @@ public class ExamAttemptService implements ExamAttemptContract {
         attempt.setStatus("EXPIRED"); attempt.setGradingStatus("EXPIRED"); attempts.save(attempt); return true;
     }
     private QuestionItemEntity chooseItem(Integer questionId, Integer itemId) { return items.findByQuestionIdOrderByPosition(questionId).stream().filter(x -> itemId == null || Objects.equals(x.getId(), itemId)).findFirst().orElseThrow(() -> new ResourceNotFoundException("Câu hỏi chưa có mục nào")); }
+
+    private void validateExamForStart(MockExamEntity exam, List<MockExamQuestionEntity> links) {
+        Set<Integer> questionIds = new HashSet<>();
+        Set<String> skills = new LinkedHashSet<>();
+        for (MockExamQuestionEntity link : links) {
+            if (!questionIds.add(link.getQuestionId())) throw new BusinessRuleException("Đề thi chứa câu hỏi bị lặp");
+            QuestionEntity question = questions.findById(link.getQuestionId())
+                    .orElseThrow(() -> new BusinessRuleException("Đề thi chứa câu hỏi không tồn tại"));
+            if (!"PUBLISHED".equals(question.getStatus()))
+                throw new BusinessRuleException("Đề thi chứa câu hỏi chưa được công bố");
+            skills.add(normalizedFilter(question.getSkill()));
+        }
+        if ("FULL_MOCK".equals(exam.getExamType())) {
+            Set<String> required = Set.of("GRAMMAR_VOCABULARY", "READING", "LISTENING", "WRITING", "SPEAKING");
+            if (!skills.containsAll(required)) throw new BusinessRuleException("Thi thử tổng hợp phải có đủ 5 kỹ năng Aptis");
+        } else if (skills.size() != 1) {
+            throw new BusinessRuleException("Đề theo kỹ năng chỉ được chứa một kỹ năng");
+        }
+        if (exam.getScoringSchemeId() != null) {
+            for (String skill : skills) scoring.validatePolicy(exam.getScoringSchemeId(), skill);
+        } else if ("CHECKPOINT".equals(exam.getExamType())) {
+            throw new BusinessRuleException("Checkpoint cần bộ chấm điểm để xác nhận CEFR");
+        }
+    }
+
     private MockExamEntity publishedExam(Integer id) { return exams.findById(id).filter(x -> "PUBLISHED".equals(x.getStatus())).orElseThrow(() -> new ResourceNotFoundException("Đề thi chưa được công bố")); }
     private MockExamEntity examFor(ExamAttemptEntity attempt) { return exams.findById(attempt.getMockExamId()).orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy đề thi")); }
     private User activeUser(Integer id) { User user = users.findById(id).orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy tài khoản")); if (user.getRole() != Role.STUDENT || user.getStatus() != UserStatus.ACTIVE) throw new AccessDeniedException("Tài khoản không còn hoạt động"); return user; }
