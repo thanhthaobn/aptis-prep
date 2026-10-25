@@ -36,9 +36,9 @@
                     class="badge badge-secondary mb-1"
                     th:text="${recommendation.skill()}"
                   ></span>
-                  <h2 class="m-0 section-title" th:text="${recommendation.title()}"
-                    >Tiếp tục bài học</h2
-                  >
+                  <h2 class="m-0 section-title" th:text="${recommendation.title()}">
+                    Tiếp tục bài học
+                  </h2>
                   <p
                     class="muted m-0 mt-1 supporting-text"
                     th:if="${recommendation.path() != null}"
@@ -58,10 +58,10 @@
               <div>
                 <span class="learn-tag">KHÔNG BẮT BUỘC ĐÁNH GIÁ</span>
                 <h2>Bắt đầu theo cách của bạn</h2>
-                <p
-                  >Khám phá kho bài giảng theo từng kỹ năng hoặc làm bài kiểm tra đầu vào để nhận lộ
-                  trình cá nhân hóa.</p
-                >
+                <p>
+                  Khám phá kho bài giảng theo từng kỹ năng hoặc làm bài kiểm tra đầu vào để nhận lộ
+                  trình cá nhân hóa.
+                </p>
                 <div class="actions">
                   <a class="button" th:href="@{/student/learning-path}">Khám phá lộ trình</a>
                 </div>
@@ -122,9 +122,9 @@
                 <strong class="streak-value" th:text="${activity.currentStreak}">0</strong>
                 <span class="muted streak-label">ngày liên tiếp</span>
               </div>
-              <p class="muted supporting-text mt-2"
-                >Có ít nhất một hoạt động học tập mỗi ngày để duy trì chuỗi.</p
-              >
+              <p class="muted supporting-text mt-2">
+                Có ít nhất một hoạt động học tập mỗi ngày để duy trì chuỗi.
+              </p>
             </article>
 
             <!-- Trình độ hiện tại & Mục tiêu -->
@@ -134,22 +134,24 @@
                 <h2>Trình độ &amp; mục tiêu</h2>
               </div>
               <table class="skill-overview-table">
-                <thead
-                  ><tr
-                    ><th scope="col">Kỹ năng</th><th scope="col">Hiện tại</th
-                    ><th scope="col">Mục tiêu</th></tr
-                  ></thead
-                >
-                <tbody
-                  ><tr th:each="skill:${skillOverview}"
-                    ><th scope="row" th:text="${skill.label}"></th
-                    ><td th:text="${skill.current}"></td
-                    ><td><span class="skill-goal-level" th:text="${skill.goal}"></span></td></tr
-                ></tbody>
+                <thead>
+                  <tr>
+                    <th scope="col">Kỹ năng</th>
+                    <th scope="col">Hiện tại</th>
+                    <th scope="col">Mục tiêu</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr th:each="skill:${skillOverview}">
+                    <th scope="row" th:text="${skill.label}"></th>
+                    <td th:text="${skill.current}"></td>
+                    <td><span class="skill-goal-level" th:text="${skill.goal}"></span></td>
+                  </tr>
+                </tbody>
               </table>
-              <p class="skill-overview-note" th:if="${#lists.isEmpty(account.profiles)}"
-                >Chưa có đánh giá đầu vào.</p
-              >
+              <p class="skill-overview-note" th:if="${#lists.isEmpty(account.profiles)}">
+                Chưa có đánh giá đầu vào.
+              </p>
               <a class="button button-secondary button-block mt-3" th:href="@{/student/placement}"
                 >Kiểm tra đầu vào</a
               >

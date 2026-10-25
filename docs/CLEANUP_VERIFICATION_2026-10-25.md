@@ -71,3 +71,82 @@ Kết quả cuối sau format/tách service:
 - `git diff --check`: đạt.
 
 Lượt đầu có hai test hỏng do tên method private và định dạng HTML thay đổi; đã cập nhật cách gọi/nhận diện như mô tả ở trên rồi chạy lại đầy đủ. Không bỏ assertion nghiệp vụ để làm test đạt. Chưa commit/push trong phạm vi yêu cầu này.
+
+## Rà soát package, HTML và form bổ sung
+
+- Không phát hiện package Java rỗng hoặc package nghiệp vụ có thể bỏ trọn vẹn.
+  Giữ `event`, `exception`, `service/contract`, `storage` và bean `resultLabels`
+  vì chúng có vai trò runtime. Không thêm tầng `impl` hoặc interface hình thức.
+- Đổi Prettier HTML từ `strict` sang `css`, format lại 52 template; thẻ block
+  và ranh giới form dễ đọc hơn. Đây là cập nhật tiếp theo sau đợt format strict.
+- Sửa grid của trang xác thực để cột có thể co về viewport; giới hạn khung,
+  xuống dòng tiêu đề trên màn hình hẹp. Không che lỗi bằng `overflow-x:hidden`.
+- Form đăng ký bổ sung `required`, `maxlength`, `minlength` tương ứng validation
+  hiện có ở DTO. Backend so sánh mật khẩu bằng `Objects.equals` để request thiếu
+  password trả lỗi nhập liệu thay vì NullPointerException. Thêm hai test đăng ký
+  thiếu mật khẩu và xác nhận không khớp, đều kiểm không tạo tài khoản.
+- Sửa regex khi clone phần thi: `sections[0]` phải trở thành `sections[1]`,
+  `sections[2]`; ID và label cũng phải đổi. Trước sửa, test thêm hai phần thi
+  đã tái hiện lỗi trùng binding. Test sau sửa kiểm tên trường, ID, label và không
+  sao chép lựa chọn câu hỏi từ phần đầu.
+- Đưa script đang chạy trong `student/attempt.html` về `exam-runner.js`, thay
+  bản runner cũ hơn 700 dòng chưa được trang nào tải. Đối chiếu script sau khi
+  format xác nhận hành vi đang chạy được giữ nguyên.
+- Tách script quản trị câu hỏi/đề và menu vào `catalog-editor.js`, `navigation.js`.
+  Template chỉ nạp bằng `th:src` + `defer`. Xóa `admin-students.js` preview không
+  còn template/selector sử dụng và CSS `form-divider` không dùng. File đã track
+  vẫn khôi phục được qua Git.
+- Hướng dẫn `AI_SETUP.md` sửa nhầm `OPENAI_API_KEY`/file dev thành biến môi trường
+  Gemini của Run Configuration. Phần tích hợp đã ở source; API key riêng không
+  đưa vào Git. Phiên terminal kiểm tra không có các biến Gemini.
+- Bổ sung bản đồ file, package và luồng GET/POST trong phần đầu `UI_GUIDE.md`.
+
+Kiểm tra trực tiếp bằng trình duyệt dùng ứng dụng riêng ở cổng 8081, database
+`jdbc:h2:mem:ui_review`; không kết nối DB ứng dụng. Đăng nhập/đăng ký ở viewport
+390px có chiều rộng document 375px (phần còn lại dành cho scrollbar), không có
+phần tử tràn ngang. Desktop 1440px vẫn có hai cột. Menu mobile mở được và Escape
+đóng/đưa focus về nút. Form đăng ký trống bị browser chặn; không tạo tài khoản
+trong lần kiểm tra này. Ảnh đối chiếu ở `backups/login-mobile-after.jpg` và
+`backups/login-desktop-after.jpg`, không đưa lên Git.
+
+Kiểm thử tự động: 250 Java test, 247 đạt, 3 skip, không failure/error; 12/12
+JavaScript test đạt. Ba skip là Gemini live và hai bộ test SQL Server opt-in,
+không xác nhận lại SQL Server thật trong đợt chỉ sửa form/source này. Các test
+render trang Admin/Student, phân quyền, snapshot, nghiệp vụ học/thi/chấm đều đạt.
+Không thay thế cho kiểm tra micro thật hoặc chất lượng phản hồi Gemini thật.
+
+Lệnh verify trong môi trường Windows này truyền Mockito agent lúc JVM khởi
+động và đặt `jdk.net.unixdomain.tmpdir` về đường dẫn ngắn trong `target` để tránh
+lỗi attach/socket do đường dẫn temp. Sau khi nhận thấy timestamp của build cũ
+lệch, đã chạy `clean verify` để biên dịch lại toàn bộ 202 Java source và 46 test.
+Không sửa cấu hình hệ thống hoặc đưa đường dẫn Maven cá nhân vào `pom.xml`.
+
+Không thay schema/dữ liệu thật, không commit/push. Ứng dụng kiểm tra cổng 8081
+đã được dừng sau khi chụp và kiểm tra form.
+
+## Gộp media về uploads
+
+Theo yêu cầu chủ project, chuyển 4 WAV và 3 SVG từ `src/main/resources/curriculum`
+sang `uploads/curriculum`. Giữ nguyên đường dẫn tương đối trong DB và snapshot;
+không chạy UPDATE hoặc thay lịch sử. Storage chỉ đọc từ upload root, bỏ nhánh
+ClassPathResource và không còn đóng gói media giáo trình vào JAR. Thư mục resource
+curriculum cũ và db rỗng đã bỏ sau khi kiểm hash và sao lưu.
+
+Bản sao lưu local: `backups/media-before-consolidation-7afb6371a9464749a7d6b9772eacebb7.zip`.
+Kiểm SHA256 của toàn bộ 20 file trong ZIP với vị trí hiện tại đều khớp: 7 file
+chuyển vào uploads và 13 file uploads có sẵn (gồm gitkeep). Không gộp/xóa các file
+trùng byte đã có, vì lịch sử có thể tham chiếu chúng. Media/backup vẫn bị Git ignore.
+
+Script tạo audio chỉ ghi vào `uploads/curriculum/audio`, bỏ qua file đã tồn tại.
+Cập nhật README, SETUP_LOCAL và hướng dẫn nội dung để việc chuyển máy/deploy phải
+đi kèm cả DB và uploads. Không tự tái tạo nội dung khi ứng dụng khởi động.
+
+Test sinh audio WAV nhỏ trong thư mục riêng, không phụ thuộc media người dùng.
+Thêm kiểm tra đường dẫn curriculum cũ đọc từ upload root và snapshot ảnh cũ vẫn
+truy cập được sau khi đổi bài hiện tại, bao gồm kiểm quyền và MIME SVG. SVG upload
+tùy ý vẫn bị từ chối như trước; chỉ phục vụ các SVG sẵn có đúng content type.
+
+`clean verify`: 255 Java test, 252 đạt, 3 skip, 0 failure/error; Spotless và build
+JAR đạt. JavaScript 12/12 và Prettier check đạt. JAR không có curriculum media hoặc
+TestAudio helper. SQL Server SQLEXPRESS đang dừng nên không kiểm trực tiếp DB thật
+hoặc khởi động ứng dụng với SQL trong đợt này; DB không bị sửa. Chưa commit/push.

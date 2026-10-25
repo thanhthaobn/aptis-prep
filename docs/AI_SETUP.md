@@ -68,9 +68,14 @@ GradingResult speakingResult = speakingGradingService.grade(prompt, savedAudioPa
 
 Không in key ra terminal. Chỉ kiểm tra hai điều kiện sau:
 
-1. `app.ai.enabled=true` trong file dev bị gitignore.
-2. `OPENAI_API_KEY` có giá trị trong Run Configuration hoặc
-   `app.ai.api-key` có giá trị trong file dev.
+1. `GEMINI_ENABLED=true` trong Environment variables của Run Configuration
+   đang dùng, hoặc trong phiên terminal khởi chạy ứng dụng.
+2. `GEMINI_API_KEY` có giá trị trong cùng Run Configuration/phiên terminal.
+
+Code đọc hai biến này qua `app.ai.enabled` và `app.ai.api-key` trong
+`src/main/resources/application.properties`. API key là cấu hình riêng của
+từng máy nên không được merge vào Git. File `.env` cũng không tự được Spring
+Boot nạp: cần truyền các biến vào process Java đang chạy.
 
 Sau khi restart, mở bài Writing/ Speaking đã công bố. Lưu bài làm vào lịch sử;
 nếu cấu hình đúng sẽ thấy nút **Yêu cầu AI nhận xét**. Nếu không thấy nút, kiểm

@@ -42,7 +42,7 @@ public class AdminScoringController {
         return "admin/settings/certificate";
     }
 
-    @GetMapping("/admin/certificates/{id:\\d+}")
+    @GetMapping("/admin/certificates/{id}")
     public String certificate(@PathVariable int id, Model model) {
         ScoringViews.CertificateView value = scoring.certificate(id);
         model.addAttribute("certificate", value);
@@ -52,7 +52,7 @@ public class AdminScoringController {
         return "admin/settings/certificate";
     }
 
-    @GetMapping("/admin/certificates/{id:\\d+}/edit")
+    @GetMapping("/admin/certificates/{id}/edit")
     public String editCertificate(@PathVariable int id, Model model) {
         certificate(id, model);
         model.addAttribute("readOnly", false);
@@ -130,7 +130,7 @@ public class AdminScoringController {
         return "admin/settings/scheme";
     }
 
-    @GetMapping("/admin/scoring-schemes/{id:\\d+}")
+    @GetMapping("/admin/scoring-schemes/{id}")
     public String scheme(
             @PathVariable int id,
             @RequestParam(defaultValue = "Reading") String skill,
@@ -139,7 +139,7 @@ public class AdminScoringController {
         return loadScheme(id, skill, bandId, true, model);
     }
 
-    @GetMapping("/admin/scoring-schemes/{id:\\d+}/edit")
+    @GetMapping("/admin/scoring-schemes/{id}/edit")
     public String editScheme(
             @PathVariable int id,
             @RequestParam(defaultValue = "Reading") String skill,

@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import com.aptisprep.config.StorageProperties;
 import com.aptisprep.exception.BusinessRuleException;
+import com.aptisprep.support.TestAudio;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import org.junit.jupiter.api.Test;
@@ -63,5 +64,26 @@ class LocalStorageServiceTests {
                                         "../outside"));
         assertThrows(BusinessRuleException.class, () -> storage().load("../outside.wav"));
         assertThrows(BusinessRuleException.class, () -> storage().delete("../outside.wav"));
+    }
+
+    @Test
+    void legacyCurriculumPathsReadFromUploadRootWithoutChangingStoredReferences() throws Exception {
+        var storage = storage();
+        String relativePath = "curriculum/audio/listening-a2.wav";
+        Path audio = root.resolve(relativePath);
+        Files.createDirectories(audio.getParent());
+        byte[] expected = TestAudio.wav();
+        Files.write(audio, expected);
+
+        assertEquals(audio.toFile(), storage.load(relativePath).getFile());
+        assertArrayEquals(expected, storage.load(relativePath).getContentAsByteArray());
+        assertEquals(
+                1.0,
+                new AudioDurationService(storage, "missing-ffprobe-for-test").seconds(relativePath),
+                0.01);
+
+        storage.delete(relativePath);
+        assertFalse(Files.exists(audio));
+        assertThrows(BusinessRuleException.class, () -> storage.load(relativePath));
     }
 }

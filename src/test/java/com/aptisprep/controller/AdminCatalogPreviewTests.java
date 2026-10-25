@@ -2,8 +2,10 @@ package com.aptisprep.controller;
 
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.not;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 import com.aptisprep.entity.User;
@@ -128,5 +130,48 @@ class AdminCatalogPreviewTests {
             mvc.perform(get(path).with(user("student@aptis.local").roles("STUDENT")))
                     .andExpect(status().isForbidden());
         }
+    }
+
+    @Test
+    void catalogRoutesDoNotCaptureOtherAdminModules() throws Exception {
+        for (String path :
+                new String[] {
+                    "/admin/not-a-module", "/admin/not-a-module/1",
+                    "/admin/not-a-module/create", "/admin/not-a-module/1/edit"
+                }) {
+            mvc.perform(get(path).with(user("admin@aptis.local").roles("ADMIN")))
+                    .andExpect(status().isNotFound());
+        }
+        mvc.perform(
+                        get("/admin/certificates/create")
+                                .with(user("admin@aptis.local").roles("ADMIN")))
+                .andExpect(status().isOk())
+                .andExpect(view().name("admin/settings/certificate"));
+        mvc.perform(
+                        get("/admin/scoring-schemes/create")
+                                .with(user("admin@aptis.local").roles("ADMIN")))
+                .andExpect(status().isOk())
+                .andExpect(view().name("admin/settings/scheme"));
+    }
+
+    @Test
+    void catalogAndMediaRoutesRejectIdsThatCannotBeConvertedToIntegers() throws Exception {
+        for (String path :
+                new String[] {
+                    "/admin/questions/not-an-id",
+                    "/admin/exams/not-an-id/edit",
+                    "/admin/questions/1/media/not-an-id/content",
+                    "/admin/certificates/not-an-id",
+                    "/admin/scoring-schemes/not-an-id/edit",
+                    "/admin/results/not-an-id"
+                }) {
+            mvc.perform(get(path).with(user("admin@aptis.local").roles("ADMIN")))
+                    .andExpect(status().isBadRequest());
+        }
+        mvc.perform(
+                        post("/admin/questions/1/media/not-an-id/delete")
+                                .with(user("admin@aptis.local").roles("ADMIN"))
+                                .with(csrf()))
+                .andExpect(status().isBadRequest());
     }
 }

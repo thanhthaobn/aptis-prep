@@ -4,6 +4,7 @@ import com.aptisprep.dto.form.RegisterForm;
 import com.aptisprep.exception.BusinessRuleException;
 import com.aptisprep.service.auth.UserService;
 import jakarta.validation.Valid;
+import java.util.Objects;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
@@ -48,7 +49,7 @@ public class AuthController {
             BindingResult bindingResult,
             RedirectAttributes redirectAttributes) {
 
-        if (!form.getPassword().equals(form.getConfirmPassword())) {
+        if (!Objects.equals(form.getPassword(), form.getConfirmPassword())) {
             bindingResult.rejectValue(
                     "confirmPassword", "password.mismatch", "Mật khẩu xác nhận không khớp");
         }

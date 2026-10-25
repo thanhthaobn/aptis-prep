@@ -1,104 +1,118 @@
 <!doctype html>
-<html lang="vi" xmlns:th="http://www.thymeleaf.org"
-  ><head th:replace="~{fragments/head :: head('Kết quả học viên')}"></head
-  ><body class="admin-theme"
-    ><div th:replace="~{fragments/navbar :: navbar}"></div
-    ><div class="container app-shell"
-      ><div th:replace="~{fragments/admin-sidebar :: adminSidebar('results')}"></div
-      ><main class="app-main admin-catalog"
-        ><header class="page-header"
-          ><div
-            ><p class="eyebrow">QUẢN TRỊ</p><h1>Kết quả học viên</h1
-            ><p>Dữ liệu thật từ các lượt thi, không dùng nội dung minh họa.</p></div
-          ></header
-        >
-        <form class="dashboard-panel result-filters" method="get" th:action="@{/admin/results}"
-          ><div class="field"
-            ><label for="q">Học viên, email hoặc tên đề</label
-            ><input id="q" name="q" th:value="${q}" maxlength="255" /></div
-          ><div class="field"
-            ><label for="skill">Kỹ năng</label
-            ><select id="skill" name="skill"
-              ><option value="">Tất cả</option
-              ><option
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+  <head th:replace="~{fragments/head :: head('Kết quả học viên')}"></head>
+  <body class="admin-theme">
+    <div th:replace="~{fragments/navbar :: navbar}"></div>
+    <div class="container app-shell">
+      <div th:replace="~{fragments/admin-sidebar :: adminSidebar('results')}"></div>
+      <main class="app-main admin-catalog">
+        <header class="page-header">
+          <div>
+            <p class="eyebrow">QUẢN TRỊ</p>
+            <h1>Kết quả học viên</h1>
+            <p>Dữ liệu thật từ các lượt thi, không dùng nội dung minh họa.</p>
+          </div>
+        </header>
+        <form class="dashboard-panel result-filters" method="get" th:action="@{/admin/results}">
+          <div class="field">
+            <label for="q">Học viên, email hoặc tên đề</label
+            ><input id="q" name="q" th:value="${q}" maxlength="255" />
+          </div>
+          <div class="field">
+            <label for="skill">Kỹ năng</label
+            ><select id="skill" name="skill">
+              <option value="">Tất cả</option>
+              <option
                 th:each="v:${skills}"
                 th:value="${v}"
                 th:text="${#strings.replace(v,'_',' ')}"
                 th:selected="${selectedSkill==v}"
-              ></option></select></div
-          ><div class="field"
-            ><label for="examType">Loại đề</label
-            ><select id="examType" name="examType"
-              ><option value="">Tất cả</option
-              ><option
+              ></option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="examType">Loại đề</label
+            ><select id="examType" name="examType">
+              <option value="">Tất cả</option>
+              <option
                 th:each="v:${T(java.util.List).of('PLACEMENT','PRACTICE','CHECKPOINT','FULL_MOCK')}"
                 th:value="${v}"
                 th:text="${@resultLabels.examType(v)}"
                 th:selected="${selectedExamType==v}"
-              ></option></select></div
-          ><div class="field"
-            ><label for="state">Trạng thái</label
-            ><select id="state" name="state"
-              ><option value="">Tất cả</option
-              ><option
+              ></option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="state">Trạng thái</label
+            ><select id="state" name="state">
+              <option value="">Tất cả</option>
+              <option
                 th:each="v:${T(java.util.List).of('IN_PROGRESS','WAITING_GRADING','COMPLETED','ERROR','EXPIRED')}"
                 th:value="${v}"
                 th:text="${@resultLabels.state(v)}"
                 th:selected="${selectedState==v}"
-              ></option></select></div
-          ><div class="field"
-            ><label for="from">Từ ngày</label
-            ><input id="from" type="date" name="from" th:value="${from}" /></div
-          ><div class="field"
-            ><label for="to">Đến ngày</label
-            ><input id="to" type="date" name="to" th:value="${to}" /></div
-          ><div class="actions"
-            ><button class="button" type="submit">Lọc kết quả</button
-            ><a class="button button-secondary" th:href="@{/admin/results}">Xóa bộ lọc</a></div
-          ></form
-        >
-        <div class="section-title-row"
-          ><h2>Lịch sử lượt thi</h2
-          ><span class="muted" th:text="|${history.totalItems} lượt|"></span></div
-        ><div class="table-wrap" th:if="${!history.items.isEmpty()}"
-          ><table class="data-table admin-responsive-table result-history-table"
-            ><thead
-              ><tr
-                ><th scope="col">Học viên</th><th scope="col">Bài thi</th><th scope="col">Loại</th
-                ><th scope="col">Trạng thái</th><th scope="col">Nộp bài</th
-                ><th scope="col">Thao tác</th></tr
-              ></thead
-            ><tbody
-              ><tr th:each="item:${history.items}"
-                ><td data-label="Học viên"
-                  ><strong th:text="${item.learnerName}"></strong
-                  ><p class="muted" th:text="${item.learnerEmail}"></p></td
-                ><td data-label="Bài thi" th:text="${item.result.examTitle}"></td
-                ><td
+              ></option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="from">Từ ngày</label
+            ><input id="from" type="date" name="from" th:value="${from}" />
+          </div>
+          <div class="field">
+            <label for="to">Đến ngày</label><input id="to" type="date" name="to" th:value="${to}" />
+          </div>
+          <div class="actions">
+            <button class="button" type="submit">Lọc kết quả</button
+            ><a class="button button-secondary" th:href="@{/admin/results}">Xóa bộ lọc</a>
+          </div>
+        </form>
+        <div class="section-title-row">
+          <h2>Lịch sử lượt thi</h2>
+          <span class="muted" th:text="|${history.totalItems} lượt|"></span>
+        </div>
+        <div class="table-wrap" th:if="${!history.items.isEmpty()}">
+          <table class="data-table admin-responsive-table result-history-table">
+            <thead>
+              <tr>
+                <th scope="col">Học viên</th>
+                <th scope="col">Bài thi</th>
+                <th scope="col">Loại</th>
+                <th scope="col">Trạng thái</th>
+                <th scope="col">Nộp bài</th>
+                <th scope="col">Thao tác</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr th:each="item:${history.items}">
+                <td data-label="Học viên">
+                  <strong th:text="${item.learnerName}"></strong>
+                  <p class="muted" th:text="${item.learnerEmail}"></p>
+                </td>
+                <td data-label="Bài thi" th:text="${item.result.examTitle}"></td>
+                <td
                   data-label="Loại"
                   th:text="${@resultLabels.examType(item.result.examType)}"
-                ></td
-                ><td
+                ></td>
+                <td
                   data-label="Trạng thái"
                   th:text="${@resultLabels.state(item.result.state)}"
-                ></td
-                ><td
+                ></td>
+                <td
                   data-label="Nộp bài"
                   th:text="${item.result.submittedAt==null?'Chưa nộp':#temporals.format(item.result.submittedAt,'dd/MM/yyyy HH:mm')}"
-                ></td
-                ><td data-label="Thao tác"
-                  ><a th:href="@{/admin/results/{id}(id=${item.result.attemptId})}"
-                    >Xem chi tiết</a
-                  ></td
-                ></tr
-              ></tbody
-            ></table
-          ></div
-        ><div class="empty-box" th:if="${history.items.isEmpty()}"
-          ><h2>Không có kết quả phù hợp</h2></div
-        >
-        <nav class="result-pagination" th:if="${history.totalItems>history.size}"
-          ><a
+                ></td>
+                <td data-label="Thao tác">
+                  <a th:href="@{/admin/results/{id}(id=${item.result.attemptId})}">Xem chi tiết</a>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="empty-box" th:if="${history.items.isEmpty()}">
+          <h2>Không có kết quả phù hợp</h2>
+        </div>
+        <nav class="result-pagination" th:if="${history.totalItems>history.size}">
+          <a
             th:if="${history.page>0}"
             th:href="@{/admin/results(page=${history.page-1},size=${history.size},q=${q},skill=${selectedSkill},examType=${selectedExamType},state=${selectedState},from=${from},to=${to})}"
             >Trang trước</a
@@ -107,8 +121,10 @@
             th:if="${(history.page+1)*history.size<history.totalItems}"
             th:href="@{/admin/results(page=${history.page+1},size=${history.size},q=${q},skill=${selectedSkill},examType=${selectedExamType},state=${selectedState},from=${from},to=${to})}"
             >Trang sau</a
-          ></nav
-        ></main
-      ></div
-    ><div th:replace="~{fragments/footer :: footer}"></div></body
-></html>
+          >
+        </nav>
+      </main>
+    </div>
+    <div th:replace="~{fragments/footer :: footer}"></div>
+  </body>
+</html>

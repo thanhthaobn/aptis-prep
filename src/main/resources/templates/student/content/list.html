@@ -65,15 +65,15 @@
             <label for="studyState">Trạng thái</label>
             <select id="studyState" name="state">
               <option value="">Tất cả trạng thái</option>
-              <option value="COMPLETED" th:selected="${selectedState == 'COMPLETED'}"
-                >Đã hoàn thành</option
-              >
-              <option value="GRADING" th:selected="${selectedState == 'GRADING'}"
-                >Đang chờ chấm</option
-              >
-              <option value="GRADING_FAILED" th:selected="${selectedState == 'GRADING_FAILED'}"
-                >Chấm chưa thành công</option
-              >
+              <option value="COMPLETED" th:selected="${selectedState == 'COMPLETED'}">
+                Đã hoàn thành
+              </option>
+              <option value="GRADING" th:selected="${selectedState == 'GRADING'}">
+                Đang chờ chấm
+              </option>
+              <option value="GRADING_FAILED" th:selected="${selectedState == 'GRADING_FAILED'}">
+                Chấm chưa thành công
+              </option>
             </select>
           </div>
           <div class="d-flex align-items-end gap-2">

@@ -18,20 +18,21 @@
       th:with="current=${stage.targetLevel != null ? stage.targetLevel : 'A1'},goal=${stage.goalLevel},scale=${ {'A1','A2','B1','B2','C1'} },currentIndex=${scale.indexOf(current)}"
       aria-label="Vị trí chặng học A1 đến C1"
     >
-      <p class="stage-current"
-        ><strong th:text="|Chặng ${current}${stage.targetLevel == null ? ' · Làm quen' : ''}|"
+      <p class="stage-current">
+        <strong th:text="|Chặng ${current}${stage.targetLevel == null ? ' · Làm quen' : ''}|"
           >Chặng A1</strong
         >
         <span
           class="badge"
           th:text="${stage.status == 'COMPLETED' ? 'Đã hoàn tất' : 'Đang học'}"
-        ></span
-      ></p>
+        ></span>
+      </p>
       <ol
         class="stage-scale"
         aria-label="Thang chặng CEFR"
         th:style="|--stage-progress:${currentIndex + 1}|"
-        ><!-- Continuous fill follows the current stage, not the final goal. -->
+      >
+        <!-- Continuous fill follows the current stage, not the final goal. -->
         <li
           th:each="level,levelStat : ${scale}"
           th:classappend="${(level == current ? ' is-current' : '') + (level == goal ? ' is-goal' : '') + (levelStat.index &lt;= currentIndex ? ' is-reached' : '')}"

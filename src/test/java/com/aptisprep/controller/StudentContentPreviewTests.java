@@ -128,4 +128,28 @@ class StudentContentPreviewTests {
                                 .with(user("student").roles("STUDENT")))
                 .andExpect(status().is4xxClientError());
     }
+
+    @Test
+    void examRoutesStayWithinTheirModuleAndRejectNonNumericIds() throws Exception {
+        for (String path : new String[] {"/student/not-a-module", "/student/not-a-module/1"}) {
+            mvc.perform(get(path).with(user("student").roles("STUDENT")))
+                    .andExpect(status().isNotFound());
+        }
+        for (String path :
+                new String[] {
+                    "/student/exams/not-an-id",
+                    "/student/attempts/not-an-id",
+                    "/student/attempts/not-an-id/result",
+                    "/student/attempts/1/media/not-an-id/content",
+                    "/student/attempts/1/answers/not-an-id/audio"
+                }) {
+            mvc.perform(get(path).with(user("student").roles("STUDENT")))
+                    .andExpect(status().isBadRequest());
+        }
+        mvc.perform(
+                        post("/student/exams/not-an-id/start")
+                                .with(user("student").roles("STUDENT"))
+                                .with(csrf()))
+                .andExpect(status().isBadRequest());
+    }
 }

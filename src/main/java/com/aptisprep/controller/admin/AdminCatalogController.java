@@ -22,15 +22,38 @@ public class AdminCatalogController {
         this.catalogService = catalogService;
     }
 
-    @GetMapping("/{module:questions|exams}")
-    public String list(
-            @PathVariable String module,
+    @GetMapping("/questions")
+    public String questions(
             @RequestParam(defaultValue = "") String q,
             @RequestParam(defaultValue = "") String skill,
             @RequestParam(defaultValue = "") String status,
             @RequestParam(defaultValue = "") String kind,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
+            Model model) {
+        return list("questions", q, skill, status, kind, page, size, model);
+    }
+
+    @GetMapping("/exams")
+    public String exams(
+            @RequestParam(defaultValue = "") String q,
+            @RequestParam(defaultValue = "") String skill,
+            @RequestParam(defaultValue = "") String status,
+            @RequestParam(defaultValue = "") String kind,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            Model model) {
+        return list("exams", q, skill, status, kind, page, size, model);
+    }
+
+    private String list(
+            String module,
+            String q,
+            String skill,
+            String status,
+            String kind,
+            int page,
+            int size,
             Model model) {
         if (q.length() > 255 || skill.length() > 80 || status.length() > 40 || kind.length() > 80)
             throw new BusinessRuleException("Bộ lọc không hợp lệ");
@@ -45,8 +68,17 @@ public class AdminCatalogController {
         return "admin/catalog/list";
     }
 
-    @GetMapping("/{module:questions|exams}/{id:\\d+}")
-    public String detail(@PathVariable String module, @PathVariable int id, Model model) {
+    @GetMapping("/questions/{id}")
+    public String question(@PathVariable int id, Model model) {
+        return detail("questions", id, model);
+    }
+
+    @GetMapping("/exams/{id}")
+    public String exam(@PathVariable int id, Model model) {
+        return detail("exams", id, model);
+    }
+
+    private String detail(String module, int id, Model model) {
         addModule(module, model);
         model.addAttribute("entry", catalogService.entry(module, id));
         if ("questions".equals(module)) {
@@ -55,8 +87,17 @@ public class AdminCatalogController {
         return "admin/catalog/detail";
     }
 
-    @GetMapping("/{module:questions|exams}/create")
-    public String create(@PathVariable String module, Model model) {
+    @GetMapping("/questions/create")
+    public String createQuestion(Model model) {
+        return create("questions", model);
+    }
+
+    @GetMapping("/exams/create")
+    public String createExam(Model model) {
+        return create("exams", model);
+    }
+
+    private String create(String module, Model model) {
         addModule(module, model);
         model.addAttribute("editing", false);
         if ("questions".equals(module))
@@ -65,8 +106,17 @@ public class AdminCatalogController {
         return "admin/catalog/form";
     }
 
-    @GetMapping("/{module:questions|exams}/{id:\\d+}/edit")
-    public String edit(@PathVariable String module, @PathVariable int id, Model model) {
+    @GetMapping("/questions/{id}/edit")
+    public String editQuestion(@PathVariable int id, Model model) {
+        return edit("questions", id, model);
+    }
+
+    @GetMapping("/exams/{id}/edit")
+    public String editExam(@PathVariable int id, Model model) {
+        return edit("exams", id, model);
+    }
+
+    private String edit(String module, int id, Model model) {
         addModule(module, model);
         model.addAttribute("editing", true);
         model.addAttribute("entry", catalogService.entry(module, id));
@@ -89,7 +139,7 @@ public class AdminCatalogController {
         }
     }
 
-    @PostMapping("/questions/{id:\\d+}/edit")
+    @PostMapping("/questions/{id}/edit")
     public String updateQuestion(
             @PathVariable int id,
             @ModelAttribute QuestionForm form,
@@ -104,13 +154,13 @@ public class AdminCatalogController {
         }
     }
 
-    @PostMapping("/questions/{id:\\d+}/publish")
+    @PostMapping("/questions/{id}/publish")
     public String publishQuestion(@PathVariable int id) {
         catalogService.publishQuestion(id);
         return "redirect:/admin/questions/" + id;
     }
 
-    @PostMapping("/questions/{id:\\d+}/media")
+    @PostMapping("/questions/{id}/media")
     public String addMedia(
             @PathVariable int id,
             @RequestParam(name = "files", required = false) MultipartFile[] files) {
@@ -118,13 +168,13 @@ public class AdminCatalogController {
         return "redirect:/admin/questions/" + id;
     }
 
-    @PostMapping("/questions/{id:\\d+}/media/{mediaId:\\d+}/delete")
+    @PostMapping("/questions/{id}/media/{mediaId}/delete")
     public String deleteMedia(@PathVariable int id, @PathVariable int mediaId) {
         catalogService.deleteMedia(id, mediaId);
         return "redirect:/admin/questions/" + id;
     }
 
-    @PostMapping("/questions/{id:\\d+}/media/{mediaId:\\d+}")
+    @PostMapping("/questions/{id}/media/{mediaId}")
     public String updateMedia(
             @PathVariable int id,
             @PathVariable int mediaId,
@@ -135,14 +185,14 @@ public class AdminCatalogController {
         return "redirect:/admin/questions/" + id;
     }
 
-    @PostMapping("/questions/{id:\\d+}/media/{mediaId:\\d+}/move")
+    @PostMapping("/questions/{id}/media/{mediaId}/move")
     public String moveMedia(
             @PathVariable int id, @PathVariable int mediaId, @RequestParam int direction) {
         catalogService.moveMedia(id, mediaId, direction);
         return "redirect:/admin/questions/" + id;
     }
 
-    @GetMapping("/questions/{id:\\d+}/media/{mediaId:\\d+}/content")
+    @GetMapping("/questions/{id}/media/{mediaId}/content")
     public ResponseEntity<Resource> mediaContent(@PathVariable int id, @PathVariable int mediaId) {
         CatalogService.MediaContent value = catalogService.mediaContent(id, mediaId);
         MediaType type;
@@ -157,13 +207,13 @@ public class AdminCatalogController {
         return ResponseEntity.ok().contentType(type).body(value.resource());
     }
 
-    @PostMapping("/questions/{id:\\d+}/archive")
+    @PostMapping("/questions/{id}/archive")
     public String archiveQuestion(@PathVariable int id) {
         catalogService.archiveQuestion(id);
         return "redirect:/admin/questions/" + id;
     }
 
-    @PostMapping("/questions/{id:\\d+}/restore")
+    @PostMapping("/questions/{id}/restore")
     public String restoreQuestion(@PathVariable int id) {
         catalogService.restoreQuestion(id);
         return "redirect:/admin/questions/" + id;
@@ -174,13 +224,13 @@ public class AdminCatalogController {
         return "redirect:/admin/exams/" + catalogService.saveExam(null, form);
     }
 
-    @PostMapping("/exams/{id:\\d+}/edit")
+    @PostMapping("/exams/{id}/edit")
     public String updateExam(@PathVariable int id, @ModelAttribute ExamForm form) {
         catalogService.saveExam(id, form);
         return "redirect:/admin/exams/" + id;
     }
 
-    @PostMapping("/exams/{id:\\d+}/publish")
+    @PostMapping("/exams/{id}/publish")
     public String publishExam(@PathVariable int id) {
         catalogService.publishExam(id);
         return "redirect:/admin/exams/" + id;

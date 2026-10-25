@@ -36,7 +36,6 @@
       th:class="|alert alert-${type == 'error' ? 'danger' : type} ap-alert ap-alert-${type == 'error' ? 'danger' : type}|"
       th:attr="role=${(type == 'danger' or type == 'error' or type == 'warning') ? 'alert' : 'status'}"
       th:text="${text}"
-    >
-    </div>
+    ></div>
   </body>
 </html>

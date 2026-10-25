@@ -9,41 +9,47 @@
         <div
           th:replace="~{fragments/breadcrumb :: breadcrumb('Tổng quan', @{/student/dashboard}, 'Bài học')}"
         ></div>
-        <header class="page-header"
-          ><div><p class="eyebrow">THƯ VIỆN HỌC TẬP</p><h1>Bài học theo kỹ năng</h1></div></header
-        >
+        <header class="page-header">
+          <div>
+            <p class="eyebrow">THƯ VIỆN HỌC TẬP</p>
+            <h1>Bài học theo kỹ năng</h1>
+          </div>
+        </header>
         <form class="toolbar" method="get" th:action="@{/student/lessons}">
-          <div class="toolbar-search"
-            ><label for="q">Tìm kiếm</label
+          <div class="toolbar-search">
+            <label for="q">Tìm kiếm</label
             ><input
               id="q"
               name="q"
               th:value="${q}"
               maxlength="255"
               placeholder="Tên bài học hoặc chủ đề"
-          /></div>
-          <div
-            ><label for="skill">Kỹ năng</label
-            ><select id="skill" name="skill"
-              ><option value="">Tất cả</option
-              ><option
+            />
+          </div>
+          <div>
+            <label for="skill">Kỹ năng</label
+            ><select id="skill" name="skill">
+              <option value="">Tất cả</option>
+              <option
                 th:each="v:${skills}"
                 th:value="${v}"
                 th:text="${v}"
                 th:selected="${selectedSkill==v}"
-              ></option></select
-          ></div>
-          <div
-            ><label for="level">CEFR</label
-            ><select id="level" name="level"
-              ><option value="">Tất cả</option
-              ><option
+              ></option>
+            </select>
+          </div>
+          <div>
+            <label for="level">CEFR</label
+            ><select id="level" name="level">
+              <option value="">Tất cả</option>
+              <option
                 th:each="v:${levels}"
                 th:value="${v}"
                 th:text="${v}"
                 th:selected="${selectedLevel==v}"
-              ></option></select
-          ></div>
+              ></option>
+            </select>
+          </div>
           <button class="button" type="submit">Tìm kiếm</button>
         </form>
         <section
@@ -60,30 +66,30 @@
             th:each="branch:${lessonTree}"
             th:attr="data-skill=${branch.skill}"
           >
-            <summary
-              ><span class="library-skill-name" th:text="${branch.skill}"></span
-              ><span class="library-count" th:text="|${branch.count} bài học|"></span
-            ></summary>
+            <summary>
+              <span class="library-skill-name" th:text="${branch.skill}"></span
+              ><span class="library-count" th:text="|${branch.count} bài học|"></span>
+            </summary>
             <div class="library-levels">
               <details class="library-level" th:each="tier:${branch.levels}">
-                <summary
-                  ><span class="library-level-badge" th:text="${tier.level}"></span
+                <summary>
+                  <span class="library-level-badge" th:text="${tier.level}"></span
                   ><span>Cấp độ <span th:text="${tier.level}"></span></span
-                  ><span class="library-count" th:text="|${tier.count} bài|"></span
-                ></summary>
+                  ><span class="library-count" th:text="|${tier.count} bài|"></span>
+                </summary>
                 <div class="library-topics">
                   <section class="library-topic" th:each="group:${tier.topics}">
-                    <header
-                      ><span
+                    <header>
+                      <span
                         class="library-topic-kind"
                         th:text="${group.independent?'TỰ HỌC':'CHỦ ĐỀ'}"
-                      ></span
-                      ><h3 th:text="${group.name}"></h3
-                      ><span
+                      ></span>
+                      <h3 th:text="${group.name}"></h3>
+                      <span
                         class="library-count"
                         th:text="|${#lists.size(group.lessons)} bài|"
-                      ></span
-                    ></header>
+                      ></span>
+                    </header>
                     <ol class="library-lessons">
                       <li
                         th:each="lesson,lessonStat:${group.lessons}"
@@ -101,8 +107,8 @@
                             th:href="@{/student/lessons/{id}(id=${lesson.id})}"
                             th:text="${lesson.title}"
                           ></a>
-                          <div class="library-learning-status"
-                            ><span
+                          <div class="library-learning-status">
+                            <span
                               class="badge badge-success"
                               th:if="${learningStatus == 'COMPLETED'}"
                               >Đã hoàn thành</span
@@ -110,8 +116,8 @@
                               >Đang học</span
                             ><span class="muted" th:if="${learningStatus == 'NOT_STARTED'}"
                               >Chưa học</span
-                            ></div
-                          >
+                            >
+                          </div>
                           <p
                             th:if="${!#strings.isEmpty(lesson.description)}"
                             th:text="${lesson.description}"
@@ -147,11 +153,11 @@
             </div>
           </details>
         </section>
-        <div class="empty-box" th:if="${#lists.isEmpty(lessons)}"
-          ><div th:replace="~{fragments/navi :: navi('empty', 'Navi đang chờ bài học mới')}"></div
-          ><h2>Không tìm thấy bài học phù hợp</h2
-          ><p>Thử bộ lọc khác hoặc quay lại sau khi có nội dung mới.</p></div
-        >
+        <div class="empty-box" th:if="${#lists.isEmpty(lessons)}">
+          <div th:replace="~{fragments/navi :: navi('empty', 'Navi đang chờ bài học mới')}"></div>
+          <h2>Không tìm thấy bài học phù hợp</h2>
+          <p>Thử bộ lọc khác hoặc quay lại sau khi có nội dung mới.</p>
+        </div>
       </main>
     </div>
     <div th:replace="~{fragments/footer :: footer}"></div>

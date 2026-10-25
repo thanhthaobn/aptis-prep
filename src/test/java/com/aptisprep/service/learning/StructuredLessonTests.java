@@ -6,11 +6,15 @@ import static org.springframework.security.test.web.servlet.request.SecurityMock
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
+import com.aptisprep.config.StorageProperties;
 import com.aptisprep.dto.form.LessonForm;
 import com.aptisprep.entity.*;
 import com.aptisprep.enums.*;
 import com.aptisprep.exception.BusinessRuleException;
 import com.aptisprep.repository.*;
+import com.aptisprep.service.storage.StorageService;
+import com.aptisprep.support.TestAudio;
+import java.nio.file.Files;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -37,6 +41,8 @@ class StructuredLessonTests {
     @Autowired jakarta.persistence.EntityManager entityManager;
     @Autowired LessonResponseRepository responseRepository;
     @Autowired LearningPathService learningPaths;
+    @Autowired StorageService storage;
+    @Autowired StorageProperties storageProperties;
 
     @Test
     void libraryShowsCompletedLessonsFromPathAndKeepsProgressPrivate() throws Exception {
@@ -194,7 +200,7 @@ class StructuredLessonTests {
     void listeningRequiresEnoughPlaybackAndReceptiveSkillsHaveNoNotesForm() throws Exception {
         var a = learner("listen-progress@test.local");
         var l = create("Listening");
-        l.setAudioPath("curriculum/audio/listening-a2.wav");
+        l.setAudioPath(TestAudio.store(storage));
         entityManager.flush();
         String url = "/student/lessons/" + l.getId() + "/audio-played";
         mvc.perform(
@@ -281,7 +287,7 @@ class StructuredLessonTests {
         for (String skill : LessonService.SKILLS) {
             var lesson = create(skill);
             if (skill.equals("Listening")) {
-                lesson.setAudioPath("curriculum/audio/listening-a2.wav");
+                lesson.setAudioPath(TestAudio.store(storage));
                 lesson.setAudioName("Bài nghe.wav");
             }
             String html =
@@ -318,6 +324,59 @@ class StructuredLessonTests {
                 default -> {}
             }
         }
+    }
+
+    @Test
+    void legacyImagePathRemainsReadableInHistoryAfterLessonChanges() throws Exception {
+        var owner = learner("media-history-owner@test.local");
+        var other = learner("media-history-other@test.local");
+        var lesson = create("Reading");
+        String relativePath = "curriculum/images/history-" + lesson.getId() + ".svg";
+        byte[] bytes =
+                "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 1 1\"></svg>"
+                        .getBytes(java.nio.charset.StandardCharsets.UTF_8);
+        var file = storageProperties.getUploadDir().resolve(relativePath);
+        Files.createDirectories(file.getParent());
+        Files.write(file, bytes);
+        lesson.setImagePath(relativePath);
+        lesson.setImageName("history.svg");
+        entityManager.flush();
+
+        mvc.perform(
+                        get("/lesson-media/" + lesson.getId() + "/image")
+                                .with(user(owner.getEmail()).roles("STUDENT")))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType("image/svg+xml"))
+                .andExpect(content().bytes(bytes));
+        var question = teaching.questions(lesson.getId()).getFirst();
+        teaching.grade(lesson.getId(), Map.of("q" + question.id(), "1"), owner.getEmail());
+        var history = teaching.history(lesson.getId(), owner.getEmail()).getFirst();
+        String url =
+                "/student/lessons/"
+                        + lesson.getId()
+                        + "/history/attempts/"
+                        + history.id()
+                        + "/media/image";
+        lesson.setImagePath(null);
+        entityManager.flush();
+        entityManager.clear();
+
+        assertThat(
+                        teaching.historicalMedia(
+                                        lesson.getId(),
+                                        history.id(),
+                                        "image",
+                                        owner.getEmail(),
+                                        true)
+                                .path())
+                .isEqualTo(relativePath);
+        mvc.perform(get(url).with(user(owner.getEmail()).roles("STUDENT")))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType("image/svg+xml"))
+                .andExpect(content().bytes(bytes));
+        mvc.perform(get(url).with(user(other.getEmail()).roles("STUDENT")))
+                .andExpect(status().isNotFound());
+        mvc.perform(get(url)).andExpect(status().is3xxRedirection());
     }
 
     private User learner(String email) {
