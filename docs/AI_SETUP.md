@@ -1,27 +1,20 @@
 # Cấu hình chấm Writing/Speaking bằng Gemini
 
-Phân công mới theo [TEAM_ASSIGNMENT_V2.md](TEAM_ASSIGNMENT_V2.md): Người 1 tiếp nhận service/provider, objective/AI grading, quy đổi, retry, tổng hợp và Profile; Người 3 lưu/khóa bài, gửi `LockedAttempt` sau commit và nhận trạng thái grading idempotent. Người 2 chỉ đọc DTO để hiển thị history/result. Không tự tạo trang chấm mẫu Admin. Ranh giới schema/writer và hợp đồng AI phải chốt trong PR đầu theo [SERVICE_CONTRACTS.md](SERVICE_CONTRACTS.md); đây chưa phải nghiệp vụ đã triển khai.
+Phân công theo [TEAM_ASSIGNMENT_V2.md](TEAM_ASSIGNMENT_V2.md): Thông phụ trách scoring/provider, Trâm phụ trách lưu/khóa bài và snapshot, Thảo phụ trách học tập/giao diện. AI đã có luồng lưu job, retry, recovery và cách ly nguồn Lesson/Exam; test mock không chứng minh chất lượng provider thật. Cấu hình hiện dùng biến môi trường và một application.properties; không có dữ liệu chấm mẫu thay kết quả thật.
 
 ## 1. Bật AI trên máy cá nhân
 
 Tạo API key riêng tại https://aistudio.google.com/apikey. Không dùng key công khai và không gửi key vào chat hoặc commit lên Git. Tài khoản API phải có quyền truy cập model và hạn mức phù hợp.
 
-Mở file **src/main/resources/application-dev.properties** đang được gitignore, thêm:
-
-```properties
-app.ai.enabled=true
-app.ai.api-key=DIEN_API_KEY_RIENG_CUA_BAN
-app.ai.grading-model=gemini-3.5-flash-lite
-```
-
-Hoặc đặt biến môi trường trong IntelliJ Run Configuration:
+Ứng dụng dùng một `application.properties`. Đặt biến môi trường trong IntelliJ Run Configuration hoặc phiên terminal chạy Maven:
 
 ```text
 GEMINI_ENABLED=true
 GEMINI_API_KEY=<key riêng>
+GEMINI_GRADING_MODEL=gemini-3.5-flash-lite
 ```
 
-Nếu cấu hình cùng một thuộc tính trong file dev, giá trị file đó được ưu tiên hơn placeholder ở application.properties. Chọn một cách để tránh nhầm. Không đưa key vào template, JavaScript hoặc ảnh chụp cấu hình.
+Không còn file cấu hình dev được nạp tự động. Không đưa key vào template, JavaScript, Git hoặc ảnh chụp cấu hình. Biến môi trường DB_PASSWORD vẫn cần cho kết nối SQL Server; xem SETUP_LOCAL.md.
 
 Không có key thì để app.ai.enabled=false. Project vẫn chạy, chức năng chấm sẽ báo chưa khả dụng và không tạo điểm giả.
 

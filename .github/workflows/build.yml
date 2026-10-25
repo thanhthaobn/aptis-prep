@@ -17,3 +17,10 @@ jobs:
           cache: maven
       - name: Test and package (no SQL Server or OpenAI credentials)
         run: bash ./mvnw -B -ntp verify
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci --ignore-scripts --no-audit --no-fund
+      - run: npm run format:web:check
+      - run: npm run test:web

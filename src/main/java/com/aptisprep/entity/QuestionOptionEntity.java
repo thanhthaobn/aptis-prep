@@ -8,19 +8,23 @@ public class QuestionOptionEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
+
     @Column(name = "question_item_id", nullable = false)
     private Integer questionItemId;
+
     @Column(nullable = false, columnDefinition = "nvarchar(max)")
     private String content;
+
     @Column(name = "option_code", length = 50)
     private String optionCode;
+
     @Column(name = "is_correct")
     private Boolean correct;
+
     @Column(nullable = false)
     private int position;
 
-    public QuestionOptionEntity() {
-    }
+    public QuestionOptionEntity() {}
 
     public Integer getId() {
         return id;

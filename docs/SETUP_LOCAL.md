@@ -1,116 +1,96 @@
-# Thiết lập môi trường local
+# Thiết lập local — một cấu hình, một schema hiện tại
 
-## 1. Yêu cầu
+## 1. Công cụ
 
-- JDK 21
-- SQL Server Developer hoặc Express
-- Git
-- IntelliJ IDEA
+JDK 21, SQL Server Developer/Express, Maven Wrapper và IntelliJ. Mở thư mục chứa pom.xml, chọn Project SDK và Maven Runner JDK 21, reload Maven.
 
-Kiểm tra Java:
+## 2. Database mới
 
-```powershell
-$env:JAVA_HOME = "C:\duong-dan-den-jdk-21"
-$env:Path = "$env:JAVA_HOME\bin;$env:Path"
-& "$env:JAVA_HOME\bin\java.exe" -version
-```
+1. Tạo một database SQL Server **mới và rỗng** bằng SSMS.
+2. Chọn đúng database mới trong cửa sổ query.
+3. Chạy toàn bộ [schema-current.sql](../database/schema-current.sql), bật chế độ dừng khi có lỗi (sqlcmd: `-b`).
+4. Script dựng 39 bảng cùng FK, CHECK, default và index. Không có tài khoản, đề thi hay dữ liệu mẫu.
+5. Script từ chối database đã có bảng; không dùng nó để nâng cấp DB đang có dữ liệu.
 
-`mvnw.cmd` sẽ dùng và kiểm tra JDK được khai báo trong `JAVA_HOME`; dự án yêu cầu đúng Java 21. Nếu máy có nhiều JDK, không dùng kết quả `java -version` đang trỏ nhầm Java 25 để chạy Maven.
+Ứng dụng chỉ dùng `ddl-auto=validate`, `spring.sql.init.mode=never`. Không còn Flyway, không tạo/cập nhật schema khi khởi động.
 
-## 2. Tạo database
+## 3. Database đang dùng
 
-Kết nối SQL Server bằng IntelliJ Database Tool, SSMS hoặc DBeaver rồi chạy:
+**Không xóa/recreate database để vượt lỗi validate.** Sao lưu DB bằng SQL Server Backup và đối chiếu schema trước khi nâng cấp thủ công có kiểm chứng.
 
-```sql
-IF DB_ID('aptisprep_db') IS NULL
-BEGIN
-    CREATE DATABASE aptisprep_db;
-END;
-GO
-```
+Kiểm tra chỉ đọc ngày 24/10/2026: `aptisprep_db` đang có 37 bảng nghiệp vụ, lịch sử cũ ở V031; chưa có `mock_exams.demo_only`, `ai_assessment_jobs.processing_token` và các cột playback mới. Vì vậy **không thể coi DB này đã sẵn sàng chạy source mới**. Đợt dọn source không sửa DB đó.
 
-Không tự tạo các bảng. Flyway sẽ tạo schema khi ứng dụng khởi động.
+Các file SQL/config nguồn cũ được lưu trong thư mục `backups/` bị Git ignore. Đây là bản sao file nguồn, **không phải backup database**. Cấu hình riêng cũ nằm ở `backups/local-config.properties`, không được Spring nạp và không đưa lên Git.
 
-## 3. Cấu hình kết nối riêng
+## 4. Cấu hình duy nhất
 
-Copy:
+Ứng dụng dùng `src/main/resources/application.properties`. Không cần profile dev. Đặt biến môi trường trong IntelliJ → Edit Configurations → Environment variables:
 
-```text
-src/main/resources/application-dev.example.properties
-```
+- `DB_PASSWORD`: bắt buộc, mật khẩu SQL Server riêng.
+- `DB_USERNAME`: tùy chọn, mặc định sa; nên dùng tài khoản local có quyền phù hợp.
+- `DB_URL`: tùy chọn; mặc định trỏ `localhost:1433`, database `aptisprep_db`. Nếu dựng DB mới tên khác phải đặt lại URL.
+- `GEMINI_ENABLED`, `GEMINI_API_KEY`, `GEMINI_GRADING_MODEL`: tùy chọn.
+- `FFPROBE_PATH`: tùy chọn nếu ffprobe không có trên PATH.
 
-thành:
+Không ghi mật khẩu/API key vào file được track, lệnh chia sẻ công khai hay ảnh chụp. Không có key thì để AI tắt; không tạo điểm giả.
 
-```text
-src/main/resources/application-dev.properties
-```
+Chọn Run `AptisPrep - local`; đặt working directory ở gốc project. Nếu dùng cấu hình cũ, xóa Active profiles/VM option dev và thêm DB_PASSWORD. Cần nạp lại cấu hình nếu IntelliJ đang mở trong lúc file được sửa.
 
-Sau đó điền username/password SQL Server local. File này đã được `.gitignore` và không được commit.
-
-## 4. Chạy ứng dụng
+Hoặc mở PowerShell ở gốc project, đặt các biến môi trường trên **trong phiên terminal của bạn**, rồi chạy:
 
 ```powershell
-.\mvnw.cmd clean spring-boot:run
+.\mvnw.cmd spring-boot:run
 ```
 
-Mở `http://localhost:8080`.
+Chỉ mở localhost:8080 sau khi log có Started AptisPrepApplication. Dừng ứng dụng cũ trước khi chạy bản khác cùng cổng. Không khởi động source mới trên DB V031 trước khi đối chiếu/nâng schema.
 
-## 5. Xác nhận setup
+## 5. Tài khoản và nội dung
 
-- Flyway chạy V001 đến V005 thành công (máy đã có V003 chỉ chạy phần còn thiếu).
-- Bảng `flyway_schema_history` tồn tại.
-- Hibernate không báo schema validation error.
-- Đăng nhập được bằng tài khoản demo.
-- Admin vào `/admin/dashboard`.
-- Student vào `/student/dashboard`.
+Không có runner tự tạo admin/student hoặc seed đề demo. Đăng ký tài khoản thật qua /register. Trên DB mới do bạn quản lý, người quản trị DB cấp role ADMIN cho đúng tài khoản đã đăng ký; xác minh email và chỉ cập nhật đúng một bản ghi. Mật khẩu vẫn được mã hóa bởi ứng dụng, không nhập mật khẩu thô vào cột password_hash.
 
-## 6. SQL Server TCP/IP và tài khoản
+Sau đó dùng chức năng Admin để tạo Certificate, Scoring Scheme/Band, Lesson, Question và Exam. Các chức năng cần dữ liệu tham chiếu phải hiện trạng thái rỗng, không tự bịa dữ liệu thay thế.
 
-- SQL Server Configuration Manager → Network Configuration → Protocols của đúng instance → bật TCP/IP. Mẫu dùng localhost:1433; Express/named instance có thể dùng cổng khác, xác định đúng cổng hoặc đặt cổng cố định và restart đúng service instance.
-- SQL login/password cần mixed mode và login được bật. Login cần quyền đọc/ghi và DDL trong database local để chạy Flyway. Không cần mở cổng public hoặc tắt firewall.
-- `Test-NetConnection localhost -Port 1433` kiểm tra cổng, không xác minh password.
-- IntelliJ Database Tool kết nối được không có nghĩa Spring đã có datasource. App vẫn cần file dev riêng. `trustServerCertificate=true` chỉ là lựa chọn local; không dùng làm cấu hình production.
-- Không sửa V001–V005 đã chạy, tự repair history hoặc drop DB để vượt checksum. Cần kiểm tra từ đầu thì tạo DB local tên mới; không xóa dữ liệu đang cần giữ.
-
-## 7. IntelliJ và Java 21
-
-- Mở thư mục chứa pom.xml; Project Structure → Project SDK/Language level: 21.
-- Settings → Maven: Maven Wrapper, Runner JRE và Importer JDK: 21; reload Maven.
-- Chạy com.aptisprep.AptisPrepApplication; working directory là thư mục repo. Profile mặc định dev, kiểm tra Run Configuration không override sang profile khác.
-- Kiểm tra `& "$env:JAVA_HOME\bin\java.exe" -version` là 21 và `.\mvnw.cmd -version` chạy thành công. Lần đầu cần mạng tải dependency.
-- Chỉ mở localhost khi log có Started AptisPrepApplication và server còn chạy. Dừng bản IntelliJ trước khi chạy bản terminal cùng cổng.
-- Sau sửa UI: Build Project hoặc chạy lại và Ctrl+F5, không sửa file trong target.
-
-## 8. Kiểm thử, JAR và file riêng
+## 6. Kiểm thử
 
 ```powershell
-.\mvnw.cmd verify
+.\mvnw.cmd clean verify
+node --test src/test/js/*.test.cjs
 ```
 
-Test thường dùng H2/Flyway tắt/Gemini giả lập, không chứng minh SQL Server migration chạy đúng. GitHub Actions chạy Java 21 và verify, không cần key hay DB secret.
+Test thường chạy H2 trong bộ nhớ, không cần DB_PASSWORD và không truy cập database ứng dụng.
 
-SqlServerMigrationTests là opt-in, gọi Flyway migrate nên có thay đổi schema. Chỉ chạy trên DB kiểm thử riêng: cấu hình datasource local trỏ đúng DB đó, đặt APTIS_SQLSERVER_TESTS=true, chạy `.\mvnw.cmd -Dtest=SqlServerMigrationTests test`, sau đó bỏ biến và khôi phục datasource. Không chạy trên DB có dữ liệu cần giữ.
+SQL Server tạm: đặt DB_PASSWORD/DB_USERNAME của tài khoản local có quyền tạo/xóa database, rồi:
 
-JAR đóng gói không chứa application-dev.properties. Chạy JAR cần datasource qua SPRING_DATASOURCE_URL/USERNAME/PASSWORD hoặc file config ngoài. Khi phát triển, vẫn chạy từ source bằng IntelliJ/Maven như trên. Không chia sẻ JAR/config kèm mật khẩu, API key hoặc dữ liệu upload.
+```powershell
+$env:APTIS_SQLSERVER_ISOLATED_TESTS = 'true'
+.\mvnw.cmd '-Dtest=V2SqlServerPreservationTests' test
+Remove-Item Env:APTIS_SQLSERVER_ISOLATED_TESTS
+```
 
-Mỗi người có DB local riêng. Git chia sẻ schema/seed và giao diện, không tự đồng bộ dữ liệu phát sinh. Tài khoản demo chỉ dùng local; AI tắt vẫn chạy bình thường. `/uploads/**` hiện bị chặn, chưa có endpoint media riêng kiểm quyền; không bật upload/audio thật trước khi hoàn thiện theo SERVICE_CONTRACTS.md.
+Test chỉ tạo/xóa DB UUID của chính nó, kiểm schema, đáp án A-F, query AI và từ chối ghi đè DB có dữ liệu.
 
-## 9. Lỗi thường gặp và checklist máy thứ hai
+`SqlServerMigrationTests` giữ tên cũ để tương thích lệnh, nhưng nay chỉ **validate**, không migrate. Bật riêng bằng APTIS_SQLSERVER_TESTS=true và DB_URL rõ ràng; DB V031 chưa được nâng sẽ thất bại đúng theo thiết kế.
 
-| Lỗi | Kiểm tra |
-|---|---|
-| Thiếu datasource URL | Tạo đúng application-dev.properties và profile dev |
-| SQL timeout/refused | Instance, service, TCP/IP và cổng thực |
-| Login failed | Mixed mode, login bật, password và quyền DB |
-| Cannot open database | DB trên đúng instance, login có quyền |
-| Port 8080 in use | Dừng app cũ hoặc đổi cổng local |
-| Web chưa đổi | Đúng project/working directory, build resources, Ctrl+F5 |
-| Migration checksum lỗi | Không sửa migration cũ; báo người giữ nền |
+## 7. Thay đổi schema về sau
 
-- [ ] Clone đúng commit trên máy khác, dùng JDK 21 và SQL Server riêng.
-- [ ] Verify thành công, DB rỗng chạy V001–V005, đăng nhập được hai role.
-- [ ] Student mở Bài học/Đề thi/Kết quả/Placement/Hồ sơ; Admin mở Cấu hình.
-- [ ] git status không có secret, uploads, target hay .idea.
-- [ ] Ghi commit và phiên bản SQL Server/kết quả trong PR, không chụp secret.
+Cập nhật DDL hiện tại và entity cùng nhau, kiểm trên DB tạm. Đối với DB đang dùng, chuẩn bị bước nâng cấp riêng, sao lưu và nghiệm thu bảo toàn dữ liệu trước khi thực thi. Không dùng Hibernate update/create-drop trên dữ liệu thật. Schema hiện tại không lưu lịch sử thay đổi; Git vẫn giữ lịch sử source để khôi phục khi cần.
 
-Chưa chạy máy thứ hai thì không đánh dấu hoàn tất checklist đó. Hibernate hiện chỉ validate Entity đã có (User), không xác nhận toàn bộ bảng nghiệp vụ đã map.
+## 8. Format source
+
+Java dùng Google Java Format theo style AOSP (4 dấu cách), quản lý qua Spotless. `verify` kiểm format nhưng không tự sửa source:
+
+```powershell
+.\mvnw.cmd spotless:apply
+.\mvnw.cmd spotless:check
+```
+
+HTML/JavaScript dùng Prettier; Node/npm chỉ phục vụ phát triển và CI, không phải dependency chạy ứng dụng Java:
+
+```powershell
+npm ci --ignore-scripts --no-audit --no-fund
+npm run format:web
+npm run format:web:check
+npm run test:web
+```
+
+Prettier giữ whitespace HTML ở chế độ strict để hạn chế ảnh hưởng Thymeleaf, đồng thời format cả JavaScript trong các thẻ script hiện có. CI kiểm cả Java, HTML/JavaScript và test JavaScript. `.editorconfig` và `.gitattributes` thống nhất encoding, thụt lề và xuống dòng giữa các máy.

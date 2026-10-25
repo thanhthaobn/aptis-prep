@@ -1,33 +1,45 @@
 package com.aptisprep.entity;
 
 import jakarta.persistence.*;
-
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "attempt_outbox", uniqueConstraints = @UniqueConstraint(name = "uq_attempt_outbox_event_key", columnNames = "event_key"))
+@Table(
+        name = "attempt_outbox",
+        uniqueConstraints =
+                @UniqueConstraint(name = "uq_attempt_outbox_event_key", columnNames = "event_key"))
 public class AttemptOutboxEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
     @Column(name = "event_key", nullable = false, length = 255)
     private String eventKey;
+
     @Column(name = "event_type", nullable = false, length = 80)
     private String eventType;
+
     @Column(name = "aggregate_id", nullable = false)
     private Integer aggregateId;
+
     @Column(nullable = false, columnDefinition = "nvarchar(max)")
     private String payload;
+
     @Column(nullable = false, length = 30)
     private String status;
+
     @Column(nullable = false)
     private int attempts;
+
     @Column(name = "next_attempt_at", nullable = false)
     private LocalDateTime nextAttemptAt;
+
     @Column(name = "last_error", length = 1000)
     private String lastError;
+
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
+
     @Column(name = "processed_at")
     private LocalDateTime processedAt;
 

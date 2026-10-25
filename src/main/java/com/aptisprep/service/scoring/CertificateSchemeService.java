@@ -2,6 +2,7 @@ package com.aptisprep.service.scoring;
 
 import com.aptisprep.entity.*;
 import com.aptisprep.enums.RecordStatus;
+import com.aptisprep.enums.Skill;
 import com.aptisprep.exception.BusinessRuleException;
 import com.aptisprep.exception.ResourceNotFoundException;
 import com.aptisprep.repository.*;
@@ -12,53 +13,96 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class CertificateSchemeService implements CertificateSchemeContract {
-    private static final Set<String> SKILLS = Set.of("GRAMMAR_VOCABULARY", "READING", "LISTENING", "WRITING", "SPEAKING");
+    private static final Set<String> SKILLS = Set.copyOf(Skill.codes());
     private final CertificateRepository certificates;
     private final ScoringSchemeRepository schemes;
     private final ScoreBandRepository bands;
     private final ScoringScaleRuleRepository scaleRules;
 
-    public CertificateSchemeService(CertificateRepository certificates, ScoringSchemeRepository schemes,
-            ScoreBandRepository bands, ScoringScaleRuleRepository scaleRules) {
-        this.certificates = certificates; this.schemes = schemes; this.bands = bands;
+    public CertificateSchemeService(
+            CertificateRepository certificates,
+            ScoringSchemeRepository schemes,
+            ScoreBandRepository bands,
+            ScoringScaleRuleRepository scaleRules) {
+        this.certificates = certificates;
+        this.schemes = schemes;
+        this.bands = bands;
         this.scaleRules = scaleRules;
     }
 
-    @Override @Transactional(readOnly = true)
+    @Override
+    @Transactional(readOnly = true)
     public List<CertificateOption> activeCertificates() {
         return certificates.findByStatusOrderByNameAsc(RecordStatus.ACTIVE).stream()
-                .map(value -> new CertificateOption(value.getId(), value.getCode(), value.getName())).toList();
+                .map(
+                        value ->
+                                new CertificateOption(
+                                        value.getId(), value.getCode(), value.getName()))
+                .toList();
     }
 
-    @Override @Transactional(readOnly = true)
+    @Override
+    @Transactional(readOnly = true)
     public List<SchemeOption> activeSchemes(Integer certificateId) {
-        if (certificateId == null || certificates.findById(certificateId)
-                .filter(value -> value.getStatus() == RecordStatus.ACTIVE).isEmpty()) {
+        if (certificateId == null
+                || certificates
+                        .findById(certificateId)
+                        .filter(value -> value.getStatus() == RecordStatus.ACTIVE)
+                        .isEmpty()) {
             return List.of();
         }
         return schemes.findByCertificateIdOrderByVersionDesc(certificateId).stream()
                 .filter(value -> value.getStatus() == RecordStatus.ACTIVE)
-                .map(this::option).toList();
+                .map(this::option)
+                .toList();
     }
 
-    @Override @Transactional
-    public SchemeOption requireAvailableScheme(Integer certificateId, Integer schemeId, String skill) {
-        String normalizedSkill = skill == null ? "" : skill.trim().toUpperCase(Locale.ROOT).replaceAll("[^A-Z0-9]+", "_");
-        if (!SKILLS.contains(normalizedSkill)) throw new BusinessRuleException("Kỹ năng không hợp lệ");
-        ScoringScheme scheme = schemes.findByIdAndCertificateId(schemeId, certificateId)
-                .orElseThrow(() -> new ResourceNotFoundException("Bộ chấm điểm không thuộc chứng chỉ đã chọn"));
-        if (scheme.getStatus() != RecordStatus.ACTIVE || scheme.getCertificate().getStatus() != RecordStatus.ACTIVE) {
+    @Override
+    @Transactional
+    public SchemeOption requireAvailableScheme(
+            Integer certificateId, Integer schemeId, String skill) {
+        String normalizedSkill =
+                skill == null
+                        ? ""
+                        : skill.trim().toUpperCase(Locale.ROOT).replaceAll("[^A-Z0-9]+", "_");
+        if (!SKILLS.contains(normalizedSkill))
+            throw new BusinessRuleException("Kỹ năng không hợp lệ");
+        ScoringScheme scheme =
+                schemes.findByIdAndCertificateId(schemeId, certificateId)
+                        .orElseThrow(
+                                () ->
+                                        new ResourceNotFoundException(
+                                                "Bộ chấm điểm không thuộc chứng chỉ đã chọn"));
+        if (scheme.getStatus() != RecordStatus.ACTIVE
+                || scheme.getCertificate().getStatus() != RecordStatus.ACTIVE) {
             throw new BusinessRuleException("Bộ chấm điểm hoặc chứng chỉ đã ngừng sử dụng");
         }
-        ScoringScaleRule rule = scaleRules.findBySchemeIdAndSkillIgnoreCase(schemeId, normalizedSkill)
-                .orElseThrow(() -> new BusinessRuleException("Bộ chấm điểm chưa cấu hình quy đổi raw-to-scale cho kỹ năng này"));
-        ScoreBandCoverage.requireComplete(rule, bands.findBySchemeIdAndSkillOrderByMinScoreAsc(scheme.getId(), normalizedSkill));
+        ScoringScaleRule rule =
+                scaleRules
+                        .findBySchemeIdAndSkillIgnoreCase(schemeId, normalizedSkill)
+                        .orElseThrow(
+                                () ->
+                                        new BusinessRuleException(
+                                                "Bộ chấm điểm chưa cấu hình quy đổi raw-to-scale"
+                                                        + " cho kỹ năng này"));
+        ScoreBandCoverage.requireComplete(
+                rule,
+                bands.findBySchemeIdAndSkillOrderByMinScoreAsc(scheme.getId(), normalizedSkill));
         return option(scheme);
     }
 
     private SchemeOption option(ScoringScheme scheme) {
-        List<String> skills = bands.findBySchemeIdOrderBySkillAscMinScoreAsc(scheme.getId()).stream()
-                .map(ScoreBand::getSkill).distinct().toList();
-        return new SchemeOption(scheme.getId(), scheme.getCertificate().getId(), scheme.getVersion(), scheme.getName(), scheme.getStatus().name(), skills);
+        List<String> skills =
+                bands.findBySchemeIdOrderBySkillAscMinScoreAsc(scheme.getId()).stream()
+                        .map(ScoreBand::getSkill)
+                        .distinct()
+                        .toList();
+        return new SchemeOption(
+                scheme.getId(),
+                scheme.getCertificate().getId(),
+                scheme.getVersion(),
+                scheme.getName(),
+                scheme.getStatus().name(),
+                skills);
     }
 }

@@ -3,31 +3,45 @@ package com.aptisprep.dto.form;
 import jakarta.validation.constraints.FutureOrPresent;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
-
+import java.math.BigDecimal;
 import java.time.LocalDate;
-
+import java.util.LinkedHashMap;
+import java.util.Map;
 import org.springframework.format.annotation.DateTimeFormat;
 
 public class GoalForm {
-    private java.util.Map<String, java.math.BigDecimal> targetScores = new java.util.LinkedHashMap<>();
-    public java.util.Map<String, java.math.BigDecimal> getTargetScores() { return targetScores; }
-    public void setTargetScores(java.util.Map<String, java.math.BigDecimal> value) { targetScores = value == null ? new java.util.LinkedHashMap<>() : value; }
+    private Map<String, BigDecimal> targetScores = new LinkedHashMap<>();
+
+    public Map<String, BigDecimal> getTargetScores() {
+        return targetScores;
+    }
+
+    public void setTargetScores(Map<String, BigDecimal> value) {
+        targetScores = value == null ? new LinkedHashMap<>() : value;
+    }
+
     private Integer certificateId;
+
     @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
     @FutureOrPresent(message = "Ngày mục tiêu phải từ hôm nay trở đi")
     private LocalDate targetDate;
+
     @Size(max = 10)
     @Pattern(regexp = "^(A1|A2|B1|B2|C1|C2)?$", message = "CEFR không hợp lệ")
     private String grammarVocabulary;
+
     @Size(max = 10)
     @Pattern(regexp = "^(A1|A2|B1|B2|C1|C2)?$", message = "CEFR không hợp lệ")
     private String reading;
+
     @Size(max = 10)
     @Pattern(regexp = "^(A1|A2|B1|B2|C1|C2)?$", message = "CEFR không hợp lệ")
     private String listening;
+
     @Size(max = 10)
     @Pattern(regexp = "^(A1|A2|B1|B2|C1|C2)?$", message = "CEFR không hợp lệ")
     private String writing;
+
     @Size(max = 10)
     @Pattern(regexp = "^(A1|A2|B1|B2|C1|C2)?$", message = "CEFR không hợp lệ")
     private String speaking;

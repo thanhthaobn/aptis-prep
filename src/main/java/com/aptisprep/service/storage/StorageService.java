@@ -1,9 +1,9 @@
 package com.aptisprep.service.storage;
 
-import org.springframework.core.io.Resource;
-import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.nio.file.Path;
+import org.springframework.core.io.Resource;
+import org.springframework.web.multipart.MultipartFile;
 
 public interface StorageService {
 
@@ -17,7 +17,8 @@ public interface StorageService {
         try {
             return load(relativePath).getFile().toPath();
         } catch (IOException | UnsupportedOperationException exception) {
-            throw new IllegalStateException("File lưu trữ không hỗ trợ truy cập local: " + relativePath, exception);
+            throw new IllegalStateException(
+                    "File lưu trữ không hỗ trợ truy cập local: " + relativePath, exception);
         }
     }
 }

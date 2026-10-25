@@ -1,22 +1,47 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="vi" xmlns:th="http://www.thymeleaf.org">
-<body>
-<span th:fragment="levelRange(skill)" class="explore-number stage-range">
-    <span th:each="stage:${stages}" th:if="${stage.skill == skill}"><span th:text="${stage.fromLevel != null ? stage.fromLevel : 'Chưa đánh giá'}"></span><span aria-hidden="true"> → </span><strong th:text="${stage.goalLevel != null ? stage.goalLevel : 'Chưa đặt mục tiêu'}"></strong></span>
-</span>
-<section th:fragment="stageScale(skill)" class="stage-overview" th:each="stage : ${stages}" th:if="${stage.skill == skill}"
-         th:with="current=${stage.targetLevel != null ? stage.targetLevel : 'A1'},goal=${stage.goalLevel},scale=${ {'A1','A2','B1','B2','C1'} },currentIndex=${scale.indexOf(current)}" aria-label="Vị trí chặng học A1 đến C1">
-    <p class="stage-current"><strong th:text="|Chặng ${current}${stage.targetLevel == null ? ' · Làm quen' : ''}|">Chặng A1</strong>
-        <span class="badge" th:text="${stage.status == 'COMPLETED' ? 'Đã hoàn tất' : 'Đang học'}"></span></p>
-    <ol class="stage-scale" aria-label="Thang chặng CEFR" th:style="|--stage-progress:${currentIndex + 1}|"><!-- Continuous fill follows the current stage, not the final goal. -->
-        <li th:each="level,levelStat : ${scale}"
-            th:classappend="${(level == current ? ' is-current' : '') + (level == goal ? ' is-goal' : '') + (levelStat.index &lt;= currentIndex ? ' is-reached' : '')}"
-            th:attr="aria-current=${level == current ? 'step' : null}">
-            <strong th:text="${level}"></strong>
-            <small th:if="${level == current}">Hiện tại</small>
-            <small class="stage-goal-label" th:if="${level == goal}">★ Mục tiêu</small>
+  <body>
+    <span th:fragment="levelRange(skill)" class="explore-number stage-range">
+      <span th:each="stage:${stages}" th:if="${stage.skill == skill}"
+        ><span th:text="${stage.fromLevel != null ? stage.fromLevel : 'Chưa đánh giá'}"></span
+        ><span aria-hidden="true"> → </span
+        ><strong
+          th:text="${stage.goalLevel != null ? stage.goalLevel : 'Chưa đặt mục tiêu'}"
+        ></strong
+      ></span>
+    </span>
+    <section
+      th:fragment="stageScale(skill)"
+      class="stage-overview"
+      th:each="stage : ${stages}"
+      th:if="${stage.skill == skill}"
+      th:with="current=${stage.targetLevel != null ? stage.targetLevel : 'A1'},goal=${stage.goalLevel},scale=${ {'A1','A2','B1','B2','C1'} },currentIndex=${scale.indexOf(current)}"
+      aria-label="Vị trí chặng học A1 đến C1"
+    >
+      <p class="stage-current"
+        ><strong th:text="|Chặng ${current}${stage.targetLevel == null ? ' · Làm quen' : ''}|"
+          >Chặng A1</strong
+        >
+        <span
+          class="badge"
+          th:text="${stage.status == 'COMPLETED' ? 'Đã hoàn tất' : 'Đang học'}"
+        ></span
+      ></p>
+      <ol
+        class="stage-scale"
+        aria-label="Thang chặng CEFR"
+        th:style="|--stage-progress:${currentIndex + 1}|"
+        ><!-- Continuous fill follows the current stage, not the final goal. -->
+        <li
+          th:each="level,levelStat : ${scale}"
+          th:classappend="${(level == current ? ' is-current' : '') + (level == goal ? ' is-goal' : '') + (levelStat.index &lt;= currentIndex ? ' is-reached' : '')}"
+          th:attr="aria-current=${level == current ? 'step' : null}"
+        >
+          <strong th:text="${level}"></strong>
+          <small th:if="${level == current}">Hiện tại</small>
+          <small class="stage-goal-label" th:if="${level == goal}">★ Mục tiêu</small>
         </li>
-    </ol>
-</section>
-</body>
+      </ol>
+    </section>
+  </body>
 </html>

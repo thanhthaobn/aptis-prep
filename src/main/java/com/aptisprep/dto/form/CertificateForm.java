@@ -7,11 +7,14 @@ public class CertificateForm {
     @NotBlank(message = "Tên chứng chỉ không được để trống")
     @Size(max = 255, message = "Tên chứng chỉ tối đa 255 ký tự")
     private String name;
+
     @NotBlank(message = "Mã chứng chỉ không được để trống")
     @Size(max = 50, message = "Mã chứng chỉ tối đa 50 ký tự")
     private String code;
+
     @Size(max = 4000, message = "Mô tả quá dài")
     private String description;
+
     @NotBlank(message = "Trạng thái không được để trống")
     private String status = "ACTIVE";
 

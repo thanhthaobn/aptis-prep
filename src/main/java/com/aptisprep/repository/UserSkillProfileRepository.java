@@ -7,5 +7,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface UserSkillProfileRepository extends JpaRepository<UserSkillProfile, Integer> {
     List<UserSkillProfile> findByUserIdOrderBySkillAsc(Integer userId);
+
     Optional<UserSkillProfile> findByUserIdAndSkill(Integer userId, String skill);
 }

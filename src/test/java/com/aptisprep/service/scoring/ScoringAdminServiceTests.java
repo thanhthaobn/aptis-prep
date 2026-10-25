@@ -1,5 +1,10 @@
 package com.aptisprep.service.scoring;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
+
 import com.aptisprep.dto.form.ScoringSchemeForm;
 import com.aptisprep.entity.Certificate;
 import com.aptisprep.entity.ScoringScheme;
@@ -12,13 +17,9 @@ import com.aptisprep.service.contract.ScoringSchemeUsageContract;
 import java.util.Optional;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.springframework.beans.factory.ObjectProvider;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.beans.factory.ObjectProvider;
 
 @ExtendWith(MockitoExtension.class)
 class ScoringAdminServiceTests {
@@ -32,7 +33,9 @@ class ScoringAdminServiceTests {
 
     @Test
     void usedSchemeCannotBeEditedInPlaceButCanCreateNewVersion() {
-        User admin = new User(); admin.setId(1); admin.setRole(Role.ADMIN);
+        User admin = new User();
+        admin.setId(1);
+        admin.setRole(Role.ADMIN);
         Certificate certificate = mock(Certificate.class);
         when(certificate.getId()).thenReturn(10);
         when(certificate.getStatus()).thenReturn(RecordStatus.ACTIVE);
@@ -46,9 +49,13 @@ class ScoringAdminServiceTests {
         when(usageProvider.getIfAvailable()).thenReturn(usage);
         when(usage.isUsed(20)).thenReturn(true);
 
-        ScoringAdminService service = new ScoringAdminService(certificates, schemes, bands, users, usageProvider, scaleRules);
+        ScoringAdminService service =
+                new ScoringAdminService(
+                        certificates, schemes, bands, users, usageProvider, scaleRules);
         ScoringSchemeForm sameVersion = form("1");
-        assertThrows(BusinessRuleException.class, () -> service.saveScheme("admin@aptis.local", 20, sameVersion));
+        assertThrows(
+                BusinessRuleException.class,
+                () -> service.saveScheme("admin@aptis.local", 20, sameVersion));
         verify(schemes, never()).save(any(ScoringScheme.class));
 
         ScoringScheme replacement = mock(ScoringScheme.class);
@@ -61,7 +68,10 @@ class ScoringAdminServiceTests {
 
     private ScoringSchemeForm form(String version) {
         ScoringSchemeForm form = new ScoringSchemeForm();
-        form.setCertificateId(10); form.setName("Aptis scheme"); form.setVersion(version); form.setStatus("ACTIVE");
+        form.setCertificateId(10);
+        form.setName("Aptis scheme");
+        form.setVersion(version);
+        form.setStatus("ACTIVE");
         return form;
     }
 }

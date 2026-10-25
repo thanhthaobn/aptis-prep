@@ -1,18 +1,16 @@
 package com.aptisprep.service.learning;
 
 import com.aptisprep.dto.form.FlashcardSetForm;
+import com.aptisprep.dto.view.FlashcardViews.*;
 import com.aptisprep.entity.*;
 import com.aptisprep.enums.*;
 import com.aptisprep.exception.*;
 import com.aptisprep.repository.*;
-
 import jakarta.persistence.*;
-
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
 import java.time.LocalDateTime;
 import java.util.*;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @Transactional
@@ -36,22 +34,6 @@ public class FlashcardSetService {
         progress = p;
         lessons = l;
     }
-
-    public record SetView(
-            Integer id,
-            String title,
-            String description,
-            String level,
-            String status,
-            int count,
-            boolean personal,
-            Integer lessonId,
-            String lessonTitle,
-            String lessonSkill) {}
-
-    public record LevelSets(String level, List<SetView> sets) {}
-
-    public record SkillSets(String skill, int count, List<LevelSets> levels) {}
 
     public static List<SkillSets> groupBySkillAndLevel(List<SetView> values) {
         var branches = new ArrayList<SkillSets>();
@@ -77,14 +59,6 @@ public class FlashcardSetService {
         }
         return List.copyOf(branches);
     }
-
-    public record CardView(
-            Integer id, String term, String definition, String state, LocalDateTime nextReviewAt) {}
-
-    public record LessonLink(Integer id, String title, String skill) {}
-
-    public record StudySetView(
-            Integer id, String title, String description, String cefrLevel, LessonLink lesson) {}
 
     @Transactional(readOnly = true)
     public StudySetView studySet(Integer id, String email) {

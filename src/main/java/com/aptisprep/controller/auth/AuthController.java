@@ -49,7 +49,8 @@ public class AuthController {
             RedirectAttributes redirectAttributes) {
 
         if (!form.getPassword().equals(form.getConfirmPassword())) {
-            bindingResult.rejectValue("confirmPassword", "password.mismatch", "Mật khẩu xác nhận không khớp");
+            bindingResult.rejectValue(
+                    "confirmPassword", "password.mismatch", "Mật khẩu xác nhận không khớp");
         }
         if (bindingResult.hasErrors()) {
             return "auth/register";
@@ -62,7 +63,8 @@ public class AuthController {
             return "auth/register";
         }
 
-        redirectAttributes.addFlashAttribute("successMessage", "Đăng ký thành công. Vui lòng đăng nhập.");
+        redirectAttributes.addFlashAttribute(
+                "successMessage", "Đăng ký thành công. Vui lòng đăng nhập.");
         return "redirect:/login";
     }
 

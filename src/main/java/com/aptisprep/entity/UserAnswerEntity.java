@@ -1,51 +1,78 @@
 package com.aptisprep.entity;
 
 import jakarta.persistence.*;
-
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "user_answers", uniqueConstraints = @UniqueConstraint(name = "uq_user_answers_attempt_question", columnNames = {"exam_attempt_id", "question_id"}))
+@Table(
+        name = "user_answers",
+        uniqueConstraints =
+                @UniqueConstraint(
+                        name = "uq_user_answers_attempt_question",
+                        columnNames = {"exam_attempt_id", "question_id"}))
 public class UserAnswerEntity {
     @Lob
     @Column(name = "audio_manifest", columnDefinition = "NVARCHAR(MAX)")
     private String audioManifest;
-    public String getAudioManifest() { return audioManifest; }
-    public void setAudioManifest(String value) { audioManifest = value; }
+
+    public String getAudioManifest() {
+        return audioManifest;
+    }
+
+    public void setAudioManifest(String value) {
+        audioManifest = value;
+    }
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
+
     @Column(name = "exam_attempt_id", nullable = false)
     private Integer attemptId;
+
     @Column(name = "question_id", nullable = false)
     private Integer questionId;
+
     @Column(nullable = false, length = 30)
     private String status;
+
     @Column(name = "answer_version", nullable = false)
     private int answerVersion = 1;
+
     @Column(name = "started_at")
     private LocalDateTime startedAt;
+
     @Column(name = "completed_at")
     private LocalDateTime completedAt;
+
     @Column(name = "text_answer", columnDefinition = "nvarchar(max)")
     private String textAnswer;
+
     @Column(name = "audio_url", length = 500)
     private String audioUrl;
+
     @Column(name = "ai_score", precision = 5, scale = 2)
     private BigDecimal aiScore;
+
     @Column(name = "ai_feedback", columnDefinition = "nvarchar(max)")
     private String aiFeedback;
+
     @Column(name = "graded_at")
     private LocalDateTime gradedAt;
+
     @Column(name = "transcript", columnDefinition = "nvarchar(max)")
     private String transcript;
+
     @Column(name = "ai_provider", length = 30)
     private String aiProvider;
+
     @Column(name = "ai_model", length = 100)
     private String aiModel;
+
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
+
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 

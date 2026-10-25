@@ -1,32 +1,34 @@
 package com.aptisprep.controller.student;
 
 import com.aptisprep.entity.Lesson;
+import com.aptisprep.exception.BusinessRuleException;
+import com.aptisprep.service.learning.FlashcardSetService;
+import com.aptisprep.service.learning.LessonListeningService;
 import com.aptisprep.service.learning.LessonService;
 import com.aptisprep.service.learning.LessonTeachingService;
-
-import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.*;
-import org.springframework.web.servlet.mvc.support.RedirectAttributes;
-
 import java.security.Principal;
 import java.text.Normalizer;
 import java.util.*;
+import java.util.List;
+import java.util.Map;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 @Controller
 @RequestMapping("/student/lessons")
 public class StudentLessonController {
-    @org.springframework.beans.factory.annotation.Autowired
-    private com.aptisprep.service.learning.LessonListeningService listening;
+    @Autowired private LessonListeningService listening;
 
     private final LessonService service;
     private final LessonTeachingService teaching;
-    private final com.aptisprep.service.learning.FlashcardSetService flashcards;
+    private final FlashcardSetService flashcards;
 
     public StudentLessonController(
-            LessonService s,
-            LessonTeachingService t,
-            com.aptisprep.service.learning.FlashcardSetService f) {
+            LessonService s, LessonTeachingService t, FlashcardSetService f) {
         service = s;
         teaching = t;
         flashcards = f;
@@ -40,7 +42,7 @@ public class StudentLessonController {
             Principal principal,
             Model m) {
         if (q.length() > 255 || skill.length() > 80 || level.length() > 40)
-            throw new com.aptisprep.exception.BusinessRuleException("Bộ lọc không hợp lệ");
+            throw new BusinessRuleException("Bộ lọc không hợp lệ");
         var query = fold(q);
         var items =
                 service.publishedLessons().stream()
@@ -100,16 +102,14 @@ public class StudentLessonController {
     @PostMapping("/{id}/check")
     public String check(
             @PathVariable Integer id,
-            @RequestParam java.util.Map<String, String> answers,
+            @RequestParam Map<String, String> answers,
             Principal principal,
             RedirectAttributes redirect) {
         redirect.addFlashAttribute("feedback", teaching.grade(id, answers, principal.getName()));
         var skill = service.requirePublished(id).getSkill();
         return "redirect:/student/lessons/"
                 + id
-                + (java.util.List.of("Writing", "Speaking").contains(skill)
-                        ? "#method"
-                        : "#practice");
+                + (List.of("Writing", "Speaking").contains(skill) ? "#method" : "#practice");
     }
 
     @PostMapping("/{id}/response")
@@ -121,7 +121,7 @@ public class StudentLessonController {
         try {
             teaching.submitResponse(id, response, principal.getName());
             redirect.addFlashAttribute("message", "Đã lưu bài thực hành vào lịch sử.");
-        } catch (com.aptisprep.exception.BusinessRuleException e) {
+        } catch (BusinessRuleException e) {
             redirect.addFlashAttribute("error", e.getMessage());
         }
         return "redirect:/student/lessons/" + id;
@@ -136,7 +136,7 @@ public class StudentLessonController {
         try {
             return "redirect:/student/assessments/"
                     + teaching.assess(id, submissionId, principal.getName());
-        } catch (com.aptisprep.exception.BusinessRuleException e) {
+        } catch (BusinessRuleException e) {
             redirect.addFlashAttribute("error", e.getMessage());
             return "redirect:/student/lessons/" + id;
         }
@@ -154,7 +154,7 @@ public class StudentLessonController {
         try {
             service.complete(p.getName(), id);
             r.addFlashAttribute("message", "Đã ghi nhận hoàn thành bài học");
-        } catch (com.aptisprep.exception.BusinessRuleException e) {
+        } catch (BusinessRuleException e) {
             r.addFlashAttribute("error", e.getMessage());
         }
         return "redirect:/student/lessons/" + id;
@@ -162,14 +162,14 @@ public class StudentLessonController {
 
     @PostMapping("/{id}/listening/start")
     @ResponseBody
-    public com.aptisprep.service.learning.LessonListeningService.Playback startListening(
+    public LessonListeningService.Playback startListening(
             @PathVariable Integer id, @RequestParam double position, Principal principal) {
         return listening.start(id, principal.getName(), position);
     }
 
     @PostMapping("/{id}/listening/heartbeat")
     @ResponseBody
-    public com.aptisprep.service.learning.LessonListeningService.Playback listeningHeartbeat(
+    public LessonListeningService.Playback listeningHeartbeat(
             @PathVariable Integer id,
             @RequestParam String token,
             @RequestParam int sequence,
@@ -184,7 +184,7 @@ public class StudentLessonController {
     @PostMapping("/{id}/audio-played")
     @ResponseBody
     public void audioPlayed(@PathVariable Integer id) {
-        throw new com.aptisprep.exception.BusinessRuleException(
+        throw new BusinessRuleException(
                 "Hãy phát audio và nghe đủ 90% qua phiên nghe được xác thực");
     }
 
@@ -197,7 +197,7 @@ public class StudentLessonController {
     @PostMapping("/{id}/recording")
     public String recording(
             @PathVariable Integer id,
-            @RequestParam org.springframework.web.multipart.MultipartFile recording,
+            @RequestParam MultipartFile recording,
             Principal p,
             RedirectAttributes r) {
         teaching.saveRecording(id, recording, p.getName());

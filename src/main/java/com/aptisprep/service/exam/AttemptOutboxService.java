@@ -6,28 +6,27 @@ import com.aptisprep.event.AttemptCompletedEvent;
 import com.aptisprep.event.AttemptSubmittedEvent;
 import com.aptisprep.repository.AttemptOutboxRepository;
 import com.aptisprep.service.contract.IntegrationModels.LockedAttempt;
-
+import java.time.LocalDateTime;
+import java.util.List;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
-
 import tools.jackson.databind.json.JsonMapper;
-
-import java.time.LocalDateTime;
-import java.util.List;
 
 /** Durable replay queue for attempt events. Handlers are idempotent by attempt/event keys. */
 @Service
 public class AttemptOutboxService {
     private final AttemptOutboxRepository outbox;
     private final ApplicationEventPublisher events;
-    private final JsonMapper json = JsonMapper.builder().build();
+    private final JsonMapper json;
 
-    public AttemptOutboxService(AttemptOutboxRepository outbox, ApplicationEventPublisher events) {
+    public AttemptOutboxService(
+            AttemptOutboxRepository outbox, ApplicationEventPublisher events, JsonMapper json) {
         this.outbox = outbox;
         this.events = events;
+        this.json = json;
     }
 
     @Transactional

@@ -6,11 +6,10 @@ import com.aptisprep.enums.Role;
 import com.aptisprep.enums.UserStatus;
 import com.aptisprep.exception.BusinessRuleException;
 import com.aptisprep.repository.UserRepository;
+import java.util.Locale;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.Locale;
 
 @Service
 public class UserService {
@@ -41,18 +40,5 @@ public class UserService {
         user.setRole(Role.STUDENT);
         user.setStatus(UserStatus.ACTIVE);
         return userRepository.save(user);
-    }
-
-    @Transactional
-    public User createDemoUserIfMissing(String name, String email, String password, Role role) {
-        return userRepository.findByEmailIgnoreCase(email).orElseGet(() -> {
-            User user = new User();
-            user.setFullName(name);
-            user.setEmail(email.toLowerCase(Locale.ROOT));
-            user.setPasswordHash(passwordEncoder.encode(password));
-            user.setRole(role);
-            user.setStatus(UserStatus.ACTIVE);
-            return userRepository.save(user);
-        });
     }
 }

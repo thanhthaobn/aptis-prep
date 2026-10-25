@@ -10,7 +10,8 @@ import com.aptisprep.entity.*;
 import com.aptisprep.enums.*;
 import com.aptisprep.repository.*;
 import com.aptisprep.service.storage.AudioDurationService;
-
+import java.time.Instant;
+import java.util.UUID;
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.*;
@@ -20,11 +21,7 @@ import org.springframework.context.annotation.Primary;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
-
 import tools.jackson.databind.json.JsonMapper;
-
-import java.time.Instant;
-import java.util.UUID;
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -45,7 +42,13 @@ class LessonListeningFlowTests {
                 LessonEngagementRepository engagements,
                 AudioDurationService durations,
                 LessonListeningServiceTests.MutableClock clock) {
-            return new LessonListeningService(users, lessons, engagements, durations, clock);
+            return new LessonListeningService(
+                    users,
+                    lessons,
+                    engagements,
+                    durations,
+                    clock,
+                    tools.jackson.databind.json.JsonMapper.builder().build());
         }
     }
 

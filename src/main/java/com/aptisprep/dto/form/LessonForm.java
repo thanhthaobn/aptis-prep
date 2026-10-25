@@ -1,35 +1,46 @@
 package com.aptisprep.dto.form;
 
+import com.aptisprep.entity.LessonMaterial;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.*;
+import java.util.ArrayList;
+import java.util.List;
 
-public class LessonForm extends com.aptisprep.entity.LessonMaterial {
-    @jakarta.validation.Valid
-    private java.util.List<CheckForm> checks = new java.util.ArrayList<>();
+public class LessonForm extends LessonMaterial {
+    @Valid private List<CheckForm> checks = new ArrayList<>();
 
-    public java.util.List<CheckForm> getChecks() {
+    public List<CheckForm> getChecks() {
         return checks;
     }
 
-    public void setChecks(java.util.List<CheckForm> value) {
+    public void setChecks(List<CheckForm> value) {
         checks = value;
     }
 
     public static class CheckForm {
         @Size(max = 2000)
         private String prompt;
+
         @Size(max = 1000)
         private String optionA;
+
         @Size(max = 1000)
         private String optionB;
+
         @Size(max = 1000)
         private String optionC;
+
         @Size(max = 1000)
         private String optionD;
+
         @Size(max = 1000)
         private String optionE;
+
         @Size(max = 1000)
         private String optionF;
+
         private Integer correctOption;
+
         @Size(max = 4000)
         private String explanation;
 
@@ -109,22 +120,26 @@ public class LessonForm extends com.aptisprep.entity.LessonMaterial {
     @NotBlank
     @Size(max = 255)
     private String title;
+
     @Size(max = 10000)
     private String description;
-    @NotBlank
-    private String skill;
-    @NotBlank
-    private String cefrLevel;
+
+    @NotBlank private String skill;
+    @NotBlank private String cefrLevel;
+
     @NotNull
     @Min(1)
     private Integer displayOrder;
-    @NotBlank
-    private String status;
+
+    @NotBlank private String status;
+
     @Size(max = 10000)
     private String transcript;
+
     @Min(1)
     @Max(5000)
     private Integer minWordCount;
+
     @Min(1)
     @Max(5000)
     private Integer maxWordCount;

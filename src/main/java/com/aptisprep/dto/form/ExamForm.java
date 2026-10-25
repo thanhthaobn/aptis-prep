@@ -18,8 +18,14 @@ public class ExamForm {
     private String status = "DRAFT";
     private boolean demoOnly;
 
-    public boolean isDemoOnly() { return demoOnly; }
-    public void setDemoOnly(boolean value) { demoOnly = value; }
+    public boolean isDemoOnly() {
+        return demoOnly;
+    }
+
+    public void setDemoOnly(boolean value) {
+        demoOnly = value;
+    }
+
     private List<SectionForm> sections = new ArrayList<>();
 
     public String getTitle() {

@@ -19,7 +19,8 @@ class PlacementExamCatalogServiceTests {
         MockExamRepository exams = mock(MockExamRepository.class);
         MockExamQuestionRepository examQuestions = mock(MockExamQuestionRepository.class);
         QuestionRepository questions = mock(QuestionRepository.class);
-        PlacementExamCatalogService service = new PlacementExamCatalogService(exams, examQuestions, questions);
+        PlacementExamCatalogService service =
+                new PlacementExamCatalogService(exams, examQuestions, questions);
 
         MockExamEntity placement = exam("placement", "PLACEMENT", 101);
         MockExamEntity practice = exam("practice", "PRACTICE", 102);
@@ -35,7 +36,9 @@ class PlacementExamCatalogServiceTests {
 
         var available = service.findPublished(" listening ");
 
-        assertEquals(List.of(101), available.stream().map(PlacementExamCatalogService.PlacementExam::id).toList());
+        assertEquals(
+                List.of(101),
+                available.stream().map(PlacementExamCatalogService.PlacementExam::id).toList());
         verify(examQuestions, never()).findByMockExamIdOrderByPosition(102);
     }
 

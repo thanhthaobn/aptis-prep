@@ -1,7 +1,6 @@
 package com.aptisprep.entity;
 
 import jakarta.persistence.*;
-
 import java.time.LocalDateTime;
 
 @Entity
@@ -10,27 +9,38 @@ public class LearningPath {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
+
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "user_id")
     private User user;
+
     @Column(name = "goal_skill_id")
     private Integer goalSkillId;
+
     @Column(name = "source_attempt_id")
     private Integer sourceAttemptId;
+
     @Column(nullable = false, length = 30)
     private String skill;
+
     @Column(name = "from_level", length = 10)
     private String fromLevel;
+
     @Column(name = "target_level", length = 10)
     private String targetLevel;
+
     @Column(name = "path_source", nullable = false, length = 30)
     private String pathSource;
+
     @Column(name = "checkpoint_exam_id")
     private Integer checkpointExamId;
+
     @Column(nullable = false, length = 30)
     private String status;
+
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
+
     @Column(name = "completed_at")
     private LocalDateTime completedAt;
 

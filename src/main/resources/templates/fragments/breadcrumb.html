@@ -1,10 +1,14 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="vi" xmlns:th="http://www.thymeleaf.org">
-<body>
-<nav class="breadcrumb" th:fragment="breadcrumb(parentLabel, parentUrl, currentLabel)" aria-label="Breadcrumb">
-    <a th:href="${parentUrl}" th:text="${parentLabel}">Tổng quan</a>
-    <span class="breadcrumb-separator">/</span>
-    <span th:text="${currentLabel}">Trang hiện tại</span>
-</nav>
-</body>
+  <body>
+    <nav
+      class="breadcrumb"
+      th:fragment="breadcrumb(parentLabel, parentUrl, currentLabel)"
+      aria-label="Breadcrumb"
+    >
+      <a th:href="${parentUrl}" th:text="${parentLabel}">Tổng quan</a>
+      <span class="breadcrumb-separator">/</span>
+      <span th:text="${currentLabel}">Trang hiện tại</span>
+    </nav>
+  </body>
 </html>

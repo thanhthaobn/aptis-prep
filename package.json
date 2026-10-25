@@ -1,0 +1,12 @@
+{
+  "name": "aptisprep-development-tools",
+  "private": true,
+  "scripts": {
+    "format:web": "prettier --write \"src/main/resources/templates/**/*.html\" \"src/main/resources/static/js/**/*.js\" \"src/test/js/**/*.cjs\"",
+    "format:web:check": "prettier --check \"src/main/resources/templates/**/*.html\" \"src/main/resources/static/js/**/*.js\" \"src/test/js/**/*.cjs\"",
+    "test:web": "node --test src/test/js/*.test.cjs"
+  },
+  "devDependencies": {
+    "prettier": "3.9.10"
+  }
+}

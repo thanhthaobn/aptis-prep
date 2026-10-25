@@ -1,5 +1,7 @@
 # APTISPREP — Tài liệu nghiệp vụ và ERD hiện trạng
 
+> Cập nhật cấu hình 24–25/10/2026: chủ project chốt bỏ Flyway, dùng một `application.properties` và `database/schema-current.sql` cho DB mới/rỗng, Hibernate `validate`. ERD bên dưới vẫn đúng 39 bảng/416 cột/62 FK. Các ghi chú Vxxx và kết quả migration bên dưới là lịch sử nghiệm thu trước chuyển đổi, không phải hướng dẫn chạy hiện tại. Không tự chạy schema mới lên DB đang có dữ liệu. Xem [SETUP_LOCAL.md](SETUP_LOCAL.md).
+
 Cập nhật V041: hai ERD phản ánh 39 bảng, 416 cột, 62 quan hệ FK. V041 thêm cờ demo_only cho mock_exams và đánh dấu ba đề demo V037; không xóa đề/lịch sử hay thay đổi cột cũ. V039 giữ phiên nghe và đáp án A–F; V040 giữ processing_token của AI. Hành trình dừng C1; Goal mới đến C1 vẫn thuộc phần tài khoản của Thông, dữ liệu C2 cũ được giữ.
 
 Phiên bản tài liệu: 1.3 — ngày 23/10/2026. Phạm vi: schema trong source đến migration V041.

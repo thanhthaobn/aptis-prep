@@ -1,30 +1,36 @@
 package com.aptisprep.service.account;
 
 import com.aptisprep.repository.*;
-
 import java.time.*;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.TemporalAdjusters;
 import java.util.*;
-
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class LearningActivityService {
-    public record Day(LocalDate date, int count, int level, boolean future, String label) {
-    }
+    public record Day(LocalDate date, int count, int level, boolean future, String label) {}
 
-    public record Week(List<Day> days) {
-    }
+    public record Week(List<Day> days) {}
 
-    public record ActivityView(List<Week> weeks, int currentStreak, int longestStreak,
-                               int activeDays, int totalActivities, LocalDate from, LocalDate to) {
-    }
+    public record ActivityView(
+            List<Week> weeks,
+            int currentStreak,
+            int longestStreak,
+            int activeDays,
+            int totalActivities,
+            LocalDate from,
+            LocalDate to) {}
 
     private static final DateTimeFormatter LABEL = DateTimeFormatter.ofPattern("dd/MM/yyyy");
 
-    private enum Kind {LESSON, PRACTICE, FLASHCARD, EXAM}
+    private enum Kind {
+        LESSON,
+        PRACTICE,
+        FLASHCARD,
+        EXAM
+    }
 
     private static final class DailyCount {
         int lesson, practice, flashcard, exam;
@@ -58,9 +64,12 @@ public class LearningActivityService {
     private final UserFlashcardProgressRepository flashcards;
     private final ExamAttemptRepository exams;
 
-    public LearningActivityService(AccountAccessService access, LessonProgressRepository lessons,
-                                   LessonCheckAttemptRepository checks, UserFlashcardProgressRepository flashcards,
-                                   ExamAttemptRepository exams) {
+    public LearningActivityService(
+            AccountAccessService access,
+            LessonProgressRepository lessons,
+            LessonCheckAttemptRepository checks,
+            UserFlashcardProgressRepository flashcards,
+            ExamAttemptRepository exams) {
         this.access = access;
         this.lessons = lessons;
         this.checks = checks;
@@ -72,29 +81,38 @@ public class LearningActivityService {
     public ActivityView activity(String email) {
         Integer userId = access.requireActiveStudent(email);
         Map<LocalDate, DailyCount> counts = new HashMap<>();
-        lessons.findByUserId(userId).forEach(item -> {
-            add(counts, item.getLastAccessedAt(), Kind.LESSON);
-            if (item.getCompletedAt() != null && !sameDay(item.getCompletedAt(), item.getLastAccessedAt()))
-                add(counts, item.getCompletedAt(), Kind.LESSON);
-        });
-        checks.findByUserId(userId).forEach(item -> add(counts, item.getSubmittedAt(), Kind.PRACTICE));
-        flashcards.findByUserId(userId).forEach(item -> add(counts, item.getLastReviewedAt(), Kind.FLASHCARD));
+        lessons.findByUserId(userId)
+                .forEach(
+                        item -> {
+                            add(counts, item.getLastAccessedAt(), Kind.LESSON);
+                            if (item.getCompletedAt() != null
+                                    && !sameDay(item.getCompletedAt(), item.getLastAccessedAt()))
+                                add(counts, item.getCompletedAt(), Kind.LESSON);
+                        });
+        checks.findByUserId(userId)
+                .forEach(item -> add(counts, item.getSubmittedAt(), Kind.PRACTICE));
+        flashcards
+                .findByUserId(userId)
+                .forEach(item -> add(counts, item.getLastReviewedAt(), Kind.FLASHCARD));
         exams.findByUserId(userId).forEach(item -> add(counts, item.getSubmittedAt(), Kind.EXAM));
         return summarizeDetailed(counts, LocalDate.now());
     }
 
     static ActivityView summarize(Map<LocalDate, Integer> source, LocalDate today) {
         Map<LocalDate, DailyCount> detailed = new HashMap<>();
-        source.forEach((date, count) -> {
-            var value = new DailyCount();
-            value.lesson = Math.max(0, count);
-            detailed.put(date, value);
-        });
+        source.forEach(
+                (date, count) -> {
+                    var value = new DailyCount();
+                    value.lesson = Math.max(0, count);
+                    detailed.put(date, value);
+                });
         return summarizeDetailed(detailed, today);
     }
 
-    private static ActivityView summarizeDetailed(Map<LocalDate, DailyCount> source, LocalDate today) {
-        LocalDate start = today.minusWeeks(52).with(TemporalAdjusters.previousOrSame(DayOfWeek.SUNDAY));
+    private static ActivityView summarizeDetailed(
+            Map<LocalDate, DailyCount> source, LocalDate today) {
+        LocalDate start =
+                today.minusWeeks(52).with(TemporalAdjusters.previousOrSame(DayOfWeek.SUNDAY));
         List<Week> weeks = new ArrayList<>();
         int total = 0, active = 0, longest = 0, running = 0;
         for (LocalDate date = start; !date.isAfter(today); date = date.plusDays(1)) {
@@ -106,9 +124,13 @@ public class LearningActivityService {
                 longest = Math.max(longest, running);
             } else running = 0;
         }
-        LocalDate cursor = source.getOrDefault(today, new DailyCount()).total() > 0 ? today : today.minusDays(1);
+        LocalDate cursor =
+                source.getOrDefault(today, new DailyCount()).total() > 0
+                        ? today
+                        : today.minusDays(1);
         int current = 0;
-        while (!cursor.isBefore(start) && source.getOrDefault(cursor, new DailyCount()).total() > 0) {
+        while (!cursor.isBefore(start)
+                && source.getOrDefault(cursor, new DailyCount()).total() > 0) {
             current++;
             cursor = cursor.minusDays(1);
         }
@@ -119,8 +141,18 @@ public class LearningActivityService {
                 boolean future = date.isAfter(today);
                 DailyCount detail = source.getOrDefault(date, new DailyCount());
                 int count = future ? 0 : detail.total();
-                days.add(new Day(date, count, level(count), future,
-                        future ? "" : date.format(LABEL) + (count == 0 ? ": Không có hoạt động" : ": " + detail.detail())));
+                days.add(
+                        new Day(
+                                date,
+                                count,
+                                level(count),
+                                future,
+                                future
+                                        ? ""
+                                        : date.format(LABEL)
+                                                + (count == 0
+                                                        ? ": Không có hoạt động"
+                                                        : ": " + detail.detail())));
             }
             weeks.add(new Week(List.copyOf(days)));
         }
@@ -132,7 +164,8 @@ public class LearningActivityService {
     }
 
     private static void add(Map<LocalDate, DailyCount> counts, LocalDateTime value, Kind kind) {
-        if (value != null) counts.computeIfAbsent(value.toLocalDate(), ignored -> new DailyCount()).add(kind);
+        if (value != null)
+            counts.computeIfAbsent(value.toLocalDate(), ignored -> new DailyCount()).add(kind);
     }
 
     private static boolean sameDay(LocalDateTime left, LocalDateTime right) {

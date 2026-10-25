@@ -2,7 +2,6 @@ package com.aptisprep.entity;
 
 import com.aptisprep.enums.GoalStatus;
 import jakarta.persistence.*;
-
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -14,19 +13,25 @@ public class UserGoal {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
+
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "certificate_id")
     private Certificate certificate;
+
     @Column(name = "target_date")
     private LocalDate targetDate;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 30)
     private GoalStatus status;
+
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
+
     @OneToMany(mappedBy = "goal", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<UserGoalSkill> skills = new ArrayList<>();
 

@@ -1,7 +1,9 @@
 package com.aptisprep.service.grading;
 
+import com.aptisprep.config.AiProperties;
 import com.aptisprep.entity.*;
 import com.aptisprep.enums.*;
+import com.aptisprep.enums.CefrLevel;
 import com.aptisprep.event.AiAssessmentCompletedEvent;
 import com.aptisprep.exception.AccessDeniedException;
 import com.aptisprep.exception.AiGradingException;
@@ -11,8 +13,16 @@ import com.aptisprep.repository.*;
 import com.aptisprep.service.contract.AiAssessmentContract;
 import com.aptisprep.service.contract.GradingTextLimits;
 import com.aptisprep.service.exam.AttemptOutboxService;
-
+import java.math.BigDecimal;
+import java.time.*;
+import java.util.*;
+import java.util.List;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.PlatformTransactionManager;
@@ -20,17 +30,11 @@ import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.transaction.support.TransactionTemplate;
 
-import java.math.BigDecimal;
-import java.time.*;
-import java.util.*;
-
 @Service
 public class AiAssessmentService implements AiAssessmentContract {
-    private static final org.slf4j.Logger log =
-            org.slf4j.LoggerFactory.getLogger(AiAssessmentService.class);
+    private static final Logger log = LoggerFactory.getLogger(AiAssessmentService.class);
     private static final Set<String> SKILLS = Set.of("WRITING", "SPEAKING");
-    private static final Set<String> LEVELS = Set.of("A1", "A2", "B1", "B2", "C1", "C2");
-    private static final int MAX_RETRIES = 3;
+    private static final Set<String> LEVELS = Set.copyOf(CefrLevel.codes());
     private final AiAssessmentJobRepository jobs;
     private final AiAssessmentRepository assessments;
     private final UserRepository users;
@@ -39,7 +43,7 @@ public class AiAssessmentService implements AiAssessmentContract {
     private final TransactionTemplate transactions;
     private final ApplicationEventPublisher events;
     private final AttemptOutboxService outbox;
-    private final com.aptisprep.config.AiProperties properties;
+    private final AiProperties properties;
 
     public AiAssessmentService(
             AiAssessmentJobRepository jobs,
@@ -53,7 +57,7 @@ public class AiAssessmentService implements AiAssessmentContract {
         this(jobs, assessments, users, writing, speaking, transactionManager, events, outbox, null);
     }
 
-    @org.springframework.beans.factory.annotation.Autowired
+    @Autowired
     public AiAssessmentService(
             AiAssessmentJobRepository jobs,
             AiAssessmentRepository assessments,
@@ -63,7 +67,7 @@ public class AiAssessmentService implements AiAssessmentContract {
             PlatformTransactionManager transactionManager,
             ApplicationEventPublisher events,
             AttemptOutboxService outbox,
-            com.aptisprep.config.AiProperties properties) {
+            AiProperties properties) {
         this.jobs = jobs;
         this.assessments = assessments;
         this.users = users;
@@ -121,7 +125,7 @@ public class AiAssessmentService implements AiAssessmentContract {
                         assessments.save(assessment);
                         return viewFor(job);
                     });
-        } catch (org.springframework.dao.DataIntegrityViolationException duplicate) {
+        } catch (DataIntegrityViolationException duplicate) {
             return transactions.execute(
                     status ->
                             jobs.findByAssessmentKeyForUpdate(request.assessmentKey())
@@ -181,7 +185,7 @@ public class AiAssessmentService implements AiAssessmentContract {
                     authorize(job, requesterId, admin);
                     if (job.getState() != AiJobState.ERROR)
                         throw new BusinessRuleException("Chỉ tác vụ lỗi mới được thử lại");
-                    if (job.getRetryCount() >= MAX_RETRIES)
+                    if (job.getRetryCount() >= AiProcessingPolicy.MAX_ATTEMPTS)
                         throw new BusinessRuleException("Tác vụ đã hết số lần thử lại");
                     job.setState(AiJobState.PENDING);
                     job.setProcessingToken(null);
@@ -272,7 +276,7 @@ public class AiAssessmentService implements AiAssessmentContract {
                     viewFor(job),
                     null);
         }
-        if (job.getRetryCount() >= MAX_RETRIES) return exhausted(job);
+        if (job.getRetryCount() >= AiProcessingPolicy.MAX_ATTEMPTS) return exhausted(job);
         String processingToken = UUID.randomUUID().toString();
         job.setState(AiJobState.PROCESSING);
         job.setProcessingToken(processingToken);
@@ -366,16 +370,16 @@ public class AiAssessmentService implements AiAssessmentContract {
     @Scheduled(fixedDelayString = "${app.ai.recovery-ms:30000}")
     public void recoverAiJobs() {
         LocalDateTime now = LocalDateTime.now();
-        var page = org.springframework.data.domain.PageRequest.of(0, 50);
+        var page = PageRequest.of(0, AiProcessingPolicy.RECOVERY_BATCH_SIZE);
         var recoverable =
                 properties == null || properties.isEnabled()
                         ? jobs.findRecoverableKeys(
                                 AiJobState.PENDING,
                                 AiJobState.PROCESSING,
                                 now,
-                                now.minusMinutes(15),
+                                now.minusMinutes(AiProcessingPolicy.LEASE_MINUTES),
                                 page)
-                        : java.util.List.<String>of();
+                        : List.<String>of();
         for (String key : recoverable) {
             try {
                 // claim() atomically reclaims the lease. There is no committed PENDING gap.
@@ -405,7 +409,9 @@ public class AiAssessmentService implements AiAssessmentContract {
                     status -> {
                         AiAssessmentJob job = jobForUpdate(key);
                         if (job.getState() == AiJobState.PENDING) {
-                            job.setNextRetryAt(LocalDateTime.now().plusSeconds(30));
+                            job.setNextRetryAt(
+                                    LocalDateTime.now()
+                                            .plusSeconds(AiProcessingPolicy.CLAIM_RETRY_SECONDS));
                             jobs.save(job);
                         }
                     });
@@ -465,7 +471,9 @@ public class AiAssessmentService implements AiAssessmentContract {
 
     private boolean isStale(AiAssessmentJob job) {
         return job.getUpdatedAt() == null
-                || job.getUpdatedAt().isBefore(LocalDateTime.now().minusMinutes(15));
+                || job.getUpdatedAt()
+                        .isBefore(
+                                LocalDateTime.now().minusMinutes(AiProcessingPolicy.LEASE_MINUTES));
     }
 
     private AiAssessmentCompletedEvent completedEvent(AiAssessmentJob job) {

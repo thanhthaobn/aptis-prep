@@ -4,10 +4,11 @@ import com.aptisprep.event.AttemptCompletedEvent;
 import com.aptisprep.service.account.AccountAccessService;
 import com.aptisprep.service.contract.LearningPathContract;
 import com.aptisprep.service.exam.AttemptOutboxService;
-
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;
 import org.springframework.transaction.support.TransactionTemplate;
@@ -31,8 +32,7 @@ public class PlacementOrchestrationService {
     }
 
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
-    @org.springframework.transaction.annotation.Transactional(
-            propagation = org.springframework.transaction.annotation.Propagation.NOT_SUPPORTED)
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
     public void onCompleted(AttemptCompletedEvent event) {
         transactions.executeWithoutResult(
                 status -> {

@@ -18,20 +18,17 @@ import com.aptisprep.service.grading.*;
 import com.aptisprep.service.placement.PlacementExamCatalogService;
 import com.aptisprep.service.storage.StorageService;
 import com.aptisprep.service.student.StudentExamCatalogService;
-
+import java.util.*;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.util.ReflectionTestUtils;
-
 import tools.jackson.databind.json.JsonMapper;
-
-import java.util.*;
 
 @SpringBootTest
 class TramBusinessCompletionTests {
     @Autowired ExamAttemptService engine;
+    @Autowired ExamGradingPayloadFactory gradingPayloads;
     @Autowired UserRepository users;
     @Autowired CertificateRepository certificates;
     @Autowired MockExamRepository exams;
@@ -142,9 +139,7 @@ class TramBusinessCompletionTests {
         save(f, id, 0, "a".repeat(20_000));
         save(f, id, 1, "b".repeat(20_000));
         save(f, id, 2, "c");
-        LockedAttempt draft =
-                ReflectionTestUtils.invokeMethod(
-                        engine, "lockedAttempt", attempts.findById(id).orElseThrow(), f.exam());
+        LockedAttempt draft = gradingPayloads.build(attempts.findById(id).orElseThrow(), f.exam());
         var answer = draft.answers().getFirst();
         int overhead =
                 GradingContextFormatter.task(answer).length()
