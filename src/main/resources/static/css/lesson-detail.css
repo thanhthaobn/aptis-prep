@@ -1,0 +1,275 @@
+/* Compact classroom layout. Keep all controls and content in their original learning flow. */
+.lesson-classroom.app-main {
+  max-width: 1120px;
+  margin-inline: auto;
+  padding-top: 24px;
+}
+
+.lesson-classroom .lesson-back {
+  width: auto;
+  min-height: 36px;
+  margin-bottom: 12px;
+  padding: 4px 0;
+  border: 0;
+  background: transparent;
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+.lesson-classroom .lesson-header {
+  align-items: flex-start;
+  gap: 16px;
+  margin-bottom: 16px;
+  padding: 20px 24px;
+  border: 1px solid var(--skill-border, var(--color-border));
+  border-radius: 16px;
+  background: var(--skill-tint, var(--color-primary-soft));
+}
+
+.lesson-classroom .lesson-header h1 {
+  margin: 6px 0;
+  font-size: clamp(1.35rem, 2.4vw, 1.9rem);
+  line-height: 1.4;
+}
+
+.lesson-classroom .lesson-header p {
+  font-size: 0.85rem;
+}
+
+.lesson-classroom .lesson-header .eyebrow {
+  color: var(--color-primary-dark);
+  font-size: 0.72rem;
+}
+
+.lesson-classroom .lesson-header > .badge {
+  flex-shrink: 0;
+  margin-top: 4px;
+}
+
+.lesson-classroom .lesson-step-nav {
+  flex-wrap: nowrap;
+  gap: 4px;
+  margin-bottom: 16px;
+  padding: 6px;
+  overflow-x: auto;
+  border-radius: 12px;
+  box-shadow: none;
+}
+
+.lesson-classroom .lesson-step-nav a {
+  flex: 0 0 auto;
+  padding: 9px 12px;
+  border-radius: 8px;
+  background: transparent;
+  font-size: 0.8rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.lesson-classroom .lesson-step-nav a:hover,
+.lesson-classroom .lesson-step-nav a:focus-visible {
+  background: var(--color-primary-soft);
+}
+
+.lesson-intro {
+  display: grid;
+  gap: 16px;
+  align-items: start;
+}
+
+.lesson-classroom .dashboard-panel {
+  min-width: 0;
+  padding: 20px;
+  border: 1px solid var(--color-border);
+  border-radius: 14px;
+  background: var(--color-surface);
+  box-shadow: none;
+}
+
+.lesson-classroom > .dashboard-section:nth-of-type(even) {
+  background: var(--color-surface);
+}
+
+.lesson-classroom .lesson-intro .dashboard-panel {
+  margin: 0;
+}
+
+.lesson-classroom .dashboard-panel h2 {
+  margin-bottom: 12px;
+  font-size: 1.05rem;
+  line-height: 1.5;
+}
+
+.lesson-classroom h2::before {
+  display: none;
+}
+
+.lesson-classroom h3 {
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+.lesson-classroom .lesson-prose,
+.lesson-classroom li {
+  font-size: 0.9rem;
+  line-height: 1.75;
+}
+
+.lesson-classroom .lesson-prose {
+  margin-bottom: 12px;
+}
+
+.lesson-classroom .lesson-video {
+  margin: 12px 0;
+  max-height: 360px;
+  border-radius: 10px;
+}
+
+.lesson-classroom #media > a {
+  font-size: 0.78rem;
+}
+
+.lesson-vocabulary-link {
+  display: block;
+  padding-top: 12px;
+  border-top: 1px solid var(--color-border);
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+.lesson-vocabulary-link small {
+  display: block;
+  margin-top: 3px;
+  color: var(--color-muted);
+  font-size: 0.75rem;
+  font-weight: 400;
+}
+
+.lesson-classroom blockquote {
+  margin: 12px 0;
+  padding: 12px 16px;
+  border-radius: 0 8px 8px 0;
+  background: var(--color-surface-soft);
+}
+
+.lesson-classroom .lesson-disclosure {
+  padding: 0 20px;
+}
+
+.lesson-disclosure > summary {
+  padding: 16px 0;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.lesson-disclosure[open] {
+  padding-bottom: 16px;
+}
+
+.lesson-disclosure > summary .badge {
+  margin-left: 6px;
+}
+
+.lesson-classroom .skill-practice {
+  border-top: 3px solid var(--color-primary);
+}
+
+.lesson-classroom .lesson-question {
+  margin: 12px 0;
+  padding: 14px 16px;
+}
+
+.lesson-classroom .lesson-question legend {
+  float: none;
+  width: auto;
+  padding: 0 6px;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.lesson-classroom .lesson-question label {
+  min-height: 44px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  font-size: 0.86rem;
+}
+
+.lesson-classroom .lesson-question label:has(input:checked) {
+  background: var(--color-primary-soft);
+}
+
+.lesson-classroom .ai-grading-target {
+  max-height: 340px;
+  overflow-y: auto;
+}
+
+.lesson-classroom .lesson-finish {
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid var(--color-border);
+}
+
+.lesson-classroom .completion-hint {
+  margin: 0 0 12px;
+  padding: 0;
+  background: transparent;
+  color: var(--color-primary-dark);
+  font-size: 0.85rem;
+}
+
+.lesson-classroom .lesson-complete {
+  margin: 0;
+}
+
+.lesson-path-link {
+  margin-left: auto;
+  padding-block: 10px;
+  font-size: 0.82rem;
+}
+
+.lesson-classroom .button {
+  font-size: 0.82rem;
+}
+
+@media (min-width: 1100px) {
+  .lesson-intro-with-media {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 760px) {
+  .lesson-classroom .lesson-header {
+    padding: 16px;
+  }
+
+  .lesson-classroom .dashboard-panel {
+    padding: 16px;
+  }
+
+  .lesson-classroom .lesson-disclosure {
+    padding: 0 16px;
+  }
+
+  .lesson-classroom .lesson-disclosure[open] {
+    padding-bottom: 16px;
+  }
+
+  .lesson-classroom .lesson-step-nav {
+    position: static;
+  }
+}
+
+@media (max-width: 420px) {
+  .lesson-classroom .lesson-header {
+    gap: 8px;
+  }
+
+  .lesson-classroom .lesson-question {
+    padding: 10px;
+  }
+
+  .lesson-classroom .lesson-complete > *,
+  .lesson-classroom .lesson-complete .button {
+    width: 100%;
+  }
+}

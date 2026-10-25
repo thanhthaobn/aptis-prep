@@ -2,9 +2,7 @@ package com.aptisprep.dto.view;
 
 import java.util.List;
 
-/**
- * UI examples only; not learner records or entity contracts.
- */
+/** Student-facing summaries of published database content. */
 public final class StudentCatalogView {
     private StudentCatalogView() {}
 
@@ -22,5 +20,7 @@ public final class StudentCatalogView {
             String status,
             String summary,
             List<Fact> facts,
-            List<Block> blocks) {}
+            List<Block> blocks,
+            String examType,
+            String skillCode) {}
 }

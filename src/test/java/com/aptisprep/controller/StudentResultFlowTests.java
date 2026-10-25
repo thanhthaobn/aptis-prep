@@ -1,5 +1,6 @@
 package com.aptisprep.controller;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -15,7 +16,10 @@ import com.aptisprep.repository.ExamAttemptRepository;
 import com.aptisprep.repository.ExamSkillResultRepository;
 import com.aptisprep.repository.MockExamRepository;
 import com.aptisprep.repository.UserRepository;
+import com.aptisprep.service.contract.IntegrationModels.HistoryPage;
 import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.HashSet;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
@@ -131,6 +135,70 @@ class StudentResultFlowTests {
                                 .param("size", "51")
                                 .with(user("student").roles("STUDENT")))
                 .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void historyPaginationKeepsFiltersAndOwnershipAndClampsPastLastPage() throws Exception {
+        var owner = learner("pagination-owner@test.local");
+        var other = learner("pagination-other@test.local");
+        var exam = new MockExamEntity();
+        exam.setCertificateId(1);
+        exam.setTitle("Reading & Email");
+        exam.setExamType("PRACTICE");
+        exam.setSkill("READING");
+        exam.setStatus("PUBLISHED");
+        exams.saveAndFlush(exam);
+        var expected = new ArrayList<Integer>();
+        for (int i = 0; i < 4; i++) {
+            var attempt = new ExamAttemptEntity();
+            attempt.setUserId(i == 3 ? other.getId() : owner.getId());
+            attempt.setRequestKey("pagination-" + i);
+            attempt.setMockExamId(exam.getId());
+            attempt.setStatus("COMPLETED");
+            attempt.setGradingStatus("COMPLETED");
+            attempts.saveAndFlush(attempt);
+            if (i < 3) expected.add(attempt.getId());
+        }
+        var seen = new HashSet<Integer>();
+        for (int page : new int[] {0, 1}) {
+            var response =
+                    mvc.perform(
+                                    get("/student/results")
+                                            .param("q", "Reading & Email")
+                                            .param("skill", "READING")
+                                            .param("examType", "PRACTICE")
+                                            .param("state", "COMPLETED")
+                                            .param("page", String.valueOf(page))
+                                            .param("size", "2")
+                                            .with(user(owner.getEmail()).roles("STUDENT")))
+                            .andExpect(status().isOk())
+                            .andExpect(
+                                    content()
+                                            .string(
+                                                    containsString(
+                                                            "Trang " + (page + 1) + " / 2")));
+            if (page == 0)
+                response.andExpect(
+                        content()
+                                .string(
+                                        containsString(
+                                                "/student/results?size=2&amp;q=Reading%20%26%20Email&amp;skill=READING&amp;examType=PRACTICE&amp;state=COMPLETED&amp;page=1")));
+            var history =
+                    (HistoryPage) response.andReturn().getModelAndView().getModel().get("history");
+            assertThat(history.totalItems()).isEqualTo(3);
+            assertThat(history.items()).hasSize(page == 0 ? 2 : 1);
+            for (var item : history.items()) {
+                assertThat(seen.add(item.attemptId())).isTrue();
+            }
+        }
+        assertThat(seen).containsExactlyInAnyOrderElementsOf(expected);
+        mvc.perform(
+                        get("/student/results")
+                                .param("page", "2147483647")
+                                .param("size", "2")
+                                .with(user(owner.getEmail()).roles("STUDENT")))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("Trang 2 / 2")));
     }
 
     @Test
