@@ -11,8 +11,8 @@ import com.aptisprep.entity.QuestionEntity;
 import com.aptisprep.entity.QuestionItemEntity;
 import com.aptisprep.entity.QuestionMediaEntity;
 import com.aptisprep.entity.QuestionOptionEntity;
-import com.aptisprep.entity.ScoringScaleRule;
 import com.aptisprep.entity.ScoreBand;
+import com.aptisprep.entity.ScoringScaleRule;
 import com.aptisprep.entity.ScoringScheme;
 import com.aptisprep.entity.User;
 import com.aptisprep.enums.RecordStatus;
@@ -31,20 +31,18 @@ import com.aptisprep.repository.QuestionMediaRepository;
 import com.aptisprep.repository.QuestionOptionRepository;
 import com.aptisprep.repository.QuestionRepository;
 import com.aptisprep.repository.ScoreBandRepository;
-import com.aptisprep.repository.ScoringSchemeRepository;
 import com.aptisprep.repository.ScoringScaleRuleRepository;
+import com.aptisprep.repository.ScoringSchemeRepository;
 import com.aptisprep.repository.UserRepository;
-
-import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
 
 @SpringBootTest
 class ExamAttemptConcurrencyTests {
@@ -178,11 +176,19 @@ class ExamAttemptConcurrencyTests {
     @Test
     void listeningContentTokenSupportsBrowserMetadataAndRangeRequests() {
         Fixture fixture = fixture("media-content");
-        int attemptId = attempts.start(fixture.user().getId(), fixture.exam().getId(), "media-content-key").attemptId();
-        String token = attempts.playMedia(fixture.user().getId(), attemptId, fixture.media().getId()).contentToken();
+        int attemptId =
+                attempts.start(fixture.user().getId(), fixture.exam().getId(), "media-content-key")
+                        .attemptId();
+        String token =
+                attempts.playMedia(fixture.user().getId(), attemptId, fixture.media().getId())
+                        .contentToken();
 
-        var metadata = attempts.mediaContent(fixture.user().getId(), attemptId, fixture.media().getId(), token);
-        var range = attempts.mediaContent(fixture.user().getId(), attemptId, fixture.media().getId(), token);
+        var metadata =
+                attempts.mediaContent(
+                        fixture.user().getId(), attemptId, fixture.media().getId(), token);
+        var range =
+                attempts.mediaContent(
+                        fixture.user().getId(), attemptId, fixture.media().getId(), token);
 
         assertTrue(metadata.resource().exists());
         assertTrue(range.resource().exists());
@@ -260,7 +266,12 @@ class ExamAttemptConcurrencyTests {
     @Test
     void attemptKeepsQuestionAndItemSnapshotAfterCatalogContentChanges() {
         Fixture fixture = fixture("snapshot-content");
-        int attemptId = attempts.start(fixture.user().getId(), fixture.exam().getId(), "snapshot-content-key").attemptId();
+        int attemptId =
+                attempts.start(
+                                fixture.user().getId(),
+                                fixture.exam().getId(),
+                                "snapshot-content-key")
+                        .attemptId();
 
         fixture.question().setContent("Edited question after the attempt started");
         questions.saveAndFlush(fixture.question());
@@ -427,18 +438,79 @@ class ExamAttemptConcurrencyTests {
     }
 
     private Fixture fixture(String suffix) {
-        User user = new User(); user.setFullName("Concurrent learner"); user.setEmail("attempt-" + suffix + "-" + System.nanoTime() + "@test.local");
-        user.setPasswordHash("unused"); user.setRole(Role.STUDENT); user.setStatus(UserStatus.ACTIVE); user = users.saveAndFlush(user);
-        Certificate certificate = new Certificate(); certificate.setName("Test certificate"); certificate.setCode("TEST-" + suffix + "-" + System.nanoTime()); certificate.setStatus(RecordStatus.ACTIVE); certificate = certificates.saveAndFlush(certificate);
-        ScoringScheme scheme = new ScoringScheme(); scheme.setCertificate(certificate); scheme.setName("Test scheme"); scheme.setVersion("v1"); scheme.setStatus(RecordStatus.ACTIVE); scheme = schemes.saveAndFlush(scheme);
-        ScoreBand band = new ScoreBand(); band.setScheme(scheme); band.setSkill("LISTENING"); band.setCefrLevel("A1"); band.setMinScore(java.math.BigDecimal.ZERO); band.setMaxScore(java.math.BigDecimal.valueOf(50)); bands.saveAndFlush(band);
-        ScoringScaleRule scaleRule = new ScoringScaleRule(); scaleRule.setScheme(scheme); scaleRule.setSkill("LISTENING"); scaleRule.setRawMin(java.math.BigDecimal.ZERO); scaleRule.setRawMax(java.math.BigDecimal.valueOf(40)); scaleRule.setScaleMin(java.math.BigDecimal.ZERO); scaleRule.setScaleMax(java.math.BigDecimal.valueOf(50)); scaleRules.saveAndFlush(scaleRule);
-        MockExamEntity exam = new MockExamEntity(); exam.setCertificateId(certificate.getId()); exam.setScoringSchemeId(scheme.getId()); exam.setTitle("Test exam"); exam.setExamType("PRACTICE"); exam.setSkill("LISTENING"); exam.setDurationMinutes(1); exam.setStatus("PUBLISHED"); exam = exams.saveAndFlush(exam);
-        QuestionEntity question = new QuestionEntity(); question.setContent("Audio question"); question.setQuestionType("SINGLE_CHOICE"); question.setSkill("LISTENING"); question.setStatus("PUBLISHED"); question = questions.saveAndFlush(question);
-        QuestionItemEntity item = new QuestionItemEntity(); item.setQuestionId(question.getId()); item.setContent("Choose the answer"); item.setPosition(1); item = items.saveAndFlush(item);
-        QuestionOptionEntity option = new QuestionOptionEntity(); option.setQuestionItemId(item.getId()); option.setContent("Correct"); option.setOptionCode("A"); option.setCorrect(true); option.setPosition(1); options.saveAndFlush(option);
-        MockExamQuestionEntity link = new MockExamQuestionEntity(); link.setMockExamId(exam.getId()); link.setQuestionId(question.getId()); link.setPosition(1); examQuestions.saveAndFlush(link);
-        QuestionMediaEntity audio = new QuestionMediaEntity(); audio.setQuestionId(question.getId()); audio.setMediaType("AUDIO"); audio.setMediaUrl("curriculum/audio/listening-a2.wav"); audio.setOriginalFilename("audio.wav"); audio.setContentType("audio/wav"); audio.setPosition(1); audio = media.saveAndFlush(audio);
+        User user = new User();
+        user.setFullName("Concurrent learner");
+        user.setEmail("attempt-" + suffix + "-" + System.nanoTime() + "@test.local");
+        user.setPasswordHash("unused");
+        user.setRole(Role.STUDENT);
+        user.setStatus(UserStatus.ACTIVE);
+        user = users.saveAndFlush(user);
+        Certificate certificate = new Certificate();
+        certificate.setName("Test certificate");
+        certificate.setCode("TEST-" + suffix + "-" + System.nanoTime());
+        certificate.setStatus(RecordStatus.ACTIVE);
+        certificate = certificates.saveAndFlush(certificate);
+        ScoringScheme scheme = new ScoringScheme();
+        scheme.setCertificate(certificate);
+        scheme.setName("Test scheme");
+        scheme.setVersion("v1");
+        scheme.setStatus(RecordStatus.ACTIVE);
+        scheme = schemes.saveAndFlush(scheme);
+        ScoreBand band = new ScoreBand();
+        band.setScheme(scheme);
+        band.setSkill("LISTENING");
+        band.setCefrLevel("A1");
+        band.setMinScore(java.math.BigDecimal.ZERO);
+        band.setMaxScore(java.math.BigDecimal.valueOf(50));
+        bands.saveAndFlush(band);
+        ScoringScaleRule scaleRule = new ScoringScaleRule();
+        scaleRule.setScheme(scheme);
+        scaleRule.setSkill("LISTENING");
+        scaleRule.setRawMin(java.math.BigDecimal.ZERO);
+        scaleRule.setRawMax(java.math.BigDecimal.valueOf(40));
+        scaleRule.setScaleMin(java.math.BigDecimal.ZERO);
+        scaleRule.setScaleMax(java.math.BigDecimal.valueOf(50));
+        scaleRules.saveAndFlush(scaleRule);
+        MockExamEntity exam = new MockExamEntity();
+        exam.setCertificateId(certificate.getId());
+        exam.setScoringSchemeId(scheme.getId());
+        exam.setTitle("Test exam");
+        exam.setExamType("PRACTICE");
+        exam.setSkill("LISTENING");
+        exam.setDurationMinutes(1);
+        exam.setStatus("PUBLISHED");
+        exam = exams.saveAndFlush(exam);
+        QuestionEntity question = new QuestionEntity();
+        question.setContent("Audio question");
+        question.setQuestionType("SINGLE_CHOICE");
+        question.setSkill("LISTENING");
+        question.setStatus("PUBLISHED");
+        question = questions.saveAndFlush(question);
+        QuestionItemEntity item = new QuestionItemEntity();
+        item.setQuestionId(question.getId());
+        item.setContent("Choose the answer");
+        item.setPosition(1);
+        item = items.saveAndFlush(item);
+        QuestionOptionEntity option = new QuestionOptionEntity();
+        option.setQuestionItemId(item.getId());
+        option.setContent("Correct");
+        option.setOptionCode("A");
+        option.setCorrect(true);
+        option.setPosition(1);
+        options.saveAndFlush(option);
+        MockExamQuestionEntity link = new MockExamQuestionEntity();
+        link.setMockExamId(exam.getId());
+        link.setQuestionId(question.getId());
+        link.setPosition(1);
+        examQuestions.saveAndFlush(link);
+        QuestionMediaEntity audio = new QuestionMediaEntity();
+        audio.setQuestionId(question.getId());
+        audio.setMediaType("AUDIO");
+        audio.setMediaUrl("curriculum/audio/listening-a2.wav");
+        audio.setOriginalFilename("audio.wav");
+        audio.setContentType("audio/wav");
+        audio.setPosition(1);
+        audio = media.saveAndFlush(audio);
         return new Fixture(user, exam, question, item, option, audio);
     }
 

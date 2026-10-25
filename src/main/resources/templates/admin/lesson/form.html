@@ -1,24 +1,465 @@
-<!DOCTYPE html><html lang="vi" xmlns:th="http://www.thymeleaf.org"><head th:replace="~{fragments/head :: head(${editing ? 'Chỉnh sửa bài học' : 'Tạo bài học'})}"></head>
-<body class="admin-theme"><div th:replace="~{fragments/navbar :: navbar}"></div><div class="container ap-container app-shell"><div th:replace="~{fragments/admin-sidebar :: adminSidebar('lessons')}"></div>
-<main class="app-main lesson-author" id="main-content" tabindex="-1"><a class="lesson-back" th:href="${editing ? '/admin/lessons/'+lessonId : '/admin/lessons'}">← Quay lại <span th:text="${editing?'chi tiết bài học':'cây bài học'}"></span></a><header class="page-header"><h1 th:text="${editing ? 'Chỉnh sửa bài học' : 'Tạo bài học'}"></h1></header>
-<form class="lesson-editor-form" method="post" enctype="multipart/form-data" th:object="${form}" th:action="${editing ? '/admin/lessons/'+lessonId : '/admin/lessons'}"><ul class="alert alert-danger ap-alert ap-alert-danger" th:if="${#fields.hasAnyErrors()}" role="alert"><li th:each="error:${#fields.allErrors()}" th:text="${error}"></li></ul>
-<section class="dashboard-panel lesson-form-section"><h2>Thông tin bài học</h2><div class="field"><label for="title">Tên bài học</label><input id="title" th:field="*{title}" maxlength="255" required></div><div class="field"><label for="description">Giới thiệu ngắn</label><textarea id="description" th:field="*{description}" rows="3" maxlength="10000"></textarea></div><div class="catalog-form-grid"><div class="field"><label for="skill">Kỹ năng</label><select id="skill" th:field="*{skill}"><option th:each="v:${skills}" th:value="${v}" th:text="${v}"></option></select></div><div class="field"><label for="level">CEFR</label><select id="level" th:field="*{cefrLevel}"><option th:each="v:${levels}" th:value="${v}" th:text="${v}"></option></select></div><div class="field"><label for="order">Thứ tự</label><input id="order" type="number" min="1" th:field="*{displayOrder}"></div><div class="field"><label for="status">Trạng thái</label><select id="status" th:field="*{status}"><option th:each="v:${statuses}" th:value="${v}" th:text="${v=='PUBLISHED'?'Đã công bố':(v=='DRAFT'?'Bản nháp':'Đã lưu trữ')}"></option></select></div></div></section>
-<section class="dashboard-panel lesson-form-section"><h2>Nội dung theo kỹ năng</h2><p id="skill-guidance" class="muted" th:text="${profile.mediaHint}"></p>
-<div class="lesson-form-grid"><div class="field"><label for="topic">Chủ đề</label><input id="topic" th:field="*{topic}" maxlength="160" placeholder="Để trống nếu là bài độc lập"></div><div class="field"><label for="taskType">Dạng bài</label><input id="taskType" th:field="*{taskType}" maxlength="160" list="task-suggestions"><datalist id="task-suggestions"><option th:each="task:${profile.tasks}" th:value="${task}"></option></datalist></div></div>
-<div class="lesson-core-fields" th:attr="data-author-skill=${form.skill}"><div class="field"><label for="exampleText" th:text="${profile.exampleLabel}"></label><textarea id="exampleText" th:field="*{exampleText}" rows="7" maxlength="10000"></textarea></div>
-<div class="field"><label for="practicePrompt" th:text="${profile.promptLabel}"></label><textarea id="practicePrompt" th:field="*{practicePrompt}" rows="4" maxlength="5000"></textarea></div></div>
-<details class="lesson-author-extra"><summary>Hướng dẫn và tiêu chí bổ sung (không bắt buộc)</summary>
-<div class="field"><label for="objectives">Mục tiêu bài học</label><textarea id="objectives" th:field="*{objectives}" rows="3" maxlength="4000"></textarea></div>
-<div class="field"><label for="strategy" th:text="${profile.strategyLabel}"></label><textarea id="strategy" th:field="*{strategy}" rows="4" maxlength="10000"></textarea></div>
-<div class="field"><label for="analysis" th:text="${profile.analysisLabel}"></label><textarea id="analysis" th:field="*{analysis}" rows="4" maxlength="10000"></textarea></div>
-<div class="field"><label for="commonMistakes">Lỗi thường gặp</label><textarea id="commonMistakes" th:field="*{commonMistakes}" rows="3" maxlength="5000"></textarea></div>
-<div class="field"><label for="checklist" th:text="${profile.checklistLabel}"></label><textarea id="checklist" th:field="*{checklist}" rows="3" maxlength="5000"></textarea></div></details>
-<details class="lesson-author-extra"><summary>Bài mẫu / gợi ý và thời điểm được xem</summary><div class="field"><label for="sampleResponse" th:text="${profile.sampleLabel}"></label><textarea id="sampleResponse" th:field="*{sampleResponse}" rows="6" maxlength="10000"></textarea></div>
-<div class="field"><label for="sampleVisibility">Khi nào học viên được xem?</label><select id="sampleVisibility" th:field="*{sampleVisibility}"><option value="AFTER_SUBMIT">Sau khi nộp bài (không có phần nộp: sau hoàn thành)</option><option value="AFTER_COMPLETE">Sau khi hoàn thành bài học</option><option value="ALWAYS">Có thể xem ngay</option><option value="AFTER_LISTEN" th:if="${form.skill=='Listening'}">Sau khi nghe ít nhất 90%</option></select></div></details></section>
-<section id="listening-audio" class="dashboard-panel lesson-form-section"><h2>Âm thanh thực hành Listening</h2><p>Mỗi bài có 1 audio thực hành, đặt trước câu hỏi nghe. Tải tệp nghe để học viên phát trực tiếp. MP3, WAV, M4A, OGG hoặc WEBM. Tối đa 20 MB.</p><audio th:if="${editing and lesson.audioPath!=null}" controls preload="metadata" th:src="@{/lesson-media/{id}/audio(id=${lesson.id})}"></audio><p th:if="${editing and lesson.audioName!=null}" th:text="|Tệp hiện tại: ${lesson.audioName}|"></p><div class="field"><label for="audio">Chọn tệp âm thanh mới</label><input id="audio" name="audio" type="file" accept="audio/mpeg,audio/wav,audio/mp4,audio/ogg,audio/webm,.mp3,.wav,.m4a,.ogg,.webm"></div><div class="field"><label for="transcript">Transcript của bài nghe</label><textarea id="transcript" th:field="*{transcript}" rows="6" maxlength="10000"></textarea></div><div class="field"><label for="transcriptVisibility">Thời điểm mở transcript</label><select id="transcriptVisibility" th:field="*{transcriptVisibility}"><option value="AFTER_LISTEN">Sau khi nghe ít nhất 90%</option><option value="AFTER_SUBMIT">Sau khi nộp bài</option><option value="AFTER_COMPLETE">Sau khi hoàn thành bài học</option><option value="ALWAYS">Có thể xem ngay</option></select></div><label th:if="${editing and lesson.audioPath!=null}" class="check-line"><input type="checkbox" name="removeAudio" value="true"> Xóa tệp âm thanh hiện tại</label></section>
-<section class="dashboard-panel lesson-form-section"><h2>Video tải trực tiếp</h2><div class="field"><label for="video">Chọn 1 video hướng dẫn</label><input id="video" name="video" type="file" accept="video/mp4,video/webm,.mp4,.webm"><small>MP4 hoặc WEBM, tối đa 50 MB. Tổng tệp trong một lần lưu tối đa 80 MB. Khi có video tải lên, bài học ưu tiên phát video này thay cho YouTube.</small></div><video th:if="${editing and lesson.videoPath!=null}" class="lesson-video" controls preload="metadata" th:src="@{/lesson-media/{id}/video(id=${lesson.id})}"></video><label class="check-line" th:if="${editing and lesson.videoPath!=null}"><input type="checkbox" name="removeVideo" value="true"> Bỏ video hiện tại khỏi bài học</label></section>
-<section id="writing-settings" class="dashboard-panel lesson-form-section"><h2>Yêu cầu độ dài bài viết</h2><div class="lesson-form-grid"><div class="field"><label for="minWordCount">Số từ tối thiểu</label><input id="minWordCount" type="number" min="1" max="5000" th:field="*{minWordCount}"></div><div class="field"><label for="maxWordCount">Số từ tối đa</label><input id="maxWordCount" type="number" min="1" max="5000" th:field="*{maxWordCount}"></div></div></section>
-<section class="dashboard-panel lesson-form-section"><h2>Ảnh đề bài và nguồn tham khảo</h2><p class="lesson-media-placement" th:text="${profile.mediaHint}"></p><div class="field"><label for="image">Tải 1 ảnh đề bài / minh họa</label><input id="image" name="image" type="file" accept="image/jpeg,image/png,image/webp,image/gif,.jpg,.jpeg,.png,.webp,.gif"><small>JPG, PNG, WEBP hoặc GIF. Tối đa 8 MB. Một ảnh mỗi bài. Nếu cần so sánh nhiều ảnh, tải một ảnh ghép.</small></div><img th:if="${editing and lesson.imagePath!=null}" th:src="@{/lesson-media/{id}/image(id=${lesson.id})}" alt="Hình minh họa hiện tại" class="lesson-hero-image"><label th:if="${editing and lesson.imagePath!=null}" class="check-line"><input type="checkbox" name="removeImage" value="true"> Xóa hình hiện tại</label><div class="field"><label for="videoUrl">Video hướng dẫn YouTube</label><input id="videoUrl" th:field="*{videoUrl}" type="url"></div><div class="lesson-form-grid"><div class="field"><label for="sourceUrl">Liên kết nguồn</label><input id="sourceUrl" th:field="*{sourceUrl}" type="url"></div><div class="field"><label for="sourceName">Tên nguồn</label><input id="sourceName" th:field="*{sourceName}" maxlength="255"></div></div></section>
-<section class="dashboard-panel lesson-form-section lesson-check-editor"><div class="panel-heading"><div><h2>Kiểm tra kiến thức</h2><p>Không bắt buộc. Tối đa 20 câu. Mỗi câu cần ít nhất 2 và tối đa 6 đáp án.</p></div></div><div id="question-list"><fieldset class="lesson-question-editor" th:each="check,stat:*{checks}" th:attr="data-question-index=${stat.index}"><legend th:text="|Câu ${stat.count}|"></legend><button class="remove-question" type="button">Xóa câu</button><div class="field"><label>Câu hỏi</label><textarea th:field="*{checks[__${stat.index}__].prompt}" rows="2"></textarea></div><div class="question-option-grid"><div class="field question-option" data-option-index="0"><label>Đáp án A (bắt buộc)</label><textarea th:field="*{checks[__${stat.index}__].optionA}" rows="2"></textarea></div><div class="field question-option" data-option-index="1"><label>Đáp án B (bắt buộc)</label><textarea th:field="*{checks[__${stat.index}__].optionB}" rows="2"></textarea></div><div class="field question-option" data-option-index="2"><label>Đáp án C</label><textarea th:field="*{checks[__${stat.index}__].optionC}" rows="2"></textarea><button class="remove-option" type="button" aria-label="Xóa đáp án C">Xóa đáp án</button></div><div class="field question-option" data-option-index="3"><label>Đáp án D</label><textarea th:field="*{checks[__${stat.index}__].optionD}" rows="2"></textarea><button class="remove-option" type="button" aria-label="Xóa đáp án D">Xóa đáp án</button></div><div class="field question-option" data-option-index="4"><label>Đáp án E</label><textarea th:field="*{checks[__${stat.index}__].optionE}" rows="2"></textarea><button class="remove-option" type="button" aria-label="Xóa đáp án E">Xóa đáp án</button></div><div class="field question-option" data-option-index="5"><label>Đáp án F</label><textarea th:field="*{checks[__${stat.index}__].optionF}" rows="2"></textarea><button class="remove-option" type="button" aria-label="Xóa đáp án F">Xóa đáp án</button></div></div><button class="add-option button button-secondary" type="button">+ Thêm đáp án</button><small class="option-limit">Mỗi câu có từ 2 đến 6 đáp án.</small><div class="lesson-form-grid"><div class="field"><label>Đáp án đúng</label><select class="correct-option" th:field="*{checks[__${stat.index}__].correctOption}"><option value="">Chọn đáp án</option><option value="0">A</option><option value="1">B</option><option value="2">C</option><option value="3">D</option><option value="4">E</option><option value="5">F</option></select></div><div class="field"><label>Giải thích đáp án</label><textarea th:field="*{checks[__${stat.index}__].explanation}" rows="2"></textarea></div></div></fieldset></div><p id="no-question" class="empty-inline" th:hidden="${!#lists.isEmpty(form.checks)}">Bài học chưa có câu kiểm tra. Điều này vẫn hợp lệ.</p><div class="question-add-footer"><button id="add-question" class="button button-secondary" type="button">+ Thêm câu hỏi</button></div></section>
-<template id="question-template"><fieldset class="lesson-question-editor"><legend>Câu</legend><button class="remove-question" type="button">Xóa câu</button><div class="field"><label>Câu hỏi</label><textarea data-field="prompt" rows="2"></textarea></div><div class="question-option-grid"><div class="field question-option" data-option-index="0"><label>Đáp án A (bắt buộc)</label><textarea data-field="optionA" rows="2"></textarea></div><div class="field question-option" data-option-index="1"><label>Đáp án B (bắt buộc)</label><textarea data-field="optionB" rows="2"></textarea></div><div class="field question-option" data-option-index="2" hidden><label>Đáp án C</label><textarea data-field="optionC" rows="2"></textarea><button class="remove-option" type="button">Xóa đáp án</button></div><div class="field question-option" data-option-index="3" hidden><label>Đáp án D</label><textarea data-field="optionD" rows="2"></textarea><button class="remove-option" type="button">Xóa đáp án</button></div><div class="field question-option" data-option-index="4" hidden><label>Đáp án E</label><textarea data-field="optionE" rows="2"></textarea><button class="remove-option" type="button">Xóa đáp án</button></div><div class="field question-option" data-option-index="5" hidden><label>Đáp án F</label><textarea data-field="optionF" rows="2"></textarea><button class="remove-option" type="button">Xóa đáp án</button></div></div><button class="add-option button button-secondary" type="button">+ Thêm đáp án</button><small class="option-limit">Mỗi câu có từ 2 đến 6 đáp án.</small><div class="lesson-form-grid"><div class="field"><label>Đáp án đúng</label><select class="correct-option" data-field="correctOption"><option value="">Chọn đáp án</option><option value="0">A</option><option value="1">B</option><option value="2">C</option><option value="3">D</option><option value="4">E</option><option value="5">F</option></select></div><div class="field"><label>Giải thích đáp án</label><textarea data-field="explanation" rows="2"></textarea></div></div></fieldset></template>
-<div class="editor-actions"><button class="button" type="submit">Lưu bài học</button><a class="button button-secondary" th:href="${editing ? '/admin/lessons/'+lessonId : '/admin/lessons'}">Quay lại</a></div></form></main></div><div th:replace="~{fragments/footer :: footer}"></div><script th:src="@{/js/lesson-author.js}" defer></script></body></html>
+<!doctype html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org"
+  ><head
+    th:replace="~{fragments/head :: head(${editing ? 'Chỉnh sửa bài học' : 'Tạo bài học'})}"
+  ></head>
+  <body class="admin-theme"
+    ><div th:replace="~{fragments/navbar :: navbar}"></div
+    ><div class="container ap-container app-shell"
+      ><div th:replace="~{fragments/admin-sidebar :: adminSidebar('lessons')}"></div>
+      <main class="app-main lesson-author" id="main-content" tabindex="-1"
+        ><a class="lesson-back" th:href="${editing ? '/admin/lessons/'+lessonId : '/admin/lessons'}"
+          >← Quay lại <span th:text="${editing?'chi tiết bài học':'cây bài học'}"></span></a
+        ><header class="page-header"
+          ><h1 th:text="${editing ? 'Chỉnh sửa bài học' : 'Tạo bài học'}"></h1
+        ></header>
+        <div id="lesson-author-profiles" hidden>
+          <div
+            th:each="entry : ${authorProfiles}"
+            th:attr="data-skill=${entry.key},data-hint=${entry.value.mediaHint}"
+          >
+            <span data-field="exampleText" th:text="${entry.value.exampleLabel}"></span>
+            <span data-field="practicePrompt" th:text="${entry.value.promptLabel}"></span>
+            <span data-field="strategy" th:text="${entry.value.strategyLabel}"></span>
+            <span data-field="analysis" th:text="${entry.value.analysisLabel}"></span>
+            <span data-field="checklist" th:text="${entry.value.checklistLabel}"></span>
+            <span data-field="sampleResponse" th:text="${entry.value.sampleLabel}"></span>
+            <span data-task th:each="task : ${entry.value.tasks}" th:text="${task}"></span>
+          </div>
+        </div>
+        <form
+          class="lesson-editor-form"
+          method="post"
+          enctype="multipart/form-data"
+          th:object="${form}"
+          th:action="${editing ? '/admin/lessons/'+lessonId : '/admin/lessons'}"
+          ><ul
+            class="alert alert-danger ap-alert ap-alert-danger"
+            th:if="${#fields.hasAnyErrors()}"
+            role="alert"
+            ><li th:each="error:${#fields.allErrors()}" th:text="${error}"></li
+          ></ul>
+          <section class="dashboard-panel lesson-form-section"
+            ><h2>Thông tin bài học</h2
+            ><div class="field"
+              ><label for="title">Tên bài học</label
+              ><input id="title" th:field="*{title}" maxlength="255" required /></div
+            ><div class="field"
+              ><label for="description">Giới thiệu ngắn</label
+              ><textarea
+                id="description"
+                th:field="*{description}"
+                rows="3"
+                maxlength="10000"
+              ></textarea></div
+            ><div class="catalog-form-grid"
+              ><div class="field"
+                ><label for="skill">Kỹ năng</label
+                ><select id="skill" th:field="*{skill}"
+                  ><option
+                    th:each="v:${skills}"
+                    th:value="${v}"
+                    th:text="${v}"
+                  ></option></select></div
+              ><div class="field"
+                ><label for="level">CEFR</label
+                ><select id="level" th:field="*{cefrLevel}"
+                  ><option
+                    th:each="v:${levels}"
+                    th:value="${v}"
+                    th:text="${v}"
+                  ></option></select></div
+              ><div class="field"
+                ><label for="order">Thứ tự</label
+                ><input id="order" type="number" min="1" th:field="*{displayOrder}" /></div
+              ><div class="field"
+                ><label for="status">Trạng thái</label
+                ><select id="status" th:field="*{status}"
+                  ><option
+                    th:each="v:${statuses}"
+                    th:value="${v}"
+                    th:text="${v=='PUBLISHED'?'Đã công bố':(v=='DRAFT'?'Bản nháp':'Đã lưu trữ')}"
+                  ></option></select></div></div
+          ></section>
+          <section class="dashboard-panel lesson-form-section"
+            ><h2>Nội dung theo kỹ năng</h2
+            ><p id="skill-guidance" class="muted" th:text="${profile.mediaHint}"></p>
+            <div class="lesson-form-grid"
+              ><div class="field"
+                ><label for="topic">Chủ đề</label
+                ><input
+                  id="topic"
+                  th:field="*{topic}"
+                  maxlength="160"
+                  placeholder="Để trống nếu là bài độc lập" /></div
+              ><div class="field"
+                ><label for="taskType">Dạng bài</label
+                ><input
+                  id="taskType"
+                  th:field="*{taskType}"
+                  maxlength="160"
+                  list="task-suggestions" /><datalist id="task-suggestions"
+                  ><option
+                    th:each="task:${profile.tasks}"
+                    th:value="${task}"
+                  ></option></datalist></div
+            ></div>
+            <div class="lesson-core-fields" th:attr="data-author-skill=${form.skill}"
+              ><div class="field"
+                ><label for="exampleText" th:text="${profile.exampleLabel}"></label
+                ><textarea
+                  id="exampleText"
+                  th:field="*{exampleText}"
+                  rows="7"
+                  maxlength="10000"
+                ></textarea>
+              </div>
+              <div class="field"
+                ><label for="practicePrompt" th:text="${profile.promptLabel}"></label
+                ><textarea
+                  id="practicePrompt"
+                  th:field="*{practicePrompt}"
+                  rows="4"
+                  maxlength="5000"
+                ></textarea></div
+            ></div>
+            <details class="lesson-author-extra"
+              ><summary>Hướng dẫn và tiêu chí bổ sung (không bắt buộc)</summary>
+              <div class="field"
+                ><label for="objectives">Mục tiêu bài học</label
+                ><textarea
+                  id="objectives"
+                  th:field="*{objectives}"
+                  rows="3"
+                  maxlength="4000"
+                ></textarea>
+              </div>
+              <div class="field"
+                ><label for="strategy" th:text="${profile.strategyLabel}"></label
+                ><textarea
+                  id="strategy"
+                  th:field="*{strategy}"
+                  rows="4"
+                  maxlength="10000"
+                ></textarea>
+              </div>
+              <div class="field"
+                ><label for="analysis" th:text="${profile.analysisLabel}"></label
+                ><textarea
+                  id="analysis"
+                  th:field="*{analysis}"
+                  rows="4"
+                  maxlength="10000"
+                ></textarea>
+              </div>
+              <div class="field"
+                ><label for="commonMistakes">Lỗi thường gặp</label
+                ><textarea
+                  id="commonMistakes"
+                  th:field="*{commonMistakes}"
+                  rows="3"
+                  maxlength="5000"
+                ></textarea>
+              </div>
+              <div class="field"
+                ><label for="checklist" th:text="${profile.checklistLabel}"></label
+                ><textarea
+                  id="checklist"
+                  th:field="*{checklist}"
+                  rows="3"
+                  maxlength="5000"
+                ></textarea></div
+            ></details>
+            <details class="lesson-author-extra"
+              ><summary>Bài mẫu / gợi ý và thời điểm được xem</summary
+              ><div class="field"
+                ><label for="sampleResponse" th:text="${profile.sampleLabel}"></label
+                ><textarea
+                  id="sampleResponse"
+                  th:field="*{sampleResponse}"
+                  rows="6"
+                  maxlength="10000"
+                ></textarea>
+              </div>
+              <div class="field"
+                ><label for="sampleVisibility">Khi nào học viên được xem?</label
+                ><select id="sampleVisibility" th:field="*{sampleVisibility}"
+                  ><option value="AFTER_SUBMIT"
+                    >Sau khi nộp bài (không có phần nộp: sau hoàn thành)</option
+                  ><option value="AFTER_COMPLETE">Sau khi hoàn thành bài học</option
+                  ><option value="ALWAYS">Có thể xem ngay</option
+                  ><option value="AFTER_LISTEN" th:if="${form.skill=='Listening'}"
+                    >Sau khi nghe ít nhất 90%</option
+                  ></select
+                ></div
+              ></details
+            ></section
+          >
+          <section id="listening-audio" class="dashboard-panel lesson-form-section"
+            ><h2>Âm thanh thực hành Listening</h2
+            ><p
+              >Mỗi bài có 1 audio thực hành, đặt trước câu hỏi nghe. Tải tệp nghe để học viên phát
+              trực tiếp. MP3, WAV, M4A, OGG hoặc WEBM. Tối đa 20 MB.</p
+            ><audio
+              th:if="${editing and lesson.audioPath!=null}"
+              controls
+              preload="metadata"
+              th:src="@{/lesson-media/{id}/audio(id=${lesson.id})}"
+            ></audio
+            ><p
+              th:if="${editing and lesson.audioName!=null}"
+              th:text="|Tệp hiện tại: ${lesson.audioName}|"
+            ></p
+            ><div class="field"
+              ><label for="audio">Chọn tệp âm thanh mới</label
+              ><input
+                id="audio"
+                name="audio"
+                type="file"
+                accept="audio/mpeg,audio/wav,audio/mp4,audio/ogg,audio/webm,.mp3,.wav,.m4a,.ogg,.webm" /></div
+            ><div class="field"
+              ><label for="transcript">Transcript của bài nghe</label
+              ><textarea
+                id="transcript"
+                th:field="*{transcript}"
+                rows="6"
+                maxlength="10000"
+              ></textarea></div
+            ><div class="field"
+              ><label for="transcriptVisibility">Thời điểm mở transcript</label
+              ><select id="transcriptVisibility" th:field="*{transcriptVisibility}"
+                ><option value="AFTER_LISTEN">Sau khi nghe ít nhất 90%</option
+                ><option value="AFTER_SUBMIT">Sau khi nộp bài</option
+                ><option value="AFTER_COMPLETE">Sau khi hoàn thành bài học</option
+                ><option value="ALWAYS">Có thể xem ngay</option></select
+              ></div
+            ><label th:if="${editing and lesson.audioPath!=null}" class="check-line"
+              ><input type="checkbox" name="removeAudio" value="true" /> Xóa tệp âm thanh hiện
+              tại</label
+            ></section
+          >
+          <section class="dashboard-panel lesson-form-section"
+            ><h2>Video tải trực tiếp</h2
+            ><div class="field"
+              ><label for="video">Chọn 1 video hướng dẫn</label
+              ><input
+                id="video"
+                name="video"
+                type="file"
+                accept="video/mp4,video/webm,.mp4,.webm"
+              /><small
+                >MP4 hoặc WEBM, tối đa 50 MB. Tổng tệp trong một lần lưu tối đa 80 MB. Khi có video
+                tải lên, bài học ưu tiên phát video này thay cho YouTube.</small
+              ></div
+            ><video
+              th:if="${editing and lesson.videoPath!=null}"
+              class="lesson-video"
+              controls
+              preload="metadata"
+              th:src="@{/lesson-media/{id}/video(id=${lesson.id})}"
+            ></video
+            ><label class="check-line" th:if="${editing and lesson.videoPath!=null}"
+              ><input type="checkbox" name="removeVideo" value="true" /> Bỏ video hiện tại khỏi bài
+              học</label
+            ></section
+          >
+          <section id="writing-settings" class="dashboard-panel lesson-form-section"
+            ><h2>Yêu cầu độ dài bài viết</h2
+            ><div class="lesson-form-grid"
+              ><div class="field"
+                ><label for="minWordCount">Số từ tối thiểu</label
+                ><input
+                  id="minWordCount"
+                  type="number"
+                  min="1"
+                  max="5000"
+                  th:field="*{minWordCount}" /></div
+              ><div class="field"
+                ><label for="maxWordCount">Số từ tối đa</label
+                ><input
+                  id="maxWordCount"
+                  type="number"
+                  min="1"
+                  max="5000"
+                  th:field="*{maxWordCount}" /></div></div
+          ></section>
+          <section class="dashboard-panel lesson-form-section"
+            ><h2>Ảnh đề bài và nguồn tham khảo</h2
+            ><p class="lesson-media-placement" th:text="${profile.mediaHint}"></p
+            ><div class="field"
+              ><label for="image">Tải 1 ảnh đề bài / minh họa</label
+              ><input
+                id="image"
+                name="image"
+                type="file"
+                accept="image/jpeg,image/png,image/webp,image/gif,.jpg,.jpeg,.png,.webp,.gif"
+              /><small
+                >JPG, PNG, WEBP hoặc GIF. Tối đa 8 MB. Một ảnh mỗi bài. Nếu cần so sánh nhiều ảnh,
+                tải một ảnh ghép.</small
+              ></div
+            ><img
+              th:if="${editing and lesson.imagePath!=null}"
+              th:src="@{/lesson-media/{id}/image(id=${lesson.id})}"
+              alt="Hình minh họa hiện tại"
+              class="lesson-hero-image" /><label
+              th:if="${editing and lesson.imagePath!=null}"
+              class="check-line"
+              ><input type="checkbox" name="removeImage" value="true" /> Xóa hình hiện tại</label
+            ><div class="field"
+              ><label for="videoUrl">Video hướng dẫn YouTube</label
+              ><input id="videoUrl" th:field="*{videoUrl}" type="url" /></div
+            ><div class="lesson-form-grid"
+              ><div class="field"
+                ><label for="sourceUrl">Liên kết nguồn</label
+                ><input id="sourceUrl" th:field="*{sourceUrl}" type="url" /></div
+              ><div class="field"
+                ><label for="sourceName">Tên nguồn</label
+                ><input id="sourceName" th:field="*{sourceName}" maxlength="255" /></div></div
+          ></section>
+          <section class="dashboard-panel lesson-form-section lesson-check-editor"
+            ><div class="panel-heading"
+              ><div
+                ><h2>Kiểm tra kiến thức</h2
+                ><p
+                  >Không bắt buộc. Tối đa 20 câu. Mỗi câu cần ít nhất 2 và tối đa 6 đáp án.</p
+                ></div
+              ></div
+            ><div id="question-list"
+              ><fieldset
+                class="lesson-question-editor"
+                th:each="check,stat:*{checks}"
+                th:attr="data-question-index=${stat.index}"
+                ><legend th:text="|Câu ${stat.count}|"></legend
+                ><button class="remove-question" type="button">Xóa câu</button
+                ><div class="field"
+                  ><label>Câu hỏi</label
+                  ><textarea
+                    th:field="*{checks[__${stat.index}__].prompt}"
+                    rows="2"
+                  ></textarea></div
+                ><div class="question-option-grid"
+                  ><div class="field question-option" data-option-index="0"
+                    ><label>Đáp án A (bắt buộc)</label
+                    ><textarea
+                      th:field="*{checks[__${stat.index}__].optionA}"
+                      rows="2"
+                    ></textarea></div
+                  ><div class="field question-option" data-option-index="1"
+                    ><label>Đáp án B (bắt buộc)</label
+                    ><textarea
+                      th:field="*{checks[__${stat.index}__].optionB}"
+                      rows="2"
+                    ></textarea></div
+                  ><div class="field question-option" data-option-index="2"
+                    ><label>Đáp án C</label
+                    ><textarea th:field="*{checks[__${stat.index}__].optionC}" rows="2"></textarea
+                    ><button class="remove-option" type="button" aria-label="Xóa đáp án C"
+                      >Xóa đáp án</button
+                    ></div
+                  ><div class="field question-option" data-option-index="3"
+                    ><label>Đáp án D</label
+                    ><textarea th:field="*{checks[__${stat.index}__].optionD}" rows="2"></textarea
+                    ><button class="remove-option" type="button" aria-label="Xóa đáp án D"
+                      >Xóa đáp án</button
+                    ></div
+                  ><div class="field question-option" data-option-index="4"
+                    ><label>Đáp án E</label
+                    ><textarea th:field="*{checks[__${stat.index}__].optionE}" rows="2"></textarea
+                    ><button class="remove-option" type="button" aria-label="Xóa đáp án E"
+                      >Xóa đáp án</button
+                    ></div
+                  ><div class="field question-option" data-option-index="5"
+                    ><label>Đáp án F</label
+                    ><textarea th:field="*{checks[__${stat.index}__].optionF}" rows="2"></textarea
+                    ><button class="remove-option" type="button" aria-label="Xóa đáp án F"
+                      >Xóa đáp án</button
+                    ></div
+                  ></div
+                ><button class="add-option button button-secondary" type="button"
+                  >+ Thêm đáp án</button
+                ><small class="option-limit">Mỗi câu có từ 2 đến 6 đáp án.</small
+                ><div class="lesson-form-grid"
+                  ><div class="field"
+                    ><label>Đáp án đúng</label
+                    ><select
+                      class="correct-option"
+                      th:field="*{checks[__${stat.index}__].correctOption}"
+                      ><option value="">Chọn đáp án</option
+                      ><option value="0">A</option
+                      ><option value="1">B</option
+                      ><option value="2">C</option
+                      ><option value="3">D</option
+                      ><option value="4">E</option
+                      ><option value="5">F</option></select
+                    ></div
+                  ><div class="field"
+                    ><label>Giải thích đáp án</label
+                    ><textarea
+                      th:field="*{checks[__${stat.index}__].explanation}"
+                      rows="2"
+                    ></textarea></div></div></fieldset></div
+            ><p id="no-question" class="empty-inline" th:hidden="${!#lists.isEmpty(form.checks)}"
+              >Bài học chưa có câu kiểm tra. Điều này vẫn hợp lệ.</p
+            ><div class="question-add-footer"
+              ><button id="add-question" class="button button-secondary" type="button"
+                >+ Thêm câu hỏi</button
+              ></div
+            ></section
+          >
+          <template id="question-template"
+            ><fieldset class="lesson-question-editor"
+              ><legend>Câu</legend><button class="remove-question" type="button">Xóa câu</button
+              ><div class="field"
+                ><label>Câu hỏi</label><textarea data-field="prompt" rows="2"></textarea></div
+              ><div class="question-option-grid"
+                ><div class="field question-option" data-option-index="0"
+                  ><label>Đáp án A (bắt buộc)</label
+                  ><textarea data-field="optionA" rows="2"></textarea></div
+                ><div class="field question-option" data-option-index="1"
+                  ><label>Đáp án B (bắt buộc)</label
+                  ><textarea data-field="optionB" rows="2"></textarea></div
+                ><div class="field question-option" data-option-index="2" hidden
+                  ><label>Đáp án C</label><textarea data-field="optionC" rows="2"></textarea
+                  ><button class="remove-option" type="button">Xóa đáp án</button></div
+                ><div class="field question-option" data-option-index="3" hidden
+                  ><label>Đáp án D</label><textarea data-field="optionD" rows="2"></textarea
+                  ><button class="remove-option" type="button">Xóa đáp án</button></div
+                ><div class="field question-option" data-option-index="4" hidden
+                  ><label>Đáp án E</label><textarea data-field="optionE" rows="2"></textarea
+                  ><button class="remove-option" type="button">Xóa đáp án</button></div
+                ><div class="field question-option" data-option-index="5" hidden
+                  ><label>Đáp án F</label><textarea data-field="optionF" rows="2"></textarea
+                  ><button class="remove-option" type="button">Xóa đáp án</button></div
+                ></div
+              ><button class="add-option button button-secondary" type="button"
+                >+ Thêm đáp án</button
+              ><small class="option-limit">Mỗi câu có từ 2 đến 6 đáp án.</small
+              ><div class="lesson-form-grid"
+                ><div class="field"
+                  ><label>Đáp án đúng</label
+                  ><select class="correct-option" data-field="correctOption"
+                    ><option value="">Chọn đáp án</option
+                    ><option value="0">A</option
+                    ><option value="1">B</option
+                    ><option value="2">C</option
+                    ><option value="3">D</option
+                    ><option value="4">E</option
+                    ><option value="5">F</option></select
+                  ></div
+                ><div class="field"
+                  ><label>Giải thích đáp án</label
+                  ><textarea data-field="explanation" rows="2"></textarea></div></div></fieldset
+          ></template>
+          <div class="editor-actions"
+            ><button class="button" type="submit">Lưu bài học</button
+            ><a
+              class="button button-secondary"
+              th:href="${editing ? '/admin/lessons/'+lessonId : '/admin/lessons'}"
+              >Quay lại</a
+            ></div
+          ></form
+        ></main
+      ></div
+    ><div th:replace="~{fragments/footer :: footer}"></div
+    ><script th:src="@{/js/lesson-author.js}" defer></script></body
+></html>

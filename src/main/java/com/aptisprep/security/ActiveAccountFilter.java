@@ -6,9 +6,7 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-
 import java.io.IOException;
-
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
@@ -25,23 +23,29 @@ public class ActiveAccountFilter extends OncePerRequestFilter {
     }
 
     @Override
-    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response,
-                                    FilterChain filterChain) throws ServletException, IOException {
+    protected void doFilterInternal(
+            HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
+            throws ServletException, IOException {
         var authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication != null && authentication.isAuthenticated()
-                && authentication.getName() != null && !"/login".equals(request.getServletPath())) {
-            users.findByEmailIgnoreCase(authentication.getName()).ifPresent(user -> {
-                if (user.getStatus() != UserStatus.ACTIVE) {
-                    SecurityContextHolder.clearContext();
-                    var session = request.getSession(false);
-                    if (session != null) session.invalidate();
-                    try {
-                        response.sendRedirect(request.getContextPath() + "/login?locked");
-                    } catch (IOException exception) {
-                        throw new RuntimeException(exception);
-                    }
-                }
-            });
+        if (authentication != null
+                && authentication.isAuthenticated()
+                && authentication.getName() != null
+                && !"/login".equals(request.getServletPath())) {
+            users.findByEmailIgnoreCase(authentication.getName())
+                    .ifPresent(
+                            user -> {
+                                if (user.getStatus() != UserStatus.ACTIVE) {
+                                    SecurityContextHolder.clearContext();
+                                    var session = request.getSession(false);
+                                    if (session != null) session.invalidate();
+                                    try {
+                                        response.sendRedirect(
+                                                request.getContextPath() + "/login?locked");
+                                    } catch (IOException exception) {
+                                        throw new RuntimeException(exception);
+                                    }
+                                }
+                            });
             if (response.isCommitted()) return;
         }
         filterChain.doFilter(request, response);

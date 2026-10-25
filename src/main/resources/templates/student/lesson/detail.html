@@ -1,133 +1,441 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="vi" xmlns:th="http://www.thymeleaf.org">
-<head th:replace="~{fragments/head :: head(${lesson.title})}"></head>
-<body class="student-theme">
-<div th:replace="~{fragments/navbar :: navbar}"></div>
-<div class="container ap-container app-shell">
-    <div th:replace="~{fragments/student-sidebar :: studentSidebar('lessons')}"></div>
-    <main class="app-main lesson-classroom" id="main-content" tabindex="-1" th:attr="data-skill=${lesson.skill},data-lesson-id=${lesson.id}">
-        <a class="lesson-back" th:href="@{/student/learning-path/{skill}(skill=${lesson.skill})}" th:text="|← Quay lại lộ trình ${lesson.skill}|"></a>
+  <head th:replace="~{fragments/head :: head(${lesson.title})}"></head>
+  <body class="student-theme">
+    <div th:replace="~{fragments/navbar :: navbar}"></div>
+    <div class="container ap-container app-shell">
+      <div th:replace="~{fragments/student-sidebar :: studentSidebar('lessons')}"></div>
+      <main
+        class="app-main lesson-classroom"
+        id="main-content"
+        tabindex="-1"
+        th:attr="data-skill=${lesson.skill},data-lesson-id=${lesson.id}"
+      >
+        <a
+          class="lesson-back"
+          th:href="@{/student/learning-path/{skill}(skill=${lesson.skill})}"
+          th:text="|← Quay lại lộ trình ${lesson.skill}|"
+        ></a>
         <header class="page-header">
-            <div><p class="eyebrow" th:text="|${lesson.skill} · ${lesson.cefrLevel}|"></p><h1 th:text="${lesson.title}"></h1><p th:if="${lesson.material!=null}" th:text="${lesson.material.topic}"></p></div>
-            <span class="badge" th:text="${progress!=null and progress.status=='COMPLETED'?'Đã hoàn thành':'Đang học'}"></span>
+          <div
+            ><p class="eyebrow" th:text="|${lesson.skill} · ${lesson.cefrLevel}|"></p
+            ><h1 th:text="${lesson.title}"></h1
+            ><p th:if="${lesson.material!=null}" th:text="${lesson.material.topic}"></p
+          ></div>
+          <span
+            class="badge"
+            th:text="${progress!=null and progress.status=='COMPLETED'?'Đã hoàn thành':'Đang học'}"
+          ></span>
         </header>
         <div th:replace="~{fragments/messages :: messages}"></div>
         <nav class="lesson-step-nav" aria-label="Các phần bài học">
-            <a href="#overview">Mục tiêu</a><a th:if="${videoId!=null or lesson.videoPath!=null}" href="#media">Video hướng dẫn</a>
-            <a th:if="${lesson.material!=null and (!#strings.isEmpty(lesson.material.strategy) or ((lesson.skill=='Writing' or lesson.skill=='Speaking') and (!#lists.isEmpty(questions) or !#lists.isEmpty(attempts))))}" href="#method">Cách làm</a><a th:if="${lesson.skill=='Listening' or (lesson.material!=null and (!#strings.isEmpty(lesson.material.exampleText) or (lesson.imagePath!=null and (lesson.skill=='Reading' or lesson.skill=='Grammar & Vocabulary'))))}" href="#example" th:text="${lesson.skill=='Listening'?'Trước khi nghe':(lesson.skill=='Reading'?'Bài đọc':'Ví dụ')}"></a><a href="#practice" th:text="${lesson.skill=='Listening'?'Nghe và làm bài':'Luyện tập'}"></a>
-            <a th:if="${flashcardSet!=null}" th:href="@{/student/flashcards/{id}(id=${flashcardSet.id})}">Flashcard của bài</a>
+          <a href="#overview">Mục tiêu</a
+          ><a th:if="${videoId!=null or lesson.videoPath!=null}" href="#media">Video hướng dẫn</a>
+          <a
+            th:if="${lesson.material!=null and (!#strings.isEmpty(lesson.material.strategy) or ((lesson.skill=='Writing' or lesson.skill=='Speaking') and (!#lists.isEmpty(questions) or !#lists.isEmpty(attempts))))}"
+            href="#method"
+            >Cách làm</a
+          ><a
+            th:if="${lesson.skill=='Listening' or (lesson.material!=null and (!#strings.isEmpty(lesson.material.exampleText) or (lesson.imagePath!=null and (lesson.skill=='Reading' or lesson.skill=='Grammar & Vocabulary'))))}"
+            href="#example"
+            th:text="${lesson.skill=='Listening'?'Trước khi nghe':(lesson.skill=='Reading'?'Bài đọc':'Ví dụ')}"
+          ></a
+          ><a
+            href="#practice"
+            th:text="${lesson.skill=='Listening'?'Nghe và làm bài':'Luyện tập'}"
+          ></a>
+          <a
+            th:if="${flashcardSet!=null}"
+            th:href="@{/student/flashcards/{id}(id=${flashcardSet.id})}"
+            >Flashcard của bài</a
+          >
         </nav>
         <section id="overview" class="dashboard-panel">
-            <h2>Mục tiêu bài học</h2>
-            <img th:if="${lesson.imagePath!=null and lesson.material==null and (lesson.skill=='Reading' or lesson.skill=='Grammar & Vocabulary')}" th:src="@{/lesson-media/{id}/image(id=${lesson.id})}" alt="Hình minh họa bài học" class="lesson-hero-image">
-            <p class="lesson-prose" th:text="${lesson.material!=null and !#strings.isEmpty(lesson.material.objectives)?lesson.material.objectives:lesson.description}"></p>
-            <span class="badge" th:if="${lesson.material!=null}" th:text="${lesson.material.taskType}"></span>
-            <div class="lesson-flashcard-callout" th:if="${flashcardSet!=null}"><div><strong th:text="${flashcardSet.title}"></strong><span>Ôn từ vựng riêng, không bắt buộc để hoàn thành bài học.</span></div><a class="button button-secondary" th:href="@{/student/flashcards/{id}(id=${flashcardSet.id})}">Ôn Flashcard →</a></div>
+          <h2>Mục tiêu bài học</h2>
+          <img
+            th:if="${lesson.imagePath!=null and lesson.material==null and (lesson.skill=='Reading' or lesson.skill=='Grammar & Vocabulary')}"
+            th:src="@{/lesson-media/{id}/image(id=${lesson.id})}"
+            alt="Hình minh họa bài học"
+            class="lesson-hero-image"
+          />
+          <p
+            class="lesson-prose"
+            th:text="${lesson.material!=null and !#strings.isEmpty(lesson.material.objectives)?lesson.material.objectives:lesson.description}"
+          ></p>
+          <span
+            class="badge"
+            th:if="${lesson.material!=null}"
+            th:text="${lesson.material.taskType}"
+          ></span>
+          <div class="lesson-flashcard-callout" th:if="${flashcardSet!=null}"
+            ><div
+              ><strong th:text="${flashcardSet.title}"></strong
+              ><span>Ôn từ vựng riêng, không bắt buộc để hoàn thành bài học.</span></div
+            ><a
+              class="button button-secondary"
+              th:href="@{/student/flashcards/{id}(id=${flashcardSet.id})}"
+              >Ôn Flashcard →</a
+            ></div
+          >
         </section>
-        <section id="media" class="dashboard-panel dashboard-section" th:if="${videoId!=null or lesson.videoPath!=null}">
-            <h2>Video hướng dẫn</h2>
-            <video th:if="${lesson.videoPath!=null}" class="lesson-video" controls preload="metadata" th:src="@{/lesson-media/{id}/video(id=${lesson.id})}">Trình duyệt không hỗ trợ phát video.</video>
-            <iframe th:if="${lesson.videoPath==null and videoId!=null}" class="lesson-video" th:src="|https://www.youtube-nocookie.com/embed/${videoId}|" title="Video hướng dẫn bài học" loading="lazy" referrerpolicy="strict-origin-when-cross-origin" allow="encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe>
-            <a th:if="${lesson.videoPath==null and videoId!=null}" th:href="|https://www.youtube.com/watch?v=${videoId}|" target="_blank" rel="noopener noreferrer">Mở video trên YouTube ↗</a>
+        <section
+          id="media"
+          class="dashboard-panel dashboard-section"
+          th:if="${videoId!=null or lesson.videoPath!=null}"
+        >
+          <h2>Video hướng dẫn</h2>
+          <video
+            th:if="${lesson.videoPath!=null}"
+            class="lesson-video"
+            controls
+            preload="metadata"
+            th:src="@{/lesson-media/{id}/video(id=${lesson.id})}"
+            >Trình duyệt không hỗ trợ phát video.</video
+          >
+          <iframe
+            th:if="${lesson.videoPath==null and videoId!=null}"
+            class="lesson-video"
+            th:src="|https://www.youtube-nocookie.com/embed/${videoId}|"
+            title="Video hướng dẫn bài học"
+            loading="lazy"
+            referrerpolicy="strict-origin-when-cross-origin"
+            allow="encrypted-media; picture-in-picture; fullscreen"
+            allowfullscreen
+          ></iframe>
+          <a
+            th:if="${lesson.videoPath==null and videoId!=null}"
+            th:href="|https://www.youtube.com/watch?v=${videoId}|"
+            target="_blank"
+            rel="noopener noreferrer"
+            >Mở video trên YouTube ↗</a
+          >
         </section>
         <th:block th:if="${lesson.material!=null}">
-            <section id="method" class="dashboard-panel dashboard-section" th:if="${!#strings.isEmpty(lesson.material.strategy) or ((lesson.skill=='Writing' or lesson.skill=='Speaking') and (!#lists.isEmpty(questions) or !#lists.isEmpty(attempts)))}">
-                <h2>Cách làm từng bước</h2><p class="lesson-prose" th:text="${lesson.material.strategy}"></p>
-                <div class="method-review" th:if="${(lesson.skill=='Writing' or lesson.skill=='Speaking') and (!#lists.isEmpty(questions) or !#lists.isEmpty(attempts))}">
-                    <p class="muted" th:text="${lesson.skill=='Writing'?'Ôn lại cách chọn giọng văn, cấu trúc và triển khai ý trước khi viết.':'Ôn lại cách diễn đạt và triển khai ý trước khi luyện nói.'}"></p>
-                    <div th:insert="~{fragments/lesson-checks :: lessonChecks(${lesson.skill=='Writing'?'Ôn phương pháp viết':'Ôn phương pháp nói'})}"></div>
-                </div>
-            </section>
-            <section id="example" class="dashboard-panel dashboard-section" th:if="${lesson.skill!='Listening' and (!#strings.isEmpty(lesson.material.exampleText) or (lesson.imagePath!=null and (lesson.skill=='Reading' or lesson.skill=='Grammar & Vocabulary')))}">
-                <h2 th:text="${lesson.skill=='Reading'?'Bài đọc':(lesson.skill=='Writing'?'Phân tích đề và dàn ý':(lesson.skill=='Speaking'?'Tình huống và khung trả lời':'Ví dụ có hướng dẫn'))}"></h2>
-                <img th:if="${lesson.imagePath!=null and (lesson.skill=='Reading' or lesson.skill=='Grammar & Vocabulary')}" th:src="@{/lesson-media/{id}/image(id=${lesson.id})}" alt="Ảnh bài đọc / ví dụ" class="lesson-hero-image">
-                <blockquote class="lesson-prose" th:text="${lesson.material.exampleText}"></blockquote><th:block th:if="${!#strings.isEmpty(lesson.material.analysis)}"><h3>Phân tích</h3><p class="lesson-prose" th:text="${lesson.material.analysis}"></p></th:block>
-            </section>
-            <section class="dashboard-panel dashboard-section" th:if="${!#strings.isEmpty(lesson.material.commonMistakes)}"><h2>Lỗi thường gặp</h2><p class="lesson-prose" th:text="${lesson.material.commonMistakes}"></p></section>
+          <section
+            id="method"
+            class="dashboard-panel dashboard-section"
+            th:if="${!#strings.isEmpty(lesson.material.strategy) or ((lesson.skill=='Writing' or lesson.skill=='Speaking') and (!#lists.isEmpty(questions) or !#lists.isEmpty(attempts)))}"
+          >
+            <h2>Cách làm từng bước</h2
+            ><p class="lesson-prose" th:text="${lesson.material.strategy}"></p>
+            <div
+              class="method-review"
+              th:if="${(lesson.skill=='Writing' or lesson.skill=='Speaking') and (!#lists.isEmpty(questions) or !#lists.isEmpty(attempts))}"
+            >
+              <p
+                class="muted"
+                th:text="${lesson.skill=='Writing'?'Ôn lại cách chọn giọng văn, cấu trúc và triển khai ý trước khi viết.':'Ôn lại cách diễn đạt và triển khai ý trước khi luyện nói.'}"
+              ></p>
+              <div
+                th:insert="~{fragments/lesson-checks :: lessonChecks(${lesson.skill=='Writing'?'Ôn phương pháp viết':'Ôn phương pháp nói'})}"
+              ></div>
+            </div>
+          </section>
+          <section
+            id="example"
+            class="dashboard-panel dashboard-section"
+            th:if="${lesson.skill!='Listening' and (!#strings.isEmpty(lesson.material.exampleText) or (lesson.imagePath!=null and (lesson.skill=='Reading' or lesson.skill=='Grammar & Vocabulary')))}"
+          >
+            <h2
+              th:text="${lesson.skill=='Reading'?'Bài đọc':(lesson.skill=='Writing'?'Phân tích đề và dàn ý':(lesson.skill=='Speaking'?'Tình huống và khung trả lời':'Ví dụ có hướng dẫn'))}"
+            ></h2>
+            <img
+              th:if="${lesson.imagePath!=null and (lesson.skill=='Reading' or lesson.skill=='Grammar & Vocabulary')}"
+              th:src="@{/lesson-media/{id}/image(id=${lesson.id})}"
+              alt="Ảnh bài đọc / ví dụ"
+              class="lesson-hero-image"
+            />
+            <blockquote class="lesson-prose" th:text="${lesson.material.exampleText}"></blockquote
+            ><th:block th:if="${!#strings.isEmpty(lesson.material.analysis)}"
+              ><h3>Phân tích</h3><p class="lesson-prose" th:text="${lesson.material.analysis}"></p
+            ></th:block>
+          </section>
+          <section
+            class="dashboard-panel dashboard-section"
+            th:if="${!#strings.isEmpty(lesson.material.commonMistakes)}"
+            ><h2>Lỗi thường gặp</h2
+            ><p class="lesson-prose" th:text="${lesson.material.commonMistakes}"></p
+          ></section>
         </th:block>
 
-        <section id="example" class="dashboard-panel dashboard-section listening-preparation" th:if="${lesson.skill=='Listening'}">
-            <h2>Trước khi nghe</h2>
-            <p class="lesson-prose" th:if="${lesson.material!=null and !#strings.isEmpty(lesson.material.exampleText)}" th:text="${lesson.material.exampleText}"></p>
-            <ol>
-                <li>Đọc câu hỏi, xác định thông tin cần nghe như thời gian, ngày hoặc đồ vật.</li>
-                <li>Nghe lượt đầu để nắm ý chính, rồi chọn đáp án phù hợp.</li>
-                <li>Nghe lại để kiểm tra chi tiết trước khi bấm Kiểm tra đáp án. Chỉ mở transcript khi đã được phép.</li>
-            </ol>
-            <a th:if="${lesson.audioPath!=null}" class="path-set-link" href="#lesson-audio">Đến bài nghe ↓</a>
+        <section
+          id="example"
+          class="dashboard-panel dashboard-section listening-preparation"
+          th:if="${lesson.skill=='Listening'}"
+        >
+          <h2>Trước khi nghe</h2>
+          <p
+            class="lesson-prose"
+            th:if="${lesson.material!=null and !#strings.isEmpty(lesson.material.exampleText)}"
+            th:text="${lesson.material.exampleText}"
+          ></p>
+          <ol>
+            <li>Đọc câu hỏi, xác định thông tin cần nghe như thời gian, ngày hoặc đồ vật.</li>
+            <li>Nghe lượt đầu để nắm ý chính, rồi chọn đáp án phù hợp.</li>
+            <li
+              >Nghe lại để kiểm tra chi tiết trước khi bấm Kiểm tra đáp án. Chỉ mở transcript khi đã
+              được phép.</li
+            >
+          </ol>
+          <a th:if="${lesson.audioPath!=null}" class="path-set-link" href="#lesson-audio"
+            >Đến bài nghe ↓</a
+          >
         </section>
 
-        <section id="practice" class="dashboard-panel dashboard-section skill-practice" th:attr="data-practice-skill=${lesson.skill}" th:with="productive=${lesson.skill=='Writing' or lesson.skill=='Speaking'}">
-            <h2 th:switch="${lesson.skill}"><span th:case="'Writing'">Thực hành viết</span><span th:case="'Speaking'">Thực hành nói</span><span th:case="'Listening'">Nghe và trả lời câu hỏi</span><span th:case="'Reading'">Luyện đọc hiểu</span><span th:case="*">Luyện ngữ pháp và từ vựng</span></h2>
-            <p class="lesson-prose" th:if="${lesson.material!=null}" th:text="${lesson.material.practicePrompt}"></p>
-            <img th:if="${lesson.imagePath!=null and (lesson.skill=='Listening' or productive)}" th:src="@{/lesson-media/{id}/image(id=${lesson.id})}" alt="Ảnh đề bài thực hành" class="lesson-hero-image">
+        <section
+          id="practice"
+          class="dashboard-panel dashboard-section skill-practice"
+          th:attr="data-practice-skill=${lesson.skill}"
+          th:with="productive=${lesson.skill=='Writing' or lesson.skill=='Speaking'}"
+        >
+          <h2 th:switch="${lesson.skill}"
+            ><span th:case="'Writing'">Thực hành viết</span
+            ><span th:case="'Speaking'">Thực hành nói</span
+            ><span th:case="'Listening'">Nghe và trả lời câu hỏi</span
+            ><span th:case="'Reading'">Luyện đọc hiểu</span
+            ><span th:case="*">Luyện ngữ pháp và từ vựng</span></h2
+          >
+          <p
+            class="lesson-prose"
+            th:if="${lesson.material!=null}"
+            th:text="${lesson.material.practicePrompt}"
+          ></p>
+          <img
+            th:if="${lesson.imagePath!=null and (lesson.skill=='Listening' or productive)}"
+            th:src="@{/lesson-media/{id}/image(id=${lesson.id})}"
+            alt="Ảnh đề bài thực hành"
+            class="lesson-hero-image"
+          />
 
-            <!-- The listening recording and comprehension questions share one work area. -->
-            <div class="listening-player" th:if="${lesson.skill=='Listening' and lesson.audioPath!=null}">
-                <h3>Bài nghe</h3><audio id="lesson-audio" controls preload="metadata" th:src="@{/lesson-media/{id}/audio(id=${lesson.id})}">Trình duyệt không hỗ trợ phát âm thanh.</audio><small th:text="${lesson.audioName}"></small>
-                <p id="listening-status" role="status" aria-live="polite">Nghe đủ 90% nội dung ở tốc độ 1x. Đoạn tua qua không được tính; tiến trình được xác nhận phía máy chủ.</p>
-            </div>
-            <div th:unless="${productive}" th:insert="~{fragments/lesson-checks :: lessonChecks(${lesson.skill=='Listening'?'Câu hỏi nghe hiểu':(lesson.skill=='Reading'?'Câu hỏi đọc hiểu':'Bài tập vận dụng')})}"></div>
-            <th:block th:if="${lesson.skill=='Listening' and !#strings.isEmpty(lesson.transcript)}"><details class="lesson-model" th:if="${release.transcript}"><summary>Xem transcript</summary><p class="lesson-prose" th:text="${lesson.transcript}"></p></details><p th:unless="${release.transcript}" class="lesson-locked-content" th:text="|Transcript: ${release.transcriptHint}|"></p></th:block>
+          <!-- The listening recording and comprehension questions share one work area. -->
+          <div
+            class="listening-player"
+            th:if="${lesson.skill=='Listening' and lesson.audioPath!=null}"
+          >
+            <h3>Bài nghe</h3
+            ><audio
+              id="lesson-audio"
+              controls
+              preload="metadata"
+              th:src="@{/lesson-media/{id}/audio(id=${lesson.id})}"
+              >Trình duyệt không hỗ trợ phát âm thanh.</audio
+            ><small th:text="${lesson.audioName}"></small>
+            <p id="listening-status" role="status" aria-live="polite"
+              >Nghe đủ 90% nội dung ở tốc độ 1x. Đoạn tua qua không được tính; tiến trình được xác
+              nhận phía máy chủ.</p
+            >
+          </div>
+          <div
+            th:unless="${productive}"
+            th:insert="~{fragments/lesson-checks :: lessonChecks(${lesson.skill=='Listening'?'Câu hỏi nghe hiểu':(lesson.skill=='Reading'?'Câu hỏi đọc hiểu':'Bài tập vận dụng')})}"
+          ></div>
+          <th:block th:if="${lesson.skill=='Listening' and !#strings.isEmpty(lesson.transcript)}"
+            ><details class="lesson-model" th:if="${release.transcript}"
+              ><summary>Xem transcript</summary
+              ><p class="lesson-prose" th:text="${lesson.transcript}"></p></details
+            ><p
+              th:unless="${release.transcript}"
+              class="lesson-locked-content"
+              th:text="|Transcript: ${release.transcriptHint}|"
+            ></p
+          ></th:block>
 
-            <!-- Speaking puts recording first; Writing puts the editor first. -->
-            <div id="speaking-recorder" class="speaking-recorder" th:if="${lesson.skill=='Speaking'}">
-                <h3>Ghi âm phần trả lời</h3><p>Bắt buộc lưu bản ghi để hoàn thành bài. Nghe lại trước khi lưu.</p>
-                <div class="actions"><button id="record-start" class="button button-secondary" type="button">Bắt đầu ghi</button><button id="record-stop" class="button button-secondary" type="button" disabled>Dừng ghi</button><button id="record-save" class="button" type="button" disabled>Lưu bản ghi</button></div>
-                <audio id="record-preview" controls th:hidden="${savedWork==null or savedWork.audioPath==null}" th:src="${savedWork!=null and savedWork.audioPath!=null?'/student/lessons/'+lesson.id+'/recording':null}"></audio><p id="record-status" aria-live="polite"></p>
+          <!-- Speaking puts recording first; Writing puts the editor first. -->
+          <div id="speaking-recorder" class="speaking-recorder" th:if="${lesson.skill=='Speaking'}">
+            <h3>Ghi âm phần trả lời</h3
+            ><p>Bắt buộc lưu bản ghi để hoàn thành bài. Nghe lại trước khi lưu.</p>
+            <div class="actions"
+              ><button id="record-start" class="button button-secondary" type="button"
+                >Bắt đầu ghi</button
+              ><button id="record-stop" class="button button-secondary" type="button" disabled
+                >Dừng ghi</button
+              ><button id="record-save" class="button" type="button" disabled
+                >Lưu bản ghi</button
+              ></div
+            >
+            <audio
+              id="record-preview"
+              controls
+              th:hidden="${savedWork==null or savedWork.audioPath==null}"
+              th:src="${savedWork!=null and savedWork.audioPath!=null?'/student/lessons/'+lesson.id+'/recording':null}"
+            ></audio
+            ><p id="record-status" aria-live="polite"></p>
+          </div>
+          <form
+            id="lesson-response-form"
+            method="post"
+            th:action="@{/student/lessons/{id}/response(id=${lesson.id})}"
+            th:if="${productive}"
+          >
+            <div class="field">
+              <label
+                for="response"
+                th:text="${lesson.skill=='Writing'?'Bài viết của bạn':'Transcript lời nói để nhận phản hồi AI'}"
+              ></label>
+              <small th:if="${lesson.skill=='Speaking'}"
+                >Nhập lại đúng lời trong bản ghi đã lưu nếu muốn nhận phản hồi AI. Transcript không
+                thay thế bản ghi.</small
+              >
+              <textarea
+                id="response"
+                name="response"
+                th:rows="${lesson.skill=='Writing'?9:4}"
+                maxlength="10000"
+                th:attr="data-min-words=${lesson.minWordCount},data-max-words=${lesson.maxWordCount}"
+                th:text="${savedResponse}"
+              ></textarea
+              ><p id="response-status" class="muted" aria-live="polite"></p>
             </div>
-            <form id="lesson-response-form" method="post" th:action="@{/student/lessons/{id}/response(id=${lesson.id})}" th:if="${productive}">
-                <div class="field">
-                    <label for="response" th:text="${lesson.skill=='Writing'?'Bài viết của bạn':'Transcript lời nói để nhận phản hồi AI'}"></label>
-                    <small th:if="${lesson.skill=='Speaking'}">Nhập lại đúng lời trong bản ghi đã lưu nếu muốn nhận phản hồi AI. Transcript không thay thế bản ghi.</small>
-                    <textarea id="response" name="response" th:rows="${lesson.skill=='Writing'?9:4}" maxlength="10000" th:attr="data-min-words=${lesson.minWordCount},data-max-words=${lesson.maxWordCount}" th:text="${savedResponse}"></textarea><p id="response-status" class="muted" aria-live="polite"></p>
-                </div>
-                <button class="button button-secondary" type="submit" th:text="${lesson.skill=='Writing'?'Lưu bài viết vào lịch sử':'Lưu transcript vào lịch sử'}"></button>
-            </form>
-            <th:block th:if="${lesson.material!=null}">
-                <th:block th:if="${!#strings.isEmpty(lesson.material.sampleResponse)}"><details th:if="${release.sample}" class="lesson-model"><summary th:text="${lesson.skill=='Writing'?'Xem bài viết tham khảo':(lesson.skill=='Speaking'?'Xem gợi ý triển khai bài nói':'Xem gợi ý sau khi tự làm')}"></summary><p class="lesson-prose" th:text="${lesson.material.sampleResponse}"></p></details></th:block>
-                <div th:if="${!#strings.isEmpty(lesson.material.checklist)}"><h3 th:text="${lesson.skill=='Writing'?'Tự rà soát bài viết':(lesson.skill=='Speaking'?'Tự đánh giá bài nói':'Tự kiểm tra')}"></h3><p class="lesson-prose" th:text="${lesson.material.checklist}"></p></div>
-            </th:block>
+            <button
+              class="button button-secondary"
+              type="submit"
+              th:text="${lesson.skill=='Writing'?'Lưu bài viết vào lịch sử':'Lưu transcript vào lịch sử'}"
+            ></button>
+          </form>
+          <th:block th:if="${lesson.material!=null}">
+            <th:block th:if="${!#strings.isEmpty(lesson.material.sampleResponse)}"
+              ><details th:if="${release.sample}" class="lesson-model"
+                ><summary
+                  th:text="${lesson.skill=='Writing'?'Xem bài viết tham khảo':(lesson.skill=='Speaking'?'Xem gợi ý triển khai bài nói':'Xem gợi ý sau khi tự làm')}"
+                ></summary
+                ><p class="lesson-prose" th:text="${lesson.material.sampleResponse}"></p></details
+            ></th:block>
+            <div th:if="${!#strings.isEmpty(lesson.material.checklist)}"
+              ><h3
+                th:text="${lesson.skill=='Writing'?'Tự rà soát bài viết':(lesson.skill=='Speaking'?'Tự đánh giá bài nói':'Tự kiểm tra')}"
+              ></h3
+              ><p class="lesson-prose" th:text="${lesson.material.checklist}"></p
+            ></div>
+          </th:block>
         </section>
 
-        <section class="dashboard-panel dashboard-section ai-grading-panel" th:if="${lesson.skill=='Writing' or lesson.skill=='Speaking'}">
-            <h2>AI chấm và nhận xét bài thực hành</h2>
-            <p th:text="${lesson.skill=='Speaking'?'AI đánh giá nội dung và ngôn ngữ của transcript đang hiển thị bên dưới. Chưa chấm phát âm hoặc ngữ điệu.':'AI ước lượng điểm 0–50, mức CEFR và góp ý cho đúng bài viết đang hiển thị bên dưới.'}"></p>
-            <form method="post" th:action="@{/student/lessons/{id}/assess(id=${lesson.id})}">
+        <section
+          class="dashboard-panel dashboard-section ai-grading-panel"
+          th:if="${lesson.skill=='Writing' or lesson.skill=='Speaking'}"
+        >
+          <h2>AI chấm và nhận xét bài thực hành</h2>
+          <p
+            th:text="${lesson.skill=='Speaking'?'AI đánh giá nội dung và ngôn ngữ của transcript đang hiển thị bên dưới. Chưa chấm phát âm hoặc ngữ điệu.':'AI ước lượng điểm 0–50, mức CEFR và góp ý cho đúng bài viết đang hiển thị bên dưới.'}"
+          ></p>
+          <form method="post" th:action="@{/student/lessons/{id}/assess(id=${lesson.id})}">
             <div class="ai-grading-target">
-                <div class="ai-grading-target-head">
-                    <div><span class="eyebrow">Chọn một bài đã lưu để chấm</span><strong th:text="${lesson.title}"></strong></div>
-                    <span class="badge" th:text="|${lesson.skill} · ${lesson.cefrLevel}|"></span>
-                </div>
-                <label class="ai-submission-choice" th:each="submission,status:${aiSubmissions}">
-                    <input type="radio" name="submissionId" th:value="${submission.id}" th:checked="${status.first}" required>
-                    <span class="ai-submission-choice-body"><strong th:text="|Bài lưu lúc ${#temporals.format(submission.submittedAt,'dd/MM/yyyy HH:mm:ss')}|"></strong><small th:if="${lesson.skill=='Speaking'}">Có transcript và bản ghi âm</small><span class="ai-submission-excerpt" th:text="${submission.text}"></span></span>
-                </label>
-                <p class="muted" th:if="${#lists.isEmpty(aiSubmissions)}" th:text="${lesson.skill=='Speaking'?'Chưa có lượt nộp gồm cả transcript và bản ghi âm.':'Chưa có bài viết đã lưu để gửi chấm.'}"></p>
+              <div class="ai-grading-target-head">
+                <div
+                  ><span class="eyebrow">Chọn một bài đã lưu để chấm</span
+                  ><strong th:text="${lesson.title}"></strong
+                ></div>
+                <span class="badge" th:text="|${lesson.skill} · ${lesson.cefrLevel}|"></span>
+              </div>
+              <label class="ai-submission-choice" th:each="submission,status:${aiSubmissions}">
+                <input
+                  type="radio"
+                  name="submissionId"
+                  th:value="${submission.id}"
+                  th:checked="${status.first}"
+                  required
+                />
+                <span class="ai-submission-choice-body"
+                  ><strong
+                    th:text="|Bài lưu lúc ${#temporals.format(submission.submittedAt,'dd/MM/yyyy HH:mm:ss')}|"
+                  ></strong
+                  ><small th:if="${lesson.skill=='Speaking'}">Có transcript và bản ghi âm</small
+                  ><span class="ai-submission-excerpt" th:text="${submission.text}"></span
+                ></span>
+              </label>
+              <p
+                class="muted"
+                th:if="${#lists.isEmpty(aiSubmissions)}"
+                th:text="${lesson.skill=='Speaking'?'Chưa có lượt nộp gồm cả transcript và bản ghi âm.':'Chưa có bài viết đã lưu để gửi chấm.'}"
+              ></p>
             </div>
-            <div class="actions"><button class="button" type="submit" th:disabled="${!canAssess}" th:attr="aria-describedby=${!canAssess?'ai-grading-status':null}" th:text="${lesson.skill=='Speaking'?'Chấm transcript đã chọn bằng AI':'Chấm bài viết đã chọn bằng AI'}"></button></div>
-            </form>
-            <p id="ai-grading-status" class="muted" th:if="${aiAvailable and !canAssess}">Nút chấm AI sẽ được bật sau khi bạn hoàn tất và lưu bài làm theo các bước trên.</p>
-            <p id="ai-grading-status" class="muted" th:unless="${aiAvailable}">Nút chấm AI đang tạm khóa vì máy chủ chưa được cấu hình API key. Bạn vẫn có thể lưu bài và hoàn thành bài học.</p>
+            <div class="actions"
+              ><button
+                class="button"
+                type="submit"
+                th:disabled="${!canAssess}"
+                th:attr="aria-describedby=${!canAssess?'ai-grading-status':null}"
+                th:text="${lesson.skill=='Speaking'?'Chấm transcript đã chọn bằng AI':'Chấm bài viết đã chọn bằng AI'}"
+              ></button
+            ></div>
+          </form>
+          <p id="ai-grading-status" class="muted" th:if="${aiAvailable and !canAssess}"
+            >Nút chấm AI sẽ được bật sau khi bạn hoàn tất và lưu bài làm theo các bước trên.</p
+          >
+          <p id="ai-grading-status" class="muted" th:unless="${aiAvailable}"
+            >Nút chấm AI đang tạm khóa vì máy chủ chưa được cấu hình API key. Bạn vẫn có thể lưu bài
+            và hoàn thành bài học.</p
+          >
         </section>
-        <section class="dashboard-panel dashboard-section lesson-source" th:if="${lesson.material!=null and !#strings.isEmpty(lesson.material.sourceUrl)}"><h2>Nguồn tham khảo</h2><a th:href="${lesson.material.sourceUrl}" th:text="${lesson.material.sourceName}" target="_blank" rel="noopener noreferrer"></a><p>Hướng dẫn, ví dụ và bài tập được biên soạn riêng. Video thuộc tác giả nguồn.</p></section>
+        <section
+          class="dashboard-panel dashboard-section lesson-source"
+          th:if="${lesson.material!=null and !#strings.isEmpty(lesson.material.sourceUrl)}"
+          ><h2>Nguồn tham khảo</h2
+          ><a
+            th:href="${lesson.material.sourceUrl}"
+            th:text="${lesson.material.sourceName}"
+            target="_blank"
+            rel="noopener noreferrer"
+          ></a
+          ><p
+            >Hướng dẫn, ví dụ và bài tập được biên soạn riêng. Video thuộc tác giả nguồn.</p
+          ></section
+        >
         <section class="dashboard-panel dashboard-section" th:if="${!#lists.isEmpty(submissions)}">
-            <h2>Bài làm đã lưu</h2>
-            <details class="lesson-work-history" th:each="submission:${submissions}">
-                <summary th:text="|${#temporals.format(submission.submittedAt,'dd/MM/yyyy HH:mm:ss')} · ${submission.skill=='Writing'?'Bài viết':'Bản ghi / transcript'}|"></summary>
-                <p class="lesson-prose" th:if="${submission.prompt!=null}" th:text="${submission.prompt}"></p>
-                <div th:replace="~{fragments/lesson-history-context :: context(${submission.context},${'/student/lessons/'+lesson.id+'/history/submissions/'+submission.id+'/media'})}"></div>
-                <blockquote class="lesson-prose" th:if="${submission.text!=null}" th:text="${submission.text}"></blockquote>
-                <audio th:if="${submission.audioPath!=null}" controls preload="none" th:src="@{/student/lessons/{id}/submissions/{submissionId}/audio(id=${lesson.id},submissionId=${submission.id})}"></audio>
-            </details>
+          <h2>Bài làm đã lưu</h2>
+          <details class="lesson-work-history" th:each="submission:${submissions}">
+            <summary
+              th:text="|${#temporals.format(submission.submittedAt,'dd/MM/yyyy HH:mm:ss')} · ${submission.skill=='Writing'?'Bài viết':'Bản ghi / transcript'}|"
+            ></summary>
+            <p
+              class="lesson-prose"
+              th:if="${submission.prompt!=null}"
+              th:text="${submission.prompt}"
+            ></p>
+            <div
+              th:replace="~{fragments/lesson-history-context :: context(${submission.context},${'/student/lessons/'+lesson.id+'/history/submissions/'+submission.id+'/media'})}"
+            ></div>
+            <blockquote
+              class="lesson-prose"
+              th:if="${submission.text!=null}"
+              th:text="${submission.text}"
+            ></blockquote>
+            <audio
+              th:if="${submission.audioPath!=null}"
+              controls
+              preload="none"
+              th:src="@{/student/lessons/{id}/submissions/{submissionId}/audio(id=${lesson.id},submissionId=${submission.id})}"
+            ></audio>
+          </details>
         </section>
         <p class="completion-hint" th:text="${completion.message(lesson.skill)}"></p>
         <div class="actions lesson-complete">
-            <a th:if="${neighbors.previous()!=null}" class="button button-secondary" th:href="@{/student/lessons/{id}(id=${neighbors.previous().id})}">← Bài trước</a>
-            <form method="post" th:action="@{/student/lessons/{id}/complete(id=${lesson.id})}"><button class="button" type="submit" th:disabled="${(progress!=null and progress.status=='COMPLETED') or !completion.eligible()}" th:text="${progress!=null and progress.status=='COMPLETED'?'Đã hoàn thành':'Hoàn thành bài học'}"></button></form>
-            <a th:if="${neighbors.next()!=null}" class="button button-secondary" th:href="@{/student/lessons/{id}(id=${neighbors.next().id})}">Bài tiếp theo →</a><a class="button button-secondary" th:href="@{/student/learning-path/{skill}(skill=${lesson.skill})}">Quay lại lộ trình</a>
+          <a
+            th:if="${neighbors.previous()!=null}"
+            class="button button-secondary"
+            th:href="@{/student/lessons/{id}(id=${neighbors.previous().id})}"
+            >← Bài trước</a
+          >
+          <form method="post" th:action="@{/student/lessons/{id}/complete(id=${lesson.id})}"
+            ><button
+              class="button"
+              type="submit"
+              th:disabled="${(progress!=null and progress.status=='COMPLETED') or !completion.eligible()}"
+              th:text="${progress!=null and progress.status=='COMPLETED'?'Đã hoàn thành':'Hoàn thành bài học'}"
+            ></button
+          ></form>
+          <a
+            th:if="${neighbors.next()!=null}"
+            class="button button-secondary"
+            th:href="@{/student/lessons/{id}(id=${neighbors.next().id})}"
+            >Bài tiếp theo →</a
+          ><a
+            class="button button-secondary"
+            th:href="@{/student/learning-path/{skill}(skill=${lesson.skill})}"
+            >Quay lại lộ trình</a
+          >
         </div>
-    </main>
-</div>
-<div th:replace="~{fragments/footer :: footer}"></div><script th:src="@{/js/lesson-player.js}" defer></script>
-</body></html>
+      </main>
+    </div>
+    <div th:replace="~{fragments/footer :: footer}"></div
+    ><script th:src="@{/js/lesson-player.js}" defer></script> </body
+></html>

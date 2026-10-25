@@ -8,23 +8,29 @@ public class QuestionItemEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
+
     @Column(name = "question_id", nullable = false)
     private Integer questionId;
+
     @Column(nullable = false, columnDefinition = "nvarchar(max)")
     private String content;
+
     @Column(name = "correct_position")
     private Integer correctPosition;
+
     @Column(nullable = false)
     private int position;
+
     @Column(name = "min_word_count")
     private Integer minWordCount;
+
     @Column(name = "max_word_count")
     private Integer maxWordCount;
+
     @Column(name = "response_seconds")
     private Integer responseSeconds;
 
-    public QuestionItemEntity() {
-    }
+    public QuestionItemEntity() {}
 
     public Integer getId() {
         return id;

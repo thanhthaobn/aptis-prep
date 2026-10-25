@@ -4,6 +4,7 @@ import com.aptisprep.dto.view.AccountSnapshot;
 import com.aptisprep.dto.view.AdminStudentView;
 import com.aptisprep.entity.*;
 import com.aptisprep.enums.*;
+import com.aptisprep.enums.Skill;
 import com.aptisprep.exception.AccessDeniedException;
 import com.aptisprep.exception.BusinessRuleException;
 import com.aptisprep.exception.ResourceNotFoundException;
@@ -11,12 +12,8 @@ import com.aptisprep.repository.*;
 import com.aptisprep.service.contract.ExamAttemptContract;
 import com.aptisprep.service.contract.IntegrationModels.*;
 import com.aptisprep.service.contract.LearningPathContract;
-
-import java.math.BigDecimal;
-import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
-
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
@@ -24,7 +21,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class StudentManagementService {
-    private static final List<String> SKILLS = List.of("GRAMMAR_VOCABULARY", "READING", "LISTENING", "WRITING", "SPEAKING");
+    private static final List<String> SKILLS = Skill.codes();
     private final UserRepository users;
     private final UserGoalRepository goals;
     private final UserGoalSkillRepository goalSkills;
@@ -32,9 +29,13 @@ public class StudentManagementService {
     private final ObjectProvider<LearningPathContract> paths;
     private final ObjectProvider<ExamAttemptContract> attempts;
 
-    public StudentManagementService(UserRepository users, UserGoalRepository goals,
-                                    UserGoalSkillRepository goalSkills, UserSkillProfileRepository profiles,
-                                    ObjectProvider<LearningPathContract> paths, ObjectProvider<ExamAttemptContract> attempts) {
+    public StudentManagementService(
+            UserRepository users,
+            UserGoalRepository goals,
+            UserGoalSkillRepository goalSkills,
+            UserSkillProfileRepository profiles,
+            ObjectProvider<LearningPathContract> paths,
+            ObjectProvider<ExamAttemptContract> attempts) {
         this.users = users;
         this.goals = goals;
         this.goalSkills = goalSkills;
@@ -48,11 +49,20 @@ public class StudentManagementService {
         int safePage = Math.max(0, page);
         int safeSize = Math.min(100, Math.max(1, size));
         String term = query == null ? "" : query.trim();
-        if (term.length() > 255) throw new BusinessRuleException("Từ khóa tìm kiếm tối đa 255 ký tự");
-        String pattern = term.isBlank() ? "%" : "%" + escapeLike(term.toLowerCase(Locale.ROOT)) + "%";
-        var result = users.searchStudents(pattern, status == null ? null : status.name(), PageRequest.of(safePage, safeSize));
-        return new AdminStudentView.Page(result.getContent().stream().map(this::listItem).toList(),
-                safePage, safeSize, result.getTotalElements());
+        if (term.length() > 255)
+            throw new BusinessRuleException("Từ khóa tìm kiếm tối đa 255 ký tự");
+        String pattern =
+                term.isBlank() ? "%" : "%" + escapeLike(term.toLowerCase(Locale.ROOT)) + "%";
+        var result =
+                users.searchStudents(
+                        pattern,
+                        status == null ? null : status.name(),
+                        PageRequest.of(safePage, safeSize));
+        return new AdminStudentView.Page(
+                result.getContent().stream().map(this::listItem).toList(),
+                safePage,
+                safeSize,
+                result.getTotalElements());
     }
 
     @Transactional(readOnly = true)
@@ -62,19 +72,44 @@ public class StudentManagementService {
         int safeSize = Math.min(100, Math.max(1, attemptSize));
         AccountSnapshot.GoalView goal = goalView(user.getId());
         Map<String, String> targetMap = goal == null ? Map.of() : goal.targets();
-        Map<String, UserSkillProfile> profileMap = profiles.findByUserIdOrderBySkillAsc(user.getId()).stream()
-                .collect(Collectors.toMap(UserSkillProfile::getSkill, value -> value, (left, right) -> right));
-        List<AdminStudentView.Skill> skillViews = SKILLS.stream().map(skill -> {
-            UserSkillProfile profile = profileMap.get(skill);
-            return new AdminStudentView.Skill(skillLabel(skill), profile == null ? "Chưa đánh giá" : levelLabel(profile.getCurrentLevel()),
-                    targetMap.getOrDefault(skill, "Chưa đặt"));
-        }).toList();
+        Map<String, UserSkillProfile> profileMap =
+                profiles.findByUserIdOrderBySkillAsc(user.getId()).stream()
+                        .collect(
+                                Collectors.toMap(
+                                        UserSkillProfile::getSkill,
+                                        value -> value,
+                                        (left, right) -> right));
+        List<AdminStudentView.Skill> skillViews =
+                SKILLS.stream()
+                        .map(
+                                skill -> {
+                                    UserSkillProfile profile = profileMap.get(skill);
+                                    return new AdminStudentView.Skill(
+                                            skillLabel(skill),
+                                            profile == null
+                                                    ? "Chưa đánh giá"
+                                                    : levelLabel(profile.getCurrentLevel()),
+                                            targetMap.getOrDefault(skill, "Chưa đặt"));
+                                })
+                        .toList();
         List<AdminStudentView.Progress> progress = progressFor(user.getId());
         HistoryPage history = historyFor(user.getId(), safePage, safeSize);
-        List<AdminStudentView.Attempt> attempts = history.items().stream().map(this::attemptView).toList();
-        return new AdminStudentView.Detail(user.getId(), user.getFullName(), user.getEmail(), initials(user.getFullName()),
-                user.getCreatedAt(), user.getStatus(), goal, skillViews, progress, attempts,
-                safePage, safeSize, history.totalItems());
+        List<AdminStudentView.Attempt> attempts =
+                history.items().stream().map(this::attemptView).toList();
+        return new AdminStudentView.Detail(
+                user.getId(),
+                user.getFullName(),
+                user.getEmail(),
+                initials(user.getFullName()),
+                user.getCreatedAt(),
+                user.getStatus(),
+                goal,
+                skillViews,
+                progress,
+                attempts,
+                safePage,
+                safeSize,
+                history.totalItems());
     }
 
     @Transactional
@@ -99,14 +134,24 @@ public class StudentManagementService {
         return users.countByRoleAndStatus(Role.STUDENT, UserStatus.LOCKED);
     }
 
-    private void changeStatus(String adminEmail, Integer id, UserStatus expected, UserStatus next, String action) {
-        User admin = users.findByEmailIgnoreCase(adminEmail).orElseThrow(() -> new AccessDeniedException("Không có quyền thực hiện thao tác"));
+    private void changeStatus(
+            String adminEmail, Integer id, UserStatus expected, UserStatus next, String action) {
+        User admin =
+                users.findByEmailIgnoreCase(adminEmail)
+                        .orElseThrow(
+                                () ->
+                                        new AccessDeniedException(
+                                                "Không có quyền thực hiện thao tác"));
         if (admin.getRole() != Role.ADMIN)
             throw new AccessDeniedException("Chỉ quản trị viên mới được quản lý học viên");
-        User target = users.findByIdForUpdate(id).orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy học viên"));
+        User target =
+                users.findByIdForUpdate(id)
+                        .orElseThrow(
+                                () -> new ResourceNotFoundException("Không tìm thấy học viên"));
         if (Objects.equals(admin.getId(), target.getId()))
             throw new BusinessRuleException("Không thể khóa tài khoản của chính mình");
-        if (target.getRole() != Role.STUDENT) throw new ResourceNotFoundException("Không tìm thấy học viên");
+        if (target.getRole() != Role.STUDENT)
+            throw new ResourceNotFoundException("Không tìm thấy học viên");
         if (target.getStatus() == UserStatus.INACTIVE)
             throw new BusinessRuleException("Tài khoản ngừng hoạt động không thể " + action);
         if (target.getStatus() != expected)
@@ -116,15 +161,39 @@ public class StudentManagementService {
 
     private AdminStudentView.ListItem listItem(User user) {
         AccountSnapshot.GoalView goal = goalView(user.getId());
-        String target = goal == null || goal.targets().isEmpty() ? "Chưa đặt mục tiêu" : goal.targets().values().stream().collect(Collectors.joining(", "));
-        return new AdminStudentView.ListItem(user.getId(), user.getFullName(), user.getEmail(), initials(user.getFullName()), user.getCreatedAt(), user.getStatus(), target);
+        String target =
+                goal == null || goal.targets().isEmpty()
+                        ? "Chưa đặt mục tiêu"
+                        : goal.targets().values().stream().collect(Collectors.joining(", "));
+        return new AdminStudentView.ListItem(
+                user.getId(),
+                user.getFullName(),
+                user.getEmail(),
+                initials(user.getFullName()),
+                user.getCreatedAt(),
+                user.getStatus(),
+                target);
     }
 
     private AccountSnapshot.GoalView goalView(Integer userId) {
         return goals.findFirstByUserIdAndStatusOrderByCreatedAtDesc(userId, GoalStatus.ACTIVE)
-                .map(goal -> new AccountSnapshot.GoalView(goal.getCertificate() == null ? null : goal.getCertificate().getId(),
-                        goal.getCertificate() == null ? null : goal.getCertificate().getName(), goal.getTargetDate(),
-                        goalSkills.findByGoalId(goal.getId()).stream().collect(Collectors.toMap(UserGoalSkill::getSkill, UserGoalSkill::getTargetLevel, (left, right) -> right, LinkedHashMap::new))))
+                .map(
+                        goal ->
+                                new AccountSnapshot.GoalView(
+                                        goal.getCertificate() == null
+                                                ? null
+                                                : goal.getCertificate().getId(),
+                                        goal.getCertificate() == null
+                                                ? null
+                                                : goal.getCertificate().getName(),
+                                        goal.getTargetDate(),
+                                        goalSkills.findByGoalId(goal.getId()).stream()
+                                                .collect(
+                                                        Collectors.toMap(
+                                                                UserGoalSkill::getSkill,
+                                                                UserGoalSkill::getTargetLevel,
+                                                                (left, right) -> right,
+                                                                LinkedHashMap::new))))
                 .orElse(null);
     }
 
@@ -132,9 +201,24 @@ public class StudentManagementService {
         LearningPathContract contract = paths.getIfAvailable();
         if (contract == null) return List.of();
         List<PathProgress> values = contract.summaries(userId);
-        return values == null ? List.of() : values.stream().map(value -> new AdminStudentView.Progress(value.pathId(), skillLabel(value.skill()),
-                value.pathSource(), value.pathStatus(), value.completedLessons(), value.totalLessons(), value.progressPercent(),
-                value.completedRequiredLessons(), value.totalRequiredLessons(), value.nextLessonTitle(), checkpointLabel(value.checkpointState()))).toList();
+        return values == null
+                ? List.of()
+                : values.stream()
+                        .map(
+                                value ->
+                                        new AdminStudentView.Progress(
+                                                value.pathId(),
+                                                skillLabel(value.skill()),
+                                                value.pathSource(),
+                                                value.pathStatus(),
+                                                value.completedLessons(),
+                                                value.totalLessons(),
+                                                value.progressPercent(),
+                                                value.completedRequiredLessons(),
+                                                value.totalRequiredLessons(),
+                                                value.nextLessonTitle(),
+                                                checkpointLabel(value.checkpointState())))
+                        .toList();
     }
 
     private HistoryPage historyFor(Integer userId, int page, int size) {
@@ -147,17 +231,33 @@ public class StudentManagementService {
     private AdminStudentView.Attempt attemptView(AttemptResult result) {
         String date = result.submittedAt() == null ? "Chưa nộp" : result.submittedAt().toString();
         String status = statusLabel(result.state());
-        List<String> scores = result.skills() == null ? List.of() : result.skills().stream()
-                .filter(skill -> skill.scaleScore() != null)
-                .map(skill -> skillLabel(skill.skill()) + ": " + skill.scaleScore().stripTrailingZeros().toPlainString())
-                .toList();
-        return new AdminStudentView.Attempt(result.examType() == null ? "Lượt thi" : result.examType(), date, status,
+        List<String> scores =
+                result.skills() == null
+                        ? List.of()
+                        : result.skills().stream()
+                                .filter(skill -> skill.scaleScore() != null)
+                                .map(
+                                        skill ->
+                                                skillLabel(skill.skill())
+                                                        + ": "
+                                                        + skill.scaleScore()
+                                                                .stripTrailingZeros()
+                                                                .toPlainString())
+                                .toList();
+        return new AdminStudentView.Attempt(
+                result.examType() == null ? "Lượt thi" : result.examType(),
+                date,
+                status,
                 scores.isEmpty() ? "Chưa chấm" : String.join(" · ", scores));
     }
 
     private User studentsOnly(Integer id) {
-        User user = users.findById(id).orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy học viên"));
-        if (user.getRole() != Role.STUDENT) throw new ResourceNotFoundException("Không tìm thấy học viên");
+        User user =
+                users.findById(id)
+                        .orElseThrow(
+                                () -> new ResourceNotFoundException("Không tìm thấy học viên"));
+        if (user.getRole() != Role.STUDENT)
+            throw new ResourceNotFoundException("Không tìm thấy học viên");
         return user;
     }
 
@@ -166,7 +266,11 @@ public class StudentManagementService {
     }
 
     private String initials(String value) {
-        return Arrays.stream(Optional.ofNullable(value).orElse("").trim().split("\\s+")).filter(part -> !part.isBlank()).map(part -> part.substring(0, 1).toUpperCase(Locale.ROOT)).limit(2).collect(Collectors.joining());
+        return Arrays.stream(Optional.ofNullable(value).orElse("").trim().split("\\s+"))
+                .filter(part -> !part.isBlank())
+                .map(part -> part.substring(0, 1).toUpperCase(Locale.ROOT))
+                .limit(2)
+                .collect(Collectors.joining());
     }
 
     private String skillLabel(String value) {

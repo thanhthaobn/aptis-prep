@@ -1,47 +1,66 @@
 package com.aptisprep.entity;
 
 import jakarta.persistence.*;
-
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "exam_attempts", uniqueConstraints = @UniqueConstraint(
-        name = "uq_exam_attempts_user_request_key", columnNames = {"user_id", "request_key"}))
+@Table(
+        name = "exam_attempts",
+        uniqueConstraints =
+                @UniqueConstraint(
+                        name = "uq_exam_attempts_user_request_key",
+                        columnNames = {"user_id", "request_key"}))
 public class ExamAttemptEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
+
     @Column(name = "user_id", nullable = false)
     private Integer userId;
+
     @Column(name = "mock_exam_id", nullable = false)
     private Integer mockExamId;
+
     @Column(nullable = false, length = 30)
     private String status;
+
     @Column(name = "grading_status", length = 30)
     private String gradingStatus;
+
     @Column(name = "answer_version", nullable = false)
     private Integer answerVersion = 1;
+
     @Column(name = "scoring_scheme_id")
     private Integer scoringSchemeId;
+
     @Column(name = "policy_version", length = 100)
     private String policyVersion;
+
     @Column(name = "rubric_version", length = 100)
     private String rubricVersion;
+
     @Column(name = "grading_request_key", length = 255)
     private String gradingRequestKey;
+
     @Column(name = "started_at", nullable = false)
     private LocalDateTime startedAt;
+
     @Column(name = "submitted_at")
     private LocalDateTime submittedAt;
+
     @Column(name = "completed_at")
     private LocalDateTime completedAt;
+
     @Column(name = "final_scale_score", precision = 6, scale = 2)
     private BigDecimal finalScaleScore;
+
     @Column(name = "estimated_overall_cefr", length = 10)
     private String estimatedOverallCefr;
+
     @Column(name = "request_key", length = 255)
     private String requestKey;
+
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 

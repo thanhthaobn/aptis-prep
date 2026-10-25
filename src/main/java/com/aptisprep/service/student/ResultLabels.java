@@ -17,6 +17,7 @@ public class ResultLabels {
             default -> "Chưa có trạng thái";
         };
     }
+
     public String examType(String type) {
         return switch (type == null ? "" : type) {
             case "PLACEMENT" -> "Kiểm tra đầu vào";

@@ -1,13 +1,16 @@
 package com.aptisprep.service.storage;
 
 import com.aptisprep.exception.BusinessRuleException;
-
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
+import java.util.Locale;
+import java.util.concurrent.TimeUnit;
 import org.jaudiotagger.audio.AudioFileIO;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-
-import java.nio.file.Path;
-import java.util.concurrent.TimeUnit;
 
 /** Duration comes from server-side media, never from a learner's request. */
 @Service
@@ -28,27 +31,26 @@ public class AudioDurationService {
             Path path;
             try {
                 path = resource.getFile().toPath();
-            } catch (java.io.IOException bundledInsideJar) {
+            } catch (IOException bundledInsideJar) {
                 String extension =
                         relativePath
                                 .substring(relativePath.lastIndexOf('.'))
-                                .toLowerCase(java.util.Locale.ROOT);
+                                .toLowerCase(Locale.ROOT);
                 if (!extension.matches("\\.[a-z0-9]{2,5}")) extension = ".audio";
-                temporary = java.nio.file.Files.createTempFile("aptis-audio-metadata-", extension);
+                temporary = Files.createTempFile("aptis-audio-metadata-", extension);
                 try (var input = resource.getInputStream()) {
-                    java.nio.file.Files.copy(
-                            input, temporary, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+                    Files.copy(input, temporary, StandardCopyOption.REPLACE_EXISTING);
                 }
                 path = temporary;
             }
             return read(path);
-        } catch (java.io.IOException unreadable) {
+        } catch (IOException unreadable) {
             throw new BusinessRuleException("Không đọc được file audio trên máy chủ");
         } finally {
             if (temporary != null)
                 try {
-                    java.nio.file.Files.deleteIfExists(temporary);
-                } catch (java.io.IOException cleanupFailed) {
+                    Files.deleteIfExists(temporary);
+                } catch (IOException cleanupFailed) {
                     temporary.toFile().deleteOnExit();
                 }
         }
@@ -81,7 +83,7 @@ public class AudioDurationService {
                         Double.parseDouble(
                                 new String(
                                                 process.getInputStream().readNBytes(128),
-                                                java.nio.charset.StandardCharsets.UTF_8)
+                                                StandardCharsets.UTF_8)
                                         .trim());
                 if (valid(seconds)) return seconds;
             }

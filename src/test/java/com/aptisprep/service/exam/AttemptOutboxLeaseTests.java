@@ -6,12 +6,10 @@ import static org.mockito.Mockito.*;
 import com.aptisprep.entity.AttemptOutboxEntity;
 import com.aptisprep.event.AttemptCompletedEvent;
 import com.aptisprep.repository.AttemptOutboxRepository;
-
-import org.junit.jupiter.api.Test;
-import org.springframework.context.ApplicationEventPublisher;
-
 import java.time.LocalDateTime;
 import java.util.List;
+import org.junit.jupiter.api.Test;
+import org.springframework.context.ApplicationEventPublisher;
 
 class AttemptOutboxLeaseTests {
     @Test
@@ -36,7 +34,11 @@ class AttemptOutboxLeaseTests {
                         })
                 .when(publisher)
                 .publishEvent(any(AttemptCompletedEvent.class));
-        new AttemptOutboxService(repository, publisher).recoverPending();
+        new AttemptOutboxService(
+                        repository,
+                        publisher,
+                        tools.jackson.databind.json.JsonMapper.builder().build())
+                .recoverPending();
         assertEquals("PROCESSING", row.getStatus());
         assertEquals(1, row.getAttempts());
         assertTrue(row.getNextAttemptAt().isAfter(LocalDateTime.now()));

@@ -1,16 +1,18 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="vi" xmlns:th="http://www.thymeleaf.org">
-<head th:replace="~{fragments/head :: head('Kết quả Kiểm tra đầu vào')}"></head>
-<body class="student-theme">
-<div th:replace="~{fragments/navbar :: navbar}"></div>
-<div class="container ap-container app-shell">
-    <div th:replace="~{fragments/student-sidebar :: studentSidebar('placement')}"></div>
-    <main class="app-main student-content" id="main-content" tabindex="-1">
+  <head th:replace="~{fragments/head :: head('Kết quả Kiểm tra đầu vào')}"></head>
+  <body class="student-theme">
+    <div th:replace="~{fragments/navbar :: navbar}"></div>
+    <div class="container ap-container app-shell">
+      <div th:replace="~{fragments/student-sidebar :: studentSidebar('placement')}"></div>
+      <main class="app-main student-content" id="main-content" tabindex="-1">
         <div th:replace="~{fragments/messages :: messages}"></div>
         <!-- Thống nhất kết quả hiển thị kiểm tra đầu vào -->
-        <div th:replace="~{fragments/result-summary :: resultSummary(${placementResult}, true)}"></div>
-    </main>
-</div>
-<div th:replace="~{fragments/footer :: footer}"></div>
-</body>
+        <div
+          th:replace="~{fragments/result-summary :: resultSummary(${placementResult}, true)}"
+        ></div>
+      </main>
+    </div>
+    <div th:replace="~{fragments/footer :: footer}"></div>
+  </body>
 </html>

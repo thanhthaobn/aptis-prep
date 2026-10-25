@@ -3,6 +3,6 @@
 const accountDialog = document.getElementById('studentAccountDialog');
 const accountTrigger = document.querySelector('[data-open-student-dialog]');
 if (accountDialog && accountTrigger) {
-    accountTrigger.addEventListener('click', () => accountDialog.showModal());
-    accountDialog.addEventListener('close', () => accountTrigger.focus());
+  accountTrigger.addEventListener('click', () => accountDialog.showModal());
+  accountDialog.addEventListener('close', () => accountTrigger.focus());
 }

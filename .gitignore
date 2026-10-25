@@ -1,6 +1,8 @@
 target/
+node_modules/
 .m2-local/
 .idea/
+.run/
 *.iml
 .vscode/
 .env

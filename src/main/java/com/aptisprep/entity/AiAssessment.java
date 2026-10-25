@@ -2,50 +2,70 @@ package com.aptisprep.entity;
 
 import com.aptisprep.enums.AiAssessmentState;
 import jakarta.persistence.*;
-
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "ai_assessments", uniqueConstraints = @UniqueConstraint(name = "uq_ai_assessment_job_version", columnNames = {"job_id", "answer_version"}))
+@Table(
+        name = "ai_assessments",
+        uniqueConstraints =
+                @UniqueConstraint(
+                        name = "uq_ai_assessment_job_version",
+                        columnNames = {"job_id", "answer_version"}))
 public class AiAssessment {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
+
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "job_id", nullable = false)
     private AiAssessmentJob job;
+
     @Column(name = "assessment_key", nullable = false, length = 255)
     private String assessmentKey;
+
     @Column(name = "answer_id")
     private Integer answerId;
+
     @Column(name = "answer_version", nullable = false)
     private Integer answerVersion;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 30)
     private AiAssessmentState state;
+
     @Column(precision = 5, scale = 2)
     private BigDecimal score;
+
     @Column(name = "estimated_cefr", length = 10)
     private String estimatedCefr;
+
     @Lob
     @Column(columnDefinition = "NVARCHAR(MAX)")
     private String feedback;
+
     @Lob
     @Column(columnDefinition = "NVARCHAR(MAX)")
     private String transcript;
+
     @Column(name = "rubric_version", nullable = false, length = 100)
     private String rubricVersion;
+
     @Column(name = "policy_version", nullable = false, length = 100)
     private String policyVersion;
+
     @Column(length = 50)
     private String provider;
+
     @Column(length = 100)
     private String model;
+
     @Column(name = "error_message", length = 1000)
     private String errorMessage;
+
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
+
     @Column(name = "completed_at")
     private LocalDateTime completedAt;
 

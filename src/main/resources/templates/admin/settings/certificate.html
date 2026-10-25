@@ -1,21 +1,82 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="vi" xmlns:th="http://www.thymeleaf.org">
-<head th:replace="~{fragments/head :: head('Chứng chỉ')}"></head>
-<body class="admin-theme"><div th:replace="~{fragments/navbar :: navbar}"></div>
-<div class="container ap-container app-shell"><div th:replace="~{fragments/admin-sidebar :: adminSidebar('settings')}"></div>
-<main id="main-content" tabindex="-1" class="app-main admin-catalog">
-    <div th:replace="~{fragments/breadcrumb :: breadcrumb('Chứng chỉ & Chấm điểm', @{/admin/certificates}, 'Chứng chỉ')}"></div>
-    <div th:replace="~{fragments/messages :: messages}"></div>
-    <header class="page-header"><h1 th:text="${readOnly ? certificate.name : (editing ? 'Chỉnh sửa chứng chỉ' : 'Thêm chứng chỉ')}"></h1><a class="button button-secondary" th:href="@{/admin/certificates}">Về danh sách</a></header>
-    <form class="dashboard-panel" th:object="${certificateForm}" th:action="${editing ? '/admin/certificates/' + certificate.id : '/admin/certificates'}" method="post">
-        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
-        <fieldset class="scoring-fields" th:disabled="${readOnly}"><legend>Thông tin chứng chỉ</legend>
-            <div class="catalog-form-grid"><div class="field"><label for="certificateName">Tên chứng chỉ</label><input id="certificateName" th:field="*{name}" maxlength="255" required><p class="field-error" th:errors="*{name}"></p></div><div class="field"><label for="certificateCode">Mã chứng chỉ</label><input id="certificateCode" th:field="*{code}" maxlength="50" required><p class="field-error" th:errors="*{code}"></p></div></div>
-            <div class="field"><label for="certificateDescription">Mô tả</label><textarea id="certificateDescription" th:field="*{description}" rows="3"></textarea><p class="field-error" th:errors="*{description}"></p></div>
-            <div class="field"><label for="certificateStatus">Trạng thái</label><select id="certificateStatus" th:field="*{status}"><option value="ACTIVE">Đang sử dụng</option><option value="INACTIVE">Ngừng sử dụng</option></select></div>
-        </fieldset>
-        <div class="alert alert-danger" th:if="${#fields.hasGlobalErrors()}"><p th:each="error : ${#fields.globalErrors()}" th:text="${error}"></p></div>
-        <div class="actions"><a th:if="${readOnly}" class="button" th:href="@{/admin/certificates/{id}/edit(id=${certificate.id})}">Chỉnh sửa</a><button th:unless="${readOnly}" class="button" type="submit">Lưu chứng chỉ</button><a class="button button-secondary" th:href="@{/admin/certificates}">Quay lại</a></div>
-    </form>
-    <form th:if="${editing and !readOnly and certificate.status == 'ACTIVE'}" th:action="@{/admin/certificates/{id}/disable(id=${certificate.id})}" method="post"><input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"><button class="button button-secondary" type="submit">Ngừng sử dụng</button></form>
-</main></div><div th:replace="~{fragments/footer :: footer}"></div></body></html>
+  <head th:replace="~{fragments/head :: head('Chứng chỉ')}"></head>
+  <body class="admin-theme"
+    ><div th:replace="~{fragments/navbar :: navbar}"></div>
+    <div class="container ap-container app-shell"
+      ><div th:replace="~{fragments/admin-sidebar :: adminSidebar('settings')}"></div>
+      <main id="main-content" tabindex="-1" class="app-main admin-catalog">
+        <div
+          th:replace="~{fragments/breadcrumb :: breadcrumb('Chứng chỉ & Chấm điểm', @{/admin/certificates}, 'Chứng chỉ')}"
+        ></div>
+        <div th:replace="~{fragments/messages :: messages}"></div>
+        <header class="page-header"
+          ><h1
+            th:text="${readOnly ? certificate.name : (editing ? 'Chỉnh sửa chứng chỉ' : 'Thêm chứng chỉ')}"
+          ></h1
+          ><a class="button button-secondary" th:href="@{/admin/certificates}"
+            >Về danh sách</a
+          ></header
+        >
+        <form
+          class="dashboard-panel"
+          th:object="${certificateForm}"
+          th:action="${editing ? '/admin/certificates/' + certificate.id : '/admin/certificates'}"
+          method="post"
+        >
+          <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+          <fieldset class="scoring-fields" th:disabled="${readOnly}"
+            ><legend>Thông tin chứng chỉ</legend>
+            <div class="catalog-form-grid"
+              ><div class="field"
+                ><label for="certificateName">Tên chứng chỉ</label
+                ><input id="certificateName" th:field="*{name}" maxlength="255" required /><p
+                  class="field-error"
+                  th:errors="*{name}"
+                ></p></div
+              ><div class="field"
+                ><label for="certificateCode">Mã chứng chỉ</label
+                ><input id="certificateCode" th:field="*{code}" maxlength="50" required /><p
+                  class="field-error"
+                  th:errors="*{code}"
+                ></p></div
+            ></div>
+            <div class="field"
+              ><label for="certificateDescription">Mô tả</label
+              ><textarea id="certificateDescription" th:field="*{description}" rows="3"></textarea
+              ><p class="field-error" th:errors="*{description}"></p
+            ></div>
+            <div class="field"
+              ><label for="certificateStatus">Trạng thái</label
+              ><select id="certificateStatus" th:field="*{status}"
+                ><option value="ACTIVE">Đang sử dụng</option
+                ><option value="INACTIVE">Ngừng sử dụng</option></select
+              ></div
+            >
+          </fieldset>
+          <div class="alert alert-danger" th:if="${#fields.hasGlobalErrors()}"
+            ><p th:each="error : ${#fields.globalErrors()}" th:text="${error}"></p
+          ></div>
+          <div class="actions"
+            ><a
+              th:if="${readOnly}"
+              class="button"
+              th:href="@{/admin/certificates/{id}/edit(id=${certificate.id})}"
+              >Chỉnh sửa</a
+            ><button th:unless="${readOnly}" class="button" type="submit">Lưu chứng chỉ</button
+            ><a class="button button-secondary" th:href="@{/admin/certificates}">Quay lại</a></div
+          >
+        </form>
+        <form
+          th:if="${editing and !readOnly and certificate.status == 'ACTIVE'}"
+          th:action="@{/admin/certificates/{id}/disable(id=${certificate.id})}"
+          method="post"
+          ><input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" /><button
+            class="button button-secondary"
+            type="submit"
+            >Ngừng sử dụng</button
+          ></form
+        >
+      </main></div
+    ><div th:replace="~{fragments/footer :: footer}"></div></body
+></html>

@@ -8,20 +8,27 @@ public class FlashcardSet {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
+
     @Column(nullable = false, length = 255)
     private String title;
+
     @Column(length = 2000)
     private String description;
+
     @Column(name = "cefr_level", nullable = false, length = 10)
     private String cefrLevel;
+
     @Column(nullable = false, length = 30)
     private String status;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "lesson_id")
     private Lesson lesson;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "owner_user_id")
     private User owner;
+
     @Column(nullable = false, length = 20)
     private String visibility = "PUBLIC";
 

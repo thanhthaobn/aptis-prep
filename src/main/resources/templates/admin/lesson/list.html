@@ -1,25 +1,71 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="vi" xmlns:th="http://www.thymeleaf.org">
-<head th:replace="~{fragments/head :: head('Quản lý bài học')}"></head>
-<body class="admin-theme">
-<div th:replace="~{fragments/navbar :: navbar}"></div>
-<div class="container ap-container app-shell">
-<div th:replace="~{fragments/admin-sidebar :: adminSidebar('lessons')}"></div>
-<main id="main-content" tabindex="-1" class="app-main admin-catalog admin-lesson-tree">
-<header class="page-header"><div><p class="eyebrow">NỘI DUNG HỌC TẬP</p><h1>Quản lý bài học</h1><p>Chọn kỹ năng và cấp độ để thêm bài vào đúng vị trí.</p></div></header>
-<section class="curriculum-tree" aria-label="Cây quản lý bài học">
-<details class="dashboard-panel skill-branch" th:each="branch:${tree}" th:attr="data-skill=${branch.skill()}">
-<summary><strong th:text="${branch.skill()}"></strong><span th:text="|${branch.count()} bài học|"></span></summary>
-<details class="level-branch" th:each="level:${branch.levels()}">
-<summary><strong th:text="${level.level()}"></strong><span th:text="|${#lists.size(level.lessons())} bài học|"></span></summary>
-<details class="topic-branch" th:each="topic:${level.topics()}"><summary th:text="${topic.key}"></summary><ul class="lesson-leaves">
-<li th:each="lesson:${topic.value}" class="admin-lesson-leaf">
-<div class="lesson-leaf-title"><span class="muted" th:text="|${lesson.displayOrder}.|"></span><a th:href="@{/admin/lessons/{id}(id=${lesson.id})}" th:text="${lesson.title}"></a>
-<span class="badge" th:text="${lesson.status=='PUBLISHED'?'Đã công bố':(lesson.status=='DRAFT'?'Bản nháp':'Đã lưu trữ')}"></span></div>
-<div class="catalog-table-actions lesson-leaf-actions"><a class="button button-secondary" th:href="@{/admin/lessons/{id}(id=${lesson.id})}">Xem trước</a><a class="button" th:href="@{/admin/lessons/{id}/edit(id=${lesson.id})}">Chỉnh sửa</a></div>
-</li></ul><a class="button button-secondary" th:href="@{/admin/lessons/create(skill=${branch.skill()},level=${level.level()},topic=${topic.key=='Bài học độc lập'?'':topic.key})}">+ Thêm bài trong chủ đề</a></details>
-<p class="muted" th:if="${#lists.isEmpty(level.lessons())}">Chưa có bài học ở cấp độ này.</p>
-<a class="button button-secondary" th:href="@{/admin/lessons/create(skill=${branch.skill()},level=${level.level()})}" th:text="|+ Thêm bài vào ${branch.skill()} ${level.level()}|"></a>
-</details></details></section>
-</main></div><div th:replace="~{fragments/footer :: footer}"></div>
-</body></html>
+  <head th:replace="~{fragments/head :: head('Quản lý bài học')}"></head>
+  <body class="admin-theme">
+    <div th:replace="~{fragments/navbar :: navbar}"></div>
+    <div class="container ap-container app-shell">
+      <div th:replace="~{fragments/admin-sidebar :: adminSidebar('lessons')}"></div>
+      <main id="main-content" tabindex="-1" class="app-main admin-catalog admin-lesson-tree">
+        <header class="page-header"
+          ><div
+            ><p class="eyebrow">NỘI DUNG HỌC TẬP</p><h1>Quản lý bài học</h1
+            ><p>Chọn kỹ năng và cấp độ để thêm bài vào đúng vị trí.</p></div
+          ></header
+        >
+        <section class="curriculum-tree" aria-label="Cây quản lý bài học">
+          <details
+            class="dashboard-panel skill-branch"
+            th:each="branch:${tree}"
+            th:attr="data-skill=${branch.skill()}"
+          >
+            <summary
+              ><strong th:text="${branch.skill()}"></strong
+              ><span th:text="|${branch.count()} bài học|"></span
+            ></summary>
+            <details class="level-branch" th:each="level:${branch.levels()}">
+              <summary
+                ><strong th:text="${level.level()}"></strong
+                ><span th:text="|${#lists.size(level.lessons())} bài học|"></span
+              ></summary>
+              <details class="topic-branch" th:each="topic:${level.topics()}"
+                ><summary th:text="${topic.key}"></summary
+                ><ul class="lesson-leaves">
+                  <li th:each="lesson:${topic.value}" class="admin-lesson-leaf">
+                    <div class="lesson-leaf-title"
+                      ><span class="muted" th:text="|${lesson.displayOrder}.|"></span
+                      ><a
+                        th:href="@{/admin/lessons/{id}(id=${lesson.id})}"
+                        th:text="${lesson.title}"
+                      ></a>
+                      <span
+                        class="badge"
+                        th:text="${lesson.status=='PUBLISHED'?'Đã công bố':(lesson.status=='DRAFT'?'Bản nháp':'Đã lưu trữ')}"
+                      ></span
+                    ></div>
+                    <div class="catalog-table-actions lesson-leaf-actions"
+                      ><a
+                        class="button button-secondary"
+                        th:href="@{/admin/lessons/{id}(id=${lesson.id})}"
+                        >Xem trước</a
+                      ><a class="button" th:href="@{/admin/lessons/{id}/edit(id=${lesson.id})}"
+                        >Chỉnh sửa</a
+                      ></div
+                    >
+                  </li></ul
+                ><a
+                  class="button button-secondary"
+                  th:href="@{/admin/lessons/create(skill=${branch.skill()},level=${level.level()},topic=${topic.key=='Bài học độc lập'?'':topic.key})}"
+                  >+ Thêm bài trong chủ đề</a
+                ></details
+              >
+              <p class="muted" th:if="${#lists.isEmpty(level.lessons())}"
+                >Chưa có bài học ở cấp độ này.</p
+              >
+              <a
+                class="button button-secondary"
+                th:href="@{/admin/lessons/create(skill=${branch.skill()},level=${level.level()})}"
+                th:text="|+ Thêm bài vào ${branch.skill()} ${level.level()}|"
+              ></a> </details></details
+        ></section> </main></div
+    ><div th:replace="~{fragments/footer :: footer}"></div> </body
+></html>

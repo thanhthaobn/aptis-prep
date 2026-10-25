@@ -8,12 +8,10 @@ import com.aptisprep.enums.*;
 import com.aptisprep.exception.BusinessRuleException;
 import com.aptisprep.repository.*;
 import com.aptisprep.service.storage.AudioDurationService;
-
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-
 import java.time.*;
 import java.util.Optional;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 class LessonListeningServiceTests {
     final UserRepository users = mock(UserRepository.class);
@@ -45,7 +43,14 @@ class LessonListeningServiceTests {
         progress.setUserId(1);
         progress.setLessonId(2);
         when(engagements.findByUserIdAndLessonId(1, 2)).thenReturn(Optional.of(progress));
-        service = new LessonListeningService(users, lessons, engagements, durations, clock);
+        service =
+                new LessonListeningService(
+                        users,
+                        lessons,
+                        engagements,
+                        durations,
+                        clock,
+                        tools.jackson.databind.json.JsonMapper.builder().build());
         token = service.start(2, "a@test.local", 0).token();
     }
 

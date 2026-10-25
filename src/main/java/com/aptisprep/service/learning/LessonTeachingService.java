@@ -1,5 +1,6 @@
 package com.aptisprep.service.learning;
 
+import com.aptisprep.config.AiProperties;
 import com.aptisprep.dto.form.LessonForm;
 import com.aptisprep.entity.*;
 import com.aptisprep.enums.*;
@@ -7,22 +8,22 @@ import com.aptisprep.exception.*;
 import com.aptisprep.repository.*;
 import com.aptisprep.service.contract.AiAssessmentContract;
 import com.aptisprep.service.storage.StorageService;
-
 import jakarta.persistence.*;
-
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.multipart.MultipartFile;
-
 import java.math.BigDecimal;
 import java.net.URI;
+import java.time.LocalDateTime;
 import java.util.*;
-import java.util.stream.Stream;
+import java.util.Objects;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
+import tools.jackson.databind.json.JsonMapper;
 
 @Service
 @Transactional
 public class LessonTeachingService {
-    private final LessonCheckRepository checks;
+    private final LessonCheckService checkService;
     private final LessonRepository lessons;
     private final UserRepository users;
     private final LessonResponseRepository responses;
@@ -33,8 +34,8 @@ public class LessonTeachingService {
     private final AiAssessmentContract assessments;
     @PersistenceContext private EntityManager em;
 
-    @org.springframework.beans.factory.annotation.Autowired
-    private com.aptisprep.config.AiProperties aiProperties;
+    private final AiProperties aiProperties;
+    private final JsonMapper json;
 
     public record ReleaseState(
             boolean transcript, boolean sample, String transcriptHint, String sampleHint) {}
@@ -58,7 +59,7 @@ public class LessonTeachingService {
                         ? !submissionHistory(id, email).isEmpty()
                         : !attempts.findByUserIdAndLessonIdOrderBySubmittedAtDesc(u.getId(), id)
                                 .isEmpty();
-        boolean noSubmission = !productive && checks.countByLessonId(id) == 0;
+        boolean noSubmission = !productive && !checkService.hasChecks(id);
         String transcript = policy(m == null ? null : m.getTranscriptVisibility(), "AFTER_LISTEN"),
                 sample = policy(m == null ? null : m.getSampleVisibility(), "AFTER_SUBMIT");
         return new ReleaseState(
@@ -149,7 +150,7 @@ public class LessonTeachingService {
     }
 
     public LessonTeachingService(
-            LessonCheckRepository c,
+            LessonCheckService c,
             LessonRepository l,
             UserRepository u,
             LessonResponseRepository r,
@@ -157,8 +158,10 @@ public class LessonTeachingService {
             LessonEngagementRepository e,
             StorageService s,
             LessonProgressRepository p,
-            AiAssessmentContract ai) {
-        checks = c;
+            AiAssessmentContract ai,
+            AiProperties aiProperties,
+            JsonMapper json) {
+        checkService = c;
         lessons = l;
         users = u;
         responses = r;
@@ -167,6 +170,8 @@ public class LessonTeachingService {
         storage = s;
         progress = p;
         assessments = ai;
+        this.aiProperties = aiProperties;
+        this.json = json;
     }
 
     public Optional<LessonResponse> savedWork(Integer lessonId, String email) {
@@ -211,7 +216,7 @@ public class LessonTeachingService {
         r.setText(null);
         r.setResponseVersion((r.getResponseVersion() == null ? 0 : r.getResponseVersion()) + 1);
         r.setAssessmentKey(null);
-        r.setUpdatedAt(java.time.LocalDateTime.now());
+        r.setUpdatedAt(LocalDateTime.now());
         responses.save(r);
         em.persist(new LessonWorkSubmission(u.getId(), lesson, r));
     }
@@ -220,7 +225,7 @@ public class LessonTeachingService {
             Integer id,
             int score,
             int total,
-            java.time.LocalDateTime submittedAt,
+            LocalDateTime submittedAt,
             List<AnswerFeedback> answers,
             LessonContextSnapshot context) {}
 
@@ -256,10 +261,9 @@ public class LessonTeachingService {
                                         a.getSubmittedAt(),
                                         has(a.getReviewJson())
                                                 ? List.of(
-                                                        new tools.jackson.databind.ObjectMapper()
-                                                                .readValue(
-                                                                        a.getReviewJson(),
-                                                                        AnswerFeedback[].class))
+                                                        json.readValue(
+                                                                a.getReviewJson(),
+                                                                AnswerFeedback[].class))
                                                 : List.of(),
                                         a.getContext()))
                 .toList();
@@ -318,7 +322,7 @@ public class LessonTeachingService {
     public CompletionState completion(Integer lessonId, String email) {
         var u = user(email);
         var l = lessons.findById(lessonId).orElseThrow();
-        boolean h = checks.countByLessonId(lessonId) > 0,
+        boolean h = checkService.hasChecks(lessonId),
                 c =
                         attempts
                                 .findByUserIdAndLessonIdOrderBySubmittedAtDesc(u.getId(), lessonId)
@@ -422,19 +426,18 @@ public class LessonTeachingService {
                 responses
                         .findByUserIdAndLessonId(u.getId(), lessonId)
                         .orElseGet(LessonResponse::new);
-        if (!java.util.Objects.equals(r.getText(), text)) {
+        if (!Objects.equals(r.getText(), text)) {
             r.setResponseVersion((r.getResponseVersion() == null ? 0 : r.getResponseVersion()) + 1);
             r.setAssessmentKey(null);
         }
         r.setUserId(u.getId());
         r.setLessonId(lessonId);
         r.setText(text);
-        r.setUpdatedAt(java.time.LocalDateTime.now());
+        r.setUpdatedAt(LocalDateTime.now());
         responses.save(r);
     }
 
-    @org.springframework.transaction.annotation.Transactional(
-            propagation = org.springframework.transaction.annotation.Propagation.NOT_SUPPORTED)
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
     public String assess(Integer lessonId, Integer submissionId, String email) {
         if (!aiProperties.isEnabled() || !has(aiProperties.getApiKey()))
             throw new BusinessRuleException("Phản hồi AI chưa được bật");
@@ -507,64 +510,17 @@ public class LessonTeachingService {
     public record Feedback(int score, int total, List<AnswerFeedback> answers) {}
 
     public List<CheckView> questions(Integer id) {
-        return checks.findByLessonIdOrderByPositionAsc(id).stream()
-                .map(q -> new CheckView(q.getId(), q.getPrompt(), options(q)))
-                .toList();
+        return checkService.questions(id);
     }
 
     public List<LessonForm.CheckForm> editorQuestions(Integer id) {
-        return checks.findByLessonIdOrderByPositionAsc(id).stream()
-                .map(
-                        q -> {
-                            var f = new LessonForm.CheckForm();
-                            f.setPrompt(q.getPrompt());
-                            f.setOptionA(q.getOptionA());
-                            f.setOptionB(q.getOptionB());
-                            f.setOptionC(q.getOptionC());
-                            f.setOptionD(q.getOptionD());
-                            f.setOptionE(q.getOptionE());
-                            f.setOptionF(q.getOptionF());
-                            f.setCorrectOption(q.getCorrectOption());
-                            f.setExplanation(q.getExplanation());
-                            return f;
-                        })
-                .toList();
+        return checkService.editorQuestions(id);
     }
 
     public void validate(LessonForm f) {
         videoId(f.getVideoUrl());
         safeLink(f.getSourceUrl());
-        if (f.getChecks() == null || f.getChecks().size() > 20)
-            throw new BusinessRuleException("Mỗi bài tối đa 20 câu kiểm tra kiến thức");
-        for (var q : f.getChecks()) {
-            if (empty(q)) continue;
-            var opts = options(q);
-            if (!has(q.getPrompt())
-                    || opts.size() < 2
-                    || !has(q.getExplanation())
-                    || q.getCorrectOption() == null
-                    || q.getCorrectOption() < 0
-                    || q.getCorrectOption() >= opts.size())
-                throw new BusinessRuleException(
-                        "Mỗi câu kiểm tra cần câu hỏi, từ 2 đến 6 lựa chọn liên tiếp, đáp án đúng"
-                                + " và giải thích");
-        }
-        for (var q : f.getChecks()) {
-            boolean gap = false;
-            for (var option :
-                    Arrays.asList(
-                            q.getOptionA(),
-                            q.getOptionB(),
-                            q.getOptionC(),
-                            q.getOptionD(),
-                            q.getOptionE(),
-                            q.getOptionF())) {
-                if (!has(option)) gap = true;
-                else if (gap)
-                    throw new BusinessRuleException(
-                            "Điền lựa chọn liên tiếp từ A, B. Không bỏ trống ở giữa");
-            }
-        }
+        checkService.validateChecks(f.getChecks());
         for (var rule :
                 List.of(
                         policy(f.getTranscriptVisibility(), "AFTER_LISTEN"),
@@ -581,79 +537,11 @@ public class LessonTeachingService {
     }
 
     public void saveChecks(Integer id, List<LessonForm.CheckForm> forms) {
-        checks.deleteByLessonId(id);
-        checks.flush();
-        int position = 1;
-        for (var f : forms) {
-            if (empty(f)) continue;
-            var q = new LessonCheck();
-            q.setLessonId(id);
-            q.setPosition(position++);
-            q.setPrompt(f.getPrompt());
-            q.setOptionA(f.getOptionA());
-            q.setOptionB(f.getOptionB());
-            q.setOptionC(blankToNull(f.getOptionC()));
-            q.setOptionD(blankToNull(f.getOptionD()));
-            q.setOptionE(blankToNull(f.getOptionE()));
-            q.setOptionF(blankToNull(f.getOptionF()));
-            q.setCorrectOption(f.getCorrectOption());
-            q.setExplanation(f.getExplanation());
-            checks.save(q);
-        }
+        checkService.saveChecks(id, forms);
     }
 
     public Feedback grade(Integer id, Map<String, String> answers, String email) {
-        var u =
-                users.findByEmailIgnoreCase(email)
-                        .orElseThrow(
-                                () -> new ResourceNotFoundException("Không tìm thấy tài khoản"));
-        if (u.getStatus() != UserStatus.ACTIVE || u.getRole() != Role.STUDENT)
-            throw new BusinessRuleException("Tài khoản không được phép học");
-        lessons.findById(id)
-                .filter(l -> "PUBLISHED".equals(l.getStatus()))
-                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy bài học"));
-        var all = checks.findByLessonIdOrderByPositionAsc(id);
-        if (all.isEmpty()) throw new BusinessRuleException("Bài chưa có câu kiểm tra kiến thức");
-        var feedback = new ArrayList<AnswerFeedback>();
-        int score = 0;
-        for (var q : all) {
-            var selected = answers.get("q" + q.getId());
-            var options = options(q);
-            int value;
-            try {
-                value = Integer.parseInt(selected);
-            } catch (Exception ex) {
-                throw new BusinessRuleException("Vui lòng trả lời đầy đủ các câu hỏi");
-            }
-            if (value < 0 || value >= options.size())
-                throw new BusinessRuleException("Lựa chọn không hợp lệ");
-            boolean right = value == q.getCorrectOption();
-            if (right) score++;
-            feedback.add(
-                    new AnswerFeedback(
-                            q.getPrompt(),
-                            options.get(value),
-                            options.get(q.getCorrectOption()),
-                            right,
-                            q.getExplanation(),
-                            options));
-        }
-        var attempt = new LessonCheckAttempt();
-        attempt.setUserId(u.getId());
-        attempt.setLessonId(id);
-        attempt.setScore(score);
-        attempt.setTotal(all.size());
-        attempt.setAnswersJson(
-                answers.entrySet().stream()
-                        .filter(e -> e.getKey().matches("q\\d+") && e.getValue().matches("[0-5]"))
-                        .sorted(Map.Entry.comparingByKey())
-                        .map(e -> e.getKey() + "=" + e.getValue())
-                        .collect(java.util.stream.Collectors.joining("&")));
-        attempt.setReviewJson(
-                new tools.jackson.databind.ObjectMapper().writeValueAsString(feedback));
-        attempt.snapshot(lessons.findById(id).orElseThrow());
-        attempts.save(attempt);
-        return new Feedback(score, all.size(), feedback);
+        return checkService.grade(id, answers, email);
     }
 
     public static String videoId(String url) {
@@ -697,38 +585,6 @@ public class LessonTeachingService {
 
     private static boolean has(String s) {
         return s != null && !s.isBlank();
-    }
-
-    private static List<String> options(LessonCheck q) {
-        return Stream.of(
-                        q.getOptionA(),
-                        q.getOptionB(),
-                        q.getOptionC(),
-                        q.getOptionD(),
-                        q.getOptionE(),
-                        q.getOptionF())
-                .filter(LessonTeachingService::has)
-                .toList();
-    }
-
-    private static List<String> options(LessonForm.CheckForm q) {
-        return Stream.of(
-                        q.getOptionA(),
-                        q.getOptionB(),
-                        q.getOptionC(),
-                        q.getOptionD(),
-                        q.getOptionE(),
-                        q.getOptionF())
-                .filter(LessonTeachingService::has)
-                .toList();
-    }
-
-    private static String blankToNull(String value) {
-        return has(value) ? value.trim() : null;
-    }
-
-    private static boolean empty(LessonForm.CheckForm q) {
-        return !has(q.getPrompt()) && options(q).isEmpty() && !has(q.getExplanation());
     }
 
     private User user(String email) {

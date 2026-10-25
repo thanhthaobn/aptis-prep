@@ -11,6 +11,7 @@ public class LessonMaterial {
     @Size(max = 30)
     @Column(name = "transcript_visibility", length = 30)
     private String transcriptVisibility;
+
     @Size(max = 30)
     @Column(name = "sample_visibility", length = 30)
     private String sampleVisibility;

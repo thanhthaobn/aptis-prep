@@ -1,30 +1,210 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="vi" xmlns:th="http://www.thymeleaf.org">
-<head th:replace="~{fragments/head :: head(${catalog.title})}"></head>
-<body class="admin-theme">
-<div th:replace="~{fragments/navbar :: navbar}"></div>
-<div class="container ap-container app-shell">
-    <div th:replace="~{fragments/admin-sidebar :: adminSidebar(${catalog.key})}"></div>
-    <main id="main-content" tabindex="-1" class="app-main admin-catalog">
-        <div th:replace="~{fragments/breadcrumb :: breadcrumb('Tổng quan', @{/admin/dashboard}, ${catalog.title})}"></div>
-        <header class="page-header"><div><p class="eyebrow">QUẢN TRỊ</p><h1 th:text="${catalog.title}"></h1></div><div class="page-actions"><a th:if="${catalog.editable()}" class="button" th:href="@{${catalog.baseUrl() + '/create'}}" th:text="${catalog.createLabel}"></a></div></header>
-        <form class="toolbar catalog-toolbar" method="get" th:action="@{${catalog.baseUrl()}}" role="search">
-            <div class="toolbar-search"><label for="catalogQuery">Tìm kiếm</label><input id="catalogQuery" name="q" type="search" th:value="${q}" maxlength="255" th:placeholder="${catalog.key == 'results' ? 'Tên học viên, email hoặc bài thi…' : 'Tên hoặc nội dung…'}"></div>
-            <div><label for="catalogSkill">Kỹ năng</label><select id="catalogSkill" name="skill"><option value="">Tất cả kỹ năng</option><option th:each="skill : ${skills}" th:value="${skill}" th:text="${skill}" th:selected="${selectedSkill == skill}"></option></select></div>
-            <div><label for="catalogKind" th:text="${catalog.typeLabel}"></label><select id="catalogKind" name="kind"><option value="">Tất cả</option><option th:each="kind : ${catalog.kinds}" th:value="${kind}" th:text="${kind}" th:selected="${selectedKind == kind}"></option></select></div>
-            <div><label for="catalogStatus">Trạng thái</label><select id="catalogStatus" name="status"><option value="">Tất cả trạng thái</option><option th:if="${catalog.editable()}" value="PUBLISHED" th:selected="${selectedStatus == 'PUBLISHED'}">Đã công bố</option><option th:if="${catalog.editable()}" value="DRAFT" th:selected="${selectedStatus == 'DRAFT'}">Bản nháp</option><option th:if="${catalog.editable()}" value="ARCHIVED" th:selected="${selectedStatus == 'ARCHIVED'}">Đã lưu trữ</option><option th:unless="${catalog.editable()}" value="COMPLETED" th:selected="${selectedStatus == 'COMPLETED'}">Đã hoàn thành</option><option th:unless="${catalog.editable()}" value="GRADING" th:selected="${selectedStatus == 'GRADING'}">Chờ chấm</option><option th:unless="${catalog.editable()}" value="GRADING_FAILED" th:selected="${selectedStatus == 'GRADING_FAILED'}">Chấm chưa thành công</option></select></div>
-            <button class="button" type="submit">Tìm kiếm</button><a class="button button-secondary" th:href="@{${catalog.baseUrl()}}">Đặt lại</a>
+  <head th:replace="~{fragments/head :: head(${catalog.title})}"></head>
+  <body class="admin-theme">
+    <div th:replace="~{fragments/navbar :: navbar}"></div>
+    <div class="container ap-container app-shell">
+      <div th:replace="~{fragments/admin-sidebar :: adminSidebar(${catalog.key})}"></div>
+      <main id="main-content" tabindex="-1" class="app-main admin-catalog">
+        <div
+          th:replace="~{fragments/breadcrumb :: breadcrumb('Tổng quan', @{/admin/dashboard}, ${catalog.title})}"
+        ></div>
+        <header class="page-header">
+          <div><p class="eyebrow">QUẢN TRỊ</p> <h1 th:text="${catalog.title}"></h1></div>
+          <div class="page-actions"
+            ><a
+              th:if="${catalog.editable()}"
+              class="button"
+              th:href="@{${catalog.baseUrl() + '/create'}}"
+              th:text="${catalog.createLabel}"
+            ></a
+          ></div>
+        </header>
+        <form
+          class="toolbar catalog-toolbar"
+          method="get"
+          th:action="@{${catalog.baseUrl()}}"
+          role="search"
+        >
+          <div class="toolbar-search"
+            ><label for="catalogQuery">Tìm kiếm</label
+            ><input
+              id="catalogQuery"
+              name="q"
+              type="search"
+              th:value="${q}"
+              maxlength="255"
+              th:placeholder="${catalog.key == 'results' ? 'Tên học viên, email hoặc bài thi…' : 'Tên hoặc nội dung…'}"
+            />
+          </div>
+          <div
+            ><label for="catalogSkill">Kỹ năng</label
+            ><select id="catalogSkill" name="skill">
+              <option value="">Tất cả kỹ năng</option>
+              <option
+                th:each="skill : ${skills}"
+                th:value="${skill}"
+                th:text="${skill}"
+                th:selected="${selectedSkill == skill}"
+              ></option> </select
+          ></div>
+          <div
+            ><label for="catalogKind" th:text="${catalog.typeLabel}"></label
+            ><select id="catalogKind" name="kind">
+              <option value="">Tất cả</option>
+              <option
+                th:each="kind : ${catalog.kinds}"
+                th:value="${kind}"
+                th:text="${kind}"
+                th:selected="${selectedKind == kind}"
+              ></option> </select
+          ></div>
+          <div
+            ><label for="catalogStatus">Trạng thái</label
+            ><select id="catalogStatus" name="status">
+              <option value="">Tất cả trạng thái</option>
+              <option
+                th:if="${catalog.editable()}"
+                value="PUBLISHED"
+                th:selected="${selectedStatus == 'PUBLISHED'}"
+              >
+                Đã công bố
+              </option>
+              <option
+                th:if="${catalog.editable()}"
+                value="DRAFT"
+                th:selected="${selectedStatus == 'DRAFT'}"
+                >Bản nháp
+              </option>
+              <option
+                th:if="${catalog.editable()}"
+                value="ARCHIVED"
+                th:selected="${selectedStatus == 'ARCHIVED'}"
+                >Đã lưu trữ
+              </option>
+              <option
+                th:unless="${catalog.editable()}"
+                value="COMPLETED"
+                th:selected="${selectedStatus == 'COMPLETED'}"
+                >Đã hoàn thành
+              </option>
+              <option
+                th:unless="${catalog.editable()}"
+                value="GRADING"
+                th:selected="${selectedStatus == 'GRADING'}"
+              >
+                Chờ chấm
+              </option>
+              <option
+                th:unless="${catalog.editable()}"
+                value="GRADING_FAILED"
+                th:selected="${selectedStatus == 'GRADING_FAILED'}"
+                >Chấm chưa thành công
+              </option>
+            </select></div
+          >
+          <button class="button" type="submit">Tìm kiếm</button>
+          <a class="button button-secondary" th:href="@{${catalog.baseUrl()}}">Đặt lại</a>
         </form>
-        <div class="section-title-row"><h2 th:text="${catalog.key == 'results' ? 'Lịch sử lượt thi' : 'Danh sách ' + catalog.singular}"></h2><span class="muted" th:text="|${pageData.totalItems} kết quả|"></span></div>
-        <div class="table-wrap" th:if="${!#lists.isEmpty(pageData.items)}"><table class="data-table catalog-table"><thead><tr><th scope="col" th:text="${catalog.key == 'results' ? 'Học viên và bài thi' : 'Nội dung'}"></th><th scope="col">Kỹ năng</th><th scope="col" th:text="${catalog.key == 'results' ? 'CEFR ước lượng' : 'Cấp độ'}"></th><th scope="col" th:text="${catalog.typeLabel}"></th><th scope="col">Trạng thái</th><th scope="col">Ngày cập nhật</th><th scope="col">Thao tác</th></tr></thead><tbody><tr th:each="entry : ${pageData.items}"><td th:attr="data-label=${catalog.key == 'results' ? 'Học viên và bài thi' : 'Nội dung'}"><strong th:text="${entry.title}"></strong><p class="catalog-row-description" th:if="${catalog.key == 'results'}" th:text="${entry.subtitle}"></p></td><td data-label="Kỹ năng" th:text="${entry.skill}"></td><td th:attr="data-label=${catalog.key == 'results' ? 'CEFR ước lượng' : 'Cấp độ'}" th:text="${entry.level}"></td><td th:attr="data-label=${catalog.typeLabel}" th:text="${entry.kind}"></td><td data-label="Trạng thái"><span class="badge" th:classappend="${entry.status == 'PUBLISHED' or entry.status == 'COMPLETED'} ? 'badge-success'" th:text="${entry.statusLabel}"></span></td><td data-label="Ngày cập nhật" th:text="${entry.date}"></td><td data-label="Thao tác"><div class="catalog-table-actions"><a th:href="@{${catalog.baseUrl() + '/' + entry.id}}">Xem chi tiết</a><a th:if="${catalog.editable()}" th:href="@{${catalog.baseUrl() + '/' + entry.id + '/edit'}}">Chỉnh sửa</a></div></td></tr></tbody></table></div>
-        <div class="empty-box" th:if="${#lists.isEmpty(pageData.items)}"><div th:replace="~{fragments/navi :: navi('empty', 'Navi đang chờ nội dung mới')}"></div><h2>Không tìm thấy nội dung phù hợp</h2><p>Thử từ khóa hoặc bộ lọc khác.</p><a class="button button-secondary" th:href="@{${catalog.baseUrl()}}">Xem tất cả</a></div>
-        <nav class="pagination catalog-pagination" th:if="${pageData.totalPages > 1}" aria-label="Phân trang nội dung">
-            <a class="page-link" th:classappend="${pageData.page == 0 ? 'disabled' : ''}" th:href="@{${catalog.baseUrl()}(page=${pageData.page - 1},size=${pageData.size},q=${q},skill=${selectedSkill},status=${selectedStatus},kind=${selectedKind})}">Trang trước</a>
-            <div class="pagination-pages"><a class="page-link" th:each="number : ${#numbers.sequence(0, pageData.totalPages - 1)}" th:classappend="${number == pageData.page ? 'active' : ''}" th:href="@{${catalog.baseUrl()}(page=${number},size=${pageData.size},q=${q},skill=${selectedSkill},status=${selectedStatus},kind=${selectedKind})}" th:text="${number + 1}"></a></div>
-            <a class="page-link" th:classappend="${pageData.page + 1 >= pageData.totalPages ? 'disabled' : ''}" th:href="@{${catalog.baseUrl()}(page=${pageData.page + 1},size=${pageData.size},q=${q},skill=${selectedSkill},status=${selectedStatus},kind=${selectedKind})}">Trang sau</a>
+        <div class="section-title-row"
+          ><h2
+            th:text="${catalog.key == 'results' ? 'Lịch sử lượt thi' : 'Danh sách ' + catalog.singular}"
+          ></h2
+          ><span class="muted" th:text="|${pageData.totalItems} kết quả|"></span
+        ></div>
+        <div class="table-wrap" th:if="${!#lists.isEmpty(pageData.items)}">
+          <table class="data-table catalog-table">
+            <thead>
+              <tr>
+                <th
+                  scope="col"
+                  th:text="${catalog.key == 'results' ? 'Học viên và bài thi' : 'Nội dung'}"
+                ></th>
+                <th scope="col">Kỹ năng</th>
+                <th
+                  scope="col"
+                  th:text="${catalog.key == 'results' ? 'CEFR ước lượng' : 'Cấp độ'}"
+                ></th>
+                <th scope="col" th:text="${catalog.typeLabel}"></th>
+                <th scope="col">Trạng thái</th>
+                <th scope="col">Ngày cập nhật</th>
+                <th scope="col">Thao tác</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr th:each="entry : ${pageData.items}">
+                <td
+                  th:attr="data-label=${catalog.key == 'results' ? 'Học viên và bài thi' : 'Nội dung'}"
+                  ><strong th:text="${entry.title}"></strong>
+                  <p
+                    class="catalog-row-description"
+                    th:if="${catalog.key == 'results'}"
+                    th:text="${entry.subtitle}"
+                  ></p
+                ></td>
+                <td data-label="Kỹ năng" th:text="${entry.skill}"></td>
+                <td
+                  th:attr="data-label=${catalog.key == 'results' ? 'CEFR ước lượng' : 'Cấp độ'}"
+                  th:text="${entry.level}"
+                ></td>
+                <td th:attr="data-label=${catalog.typeLabel}" th:text="${entry.kind}"></td>
+                <td data-label="Trạng thái"
+                  ><span
+                    class="badge"
+                    th:classappend="${entry.status == 'PUBLISHED' or entry.status == 'COMPLETED'} ? 'badge-success'"
+                    th:text="${entry.statusLabel}"
+                  ></span
+                ></td>
+                <td data-label="Ngày cập nhật" th:text="${entry.date}"></td>
+                <td data-label="Thao tác">
+                  <div class="catalog-table-actions"
+                    ><a th:href="@{${catalog.baseUrl() + '/' + entry.id}}">Xem chi tiết</a
+                    ><a
+                      th:if="${catalog.editable()}"
+                      th:href="@{${catalog.baseUrl() + '/' + entry.id + '/edit'}}"
+                      >Chỉnh sửa</a
+                    ></div
+                  >
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="empty-box" th:if="${#lists.isEmpty(pageData.items)}">
+          <div th:replace="~{fragments/navi :: navi('empty', 'Navi đang chờ nội dung mới')}"></div>
+          <h2>Không tìm thấy nội dung phù hợp</h2>
+          <p>Thử từ khóa hoặc bộ lọc khác.</p
+          ><a class="button button-secondary" th:href="@{${catalog.baseUrl()}}">Xem tất cả</a></div
+        >
+        <nav
+          class="pagination catalog-pagination"
+          th:if="${pageData.totalPages > 1}"
+          aria-label="Phân trang nội dung"
+        >
+          <a
+            class="page-link"
+            th:classappend="${pageData.page == 0 ? 'disabled' : ''}"
+            th:href="@{${catalog.baseUrl()}(page=${pageData.page - 1},size=${pageData.size},q=${q},skill=${selectedSkill},status=${selectedStatus},kind=${selectedKind})}"
+            >Trang trước</a
+          >
+          <div class="pagination-pages"
+            ><a
+              class="page-link"
+              th:each="number : ${#numbers.sequence(0, pageData.totalPages - 1)}"
+              th:classappend="${number == pageData.page ? 'active' : ''}"
+              th:href="@{${catalog.baseUrl()}(page=${number},size=${pageData.size},q=${q},skill=${selectedSkill},status=${selectedStatus},kind=${selectedKind})}"
+              th:text="${number + 1}"
+            ></a
+          ></div>
+          <a
+            class="page-link"
+            th:classappend="${pageData.page + 1 >= pageData.totalPages ? 'disabled' : ''}"
+            th:href="@{${catalog.baseUrl()}(page=${pageData.page + 1},size=${pageData.size},q=${q},skill=${selectedSkill},status=${selectedStatus},kind=${selectedKind})}"
+            >Trang sau</a
+          >
         </nav>
-    </main>
-</div>
-<div th:replace="~{fragments/footer :: footer}"></div>
-</body>
+      </main>
+    </div>
+    <div th:replace="~{fragments/footer :: footer}"></div>
+  </body>
 </html>

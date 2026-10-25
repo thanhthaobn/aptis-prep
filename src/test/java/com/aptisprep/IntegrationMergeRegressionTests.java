@@ -12,50 +12,35 @@ import com.aptisprep.repository.MockExamQuestionRepository;
 import com.aptisprep.repository.MockExamRepository;
 import com.aptisprep.repository.MockExamSectionRepository;
 import com.aptisprep.service.student.StudentExamCatalogService;
-
-import org.flywaydb.core.api.MigrationVersion;
-import org.junit.jupiter.api.Test;
-import org.springframework.test.util.ReflectionTestUtils;
-
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import org.junit.jupiter.api.Test;
+import org.springframework.test.util.ReflectionTestUtils;
 
 class IntegrationMergeRegressionTests {
     @Test
-    void migrationVersionsAreUniqueIncludingFlywayNumericNormalization() throws Exception {
-        var versions = new HashSet<MigrationVersion>();
-        try (var paths = Files.list(Path.of("src/main/resources/db/migration"))) {
-            for (Path path :
-                    paths.filter(file -> file.getFileName().toString().startsWith("V")).toList()) {
-                String name = path.getFileName().toString();
-                var version = MigrationVersion.fromVersion(name.substring(1, name.indexOf("__")));
-                assertTrue(versions.add(version), "Duplicate migration version: " + name);
-            }
-        }
-        assertTrue(
-                Files.exists(
-                        Path.of(
-                                "src/main/resources/db/migration/V026__seed_tram_exam_catalog.sql")));
-        assertTrue(
-                Files.exists(
-                        Path.of(
-                                "src/main/resources/db/migration/V028__add_reading_passages.sql")));
-        assertTrue(
-                Files.exists(
-                        Path.of(
-                                "src/main/resources/db/migration/V032__lesson_submission_history.sql")));
-        assertTrue(
-                Files.exists(
-                        Path.of(
-                                "src/main/resources/db/migration/V034__simple_lesson_release_rules.sql")));
-        assertTrue(Files.exists(Path.of(
-                "src/main/resources/db/migration/V039__lesson_playback_verification_and_six_options.sql")));
-        assertTrue(Files.exists(Path.of(
-                "src/main/resources/db/migration/V040__protect_ai_processing_claims.sql")));
+    void currentSchemaIsExplicitAndContainsNoSeedRowsOrMigrationHistory() throws Exception {
+        String ddl = Files.readString(Path.of("database/schema-current.sql"));
+        assertEquals(
+                39,
+                java.util.regex.Pattern.compile(
+                                "CREATE TABLE", java.util.regex.Pattern.CASE_INSENSITIVE)
+                        .matcher(ddl)
+                        .results()
+                        .count());
+        assertTrue(ddl.contains("Schema installation requires an empty database"));
+        assertTrue(ddl.contains("BEGIN TRANSACTION"));
+        assertFalse(ddl.toUpperCase().contains("INSERT INTO"));
+        assertFalse(ddl.contains("flyway_schema_history"));
+        assertFalse(ddl.contains("CREATE DATABASE"));
+        String settings = Files.readString(Path.of("src/main/resources/application.properties"));
+        assertTrue(settings.contains("spring.jpa.hibernate.ddl-auto=validate"));
+        assertTrue(settings.contains("spring.sql.init.mode=never"));
+        assertTrue(settings.contains("spring.datasource.password=${DB_PASSWORD}"));
+        assertFalse(settings.contains("app.demo-data.enabled"));
     }
 
     @Test

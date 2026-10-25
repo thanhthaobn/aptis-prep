@@ -1,18 +1,63 @@
-<!DOCTYPE html>
-<html lang="vi" xmlns:th="http://www.thymeleaf.org"><body>
-<div th:fragment="lessonChecks(heading)" class="lesson-knowledge-check" th:if="${!#lists.isEmpty(questions) or !#lists.isEmpty(attempts)}">
-    <th:block th:if="${!#lists.isEmpty(questions)}"><h3 th:text="|${heading} (${#lists.size(questions)} câu)|"></h3><p>Chọn đáp án rồi nộp để xem giải thích. Cần đạt ít nhất 60% để hoàn thành phần kiểm tra.</p></th:block>
-    <form th:if="${!#lists.isEmpty(questions)}" method="post" th:action="@{/student/lessons/{id}/check(id=${lesson.id})}">
-        <fieldset class="lesson-question" th:each="question,stat:${questions}"><legend th:text="|${stat.count}. ${question.prompt()}|"></legend><label th:each="option,opt:${question.options()}"><input type="radio" th:name="|q${question.id()}|" th:value="${opt.index}" required><span th:text="${option}"></span></label></fieldset>
+<!doctype html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org"
+  ><body>
+    <div
+      th:fragment="lessonChecks(heading)"
+      class="lesson-knowledge-check"
+      th:if="${!#lists.isEmpty(questions) or !#lists.isEmpty(attempts)}"
+    >
+      <th:block th:if="${!#lists.isEmpty(questions)}"
+        ><h3 th:text="|${heading} (${#lists.size(questions)} câu)|"></h3
+        ><p
+          >Chọn đáp án rồi nộp để xem giải thích. Cần đạt ít nhất 60% để hoàn thành phần kiểm
+          tra.</p
+        ></th:block
+      >
+      <form
+        th:if="${!#lists.isEmpty(questions)}"
+        method="post"
+        th:action="@{/student/lessons/{id}/check(id=${lesson.id})}"
+      >
+        <fieldset class="lesson-question" th:each="question,stat:${questions}"
+          ><legend th:text="|${stat.count}. ${question.prompt()}|"></legend
+          ><label th:each="option,opt:${question.options()}"
+            ><input
+              type="radio"
+              th:name="|q${question.id()}|"
+              th:value="${opt.index}"
+              required /><span th:text="${option}"></span></label
+        ></fieldset>
         <button class="button" type="submit">Kiểm tra đáp án</button>
-    </form>
-    <div th:if="${feedback}" class="lesson-feedback" role="status"><h3 th:text="|Kết quả: ${feedback.score()}/${feedback.total()} câu đúng|"></h3><article th:each="answer:${feedback.answers()}"><strong th:text="${answer.right()?'Đúng':'Chưa đúng'}"></strong><p th:text="${answer.prompt()}"></p><p th:text="|Bạn chọn: ${answer.selected()}|"></p><p th:text="|Đáp án: ${answer.correct()}|"></p><p th:text="${answer.explanation()}"></p></article></div>
-    <details class="lesson-attempts" th:if="${!#lists.isEmpty(attempts)}"><summary th:text="|Lịch sử làm bài (${#lists.size(attempts)} lần)|"></summary>
-        <details class="lesson-work-history" th:each="attempt:${attempts}"><summary th:text="|${#temporals.format(attempt.submittedAt(),'dd/MM/yyyy HH:mm:ss')} — ${attempt.score()}/${attempt.total()} câu đúng|"></summary>
-            <div th:replace="~{fragments/lesson-history-context :: context(${attempt.context},${'/student/lessons/'+lesson.id+'/history/attempts/'+attempt.id+'/media'})}"></div>
-            <p th:if="${#lists.isEmpty(attempt.answers)}">Lượt cũ chỉ có điểm và mã đáp án. Chưa lưu nội dung câu hỏi tại thời điểm làm bài.</p>
-            <article th:each="answer:${attempt.answers}"><strong th:text="${answer.prompt}"></strong><ol type="A" th:if="${answer.options!=null}"><li th:each="option:${answer.options}" th:text="${option}"></li></ol><p th:text="|Bạn chọn: ${answer.selected}|"></p><p th:text="|Đáp án đúng: ${answer.correct}|"></p><p th:text="${answer.explanation}"></p></article>
+      </form>
+      <div th:if="${feedback}" class="lesson-feedback" role="status"
+        ><h3 th:text="|Kết quả: ${feedback.score()}/${feedback.total()} câu đúng|"></h3
+        ><article th:each="answer:${feedback.answers()}"
+          ><strong th:text="${answer.right()?'Đúng':'Chưa đúng'}"></strong
+          ><p th:text="${answer.prompt()}"></p><p th:text="|Bạn chọn: ${answer.selected()}|"></p
+          ><p th:text="|Đáp án: ${answer.correct()}|"></p
+          ><p th:text="${answer.explanation()}"></p></article
+      ></div>
+      <details class="lesson-attempts" th:if="${!#lists.isEmpty(attempts)}"
+        ><summary th:text="|Lịch sử làm bài (${#lists.size(attempts)} lần)|"></summary>
+        <details class="lesson-work-history" th:each="attempt:${attempts}"
+          ><summary
+            th:text="|${#temporals.format(attempt.submittedAt(),'dd/MM/yyyy HH:mm:ss')} — ${attempt.score()}/${attempt.total()} câu đúng|"
+          ></summary>
+          <div
+            th:replace="~{fragments/lesson-history-context :: context(${attempt.context},${'/student/lessons/'+lesson.id+'/history/attempts/'+attempt.id+'/media'})}"
+          ></div>
+          <p th:if="${#lists.isEmpty(attempt.answers)}"
+            >Lượt cũ chỉ có điểm và mã đáp án. Chưa lưu nội dung câu hỏi tại thời điểm làm bài.</p
+          >
+          <article th:each="answer:${attempt.answers}"
+            ><strong th:text="${answer.prompt}"></strong
+            ><ol type="A" th:if="${answer.options!=null}"
+              ><li th:each="option:${answer.options}" th:text="${option}"></li></ol
+            ><p th:text="|Bạn chọn: ${answer.selected}|"></p
+            ><p th:text="|Đáp án đúng: ${answer.correct}|"></p
+            ><p th:text="${answer.explanation}"></p
+          ></article>
         </details>
-    </details>
-</div>
-</body></html>
+      </details>
+    </div> </body
+></html>

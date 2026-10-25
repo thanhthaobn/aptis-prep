@@ -1,8 +1,6 @@
 package com.aptisprep.service.learning;
 
 import static org.assertj.core.api.Assertions.*;
-import static org.hamcrest.Matchers.containsString;
-import static org.hamcrest.Matchers.not;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -12,7 +10,6 @@ import com.aptisprep.entity.*;
 import com.aptisprep.enums.*;
 import com.aptisprep.exception.BusinessRuleException;
 import com.aptisprep.repository.*;
-
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -163,8 +160,11 @@ class SimpleLessonRulesTests {
                 .contains("HIDDEN_MODEL")
                 .doesNotContain("HIDDEN_TRANSCRIPT");
         // Fixture for this release-policy test; playback verification has its own service tests.
-        var verified = new LessonEngagement(); verified.setUserId(u.getId()); verified.setLessonId(l.getId());
-        verified.setAudioPlayedAt(java.time.LocalDateTime.now()); verified.setVerifiedAudioPath(l.getAudioPath());
+        var verified = new LessonEngagement();
+        verified.setUserId(u.getId());
+        verified.setLessonId(l.getId());
+        verified.setAudioPlayedAt(java.time.LocalDateTime.now());
+        verified.setVerifiedAudioPath(l.getAudioPath());
         em.persist(verified);
         assertThat(page(l.getId(), u.getEmail())).contains("HIDDEN_TRANSCRIPT");
         var edit = lessons.form(l.getId());
@@ -397,13 +397,10 @@ class SimpleLessonRulesTests {
                         .andReturn()
                         .getResponse()
                         .getContentAsString(java.nio.charset.StandardCharsets.UTF_8);
-        assertThat(html)
-                .contains(
-                        "Đã hoàn thành 1/2 bài bắt buộc.",
-                        "Còn 1 bài cần hoàn thành");
+        assertThat(html).contains("Đã hoàn thành 1/2 bài bắt buộc.", "Còn 1 bài cần hoàn thành");
         var missing =
                 java.util.regex.Pattern.compile(
-                                "<ul class=\"checkpoint-missing-list\">(.*?)</ul>",
+                                "<ul\\s+class=\"checkpoint-missing-list\"\\s*>(.*?)</ul\\s*>",
                                 java.util.regex.Pattern.DOTALL)
                         .matcher(html);
         assertThat(missing.find()).isTrue();

@@ -2,7 +2,6 @@ package com.aptisprep.entity;
 
 import com.aptisprep.enums.RecordStatus;
 import jakarta.persistence.*;
-
 import java.time.LocalDateTime;
 
 @Entity
@@ -11,21 +10,28 @@ public class Certificate {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
+
     @Column(nullable = false, length = 255)
     private String name;
+
     @Column(nullable = false, unique = true, length = 50)
     private String code;
+
     @Lob
     @Column(columnDefinition = "NVARCHAR(MAX)")
     private String description;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 30)
     private RecordStatus status;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "created_by")
     private User createdBy;
+
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
+
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 

@@ -1,5 +1,9 @@
 package com.aptisprep.service.account;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
+
 import com.aptisprep.entity.User;
 import com.aptisprep.entity.UserSkillProfile;
 import com.aptisprep.enums.Role;
@@ -14,12 +18,9 @@ import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.springframework.beans.factory.ObjectProvider;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.*;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.beans.factory.ObjectProvider;
 
 @ExtendWith(MockitoExtension.class)
 class AccountAccessServiceTests {
@@ -37,22 +38,53 @@ class AccountAccessServiceTests {
 
     @BeforeEach
     void setUp() {
-        student = new User(); student.setId(1); student.setRole(Role.STUDENT); student.setStatus(UserStatus.ACTIVE);
-        profile = new UserSkillProfile(); profile.setUser(student); profile.setSkill("READING");
-        service = new AccountAccessService(users, goals, goalSkills, profiles, applications, attemptProvider);
+        student = new User();
+        student.setId(1);
+        student.setRole(Role.STUDENT);
+        student.setStatus(UserStatus.ACTIVE);
+        profile = new UserSkillProfile();
+        profile.setUser(student);
+        profile.setSkill("READING");
+        service =
+                new AccountAccessService(
+                        users, goals, goalSkills, profiles, applications, attemptProvider);
         lenient().when(users.findById(1)).thenReturn(Optional.of(student));
         when(users.findByIdForUpdate(1)).thenReturn(Optional.of(student));
         when(attemptProvider.getIfAvailable()).thenReturn(attempts);
-        lenient().when(profiles.findByUserIdAndSkill(1, "READING")).thenReturn(Optional.of(profile));
-        lenient().when(applications.existsByUserIdAndAttemptIdAndSkill(anyInt(), anyInt(), anyString())).thenReturn(false);
-        lenient().when(profiles.save(any(UserSkillProfile.class))).thenAnswer(invocation -> invocation.getArgument(0));
-        lenient().when(applications.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
+        lenient()
+                .when(profiles.findByUserIdAndSkill(1, "READING"))
+                .thenReturn(Optional.of(profile));
+        lenient()
+                .when(
+                        applications.existsByUserIdAndAttemptIdAndSkill(
+                                anyInt(), anyInt(), anyString()))
+                .thenReturn(false);
+        lenient()
+                .when(profiles.save(any(UserSkillProfile.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+        lenient()
+                .when(applications.save(any()))
+                .thenAnswer(invocation -> invocation.getArgument(0));
     }
 
     @Test
     void olderPlacementCannotOverwriteNewerPlacement() {
-        when(attempts.result(eq(1), eq(20))).thenReturn(result(20, "PLACEMENT", "B2", Instant.parse("2026-01-02T00:00:00Z"), false));
-        when(attempts.result(eq(1), eq(10))).thenReturn(result(10, "PLACEMENT", "B1", Instant.parse("2026-01-01T00:00:00Z"), false));
+        when(attempts.result(eq(1), eq(20)))
+                .thenReturn(
+                        result(
+                                20,
+                                "PLACEMENT",
+                                "B2",
+                                Instant.parse("2026-01-02T00:00:00Z"),
+                                false));
+        when(attempts.result(eq(1), eq(10)))
+                .thenReturn(
+                        result(
+                                10,
+                                "PLACEMENT",
+                                "B1",
+                                Instant.parse("2026-01-01T00:00:00Z"),
+                                false));
 
         service.applyAssessment(1, 20);
         service.applyAssessment(1, 10);
@@ -64,9 +96,30 @@ class AccountAccessServiceTests {
 
     @Test
     void checkpointFloorProtectsLaterPlacementAndFailedCheckpointIsClaimed() {
-        when(attempts.result(eq(1), eq(30))).thenReturn(result(30, "CHECKPOINT", "B2", Instant.parse("2026-01-02T00:00:00Z"), true));
-        when(attempts.result(eq(1), eq(40))).thenReturn(result(40, "CHECKPOINT", "C1", Instant.parse("2026-01-03T00:00:00Z"), false));
-        when(attempts.result(eq(1), eq(50))).thenReturn(result(50, "PLACEMENT", "B1", Instant.parse("2026-01-04T00:00:00Z"), false));
+        when(attempts.result(eq(1), eq(30)))
+                .thenReturn(
+                        result(
+                                30,
+                                "CHECKPOINT",
+                                "B2",
+                                Instant.parse("2026-01-02T00:00:00Z"),
+                                true));
+        when(attempts.result(eq(1), eq(40)))
+                .thenReturn(
+                        result(
+                                40,
+                                "CHECKPOINT",
+                                "C1",
+                                Instant.parse("2026-01-03T00:00:00Z"),
+                                false));
+        when(attempts.result(eq(1), eq(50)))
+                .thenReturn(
+                        result(
+                                50,
+                                "PLACEMENT",
+                                "B1",
+                                Instant.parse("2026-01-04T00:00:00Z"),
+                                false));
 
         service.applyAssessment(1, 30);
         service.applyAssessment(1, 40);
@@ -83,7 +136,14 @@ class AccountAccessServiceTests {
     @Test
     void failedFirstCheckpointDoesNotCreateProfileWithNullCurrentLevel() {
         when(profiles.findByUserIdAndSkill(1, "READING")).thenReturn(Optional.empty());
-        when(attempts.result(eq(1), eq(45))).thenReturn(result(45, "CHECKPOINT", "B1", Instant.parse("2026-01-05T00:00:00Z"), false));
+        when(attempts.result(eq(1), eq(45)))
+                .thenReturn(
+                        result(
+                                45,
+                                "CHECKPOINT",
+                                "B1",
+                                Instant.parse("2026-01-05T00:00:00Z"),
+                                false));
 
         service.applyAssessment(1, 45);
 
@@ -94,7 +154,14 @@ class AccountAccessServiceTests {
     @Test
     void alreadyClaimedAttemptDoesNotWriteProfileAgain() {
         when(applications.existsByUserIdAndAttemptIdAndSkill(1, 20, "READING")).thenReturn(true);
-        when(attempts.result(eq(1), eq(20))).thenReturn(result(20, "PLACEMENT", "B2", Instant.parse("2026-01-02T00:00:00Z"), false));
+        when(attempts.result(eq(1), eq(20)))
+                .thenReturn(
+                        result(
+                                20,
+                                "PLACEMENT",
+                                "B2",
+                                Instant.parse("2026-01-02T00:00:00Z"),
+                                false));
 
         service.applyAssessment(1, 20);
 
@@ -104,8 +171,22 @@ class AccountAccessServiceTests {
 
     @Test
     void olderHigherCheckpointRaisesMonotonicFloorWithoutLoweringPlacement() {
-        when(attempts.result(eq(1), eq(60))).thenReturn(result(60, "CHECKPOINT", "B1", Instant.parse("2026-01-02T00:00:00Z"), true));
-        when(attempts.result(eq(1), eq(70))).thenReturn(result(70, "CHECKPOINT", "B2", Instant.parse("2026-01-01T00:00:00Z"), true));
+        when(attempts.result(eq(1), eq(60)))
+                .thenReturn(
+                        result(
+                                60,
+                                "CHECKPOINT",
+                                "B1",
+                                Instant.parse("2026-01-02T00:00:00Z"),
+                                true));
+        when(attempts.result(eq(1), eq(70)))
+                .thenReturn(
+                        result(
+                                70,
+                                "CHECKPOINT",
+                                "B2",
+                                Instant.parse("2026-01-01T00:00:00Z"),
+                                true));
 
         service.applyAssessment(1, 60);
         service.applyAssessment(1, 70);
@@ -114,12 +195,23 @@ class AccountAccessServiceTests {
         assertEquals(70, profile.getCheckpointSourceAttemptId());
         assertEquals("B2", profile.getCurrentLevel());
         assertEquals(60, profile.getCheckpointLastAttemptId());
-        assertEquals(java.time.LocalDateTime.of(2026, 1, 2, 0, 0), profile.getCheckpointLastSubmittedAt());
+        assertEquals(
+                java.time.LocalDateTime.of(2026, 1, 2, 0, 0),
+                profile.getCheckpointLastSubmittedAt());
     }
 
-    private AttemptResult result(int attemptId, String type, String level, Instant submittedAt, boolean passed) {
-        SkillResult skill = new SkillResult("READING", new BigDecimal("30"), new BigDecimal("30"), level,
-                "COMPLETED", "ok", passed);
-        return new AttemptResult(attemptId, 1, 100, type, 1, "COMPLETED", List.of(skill), submittedAt);
+    private AttemptResult result(
+            int attemptId, String type, String level, Instant submittedAt, boolean passed) {
+        SkillResult skill =
+                new SkillResult(
+                        "READING",
+                        new BigDecimal("30"),
+                        new BigDecimal("30"),
+                        level,
+                        "COMPLETED",
+                        "ok",
+                        passed);
+        return new AttemptResult(
+                attemptId, 1, 100, type, 1, "COMPLETED", List.of(skill), submittedAt);
     }
 }

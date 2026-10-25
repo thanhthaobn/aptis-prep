@@ -1,5 +1,6 @@
 package com.aptisprep.service.grading;
 
+import com.aptisprep.entity.AiAssessment;
 import com.aptisprep.entity.AiAssessmentJob;
 import com.aptisprep.entity.ExamAttemptEntity;
 import com.aptisprep.entity.ExamSkillResultEntity;
@@ -27,13 +28,7 @@ import com.aptisprep.service.contract.IntegrationModels.LockedAnswer;
 import com.aptisprep.service.contract.ScoringPolicyContract;
 import com.aptisprep.service.contract.ScoringPolicyContract.SkillScore;
 import com.aptisprep.service.exam.AttemptOutboxService;
-
-import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.PlatformTransactionManager;
-import org.springframework.transaction.annotation.Transactional;
-import org.springframework.transaction.support.TransactionTemplate;
-
+import com.aptisprep.service.scoring.CheckpointScorePolicy;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDateTime;
@@ -41,12 +36,17 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
+import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionTemplate;
 
 /** Owner: Thông. Combines accepted grading components and owns the final attempt state. */
 @Service
 public class AttemptFinalizationService {
-    private static final int MAX_AI_RETRIES = 3;
     private final ExamAttemptRepository attempts;
     private final ExamSkillResultRepository skillResults;
     private final MockExamRepository exams;
@@ -229,7 +229,7 @@ public class AttemptFinalizationService {
                                 value ->
                                         value.getState() == AiAssessmentState.COMPLETED
                                                 && value.getScore() != null)
-                        .map(com.aptisprep.entity.AiAssessment::getScore)
+                        .map(AiAssessment::getScore)
                         .toList();
         // A restart may lose several callbacks after their assessments were already saved.
         // Synchronize every accepted answer before completing the aggregate, not just this event's
@@ -318,7 +318,7 @@ public class AttemptFinalizationService {
         }
         result.setScaleScore(scoring.scale(schemeId, question.getSkill(), raw));
         result.setCefrLevel(
-                com.aptisprep.service.scoring.CheckpointScorePolicy.confirmedLevel(
+                CheckpointScorePolicy.confirmedLevel(
                         exam(attempt).getExamType(),
                         exam(attempt).getTargetLevel(),
                         scoring.estimatedLevel(
@@ -470,7 +470,7 @@ public class AttemptFinalizationService {
                                 attempt.getRubricVersion(),
                                 AiJobState.ERROR)
                         .stream()
-                        .filter(job -> job.getRetryCount() < MAX_AI_RETRIES)
+                        .filter(job -> job.getRetryCount() < AiProcessingPolicy.MAX_ATTEMPTS)
                         .filter(job -> isRetryableExamJob(job, attemptId))
                         .toList();
         if (failed.isEmpty())
@@ -515,8 +515,7 @@ public class AttemptFinalizationService {
                 .count();
     }
 
-    private java.util.Optional<com.aptisprep.entity.AiAssessment> acceptedAssessment(
-            AiAssessmentJob job) {
+    private Optional<AiAssessment> acceptedAssessment(AiAssessmentJob job) {
         return assessments
                 .findFirstByJobIdAndAnswerVersionOrderByIdDesc(job.getId(), job.getAnswerVersion())
                 .filter(

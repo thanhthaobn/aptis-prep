@@ -1,29 +1,38 @@
 package com.aptisprep.entity;
 
 import jakarta.persistence.*;
-
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "lesson_responses", uniqueConstraints = @UniqueConstraint(columnNames = {"user_id", "lesson_id"}))
+@Table(
+        name = "lesson_responses",
+        uniqueConstraints = @UniqueConstraint(columnNames = {"user_id", "lesson_id"}))
 public class LessonResponse {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
+
     @Column(name = "user_id", nullable = false)
     private Integer userId;
+
     @Column(name = "lesson_id", nullable = false)
     private Integer lessonId;
+
     @Column(name = "response_text", columnDefinition = "nvarchar(max)")
     private String text;
+
     @Column(name = "audio_path", length = 500)
     private String audioPath;
+
     @Column(name = "audio_name", length = 255)
     private String audioName;
+
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
+
     @Column(name = "response_version", nullable = false)
     private Integer responseVersion = 1;
+
     @Column(name = "assessment_key", length = 255)
     private String assessmentKey;
 

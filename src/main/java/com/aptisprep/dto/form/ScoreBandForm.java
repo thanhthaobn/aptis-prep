@@ -4,19 +4,22 @@ import jakarta.validation.constraints.DecimalMax;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-
 import java.math.BigDecimal;
 
 public class ScoreBandForm {
     private Integer id;
+
     @NotBlank(message = "Phải chọn kỹ năng")
     private String skill;
+
     @NotBlank(message = "Phải chọn CEFR")
     private String cefrLevel;
+
     @NotNull(message = "Điểm thấp nhất không được để trống")
     @DecimalMin(value = "0.00", message = "Điểm phải từ 0 đến 50")
     @DecimalMax(value = "50.00", message = "Điểm phải từ 0 đến 50")
     private BigDecimal minScore;
+
     @NotNull(message = "Điểm cao nhất không được để trống")
     @DecimalMin(value = "0.00", message = "Điểm phải từ 0 đến 50")
     @DecimalMax(value = "50.00", message = "Điểm phải từ 0 đến 50")

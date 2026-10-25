@@ -1,1 +1,50 @@
-<!DOCTYPE html><html lang="vi" xmlns:th="http://www.thymeleaf.org"><head th:replace="~{fragments/head :: head('Chi tiết kết quả')}"></head><body class="admin-theme"><div th:replace="~{fragments/navbar :: navbar}"></div><div class="container app-shell"><div th:replace="~{fragments/admin-sidebar :: adminSidebar('results')}"></div><main class="app-main student-content attempt-result-page"><a class="lesson-back" th:href="@{/admin/results}">← Quay lại kết quả</a><header class="page-header result-hero"><div><p class="eyebrow" th:text="${@resultLabels.examType(attemptResult.examType)}"></p><h1 th:text="${attemptResult.examTitle}"></h1><p th:text="|Mã lượt thi: ${attemptResult.attemptId}|"></p></div><span class="result-status" th:text="${@resultLabels.state(attemptResult.state)}"></span></header><section class="dashboard-panel result-overall-panel"><div><span>Điểm tổng</span><strong th:text="${attemptResult.finalScaleScore==null?'—':attemptResult.finalScaleScore}"></strong></div><div><span>CEFR</span><strong th:text="${attemptResult.overallCefr==null?'—':attemptResult.overallCefr}"></strong></div></section><section class="result-skill-grid"><article class="dashboard-panel result-skill-card" th:each="skill:${attemptResult.skills}"><div class="result-skill-heading"><h2 th:text="${#strings.replace(skill.skill,'_',' ')}"></h2><strong th:text="${skill.estimatedLevel==null?'—':skill.estimatedLevel}"></strong></div><dl class="result-score-list"><div><dt>Điểm thô</dt><dd th:text="${skill.rawScore==null?'Chưa có':skill.rawScore}"></dd></div><div><dt>Điểm quy đổi</dt><dd th:text="${skill.scaleScore==null?'Chưa có':skill.scaleScore}"></dd></div></dl><div class="result-feedback" th:if="${skill.feedback!=null}"><h3>Nhận xét</h3><p th:text="${skill.feedback}"></p></div></article></section></main></div><div th:replace="~{fragments/footer :: footer}"></div></body></html>
+<!doctype html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org"
+  ><head th:replace="~{fragments/head :: head('Chi tiết kết quả')}"></head
+  ><body class="admin-theme"
+    ><div th:replace="~{fragments/navbar :: navbar}"></div
+    ><div class="container app-shell"
+      ><div th:replace="~{fragments/admin-sidebar :: adminSidebar('results')}"></div
+      ><main class="app-main student-content attempt-result-page"
+        ><a class="lesson-back" th:href="@{/admin/results}">← Quay lại kết quả</a
+        ><header class="page-header result-hero"
+          ><div
+            ><p class="eyebrow" th:text="${@resultLabels.examType(attemptResult.examType)}"></p
+            ><h1 th:text="${attemptResult.examTitle}"></h1
+            ><p th:text="|Mã lượt thi: ${attemptResult.attemptId}|"></p></div
+          ><span
+            class="result-status"
+            th:text="${@resultLabels.state(attemptResult.state)}"
+          ></span></header
+        ><section class="dashboard-panel result-overall-panel"
+          ><div
+            ><span>Điểm tổng</span
+            ><strong
+              th:text="${attemptResult.finalScaleScore==null?'—':attemptResult.finalScaleScore}"
+            ></strong></div
+          ><div
+            ><span>CEFR</span
+            ><strong
+              th:text="${attemptResult.overallCefr==null?'—':attemptResult.overallCefr}"
+            ></strong></div></section
+        ><section class="result-skill-grid"
+          ><article
+            class="dashboard-panel result-skill-card"
+            th:each="skill:${attemptResult.skills}"
+            ><div class="result-skill-heading"
+              ><h2 th:text="${#strings.replace(skill.skill,'_',' ')}"></h2
+              ><strong
+                th:text="${skill.estimatedLevel==null?'—':skill.estimatedLevel}"
+              ></strong></div
+            ><dl class="result-score-list"
+              ><div
+                ><dt>Điểm thô</dt
+                ><dd th:text="${skill.rawScore==null?'Chưa có':skill.rawScore}"></dd></div
+              ><div
+                ><dt>Điểm quy đổi</dt
+                ><dd th:text="${skill.scaleScore==null?'Chưa có':skill.scaleScore}"></dd></div></dl
+            ><div class="result-feedback" th:if="${skill.feedback!=null}"
+              ><h3>Nhận xét</h3
+              ><p th:text="${skill.feedback}"></p></div></article></section></main></div
+    ><div th:replace="~{fragments/footer :: footer}"></div></body
+></html>
