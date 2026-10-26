@@ -627,20 +627,29 @@ public class ExamAttemptService implements ExamAttemptContract {
         attempts.save(attempt);
         return true;
     }
+
     private void validateExamForStart(MockExamEntity exam, List<MockExamQuestionEntity> links) {
         Set<Integer> questionIds = new HashSet<>();
         Set<String> skills = new LinkedHashSet<>();
         for (MockExamQuestionEntity link : links) {
-            if (!questionIds.add(link.getQuestionId())) throw new BusinessRuleException("Đề thi chứa câu hỏi bị lặp");
-            QuestionEntity question = questions.findById(link.getQuestionId())
-                    .orElseThrow(() -> new BusinessRuleException("Đề thi chứa câu hỏi không tồn tại"));
+            if (!questionIds.add(link.getQuestionId()))
+                throw new BusinessRuleException("Đề thi chứa câu hỏi bị lặp");
+            QuestionEntity question =
+                    questions
+                            .findById(link.getQuestionId())
+                            .orElseThrow(
+                                    () ->
+                                            new BusinessRuleException(
+                                                    "Đề thi chứa câu hỏi không tồn tại"));
             if (!"PUBLISHED".equals(question.getStatus()))
                 throw new BusinessRuleException("Đề thi chứa câu hỏi chưa được công bố");
             skills.add(normalizeSkill(question.getSkill()));
         }
         if ("FULL_MOCK".equals(exam.getExamType())) {
-            Set<String> required = Set.of("GRAMMAR_VOCABULARY", "READING", "LISTENING", "WRITING", "SPEAKING");
-            if (!skills.containsAll(required)) throw new BusinessRuleException("Thi thử tổng hợp phải có đủ 5 kỹ năng Aptis");
+            Set<String> required =
+                    Set.of("GRAMMAR_VOCABULARY", "READING", "LISTENING", "WRITING", "SPEAKING");
+            if (!skills.containsAll(required))
+                throw new BusinessRuleException("Thi thử tổng hợp phải có đủ 5 kỹ năng Aptis");
         } else if (skills.size() != 1) {
             throw new BusinessRuleException("Đề theo kỹ năng chỉ được chứa một kỹ năng");
         }

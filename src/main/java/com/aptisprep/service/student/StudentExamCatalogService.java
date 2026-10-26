@@ -287,7 +287,8 @@ public class StudentExamCatalogService {
                         checks,
                         "Mọi câu hỏi trong đề đều đã công bố");
             if (questionById.put(link.getQuestionId(), question) != null)
-                return blocked("Đề đang chứa câu hỏi bị lặp.", checks, "Không có câu hỏi trùng trong đề");
+                return blocked(
+                        "Đề đang chứa câu hỏi bị lặp.", checks, "Không có câu hỏi trùng trong đề");
         }
         checks.add("Mọi câu hỏi trong đề đều đã công bố");
 
@@ -332,7 +333,8 @@ public class StudentExamCatalogService {
 
         if (exam.getScoringSchemeId() != null) {
             try {
-                for (String skill : skills) scoring.validatePolicy(exam.getScoringSchemeId(), skill);
+                for (String skill : skills)
+                    scoring.validatePolicy(exam.getScoringSchemeId(), skill);
             } catch (BusinessRuleException exception) {
                 return blocked(
                         exception.getMessage(), checks, "Bộ chấm điểm đã phủ đủ miền điểm CEFR");
@@ -352,7 +354,8 @@ public class StudentExamCatalogService {
                     "Checkpoint chỉ được bắt đầu từ lộ trình học.",
                     checks,
                     "Được mở từ đúng lộ trình học");
-        return new Readiness(true, "Đề đã sẵn sàng. Bạn có thể bắt đầu làm bài.", List.copyOf(checks));
+        return new Readiness(
+                true, "Đề đã sẵn sàng. Bạn có thể bắt đầu làm bài.", List.copyOf(checks));
     }
 
     private Readiness blocked(String message, List<String> checks, String missing) {
