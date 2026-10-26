@@ -8,9 +8,12 @@
   form.addEventListener('click', (event) => {
     if (event.target.closest('.remove-card,#add-card,#import-cards,#undo-remove')) dirty = true;
   });
-  document.getElementById('leave-editor').addEventListener('click', (event) => {
-    if (dirty && !window.confirm('Bạn có thay đổi chưa lưu. Rời trang và bỏ các thay đổi này?'))
-      event.preventDefault();
+  window.AppDialog.guardUnsaved(form, {
+    isDirty: () => dirty,
+    onDiscard: () => {
+      dirty = false;
+    },
+    message: 'Bạn có thay đổi chưa lưu trong bộ thẻ. Rời trang sẽ bỏ các thay đổi này.',
   });
   const message = document.getElementById('import-message');
   const editorMessage = document.getElementById('editor-message'),

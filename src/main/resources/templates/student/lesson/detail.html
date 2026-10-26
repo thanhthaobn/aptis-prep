@@ -16,7 +16,7 @@
           th:href="@{/student/learning-path/{skill}(skill=${lesson.skill})}"
           th:text="|← Quay lại lộ trình ${lesson.skill}|"
         ></a>
-        <header class="page-header">
+        <header class="page-header lesson-header">
           <div>
             <p class="eyebrow" th:text="|${lesson.skill} · ${lesson.cefrLevel}|"></p>
             <h1 th:text="${lesson.title}"></h1>
@@ -50,68 +50,69 @@
             >Flashcard của bài</a
           >
         </nav>
-        <section id="overview" class="dashboard-panel">
-          <h2>Mục tiêu bài học</h2>
-          <img
-            th:if="${lesson.imagePath!=null and lesson.material==null and (lesson.skill=='Reading' or lesson.skill=='Grammar & Vocabulary')}"
-            th:src="@{/lesson-media/{id}/image(id=${lesson.id})}"
-            alt="Hình minh họa bài học"
-            class="lesson-hero-image"
-          />
-          <p
-            class="lesson-prose"
-            th:text="${lesson.material!=null and !#strings.isEmpty(lesson.material.objectives)?lesson.material.objectives:lesson.description}"
-          ></p>
-          <span
-            class="badge"
-            th:if="${lesson.material!=null}"
-            th:text="${lesson.material.taskType}"
-          ></span>
-          <div class="lesson-flashcard-callout" th:if="${flashcardSet!=null}">
-            <div>
-              <strong th:text="${flashcardSet.title}"></strong
-              ><span>Ôn từ vựng riêng, không bắt buộc để hoàn thành bài học.</span>
-            </div>
-            <a
-              class="button button-secondary"
-              th:href="@{/student/flashcards/{id}(id=${flashcardSet.id})}"
-              >Ôn Flashcard →</a
-            >
-          </div>
-        </section>
-        <section
-          id="media"
-          class="dashboard-panel dashboard-section"
-          th:if="${videoId!=null or lesson.videoPath!=null}"
+        <div
+          class="lesson-intro"
+          th:classappend="${videoId!=null or lesson.videoPath!=null}?'lesson-intro-with-media'"
         >
-          <h2>Video hướng dẫn</h2>
-          <video
-            th:if="${lesson.videoPath!=null}"
-            class="lesson-video"
-            controls
-            preload="metadata"
-            th:src="@{/lesson-media/{id}/video(id=${lesson.id})}"
+          <section id="overview" class="dashboard-panel">
+            <h2>Mục tiêu bài học</h2>
+            <img
+              th:if="${lesson.imagePath!=null and lesson.material==null and (lesson.skill=='Reading' or lesson.skill=='Grammar & Vocabulary')}"
+              th:src="@{/lesson-media/{id}/image(id=${lesson.id})}"
+              alt="Hình minh họa bài học"
+              class="lesson-hero-image"
+            />
+            <p
+              class="lesson-prose"
+              th:text="${lesson.material!=null and !#strings.isEmpty(lesson.material.objectives)?lesson.material.objectives:lesson.description}"
+            ></p>
+            <span
+              class="badge"
+              th:if="${lesson.material!=null}"
+              th:text="${lesson.material.taskType}"
+            ></span>
+            <a
+              class="lesson-vocabulary-link"
+              th:if="${flashcardSet!=null}"
+              th:href="@{/student/flashcards/{id}(id=${flashcardSet.id})}"
+              >Ôn từ vựng của bài <span aria-hidden="true">↗</span>
+              <small>Ôn từ vựng riêng, không bắt buộc để hoàn thành bài học.</small></a
+            >
+          </section>
+          <section
+            id="media"
+            class="dashboard-panel dashboard-section"
+            th:if="${videoId!=null or lesson.videoPath!=null}"
           >
-            Trình duyệt không hỗ trợ phát video.
-          </video>
-          <iframe
-            th:if="${lesson.videoPath==null and videoId!=null}"
-            class="lesson-video"
-            th:src="|https://www.youtube-nocookie.com/embed/${videoId}|"
-            title="Video hướng dẫn bài học"
-            loading="lazy"
-            referrerpolicy="strict-origin-when-cross-origin"
-            allow="encrypted-media; picture-in-picture; fullscreen"
-            allowfullscreen
-          ></iframe>
-          <a
-            th:if="${lesson.videoPath==null and videoId!=null}"
-            th:href="|https://www.youtube.com/watch?v=${videoId}|"
-            target="_blank"
-            rel="noopener noreferrer"
-            >Mở video trên YouTube ↗</a
-          >
-        </section>
+            <h2>Video hướng dẫn</h2>
+            <video
+              th:if="${lesson.videoPath!=null}"
+              class="lesson-video"
+              controls
+              preload="metadata"
+              th:src="@{/lesson-media/{id}/video(id=${lesson.id})}"
+            >
+              Trình duyệt không hỗ trợ phát video.
+            </video>
+            <iframe
+              th:if="${lesson.videoPath==null and videoId!=null}"
+              class="lesson-video"
+              th:src="|https://www.youtube-nocookie.com/embed/${videoId}|"
+              title="Video hướng dẫn bài học"
+              loading="lazy"
+              referrerpolicy="strict-origin-when-cross-origin"
+              allow="encrypted-media; picture-in-picture; fullscreen"
+              allowfullscreen
+            ></iframe>
+            <a
+              th:if="${lesson.videoPath==null and videoId!=null}"
+              th:href="|https://www.youtube.com/watch?v=${videoId}|"
+              target="_blank"
+              rel="noopener noreferrer"
+              >Mở video trên YouTube ↗</a
+            >
+          </section>
+        </div>
         <th:block th:if="${lesson.material!=null}">
           <section
             id="method"
@@ -153,13 +154,13 @@
               <p class="lesson-prose" th:text="${lesson.material.analysis}"></p
             ></th:block>
           </section>
-          <section
-            class="dashboard-panel dashboard-section"
+          <details
+            class="dashboard-panel dashboard-section lesson-disclosure"
             th:if="${!#strings.isEmpty(lesson.material.commonMistakes)}"
           >
-            <h2>Lỗi thường gặp</h2>
+            <summary>Lỗi thường gặp</summary>
             <p class="lesson-prose" th:text="${lesson.material.commonMistakes}"></p>
-          </section>
+          </details>
         </th:block>
 
         <section
@@ -370,11 +371,11 @@
             và hoàn thành bài học.
           </p>
         </section>
-        <section
-          class="dashboard-panel dashboard-section lesson-source"
+        <details
+          class="dashboard-panel dashboard-section lesson-source lesson-disclosure"
           th:if="${lesson.material!=null and !#strings.isEmpty(lesson.material.sourceUrl)}"
         >
-          <h2>Nguồn tham khảo</h2>
+          <summary>Nguồn tham khảo</summary>
           <a
             th:href="${lesson.material.sourceUrl}"
             th:text="${lesson.material.sourceName}"
@@ -382,9 +383,14 @@
             rel="noopener noreferrer"
           ></a>
           <p>Hướng dẫn, ví dụ và bài tập được biên soạn riêng. Video thuộc tác giả nguồn.</p>
-        </section>
-        <section class="dashboard-panel dashboard-section" th:if="${!#lists.isEmpty(submissions)}">
-          <h2>Bài làm đã lưu</h2>
+        </details>
+        <details
+          class="dashboard-panel dashboard-section lesson-disclosure"
+          th:if="${!#lists.isEmpty(submissions)}"
+        >
+          <summary>
+            Bài làm đã lưu <span class="badge" th:text="${#lists.size(submissions)}"></span>
+          </summary>
           <details class="lesson-work-history" th:each="submission:${submissions}">
             <summary
               th:text="|${#temporals.format(submission.submittedAt,'dd/MM/yyyy HH:mm:ss')} · ${submission.skill=='Writing'?'Bài viết':'Bản ghi / transcript'}|"
@@ -409,34 +415,37 @@
               th:src="@{/student/lessons/{id}/submissions/{submissionId}/audio(id=${lesson.id},submissionId=${submission.id})}"
             ></audio>
           </details>
-        </section>
-        <p class="completion-hint" th:text="${completion.message(lesson.skill)}"></p>
-        <div class="actions lesson-complete">
-          <a
-            th:if="${neighbors.previous()!=null}"
-            class="button button-secondary"
-            th:href="@{/student/lessons/{id}(id=${neighbors.previous().id})}"
-            >← Bài trước</a
-          >
-          <form method="post" th:action="@{/student/lessons/{id}/complete(id=${lesson.id})}">
-            <button
-              class="button"
-              type="submit"
-              th:disabled="${(progress!=null and progress.status=='COMPLETED') or !completion.eligible()}"
-              th:text="${progress!=null and progress.status=='COMPLETED'?'Đã hoàn thành':'Hoàn thành bài học'}"
-            ></button>
-          </form>
-          <a
-            th:if="${neighbors.next()!=null}"
-            class="button button-secondary"
-            th:href="@{/student/lessons/{id}(id=${neighbors.next().id})}"
-            >Bài tiếp theo →</a
-          ><a
-            class="button button-secondary"
-            th:href="@{/student/learning-path/{skill}(skill=${lesson.skill})}"
-            >Quay lại lộ trình</a
-          >
-        </div>
+        </details>
+        <footer class="lesson-finish">
+          <p class="completion-hint" th:text="${completion.message(lesson.skill)}"></p>
+          <div class="actions lesson-complete">
+            <a
+              th:if="${neighbors.previous()!=null}"
+              class="button button-secondary"
+              th:href="@{/student/lessons/{id}(id=${neighbors.previous().id})}"
+              >← Bài trước</a
+            >
+            <form method="post" th:action="@{/student/lessons/{id}/complete(id=${lesson.id})}">
+              <button
+                class="button"
+                type="submit"
+                th:disabled="${(progress!=null and progress.status=='COMPLETED') or !completion.eligible()}"
+                th:text="${progress!=null and progress.status=='COMPLETED'?'Đã hoàn thành':'Hoàn thành bài học'}"
+              ></button>
+            </form>
+            <a
+              th:if="${neighbors.next()!=null}"
+              class="button button-secondary"
+              th:href="@{/student/lessons/{id}(id=${neighbors.next().id})}"
+              >Bài tiếp theo →</a
+            >
+            <a
+              class="lesson-path-link"
+              th:href="@{/student/learning-path/{skill}(skill=${lesson.skill})}"
+              >Quay lại lộ trình</a
+            >
+          </div>
+        </footer>
       </main>
     </div>
     <div th:replace="~{fragments/footer :: footer}"></div>

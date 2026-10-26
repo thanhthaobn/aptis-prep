@@ -1,13 +1,17 @@
 package com.aptisprep.controller.student;
 
+import com.aptisprep.dto.view.StudentCatalogView.Entry;
 import com.aptisprep.exception.BusinessRuleException;
 import com.aptisprep.service.account.AccountAccessService;
 import com.aptisprep.service.contract.ExamAttemptContract;
 import com.aptisprep.service.contract.IntegrationModels.HistoryFilter;
 import com.aptisprep.service.student.StudentExamCatalogService;
 import java.security.Principal;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.UUID;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -32,15 +36,40 @@ public class StudentContentController {
 
     @GetMapping("/exams")
     public String list(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "9") int size,
             @RequestParam(defaultValue = "") String q,
             @RequestParam(defaultValue = "") String skill,
             @RequestParam(defaultValue = "") String level,
             @RequestParam(defaultValue = "") String state,
+            @RequestParam(defaultValue = "PRACTICE") String examType,
+            @RequestParam(defaultValue = "level") String sort,
             Model model) {
+        if (page < 0 || size < 1 || size > 50)
+            throw new BusinessRuleException("Phân trang không hợp lệ");
         if (q.length() > 255 || skill.length() > 80 || level.length() > 40 || state.length() > 40)
             throw new BusinessRuleException("Bộ lọc không hợp lệ");
         examModel(model);
-        model.addAttribute("entries", catalog.find("exams", q, skill, level, state));
+        if (!StudentExamCatalogService.EXAM_TYPES.contains(examType)
+                || !StudentExamCatalogService.SORT_OPTIONS.contains(sort))
+            throw new BusinessRuleException("Phân loại hoặc sắp xếp đề thi không hợp lệ");
+        var content =
+                catalog.browse(q, skill, level, state, examType, sort, PageRequest.of(page, size));
+        var entries = content.page();
+        var groups = new LinkedHashMap<String, List<Entry>>();
+        entries.getContent()
+                .forEach(
+                        entry ->
+                                groups.computeIfAbsent(entry.skill(), key -> new ArrayList<>())
+                                        .add(entry));
+        model.addAttribute("entries", entries.getContent());
+        model.addAttribute("examGroups", groups);
+        model.addAttribute("examCategories", content.categories());
+        model.addAttribute("selectedExamType", examType);
+        model.addAttribute("selectedSort", sort);
+        model.addAttribute("categoryTitle", StudentExamCatalogService.categoryLabel(examType));
+        model.addAttribute("catalogPage", entries);
+        model.addAttribute("size", size);
         model.addAttribute("q", q);
         model.addAttribute("selectedSkill", skill);
         model.addAttribute("selectedLevel", level);
@@ -65,10 +94,12 @@ public class StudentContentController {
                 || examType.length() > 40
                 || state.length() > 40) throw new BusinessRuleException("Bộ lọc không hợp lệ");
         Integer userId = accounts.requireActiveStudent(principal.getName());
+        var history =
+                attempts.history(userId, page, size, new HistoryFilter(q, skill, examType, state));
+        model.addAttribute("history", history);
         model.addAttribute(
-                "history",
-                attempts.history(userId, page, size, new HistoryFilter(q, skill, examType, state)));
-        model.addAttribute("page", page);
+                "totalPages", (history.totalItems() + history.size() - 1) / history.size());
+        model.addAttribute("page", history.page());
         model.addAttribute("size", size);
         model.addAttribute("q", q);
         model.addAttribute("selectedSkill", skill);
@@ -114,12 +145,6 @@ public class StudentContentController {
         model.addAttribute("title", "Đề thi");
         model.addAttribute(
                 "skills",
-                List.of(
-                        "Grammar & Vocabulary",
-                        "Reading",
-                        "Listening",
-                        "Writing",
-                        "Speaking",
-                        "Tổng hợp"));
+                List.of("Grammar & Vocabulary", "Reading", "Listening", "Writing", "Speaking"));
     }
 }

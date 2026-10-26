@@ -132,6 +132,7 @@
     const area = document.getElementById('response'),
       status = document.getElementById('response-status');
     let timer,
+      changeVersion = 0,
       dirty = false;
     const words = () => (area.value.trim() ? area.value.trim().split(/\s+/).length : 0);
     const label = () => {
@@ -142,6 +143,7 @@
     };
     area.addEventListener('input', () => {
       dirty = true;
+      const version = ++changeVersion;
       label();
       clearTimeout(timer);
       timer = setTimeout(() => {
@@ -151,6 +153,7 @@
         )
           .then((r) => {
             if (!r.ok) throw Error();
+            if (version !== changeVersion) return;
             dirty = false;
             status.textContent = `${words()} từ · đã tự động lưu`;
           })
@@ -162,6 +165,15 @@
         e.preventDefault();
         e.returnValue = '';
       }
+    });
+    window.AppDialog.guardUnsaved(form, {
+      isDirty: () => dirty,
+      onDiscard: () => {
+        clearTimeout(timer);
+        dirty = false;
+      },
+      message:
+        'Bài làm chưa được lưu đầy đủ. Bạn có thể tiếp tục chỉnh sửa và lưu bài trước khi rời trang.',
     });
     form.addEventListener('submit', () => {
       clearTimeout(timer);
