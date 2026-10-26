@@ -2,7 +2,7 @@
 <html lang="vi" xmlns:th="http://www.thymeleaf.org">
   <body>
     <nav
-      th:fragment="pagination(currentPage, totalPages, totalItems, baseUrl)"
+      th:fragment="studentPagination(currentPage, totalPages, totalItems, baseUrl)"
       class="pagination student-pagination"
       aria-label="Phân trang"
     >
@@ -13,15 +13,17 @@
           th:if="${currentPage > 0}"
           th:href="${baseUrl + '&page=' + (currentPage - 1)}"
           aria-label="Trang trước"
-          >‹</a
         >
+          ‹
+        </a>
         <span
           class="page-link disabled"
           th:unless="${currentPage > 0}"
           aria-disabled="true"
           aria-label="Trang trước"
-          >‹</span
         >
+          ‹
+        </span>
         <th:block
           th:with="start=${currentPage > 2 ? currentPage - 2 : 0},end=${currentPage + 2 < totalPages ? currentPage + 2 : totalPages - 1}"
         >
@@ -30,8 +32,9 @@
             th:if="${start > 0}"
             th:href="${baseUrl + '&page=0'}"
             aria-label="Trang 1"
-            >1</a
           >
+            1
+          </a>
           <span class="pagination-gap" th:if="${start > 1}" aria-hidden="true">…</span>
           <th:block th:each="index : ${#numbers.sequence(start, end)}">
             <span
@@ -63,15 +66,17 @@
           th:if="${currentPage + 1 < totalPages}"
           th:href="${baseUrl + '&page=' + (currentPage + 1)}"
           aria-label="Trang sau"
-          >›</a
         >
+          ›
+        </a>
         <span
           class="page-link disabled"
           th:unless="${currentPage + 1 < totalPages}"
           aria-disabled="true"
           aria-label="Trang sau"
-          >›</span
         >
+          ›
+        </span>
       </div>
       <span th:if="${totalPages > 0}" th:text="|Trang ${currentPage + 1} / ${totalPages}|"></span>
     </nav>

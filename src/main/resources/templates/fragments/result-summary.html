@@ -40,9 +40,9 @@
         <div class="result-overall-box">
           <div class="overall-cefr-badge" aria-label="Khung CEFR ước lượng">
             <span class="cefr-title">CEFR</span>
-            <span class="cefr-level" th:text="${res.overallCefr == null ? '—' : res.overallCefr}"
-              >—</span
-            >
+            <span class="cefr-level" th:text="${res.overallCefr == null ? '—' : res.overallCefr}">
+              —
+            </span>
           </div>
           <div class="overall-score-details">
             <h3>Trình độ ước lượng tổng quan</h3>
@@ -74,7 +74,7 @@
 
       <!-- Banner thông báo khi có kỹ năng chờ chấm điểm (WAITING_GRADING / PENDING) -->
       <div
-        th:if="${res.state == 'WAITING_GRADING' or !#lists.isEmpty(res.skills.?[gradingState == 'PENDING' or gradingState == 'WAITING'])}"
+        th:if="${res.state == 'WAITING_GRADING' or (res.skills != null and !res.skills.?[gradingState == 'PENDING' or gradingState == 'WAITING'].isEmpty())}"
         class="result-pending-banner"
         role="status"
       >
@@ -90,12 +90,12 @@
 
       <div th:if="${res.state == 'IN_PROGRESS'}" class="alert alert-info" role="status">
         <p>Bài thi đang làm, chưa có kết quả cuối cùng.</p>
-        <a class="button" th:href="@{/student/attempts/{id}(id=${res.attemptId})}"
-          >Tiếp tục làm bài</a
-        >
+        <a class="button" th:href="@{/student/attempts/{id}(id=${res.attemptId})}">
+          Tiếp tục làm bài
+        </a>
       </div>
       <div
-        th:if="${res.state == 'ERROR' or !#lists.isEmpty(res.skills.?[gradingState == 'ERROR'])}"
+        th:if="${res.state == 'ERROR' or (res.skills != null and !res.skills.?[gradingState == 'ERROR'].isEmpty())}"
         class="alert alert-error"
         role="alert"
       >
@@ -104,7 +104,7 @@
           kết quả trượt.
         </p>
         <form
-          th:if="${res.state == 'ERROR' and !#lists.isEmpty(res.skills.?[retryable == true])}"
+          th:if="${res.state == 'ERROR' and (res.skills != null and !res.skills.?[retryable == true].isEmpty())}"
           method="post"
           th:action="@{/student/attempts/{id}/retry-grading(id=${res.attemptId})}"
         >
@@ -136,8 +136,7 @@
                 class="badge"
                 th:classappend="${skill.estimatedLevel != null ? 'badge-cefr-' + #strings.toLowerCase(skill.estimatedLevel) : 'badge-secondary'}"
                 th:text="${skill.estimatedLevel != null ? skill.estimatedLevel : (skill.gradingState == 'ERROR' ? 'Chấm lỗi' : (skill.gradingState == 'PENDING' or skill.gradingState == 'WAITING' ? 'Đang chấm' : 'Chưa đánh giá'))}"
-              >
-              </span>
+              ></span>
             </div>
 
             <div class="skill-score-row">
@@ -148,8 +147,9 @@
               <div class="skill-score-pending" th:unless="${skill.scaleScore != null}">
                 <span
                   th:text="${skill.gradingState == 'ERROR' ? 'Chấm chưa thành công' : 'Chưa có điểm'}"
-                  >Chưa có điểm</span
                 >
+                  Chưa có điểm
+                </span>
               </div>
 
               <!-- Thanh tiến trình điểm 0 - 50 -->
@@ -188,8 +188,9 @@
           <a class="button button-primary" th:href="@{/student/learning-path}">
             <span
               th:text="${isPlacement ? 'Bắt đầu học theo lộ trình' : 'Tiếp tục lộ trình học tập'}"
-              >Tiếp tục lộ trình học tập</span
             >
+              Tiếp tục lộ trình học tập
+            </span>
           </a>
           <a class="button button-secondary" th:href="@{/student/exams}">Luyện tập thêm đề thi</a>
           <a class="button button-secondary" th:href="@{/student/results}">Xem tất cả kết quả</a>

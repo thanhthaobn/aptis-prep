@@ -19,9 +19,9 @@
               <div>
                 <p class="eyebrow">LỘ TRÌNH CÁ NHÂN HÓA</p>
                 <h1>Mỗi ngày một bước nhỏ hướng tới mục tiêu Aptis.</h1>
-                <span th:if="${!hasLearningContent}"
-                  >Chưa có bài học được công bố cho lộ trình.</span
-                >
+                <span th:if="${!hasLearningContent}">
+                  Chưa có bài học được công bố cho lộ trình.
+                </span>
               </div>
             </section>
 
@@ -48,8 +48,9 @@
                 <a
                   class="button button-primary"
                   th:href="@{/student/lessons/{id}(id=${recommendation.lessonId()})}"
-                  >Học tiếp ngay →</a
                 >
+                  Học tiếp ngay →
+                </a>
               </div>
             </section>
 
@@ -85,8 +86,9 @@
                   th:href="@{/student/learning-path/{skill}(skill=${path.skill()})}"
                   th:attr="aria-label=|Xem lộ trình ${path.skill()}|,data-skill=${path.skill()}"
                   th:text="${path.progressPercent() == null ? '—' : path.progressPercent() + '%'}"
-                  >—</a
                 >
+                  —
+                </a>
                 <div>
                   <h3 th:text="${path.skill()}"></h3>
                   <p
@@ -108,8 +110,9 @@
               <a
                 class="button button-secondary button-block"
                 th:href="@{/student/attempts/{id}/result(id=${latestResult.attemptId})}"
-                >Xem kết quả</a
               >
+                Xem kết quả
+              </a>
             </article>
 
             <!-- Chuỗi học tập (Streak) -->
@@ -142,19 +145,22 @@
                   </tr>
                 </thead>
                 <tbody>
-                  <tr th:each="skill:${skillOverview}">
+                  <tr th:each="skill : ${skillOverview}">
                     <th scope="row" th:text="${skill.label}"></th>
                     <td th:text="${skill.current}"></td>
                     <td><span class="skill-goal-level" th:text="${skill.goal}"></span></td>
                   </tr>
                 </tbody>
               </table>
-              <p class="skill-overview-note" th:if="${#lists.isEmpty(account.profiles)}">
+              <p
+                class="skill-overview-note"
+                th:if="${account.profiles == null or account.profiles.isEmpty()}"
+              >
                 Chưa có đánh giá đầu vào.
               </p>
-              <a class="button button-secondary button-block mt-3" th:href="@{/student/placement}"
-                >Kiểm tra đầu vào</a
-              >
+              <a class="button button-secondary button-block mt-3" th:href="@{/student/placement}">
+                Kiểm tra đầu vào
+              </a>
             </article>
 
             <!-- Thống kê tổng quan -->
@@ -169,7 +175,7 @@
               </div>
               <div class="learn-mini-stat">
                 <span>Kỹ năng đang luyện</span>
-                <strong th:text="${#lists.size(paths)}">0</strong>
+                <strong th:text="${paths.size()}">0</strong>
               </div>
             </article>
           </aside>

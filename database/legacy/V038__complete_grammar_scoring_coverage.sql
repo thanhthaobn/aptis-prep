@@ -1,4 +1,6 @@
-/* Complete the internal estimated CEFR policy used by Full Mock and Grammar exams. */
+/* ARCHIVE ONLY. Do not execute: this legacy script changes an existing scoring policy.
+   Use database/complete-grammar-scoring.sql to create a separate version while retaining history.
+   This file is excluded from application resources and is not a migration. */
 DECLARE @scheme_id INT = (
     SELECT id
     FROM scoring_schemes

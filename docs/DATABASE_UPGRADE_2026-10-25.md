@@ -1,5 +1,10 @@
 # Nâng schema DB local và kiểm chứng ứng dụng — 25/10/2026
 
+> Cập nhật 26/10: thiếu band Grammar của policy 1.0 được xử lý bằng version mới
+> 1.1-gv-c1, giữ nguyên policy/lịch sử cũ. Xem
+> [biên bản kiểm chứng](GRAMMAR_SCORING_VERIFICATION_2026-10-26.md).
+> Mô tả thiếu cấu hình bên dưới là hiện trạng tại thời điểm 25/10.
+
 ## Source và phạm vi
 
 Runtime source local khớp `origin/develop` tại `0ec2019` (PR #36), gồm phần Trâm đã merge và phần refactor/format. Không sửa source nghiệp vụ trong đợt nâng DB này. Bổ sung báo cáo và cập nhật SETUP_LOCAL; chưa commit/push tài liệu mới.

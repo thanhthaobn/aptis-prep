@@ -21,9 +21,10 @@
           <a
             th:class="${admin?'button':'button button-secondary'}"
             th:href="${admin?'/admin/flashcards/create':'/student/flashcards/create'}"
-            ><span aria-hidden="true">＋</span
-            ><span th:text="${admin?'Tạo bộ thẻ':'Tạo bộ thẻ riêng'}"></span
-          ></a>
+          >
+            <span aria-hidden="true">＋</span>
+            <span th:text="${admin?'Tạo bộ thẻ':'Tạo bộ thẻ riêng'}"></span>
+          </a>
         </header>
         <div th:replace="~{fragments/messages :: messages}"></div>
         <form
@@ -34,8 +35,8 @@
         >
           <div class="flashcard-search-line">
             <div class="toolbar-search">
-              <label for="q">Tìm bộ thẻ</label
-              ><input
+              <label for="q">Tìm bộ thẻ</label>
+              <input
                 id="q"
                 name="q"
                 type="search"
@@ -48,7 +49,7 @@
           </div>
         </form>
 
-        <th:block th:each="group:${admin ? {'admin'} : {'mine','lesson'}}">
+        <th:block th:each="group : ${admin ? {'admin'} : {'mine','lesson'}}">
           <section
             class="flashcard-function-group"
             th:if="${admin or group=='mine' or lessonResultCount>0}"
@@ -61,12 +62,10 @@
               class="flashcard-personal-empty"
               th:if="${!admin and group=='mine' and mineResultCount==0 and mineCount>0}"
             >
-              <th:block th:if="${mineCount>0}"
-                ><p>Bộ lọc hiện tại đang ẩn các bộ thẻ của bạn.</p>
-                <a th:href="@{/student/flashcards(source='mine')}"
-                  >Xem tất cả bộ thẻ của tôi →</a
-                ></th:block
-              >
+              <th:block th:if="${mineCount>0}">
+                <p>Bộ lọc hiện tại đang ẩn các bộ thẻ của bạn.</p>
+                <a th:href="@{/student/flashcards(source='mine')}">Xem tất cả bộ thẻ của tôi →</a>
+              </th:block>
             </div>
             <div
               class="flashcard-topic-tree"
@@ -75,18 +74,18 @@
             >
               <details
                 class="flashcard-skill-branch"
-                th:each="branch:${lessonBranches}"
+                th:each="branch : ${lessonBranches}"
                 th:attr="data-skill=${branch.skill}"
               >
                 <summary>
-                  <strong th:text="${branch.skill}"></strong
-                  ><span th:text="|${branch.count} bộ|"></span>
+                  <strong th:text="${branch.skill}"></strong>
+                  <span th:text="|${branch.count} bộ|"></span>
                 </summary>
                 <div class="flashcard-level-branches">
-                  <details class="flashcard-level-branch" th:each="tier:${branch.levels}">
+                  <details class="flashcard-level-branch" th:each="tier : ${branch.levels}">
                     <summary>
-                      <strong th:text="${tier.level}"></strong
-                      ><span th:text="|${#lists.size(tier.sets)} bộ|"></span>
+                      <strong th:text="${tier.level}"></strong>
+                      <span th:text="|${tier.sets.size()} bộ|"></span>
                     </summary>
                     <div th:replace="~{flashcard/list :: setRows(${tier.sets})}"></div>
                   </details>
@@ -94,11 +93,11 @@
               </details>
               <details
                 class="flashcard-skill-branch"
-                th:if="${admin and !#lists.isEmpty(unclassifiedSets)}"
+                th:if="${admin and (unclassifiedSets != null and !unclassifiedSets.isEmpty())}"
               >
                 <summary>
-                  <strong>Chưa phân loại</strong
-                  ><span th:text="|${#lists.size(unclassifiedSets)} bộ|"></span>
+                  <strong>Chưa phân loại</strong>
+                  <span th:text="|${unclassifiedSets.size()} bộ|"></span>
                 </summary>
                 <div th:replace="~{flashcard/list :: setRows(${unclassifiedSets})}"></div>
               </details>
@@ -112,7 +111,7 @@
               >
                 <article
                   class="flashcard-set-card flashcard-row"
-                  th:each="set:${rowSets}"
+                  th:each="set : ${rowSets}"
                   th:if="${admin or (group=='mine' ? set.personal() : !set.personal())}"
                   th:attr="data-skill=${set.lessonSkill()}"
                 >
@@ -127,9 +126,9 @@
                         class="badge"
                         th:classappend="${set.level() != null ? 'badge-cefr-' + #strings.toLowerCase(set.level()) : ''}"
                         th:text="${set.level()}"
-                      ></span
-                      ><span th:if="${set.personal()}" class="badge personal-badge">Riêng tư</span
-                      ><span
+                      ></span>
+                      <span th:if="${set.personal()}" class="badge personal-badge">Riêng tư</span>
+                      <span
                         th:if="${admin}"
                         class="badge set-status"
                         th:text="${set.status()=='PUBLISHED'?'Đã công bố':(set.status()=='DRAFT'?'Bản nháp':'Đã lưu trữ')}"
@@ -140,9 +139,10 @@
                       class="set-lesson-source"
                       th:if="${set.lessonId()!=null}"
                       th:href="${admin?'/admin/lessons/'+set.lessonId():'/student/lessons/'+set.lessonId()}"
-                      ><small th:text="|${set.lessonSkill()} · Bài học nguồn|"></small
-                      ><span th:text="|${set.lessonTitle()} ↗|"></span
-                    ></a>
+                    >
+                      <small th:text="|${set.lessonSkill()} · Bài học nguồn|"></small>
+                      <span th:text="|${set.lessonTitle()} ↗|"></span>
+                    </a>
                     <p
                       class="set-lesson muted"
                       th:if="${admin and !set.personal() and set.lessonTitle()==null}"
@@ -155,8 +155,8 @@
                       th:text="${set.description()}"
                     ></p>
                     <div class="flashcard-set-meta">
-                      <span aria-hidden="true">▤</span
-                      ><strong th:text="|${set.count()} thuật ngữ|"></strong>
+                      <span aria-hidden="true">▤</span>
+                      <strong th:text="|${set.count()} thuật ngữ|"></strong>
                     </div>
                   </div>
                   <div class="flashcard-set-actions">
@@ -164,8 +164,9 @@
                       class="button button-secondary"
                       th:if="${admin and set.lessonId()!=null}"
                       th:href="${'/admin/lessons/'+set.lessonId()}"
-                      >Mở bài học</a
                     >
+                      Mở bài học
+                    </a>
                     <a
                       class="button"
                       th:href="${admin?'/admin/flashcards/'+set.id()+'/edit':'/student/flashcards/'+set.id()}"
@@ -176,8 +177,9 @@
                       <a
                         class="button button-secondary"
                         th:href="@{/student/flashcards/{id}/edit(id=${set.id()})}"
-                        >Chỉnh sửa</a
                       >
+                        Chỉnh sửa
+                      </a>
                       <form
                         th:if="${!admin and set.personal()}"
                         method="post"
@@ -191,16 +193,17 @@
                           th:if="${_csrf != null}"
                           th:name="${_csrf.parameterName}"
                           th:value="${_csrf.token}"
-                        /><button class="button button-quiet" type="submit">Lưu trữ</button>
+                        />
+                        <button class="button button-quiet" type="submit">Lưu trữ</button>
                       </form>
                     </details>
                   </div>
                 </article>
               </section>
             </th:block>
-          </section></th:block
-        >
-        <div class="empty-box" th:if="${#lists.isEmpty(sets)}">
+          </section>
+        </th:block>
+        <div class="empty-box" th:if="${sets == null or sets.isEmpty()}">
           <div
             th:replace="~{fragments/navi :: navi('empty', 'Navi đang chờ bộ thẻ đầu tiên')}"
           ></div>

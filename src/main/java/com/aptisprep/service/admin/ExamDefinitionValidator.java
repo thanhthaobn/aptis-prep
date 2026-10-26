@@ -72,8 +72,10 @@ final class ExamDefinitionValidator {
             throw new BusinessRuleException("Thời lượng section phải lớn hơn 0");
         if (f.getCertificateId() == null || !certificates.existsById(f.getCertificateId()))
             throw new BusinessRuleException("Chứng chỉ không hợp lệ");
-        if ("CHECKPOINT".equals(f.getExamType()) && f.getScoringSchemeId() == null)
-            throw new BusinessRuleException("Checkpoint cần bộ chấm điểm để xác nhận CEFR");
+        if (Set.of("CHECKPOINT", "PLACEMENT").contains(f.getExamType())
+                && f.getScoringSchemeId() == null)
+            throw new BusinessRuleException(
+                    "Placement và Checkpoint cần bộ chấm điểm để xác nhận CEFR");
         if (f.getScoringSchemeId() != null && !schemes.existsById(f.getScoringSchemeId()))
             throw new BusinessRuleException("Bộ chấm điểm không hợp lệ");
         if (f.getScoringSchemeId() != null)

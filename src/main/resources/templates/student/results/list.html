@@ -16,8 +16,8 @@
         <form class="toolbar result-filters" method="get" th:action="@{/student/results}">
           <input type="hidden" name="size" th:value="${history.size}" />
           <div class="field">
-            <label for="result-q">Tên đề</label
-            ><input
+            <label for="result-q">Tên đề</label>
+            <input
               id="result-q"
               name="q"
               maxlength="255"
@@ -26,8 +26,8 @@
             />
           </div>
           <div class="field">
-            <label for="result-skill">Kỹ năng</label
-            ><select id="result-skill" name="skill">
+            <label for="result-skill">Kỹ năng</label>
+            <select id="result-skill" name="skill">
               <option value="">Tất cả</option>
               <option
                 th:each="value : ${T(java.util.List).of('GRAMMAR_VOCABULARY','READING','LISTENING','WRITING','SPEAKING')}"
@@ -38,8 +38,8 @@
             </select>
           </div>
           <div class="field">
-            <label for="result-type">Loại bài</label
-            ><select id="result-type" name="examType">
+            <label for="result-type">Loại bài</label>
+            <select id="result-type" name="examType">
               <option value="">Tất cả</option>
               <option value="PLACEMENT" th:selected="${selectedExamType == 'PLACEMENT'}">
                 Kiểm tra đầu vào
@@ -56,8 +56,8 @@
             </select>
           </div>
           <div class="field">
-            <label for="result-state">Trạng thái</label
-            ><select id="result-state" name="state">
+            <label for="result-state">Trạng thái</label>
+            <select id="result-state" name="state">
               <option value="">Tất cả</option>
               <option value="IN_PROGRESS" th:selected="${selectedState == 'IN_PROGRESS'}">
                 Đang làm
@@ -75,8 +75,8 @@
             </select>
           </div>
           <div class="actions">
-            <button class="button" type="submit">Lọc kết quả</button
-            ><a class="button button-secondary" th:href="@{/student/results}">Xóa bộ lọc</a>
+            <button class="button" type="submit">Lọc kết quả</button>
+            <a class="button button-secondary" th:href="@{/student/results}">Xóa bộ lọc</a>
           </div>
         </form>
 
@@ -117,14 +117,16 @@
                 class="button button-secondary"
                 th:if="${attempt.state == 'IN_PROGRESS'}"
                 th:href="@{/student/attempts/{id}(id=${attempt.attemptId})}"
-                >Tiếp tục làm bài</a
               >
+                Tiếp tục làm bài
+              </a>
               <a
                 class="button button-secondary"
                 th:unless="${attempt.state == 'IN_PROGRESS'}"
                 th:href="@{/student/attempts/{id}/result(id=${attempt.attemptId})}"
-                >Xem kết quả</a
               >
+                Xem kết quả
+              </a>
             </div>
           </article>
         </section>
@@ -140,7 +142,7 @@
         </section>
 
         <div
-          th:replace="~{fragments/student-pagination :: pagination(${history.page}, ${totalPages}, ${history.totalItems}, @{/student/results(size=${history.size},q=${q},skill=${selectedSkill},examType=${selectedExamType},state=${selectedState})})}"
+          th:replace="~{fragments/student-pagination :: studentPagination(${history.page}, ${totalPages}, ${history.totalItems}, @{/student/results(size=${history.size},q=${q},skill=${selectedSkill},examType=${selectedExamType},state=${selectedState})})}"
         ></div>
       </main>
     </div>

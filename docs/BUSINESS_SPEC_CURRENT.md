@@ -1,5 +1,7 @@
 # APTISPREP — Tài liệu nghiệp vụ và ERD hiện trạng
 
+> Bổ sung 26/10/2026: [Hoàn thiện tích hợp của cả nhóm](GROUP_COMPLETION_2026-10-26.md). Goal mới chỉ nhận A1–C1; Placement bắt buộc policy hợp lệ và mở từ luồng Placement; Checkpoint xác minh lộ trình tại engine; Listening thi dùng file audio được bảo vệ và không gửi transcript xuống học viên. Không thay schema hoặc viết lại lịch sử.
+
 > Cập nhật cấu hình 24–25/10/2026: chủ project chốt bỏ Flyway, dùng một `application.properties` và `database/schema-current.sql` cho DB mới/rỗng, Hibernate `validate`. ERD bên dưới vẫn đúng 39 bảng/416 cột/62 FK. Các ghi chú Vxxx và kết quả migration bên dưới là lịch sử nghiệm thu trước chuyển đổi, không phải hướng dẫn chạy hiện tại. Không tự chạy schema mới lên DB đang có dữ liệu. Xem [SETUP_LOCAL.md](SETUP_LOCAL.md).
 
 Cập nhật V041: hai ERD phản ánh 39 bảng, 416 cột, 62 quan hệ FK. V041 thêm cờ demo_only cho mock_exams và đánh dấu ba đề demo V037; không xóa đề/lịch sử hay thay đổi cột cũ. V039 giữ phiên nghe và đáp án A–F; V040 giữ processing_token của AI. Hành trình dừng C1; Goal mới đến C1 vẫn thuộc phần tài khoản của Thông, dữ liệu C2 cũ được giữ.

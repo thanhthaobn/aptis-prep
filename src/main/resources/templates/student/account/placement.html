@@ -45,12 +45,12 @@
 
         <section class="dashboard-panel dashboard-section">
           <h2>Đề kiểm tra đầu vào khả dụng</h2>
-          <div th:if="${#lists.isEmpty(placementExams)}" class="empty-box">
+          <div th:if="${placementExams == null or placementExams.isEmpty()}" class="empty-box">
             <div th:replace="~{fragments/navi :: navi('empty', 'Navi đang chờ đề kiểm tra')}"></div>
             <p>Hiện chưa có đề kiểm tra đầu vào đã công bố cho kỹ năng này.</p>
           </div>
           <div
-            th:unless="${#lists.isEmpty(placementExams)}"
+            th:unless="${placementExams == null or placementExams.isEmpty()}"
             th:each="exam : ${placementExams}"
             class="catalog-answer"
           >

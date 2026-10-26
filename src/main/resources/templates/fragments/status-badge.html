@@ -29,7 +29,7 @@
       </span>
 
       <!-- DRAFT -->
-      <span th:if="${#strings.toString(status) == 'DRAFT'}" class="badge"> Bản nháp </span>
+      <span th:if="${#strings.toString(status) == 'DRAFT'}" class="badge">Bản nháp</span>
 
       <!-- PUBLISHED -->
       <span th:if="${#strings.toString(status) == 'PUBLISHED'}" class="badge badge-success">
@@ -37,7 +37,7 @@
       </span>
 
       <!-- ARCHIVED -->
-      <span th:if="${#strings.toString(status) == 'ARCHIVED'}" class="badge"> Đã lưu trữ </span>
+      <span th:if="${#strings.toString(status) == 'ARCHIVED'}" class="badge">Đã lưu trữ</span>
 
       <!-- ACTIVE -->
       <span th:if="${#strings.toString(status) == 'ACTIVE'}" class="badge badge-success">
@@ -50,17 +50,14 @@
       </span>
 
       <!-- INACTIVE -->
-      <span th:if="${#strings.toString(status) == 'INACTIVE'}" class="badge">
-        Ngừng hoạt động
-      </span>
+      <span th:if="${#strings.toString(status) == 'INACTIVE'}" class="badge">Ngừng hoạt động</span>
 
       <!-- Fallback nếu không khớp enum nào đã định nghĩa -->
       <span
         th:if="${#strings.toString(status) != 'COMPLETED' and #strings.toString(status) != 'GRADING' and #strings.toString(status) != 'GRADING_FAILED' and #strings.toString(status) != 'PENDING' and #strings.toString(status) != 'ERROR' and #strings.toString(status) != 'DRAFT' and #strings.toString(status) != 'PUBLISHED' and #strings.toString(status) != 'ARCHIVED' and #strings.toString(status) != 'ACTIVE' and #strings.toString(status) != 'LOCKED' and #strings.toString(status) != 'INACTIVE' and status != null}"
         class="badge"
         th:text="${status}"
-      >
-      </span>
+      ></span>
     </th:block>
 
     <!-- Fragment dạng chữ thường không badge -->

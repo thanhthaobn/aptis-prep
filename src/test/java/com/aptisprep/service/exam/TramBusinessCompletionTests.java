@@ -43,6 +43,9 @@ class TramBusinessCompletionTests {
     @Autowired PlacementExamCatalogService placement;
     @Autowired PublishedExamCatalogService published;
     @Autowired CatalogService admin;
+    @Autowired ScoringSchemeRepository schemes;
+    @Autowired ScoringScaleRuleRepository scaleRules;
+    @Autowired ScoreBandRepository bands;
     private final JsonMapper json = JsonMapper.builder().build();
 
     @Test
@@ -226,6 +229,7 @@ class TramBusinessCompletionTests {
         var real = new MockExamEntity();
         real.setTitle("Real Placement after demo");
         real.setCertificateId(f.exam().getCertificateId());
+        real.setScoringSchemeId(f.exam().getScoringSchemeId());
         real.setExamType("PLACEMENT");
         real.setSkill("WRITING");
         real.setStatus("PUBLISHED");
@@ -236,7 +240,8 @@ class TramBusinessCompletionTests {
         link.setQuestionId(f.question().getId());
         link.setPosition(1);
         links.saveAndFlush(link);
-        int actual = engine.start(f.user().getId(), real.getId(), "real-placement").attemptId();
+        int actual =
+                engine.startPlacement(f.user().getId(), real.getId(), "real-placement").attemptId();
         assertNotEquals(demoAttempt, actual);
         assertEquals(real.getId(), attempts.findById(actual).orElseThrow().getMockExamId());
         assertEquals(demoAttempt, attempts.findById(demoAttempt).orElseThrow().getId());
@@ -255,7 +260,8 @@ class TramBusinessCompletionTests {
     }
 
     private int start(Fixture f) {
-        return engine.start(f.user().getId(), f.exam().getId(), "test:" + UUID.randomUUID())
+        return engine.startPlacement(
+                        f.user().getId(), f.exam().getId(), "test:" + UUID.randomUUID())
                 .attemptId();
     }
 
@@ -283,6 +289,27 @@ class TramBusinessCompletionTests {
         certificate.setName("Regression certificate");
         certificate.setStatus(RecordStatus.ACTIVE);
         certificate = certificates.saveAndFlush(certificate);
+        var scheme = new ScoringScheme();
+        scheme.setCertificate(certificate);
+        scheme.setName("Placement regression policy");
+        scheme.setVersion("test-v1");
+        scheme.setStatus(RecordStatus.ACTIVE);
+        scheme = schemes.saveAndFlush(scheme);
+        var rule = new ScoringScaleRule();
+        rule.setScheme(scheme);
+        rule.setSkill("WRITING");
+        rule.setRawMin(java.math.BigDecimal.ZERO);
+        rule.setRawMax(java.math.BigDecimal.valueOf(50));
+        rule.setScaleMin(java.math.BigDecimal.ZERO);
+        rule.setScaleMax(java.math.BigDecimal.valueOf(50));
+        scaleRules.saveAndFlush(rule);
+        var band = new ScoreBand();
+        band.setScheme(scheme);
+        band.setSkill("WRITING");
+        band.setCefrLevel("A1");
+        band.setMinScore(java.math.BigDecimal.ZERO);
+        band.setMaxScore(java.math.BigDecimal.valueOf(50));
+        bands.saveAndFlush(band);
         var question = new QuestionEntity();
         question.setContent("Original question");
         question.setInstruction("Original instructions");
@@ -303,6 +330,7 @@ class TramBusinessCompletionTests {
         }
         var exam = new MockExamEntity();
         exam.setCertificateId(certificate.getId());
+        exam.setScoringSchemeId(scheme.getId());
         exam.setTitle("Regression exam");
         exam.setExamType("PLACEMENT");
         exam.setSkill("WRITING");

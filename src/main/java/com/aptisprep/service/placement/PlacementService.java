@@ -7,6 +7,7 @@ import com.aptisprep.service.contract.ExamCatalogContract;
 import com.aptisprep.service.contract.IntegrationModels.AttemptHandle;
 import com.aptisprep.service.contract.IntegrationModels.AttemptResult;
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.stereotype.Service;
@@ -46,7 +47,7 @@ public class PlacementService {
         Integer userId = account.requireActiveStudent(email);
         PlacementExamCatalogService.PlacementExam exam =
                 available(skill).stream()
-                        .filter(value -> examId == null || value.id() == examId)
+                        .filter(value -> examId == null || Objects.equals(value.id(), examId))
                         .findFirst()
                         .orElseThrow(
                                 () ->
@@ -56,7 +57,7 @@ public class PlacementService {
         // A new Placement/Practice run must not reuse the key of a terminal attempt.
         // Repeated clicks in the same request are still protected by the engine's
         // active-attempt lookup and the user-row lock.
-        return attempt.start(
+        return attempt.startPlacement(
                 userId,
                 exam.id(),
                 "placement:" + userId + ":" + exam.id() + ":" + UUID.randomUUID());

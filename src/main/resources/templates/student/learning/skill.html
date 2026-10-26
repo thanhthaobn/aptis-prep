@@ -15,26 +15,26 @@
             <p class="eyebrow">LỘ TRÌNH KỸ NĂNG</p>
             <h1 th:text="${selectedSkill}"></h1>
           </div>
-          <div th:replace="~{fragments/path-stage :: levelRange(${selectedSkill})}"></div>
+          <div th:replace="~{fragments/path-stage :: pathLevelRange(${selectedSkill})}"></div>
         </header>
 
         <!-- Thông báo alert chuẩn thống nhất -->
         <div th:replace="~{fragments/messages :: messages}"></div>
 
         <div class="actions">
-          <a class="button button-secondary" th:href="@{/student/learning-path}"
-            >← Tất cả kỹ năng</a
-          >
+          <a class="button button-secondary" th:href="@{/student/learning-path}">
+            ← Tất cả kỹ năng
+          </a>
         </div>
 
         <section class="curriculum-tree" aria-label="Kỹ năng, cấp độ và bài học">
-          <p th:if="${#lists.isEmpty(paths)}" class="empty-box">
+          <p th:if="${paths == null or paths.isEmpty()}" class="empty-box">
             Chưa có chặng phù hợp hoặc mục tiêu hiện tại đã đạt. Bạn vẫn có thể ôn bài trong thư
             viện.
           </p>
-          <a class="button button-secondary" th:href="@{/student/lessons(skill=${selectedSkill})}"
-            >Xem tất cả bài học của kỹ năng</a
-          >
+          <a class="button button-secondary" th:href="@{/student/lessons(skill=${selectedSkill})}">
+            Xem tất cả bài học của kỹ năng
+          </a>
           <article
             class="dashboard-panel skill-branch"
             th:each="path : ${paths}"
@@ -46,7 +46,7 @@
                 th:text="${path.totalLessons() == 0 ? 'Chưa có bài học' : path.completedLessons() + '/' + path.totalLessons() + ' bài · ' + path.progressPercent() + '%'}"
               ></span>
             </header>
-            <div th:replace="~{fragments/path-stage :: stageScale(${path.skill()})}"></div>
+            <div th:replace="~{fragments/path-stage :: pathStage(${path.skill()})}"></div>
             <div th:each="stage : ${stages}" th:if="${stage.pathId == path.pathId}">
               <h2>Bài học được giao trong chặng</h2>
               <ol class="lesson-leaves">
@@ -69,9 +69,9 @@
                     ></span>
                   </div>
                   <div class="path-lesson-actions">
-                    <span th:if="${lesson.completed}" class="badge badge-success"
-                      >Đã hoàn thành</span
-                    >
+                    <span th:if="${lesson.completed}" class="badge badge-success">
+                      Đã hoàn thành
+                    </span>
                     <a
                       class="path-set-link"
                       th:if="${lesson.available and lessonSets.containsKey(lesson.id)}"
@@ -143,8 +143,9 @@
                 th:if="${path.checkpointState == 'error'}"
                 class="button button-secondary"
                 th:href="@{/student/results(examType='CHECKPOINT')}"
-                >Xem kết quả checkpoint</a
               >
+                Xem kết quả checkpoint
+              </a>
               <form
                 th:if="${path.checkpointState == 'available' or path.checkpointState == 'failed' or path.checkpointState == 'in_progress' or path.checkpointState == 'grading'}"
                 method="post"

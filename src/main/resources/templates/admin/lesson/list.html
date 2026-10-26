@@ -16,25 +16,25 @@
         <section class="curriculum-tree" aria-label="Cây quản lý bài học">
           <details
             class="dashboard-panel skill-branch"
-            th:each="branch:${tree}"
+            th:each="branch : ${tree}"
             th:attr="data-skill=${branch.skill()}"
           >
             <summary>
-              <strong th:text="${branch.skill()}"></strong
-              ><span th:text="|${branch.count()} bài học|"></span>
+              <strong th:text="${branch.skill()}"></strong>
+              <span th:text="|${branch.count()} bài học|"></span>
             </summary>
-            <details class="level-branch" th:each="level:${branch.levels()}">
+            <details class="level-branch" th:each="level : ${branch.levels()}">
               <summary>
-                <strong th:text="${level.level()}"></strong
-                ><span th:text="|${#lists.size(level.lessons())} bài học|"></span>
+                <strong th:text="${level.level()}"></strong>
+                <span th:text="|${level.lessons().size()} bài học|"></span>
               </summary>
-              <details class="topic-branch" th:each="topic:${level.topics()}">
+              <details class="topic-branch" th:each="topic : ${level.topics()}">
                 <summary th:text="${topic.key}"></summary>
                 <ul class="lesson-leaves">
-                  <li th:each="lesson:${topic.value}" class="admin-lesson-leaf">
+                  <li th:each="lesson : ${topic.value}" class="admin-lesson-leaf">
                     <div class="lesson-leaf-title">
-                      <span class="muted" th:text="|${lesson.displayOrder}.|"></span
-                      ><a
+                      <span class="muted" th:text="|${lesson.displayOrder}.|"></span>
+                      <a
                         th:href="@{/admin/lessons/{id}(id=${lesson.id})}"
                         th:text="${lesson.title}"
                       ></a>
@@ -47,20 +47,23 @@
                       <a
                         class="button button-secondary"
                         th:href="@{/admin/lessons/{id}(id=${lesson.id})}"
-                        >Xem trước</a
-                      ><a class="button" th:href="@{/admin/lessons/{id}/edit(id=${lesson.id})}"
-                        >Chỉnh sửa</a
                       >
+                        Xem trước
+                      </a>
+                      <a class="button" th:href="@{/admin/lessons/{id}/edit(id=${lesson.id})}">
+                        Chỉnh sửa
+                      </a>
                     </div>
                   </li>
                 </ul>
                 <a
                   class="button button-secondary"
                   th:href="@{/admin/lessons/create(skill=${branch.skill()},level=${level.level()},topic=${topic.key=='Bài học độc lập'?'':topic.key})}"
-                  >+ Thêm bài trong chủ đề</a
                 >
+                  + Thêm bài trong chủ đề
+                </a>
               </details>
-              <p class="muted" th:if="${#lists.isEmpty(level.lessons())}">
+              <p class="muted" th:if="${level.lessons() == null or level.lessons().isEmpty()}">
                 Chưa có bài học ở cấp độ này.
               </p>
               <a

@@ -17,14 +17,14 @@
         </header>
         <section class="dashboard-panel result-overall-panel">
           <div>
-            <span>Điểm tổng</span
-            ><strong
+            <span>Điểm tổng</span>
+            <strong
               th:text="${attemptResult.finalScaleScore==null?'—':attemptResult.finalScaleScore}"
             ></strong>
           </div>
           <div>
-            <span>CEFR</span
-            ><strong
+            <span>CEFR</span>
+            <strong
               th:text="${attemptResult.overallCefr==null?'—':attemptResult.overallCefr}"
             ></strong>
           </div>
@@ -32,7 +32,7 @@
         <section class="result-skill-grid">
           <article
             class="dashboard-panel result-skill-card"
-            th:each="skill:${attemptResult.skills}"
+            th:each="skill : ${attemptResult.skills}"
           >
             <div class="result-skill-heading">
               <h2 th:text="${#strings.replace(skill.skill,'_',' ')}"></h2>

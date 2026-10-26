@@ -27,14 +27,15 @@
             <a
               class="button button-secondary"
               th:href="@{/student/exams(examType=${entry.examType})}"
-              >Về danh sách</a
             >
+              Về danh sách
+            </a>
           </div>
         </header>
         <section class="dashboard-panel study-overview-card">
           <div class="study-card-meta">
-            <span class="badge" th:text="${entry.kind}"></span
-            ><strong th:text="${module == 'results' ? entry.status : entry.level}"></strong>
+            <span class="badge" th:text="${entry.kind}"></span>
+            <strong th:text="${module == 'results' ? entry.status : entry.level}"></strong>
           </div>
           <p class="study-summary" th:text="${entry.summary}"></p>
           <dl class="study-facts">
@@ -60,7 +61,8 @@
           <div class="study-flashcards" th:if="${entry.kind == 'Flashcard'}">
             <details class="orientation-flashcard" th:each="block : ${entry.blocks}">
               <summary>
-                <span th:text="${block.title}"></span><small th:text="${block.value}"></small>
+                <span th:text="${block.title}"></span>
+                <small th:text="${block.value}"></small>
               </summary>
               <p th:text="${block.content}"></p>
             </details>
@@ -76,8 +78,8 @@
               like it.
             </p>
             <div class="field">
-              <label for="writingPractice">Đoạn văn của bạn</label
-              ><textarea
+              <label for="writingPractice">Đoạn văn của bạn</label>
+              <textarea
                 id="writingPractice"
                 rows="7"
                 placeholder="In my free time, I enjoy…"
@@ -97,8 +99,9 @@
             <h2>Kể về sở thích của bạn</h2>
             <p>Tell us about an activity you enjoy in your free time.</p>
             <div class="speaking-cues">
-              <span>What do you enjoy?</span><span>When do you do it?</span
-              ><span>Why do you like it?</span>
+              <span>What do you enjoy?</span>
+              <span>When do you do it?</span>
+              <span>Why do you like it?</span>
             </div>
             <div class="speaking-recorder">
               <span class="recorder-symbol" aria-hidden="true">♫</span>
@@ -116,8 +119,8 @@
             </details>
           </section>
           <div class="actions">
-            <a class="button" th:href="@{/student/lessons}">Chọn bài học khác</a
-            ><a class="button button-secondary" th:href="@{/student/learning-path}">Về lộ trình</a>
+            <a class="button" th:href="@{/student/lessons}">Chọn bài học khác</a>
+            <a class="button button-secondary" th:href="@{/student/learning-path}">Về lộ trình</a>
           </div>
         </section>
 
@@ -180,7 +183,7 @@
           </div>
           <div class="actions">
             <form
-              th:if="${entry.startable and entry.kind != 'Kiểm tra cuối chặng'}"
+              th:if="${entry.startable and entry.examType != 'CHECKPOINT' and entry.examType != 'PLACEMENT'}"
               method="post"
               th:action="@{/student/exams/{id}/start(id=${entry.id})}"
             >
@@ -191,19 +194,22 @@
               class="button"
               th:if="${entry.kind == 'Kiểm tra cuối chặng'}"
               th:href="@{/student/learning-path/{skill}(skill=${entry.skill})}"
-              >Mở từ lộ trình học</a
             >
+              Mở từ lộ trình học
+            </a>
             <a
               class="button"
               th:if="${entry.state == 'PUBLISHED' and entry.examType == 'PLACEMENT'}"
               th:href="@{/student/placement(skill=${entry.skillCode})}"
-              >Mở kiểm tra đầu vào</a
             >
+              Mở kiểm tra đầu vào
+            </a>
             <a
               class="button button-secondary"
               th:href="@{/student/exams(examType=${entry.examType})}"
-              >Vào danh sách đề thi</a
             >
+              Vào danh sách đề thi
+            </a>
           </div>
         </section>
 
@@ -230,8 +236,8 @@
             </p>
           </article>
           <div class="actions">
-            <a class="button" th:href="@{/student/lessons}">Tiếp tục học</a
-            ><a class="button button-secondary" th:href="@{/student/exams}">Xem đề thi</a>
+            <a class="button" th:href="@{/student/lessons}">Tiếp tục học</a>
+            <a class="button button-secondary" th:href="@{/student/exams}">Xem đề thi</a>
           </div>
         </section>
       </main>

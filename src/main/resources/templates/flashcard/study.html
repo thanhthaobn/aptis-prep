@@ -20,9 +20,10 @@
           class="set-lesson-source study-lesson-source"
           th:if="${set.lesson!=null}"
           th:href="@{/student/lessons/{id}(id=${set.lesson.id})}"
-          ><small th:text="|${set.lesson.skill} · ${set.cefrLevel} · Bài học nguồn|"></small
-          ><span th:text="|${set.lesson.title} ↗|"></span
-        ></a>
+        >
+          <small th:text="|${set.lesson.skill} · ${set.cefrLevel} · Bài học nguồn|"></small>
+          <span th:text="|${set.lesson.title} ↗|"></span>
+        </a>
         <header
           class="page-header d-flex flex-wrap align-items-center justify-content-between gap-3"
         >
@@ -38,12 +39,14 @@
           ></span>
         </header>
         <div class="toolbar flashcard-options d-flex flex-wrap align-items-center gap-3">
-          <label class="flashcard-toggle"
-            ><input id="reverse" type="checkbox" /> Hiện nghĩa trước</label
-          >
-          <label class="flashcard-toggle"
-            ><input id="unlearned" type="checkbox" /> Chỉ thẻ cần học lại</label
-          >
+          <label class="flashcard-toggle">
+            <input id="reverse" type="checkbox" />
+            Hiện nghĩa trước
+          </label>
+          <label class="flashcard-toggle">
+            <input id="unlearned" type="checkbox" />
+            Chỉ thẻ cần học lại
+          </label>
           <button class="button button-secondary" id="shuffle" type="button">Trộn thẻ</button>
         </div>
         <div class="study-summary d-flex align-items-center justify-content-between gap-3">
@@ -59,28 +62,29 @@
               aria-label="Lật thẻ"
               aria-pressed="false"
             >
-              <span class="flashcard-inner"
-                ><span class="flashcard-side flashcard-front"
-                  ><span class="face-label" id="front-label">THUẬT NGỮ</span
-                  ><strong class="face-content" id="front-content"></strong
-                  ><small>Bấm hoặc nhấn Space để lật</small></span
-                ><span class="flashcard-side flashcard-back"
-                  ><span class="face-label" id="back-label">ĐỊNH NGHĨA</span
-                  ><strong class="face-content" id="back-content"></strong
-                  ><small>Bấm để quay lại mặt trước</small></span
-                ></span
-              >
+              <span class="flashcard-inner">
+                <span class="flashcard-side flashcard-front">
+                  <span class="face-label" id="front-label">THUẬT NGỮ</span>
+                  <strong class="face-content" id="front-content"></strong>
+                  <small>Bấm hoặc nhấn Space để lật</small>
+                </span>
+                <span class="flashcard-side flashcard-back">
+                  <span class="face-label" id="back-label">ĐỊNH NGHĨA</span>
+                  <strong class="face-content" id="back-content"></strong>
+                  <small>Bấm để quay lại mặt trước</small>
+                </span>
+              </span>
             </button>
           </div>
           <div class="actions flashcard-controls d-flex justify-content-center gap-3">
-            <button type="button" class="button button-secondary" id="previous">← Thẻ trước</button
-            ><button type="button" class="button button-secondary" id="next">Thẻ tiếp →</button>
+            <button type="button" class="button button-secondary" id="previous">← Thẻ trước</button>
+            <button type="button" class="button button-secondary" id="next">Thẻ tiếp →</button>
           </div>
           <div
             class="actions flashcard-controls mastery-controls d-flex justify-content-center gap-3"
           >
-            <button type="button" class="button button-secondary" id="learning">Cần học lại</button
-            ><button type="button" class="button" id="mastered">Đã nhớ</button>
+            <button type="button" class="button button-secondary" id="learning">Cần học lại</button>
+            <button type="button" class="button" id="mastered">Đã nhớ</button>
           </div>
           <p id="save-message" role="status" aria-live="polite"></p>
           <p class="keyboard-hint">Phím ← → để chuyển thẻ · Space để lật</p>
@@ -93,10 +97,12 @@
           <h2>Bạn đã xem hết các thẻ</h2>
           <div class="flashcard-result-grid">
             <article class="flashcard-result is-mastered">
-              <strong id="mastered-count">0</strong><span>Đã nhớ</span>
+              <strong id="mastered-count">0</strong>
+              <span>Đã nhớ</span>
             </article>
             <article class="flashcard-result is-learning">
-              <strong id="learning-count">0</strong><span>Cần học lại</span>
+              <strong id="learning-count">0</strong>
+              <span>Cần học lại</span>
             </article>
           </div>
           <div id="learning-review" class="learning-review" hidden>
@@ -104,12 +110,13 @@
             <ul id="learning-terms"></ul>
           </div>
           <div class="actions completion-actions">
-            <button type="button" class="button" id="review-learning">Ôn lại từ chưa thuộc</button
-            ><button type="button" class="button button-secondary" id="restart-all">
-              Học lại tất cả</button
-            ><a class="button button-secondary" th:href="@{/student/flashcards}"
-              >Về danh sách bộ thẻ</a
-            >
+            <button type="button" class="button" id="review-learning">Ôn lại từ chưa thuộc</button>
+            <button type="button" class="button button-secondary" id="restart-all">
+              Học lại tất cả
+            </button>
+            <a class="button button-secondary" th:href="@{/student/flashcards}">
+              Về danh sách bộ thẻ
+            </a>
           </div>
         </section>
         <form
@@ -119,15 +126,15 @@
           hidden
         ></form>
         <section id="study-data" hidden>
-          <div th:each="card:${cards}" th:attr="data-id=${card.id()},data-state=${card.state()}">
-            <span class="term" th:text="${card.term()}"></span
-            ><span class="definition" th:text="${card.definition()}"></span>
+          <div th:each="card : ${cards}" th:attr="data-id=${card.id()},data-state=${card.state()}">
+            <span class="term" th:text="${card.term()}"></span>
+            <span class="definition" th:text="${card.definition()}"></span>
           </div>
         </section>
         <details class="dashboard-panel dashboard-section term-overview">
           <summary>Xem toàn bộ thuật ngữ</summary>
           <dl class="term-list">
-            <div th:each="card:${cards}">
+            <div th:each="card : ${cards}">
               <dt th:text="${card.term()}"></dt>
               <dd th:text="${card.definition()}"></dd>
               <dd

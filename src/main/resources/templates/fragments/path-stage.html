@@ -1,17 +1,17 @@
 <!doctype html>
 <html lang="vi" xmlns:th="http://www.thymeleaf.org">
   <body>
-    <span th:fragment="levelRange(skill)" class="explore-number stage-range">
-      <span th:each="stage:${stages}" th:if="${stage.skill == skill}"
-        ><span th:text="${stage.fromLevel != null ? stage.fromLevel : 'Chưa đánh giá'}"></span
-        ><span aria-hidden="true"> → </span
-        ><strong
+    <span th:fragment="pathLevelRange(skill)" class="explore-number stage-range">
+      <span th:each="stage : ${stages}" th:if="${stage.skill == skill}">
+        <span th:text="${stage.fromLevel != null ? stage.fromLevel : 'Chưa đánh giá'}"></span>
+        <span aria-hidden="true">→</span>
+        <strong
           th:text="${stage.goalLevel != null ? stage.goalLevel : 'Chưa đặt mục tiêu'}"
-        ></strong
-      ></span>
+        ></strong>
+      </span>
     </span>
     <section
-      th:fragment="stageScale(skill)"
+      th:fragment="pathStage(skill)"
       class="stage-overview"
       th:each="stage : ${stages}"
       th:if="${stage.skill == skill}"
@@ -19,9 +19,9 @@
       aria-label="Vị trí chặng học A1 đến C1"
     >
       <p class="stage-current">
-        <strong th:text="|Chặng ${current}${stage.targetLevel == null ? ' · Làm quen' : ''}|"
-          >Chặng A1</strong
-        >
+        <strong th:text="|Chặng ${current}${stage.targetLevel == null ? ' · Làm quen' : ''}|">
+          Chặng A1
+        </strong>
         <span
           class="badge"
           th:text="${stage.status == 'COMPLETED' ? 'Đã hoàn tất' : 'Đang học'}"
@@ -34,7 +34,7 @@
       >
         <!-- Continuous fill follows the current stage, not the final goal. -->
         <li
-          th:each="level,levelStat : ${scale}"
+          th:each="level, levelStat : ${scale}"
           th:classappend="${(level == current ? ' is-current' : '') + (level == goal ? ' is-goal' : '') + (levelStat.index &lt;= currentIndex ? ' is-reached' : '')}"
           th:attr="aria-current=${level == current ? 'step' : null}"
         >

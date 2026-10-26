@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="vi" xmlns:th="http://www.thymeleaf.org">
   <body>
-    <figure th:fragment="navi(pose, label)" class="navi" th:classappend="'navi-' + ${pose}">
+    <figure th:fragment="navi(pose, label)" class="navi" th:classappend="${'navi-' + pose}">
       <svg viewBox="0 0 160 130" role="img" th:attr="aria-label=${label}">
         <path
           class="navi-shadow"

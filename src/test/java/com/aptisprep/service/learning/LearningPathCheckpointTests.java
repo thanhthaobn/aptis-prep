@@ -241,14 +241,16 @@ class LearningPathCheckpointTests {
         assertThat(service.summary(user.getId(), path.getId()).completedLessons()).isEqualTo(1);
         when(engine.history(eq(user.getId()), eq(0), eq(100), any()))
                 .thenReturn(new HistoryPage(List.of(failed), 0, 100, 1));
-        when(engine.start(eq(user.getId()), eq(exam.getId()), anyString()))
+        when(engine.startCheckpoint(
+                        eq(user.getId()), eq(exam.getId()), eq(path.getId()), anyString()))
                 .thenReturn(new AttemptHandle(1004, "IN_PROGRESS", null));
         assertThat(service.startCheckpoint(user.getId(), path.getId(), "client-key"))
                 .isEqualTo(1004);
         verify(engine)
-                .start(
+                .startCheckpoint(
                         user.getId(),
                         exam.getId(),
+                        path.getId(),
                         "checkpoint:" + user.getId() + ":" + path.getId() + ":after:1003");
     }
 
@@ -323,7 +325,8 @@ class LearningPathCheckpointTests {
                 .andExpect(status().is3xxRedirection())
                 .andExpect(redirectedUrl("/student/attempts/1006/result"));
         verify(engine, times(2))
-                .start(
+                .startCheckpoint(
+                        anyInt(),
                         anyInt(),
                         anyInt(),
                         anyString()); // helper + first POST; pending does not start again
@@ -353,7 +356,7 @@ class LearningPathCheckpointTests {
         int id = empty.getId();
         assertThatThrownBy(() -> service.startCheckpoint(user.getId(), id, "x"))
                 .isInstanceOf(BusinessRuleException.class);
-        verify(engine, never()).start(anyInt(), anyInt(), anyString());
+        verify(engine, never()).startCheckpoint(anyInt(), anyInt(), anyInt(), anyString());
     }
 
     @Test
@@ -481,7 +484,8 @@ class LearningPathCheckpointTests {
     }
 
     private void start(User user, LearningPath path, MockExamEntity exam, int id, String state) {
-        when(engine.start(eq(user.getId()), eq(exam.getId()), anyString()))
+        when(engine.startCheckpoint(
+                        eq(user.getId()), eq(exam.getId()), eq(path.getId()), anyString()))
                 .thenReturn(new AttemptHandle(id, state, null));
         when(engine.result(user.getId(), id))
                 .thenReturn(

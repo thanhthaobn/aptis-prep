@@ -27,23 +27,23 @@ public class GoalForm {
     private LocalDate targetDate;
 
     @Size(max = 10)
-    @Pattern(regexp = "^(A1|A2|B1|B2|C1|C2)?$", message = "CEFR không hợp lệ")
+    @Pattern(regexp = "^(A1|A2|B1|B2|C1)?$", message = "Mục tiêu học tập chỉ hỗ trợ từ A1 đến C1")
     private String grammarVocabulary;
 
     @Size(max = 10)
-    @Pattern(regexp = "^(A1|A2|B1|B2|C1|C2)?$", message = "CEFR không hợp lệ")
+    @Pattern(regexp = "^(A1|A2|B1|B2|C1)?$", message = "Mục tiêu học tập chỉ hỗ trợ từ A1 đến C1")
     private String reading;
 
     @Size(max = 10)
-    @Pattern(regexp = "^(A1|A2|B1|B2|C1|C2)?$", message = "CEFR không hợp lệ")
+    @Pattern(regexp = "^(A1|A2|B1|B2|C1)?$", message = "Mục tiêu học tập chỉ hỗ trợ từ A1 đến C1")
     private String listening;
 
     @Size(max = 10)
-    @Pattern(regexp = "^(A1|A2|B1|B2|C1|C2)?$", message = "CEFR không hợp lệ")
+    @Pattern(regexp = "^(A1|A2|B1|B2|C1)?$", message = "Mục tiêu học tập chỉ hỗ trợ từ A1 đến C1")
     private String writing;
 
     @Size(max = 10)
-    @Pattern(regexp = "^(A1|A2|B1|B2|C1|C2)?$", message = "CEFR không hợp lệ")
+    @Pattern(regexp = "^(A1|A2|B1|B2|C1)?$", message = "Mục tiêu học tập chỉ hỗ trợ từ A1 đến C1")
     private String speaking;
 
     public Integer getCertificateId() {
