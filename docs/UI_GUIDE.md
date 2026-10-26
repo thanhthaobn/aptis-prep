@@ -2,13 +2,163 @@
 
 Tài liệu này là hợp đồng giao diện cho mọi Pull Request có Thymeleaf/CSS.
 
+## Cách đọc template và format (26/10/2026)
+
+HTML dùng Prettier, thụt lề 2 khoảng trắng. `htmlWhitespaceSensitivity: ignore`
+giúp thẻ inline đóng/mở trên các dòng riêng, tránh kiểu `</label` rồi dòng sau
+mới có `>`. Nội dung trong textarea/pre vẫn phải được bảo toàn.
+Chạy `npm run format:web` để format và `npm run format:web:check` để kiểm tra.
+
+| Cú pháp | Ý nghĩa |
+| --- | --- |
+| `${catalog.title}` | Lấy dữ liệu controller đã đưa vào model |
+| `*{title}` | Trường của đối tượng form hiện tại, khai báo bằng `th:object` |
+| `@{/admin/questions}` | Tạo URL, có xét context path của ứng dụng |
+| `~{fragments/navbar :: navbar}` | Chọn fragment `navbar` trong file `fragments/navbar.html` |
+| `th:replace` | Thay cả thẻ hiện tại bằng fragment; dùng chung navbar/sidebar/footer |
+| `th:with="itemPath=${'items[' + itemStat.index + ']'}"` | Đặt tên đường dẫn của mục đang lặp, ví dụ `items[0]` |
+| `th:name="${itemPath + '.content'}"` | Ghép đường dẫn với tên trường bằng phép nối chuỗi `+` |
+| `${items != null and !items.isEmpty()}` | Danh sách có dữ liệu; kiểm tra null trước khi gọi phương thức |
+| `${items == null or items.isEmpty()}` | Danh sách chưa có hoặc rỗng |
+| `${items.size()}` | Đếm phần tử của danh sách đã được khởi tạo |
+
+`::` và `~{...}` là cú pháp chuẩn của Thymeleaf, không phải lỗi HTML. Không bỏ
+chúng bằng cách chép navbar/sidebar vào mọi trang hoặc chuyển sang cú pháp cũ.
+
+Tên file dùng chữ thường, ngăn cách bằng dấu `-`; tên fragment dùng camelCase
+theo cùng ý nghĩa. Giữ các thành phần cùng chức năng trong một file khi hợp lý:
+
+| File trong `fragments/` | Fragment |
+| --- | --- |
+| `navbar.html` | `navbar` |
+| `admin-sidebar.html` | `adminSidebar(activePage)` |
+| `student-sidebar.html` | `studentSidebar(activePage)` |
+| `footer.html` | `footer` |
+| `status-badge.html` | `statusBadge(status)`; `statusText(status)` cho dạng chữ |
+| `student-pagination.html` | `studentPagination(currentPage, totalPages, totalItems, baseUrl)` |
+| `lesson-history-context.html` | `lessonHistoryContext(context, mediaPrefix)` |
+| `path-stage.html` | `pathStage(skill)` và `pathLevelRange(skill)` |
+
+Ví dụ: `th:replace="~{fragments/status-badge :: statusBadge(${attempt.status})}"`.
+`pagination.html :: pagination(page, baseUrl)` nhận Spring Data Page, khác với
+`studentPagination` nhận các số trang riêng; không hoán đổi hai contract này.
+
+Điều kiện dài được dùng nhiều lần nên đặt tên bằng `th:with` tại phần tử cha.
+Trang bài học dùng `productive`, `hasQuestions`, `hasAttempts`, `hasMethodReview`,
+`hasMethod` và `hasVideo`; các phần con chỉ cần `th:if="${hasMethod}"` thay vì
+lặp lại toàn bộ điều kiện. Đây là biến trình bày trong template, không truy vấn
+DB hoặc thay đổi điều kiện hoàn thành bài học.
+
+`admin/catalog/form.html` chỉ giữ khung trang và chọn đúng form. Nội dung từng
+form nằm ở `admin/catalog/question-form.html` và `admin/catalog/exam-form.html`.
+Form bài học nằm ở `admin/lesson/form.html`.
+
+Các form như bài học vẫn dùng `th:field="*{title}"` cho trường đơn để giữ binding
+tự động của Spring. Hai fragment catalog dùng đối tượng rõ ràng, ví dụ
+`name="title" th:value="${examForm.title}"`, và khai báo kiểu model bằng comment
+`@thymesVar` để IDE nhận diện các thuộc tính trong fragment. Đây là thông tin
+kiểu cho IDE, không phải tắt kiểm tra lỗi hay thêm dữ liệu nghiệp vụ.
+Các danh sách nhiều cấp khai báo đường dẫn một lần bằng `th:with`, rồi dùng
+phép nối chuỗi `+` quen thuộc. Không lặp lại cả đường dẫn dài ở mỗi ô nhập:
+
+```html
+<div th:each="item, itemStat : ${questionForm.items}"
+     th:with="itemPath=${'items[' + itemStat.index + ']'}">
+  <div th:each="option, optionStat : ${item.options}"
+       th:with="optionPath=${itemPath + '.options[' + optionStat.index + ']'}">
+    <input th:name="${optionPath + '.content'}" th:value="${option.content}" />
+  </div>
+</div>
+```
+
+Sau render, tên là `items[0].options[1].content`; Spring vẫn gán vào DTO tương
+ứng khi POST. Không thể dùng chung `name="content"` cho mọi đáp án vì sẽ mất
+thông tin đáp án thuộc mục nào. Form đề thi dùng `sectionPath`, form bài học
+dùng `checkPath` theo cùng cách. Textarea dùng `th:text`, radio/checkbox dùng `th:checked`, option
+dùng `th:selected` để giữ dữ liệu khi sửa hoặc khi form có lỗi. Không ghép nội
+dung người dùng vào HTML bằng `th:utext`.
+
+`__${...}__` là preprocessing hợp lệ của `th:field` cho danh sách, không phải
+code sai. Các form hiện tại dùng `th:name` tường minh để tránh lồng cú pháp này.
+Không chỉ xóa dấu `__` rồi giữ nguyên `th:field`, vì có thể làm hỏng binding.
+Khi thêm/xóa dòng, phải cập nhật đồng thời `name`, `id` và `label[for]`.
+
+Tham khảo chính thức: [Template fragments](https://www.thymeleaf.org/doc/tutorials/3.1/usingthymeleaf.html#template-layout)
+và [Dynamic fields](https://www.thymeleaf.org/doc/tutorials/3.1/thymeleafspring.html#dynamic-fields).
+
+## Đọc source và theo dõi form hiện tại (25/10/2026)
+
+Phần này mô tả source đang chạy; những mô tả preview trong các quyết định cũ
+bên dưới là lịch sử triển khai, không phải danh sách chức năng còn thiếu.
+
+| Khi cần sửa | Đọc ở đâu |
+| --- | --- |
+| Trang và form | `src/main/resources/templates/`, chia `auth`, `admin`, `student`, `flashcard` |
+| Header/sidebar/thông báo dùng lại | `templates/fragments/` |
+| Menu mobile | `static/js/navigation.js` được navbar nạp bằng `defer` |
+| Thêm ý hỏi/phần thi ở Admin | `static/js/catalog-editor.js` được `admin/catalog/form.html` nạp |
+| Autosave, timer, audio, ghi âm khi thi | `static/js/exam-runner.js` được `student/attempt.html` nạp |
+| Soạn bài học / học bài | `static/js/lesson-author.js` / `lesson-player.js` |
+| Soạn và ôn Flashcard | `static/js/flashcard-editor.js` / `flashcard-study.js` |
+| Biểu đồ hoạt động hồ sơ | `static/js/profile-activity.js` |
+
+Luồng form cơ bản: GET vào controller → service đọc dữ liệu → controller đặt
+model → Thymeleaf render HTML. Khi nhấn lưu: trình duyệt gửi POST + CSRF →
+controller nhận DTO trong `dto/form` → service kiểm nghiệp vụ và lưu qua
+repository → redirect về GET. Lỗi nhập liệu phải quay lại form và giữ thông tin
+có thể sửa; JavaScript chỉ hỗ trợ hiển thị và lưu nháp, backend vẫn kiểm lại.
+
+Ví dụ đăng ký: `auth/register.html` → POST `/register` →
+`AuthController.register` + `RegisterForm` → `UserService.registerStudent` →
+`UserRepository`. Backend trả lỗi từng trường nếu thiếu dữ liệu hoặc xác nhận
+mật khẩu khác nhau; form có `required`, giới hạn độ dài tương ứng DTO.
+
+Ví dụ bài học: `StudentLessonController` render `student/lesson/detail.html`;
+`lesson-player.js` hỗ trợ phiên nghe/autosave. Các POST `/check`, `/response`,
+`/assess` được chuyển vào `LessonTeachingService`; điều kiện nghe đủ được xử lý
+riêng bởi `LessonListeningService`, không tin phần trăm do client khai báo.
+
+Ví dụ bài thi: `StudentExamController` → `ExamAttemptService` tạo snapshot và
+lượt thi → `student/attempt.html` + `exam-runner.js`. Lưu đáp án qua
+`/answers/autosave`; nộp qua `/submit`. Sau khi lưu bài, outbox/orchestration
+chuyển phần chấm sang grading; kết quả được đọc lại ở trang result. Không đưa
+lệnh gọi Gemini hoặc đáp án đúng vào JavaScript của học viên.
+
+### Package nên giữ và mức độ phức tạp
+
+`controller`, `dto`, `service`, `repository`, `entity` vẫn là các tầng MVC quen
+thuộc. Các nhánh `service/learning`, `exam`, `grading`, `scoring`, `account`,
+`placement`, `storage`, `catalog`, `admin`, `auth`, `student` đều đang có lớp
+được sử dụng; chưa có bằng chứng cần bỏ hoặc thêm package nghiệp vụ.
+
+- `event` dùng cho thông báo sau giao dịch, liên kết cập nhật Goal/lộ trình
+  và kết quả AI; không thay bằng việc gọi mạng trong transaction.
+- `exception` giữ lỗi nghiệp vụ, quyền truy cập và không tìm thấy dữ liệu,
+  cùng cách trả thông báo phù hợp.
+- `service/contract` chứa giao tiếp giữa các luồng; không cần thêm interface
+  cho mọi service chỉ để có cấu trúc `service/impl`.
+- Bean `resultLabels` được Thymeleaf gọi dù có thể không thấy lời gọi từ Java;
+  không xóa bean chỉ dựa trên Find Usages trong Java.
+
+Phần khó chủ yếu nằm ở `AiAssessmentService`, `AttemptFinalizationService`,
+`ExamAttemptService`, `LessonTeachingService`, `CatalogService` và
+`LearningPathService`. Chúng vẫn lớn; khi sửa tiếp nên tách theo một trách nhiệm
+cụ thể và giữ ranh giới transaction/lock. Việc di chuyển file sang package mới
+không tự làm các luồng này dễ hiểu hơn.
+
+HTML hiện đã tách các script dài ra file riêng. Formatter dùng
+`htmlWhitespaceSensitivity: css` để thẻ block dễ đọc hơn; dùng
+`npm run format:web` / `npm run format:web:check` và kiểm tra lại các vùng text
+inline sau khi sửa template. Bootstrap vẫn phụ trách collapse của sidebar,
+các trang vẫn dùng CSS chung trong head fragment.
+
 Thanh tìm kiếm/bộ lọc dùng chung `.toolbar` của Student/Admin: padding 10px 12px, gap 8px, nhãn 13px, ô nhập/select/nút 14px cao 38px desktop, viền mảnh và không shadow. Ô tìm kiếm co giãn cùng hàng với bộ lọc nếu đủ chỗ, không ép chiếm cả hàng trên desktop. Mobile ≤760px xếp ô lọc theo hàng riêng và giữ vùng thao tác tối thiểu 44px. Không áp các kích thước này lên form tạo/sửa hoặc đăng nhập.
 
 ## Quyết định giao diện mới nhất
 
 Navbar hiện có active state theo URL qua NavigationModelAdvice.navSection: `/` → Trang chủ; `/student/**` → Học tập; `/admin/**` → Quản trị; login/register → đúng mục. Không chọn theo role khi user đang ở trang chủ. Link active có nền màu nhẹ, chữ màu theme đậm và aria-current, không viền, không đổ bóng; vẫn hiện trên mobile. Menu bo góc 8px, cùng padding và độ đậm chữ ở cả trạng thái thường/active để không đổi kích thước khi chuyển trang. Nút Đăng ký active dùng nền đậm hơn, không thêm khung ngoài. Không sửa active riêng từng template; không loại bỏ viền focus dành cho bàn phím.
 
-Menu “Chứng chỉ & Chấm điểm” thay “Cấu hình”, liên kết `/admin/certificates` và dùng activePage `settings`. Template admin/settings/index, certificate, scheme tuân theme teal/tiêu đề không khung. Không hiển thị cấu hình kỹ thuật hay trạng thái OpenAI ở đây. Bàn giao UC-A03–A05: SCORING_UI_HANDOFF.md.
+Menu “Chứng chỉ & Chấm điểm” thay “Cấu hình”, liên kết `/admin/certificates` và dùng activePage `settings`. Template admin/settings/index, certificate, scheme tuân theme teal/tiêu đề không khung. Không hiển thị cấu hình kỹ thuật hay trạng thái Gemini ở đây. Bàn giao UC-A03–A05: SCORING_UI_HANDOFF.md.
 
 Tiêu đề học viên cũng bỏ toàn bộ nền/viền/bóng/bo góc bao quanh như admin, padding 0 và giữ khoảng dưới 18px. Áp dụng Placement, Khám phá, Bài học, Đề thi, Kết quả, Hồ sơ, các chi tiết và banner tiêu đề tổng quan. Chữ dùng font chung; tiêu đề chi tiết kế thừa màu đậm của skill, trang chung màu xanh lá. Các quy tắc khung tiêu đề Student cũ (padding 12px 16px/bo 14px) được thay thế. Không xóa thẻ header ngữ nghĩa hoặc thay màu/khung card nội dung, bản đồ kỹ năng bên dưới.
 

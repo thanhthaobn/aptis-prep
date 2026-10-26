@@ -1,25 +1,290 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="vi" xmlns:th="http://www.thymeleaf.org">
-<head th:replace="~{fragments/head :: head('Bộ chấm điểm & CEFR')}"></head>
-<body class="admin-theme"><div th:replace="~{fragments/navbar :: navbar}"></div>
-<div class="container app-shell"><div th:replace="~{fragments/admin-sidebar :: adminSidebar('settings')}"></div>
-<main class="app-main admin-catalog">
-    <div th:replace="~{fragments/breadcrumb :: breadcrumb('Chứng chỉ & Chấm điểm', @{/admin/certificates}, 'Bộ chấm điểm')}"></div>
-    <header class="page-header"><h1 th:text="${readOnly ? scheme.name : (editing ? 'Chỉnh sửa bộ chấm điểm' : 'Thêm bộ chấm điểm')}"></h1><a class="button button-secondary" th:href="@{/admin/certificates#schemes}">Về danh sách</a></header>
-    <form class="dashboard-panel" onsubmit="return false;">
-        <fieldset class="scoring-fields" th:disabled="${readOnly}"><legend>Thông tin bộ chấm điểm</legend><div class="catalog-form-grid">
-            <div class="field"><label for="schemeCertificate">Chứng chỉ</label><select id="schemeCertificate"><option th:each="certificate : ${certificates}" th:value="${certificate.id}" th:text="${certificate.name}" th:selected="${editing and scheme.certificateId == certificate.id}"></option></select></div>
-            <div class="field"><label for="schemeName">Tên bộ chấm điểm</label><input id="schemeName" maxlength="255" th:value="${editing ? scheme.name : ''}" required></div>
-            <div class="field"><label for="schemeVersion">Phiên bản</label><input id="schemeVersion" maxlength="30" placeholder="1.0" th:value="${editing ? scheme.version : ''}" required></div>
-            <div class="field"><label for="schemeStatus">Trạng thái</label><select id="schemeStatus"><option value="ACTIVE">Đang sử dụng</option><option value="INACTIVE">Ngừng sử dụng</option></select></div>
-            <div class="field"><label for="schemeDate">Ngày hiệu lực</label><input id="schemeDate" type="datetime-local" th:value="${editing ? scheme.effectiveFrom : ''}"></div>
-        </div></fieldset>
-        <div class="actions"><button class="button" type="button" disabled>Lưu bộ chấm điểm</button><a th:if="${readOnly}" class="button button-secondary" th:href="@{/admin/scoring-schemes/{id}/edit(id=${scheme.id},skill=${selectedSkill})}">Chỉnh sửa</a><button th:if="${editing}" class="button button-secondary" type="button" disabled>Ngừng sử dụng</button></div>
-    </form>
-    <section class="dashboard-panel dashboard-section"><h2>Khoảng điểm CEFR</h2><p class="muted">Thang điểm nội bộ để ước lượng, không phải ngưỡng Aptis chính thức.</p>
-        <form th:if="${editing}" class="toolbar" method="get" th:action="@{${'/admin/scoring-schemes/' + scheme.id + (readOnly ? '' : '/edit')}}"><div><label for="bandSkill">Kỹ năng</label><select id="bandSkill" name="skill"><option th:each="skill : ${skills}" th:text="${skill}" th:value="${skill}" th:selected="${selectedSkill == skill}"></option></select></div><button class="button button-secondary" type="submit">Xem khoảng điểm</button></form>
-        <div class="table-wrap" th:if="${!#lists.isEmpty(bands)}"><table class="data-table"><thead><tr><th scope="col">CEFR</th><th scope="col">Từ điểm</th><th scope="col">Đến điểm</th></tr></thead><tbody><tr th:each="band : ${bands}"><td th:text="${band.level}"></td><td th:text="${band.min}"></td><td th:text="${band.max}"></td></tr></tbody></table></div>
-        <p th:if="${#lists.isEmpty(bands)}">Chưa có khoảng điểm cho kỹ năng này.</p>
-        <form class="catalog-form-section" onsubmit="return false;"><h3>Thiết lập khoảng điểm</h3><div class="catalog-form-grid"><div class="field"><label for="newBandSkill">Kỹ năng</label><select id="newBandSkill"><option th:each="skill : ${skills}" th:text="${skill}" th:selected="${selectedSkill == skill}"></option></select></div><div class="field"><label for="bandLevel">CEFR</label><select id="bandLevel"><option th:each="level : ${ {'A1','A2','B1','B2','C1','C2'} }" th:text="${level}"></option></select></div><div class="field"><label for="bandMin">Từ điểm</label><input id="bandMin" type="number" step="0.01" min="0"></div><div class="field"><label for="bandMax">Đến điểm</label><input id="bandMax" type="number" step="0.01" min="0"></div></div><div class="actions"><button class="button" type="button" disabled>Lưu khoảng điểm</button><button class="button button-secondary" type="button" disabled>Xóa khoảng điểm</button></div></form>
-    </section>
-</main></div><div th:replace="~{fragments/footer :: footer}"></div></body></html>
+  <head th:replace="~{fragments/head :: head('Bộ chấm điểm & CEFR')}"></head>
+  <body class="admin-theme">
+    <div th:replace="~{fragments/navbar :: navbar}"></div>
+    <div class="container ap-container app-shell">
+      <div th:replace="~{fragments/admin-sidebar :: adminSidebar('settings')}"></div>
+      <main id="main-content" tabindex="-1" class="app-main admin-catalog">
+        <div
+          th:replace="~{fragments/breadcrumb :: breadcrumb('Chứng chỉ & Chấm điểm', @{/admin/certificates}, 'Bộ chấm điểm')}"
+        ></div>
+        <div th:replace="~{fragments/messages :: messages}"></div>
+        <header class="page-header">
+          <h1
+            th:text="${readOnly ? scheme.name : (editing ? 'Chỉnh sửa bộ chấm điểm' : 'Thêm bộ chấm điểm')}"
+          ></h1>
+          <a class="button button-secondary" th:href="@{/admin/certificates#schemes}">
+            Về danh sách
+          </a>
+        </header>
+        <form
+          class="dashboard-panel"
+          th:object="${schemeForm}"
+          th:action="${editing ? '/admin/scoring-schemes/' + scheme.id : '/admin/scoring-schemes'}"
+          method="post"
+        >
+          <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+          <fieldset class="scoring-fields" th:disabled="${readOnly}">
+            <legend>Thông tin bộ chấm điểm</legend>
+            <div class="catalog-form-grid">
+              <div class="field">
+                <label for="schemeCertificate">Chứng chỉ</label>
+                <select id="schemeCertificate" th:field="*{certificateId}">
+                  <option
+                    th:each="certificate : ${certificates}"
+                    th:value="${certificate.id}"
+                    th:text="${certificate.name}"
+                    th:selected="${editing and scheme.certificateId == certificate.id}"
+                  ></option>
+                </select>
+                <p class="field-error" th:errors="*{certificateId}"></p>
+              </div>
+              <div class="field">
+                <label for="schemeName">Tên bộ chấm điểm</label>
+                <input id="schemeName" th:field="*{name}" maxlength="255" required />
+                <p class="field-error" th:errors="*{name}"></p>
+              </div>
+              <div class="field">
+                <label for="schemeVersion">Phiên bản</label>
+                <input
+                  id="schemeVersion"
+                  th:field="*{version}"
+                  maxlength="30"
+                  placeholder="1.0"
+                  required
+                />
+                <p class="field-error" th:errors="*{version}"></p>
+              </div>
+              <div class="field">
+                <label for="schemeStatus">Trạng thái</label>
+                <select id="schemeStatus" th:field="*{status}">
+                  <option value="ACTIVE">Đang sử dụng</option>
+                  <option value="INACTIVE">Ngừng sử dụng</option>
+                </select>
+              </div>
+              <div class="field">
+                <label for="schemeDate">Ngày hiệu lực</label>
+                <input id="schemeDate" type="datetime-local" th:field="*{effectiveFrom}" />
+              </div>
+            </div>
+          </fieldset>
+          <div class="alert alert-danger" th:if="${#fields.hasGlobalErrors()}">
+            <p th:each="error : ${#fields.globalErrors()}" th:text="${error}"></p>
+          </div>
+          <div class="actions">
+            <button th:unless="${readOnly}" class="button" type="submit">Lưu bộ chấm điểm</button>
+            <a
+              th:if="${readOnly}"
+              class="button"
+              th:href="@{/admin/scoring-schemes/{id}/edit(id=${scheme.id},skill=${selectedSkill})}"
+            >
+              Chỉnh sửa
+            </a>
+          </div>
+        </form>
+        <form
+          th:if="${editing and !readOnly and scheme.status == 'ACTIVE'}"
+          th:action="@{/admin/scoring-schemes/{id}/disable(id=${scheme.id})}"
+          method="post"
+        >
+          <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+          <button class="button button-secondary" type="submit">Ngừng sử dụng</button>
+        </form>
+        <section class="dashboard-panel dashboard-section" th:if="${editing}">
+          <h2>Khoảng điểm CEFR</h2>
+          <p class="muted">
+            Thang điểm nội bộ để ước lượng, không phải ngưỡng Aptis chính thức. Grammar &amp;
+            Vocabulary chưa có band nếu chưa được cấu hình. Không mặc định CEFR.
+          </p>
+          <form
+            class="toolbar"
+            method="get"
+            th:action="@{${readOnly ? '/admin/scoring-schemes/' + scheme.id : '/admin/scoring-schemes/' + scheme.id + '/edit'}}"
+          >
+            <div>
+              <label for="bandSkill">Kỹ năng</label>
+              <select id="bandSkill" name="skill">
+                <option
+                  th:each="skill : ${skills}"
+                  th:text="${skill}"
+                  th:value="${skill}"
+                  th:selected="${selectedSkill == skill}"
+                ></option>
+              </select>
+            </div>
+            <button class="button button-secondary" type="submit">Xem khoảng điểm</button>
+          </form>
+          <div class="table-wrap" th:if="${bands != null and !bands.isEmpty()}">
+            <table class="data-table admin-responsive-table">
+              <thead>
+                <tr>
+                  <th scope="col">CEFR</th>
+                  <th scope="col">Từ điểm</th>
+                  <th scope="col">Đến điểm</th>
+                  <th scope="col">Thao tác</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr th:each="band : ${bands}">
+                  <td data-label="CEFR" th:text="${band.cefrLevel}"></td>
+                  <td data-label="Từ điểm" th:text="${band.minScore}"></td>
+                  <td data-label="Đến điểm" th:text="${band.maxScore}"></td>
+                  <td data-label="Thao tác">
+                    <a
+                      th:if="${!readOnly}"
+                      class="button button-secondary button-small"
+                      th:href="@{/admin/scoring-schemes/{id}/edit(id=${scheme.id},skill=${selectedSkill},bandId=${band.id})}"
+                    >
+                      Sửa
+                    </a>
+                    <form
+                      th:if="${!readOnly}"
+                      th:action="@{/admin/scoring-schemes/{schemeId}/bands/{bandId}/delete(schemeId=${scheme.id},bandId=${band.id},skill=${selectedSkill})}"
+                      method="post"
+                    >
+                      <input
+                        type="hidden"
+                        th:name="${_csrf.parameterName}"
+                        th:value="${_csrf.token}"
+                      />
+                      <button class="button button-secondary button-small" type="submit">
+                        Xóa
+                      </button>
+                    </form>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <p th:if="${bands == null or bands.isEmpty()}">Chưa có khoảng điểm cho kỹ năng này.</p>
+          <form
+            class="catalog-form-section"
+            th:object="${scaleRuleForm}"
+            th:action="@{/admin/scoring-schemes/{id}/scale-rule(id=${scheme.id})}"
+            method="post"
+          >
+            <h3>Quy đổi điểm theo kỹ năng</h3>
+            <p class="muted">
+              Quy đổi tuyến tính nội bộ để ước lượng. Cần cấu hình cả quy đổi và khoảng CEFR trước
+              khi sử dụng trong đề thi.
+            </p>
+            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+            <input type="hidden" name="skill" th:value="${selectedSkill}" />
+            <fieldset th:disabled="${readOnly}">
+              <div class="catalog-form-grid">
+                <div class="field">
+                  <label for="rawMin">Raw thấp nhất</label>
+                  <input
+                    id="rawMin"
+                    th:field="*{rawMin}"
+                    type="number"
+                    min="0"
+                    max="9999.99"
+                    step="0.01"
+                    required
+                  />
+                </div>
+                <div class="field">
+                  <label for="rawMax">Raw cao nhất</label>
+                  <input
+                    id="rawMax"
+                    th:field="*{rawMax}"
+                    type="number"
+                    min="0.01"
+                    max="9999.99"
+                    step="0.01"
+                    required
+                  />
+                </div>
+                <div class="field">
+                  <label for="scaleMin">Scale thấp nhất</label>
+                  <input
+                    id="scaleMin"
+                    th:field="*{scaleMin}"
+                    type="number"
+                    min="0"
+                    max="50"
+                    step="0.01"
+                    required
+                  />
+                </div>
+                <div class="field">
+                  <label for="scaleMax">Scale cao nhất</label>
+                  <input
+                    id="scaleMax"
+                    th:field="*{scaleMax}"
+                    type="number"
+                    min="0.01"
+                    max="50"
+                    step="0.01"
+                    required
+                  />
+                </div>
+              </div>
+            </fieldset>
+            <div class="alert alert-danger" th:if="${#fields.hasErrors('*')}">
+              <p th:each="error : ${#fields.allErrors()}" th:text="${error}"></p>
+            </div>
+            <button class="button" type="submit" th:unless="${readOnly}">Lưu quy đổi điểm</button>
+          </form>
+          <form
+            class="catalog-form-section"
+            th:if="${!readOnly}"
+            th:object="${bandForm}"
+            th:action="@{/admin/scoring-schemes/{id}/bands(id=${scheme.id})}"
+            method="post"
+          >
+            <h3
+              th:text="${bandForm.id == null ? 'Thiết lập khoảng điểm' : 'Chỉnh sửa khoảng điểm'}"
+            >
+              Thiết lập khoảng điểm
+            </h3>
+            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+            <input type="hidden" th:field="*{id}" />
+            <input type="hidden" name="skill" th:value="${selectedSkill}" />
+            <div class="catalog-form-grid">
+              <div class="field">
+                <label for="bandLevel">CEFR</label>
+                <select id="bandLevel" th:field="*{cefrLevel}">
+                  <option
+                    th:each="level : ${ {'A1','A2','B1','B2','C1','C2'} }"
+                    th:value="${level}"
+                    th:text="${level}"
+                  ></option>
+                </select>
+              </div>
+              <div class="field">
+                <label for="bandMin">Từ điểm</label>
+                <input
+                  id="bandMin"
+                  th:field="*{minScore}"
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  max="50"
+                />
+              </div>
+              <div class="field">
+                <label for="bandMax">Đến điểm</label>
+                <input
+                  id="bandMax"
+                  th:field="*{maxScore}"
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  max="50"
+                />
+              </div>
+            </div>
+            <div class="alert alert-danger" th:if="${#fields.hasGlobalErrors()}">
+              <p th:each="error : ${#fields.globalErrors()}" th:text="${error}"></p>
+            </div>
+            <div class="actions"><button class="button" type="submit">Lưu khoảng điểm</button></div>
+          </form>
+        </section>
+      </main>
+    </div>
+    <div th:replace="~{fragments/footer :: footer}"></div>
+  </body>
+</html>

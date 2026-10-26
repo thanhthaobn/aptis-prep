@@ -8,9 +8,9 @@ public record GradingResult(
         String feedback,
         String provider,
         String model,
-        String transcript
-) {
-    public GradingResult(java.math.BigDecimal score, String cefr, String feedback, String provider, String model) {
+        String transcript) {
+    public GradingResult(
+            BigDecimal score, String cefr, String feedback, String provider, String model) {
         this(score, cefr, feedback, provider, model, null);
     }
 }

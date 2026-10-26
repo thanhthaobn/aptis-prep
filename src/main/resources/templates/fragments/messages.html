@@ -1,10 +1,41 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="vi" xmlns:th="http://www.thymeleaf.org">
-<body>
-<div th:fragment="messages">
-    <div class="alert alert-success" th:if="${successMessage}" th:text="${successMessage}"></div>
-    <div class="alert alert-danger" th:if="${errorMessage}" th:text="${errorMessage}"></div>
-    <div class="alert alert-warning" th:if="${warningMessage}" th:text="${warningMessage}"></div>
-</div>
-</body>
+  <body>
+    <!-- Fragment hiển thị thông báo tự động từ FlashAttributes hoặc Model -->
+    <div th:fragment="messages" class="messages-container" aria-live="polite">
+      <div
+        class="alert alert-success ap-alert ap-alert-success"
+        role="status"
+        th:if="${successMessage != null or (message != null and error == null)}"
+        th:text="${successMessage != null ? successMessage : message}"
+      ></div>
+      <div
+        class="alert alert-danger ap-alert ap-alert-danger"
+        role="alert"
+        th:if="${errorMessage != null or error != null}"
+        th:text="${errorMessage != null ? errorMessage : error}"
+      ></div>
+      <div
+        class="alert alert-warning ap-alert ap-alert-warning"
+        role="alert"
+        th:if="${warningMessage != null or warning != null}"
+        th:text="${warningMessage != null ? warningMessage : warning}"
+      ></div>
+      <div
+        class="alert alert-info ap-alert ap-alert-info"
+        role="status"
+        th:if="${infoMessage != null or info != null}"
+        th:text="${infoMessage != null ? infoMessage : info}"
+      ></div>
+    </div>
+
+    <!-- Fragment alert đơn lẻ dùng chung với tham số (type: success | danger | warning | info, text) -->
+    <div
+      th:fragment="alert(type, text)"
+      th:if="${text != null and !#strings.isEmpty(text)}"
+      th:class="|alert alert-${type == 'error' ? 'danger' : type} ap-alert ap-alert-${type == 'error' ? 'danger' : type}|"
+      th:attr="role=${(type == 'danger' or type == 'error' or type == 'warning') ? 'alert' : 'status'}"
+      th:text="${text}"
+    ></div>
+  </body>
 </html>

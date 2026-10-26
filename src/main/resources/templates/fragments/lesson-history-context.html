@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+  <body>
+    <details
+      th:fragment="lessonHistoryContext(context, mediaPrefix)"
+      class="lesson-history-context"
+      th:if="${context!=null}"
+    >
+      <summary>Đề bài tại thời điểm nộp</summary>
+      <h3 th:text="${context.title}"></h3>
+      <p class="lesson-prose" th:text="${context.description}"></p>
+      <p
+        class="lesson-prose"
+        th:if="${context.objectives!=null}"
+        th:text="${context.objectives}"
+      ></p>
+      <p class="lesson-prose" th:if="${context.strategy!=null}" th:text="${context.strategy}"></p>
+      <blockquote
+        class="lesson-prose"
+        th:if="${context.exampleText!=null}"
+        th:text="${context.exampleText}"
+      ></blockquote>
+      <p class="lesson-prose" th:if="${context.analysis!=null}" th:text="${context.analysis}"></p>
+      <p
+        class="lesson-prose"
+        th:if="${context.practicePrompt!=null}"
+        th:text="${context.practicePrompt}"
+      ></p>
+      <p
+        th:if="${context.minWords!=null or context.maxWords!=null}"
+        th:text="|Yêu cầu bài viết lúc nộp: ${context.minWords!=null?context.minWords:0}–${context.maxWords!=null?context.maxWords:'không giới hạn'} từ|"
+      ></p>
+      <img
+        th:if="${context.imagePath!=null}"
+        class="lesson-hero-image"
+        th:src="|${mediaPrefix}/image|"
+        alt="Ảnh của đề bài lúc nộp"
+      />
+      <audio
+        th:if="${context.audioPath!=null}"
+        controls
+        preload="none"
+        th:src="|${mediaPrefix}/audio|"
+      ></audio>
+      <video
+        th:if="${context.videoPath!=null}"
+        class="lesson-video"
+        controls
+        preload="none"
+        th:src="|${mediaPrefix}/video|"
+      ></video>
+      <a
+        th:if="${context.videoPath==null and !#strings.isEmpty(context.videoUrl)}"
+        th:href="${context.videoUrl}"
+        target="_blank"
+        rel="noopener noreferrer"
+      >
+        Video hướng dẫn của đề gốc ↗
+      </a>
+    </details>
+  </body>
+</html>

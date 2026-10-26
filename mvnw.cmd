@@ -50,6 +50,29 @@ if ($env:MVNW_VERBOSE -eq "true") {
   $VerbosePreference = "Continue"
 }
 
+# The project targets Java 21. Maven uses JAVA_HOME, while `java` may still
+# resolve to another JDK when PATH contains a newer installation first.
+if (-not $env:JAVA_HOME) {
+  Write-Error "JAVA_HOME is not set. Install JDK 21 and set JAVA_HOME to its directory."
+}
+
+$javaExecutable = Join-Path $env:JAVA_HOME "bin/java.exe"
+if (-not (Test-Path -Path $javaExecutable -PathType Leaf)) {
+  Write-Error "JAVA_HOME does not point to a valid JDK: $env:JAVA_HOME"
+}
+
+$previousErrorActionPreference = $ErrorActionPreference
+$ErrorActionPreference = "Continue"
+$javaVersionOutput = (& $javaExecutable -version 2>&1 | Out-String)
+$ErrorActionPreference = $previousErrorActionPreference
+if ($javaVersionOutput -notmatch 'version "21(?:[.]|"|-)') {
+  Write-Error "This project requires JDK 21. JAVA_HOME currently points to: $env:JAVA_HOME"
+}
+
+# Make the selected JDK win for the Maven process even when PATH contains a
+# different Java installation before JAVA_HOME/bin.
+$env:Path = "$(Join-Path $env:JAVA_HOME 'bin');$env:Path"
+
 # calculate distributionUrl, requires .mvn/wrapper/maven-wrapper.properties
 $distributionUrl = (Get-Content -Raw "$scriptDir/.mvn/wrapper/maven-wrapper.properties" | ConvertFrom-StringData).distributionUrl
 if (!$distributionUrl) {
@@ -89,10 +112,11 @@ if (-not (Test-Path -Path $MAVEN_M2_PATH)) {
 }
 
 $MAVEN_WRAPPER_DISTS = $null
-if ((Get-Item $MAVEN_M2_PATH).Target[0] -eq $null) {
+$mavenUserHomeItem = Get-Item -LiteralPath $MAVEN_M2_PATH
+if ($null -eq $mavenUserHomeItem.Target -or $mavenUserHomeItem.Target.Count -eq 0) {
   $MAVEN_WRAPPER_DISTS = "$MAVEN_M2_PATH/wrapper/dists"
 } else {
-  $MAVEN_WRAPPER_DISTS = (Get-Item $MAVEN_M2_PATH).Target[0] + "/wrapper/dists"
+  $MAVEN_WRAPPER_DISTS = $mavenUserHomeItem.Target[0] + "/wrapper/dists"
 }
 
 $MAVEN_HOME_PARENT = "$MAVEN_WRAPPER_DISTS/$distributionUrlNameMain"

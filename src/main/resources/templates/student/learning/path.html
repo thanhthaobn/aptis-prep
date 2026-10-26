@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+  <head th:replace="~{fragments/head :: head('Lộ trình của tôi')}"></head>
+  <body class="student-theme">
+    <div th:replace="~{fragments/navbar :: navbar}"></div>
+    <div class="container ap-container app-shell">
+      <div th:replace="~{fragments/student-sidebar :: studentSidebar('learning-path')}"></div>
+      <main class="app-main orientation-page" id="main-content" tabindex="-1">
+        <div
+          th:replace="~{fragments/breadcrumb :: breadcrumb('Học tập', @{/student/dashboard}, 'Lộ trình của tôi')}"
+        ></div>
+
+        <header class="page-header" id="start">
+          <div>
+            <h1>Lộ trình của tôi</h1>
+          </div>
+        </header>
+
+        <!-- Thông báo từ flash attributes hoặc model -->
+        <div th:replace="~{fragments/messages :: messages}"></div>
+
+        <section class="explore-grid" aria-label="Khám phá từng kỹ năng">
+          <!-- Reading -->
+          <article class="explore-card explore-reading" id="reading">
+            <div class="explore-card-top">
+              <div class="path-skill-heading">
+                <span class="explore-icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                    <path d="M12 6v15M3 4l9 2 9-2v15l-9 2-9-2z" />
+                  </svg>
+                </span>
+                <h2>Reading</h2>
+              </div>
+              <span th:replace="~{fragments/path-stage :: pathLevelRange('Reading')}"></span>
+            </div>
+            <div th:replace="~{fragments/path-stage :: pathStage('Reading')}"></div>
+            <a class="button" th:href="@{/student/learning-path/{skill}(skill='Reading')}">
+              Xem bài Reading
+              <span aria-hidden="true">→</span>
+            </a>
+          </article>
+
+          <!-- Listening -->
+          <article class="explore-card explore-listening" id="listening">
+            <div class="explore-card-top">
+              <div class="path-skill-heading">
+                <span class="explore-icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                    <path d="M4 14a8 8 0 0 1 16 0M4 14v5h4v-7H4zm16 0v5h-4v-7h4z" />
+                  </svg>
+                </span>
+                <h2>Listening</h2>
+              </div>
+              <span th:replace="~{fragments/path-stage :: pathLevelRange('Listening')}"></span>
+            </div>
+            <div th:replace="~{fragments/path-stage :: pathStage('Listening')}"></div>
+            <a class="button" th:href="@{/student/learning-path/{skill}(skill='Listening')}">
+              Xem bài Listening
+              <span aria-hidden="true">→</span>
+            </a>
+          </article>
+
+          <!-- Writing & Speaking -->
+          <article class="explore-card explore-writing">
+            <div class="explore-card-top">
+              <div class="path-skill-heading">
+                <span class="explore-icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                    <path d="m4 20 1-5L17 3l4 4L9 19zM14 6l4 4M4 20l5-1" />
+                  </svg>
+                </span>
+                <h2>Writing</h2>
+              </div>
+              <span th:replace="~{fragments/path-stage :: pathLevelRange('Writing')}"></span>
+            </div>
+            <div th:replace="~{fragments/path-stage :: pathStage('Writing')}"></div>
+            <a class="button" th:href="@{/student/learning-path/{skill}(skill='Writing')}">
+              Xem bài Writing
+              <span aria-hidden="true">→</span>
+            </a>
+          </article>
+
+          <article class="explore-card explore-speaking">
+            <div class="explore-card-top">
+              <div class="path-skill-heading">
+                <span class="explore-icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                    <rect x="9" y="2" width="6" height="12" rx="3" />
+                    <path d="M5 10a7 7 0 0 0 14 0M12 17v5m-4 0h8" />
+                  </svg>
+                </span>
+                <h2>Speaking</h2>
+              </div>
+              <span th:replace="~{fragments/path-stage :: pathLevelRange('Speaking')}"></span>
+            </div>
+            <div th:replace="~{fragments/path-stage :: pathStage('Speaking')}"></div>
+            <a class="button" th:href="@{/student/learning-path/{skill}(skill='Speaking')}">
+              Xem bài Speaking
+              <span aria-hidden="true">→</span>
+            </a>
+          </article>
+
+          <!-- Grammar & Vocabulary -->
+          <article class="explore-card explore-vocabulary" id="vocabulary">
+            <div class="explore-card-top">
+              <div class="path-skill-heading">
+                <span class="explore-icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                    <rect x="6" y="6" width="15" height="15" rx="3" />
+                    <path d="M17 6V3H3v14h3M10 11h7m-7 5h4" />
+                  </svg>
+                </span>
+                <h2>Grammar &amp; Vocabulary</h2>
+              </div>
+              <span
+                th:replace="~{fragments/path-stage :: pathLevelRange('Grammar & Vocabulary')}"
+              ></span>
+            </div>
+            <div th:replace="~{fragments/path-stage :: pathStage('Grammar & Vocabulary')}"></div>
+            <a
+              class="button"
+              th:href="@{/student/learning-path/{skill}(skill='Grammar & Vocabulary')}"
+            >
+              Xem bài ngữ pháp &amp; từ vựng
+              <span aria-hidden="true">→</span>
+            </a>
+          </article>
+        </section>
+
+        <div class="actions">
+          <a class="button button-secondary" th:href="@{/student/dashboard}">
+            ← Về hành trình tổng quan
+          </a>
+          <a class="button" th:href="@{/student/placement}">Làm bài kiểm tra đầu vào</a>
+        </div>
+      </main>
+    </div>
+    <div th:replace="~{fragments/footer :: footer}"></div>
+  </body>
+</html>

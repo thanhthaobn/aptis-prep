@@ -1,33 +1,217 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="vi" xmlns:th="http://www.thymeleaf.org">
-<head th:replace="~{fragments/head :: head(${title})}"></head>
-<body class="student-theme">
-<div th:replace="~{fragments/navbar :: navbar}"></div>
-<div class="container app-shell">
-    <div th:replace="~{fragments/student-sidebar :: studentSidebar(${module})}"></div>
-    <main class="app-main student-content compact-catalog">
-        <div th:replace="~{fragments/breadcrumb :: breadcrumb('Tổng quan', @{/student/dashboard}, ${title})}"></div>
-        <header class="page-header"><div><h1 th:text="${title}"></h1></div></header>
-        <form class="toolbar study-filters" method="get" th:action="@{${'/student/' + module}}" role="search">
-            <div class="toolbar-search"><label for="studyQuery">Tìm kiếm</label><input id="studyQuery" name="q" type="search" maxlength="255" th:value="${q}" placeholder="Tên nội dung…"></div>
-            <div><label for="studySkill">Kỹ năng</label><select id="studySkill" name="skill"><option value="">Tất cả</option><option th:each="skill : ${skills}" th:value="${skill}" th:text="${skill}" th:selected="${selectedSkill == skill}"></option></select></div>
-            <div th:if="${module != 'results'}"><label for="studyLevel">Cấp độ</label><select id="studyLevel" name="level"><option value="">Tất cả</option><option th:each="level : ${ {'A1','A2','B1','B2','C1'} }" th:value="${level}" th:text="${level}" th:selected="${selectedLevel == level}"></option></select></div>
-            <div th:if="${module == 'results'}"><label for="studyState">Trạng thái</label><select id="studyState" name="state"><option value="">Tất cả</option><option value="COMPLETED" th:selected="${selectedState == 'COMPLETED'}">Đã có kết quả</option><option value="GRADING" th:selected="${selectedState == 'GRADING'}">Chờ chấm</option><option value="GRADING_FAILED" th:selected="${selectedState == 'GRADING_FAILED'}">Chấm chưa thành công</option></select></div>
-            <button class="button" type="submit">Tìm kiếm</button><a class="button button-secondary" th:href="@{${'/student/' + module}}">Đặt lại</a>
+  <head th:replace="~{fragments/head :: head('Đề thi')}"></head>
+  <body class="student-theme">
+    <div th:replace="~{fragments/navbar :: navbar}"></div>
+    <div class="container ap-container app-shell">
+      <div th:replace="~{fragments/student-sidebar :: studentSidebar('exams')}"></div>
+      <main
+        id="main-content"
+        tabindex="-1"
+        class="app-main student-content compact-catalog exam-library"
+      >
+        <div
+          th:replace="~{fragments/breadcrumb :: breadcrumb('Tổng quan', @{/student/dashboard}, 'Đề thi')}"
+        ></div>
+        <header class="page-header">
+          <div>
+            <p class="eyebrow">NGÂN HÀNG ĐỀ THI</p>
+            <h1>Chọn bài thi phù hợp</h1>
+            <p>Luyện từng kỹ năng hoặc làm đề tổng hợp theo mục tiêu của bạn.</p>
+          </div>
+        </header>
+
+        <nav class="exam-category-nav" aria-label="Loại đề thi">
+          <a
+            th:each="category : ${examCategories}"
+            th:href="@{/student/exams(examType=${category.code},q=${q},skill=${selectedSkill},level=${selectedLevel},sort=${selectedSort},size=${size})}"
+            th:classappend="${selectedExamType == category.code} ? 'is-active'"
+            th:attr="aria-current=${selectedExamType == category.code ? 'page' : null}"
+          >
+            <span th:text="${category.label}"></span>
+            <small
+              th:text="${category.count}"
+              th:attr="aria-label=|${category.count} đề phù hợp|"
+            ></small>
+          </a>
+        </nav>
+
+        <div class="exam-category-context" th:switch="${selectedExamType}">
+          <p th:case="'PRACTICE'">
+            Tập trung vào một kỹ năng. Đề được chia theo kỹ năng và cấp độ để bạn dễ chọn bài luyện.
+          </p>
+          <p th:case="'FULL_MOCK'">
+            Luyện nhiều kỹ năng trong cùng một lượt thi. Xem cấu trúc từng đề trước khi bắt đầu.
+          </p>
+          <p th:case="'PLACEMENT'">
+            Xác định trình độ hiện tại để xây dựng lộ trình phù hợp.
+            <a th:href="@{/student/placement}">Đến kiểm tra đầu vào →</a>
+          </p>
+          <p th:case="'CHECKPOINT'">
+            Chỉ bắt đầu sau khi hoàn thành các bài bắt buộc của chặng.
+            <a th:href="@{/student/learning-path}">Xem điều kiện trong lộ trình →</a>
+          </p>
+        </div>
+
+        <form
+          class="toolbar study-filters"
+          method="get"
+          th:action="@{/student/exams}"
+          role="search"
+        >
+          <input type="hidden" name="size" th:value="${size}" />
+          <input type="hidden" name="examType" th:value="${selectedExamType}" />
+          <input type="hidden" name="state" th:value="${selectedState}" />
+          <div class="toolbar-search">
+            <label for="studyQuery">Tìm đề thi</label>
+            <input
+              id="studyQuery"
+              name="q"
+              type="search"
+              maxlength="255"
+              th:value="${q}"
+              placeholder="Tên đề hoặc từ khóa…"
+            />
+          </div>
+          <div>
+            <label for="studySkill">Kỹ năng</label>
+            <select id="studySkill" name="skill">
+              <option value="">Tất cả kỹ năng</option>
+              <option
+                th:each="skill : ${skills}"
+                th:value="${skill}"
+                th:text="${skill}"
+                th:selected="${selectedSkill == skill}"
+              ></option>
+            </select>
+          </div>
+          <div>
+            <label for="studyLevel">Cấp độ mục tiêu</label>
+            <select id="studyLevel" name="level">
+              <option value="">Tất cả cấp độ</option>
+              <option
+                th:each="level : ${ {'A1','A2','B1','B2','C1'} }"
+                th:value="${level}"
+                th:text="${level}"
+                th:selected="${selectedLevel == level}"
+              ></option>
+            </select>
+          </div>
+          <div>
+            <label for="examSort">Sắp xếp trong nhóm</label>
+            <select id="examSort" name="sort">
+              <option value="level" th:selected="${selectedSort == 'level'}">
+                Cấp độ tăng dần
+              </option>
+              <option value="newest" th:selected="${selectedSort == 'newest'}">Mới cập nhật</option>
+              <option value="duration" th:selected="${selectedSort == 'duration'}">
+                Thời gian tăng dần
+              </option>
+            </select>
+          </div>
+          <div class="actions">
+            <button class="button" type="submit">Lọc đề thi</button>
+            <a
+              class="button button-secondary"
+              th:href="@{/student/exams(examType=${selectedExamType})}"
+            >
+              Đặt lại
+            </a>
+          </div>
         </form>
-        <div class="section-title-row"><h2 th:text="${module == 'lessons' ? 'Chọn bài học' : (module == 'exams' ? 'Khám phá đề thi' : 'Lịch sử thi')}"></h2><span class="muted" th:text="|${#lists.size(entries)} nội dung|"></span></div>
-        <section class="study-card-grid" th:if="${!#lists.isEmpty(entries)}" aria-label="Danh sách nội dung">
-            <article class="dashboard-panel study-content-card" th:each="entry : ${entries}" th:attr="data-skill=${entry.skill},data-kind=${entry.kind}">
-                <div class="study-card-meta"><span class="badge" th:text="${entry.skill}"></span><span class="study-level" th:text="${entry.level}"></span></div>
-                <h2 th:text="${entry.title}"></h2>
-                <p th:text="${module == 'results' ? entry.status : entry.kind}"></p>
-                <div class="study-card-fact" th:if="${!#lists.isEmpty(entry.facts)}"><span th:text="${entry.facts[0].label}"></span><strong th:text="${entry.facts[0].value}"></strong></div>
-                <a class="button button-secondary" th:href="@{${module == 'results' ? '/student/attempts/' + entry.id + '/result' : '/student/' + module + '/' + entry.id}}" th:text="${module == 'lessons' ? 'Mở bài học' : (module == 'exams' ? 'Xem đề thi' : 'Xem kết quả')}"></a>
+
+        <div class="section-title-row exam-library-heading">
+          <h2 th:text="${categoryTitle}"></h2>
+          <span class="muted" th:text="|${catalogPage.totalElements} đề phù hợp|"></span>
+        </div>
+
+        <section
+          class="exam-skill-group"
+          th:each="group : ${examGroups}"
+          th:attr="data-skill=${group.key},aria-label=${group.key}"
+        >
+          <header class="exam-group-heading">
+            <h3 th:text="${group.key}"></h3>
+            <small th:text="|${group.value.size()} đề trên trang này|"></small>
+          </header>
+          <div class="study-card-grid">
+            <article
+              class="dashboard-panel study-content-card"
+              th:each="entry : ${group.value}"
+              th:attr="data-skill=${entry.skill},data-kind=${entry.kind},data-exam-type=${entry.examType}"
+            >
+              <div class="study-card-meta">
+                <span class="badge badge-secondary" th:text="${entry.skill}"></span>
+                <span
+                  class="badge"
+                  th:if="${!#strings.isEmpty(entry.level)}"
+                  th:classappend="${'badge-cefr-' + #strings.toLowerCase(entry.level)}"
+                  th:text="${entry.level}"
+                ></span>
+              </div>
+              <h4 th:text="${entry.title}"></h4>
+              <p
+                class="exam-card-summary"
+                th:if="${!#strings.isEmpty(entry.summary)}"
+                th:text="${entry.summary}"
+              ></p>
+              <div class="exam-card-facts">
+                <div th:each="fact : ${entry.facts}">
+                  <span th:text="${fact.label}"></span>
+                  <strong th:text="${fact.value}"></strong>
+                </div>
+              </div>
+              <div
+                class="exam-section-skills"
+                th:if="${entry.examType == 'FULL_MOCK'}"
+                aria-label="Các phần thi"
+              >
+                <span th:each="block : ${entry.blocks}" th:text="${block.title}"></span>
+              </div>
+              <div
+                class="exam-card-readiness"
+                th:classappend="${entry.startable ? 'is-ready' : 'is-blocked'}"
+              >
+                <strong
+                  th:text="${entry.startable ? 'Đề đã sẵn sàng' : 'Chưa thể bắt đầu'}"
+                ></strong>
+                <span th:text="${entry.readinessMessage}"></span>
+              </div>
+              <div class="exam-card-actions">
+                <form
+                  th:if="${entry.startable and entry.kind != 'Kiểm tra cuối chặng'}"
+                  method="post"
+                  th:action="@{/student/exams/{id}/start(id=${entry.id})}"
+                >
+                  <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+                  <button class="button button-primary" type="submit">Bắt đầu làm bài</button>
+                </form>
+                <a class="button button-secondary" th:href="@{/student/exams/{id}(id=${entry.id})}">
+                  Xem cấu trúc đề →
+                </a>
+              </div>
             </article>
+          </div>
         </section>
-        <div class="empty-box" th:if="${#lists.isEmpty(entries)}"><h2>Không tìm thấy nội dung phù hợp</h2><a class="button button-secondary" th:href="@{${'/student/' + module}}">Xem tất cả</a></div>
-    </main>
-</div>
-<div th:replace="~{fragments/footer :: footer}"></div>
-</body>
+
+        <div class="empty-box" th:if="${entries == null or entries.isEmpty()}">
+          <div
+            th:replace="~{fragments/navi :: navi('empty', 'Navi đang chờ đề thi phù hợp')}"
+          ></div>
+          <h2>Chưa có đề phù hợp trong mục này</h2>
+          <p>Thử đổi kỹ năng, cấp độ hoặc chọn loại đề khác ở phía trên.</p>
+          <a
+            class="button button-secondary"
+            th:href="@{/student/exams(examType=${selectedExamType})}"
+          >
+            Xóa bộ lọc của mục này
+          </a>
+        </div>
+        <div
+          th:replace="~{fragments/student-pagination :: studentPagination(${catalogPage.number}, ${catalogPage.totalPages}, ${catalogPage.totalElements}, @{/student/exams(size=${catalogPage.size},q=${q},skill=${selectedSkill},level=${selectedLevel},state=${selectedState},examType=${selectedExamType},sort=${selectedSort})})}"
+        ></div>
+      </main>
+    </div>
+    <div th:replace="~{fragments/footer :: footer}"></div>
+  </body>
 </html>

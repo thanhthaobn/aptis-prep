@@ -1,5 +1,9 @@
 **HSF302 – APTIS LEARNING SYSTEM**
 
+Bản nghiệp vụ hiện trạng và hai ERD theo source đến V038: [BUSINESS_SPEC_CURRENT.md](BUSINESS_SPEC_CURRENT.md). Giữ các sơ đồ/yêu cầu bên dưới làm baseline V2 để đối chiếu, không coi chúng là ERD vật lý đầy đủ của bản triển khai hiện tại.
+
+Ghi chú đối chiếu 23/10/2026: tài liệu này giữ vai trò đặc tả nghiệp vụ; không phải ERD toàn bộ database triển khai. Phần mở rộng, quyết định tương thích dữ liệu và trạng thái code được tách tại [V2_IMPLEMENTATION.md](V2_IMPLEMENTATION.md) và [V2_CLEANUP_VERIFICATION_2026-10-23.md](V2_CLEANUP_VERIFICATION_2026-10-23.md), không thay các use case gốc để khớp lỗi code.
+
 **TÀI LIỆU PHÂN TÍCH HỆ THỐNG  
 ERD – USE CASE – FLOWCHART – SWIMLANE**
 
@@ -241,7 +245,9 @@ erDiagram
 erDiagram
     USER ||--o{ LESSON_PROGRESS : has
     LESSON ||--o{ LESSON_PROGRESS : tracks
-    LESSON ||--o{ FLASHCARD : contains
+    LESSON ||--o| FLASHCARD_SET : provides
+    USER o|--o{ FLASHCARD_SET : owns
+    FLASHCARD_SET ||--|{ FLASHCARD : contains
     USER ||--o{ USER_FLASHCARD_PROGRESS : has
     FLASHCARD ||--o{ USER_FLASHCARD_PROGRESS : tracked_by
 ```
@@ -716,9 +722,22 @@ erDiagram
         datetime completed_at
     }
 
-    FLASHCARD {
+    FLASHCARD_SET {
         int id PK
         int lesson_id FK
+        int owner_user_id FK
+        string title
+        string description
+        string cefr_level
+        string status
+        string visibility
+        datetime created_at
+        datetime updated_at
+    }
+
+    FLASHCARD {
+        int id PK
+        int set_id FK
         string front_content
         string back_content
         string cefr_level
@@ -738,7 +757,9 @@ erDiagram
 
     USER ||--o{ LESSON_PROGRESS : has
     LESSON ||--o{ LESSON_PROGRESS : tracks
-    LESSON ||--o{ FLASHCARD : contains
+    LESSON ||--o| FLASHCARD_SET : provides
+    USER o|--o{ FLASHCARD_SET : owns
+    FLASHCARD_SET ||--|{ FLASHCARD : contains
     USER ||--o{ USER_FLASHCARD_PROGRESS : has
     FLASHCARD ||--o{ USER_FLASHCARD_PROGRESS : tracked_by
 ```
@@ -1087,11 +1108,33 @@ erDiagram
 
 - completed_at DATETIME2 NULL
 
+### FLASHCARD_SET
+
+- id INT PK
+
+- lesson_id INT FK → LESSON.id NULL
+
+- owner_user_id INT FK → USER.id NULL
+
+- title NVARCHAR(255)
+
+- description NVARCHAR(MAX) NULL
+
+- cefr_level VARCHAR(10)
+
+- status VARCHAR(30)
+
+- visibility VARCHAR(20)
+
+- created_at DATETIME2
+
+- updated_at DATETIME2
+
 ### FLASHCARD
 
 - id INT PK
 
-- lesson_id INT FK → LESSON.id
+- set_id INT FK → FLASHCARD_SET.id
 
 - front_content NVARCHAR(MAX)
 
@@ -1170,7 +1213,14 @@ erDiagram
 
 - USER 1 — N LESSON_PROGRESS; LESSON 1 — N LESSON_PROGRESS.
 
-- LESSON 1 — N FLASHCARD.
+- LESSON 1 — 0..1 FLASHCARD_SET dùng chung. Bộ thẻ này không có owner và
+  được học từ trang chi tiết bài học.
+
+- USER 1 — N FLASHCARD_SET riêng tư. Bộ thẻ riêng có owner, không gắn
+  lesson và chỉ người tạo được truy cập.
+
+- FLASHCARD_SET 1 — N FLASHCARD; mỗi FLASHCARD bắt buộc thuộc đúng một
+  FLASHCARD_SET.
 
 - USER 1 — N USER_FLASHCARD_PROGRESS; FLASHCARD 1 — N
   USER_FLASHCARD_PROGRESS.

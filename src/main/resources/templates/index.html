@@ -1,85 +1,390 @@
-<!DOCTYPE html>
-<html lang="vi" xmlns:th="http://www.thymeleaf.org"
-      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
-<head th:replace="~{fragments/head :: head('Trang chủ')}"></head>
-<body class="landing-theme">
-<div th:replace="~{fragments/navbar :: navbar}"></div>
-<main>
-    <section class="hero-shell">
-        <div class="container hero">
-            <div>
-                <p class="eyebrow">Nền tảng luyện thi Aptis</p>
-                <h1>Học một chút.<br><span class="text-gradient">Tiến xa mỗi ngày.</span></h1>
-                <p class="hero-copy">Luyện Aptis từng chặng nhỏ. Khám phá trước, chọn mục tiêu sau.</p>
-                <div class="actions" sec:authorize="isAnonymous()">
-                    <a class="button" th:href="@{/register}">Bắt đầu miễn phí <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg></a>
-                    <a class="button button-secondary" th:href="@{/login}">Đăng nhập</a>
-                </div>
-                <div class="actions" sec:authorize="hasRole('STUDENT')">
-                    <a class="button" th:href="@{/student/dashboard}">Tiếp tục học <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg></a>
-                </div>
-                <div class="actions" sec:authorize="hasRole('ADMIN')">
-                    <a class="button" th:href="@{/admin/dashboard}">Mở trang quản trị <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg></a>
-                </div>
-                <div class="trust-row">
-                    <span class="trust-item"><svg class="trust-dot" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m5 12 4 4L19 6"/></svg>Lộ trình theo CEFR</span>
-                    <span class="trust-item"><svg class="trust-dot" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m5 12 4 4L19 6"/></svg>Đề thi mô phỏng</span>
-                    <span class="trust-item"><svg class="trust-dot" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m5 12 4 4L19 6"/></svg>Theo dõi tiến độ</span>
-                </div>
+<!doctype html>
+<html
+  lang="vi"
+  xmlns:th="http://www.thymeleaf.org"
+  xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+>
+  <head th:replace="~{fragments/head :: head('Trang chủ')}"></head>
+  <body class="landing-theme">
+    <div th:replace="~{fragments/navbar :: navbar}"></div>
+    <main id="main-content" tabindex="-1">
+      <section class="hero-shell">
+        <div class="container ap-container hero">
+          <div>
+            <p class="eyebrow">Nền tảng luyện thi Aptis</p>
+            <h1>
+              Học một chút.
+              <br />
+              <span class="text-gradient">Tiến xa mỗi ngày.</span>
+            </h1>
+            <p class="hero-copy">Luyện Aptis từng chặng nhỏ. Khám phá trước, chọn mục tiêu sau.</p>
+            <div class="actions" sec:authorize="isAnonymous()">
+              <a class="button" th:href="@{/register}">
+                Bắt đầu miễn phí
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="m9 18 6-6-6-6" />
+                </svg>
+              </a>
+              <a class="button button-secondary" th:href="@{/login}">Đăng nhập</a>
             </div>
-            <div class="hero-visual" aria-label="Không gian học tập">
-                <div th:replace="~{fragments/study-guide :: guide}"></div>
-                <div class="preview-card">
-                    <div class="preview-top"><div class="preview-user"><span class="preview-avatar">A</span><span><strong>Mỗi chặng là một bước tiến</strong><small>Sẵn sàng thử một điều mới?</small></span></div></div>
-                    <div class="progress-card"><p>Lộ trình hiện tại</p><h3>Tiến tới CEFR B2</h3><div class="progress-track"><div class="progress-fill"></div></div></div>
-                    <div class="preview-stats"><div class="preview-stat"><strong>12</strong><span>Bài đã học</span></div><div class="preview-stat"><strong>68%</strong><span>Tiến độ</span></div><div class="preview-stat"><strong>7 ngày</strong><span>Chuỗi ngày học</span></div></div>
-                    <div class="floating-score"><strong>+12 điểm</strong><span>Tuần này</span></div>
+            <div class="actions" sec:authorize="hasRole('STUDENT')">
+              <a class="button" th:href="@{/student/dashboard}">
+                Tiếp tục học
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="m9 18 6-6-6-6" />
+                </svg>
+              </a>
+            </div>
+            <div class="actions" sec:authorize="hasRole('ADMIN')">
+              <a class="button" th:href="@{/admin/dashboard}">
+                Mở trang quản trị
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="m9 18 6-6-6-6" />
+                </svg>
+              </a>
+            </div>
+            <div class="trust-row">
+              <span class="trust-item">
+                <svg
+                  class="trust-dot"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2.5"
+                >
+                  <path d="m5 12 4 4L19 6" />
+                </svg>
+                Lộ trình theo CEFR
+              </span>
+              <span class="trust-item">
+                <svg
+                  class="trust-dot"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2.5"
+                >
+                  <path d="m5 12 4 4L19 6" />
+                </svg>
+                Đề thi mô phỏng
+              </span>
+              <span class="trust-item">
+                <svg
+                  class="trust-dot"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2.5"
+                >
+                  <path d="m5 12 4 4L19 6" />
+                </svg>
+                Theo dõi tiến độ
+              </span>
+            </div>
+          </div>
+          <div class="hero-visual" aria-label="Không gian học tập">
+            <div th:replace="~{fragments/navi :: navi('welcome', 'Navi đồng hành cùng bạn')}"></div>
+            <div class="preview-card">
+              <p class="muted">
+                Hình minh họa giao diện — không phải tiến độ hay kết quả của tài khoản.
+              </p>
+              <div class="preview-top">
+                <div class="preview-user">
+                  <span class="preview-avatar">A</span>
+                  <span>
+                    <strong>Mỗi chặng là một bước tiến</strong>
+                    <small>Sẵn sàng thử một điều mới?</small>
+                  </span>
                 </div>
+              </div>
+              <div class="progress-card">
+                <p>Lộ trình hiện tại</p>
+                <h3>Tiến tới CEFR B2</h3>
+                <div class="progress-track"><div class="progress-fill"></div></div>
+              </div>
+              <div class="preview-stats">
+                <div class="preview-stat">
+                  <strong>12</strong>
+                  <span>Bài đã học</span>
+                </div>
+                <div class="preview-stat">
+                  <strong>68%</strong>
+                  <span>Tiến độ</span>
+                </div>
+                <div class="preview-stat">
+                  <strong>7 ngày</strong>
+                  <span>Chuỗi ngày học</span>
+                </div>
+              </div>
+              <div class="floating-score">
+                <strong>+12 điểm</strong>
+                <span>Tuần này</span>
+              </div>
             </div>
+          </div>
         </div>
-    </section>
-    <section class="section section-white">
-        <div class="container">
-            <div class="section-heading"><h2>Mọi thứ bạn cần để tiến bộ</h2></div>
-            <div class="grid grid-3">
-                <article class="card"><span class="card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19V5m0 14h16M8 16v-4m4 4V7m4 9v-6"/></svg></span><h3>Kiểm tra đầu vào</h3><p>Đánh giá trình độ khi bạn sẵn sàng.</p><span class="card-link">Tùy chọn <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg></span></article>
-                <article class="card"><span class="card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19h16M6 17V9l6-4 6 4v8M9 17v-5h6v5"/></svg></span><h3>Lộ trình học tập</h3><p>Học bài, ôn từ vựng và rèn kỹ năng theo mục tiêu cá nhân.</p><span class="card-link">Bước 02 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg></span></article>
-                <article class="card"><span class="card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 3h10v4H7zM5 7h14v14H5zM9 12h6m-6 4h4"/></svg></span><h3>Thi thử</h3><p>Luyện đề sát cấu trúc thi, nhận kết quả ước lượng và biết phần cần cải thiện.</p><span class="card-link">Bước 03 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg></span></article>
+      </section>
+      <section class="section section-white">
+        <div class="container ap-container">
+          <div class="section-heading"><h2>Mọi thứ bạn cần để tiến bộ</h2></div>
+          <div class="grid ap-grid grid-3">
+            <article class="card">
+              <span class="card-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M4 19V5m0 14h16M8 16v-4m4 4V7m4 9v-6" />
+                </svg>
+              </span>
+              <h3>Kiểm tra đầu vào</h3>
+              <p>Đánh giá trình độ khi bạn sẵn sàng.</p>
+              <span class="card-link">
+                Tùy chọn
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="m9 18 6-6-6-6" />
+                </svg>
+              </span>
+            </article>
+            <article class="card">
+              <span class="card-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M4 19h16M6 17V9l6-4 6 4v8M9 17v-5h6v5" />
+                </svg>
+              </span>
+              <h3>Lộ trình học tập</h3>
+              <p>Học bài, ôn từ vựng và rèn kỹ năng theo mục tiêu cá nhân.</p>
+              <span class="card-link">
+                Bước 02
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="m9 18 6-6-6-6" />
+                </svg>
+              </span>
+            </article>
+            <article class="card">
+              <span class="card-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M7 3h10v4H7zM5 7h14v14H5zM9 12h6m-6 4h4" />
+                </svg>
+              </span>
+              <h3>Thi thử</h3>
+              <p>Luyện đề sát cấu trúc thi, nhận kết quả ước lượng và biết phần cần cải thiện.</p>
+              <span class="card-link">
+                Bước 03
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="m9 18 6-6-6-6" />
+                </svg>
+              </span>
+            </article>
+          </div>
+        </div>
+      </section>
+      <section class="section skills-section">
+        <div class="container ap-container">
+          <div class="section-heading section-heading-center">
+            <h2>Làm chủ cả 4 kỹ năng Aptis</h2>
+          </div>
+          <div class="skills-grid">
+            <article class="skill-card skill-reading">
+              <span class="skill-label">01</span>
+              <div class="skill-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20V4H6.5A2.5 2.5 0 0 0 4 6.5z" />
+                </svg>
+              </div>
+              <h3>Reading</h3>
+              <p>Đọc hiểu và liên kết ý.</p>
+            </article>
+            <article class="skill-card skill-listening">
+              <span class="skill-label">02</span>
+              <div class="skill-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path
+                    d="M4 14a8 8 0 0 1 16 0M4 14v4a2 2 0 0 0 2 2h2v-7H4Zm16 0v4a2 2 0 0 1-2 2h-2v-7h4Z"
+                  />
+                </svg>
+              </div>
+              <h3>Listening</h3>
+              <p>Nắm ý chính, nghe tối đa hai lượt.</p>
+            </article>
+            <article class="skill-card skill-writing">
+              <span class="skill-label">03</span>
+              <div class="skill-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="m4 20 4.5-1 10-10a2.1 2.1 0 0 0-3-3l-10 10L4 20Zm10-12 3 3" />
+                </svg>
+              </div>
+              <h3>Writing</h3>
+              <p>Viết đúng yêu cầu, diễn đạt rõ ý.</p>
+            </article>
+            <article class="skill-card skill-speaking">
+              <span class="skill-label">04</span>
+              <div class="skill-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="9" y="2" width="6" height="12" rx="3" />
+                  <path d="M5 10a7 7 0 0 0 14 0M12 17v5m-4 0h8" />
+                </svg>
+              </div>
+              <h3>Speaking</h3>
+              <p>Ghi âm và luyện diễn đạt.</p>
+            </article>
+          </div>
+        </div>
+      </section>
+      <section class="section section-white">
+        <div class="container ap-container journey-layout">
+          <div class="journey-copy">
+            <p class="eyebrow">Học có định hướng</p>
+            <h2>Không cần biết hết để bắt đầu</h2>
+            <p>Khám phá trước. Cá nhân hóa khi sẵn sàng.</p>
+            <div class="journey-points">
+              <div>
+                <span>1</span>
+                <p>
+                  <strong>Khám phá tự do</strong>
+                  Làm quen với các kỹ năng theo nhịp của bạn.
+                </p>
+              </div>
+              <div>
+                <span>2</span>
+                <p>
+                  <strong>Chọn mục tiêu khi sẵn sàng</strong>
+                  Kiểm tra đầu vào là một lựa chọn, không phải rào cản.
+                </p>
+              </div>
+              <div>
+                <span>3</span>
+                <p>
+                  <strong>Tiến bộ từng chặng</strong>
+                  Học bài, ôn tập và kiểm tra cuối chặng.
+                </p>
+              </div>
             </div>
-        </div>
-    </section>
-    <section class="section skills-section">
-        <div class="container">
-            <div class="section-heading section-heading-center"><h2>Làm chủ cả 4 kỹ năng Aptis</h2></div>
-            <div class="skills-grid">
-                <article class="skill-card skill-reading"><span class="skill-label">01</span><div class="skill-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20V4H6.5A2.5 2.5 0 0 0 4 6.5z"/></svg></div><h3>Reading</h3><p>Đọc hiểu và liên kết ý.</p></article>
-                <article class="skill-card skill-listening"><span class="skill-label">02</span><div class="skill-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 14a8 8 0 0 1 16 0M4 14v4a2 2 0 0 0 2 2h2v-7H4Zm16 0v4a2 2 0 0 1-2 2h-2v-7h4Z"/></svg></div><h3>Listening</h3><p>Nắm ý chính, nghe tối đa hai lượt.</p></article>
-                <article class="skill-card skill-writing"><span class="skill-label">03</span><div class="skill-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m4 20 4.5-1 10-10a2.1 2.1 0 0 0-3-3l-10 10L4 20Zm10-12 3 3"/></svg></div><h3>Writing</h3><p>Viết đúng yêu cầu, diễn đạt rõ ý.</p></article>
-                <article class="skill-card skill-speaking"><span class="skill-label">04</span><div class="skill-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0 0 14 0M12 17v5m-4 0h8"/></svg></div><h3>Speaking</h3><p>Ghi âm và luyện diễn đạt.</p></article>
+          </div>
+          <div class="journey-panel">
+            <div class="journey-panel-head">
+              <span>
+                <small>HÀNH TRÌNH HỌC TẬP</small>
+                <strong>CEFR B2</strong>
+              </span>
+              <span class="level-circle">68%</span>
             </div>
+            <div class="path-line"><span class="path-done"></span></div>
+            <div class="path-levels">
+              <span>
+                <i class="done">✓</i>
+                A1
+              </span>
+              <span>
+                <i class="done">✓</i>
+                A2
+              </span>
+              <span>
+                <i class="done">✓</i>
+                B1
+              </span>
+              <span>
+                <i class="active">4</i>
+                B2
+              </span>
+              <span>
+                <i>5</i>
+                C1
+              </span>
+            </div>
+            <div class="next-lesson">
+              <span class="play-icon">▶</span>
+              <span>
+                <small>BÀI HỌC TIẾP THEO</small>
+                <strong>Reading: Nhận biết liên kết ý</strong>
+              </span>
+              <span>18 phút</span>
+            </div>
+          </div>
         </div>
-    </section>
-    <section class="section section-white">
-        <div class="container journey-layout">
-            <div class="journey-copy"><p class="eyebrow">Học có định hướng</p><h2>Không cần biết hết để bắt đầu</h2><p>Khám phá trước. Cá nhân hóa khi sẵn sàng.</p><div class="journey-points"><div><span>1</span><p><strong>Khám phá tự do</strong>Làm quen với các kỹ năng theo nhịp của bạn.</p></div><div><span>2</span><p><strong>Chọn mục tiêu khi sẵn sàng</strong>Kiểm tra đầu vào là một lựa chọn, không phải rào cản.</p></div><div><span>3</span><p><strong>Tiến bộ từng chặng</strong>Học bài, ôn tập và kiểm tra cuối chặng.</p></div></div></div>
-            <div class="journey-panel"><div class="journey-panel-head"><span><small>HÀNH TRÌNH HỌC TẬP</small><strong>CEFR B2</strong></span><span class="level-circle">68%</span></div><div class="path-line"><span class="path-done"></span></div><div class="path-levels"><span><i class="done">✓</i>A1</span><span><i class="done">✓</i>A2</span><span><i class="done">✓</i>B1</span><span><i class="active">4</i>B2</span><span><i>5</i>C1</span></div><div class="next-lesson"><span class="play-icon">▶</span><span><small>BÀI HỌC TIẾP THEO</small><strong>Reading: Nhận biết liên kết ý</strong></span><span>18 phút</span></div></div>
+      </section>
+      <section class="section experience-section">
+        <div class="container ap-container experience-grid">
+          <div class="experience-card">
+            <div class="exam-window">
+              <div class="exam-bar">
+                <span></span>
+                <span></span>
+                <span></span>
+                <small>Thi thử · Reading</small>
+                <b>12:45</b>
+              </div>
+              <div class="exam-body">
+                <aside>
+                  <strong>Phần 1</strong>
+                  <span class="active-question">1</span>
+                  <span>2</span>
+                  <span>3</span>
+                  <span>4</span>
+                </aside>
+                <div>
+                  <small>CÂU 1 / 4</small>
+                  <h3>Chọn từ phù hợp nhất để hoàn thành câu.</h3>
+                  <p>The course provides a very _____ introduction to academic writing.</p>
+                  <label>
+                    <i>A</i>
+                    benefit
+                  </label>
+                  <label class="selected">
+                    <i>B</i>
+                    useful
+                  </label>
+                  <label>
+                    <i>C</i>
+                    success
+                  </label>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="experience-copy">
+            <p class="eyebrow">Trải nghiệm sát kỳ thi</p>
+            <h2>Luyện tập như đang làm bài thật</h2>
+            <p>
+              Giao diện tập trung, bộ đếm thời gian và từng phần thi rõ ràng giúp bạn tự tin hơn.
+            </p>
+            <ul>
+              <li>Đề được tổ chức theo từng kỹ năng</li>
+              <li>Lưu đáp án và tiến độ trong mỗi lượt thi</li>
+              <li>Kết quả và cấp độ CEFR ước lượng</li>
+            </ul>
+          </div>
         </div>
-    </section>
-    <section class="section experience-section">
-        <div class="container experience-grid">
-            <div class="experience-card"><div class="exam-window"><div class="exam-bar"><span></span><span></span><span></span><small>Thi thử · Reading</small><b>12:45</b></div><div class="exam-body"><aside><strong>Phần 1</strong><span class="active-question">1</span><span>2</span><span>3</span><span>4</span></aside><div><small>CÂU 1 / 4</small><h3>Chọn từ phù hợp nhất để hoàn thành câu.</h3><p>The course provides a very _____ introduction to academic writing.</p><label><i>A</i> benefit</label><label class="selected"><i>B</i> useful</label><label><i>C</i> success</label></div></div></div></div>
-            <div class="experience-copy"><p class="eyebrow">Trải nghiệm sát kỳ thi</p><h2>Luyện tập như đang làm bài thật</h2><p>Giao diện tập trung, bộ đếm thời gian và từng phần thi rõ ràng giúp bạn tự tin hơn.</p><ul><li>Đề được tổ chức theo từng kỹ năng</li><li>Lưu đáp án và tiến độ trong mỗi lượt thi</li><li>Kết quả và cấp độ CEFR ước lượng</li></ul></div>
+      </section>
+      <section class="section final-cta">
+        <div class="container ap-container cta-card">
+          <div class="cta-mascot on-dark">
+            <div
+              th:replace="~{fragments/navi :: navi('celebrate', 'Navi chúc bạn bắt đầu thuận lợi')}"
+            ></div>
+          </div>
+          <div>
+            <p class="eyebrow">Sẵn sàng bắt đầu?</p>
+            <h2>Một bước nhỏ hôm nay. Tự tin hơn ngày mai.</h2>
+            <p>Tạo tài khoản và khám phá hành trình phù hợp với bạn.</p>
+          </div>
+          <div class="actions" sec:authorize="isAnonymous()">
+            <a class="button button-light" th:href="@{/register}">
+              Tạo tài khoản miễn phí
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="m9 18 6-6-6-6" />
+              </svg>
+            </a>
+            <a class="cta-login" th:href="@{/login}">Tôi đã có tài khoản</a>
+          </div>
+          <div class="actions" sec:authorize="hasRole('STUDENT')">
+            <a class="button button-light" th:href="@{/student/dashboard}">
+              Vào không gian học tập
+            </a>
+          </div>
+          <div class="actions" sec:authorize="hasRole('ADMIN')">
+            <a class="button button-light" th:href="@{/admin/dashboard}">Vào trang quản trị</a>
+          </div>
         </div>
-    </section>
-    <section class="section final-cta">
-        <div class="container cta-card">
-            <div><p class="eyebrow">Sẵn sàng bắt đầu?</p><h2>Một bước nhỏ hôm nay. Tự tin hơn ngày mai.</h2><p>Tạo tài khoản và khám phá hành trình phù hợp với bạn.</p></div>
-            <div class="actions" sec:authorize="isAnonymous()"><a class="button button-light" th:href="@{/register}">Tạo tài khoản miễn phí <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg></a><a class="cta-login" th:href="@{/login}">Tôi đã có tài khoản</a></div>
-            <div class="actions" sec:authorize="hasRole('STUDENT')"><a class="button button-light" th:href="@{/student/dashboard}">Vào không gian học tập</a></div>
-            <div class="actions" sec:authorize="hasRole('ADMIN')"><a class="button button-light" th:href="@{/admin/dashboard}">Vào trang quản trị</a></div>
-        </div>
-    </section>
-</main>
-<div th:replace="~{fragments/footer :: footer}"></div>
-</body>
+      </section>
+    </main>
+    <div th:replace="~{fragments/footer :: footer}"></div>
+  </body>
 </html>

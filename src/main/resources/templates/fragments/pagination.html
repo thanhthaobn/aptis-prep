@@ -1,13 +1,32 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="vi" xmlns:th="http://www.thymeleaf.org">
-<body>
-<nav class="pagination" th:fragment="pagination(page, baseUrl)" th:if="${page != null and page.totalPages > 0}" aria-label="Phân trang">
-    <span th:text="|Hiển thị ${page.numberOfElements} / ${page.totalElements} kết quả|">Hiển thị kết quả</span>
-    <div class="pagination-pages">
-        <a class="page-link" th:classappend="${page.first} ? 'disabled'" th:href="${baseUrl + '?page=' + (page.number - 1)}">‹</a>
+  <body>
+    <nav
+      class="pagination"
+      th:fragment="pagination(page, baseUrl)"
+      th:if="${page != null and page.totalPages > 0}"
+      aria-label="Phân trang"
+    >
+      <span th:text="|Hiển thị ${page.numberOfElements} / ${page.totalElements} kết quả|">
+        Hiển thị kết quả
+      </span>
+      <div class="pagination-pages">
+        <a
+          class="page-link"
+          th:classappend="${page.first} ? 'disabled'"
+          th:href="${baseUrl + '?page=' + (page.number - 1)}"
+        >
+          ‹
+        </a>
         <span class="page-link active" th:text="${page.number + 1}">1</span>
-        <a class="page-link" th:classappend="${page.last} ? 'disabled'" th:href="${baseUrl + '?page=' + (page.number + 1)}">›</a>
-    </div>
-</nav>
-</body>
+        <a
+          class="page-link"
+          th:classappend="${page.last} ? 'disabled'"
+          th:href="${baseUrl + '?page=' + (page.number + 1)}"
+        >
+          ›
+        </a>
+      </div>
+    </nav>
+  </body>
 </html>

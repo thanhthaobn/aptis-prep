@@ -2,25 +2,26 @@ package com.aptisprep.service.storage;
 
 import com.aptisprep.config.StorageProperties;
 import com.aptisprep.exception.BusinessRuleException;
-import org.springframework.core.io.Resource;
-import org.springframework.core.io.UrlResource;
-import org.springframework.stereotype.Service;
-import org.springframework.web.multipart.MultipartFile;
-
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
-import java.util.UUID;
 import java.util.Locale;
 import java.util.Set;
+import java.util.UUID;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.UrlResource;
+import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
 @Service
 public class LocalStorageService implements StorageService {
 
-    private static final Set<String> ALLOWED_EXTENSIONS = Set.of(
-            ".jpg", ".jpeg", ".png", ".webp", ".pdf", ".mp3", ".wav", ".webm", ".m4a", ".mp4", ".ogg");
+    private static final Set<String> ALLOWED_EXTENSIONS =
+            Set.of(
+                    ".jpg", ".jpeg", ".png", ".webp", ".pdf", ".mp3", ".wav", ".webm", ".m4a",
+                    ".mp4", ".ogg");
     private static final long MAX_BYTES = 50L * 1024 * 1024;
 
     private final Path root;
@@ -35,9 +36,12 @@ public class LocalStorageService implements StorageService {
             throw new BusinessRuleException("File tải lên không được để trống");
         }
 
-        String originalName = file.getOriginalFilename() == null ? "file" : file.getOriginalFilename();
-        String extension = originalName.lastIndexOf('.') >= 0
-                ? originalName.substring(originalName.lastIndexOf('.')) : "";
+        String originalName =
+                file.getOriginalFilename() == null ? "file" : file.getOriginalFilename();
+        String extension =
+                originalName.lastIndexOf('.') >= 0
+                        ? originalName.substring(originalName.lastIndexOf('.'))
+                        : "";
         extension = extension.toLowerCase(Locale.ROOT);
         // Baseline guard only. Callers must also validate actual bytes/MIME and purpose.
         if (!ALLOWED_EXTENSIONS.contains(extension) || file.getSize() > MAX_BYTES) {

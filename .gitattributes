@@ -5,3 +5,7 @@ mvnw text eol=lf
 *.yml text eol=lf
 *.sql text eol=lf
 *.md text eol=lf
+*.html text eol=lf
+*.js text eol=lf
+*.cjs text eol=lf
+*.json text eol=lf

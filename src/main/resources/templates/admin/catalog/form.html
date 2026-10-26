@@ -1,31 +1,29 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="vi" xmlns:th="http://www.thymeleaf.org">
-<head th:replace="~{fragments/head :: head(${catalog.title})}"></head>
-<body class="admin-theme">
-<div th:replace="~{fragments/navbar :: navbar}"></div>
-<div class="container app-shell">
-    <div th:replace="~{fragments/admin-sidebar :: adminSidebar(${catalog.key})}"></div>
-    <main class="app-main admin-catalog">
-        <div th:replace="~{fragments/breadcrumb :: breadcrumb(${catalog.title}, @{${catalog.baseUrl()}}, ${editing ? 'Chỉnh sửa' : catalog.createLabel})}"></div>
-        <header class="page-header"><div><h1 th:text="${editing ? 'Chỉnh sửa ' + catalog.singular : catalog.createLabel}"></h1></div></header>
-        <form class="dashboard-panel catalog-preview-form" onsubmit="return false;">
-            <h2>Thông tin cơ bản</h2>
-            <div class="field"><label for="contentTitle" th:text="${catalog.key == 'questions' ? 'Tiêu đề câu hỏi' : 'Tên ' + catalog.singular}"></label><input id="contentTitle" name="title" th:value="${editing ? entry.title : ''}" maxlength="255" required></div>
-            <div class="catalog-form-grid">
-                <div class="field"><label for="contentSkill">Kỹ năng</label><select id="contentSkill" name="skill"><option th:each="skill : ${skills}" th:value="${skill}" th:text="${skill}" th:selected="${editing and entry.skill == skill}"></option></select></div>
-                <div class="field"><label for="contentLevel">Cấp độ CEFR</label><select id="contentLevel" name="level"><option th:each="level : ${ {'A1','A2','B1','B2','C1'} }" th:value="${level}" th:text="${level}" th:selected="${editing and entry.level == level}"></option></select></div>
-                <div class="field"><label for="contentKind" th:text="${catalog.typeLabel}"></label><select id="contentKind" name="kind"><option th:each="kind : ${catalog.kinds}" th:text="${kind}" th:selected="${editing and entry.kind == kind}"></option></select></div>
-                <div class="field"><label for="contentStatus">Trạng thái</label><select id="contentStatus" name="status"><option value="DRAFT">Bản nháp</option><option value="PUBLISHED" th:selected="${editing and entry.status == 'PUBLISHED'}">Đã công bố</option><option value="ARCHIVED" th:selected="${editing and entry.status == 'ARCHIVED'}">Đã lưu trữ</option></select></div>
-            </div>
-            <div class="field"><label for="contentDescription">Mô tả hoặc hướng dẫn</label><textarea id="contentDescription" name="description" rows="4" th:text="${editing ? entry.subtitle : ''}"></textarea></div>
-            <section class="catalog-form-section" th:if="${catalog.key == 'lessons'}"><h2>Nội dung và Flashcard</h2><div class="field"><label for="lessonBody">Nội dung bài học</label><textarea id="lessonBody" name="body" rows="6" placeholder="Nhập nội dung bài học…"></textarea></div><div class="catalog-form-grid"><div class="field"><label for="cardFront">Mặt trước Flashcard</label><input id="cardFront" name="front" placeholder="Từ hoặc cụm từ"></div><div class="field"><label for="cardBack">Mặt sau Flashcard</label><input id="cardBack" name="back" placeholder="Nghĩa và ví dụ"></div></div></section>
-            <section class="catalog-form-section" th:if="${catalog.key == 'questions'}"><h2>Ý hỏi và phương án trả lời</h2><div class="field"><label for="questionBody">Nội dung ý hỏi</label><textarea id="questionBody" name="questionBody" rows="3" th:text="${editing ? entry.subtitle : ''}"></textarea></div><fieldset class="catalog-option-fields"><legend>Phương án trả lời</legend><div th:each="letter : ${ {'A','B','C'} }"><label th:for="|option-${letter}|" th:text="|Phương án ${letter}|"></label><input th:id="|option-${letter}|" th:name="|option${letter}|" type="text"><label><input type="radio" name="correctAnswer" th:value="${letter}"> Đáp án đúng</label></div></fieldset><div class="catalog-form-grid"><div class="field"><label for="minWords">Số từ tối thiểu</label><input id="minWords" name="minWords" type="number" min="0"></div><div class="field"><label for="responseTime">Thời gian trả lời (giây)</label><input id="responseTime" name="responseTime" type="number" min="1"></div></div></section>
-            <section class="catalog-form-section" th:if="${catalog.key == 'exams'}"><h2>Cấu hình đề thi</h2><div class="catalog-form-grid"><div class="field"><label for="certificate">Chứng chỉ</label><select id="certificate" name="certificate"><option>Aptis</option></select></div><div class="field"><label for="scheme">Bộ chấm điểm</label><select id="scheme" name="scheme"><option>Ước lượng — phiên bản 1</option></select></div><div class="field"><label for="duration">Thời gian (phút)</label><input id="duration" name="duration" type="number" min="1" value="35"></div><div class="field"><label for="questionSearch">Tìm câu hỏi</label><input id="questionSearch" name="questionSearch" placeholder="Tên câu hỏi hoặc kỹ năng…"></div></div><div class="catalog-checkbox"><label><input type="checkbox" name="questionIds" value="3001"> Chọn từ phù hợp trong câu · Grammar &amp; Vocabulary · B1</label><label><input type="checkbox" name="questionIds" value="3002"> Viết thư cho câu lạc bộ · Writing · B2</label><label><input type="checkbox" name="questionIds" value="3003"> Giới thiệu sở thích · Speaking · A2</label></div></section>
-            <section class="catalog-form-section" th:if="${catalog.key != 'exams'}"><h2>Tài nguyên đính kèm</h2><div class="field"><label for="contentFile" th:text="${catalog.key == 'lessons' ? 'Video hoặc tài liệu' : 'Hình ảnh hoặc âm thanh'}"></label><input id="contentFile" name="file" type="file" th:accept="${catalog.key == 'lessons' ? 'video/*,.pdf' : 'image/*,audio/*'}"></div></section>
-            <div class="page-actions catalog-form-section"><button class="button" type="button" disabled>Lưu thay đổi</button><a class="button button-secondary" th:href="@{${catalog.baseUrl()}}">Hủy</a></div>
-        </form>
-    </main>
-</div>
-<div th:replace="~{fragments/footer :: footer}"></div>
-</body>
+  <head th:replace="~{fragments/head :: head(${catalog.title})}"></head>
+  <body class="admin-theme">
+    <div th:replace="~{fragments/navbar :: navbar}"></div>
+    <div class="container ap-container app-shell">
+      <div th:replace="~{fragments/admin-sidebar :: adminSidebar(${catalog.key})}"></div>
+      <main id="main-content" tabindex="-1" class="app-main admin-catalog">
+        <div
+          th:replace="~{fragments/breadcrumb :: breadcrumb(${catalog.title}, @{${catalog.baseUrl()}}, ${editing ? 'Chỉnh sửa' : catalog.createLabel})}"
+        ></div>
+        <header class="page-header">
+          <div>
+            <h1 th:text="${editing ? 'Chỉnh sửa ' + catalog.singular : catalog.createLabel}"></h1>
+            <p class="muted">Dữ liệu được lưu trực tiếp vào ngân hàng nội dung.</p>
+          </div>
+        </header>
+        <th:block th:if="${catalog.key == 'questions'}">
+          <form th:replace="~{admin/catalog/question-form :: questionForm}"></form>
+        </th:block>
+        <th:block th:if="${catalog.key == 'exams'}">
+          <form th:replace="~{admin/catalog/exam-form :: examForm}"></form>
+        </th:block>
+      </main>
+    </div>
+    <div th:replace="~{fragments/footer :: footer}"></div>
+    <script th:src="@{/js/catalog-editor.js}" defer></script>
+  </body>
 </html>

@@ -12,38 +12,50 @@ Setup chi tiết SQL Server TCP/IP, IntelliJ/JDK 21, kiểm thử và checklist 
 - Spring Security Session
 - Spring Data JPA
 - Microsoft SQL Server
-- Flyway Migration
+- SQL schema hiện tại, Hibernate validate (không tự thay đổi database)
 - Maven Wrapper
 
 ## Chạy local
 
 1. Cài JDK 21 và SQL Server.
-2. Tạo database `aptisprep_db`.
-3. Copy `src/main/resources/application-dev.example.properties` thành `application-dev.properties`.
-4. Điền username/password SQL Server local.
+2. Tạo database **mới/rỗng** và chạy `database/schema-current.sql`. Không chạy script này trên DB có dữ liệu.
+3. Dùng một `application.properties`; không cần profile dev.
+4. Đặt `DB_PASSWORD`, tùy chọn `DB_USERNAME`/`DB_URL` trong biến môi trường. DB V031 cũ phải đối chiếu schema trước khi chạy source mới.
 5. Chạy `mvnw.cmd clean spring-boot:run` trên Windows.
 6. Mở `http://localhost:8080`.
 
-Tài khoản demo được tạo tự động trong profile `dev`:
+Không tự tạo tài khoản/nội dung demo. Đăng ký người dùng thật và cấp quyền quản trị trên DB do bạn quản lý theo [SETUP_LOCAL.md](docs/SETUP_LOCAL.md).
 
-| Role | Email | Password |
-|---|---|---|
-| Admin | `admin@aptis.local` | `Password@123` |
-| Student | `student@aptis.local` | `Password@123` |
+## Lưu ảnh, video và audio
+
+Toàn bộ media nằm trên ổ đĩa trong `uploads/`, không đóng gói trong JAR.
+Admin tải file mới vào các nhánh `lesson-images`, `lesson-video`, `lesson-audio`,
+`questions`; bản ghi học viên nằm trong các nhánh recording/attempt tương ứng.
+Các tài nguyên giáo trình cũ nằm trong `uploads/curriculum/`. DB và snapshot
+giữ nguyên đường dẫn tương đối `curriculum/...` để lịch sử vẫn đọc được.
+
+Khi chuyển máy/deploy hoặc khôi phục DB, phải mang theo **cả database và thư mục
+uploads**. Git không chứa media riêng; clone source hoặc chạy schema không tự
+khôi phục chúng. Backend kiểm quyền trước khi trả file, không công khai `/uploads/**`.
+Xem hướng dẫn sao lưu/chuyển máy trong [SETUP_LOCAL.md](docs/SETUP_LOCAL.md#9-media-local-và-chuyển-máy).
 
 ## Kiểm thử
 
 ```powershell
+$env:JAVA_HOME = "C:\duong-dan-den-jdk-21"
+$env:Path = "$env:JAVA_HOME\bin;$env:Path"
 .\mvnw.cmd clean test
 ```
 
-Test thường dùng H2 in-memory và không cần SQL Server. V001–V003 đã được kiểm tra trên SQL Server 15 với database rỗng; migration V004–V005 chuyển nền cũ sang contract V2. `SqlServerMigrationTests` chỉ chạy khi đặt `APTIS_SQLSERVER_TESTS=true` và dùng cấu hình database local.
+Maven Wrapper kiểm tra `JAVA_HOME` và chỉ chạy với JDK 21, kể cả khi máy đang cài thêm Java phiên bản mới hơn.
+
+Test thường dùng H2 in-memory. `V2SqlServerPreservationTests` dùng SQL Server UUID tạm khi bật `APTIS_SQLSERVER_ISOLATED_TESTS=true`; không sửa DB ứng dụng. `SqlServerMigrationTests` giữ tên cũ nhưng chỉ validate schema, không migrate.
 
 ## Nguyên tắc kiến trúc
 
-Giao diện học viên dùng bản đồ chặng và phong cách học tập vui. Sau đăng nhập mở `/student/orientation` để xem lộ trình định hướng minh họa không yêu cầu mục tiêu/bài đầu vào; sinh/lưu lộ trình và tiến độ thực tế còn chờ luồng học tập triển khai.
+Giao diện học viên dùng bản đồ chặng. Goal và Placement có thể bỏ qua; các service học tập đã lưu lộ trình và tiến độ thật. Trạng thái hiện tại và phần mở rộng được ghi trong tài liệu nghiệp vụ bên dưới.
 
-Phân công đầy đủ cho bốn người theo V2 và phần mở rộng quản lý học viên: [TEAM_ASSIGNMENT_V2.md](docs/TEAM_ASSIGNMENT_V2.md).
+Phân công cập nhật cho ba thành viên Thông, Thảo và Trâm: [TEAM_ASSIGNMENT_V2.md](docs/TEAM_ASSIGNMENT_V2.md).
 
 ```text
 Controller -> Service -> Repository
@@ -51,22 +63,22 @@ Controller -> Service -> Repository
 
 - Không dùng `@RestController` cho giao diện.
 - Controller không gọi Repository trực tiếp.
-- Schema thay đổi qua Flyway, không sửa bảng thủ công rồi bỏ qua migration.
+- DDL mới nhất nằm ở `database/schema-current.sql`; không có migration runtime. Mọi nâng cấp DB hiện có phải sao lưu và kiểm chứng riêng.
 - Hibernate dùng `ddl-auto=validate` khi chạy với SQL Server.
 
 Đọc [PROJECT_DECISIONS.md](PROJECT_DECISIONS.md) trước khi phát triển module.
 
-Yêu cầu chuẩn: [V2](docs/SPEC_V2.md). Xem [đối chiếu triển khai](docs/V2_IMPLEMENTATION.md) để phân biệt nền tảng đã có và nghiệp vụ còn thiếu. Service và cấu hình OpenAI được giữ để tích hợp vào luồng nộp bài thi theo [AI_SETUP.md](docs/AI_SETUP.md); hiện chưa có giao diện gọi chấm AI.
+Tài liệu nghiệp vụ hiện trạng và ERD Mermaid (không thuộc tính/có thuộc tính): [BUSINESS_SPEC_CURRENT.md](docs/BUSINESS_SPEC_CURRENT.md). Yêu cầu gốc giữ tại [V2](docs/SPEC_V2.md); trạng thái code tại [đối chiếu triển khai](docs/V2_IMPLEMENTATION.md). AI tùy chọn hiện dùng Gemini cho bài thi và phản hồi Lesson, có phân biệt nguồn; cấu hình và giới hạn xem [AI_SETUP.md](docs/AI_SETUP.md).
 
 Trước khi tạo hoặc sửa giao diện, đọc [docs/UI_GUIDE.md](docs/UI_GUIDE.md) và giữ đúng route trong [docs/ROUTES.md](docs/ROUTES.md).
 
-Phần mở rộng [Quản lý học viên cho Admin](docs/STUDENT_MANAGEMENT.md) có giao diện tại `/admin/students`, hỗ trợ xem/tìm/lọc hồ sơ minh họa. Nút khóa/mở khóa chỉ mở xác nhận, chưa thay đổi tài khoản; thành viên tiếp tục nối database, phân trang và nghiệp vụ theo tài liệu.
+Phần mở rộng [Quản lý học viên cho Admin](docs/STUDENT_MANAGEMENT.md) tại `/admin/students` đọc hồ sơ/tiến độ thật và có nghiệp vụ khóa/mở khóa; không tạo/xóa học viên hoặc sửa điểm.
 
-Admin còn có khung Bài học (`/admin/lessons`), Ngân hàng câu hỏi (`/admin/questions`), Đề thi (`/admin/exams`) và Kết quả (`/admin/results`). Đây là dữ liệu minh họa; bàn giao và phần việc chưa nối backend xem [ADMIN_UI_HANDOFF.md](docs/ADMIN_UI_HANDOFF.md).
+Admin quản lý Bài học (`/admin/lessons`), Ngân hàng câu hỏi (`/admin/questions`), Đề thi (`/admin/exams`) và xem Kết quả (`/admin/results`) bằng dữ liệu DB. Các tài liệu handoff cũ là lịch sử phân công, không phải bằng chứng trạng thái triển khai hiện tại.
 
 ## Giao diện học viên mới
 
-Admin có mục **Chứng chỉ & Chấm điểm** tại `/admin/certificates`: khung UC-A03–A05, không có ghi DB. Người 3 nhận theo [SCORING_UI_HANDOFF.md](docs/SCORING_UI_HANDOFF.md); `/admin/settings` chỉ còn redirect, không phải trang cấu hình key.
+Admin có mục **Chứng chỉ & Chấm điểm** tại `/admin/certificates`; Thông phụ trách nghiệp vụ scoring theo [SCORING_UI_HANDOFF.md](docs/SCORING_UI_HANDOFF.md). `/admin/settings` chỉ còn redirect, không phải trang cấu hình key.
 
-Sau khi đăng nhập Student, mở menu **Bài học**, **Đề thi**, **Kết quả** để xem danh sách và chi tiết minh họa. Chưa có lưu tiến độ, tạo lượt thi hoặc chấm AI. Hướng dẫn nhóm tiếp nhận: [docs/STUDENT_UI_HANDOFF.md](docs/STUDENT_UI_HANDOFF.md).
+Sau khi đăng nhập Student, các menu **Bài học**, **Đề thi**, **Kết quả** đọc dữ liệu thật; tiến độ, lượt thi và tác vụ AI được lưu DB. AI thật cần key/quota riêng. Các handoff cũ chỉ là tài liệu lịch sử, không mô tả đầy đủ trạng thái hiện tại.
 

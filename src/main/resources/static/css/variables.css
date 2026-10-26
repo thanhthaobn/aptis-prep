@@ -1,26 +1,81 @@
 :root {
-    --color-primary: #4f46e5;
-    --color-primary-dark: #3730a3;
-    --color-primary-soft: #eef2ff;
-    --color-accent: #06b6d4;
+    /* Brand & Primary Colors (AptisPrep Teal) */
+    --color-primary: #0F6E56;
+    --color-primary-rgb: 15, 110, 86;
+    --color-primary-dark: #094738;
+    --color-primary-dark-rgb: 9, 71, 56;
+    --color-primary-light: #168e70;
+    --color-primary-soft: #eaf5f2;
+    --color-primary-focus: rgba(15, 110, 86, 0.25);
+
+    /* Neutral & Surfaces */
     --color-navy: #111827;
-    --color-surface: #ffffff;
-    --color-surface-soft: #f8fafc;
-    --color-background: #f4f7fb;
+    --color-surface: #FFFFFF;
+    --color-surface-soft: #F4F6F5;
+    --color-background: #FAFAF8;
     --color-text: #172033;
+    --color-text-muted: #64748b;
     --color-muted: #64748b;
-    --color-border: #e2e8f0;
-    --color-danger: #b42318;
-    --color-danger-bg: #fef3f2;
+    --color-border: #E5E7EB;
+    --color-border-hover: #D1D5DB;
+
+    /* Semantic Alerts (4 types: Success, Danger, Warning, Info) */
     --color-success: #067647;
     --color-success-bg: #ecfdf3;
+    --color-success-border: #abefc6;
+
+    --color-danger: #b42318;
+    --color-danger-bg: #fef3f2;
+    --color-danger-border: #fecdca;
+
     --color-warning: #b54708;
     --color-warning-bg: #fffaeb;
-    --radius-sm: 10px;
-    --radius: 16px;
-    --radius-lg: 24px;
-    --shadow-sm: 0 2px 8px rgba(15, 23, 42, 0.06);
-    --shadow: 0 16px 48px rgba(15, 23, 42, 0.09);
-    --shadow-primary: 0 12px 28px rgba(79, 70, 229, 0.24);
+    --color-warning-border: #fedf89;
+
+    --color-info: #026aa2;
+    --color-info-bg: #f0f9ff;
+    --color-info-border: #b9e6fe;
+
+    /* CEFR Palette: A2 slate, B1 steel-blue, B2 teal, C1/C2 emerald-indigo */
+    --cefr-a1-bg: #f1f5f9;
+    --cefr-a1-text: #475569;
+    --cefr-a1-border: #cbd5e1;
+
+    --cefr-a2-bg: #f1f5f9;
+    --cefr-a2-text: #334155;
+    --cefr-a2-border: #cbd5e1;
+
+    --cefr-b1-bg: #f0f7ff;
+    --cefr-b1-text: #0284c7;
+    --cefr-b1-border: #bae6fd;
+
+    --cefr-b2-bg: #eaf5f2;
+    --cefr-b2-text: #0F6E56;
+    --cefr-b2-border: #a3d9cb;
+
+    --cefr-c1-bg: #e8f0fe;
+    --cefr-c1-text: #4338ca;
+    --cefr-c1-border: #c7d2fe;
+
+    --cefr-c2-bg: #ede9fe;
+    --cefr-c2-text: #6d28d9;
+    --cefr-c2-border: #ddd6fe;
+
+    /* Typography */
+    --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    --font-ui: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+
+    /* Radii & Shadows */
+    --radius-sm: 8px;
+    --radius: 14px;
+    --radius-lg: 20px;
+    --radius-pill: 9999px;
+
+    --shadow-sm: 0 1px 3px rgba(15, 23, 42, 0.06);
+    --shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
+    --shadow-primary: 0 10px 24px rgba(15, 110, 86, 0.22);
+
+    /* Layout & Accessibility */
     --container: 1180px;
+    --min-touch-target: 44px;
 }

@@ -32,7 +32,7 @@ So sánh CEFR bằng thứ tự tường minh A1 < A2 < B1 < B2 < C1 < C2, khôn
 | Đã đạt checkpoint B1, Placement mới hợp lệ B2 | B2 | B1 | B2 theo quyền cập nhật Placement của V2; không tuyên bố đã đạt checkpoint B2 |
 | Đã đạt checkpoint B2, lượt mới chờ/lỗi chấm | Chưa có kết quả mới | B2 | Giữ trình độ hợp lệ hiện có, không áp dụng kết quả lỗi |
 
-Không làm mất căn cứ checkpoint khi source_attempt_id của Profile đổi sang Placement. Schema hiện chỉ có current_level/source_attempt_id nên Người 1/2/3/4 phải thống nhất cách lưu/truy xuất mức checkpoint từ lịch sử hợp lệ hoặc migration mới có dấu vết nguồn. Không chỉ nhìn attempt đang được source_attempt_id trỏ tới. Không sửa V001–V005.
+Không làm mất căn cứ checkpoint khi source_attempt_id của Profile đổi sang Placement. Schema hiện chỉ có current_level/source_attempt_id nên Người 1/2/3 phải thống nhất cách lưu/truy xuất mức checkpoint từ lịch sử hợp lệ hoặc migration mới có dấu vết nguồn. Không chỉ nhìn attempt đang được source_attempt_id trỏ tới. Không sửa V001–V005.
 
 ## 3. Lộ trình và giao diện
 
@@ -49,10 +49,9 @@ Không làm mất căn cứ checkpoint khi source_attempt_id của Profile đổ
 |---|---|---|
 | Người 1 — đầu mối ghi Profile và AI | Xác minh kết quả đầu vào/newest/floor khi ghi Skill Profile; giữ dấu vết nguồn; tác vụ chấm tự luận/retry AI, không điều phối trang Placement | Không hạ checkpoint/áp lặp; dữ liệu thiếu/chờ/lỗi; ownership; retry AI và bản trả về cũ |
 | Người 2 | Cung cấp căn cứ checkpoint đã đạt theo skill; điều chỉnh path/đề xuất ôn tập, không xóa tiến độ cũ; dashboard tách mục tiêu/trình độ/đầu vào | Checkpoint B2 + Placement B1 vẫn B2; path cũ còn lịch sử; kế thừa completion; không tăng/giảm lặp |
-| Người 3 — đầu mối Placement | Đề/scheme có version; trang chọn/skip/resume; chọn kết quả mới nhất hợp lệ; điều phối engine 4 → Profile 1 → path 2, dấu xử lý bền | Đề đúng phạm vi; không lộ đáp án; pending/retake/thiếu đề; kết quả trả chậm, crash giữa Profile và path |
-| Người 4 | Một lượt chưa kết thúc/user/skill; resume/deadline; start concurrent; giữ bài, điều phối AI sang 1; tổng hợp và cung cấp kết quả/metadata | Hai tab/hai đề cùng skill, hết hạn, chờ/lỗi chấm, submit/notification lặp và kết quả sai thứ tự |
+| Người 3 — đầu mối Placement/engine | Đề/scheme có version; trang chọn/skip/resume; chọn kết quả mới nhất hợp lệ; điều phối engine 3 → grading/result 1 → Profile 1 → path 2, dấu xử lý bền | Đề đúng phạm vi; không lộ đáp án; pending/retake/thiếu đề; kết quả trả chậm, crash giữa Profile và path |
 
-Người 1/3/4 chốt trạng thái terminal/non-terminal trước khi nối UI; cả 4 review contract/migration áp kết quả. Người 3 điều phối Placement, Người 1 duy nhất ghi Profile, Người 2 ghi path, Người 4 duy nhất ghi trạng thái attempt/skill result. Không tự định nghĩa khác nhau cách bảo vệ checkpoint. Interface hiện có tối thiểu: mở rộng DTO Placement/mức checkpoint trong PR chung; không truyền CEFR tùy ý từ FE vào applyAssessment. Phân công mới theo TEAM_ASSIGNMENT_V2.md thay phân công cũ.
+Người 1/2/3 chốt trạng thái terminal/non-terminal trước khi nối UI; cả ba review contract/migration áp kết quả. Người 3 điều phối Placement và duy nhất ghi lifecycle attempt; Người 1 duy nhất ghi result/skill result/Profile; Người 2 ghi path/UI. Không tự định nghĩa khác nhau cách bảo vệ checkpoint. Interface hiện có tối thiểu: mở rộng DTO Placement/mức checkpoint trong PR chung; không truyền CEFR tùy ý từ FE vào applyAssessment. Phân công mới theo TEAM_ASSIGNMENT_V2.md thay phân công cũ.
 
 ## 5. Checklist nghiệm thu
 

@@ -1,0 +1,275 @@
+/* ==========================================================================
+   AptisPrep Result Stylesheet (result.css)
+   - Result Hero Card & Overall CEFR Level
+   - Pending Grading Banner for Subjective Skills
+   - Skill Breakdown Cards (Reading, Listening, Writing, Speaking)
+   - Score Progress Bars & Scale Score Display (0-50 Aptis Standard)
+   - Recommendations & Learning Path Navigation
+   ========================================================================== */
+
+.result-container {
+    max-width: 1100px;
+    margin: 0 auto;
+}
+
+/* Result Hero Banner */
+.result-hero-card {
+    background: #ffffff;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    padding: 2rem;
+    box-shadow: var(--shadow-sm);
+    margin-bottom: 1.75rem;
+    position: relative;
+    overflow: hidden;
+}
+
+.result-hero-card::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 5px;
+    background: linear-gradient(90deg, var(--color-primary), #2dd4bf);
+}
+
+.result-hero-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    flex-wrap: wrap;
+    gap: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.result-hero-title h1 {
+    font-size: 1.75rem;
+    color: var(--color-navy);
+    margin: .35rem 0;
+}
+
+.result-meta-list {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 1rem;
+    font-size: .9rem;
+    color: var(--color-muted);
+}
+
+.result-meta-item {
+    display: inline-flex;
+    align-items: center;
+    gap: .4rem;
+}
+
+/* Overall Score Box */
+.result-overall-box {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    background: var(--color-surface-soft);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    padding: 1.25rem 1.75rem;
+}
+
+.overall-cefr-badge {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-width: 72px;
+    height: 72px;
+    background: var(--color-primary);
+    color: #ffffff;
+    border-radius: var(--radius-sm);
+    font-weight: 800;
+}
+
+.overall-cefr-badge .cefr-title {
+    font-size: .75rem;
+    text-transform: uppercase;
+    letter-spacing: .05em;
+    opacity: 0.85;
+}
+
+.overall-cefr-badge .cefr-level {
+    font-size: 1.65rem;
+    line-height: 1;
+}
+
+.overall-score-details h3 {
+    margin: 0;
+    font-size: 1.15rem;
+    color: var(--color-navy);
+}
+
+.overall-score-details p {
+    margin: .25rem 0 0;
+    font-size: .9rem;
+    color: var(--color-muted);
+}
+
+/* Pending Grading Banner */
+.result-pending-banner {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    background: #fffbeb;
+    border: 1px solid #fedf89;
+    border-radius: var(--radius-sm);
+    padding: 1.15rem 1.5rem;
+    margin-bottom: 1.75rem;
+    color: #b54708;
+}
+
+.result-pending-banner .pending-icon {
+    font-size: 1.5rem;
+}
+
+.result-pending-banner p {
+    margin: 0;
+    font-size: .95rem;
+    line-height: 1.5;
+}
+
+/* Skills Grid */
+.skills-result-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 1.25rem;
+    margin-bottom: 2rem;
+}
+
+.skill-result-card {
+    background: #ffffff;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    padding: 1.5rem;
+    box-shadow: var(--shadow-sm);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    transition: transform .15s ease, box-shadow .15s ease;
+}
+
+.skill-result-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow);
+}
+
+.skill-card-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.25rem;
+}
+
+.skill-card-name {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--color-navy);
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+}
+
+.skill-score-row {
+    margin-bottom: 1rem;
+}
+
+.skill-score-main {
+    display: flex;
+    align-items: baseline;
+    gap: .35rem;
+}
+
+.skill-score-main .score-val {
+    font-size: 2.25rem;
+    font-weight: 800;
+    color: var(--color-navy);
+    line-height: 1;
+}
+
+.skill-score-main .score-max {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--color-muted);
+}
+
+.skill-score-pending {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: #b54708;
+    margin: .5rem 0;
+}
+
+/* Score Progress Bar */
+.skill-progress-track {
+    width: 100%;
+    height: 8px;
+    background: var(--color-surface-soft);
+    border-radius: 999px;
+    overflow: hidden;
+    margin: .75rem 0 .5rem;
+}
+
+.skill-progress-bar {
+    height: 100%;
+    background: var(--color-primary);
+    border-radius: 999px;
+    transition: width .6s ease;
+}
+
+.skill-raw-score {
+    font-size: .85rem;
+    color: var(--color-muted);
+}
+
+/* Feedback Box */
+.skill-feedback-box {
+    margin-top: 1rem;
+    padding: .85rem 1rem;
+    background: var(--color-surface-soft);
+    border-left: 3px solid var(--color-primary);
+    border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+    font-size: .88rem;
+    color: var(--color-text);
+    line-height: 1.5;
+}
+
+/* Recommendations Card */
+.recommendations-card {
+    background: linear-gradient(135deg, #ffffff 0%, #f0fdfa 100%);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    padding: 2rem;
+    box-shadow: var(--shadow-sm);
+    margin-bottom: 2rem;
+}
+
+.recommendations-card h2 {
+    font-size: 1.25rem;
+    color: var(--color-navy);
+    margin-top: 0;
+    margin-bottom: .75rem;
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+}
+
+.recommendations-card p {
+    font-size: .95rem;
+    color: var(--color-text);
+    line-height: 1.6;
+    margin-bottom: 1.5rem;
+}
+
+.result-actions-bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-top: 1.5rem;
+}

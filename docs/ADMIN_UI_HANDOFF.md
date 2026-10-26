@@ -1,8 +1,8 @@
 # Bàn giao giao diện quản trị nội dung
 
-> Phân công mới nhất 17/10/2026: Kết quả admin thuộc Người 4; Người 1 nhận quản lý Học viên, trọn Chứng chỉ & Chấm điểm và AI, không có trang chấm mẫu Admin; Người 2 nhận Bài học/Flashcard; Người 3 nhận Câu hỏi/Đề thi và Placement. Phương án giao scoring cho Người 3 hoặc kết quả tổng quát cho Người 1 không còn áp dụng. Xem [TEAM_ASSIGNMENT_V2.md](TEAM_ASSIGNMENT_V2.md).
+> Phân công mới nhất 20/10/2026: Người 2 nhận lịch sử/kết quả admin; Người 1 nhận quản lý Học viên, trọn Chứng chỉ & Chấm điểm, AI và dữ liệu result; Người 2 nhận Bài học/Flashcard; Người 3 nhận Câu hỏi/Đề thi, engine và Placement. Xem [TEAM_ASSIGNMENT_V2.md](TEAM_ASSIGNMENT_V2.md).
 
-Mục Cấu hình cũ đã đổi thành **Chứng chỉ & Chấm điểm**, không còn trang trạng thái OpenAI. UI UC-A03–A05 và phân công Người 1 xem [SCORING_UI_HANDOFF.md](SCORING_UI_HANDOFF.md). Các mô tả Cấu hình/settings cũ bên dưới được thay bằng luồng mới này; settings chỉ còn redirect.
+Mục Cấu hình cũ đã đổi thành **Chứng chỉ & Chấm điểm**, không còn trang trạng thái Gemini. UI UC-A03–A05 và phân công Người 1 xem [SCORING_UI_HANDOFF.md](SCORING_UI_HANDOFF.md). Các mô tả Cấu hình/settings cũ bên dưới được thay bằng luồng mới này; settings chỉ còn redirect.
 
 > Quyết định mới: đã bỏ nhãn “minh họa”/“mẫu” trên FE theo yêu cầu chủ project; hướng dẫn giữ nhãn cũ bên dưới không còn áp dụng. Fixture chưa được thay bằng DB, POST vẫn chưa triển khai, không coi giao diện không nhãn là nghiệp vụ hoàn tất.
 
@@ -10,7 +10,7 @@ Mục Cấu hình cũ đã đổi thành **Chứng chỉ & Chấm điểm**, kh�
 
 Trang `/admin/settings` redirect sang Chứng chỉ & Chấm điểm (AdminSettingsPreviewController, `admin/settings/*`). Chỉ UI fixture, không gọi AI, đọc key/datasource hoặc lưu properties. Người 1 nối quản lý chứng chỉ/scoring theo V2; cấu hình kỹ thuật vẫn qua file local/biến môi trường và người giữ nền review.
 
-Đã dựng giao diện GET dùng dữ liệu minh họa, theo theme teal của Admin. Không đọc/ghi bảng nghiệp vụ, không gọi OpenAI, không upload file lên server và không lưu chỉnh sửa. Nhãn “Dữ liệu minh họa” phải giữ đến khi thay bằng dữ liệu thật.
+Đã dựng giao diện GET dùng dữ liệu minh họa, theo theme teal của Admin. Không đọc/ghi bảng nghiệp vụ, không gọi Gemini, không upload file lên server và không lưu chỉnh sửa. Nhãn “Dữ liệu minh họa” phải giữ đến khi thay bằng dữ liệu thật.
 
 Đã đồng bộ danh sách, chi tiết và form với `learning-theme.css`: chữ gốc 18px, nhãn form/bảng 1rem, dữ kiện chính 1.15rem; mô tả dài không lặp lại ở danh sách. Mô tả bài học/đề thi nằm trong mục bấm mở ở chi tiết. Hàng thao tác xuống dòng riêng để không tràn tiêu đề. Giữ email học viên, cảnh báo khóa và giới hạn chấm Speaking. Bảng cuộn ngang khi cần; không thu nhỏ chữ để ép cột.
 
@@ -19,7 +19,7 @@ Trang `/admin/settings` redirect sang Chứng chỉ & Chấm điểm (AdminSetti
 | Bài học / Flashcard | `/admin/lessons` | `/admin/lessons/2001` | `/admin/lessons/create`, `/admin/lessons/2001/edit` | 2 |
 | Ngân hàng câu hỏi | `/admin/questions` | `/admin/questions/3001` | `/admin/questions/create`, `/admin/questions/3001/edit` | 3 |
 | Đề thi | `/admin/exams` | `/admin/exams/4001` | `/admin/exams/create`, `/admin/exams/4001/edit` | 3 |
-| Kết quả | `/admin/results` | `/admin/results/5001` | Chỉ xem, không sửa điểm hoặc tạo kết quả | 4 |
+| Kết quả | `/admin/results` | `/admin/results/5001` | Chỉ xem, không sửa điểm hoặc tạo kết quả; đọc DTO của 1 | 2 |
 
 Học viên tiếp tục dùng AdminStudentController và StudentPreviewService do Người 1 tiếp nhận theo STUDENT_MANAGEMENT.md.
 
