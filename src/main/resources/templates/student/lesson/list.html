@@ -17,8 +17,8 @@
         </header>
         <form class="toolbar" method="get" th:action="@{/student/lessons}">
           <div class="toolbar-search">
-            <label for="q">Tìm kiếm</label
-            ><input
+            <label for="q">Tìm kiếm</label>
+            <input
               id="q"
               name="q"
               th:value="${q}"
@@ -27,11 +27,11 @@
             />
           </div>
           <div>
-            <label for="skill">Kỹ năng</label
-            ><select id="skill" name="skill">
+            <label for="skill">Kỹ năng</label>
+            <select id="skill" name="skill">
               <option value="">Tất cả</option>
               <option
-                th:each="v:${skills}"
+                th:each="v : ${skills}"
                 th:value="${v}"
                 th:text="${v}"
                 th:selected="${selectedSkill==v}"
@@ -39,11 +39,11 @@
             </select>
           </div>
           <div>
-            <label for="level">CEFR</label
-            ><select id="level" name="level">
+            <label for="level">CEFR</label>
+            <select id="level" name="level">
               <option value="">Tất cả</option>
               <option
-                th:each="v:${levels}"
+                th:each="v : ${levels}"
                 th:value="${v}"
                 th:text="${v}"
                 th:selected="${selectedLevel==v}"
@@ -54,37 +54,34 @@
         </form>
         <section
           class="lesson-library-tree"
-          th:if="${!#lists.isEmpty(lessons)}"
+          th:if="${lessons != null and !lessons.isEmpty()}"
           aria-label="Cây bài học theo kỹ năng và cấp độ"
         >
-          <p class="library-count" th:text="|${#lists.size(lessons)} bài học|"></p>
+          <p class="library-count" th:text="|${lessons.size()} bài học|"></p>
           <details
             class="library-skill"
-            th:each="branch:${lessonTree}"
+            th:each="branch : ${lessonTree}"
             th:attr="data-skill=${branch.skill}"
           >
             <summary>
-              <span class="library-skill-name" th:text="${branch.skill}"></span
-              ><span class="library-count" th:text="|${branch.count} bài học|"></span>
+              <span class="library-skill-name" th:text="${branch.skill}"></span>
+              <span class="library-count" th:text="|${branch.count} bài học|"></span>
             </summary>
             <div class="library-levels">
-              <details class="library-level" th:each="tier:${branch.levels}">
+              <details class="library-level" th:each="tier : ${branch.levels}">
                 <summary th:attr="aria-label=|Cấp độ ${tier.level}, ${tier.count} bài học|">
-                  <span class="library-level-badge" th:text="${tier.level}"></span
-                  ><span class="library-count" th:text="|${tier.count} bài|"></span>
+                  <span class="library-level-badge" th:text="${tier.level}"></span>
+                  <span class="library-count" th:text="|${tier.count} bài|"></span>
                 </summary>
                 <div class="library-topics">
-                  <section class="library-topic" th:each="group:${tier.topics}">
+                  <section class="library-topic" th:each="group : ${tier.topics}">
                     <header>
                       <h3 th:text="${group.name}"></h3>
-                      <span
-                        class="library-count"
-                        th:text="|${#lists.size(group.lessons)} bài|"
-                      ></span>
+                      <span class="library-count" th:text="|${group.lessons.size()} bài|"></span>
                     </header>
                     <ol class="library-lessons">
                       <li
-                        th:each="lesson,lessonStat:${group.lessons}"
+                        th:each="lesson, lessonStat : ${group.lessons}"
                         th:with="learningStatus=${lessonStatuses.getOrDefault(lesson.id, 'NOT_STARTED')}"
                         th:attr="data-lesson-id=${lesson.id},data-learning-status=${learningStatus}"
                       >
@@ -104,12 +101,15 @@
                               <span
                                 class="badge badge-success"
                                 th:if="${learningStatus == 'COMPLETED'}"
-                                >Đã hoàn thành</span
-                              ><span class="badge" th:if="${learningStatus == 'IN_PROGRESS'}"
-                                >Đang học</span
-                              ><span class="muted" th:if="${learningStatus == 'NOT_STARTED'}"
-                                >Chưa học</span
                               >
+                                Đã hoàn thành
+                              </span>
+                              <span class="badge" th:if="${learningStatus == 'IN_PROGRESS'}">
+                                Đang học
+                              </span>
+                              <span class="muted" th:if="${learningStatus == 'NOT_STARTED'}">
+                                Chưa học
+                              </span>
                             </div>
                           </div>
                         </div>
@@ -125,8 +125,9 @@
                             class="button button-secondary button-small library-open"
                             th:href="@{/student/lessons/{id}(id=${lesson.id})}"
                             th:text="${learningStatus == 'COMPLETED' ? 'Ôn lại →' : (learningStatus == 'IN_PROGRESS' ? 'Học tiếp →' : 'Học bài →')}"
-                            >Học bài →</a
                           >
+                            Học bài →
+                          </a>
                         </div>
                       </li>
                     </ol>
@@ -136,7 +137,7 @@
             </div>
           </details>
         </section>
-        <div class="empty-box" th:if="${#lists.isEmpty(lessons)}">
+        <div class="empty-box" th:if="${lessons == null or lessons.isEmpty()}">
           <div th:replace="~{fragments/navi :: navi('empty', 'Navi đang chờ bài học mới')}"></div>
           <h2>Không tìm thấy bài học phù hợp</h2>
           <p>Thử bộ lọc khác hoặc quay lại sau khi có nội dung mới.</p>

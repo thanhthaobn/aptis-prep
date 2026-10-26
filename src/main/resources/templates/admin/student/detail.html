@@ -42,28 +42,23 @@
                 th:action="@{/admin/students/{id}/lock(id=${student.id})}"
                 method="post"
               >
-                <input
-                  type="hidden"
-                  th:name="${_csrf.parameterName}"
-                  th:value="${_csrf.token}"
-                /><button class="button student-lock-button" type="submit">Khóa tài khoản</button>
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+                <button class="button student-lock-button" type="submit">Khóa tài khoản</button>
               </form>
               <form
                 th:if="${student.status.name() == 'LOCKED'}"
                 th:action="@{/admin/students/{id}/unlock(id=${student.id})}"
                 method="post"
               >
-                <input
-                  type="hidden"
-                  th:name="${_csrf.parameterName}"
-                  th:value="${_csrf.token}"
-                /><button class="button button-secondary" type="submit">Mở khóa tài khoản</button>
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+                <button class="button button-secondary" type="submit">Mở khóa tài khoản</button>
               </form>
               <span
                 th:if="${student.status.name() == 'INACTIVE'}"
                 class="student-status student-status-inactive"
-                >Ngừng hoạt động</span
               >
+                Ngừng hoạt động
+              </span>
             </div>
           </div>
           <dl class="student-profile-facts">
@@ -94,16 +89,16 @@
             <div class="panel-heading"><h2>Năng lực từng kỹ năng</h2></div>
             <div class="skill-list">
               <div th:each="skill : ${student.skills}">
-                <span class="skill-name" th:text="${skill.name}"></span
-                ><span class="badge skill-level" th:text="${skill.level}"></span
-                ><span class="muted skill-target" th:text="|Mục tiêu: ${skill.target}|"></span>
+                <span class="skill-name" th:text="${skill.name}"></span>
+                <span class="badge skill-level" th:text="${skill.level}"></span>
+                <span class="muted skill-target" th:text="|Mục tiêu: ${skill.target}|"></span>
               </div>
             </div>
           </article>
           <article class="dashboard-panel">
             <div class="panel-heading"><h2>Lộ trình hiện tại</h2></div>
             <div
-              th:if="${!#lists.isEmpty(student.progress)}"
+              th:if="${student.progress != null and !student.progress.isEmpty()}"
               th:each="path : ${student.progress}"
               class="dashboard-section"
             >
@@ -126,7 +121,10 @@
                 ></span>
               </p>
             </div>
-            <div class="empty-state" th:if="${#lists.isEmpty(student.progress)}">
+            <div
+              class="empty-state"
+              th:if="${student.progress == null or student.progress.isEmpty()}"
+            >
               <h3>Chưa có dữ liệu lộ trình</h3>
               <p class="muted">
                 Lộ trình do luồng học tập cung cấp và không dùng dữ liệu minh họa.
@@ -139,7 +137,10 @@
             <h2>Lịch sử thi</h2>
             <span class="muted" th:text="|${student.attemptTotal} lượt|">0 lượt</span>
           </div>
-          <div class="table-wrap" th:if="${!#lists.isEmpty(student.attempts)}">
+          <div
+            class="table-wrap"
+            th:if="${student.attempts != null and !student.attempts.isEmpty()}"
+          >
             <table class="data-table student-table admin-responsive-table">
               <thead>
                 <tr>
@@ -155,7 +156,7 @@
                   <td data-label="Ngày nộp" th:text="${attempt.date}"></td>
                   <td data-label="Trạng thái">
                     <th:block
-                      th:replace="~{fragments/status :: statusBadge(${attempt.status})}"
+                      th:replace="~{fragments/status-badge :: statusBadge(${attempt.status})}"
                     ></th:block>
                   </td>
                   <td data-label="Kết quả" th:text="${attempt.score}"></td>
@@ -163,7 +164,7 @@
               </tbody>
             </table>
           </div>
-          <div class="empty-box" th:if="${#lists.isEmpty(student.attempts)}">
+          <div class="empty-box" th:if="${student.attempts == null or student.attempts.isEmpty()}">
             <div
               th:replace="~{fragments/navi :: navi('empty', 'Navi đang chờ lượt thi đầu tiên')}"
             ></div>
@@ -177,13 +178,16 @@
             <a
               th:if="${student.attemptPage > 0}"
               th:href="@{/admin/students/{id}(id=${student.id},attemptPage=${student.attemptPage - 1},attemptSize=${student.attemptSize})}"
-              >Trang trước</a
-            ><span th:text="|Trang ${student.attemptPage + 1}|">Trang 1</span
-            ><a
+            >
+              Trang trước
+            </a>
+            <span th:text="|Trang ${student.attemptPage + 1}|">Trang 1</span>
+            <a
               th:if="${(student.attemptPage + 1) * student.attemptSize < student.attemptTotal}"
               th:href="@{/admin/students/{id}(id=${student.id},attemptPage=${student.attemptPage + 1},attemptSize=${student.attemptSize})}"
-              >Trang sau</a
             >
+              Trang sau
+            </a>
           </nav>
         </section>
       </main>

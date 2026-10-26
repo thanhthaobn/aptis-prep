@@ -20,7 +20,25 @@ function readAuthorProfiles(root) {
     ]),
   );
 }
-if (typeof module !== 'undefined' && module.exports) module.exports = { readAuthorProfiles };
+function renumberLessonChecks(rows) {
+  rows.forEach((row, index) => {
+    row.dataset.questionIndex = index;
+    row.querySelector('legend').textContent = `Câu ${index + 1}`;
+    row.querySelectorAll('[name]').forEach((field) => {
+      field.name = field.name.replace(/checks\[\d+\]/, `checks[${index}]`);
+    });
+    row.querySelectorAll('[id]').forEach((field) => {
+      field.id = field.id.replace(/checks-\d+-/, `checks-${index}-`);
+    });
+    row.querySelectorAll('[for]').forEach((label) => {
+      label.htmlFor = label.htmlFor.replace(/checks-\d+-/, `checks-${index}-`);
+    });
+  });
+}
+
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = { readAuthorProfiles, renumberLessonChecks };
+}
 (() => {
   if (typeof document === 'undefined') return;
   const skill = document.getElementById('skill');
@@ -83,16 +101,7 @@ if (typeof module !== 'undefined' && module.exports) module.exports = { readAuth
     empty = document.getElementById('no-question');
   function reindex() {
     const rows = [...list.querySelectorAll('.lesson-question-editor')];
-    rows.forEach((row, index) => {
-      row.dataset.questionIndex = index;
-      row.querySelector('legend').textContent = `Câu ${index + 1}`;
-      row
-        .querySelectorAll('[name]')
-        .forEach((el) => (el.name = el.name.replace(/checks\[\d+\]/, `checks[${index}]`)));
-      row
-        .querySelectorAll('[id]')
-        .forEach((el) => (el.id = el.id.replace(/checks\d+/, `checks${index}`)));
-    });
+    renumberLessonChecks(rows);
     empty.hidden = rows.length > 0;
     add.disabled = rows.length >= 20;
   }
@@ -164,7 +173,9 @@ if (typeof module !== 'undefined' && module.exports) module.exports = { readAuth
     row.querySelectorAll('[data-field]').forEach((el) => {
       const field = el.dataset.field;
       el.name = `checks[${index}].${field}`;
-      el.id = `checks${index}.${field}`;
+      el.id = `checks-${index}-${field}`;
+      const label = el.closest('.field')?.querySelector('label');
+      if (label) label.htmlFor = el.id;
     });
     list.appendChild(row);
     wire(row);

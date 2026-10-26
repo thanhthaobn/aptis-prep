@@ -14,13 +14,16 @@
         </header>
         <section class="student-summary" aria-label="Tổng quan học viên">
           <article class="dashboard-panel">
-            <span>Tổng học viên</span><strong th:text="${totalStudents}">4</strong>
+            <span>Tổng học viên</span>
+            <strong th:text="${totalStudents}">4</strong>
           </article>
           <article class="dashboard-panel">
-            <span>Đang hoạt động</span><strong th:text="${activeStudents}">2</strong>
+            <span>Đang hoạt động</span>
+            <strong th:text="${activeStudents}">2</strong>
           </article>
           <article class="dashboard-panel">
-            <span>Đã khóa</span><strong th:text="${lockedStudents}">1</strong>
+            <span>Đã khóa</span>
+            <strong th:text="${lockedStudents}">1</strong>
           </article>
         </section>
         <form
@@ -30,8 +33,8 @@
           role="search"
         >
           <div class="toolbar-search">
-            <label for="studentQuery">Tìm học viên</label
-            ><input
+            <label for="studentQuery">Tìm học viên</label>
+            <input
               id="studentQuery"
               name="q"
               th:value="${q}"
@@ -60,11 +63,9 @@
           <h2>Danh sách học viên</h2>
           <span class="muted" th:text="|${pageData.totalItems} kết quả|">0 kết quả</span>
         </div>
-        <div class="table-wrap" th:if="${!#lists.isEmpty(pageData.items)}">
+        <div class="table-wrap" th:if="${pageData.items != null and !pageData.items.isEmpty()}">
           <table class="data-table student-table admin-responsive-table">
-            <caption class="student-sr-only">
-              Danh sách học viên
-            </caption>
+            <caption class="student-sr-only">Danh sách học viên</caption>
             <thead>
               <tr>
                 <th scope="col">Học viên</th>
@@ -81,8 +82,8 @@
                   <div class="student-identity">
                     <span class="student-avatar" th:text="${student.initials}">MA</span>
                     <div>
-                      <strong th:text="${student.fullName}">Tên học viên</strong
-                      ><span th:text="${student.email}">Email</span>
+                      <strong th:text="${student.fullName}">Tên học viên</strong>
+                      <span th:text="${student.email}">Email</span>
                     </div>
                   </div>
                 </td>
@@ -100,14 +101,15 @@
                   <a
                     class="button button-secondary button-small"
                     th:href="@{/admin/students/{id}(id=${student.id})}"
-                    >Xem chi tiết</a
                   >
+                    Xem chi tiết
+                  </a>
                 </td>
               </tr>
             </tbody>
           </table>
         </div>
-        <div class="empty-box" th:if="${#lists.isEmpty(pageData.items)}">
+        <div class="empty-box" th:if="${pageData.items == null or pageData.items.isEmpty()}">
           <div th:replace="~{fragments/navi :: navi('empty', 'Navi đang chờ học viên')}"></div>
           <h2
             th:text="${pageData.totalItems == 0 and (q == null or q == '') and (selectedStatus == null or selectedStatus == '') ? 'Chưa có học viên' : 'Không tìm thấy học viên phù hợp'}"
@@ -121,14 +123,16 @@
           <a
             th:if="${pageData.hasPrevious}"
             th:href="@{/admin/students(page=${pageData.previousPage},size=${pageData.size},q=${q},status=${selectedStatus})}"
-            >Trang trước</a
           >
+            Trang trước
+          </a>
           <span th:text="|Trang ${pageData.page + 1}/${pageData.totalPages}|">Trang 1/1</span>
           <a
             th:if="${pageData.hasNext}"
             th:href="@{/admin/students(page=${pageData.nextPage},size=${pageData.size},q=${q},status=${selectedStatus})}"
-            >Trang sau</a
           >
+            Trang sau
+          </a>
         </nav>
       </main>
     </div>

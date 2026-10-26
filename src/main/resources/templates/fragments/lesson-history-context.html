@@ -2,7 +2,7 @@
 <html lang="vi" xmlns:th="http://www.thymeleaf.org">
   <body>
     <details
-      th:fragment="context(context,mediaPrefix)"
+      th:fragment="lessonHistoryContext(context, mediaPrefix)"
       class="lesson-history-context"
       th:if="${context!=null}"
     >
@@ -54,8 +54,9 @@
         th:href="${context.videoUrl}"
         target="_blank"
         rel="noopener noreferrer"
-        >Video hướng dẫn của đề gốc ↗</a
       >
+        Video hướng dẫn của đề gốc ↗
+      </a>
     </details>
   </body>
 </html>

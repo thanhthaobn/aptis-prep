@@ -188,7 +188,8 @@ public class AccountProfileService {
     private void addTarget(Map<String, String> targets, String skill, String value) {
         if (value != null && !value.isBlank()) {
             CefrLevel level = CefrLevel.parse(value);
-            if (level == null) throw new BusinessRuleException("CEFR không hợp lệ");
+            if (level == null || level == CefrLevel.C2)
+                throw new BusinessRuleException("Mục tiêu học tập chỉ hỗ trợ từ A1 đến C1");
             targets.put(skill, level.name());
         }
     }

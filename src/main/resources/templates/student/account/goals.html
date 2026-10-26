@@ -11,6 +11,10 @@
             <p class="eyebrow">MỤC TIÊU</p>
             <h1>Mục tiêu học tập</h1>
             <p>Chọn mục tiêu theo từng kỹ năng. Bạn có thể bỏ qua và khám phá bài học trước.</p>
+            <p>
+              Giáo trình hỗ trợ A1–C1. Mục tiêu C2 cũ được giữ trong lịch sử; khi cập nhật, hãy chọn
+              mục tiêu trong phạm vi A1–C1.
+            </p>
           </div>
         </header>
         <div th:replace="~{fragments/messages :: messages}"></div>
@@ -23,8 +27,8 @@
           <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
           <h2>Mục tiêu của bạn</h2>
           <div class="field">
-            <label for="certificateId">Chứng chỉ</label
-            ><select id="certificateId" th:field="*{certificateId}">
+            <label for="certificateId">Chứng chỉ</label>
+            <select id="certificateId" th:field="*{certificateId}">
               <option value="">Không chọn</option>
               <option
                 th:each="certificate : ${certificates}"
@@ -34,61 +38,61 @@
             </select>
           </div>
           <div class="field">
-            <label for="targetDate">Ngày mục tiêu</label
-            ><input id="targetDate" type="date" th:field="*{targetDate}" />
+            <label for="targetDate">Ngày mục tiêu</label>
+            <input id="targetDate" type="date" th:field="*{targetDate}" />
             <p class="field-error" th:errors="*{targetDate}"></p>
           </div>
           <div class="catalog-form-grid">
             <div class="field">
-              <label for="grammarVocabulary">Grammar &amp; Vocabulary</label
-              ><select id="grammarVocabulary" th:field="*{grammarVocabulary}">
+              <label for="grammarVocabulary">Grammar &amp; Vocabulary</label>
+              <select id="grammarVocabulary" th:field="*{grammarVocabulary}">
                 <option value="">Chưa đặt</option>
                 <option
-                  th:each="level : ${ {'A1','A2','B1','B2','C1','C2'} }"
+                  th:each="level : ${ {'A1','A2','B1','B2','C1'} }"
                   th:value="${level}"
                   th:text="${level}"
                 ></option>
               </select>
             </div>
             <div class="field">
-              <label for="reading">Reading</label
-              ><select id="reading" th:field="*{reading}">
+              <label for="reading">Reading</label>
+              <select id="reading" th:field="*{reading}">
                 <option value="">Chưa đặt</option>
                 <option
-                  th:each="level : ${ {'A1','A2','B1','B2','C1','C2'} }"
+                  th:each="level : ${ {'A1','A2','B1','B2','C1'} }"
                   th:value="${level}"
                   th:text="${level}"
                 ></option>
               </select>
             </div>
             <div class="field">
-              <label for="listening">Listening</label
-              ><select id="listening" th:field="*{listening}">
+              <label for="listening">Listening</label>
+              <select id="listening" th:field="*{listening}">
                 <option value="">Chưa đặt</option>
                 <option
-                  th:each="level : ${ {'A1','A2','B1','B2','C1','C2'} }"
+                  th:each="level : ${ {'A1','A2','B1','B2','C1'} }"
                   th:value="${level}"
                   th:text="${level}"
                 ></option>
               </select>
             </div>
             <div class="field">
-              <label for="writing">Writing</label
-              ><select id="writing" th:field="*{writing}">
+              <label for="writing">Writing</label>
+              <select id="writing" th:field="*{writing}">
                 <option value="">Chưa đặt</option>
                 <option
-                  th:each="level : ${ {'A1','A2','B1','B2','C1','C2'} }"
+                  th:each="level : ${ {'A1','A2','B1','B2','C1'} }"
                   th:value="${level}"
                   th:text="${level}"
                 ></option>
               </select>
             </div>
             <div class="field">
-              <label for="speaking">Speaking</label
-              ><select id="speaking" th:field="*{speaking}">
+              <label for="speaking">Speaking</label>
+              <select id="speaking" th:field="*{speaking}">
                 <option value="">Chưa đặt</option>
                 <option
-                  th:each="level : ${ {'A1','A2','B1','B2','C1','C2'} }"
+                  th:each="level : ${ {'A1','A2','B1','B2','C1'} }"
                   th:value="${level}"
                   th:text="${level}"
                 ></option>
@@ -123,10 +127,10 @@
             </div>
           </fieldset>
           <div class="actions">
-            <button class="button" type="submit">Lưu mục tiêu</button
-            ><a class="button button-secondary" th:href="@{/student/learning-path}"
-              >Khám phá lộ trình</a
-            >
+            <button class="button" type="submit">Lưu mục tiêu</button>
+            <a class="button button-secondary" th:href="@{/student/learning-path}">
+              Khám phá lộ trình
+            </a>
           </div>
         </form>
       </main>

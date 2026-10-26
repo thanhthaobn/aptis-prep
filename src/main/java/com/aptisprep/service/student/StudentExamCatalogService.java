@@ -3,15 +3,12 @@ package com.aptisprep.service.student;
 import com.aptisprep.dto.view.StudentCatalogView.*;
 import com.aptisprep.entity.MockExamEntity;
 import com.aptisprep.entity.MockExamQuestionEntity;
-import com.aptisprep.entity.MockExamSectionEntity;
-import com.aptisprep.entity.QuestionEntity;
 import com.aptisprep.exception.BusinessRuleException;
 import com.aptisprep.exception.ResourceNotFoundException;
 import com.aptisprep.repository.MockExamQuestionRepository;
 import com.aptisprep.repository.MockExamRepository;
 import com.aptisprep.repository.MockExamSectionRepository;
-import com.aptisprep.repository.QuestionRepository;
-import com.aptisprep.service.contract.ScoringPolicyContract;
+import com.aptisprep.service.exam.ExamStartValidator;
 import java.text.Normalizer;
 import java.util.*;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -48,21 +45,18 @@ public class StudentExamCatalogService {
     private final MockExamRepository exams;
     private final MockExamSectionRepository sections;
     private final MockExamQuestionRepository questions;
-    private final QuestionRepository questionCatalog;
-    private final ScoringPolicyContract scoring;
+    private final ExamStartValidator startValidator;
 
     @Autowired
     public StudentExamCatalogService(
             MockExamRepository exams,
             MockExamSectionRepository sections,
             MockExamQuestionRepository questions,
-            QuestionRepository questionCatalog,
-            ScoringPolicyContract scoring) {
+            ExamStartValidator startValidator) {
         this.exams = exams;
         this.sections = sections;
         this.questions = questions;
-        this.questionCatalog = questionCatalog;
-        this.scoring = scoring;
+        this.startValidator = startValidator;
     }
 
     /** Kept for lightweight preview tests that do not need readiness validation. */
@@ -70,7 +64,7 @@ public class StudentExamCatalogService {
             MockExamRepository exams,
             MockExamSectionRepository sections,
             MockExamQuestionRepository questions) {
-        this(exams, sections, questions, null, null);
+        this(exams, sections, questions, null);
     }
 
     public List<Entry> find(String module, String query, String skill, String level, String state) {
@@ -240,9 +234,9 @@ public class StudentExamCatalogService {
                                     : exam.getDurationMinutes() + " phút"));
 
         Readiness readiness =
-                questionCatalog == null
+                startValidator == null
                         ? new Readiness(true, "Đề đã sẵn sàng để làm bài.", List.of())
-                        : checkReadiness(exam, links, examSections);
+                        : checkReadiness(exam, links);
         return new Entry(
                 exam.getId(),
                 exam.getTitle(),
@@ -268,92 +262,27 @@ public class StudentExamCatalogService {
                 readiness.checks());
     }
 
-    private Readiness checkReadiness(
-            MockExamEntity exam,
-            List<MockExamQuestionEntity> links,
-            List<MockExamSectionEntity> examSections) {
+    private Readiness checkReadiness(MockExamEntity exam, List<MockExamQuestionEntity> links) {
         List<String> checks = new ArrayList<>();
-        checks.add("Đề đã được công bố");
-        if (links.isEmpty())
+        try {
+            startValidator.validate(exam, links);
+        } catch (BusinessRuleException exception) {
             return blocked(
-                    "Đề chưa có câu hỏi để làm.", checks, "Có ít nhất một câu hỏi đã công bố");
-
-        Map<Integer, QuestionEntity> questionById = new LinkedHashMap<>();
-        for (MockExamQuestionEntity link : links) {
-            QuestionEntity question = questionCatalog.findById(link.getQuestionId()).orElse(null);
-            if (question == null || !"PUBLISHED".equals(question.getStatus()))
-                return blocked(
-                        "Đề đang chứa câu hỏi chưa được công bố.",
-                        checks,
-                        "Mọi câu hỏi trong đề đều đã công bố");
-            if (questionById.put(link.getQuestionId(), question) != null)
-                return blocked(
-                        "Đề đang chứa câu hỏi bị lặp.", checks, "Không có câu hỏi trùng trong đề");
-        }
-        checks.add("Mọi câu hỏi trong đề đều đã công bố");
-
-        Map<Integer, String> sectionSkills = new HashMap<>();
-        for (MockExamSectionEntity section : examSections)
-            sectionSkills.put(section.getId(), section.getSkill());
-        for (MockExamQuestionEntity link : links) {
-            String sectionSkill =
-                    link.getMockExamSectionId() == null
-                            ? null
-                            : sectionSkills.get(link.getMockExamSectionId());
-            QuestionEntity question = questionById.get(link.getQuestionId());
-            if (sectionSkill != null
-                    && !normalizeSkill(sectionSkill).equals(normalizeSkill(question.getSkill())))
-                return blocked(
-                        "Một câu hỏi không thuộc đúng kỹ năng của section.",
-                        checks,
-                        "Câu hỏi khớp với kỹ năng section");
-        }
-        checks.add("Câu hỏi khớp với kỹ năng section");
-
-        Set<String> skills =
-                questionById.values().stream()
-                        .map(QuestionEntity::getSkill)
-                        .map(StudentExamCatalogService::normalizeSkill)
-                        .collect(java.util.stream.Collectors.toCollection(LinkedHashSet::new));
-        if ("FULL_MOCK".equals(exam.getExamType())) {
-            if (!skills.containsAll(APTIS_SKILLS))
-                return blocked(
-                        "Thi thử tổng hợp phải có đủ 5 kỹ năng Aptis.",
-                        checks,
-                        "Đủ Grammar, Reading, Listening, Writing và Speaking");
-            checks.add("Đủ 5 kỹ năng Aptis");
-        } else if (skills.size() != 1) {
-            return blocked(
-                    "Đề theo kỹ năng đang chứa nhiều kỹ năng khác nhau.",
+                    exception.getMessage(),
                     checks,
-                    "Đề theo kỹ năng chỉ có một kỹ năng");
-        } else {
-            checks.add("Đề theo kỹ năng chỉ có một kỹ năng");
+                    "Đề phải có nội dung, thời lượng và bộ điểm hợp lệ");
         }
-
-        if (exam.getScoringSchemeId() != null) {
-            try {
-                for (String skill : skills)
-                    scoring.validatePolicy(exam.getScoringSchemeId(), skill);
-            } catch (BusinessRuleException exception) {
-                return blocked(
-                        exception.getMessage(), checks, "Bộ chấm điểm đã phủ đủ miền điểm CEFR");
-            }
-            checks.add("Bộ chấm điểm đã phủ đủ miền điểm CEFR");
-        } else if ("CHECKPOINT".equals(exam.getExamType())) {
-            return blocked(
-                    "Checkpoint chưa có bộ chấm điểm để xác nhận CEFR.",
-                    checks,
-                    "Checkpoint có bộ chấm điểm hợp lệ");
-        } else {
-            checks.add("Chấm điểm raw, không quy đổi CEFR");
-        }
-
+        checks.add("Đề đã công bố; câu hỏi, section, thời lượng và audio hợp lệ");
+        checks.add(
+                exam.getScoringSchemeId() == null
+                        ? "Chấm điểm raw, không quy đổi CEFR"
+                        : "Bộ chấm điểm đã phủ đủ miền điểm CEFR");
         if ("CHECKPOINT".equals(exam.getExamType()))
             return blocked(
                     "Checkpoint chỉ được bắt đầu từ lộ trình học.",
                     checks,
                     "Được mở từ đúng lộ trình học");
+        if ("PLACEMENT".equals(exam.getExamType())) checks.add("Bắt đầu từ trang kiểm tra đầu vào");
         return new Readiness(
                 true, "Đề đã sẵn sàng. Bạn có thể bắt đầu làm bài.", List.copyOf(checks));
     }

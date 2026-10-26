@@ -5,12 +5,9 @@ import static org.mockito.Mockito.*;
 
 import com.aptisprep.entity.MockExamEntity;
 import com.aptisprep.entity.MockExamQuestionEntity;
-import com.aptisprep.entity.QuestionEntity;
 import com.aptisprep.repository.MockExamQuestionRepository;
 import com.aptisprep.repository.MockExamRepository;
-import com.aptisprep.repository.QuestionRepository;
 import java.util.List;
-import java.util.Optional;
 import org.junit.jupiter.api.Test;
 
 class PlacementExamCatalogServiceTests {
@@ -18,21 +15,22 @@ class PlacementExamCatalogServiceTests {
     void onlyPublishedPlacementExamsWithPublishedQuestionsAreAvailable() {
         MockExamRepository exams = mock(MockExamRepository.class);
         MockExamQuestionRepository examQuestions = mock(MockExamQuestionRepository.class);
-        QuestionRepository questions = mock(QuestionRepository.class);
+        var validator = mock(com.aptisprep.service.exam.ExamStartValidator.class);
         PlacementExamCatalogService service =
-                new PlacementExamCatalogService(exams, examQuestions, questions);
+                new PlacementExamCatalogService(exams, examQuestions, validator);
 
         MockExamEntity placement = exam("placement", "PLACEMENT", 101);
         MockExamEntity practice = exam("practice", "PRACTICE", 102);
         MockExamEntity empty = exam("empty", "PLACEMENT", 103);
-        QuestionEntity published = question("PUBLISHED");
         MockExamQuestionEntity link = link(101, 201);
 
         when(exams.findBySkillAndStatusOrderByUpdatedAtDesc("LISTENING", "PUBLISHED"))
                 .thenReturn(List.of(placement, practice, empty));
         when(examQuestions.findByMockExamIdOrderByPosition(101)).thenReturn(List.of(link));
         when(examQuestions.findByMockExamIdOrderByPosition(103)).thenReturn(List.of());
-        when(questions.findById(201)).thenReturn(Optional.of(published));
+        doThrow(new com.aptisprep.exception.BusinessRuleException("Empty exam"))
+                .when(validator)
+                .validate(eq(empty), anyList());
 
         var available = service.findPublished(" listening ");
 
@@ -49,12 +47,6 @@ class PlacementExamCatalogServiceTests {
         when(exam.getExamType()).thenReturn(type);
         when(exam.getDescription()).thenReturn("description");
         return exam;
-    }
-
-    private QuestionEntity question(String status) {
-        QuestionEntity question = mock(QuestionEntity.class);
-        when(question.getStatus()).thenReturn(status);
-        return question;
     }
 
     private MockExamQuestionEntity link(int examId, int questionId) {

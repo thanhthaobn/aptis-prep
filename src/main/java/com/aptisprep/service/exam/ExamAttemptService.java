@@ -37,7 +37,6 @@ public class ExamAttemptService implements ExamAttemptContract {
     private final UserRepository users;
     private final MockExamRepository exams;
     private final MockExamQuestionRepository examQuestions;
-    private final QuestionRepository questions;
     private final QuestionMediaRepository questionMedia;
     private final UserMediaActivityRepository mediaActivities;
     private final ExamSnapshotService examSnapshots;
@@ -54,12 +53,13 @@ public class ExamAttemptService implements ExamAttemptContract {
     private final ObjectiveGradingService objectiveGrading;
     private final ApplicationEventPublisher events;
     private final ExamAnswerWriter answerWriter;
+    private final ExamStartValidator startValidator;
+    private final CheckpointStartValidator checkpointValidator;
 
     public ExamAttemptService(
             UserRepository users,
             MockExamRepository exams,
             MockExamQuestionRepository examQuestions,
-            QuestionRepository questions,
             QuestionMediaRepository questionMedia,
             UserMediaActivityRepository mediaActivities,
             ExamSnapshotService examSnapshots,
@@ -75,11 +75,12 @@ public class ExamAttemptService implements ExamAttemptContract {
             AttemptFinalizationService finalization,
             ObjectiveGradingService objectiveGrading,
             ApplicationEventPublisher events,
-            ExamAnswerWriter answerWriter) {
+            ExamAnswerWriter answerWriter,
+            ExamStartValidator startValidator,
+            CheckpointStartValidator checkpointValidator) {
         this.users = users;
         this.exams = exams;
         this.examQuestions = examQuestions;
-        this.questions = questions;
         this.questionMedia = questionMedia;
         this.mediaActivities = mediaActivities;
         this.examSnapshots = examSnapshots;
@@ -96,20 +97,46 @@ public class ExamAttemptService implements ExamAttemptContract {
         this.objectiveGrading = objectiveGrading;
         this.events = events;
         this.answerWriter = answerWriter;
+        this.startValidator = startValidator;
+        this.checkpointValidator = checkpointValidator;
     }
 
     @Override
     @Transactional
     public AttemptHandle start(Integer userId, Integer examId, String requestKey) {
+        return startInternal(userId, examId, requestKey, null, false);
+    }
+
+    @Override
+    @Transactional
+    public AttemptHandle startPlacement(Integer userId, Integer examId, String requestKey) {
+        return startInternal(userId, examId, requestKey, null, true);
+    }
+
+    @Override
+    @Transactional
+    public AttemptHandle startCheckpoint(
+            Integer userId, Integer examId, Integer pathId, String requestKey) {
+        if (pathId == null) throw new BusinessRuleException("Checkpoint cần ngữ cảnh lộ trình học");
+        return startInternal(userId, examId, requestKey, pathId, false);
+    }
+
+    private AttemptHandle startInternal(
+            Integer userId, Integer examId, String requestKey, Integer pathId, boolean placement) {
         // Lock the user row for the whole transaction. A JVM lock is not enough here:
         // another request can enter after the first synchronized block exits but before
         // the first transaction has committed its attempt row.
         activeUserForUpdate(userId);
         MockExamEntity exam = publishedExam(examId);
-        if ("CHECKPOINT".equals(exam.getExamType())
-                && (requestKey == null || !requestKey.trim().startsWith("checkpoint:"))) {
+        if (pathId != null) {
+            if (!"CHECKPOINT".equals(exam.getExamType()))
+                throw new BusinessRuleException("Đề không phải Checkpoint");
+            checkpointValidator.validate(userId, exam, pathId);
+        } else if ("CHECKPOINT".equals(exam.getExamType())) {
             throw new BusinessRuleException("Checkpoint chỉ được bắt đầu từ lộ trình học");
         }
+        if (placement != "PLACEMENT".equals(exam.getExamType()))
+            throw new BusinessRuleException("Placement chỉ được bắt đầu từ trang kiểm tra đầu vào");
         List<MockExamQuestionEntity> links = examQuestions.findByMockExamIdOrderByPosition(examId);
         if (links.isEmpty()) throw new BusinessRuleException("Đề thi chưa có câu hỏi");
         String key = normalizeRequestKey(requestKey, userId, examId);
@@ -124,7 +151,7 @@ public class ExamAttemptService implements ExamAttemptContract {
             throw new BusinessRuleException(
                     "Đề demo chỉ dành cho kiểm thử, không thể bắt đầu lượt thi mới");
         }
-        validateExamForStart(exam, links);
+        startValidator.validate(exam, links);
         if ("PLACEMENT".equals(exam.getExamType())) {
             Optional<ExamAttemptEntity> active =
                     attempts.findActivePlacement(userId, exam.getSkill(), ACTIVE_STATES);
@@ -203,6 +230,7 @@ public class ExamAttemptService implements ExamAttemptContract {
                                 attemptId, lockedMedia.path("questionId").asInt())
                         .isPresent()) throw new AccessDeniedException("Media không thuộc lượt thi");
         ensureMediaWindow(attempt);
+        startValidator.validateAudio(lockedMedia.path("mediaUrl").asText());
         int limit = Math.min(2, lockedMedia.path("maxPlayCount").asInt(2));
         UserMediaActivityEntity activity =
                 mediaActivities
@@ -475,16 +503,12 @@ public class ExamAttemptService implements ExamAttemptContract {
                                     }
                                     List<MediaPage> mediaPages = new ArrayList<>();
                                     for (JsonNode media : q.path("media")) {
-                                        ExamSnapshotService.MediaPresentation mediaView =
-                                                examSnapshots.mediaPresentation(media);
                                         mediaPages.add(
                                                 new MediaPage(
-                                                        mediaView.id(),
-                                                        mediaView.type(),
-                                                        mediaView.filename(),
-                                                        mediaView.contentType(),
-                                                        mediaView.browserSpeech(),
-                                                        mediaView.transcript()));
+                                                        media.path("id").asInt(),
+                                                        media.path("type").asText(),
+                                                        media.path("filename").asText(),
+                                                        media.path("contentType").asText()));
                                     }
                                     return new QuestionPage(
                                             questionId,
@@ -591,13 +615,7 @@ public class ExamAttemptService implements ExamAttemptContract {
 
     public record OptionPage(Integer id, String code, String content) {}
 
-    public record MediaPage(
-            Integer id,
-            String type,
-            String filename,
-            String contentType,
-            boolean browserSpeech,
-            String transcript) {}
+    public record MediaPage(Integer id, String type, String filename, String contentType) {}
 
     public record MediaPlayResult(
             Integer mediaId, int playCount, int maxPlayCount, String contentToken) {}
@@ -651,38 +669,6 @@ public class ExamAttemptService implements ExamAttemptContract {
         attempt.setGradingStatus("EXPIRED");
         attempts.save(attempt);
         return true;
-    }
-
-    private void validateExamForStart(MockExamEntity exam, List<MockExamQuestionEntity> links) {
-        Set<Integer> questionIds = new HashSet<>();
-        Set<String> skills = new LinkedHashSet<>();
-        for (MockExamQuestionEntity link : links) {
-            if (!questionIds.add(link.getQuestionId()))
-                throw new BusinessRuleException("Đề thi chứa câu hỏi bị lặp");
-            QuestionEntity question =
-                    questions
-                            .findById(link.getQuestionId())
-                            .orElseThrow(
-                                    () ->
-                                            new BusinessRuleException(
-                                                    "Đề thi chứa câu hỏi không tồn tại"));
-            if (!"PUBLISHED".equals(question.getStatus()))
-                throw new BusinessRuleException("Đề thi chứa câu hỏi chưa được công bố");
-            skills.add(normalizeSkill(question.getSkill()));
-        }
-        if ("FULL_MOCK".equals(exam.getExamType())) {
-            Set<String> required =
-                    Set.of("GRAMMAR_VOCABULARY", "READING", "LISTENING", "WRITING", "SPEAKING");
-            if (!skills.containsAll(required))
-                throw new BusinessRuleException("Thi thử tổng hợp phải có đủ 5 kỹ năng Aptis");
-        } else if (skills.size() != 1) {
-            throw new BusinessRuleException("Đề theo kỹ năng chỉ được chứa một kỹ năng");
-        }
-        if (exam.getScoringSchemeId() != null) {
-            for (String skill : skills) scoring.validatePolicy(exam.getScoringSchemeId(), skill);
-        } else if ("CHECKPOINT".equals(exam.getExamType())) {
-            throw new BusinessRuleException("Checkpoint cần bộ chấm điểm để xác nhận CEFR");
-        }
     }
 
     private MockExamEntity publishedExam(Integer id) {

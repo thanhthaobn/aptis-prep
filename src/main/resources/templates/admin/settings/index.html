@@ -13,7 +13,7 @@
             <h2>Chứng chỉ</h2>
             <a class="button" th:href="@{/admin/certificates/create}">Thêm chứng chỉ</a>
           </div>
-          <div class="table-wrap" th:if="${!#lists.isEmpty(certificates)}">
+          <div class="table-wrap" th:if="${certificates != null and !certificates.isEmpty()}">
             <table class="data-table admin-responsive-table">
               <thead>
                 <tr>
@@ -32,17 +32,19 @@
                   </td>
                   <td data-label="Thao tác">
                     <div class="catalog-table-actions">
-                      <a th:href="@{/admin/certificates/{id}(id=${certificate.id})}">Xem chi tiết</a
-                      ><a th:href="@{/admin/certificates/{id}/edit(id=${certificate.id})}"
-                        >Chỉnh sửa</a
-                      >
+                      <a th:href="@{/admin/certificates/{id}(id=${certificate.id})}">
+                        Xem chi tiết
+                      </a>
+                      <a th:href="@{/admin/certificates/{id}/edit(id=${certificate.id})}">
+                        Chỉnh sửa
+                      </a>
                     </div>
                   </td>
                 </tr>
               </tbody>
             </table>
           </div>
-          <div class="empty-box" th:if="${#lists.isEmpty(certificates)}">
+          <div class="empty-box" th:if="${certificates == null or certificates.isEmpty()}">
             <div
               th:replace="~{fragments/navi :: navi('empty', 'Navi đang chờ chứng chỉ đầu tiên')}"
             ></div>
@@ -54,7 +56,7 @@
             <h2>Bộ chấm điểm</h2>
             <a class="button" th:href="@{/admin/scoring-schemes/create}">Thêm bộ chấm điểm</a>
           </div>
-          <div class="table-wrap" th:if="${!#lists.isEmpty(schemes)}">
+          <div class="table-wrap" th:if="${schemes != null and !schemes.isEmpty()}">
             <table class="data-table admin-responsive-table">
               <thead>
                 <tr>
@@ -75,18 +77,19 @@
                   </td>
                   <td data-label="Thao tác">
                     <div class="catalog-table-actions">
-                      <a th:href="@{/admin/scoring-schemes/{id}(id=${scheme.id})}"
-                        >Khoảng điểm CEFR</a
-                      ><a th:href="@{/admin/scoring-schemes/{id}/edit(id=${scheme.id})}"
-                        >Chỉnh sửa</a
-                      >
+                      <a th:href="@{/admin/scoring-schemes/{id}(id=${scheme.id})}">
+                        Khoảng điểm CEFR
+                      </a>
+                      <a th:href="@{/admin/scoring-schemes/{id}/edit(id=${scheme.id})}">
+                        Chỉnh sửa
+                      </a>
                     </div>
                   </td>
                 </tr>
               </tbody>
             </table>
           </div>
-          <div class="empty-box" th:if="${#lists.isEmpty(schemes)}">
+          <div class="empty-box" th:if="${schemes == null or schemes.isEmpty()}">
             <div
               th:replace="~{fragments/navi :: navi('empty', 'Navi đang chờ bộ chấm điểm đầu tiên')}"
             ></div>

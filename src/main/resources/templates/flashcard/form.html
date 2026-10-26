@@ -15,9 +15,9 @@
         th:insert="~{fragments/admin-sidebar :: adminSidebar('flashcards')}"
       ></div>
       <main class="app-main flashcard-editor" id="main-content" tabindex="-1">
-        <a class="lesson-back" th:href="${personal?'/student/flashcards':'/admin/flashcards'}"
-          >← Quay lại bộ thẻ</a
-        >
+        <a class="lesson-back" th:href="${personal?'/student/flashcards':'/admin/flashcards'}">
+          ← Quay lại bộ thẻ
+        </a>
         <header class="page-header">
           <div>
             <p class="eyebrow" th:text="${personal?'BỘ THẺ RIÊNG TƯ':'THƯ VIỆN CHUNG'}"></p>
@@ -36,11 +36,11 @@
               class="alert alert-danger ap-alert ap-alert-danger"
               th:if="${#fields.hasAnyErrors()}"
             >
-              <li th:each="err:${#fields.allErrors()}" th:text="${err}"></li>
+              <li th:each="err : ${#fields.allErrors()}" th:text="${err}"></li>
             </ul>
             <div class="field">
-              <label for="title">Tên bộ thẻ</label
-              ><input
+              <label for="title">Tên bộ thẻ</label>
+              <input
                 id="title"
                 th:field="*{title}"
                 required
@@ -49,8 +49,8 @@
               />
             </div>
             <div class="field">
-              <label for="description">Mô tả</label
-              ><textarea
+              <label for="description">Mô tả</label>
+              <textarea
                 id="description"
                 th:field="*{description}"
                 maxlength="2000"
@@ -58,27 +58,28 @@
               ></textarea>
             </div>
             <div class="field" th:unless="${personal}">
-              <label for="lesson">Bài học sử dụng bộ thẻ</label
-              ><select id="lesson" th:field="*{lessonId}" required>
+              <label for="lesson">Bài học sử dụng bộ thẻ</label>
+              <select id="lesson" th:field="*{lessonId}" required>
                 <option value="">Chọn bài học</option>
                 <option
-                  th:each="lesson:${lessons}"
+                  th:each="lesson : ${lessons}"
                   th:value="${lesson.id}"
                   th:attr="data-level=${lesson.cefrLevel}"
                   th:text="|${lesson.skill} · ${lesson.cefrLevel} · ${lesson.title}|"
-                ></option></select
-              ><small>Bộ thẻ sẽ xuất hiện trong đúng bài học này.</small>
+                ></option>
+              </select>
+              <small>Bộ thẻ sẽ xuất hiện trong đúng bài học này.</small>
             </div>
             <div class="catalog-form-grid">
               <div class="field">
-                <label for="level">Cấp độ</label
-                ><select id="level" th:field="*{cefrLevel}">
-                  <option th:each="v:${levels}" th:value="${v}" th:text="${v}"></option>
+                <label for="level">Cấp độ</label>
+                <select id="level" th:field="*{cefrLevel}">
+                  <option th:each="v : ${levels}" th:value="${v}" th:text="${v}"></option>
                 </select>
               </div>
               <div class="field" th:unless="${personal}">
-                <label for="status">Trạng thái</label
-                ><select id="status" th:field="*{status}">
+                <label for="status">Trạng thái</label>
+                <select id="status" th:field="*{status}">
                   <option value="DRAFT">Bản nháp</option>
                   <option value="PUBLISHED">Đã công bố</option>
                   <option value="ARCHIVED">Lưu trữ</option>
@@ -90,13 +91,13 @@
           <details class="dashboard-panel dashboard-section bulk-import">
             <summary>Nhập nhanh nhiều thuật ngữ</summary>
             <div class="bulk-import-body">
-              <label for="bulk">Mỗi dòng: thuật ngữ, phím Tab hoặc dấu |, rồi định nghĩa</label
-              ><textarea
+              <label for="bulk">Mỗi dòng: thuật ngữ, phím Tab hoặc dấu |, rồi định nghĩa</label>
+              <textarea
                 id="bulk"
                 rows="6"
                 placeholder="get up | thức dậy&#10;have breakfast | ăn sáng"
-              ></textarea
-              ><button type="button" id="import-cards" class="button button-secondary">
+              ></textarea>
+              <button type="button" id="import-cards" class="button button-secondary">
                 Thêm vào danh sách
               </button>
               <p id="import-message" role="status"></p>
@@ -108,52 +109,54 @@
           </div>
           <p id="editor-message" role="status" aria-live="polite"></p>
           <div id="card-rows">
-            <div class="dashboard-panel card-editor-row" th:each="row,stat:*{rows}">
-              <span class="card-number" th:text="${stat.count}"></span
-              ><input
+            <div class="dashboard-panel card-editor-row" th:each="row, stat : *{rows}">
+              <span class="card-number" th:text="${stat.count}"></span>
+              <input
                 type="hidden"
                 data-name="id"
                 th:name="|rows[${stat.index}].id|"
                 th:value="${row.id}"
               />
               <div class="field">
-                <label>Thuật ngữ</label
-                ><textarea
+                <label>Thuật ngữ</label>
+                <textarea
                   data-name="term"
                   th:name="|rows[${stat.index}].term|"
                   th:text="${row.term}"
                   required
                   maxlength="200"
                   rows="2"
-                ></textarea
-                ><small class="char-count">0/200</small>
+                ></textarea>
+                <small class="char-count">0/200</small>
               </div>
               <div class="field">
-                <label>Định nghĩa</label
-                ><textarea
+                <label>Định nghĩa</label>
+                <textarea
                   data-name="definition"
                   th:name="|rows[${stat.index}].definition|"
                   th:text="${row.definition}"
                   required
                   maxlength="1000"
                   rows="2"
-                ></textarea
-                ><small class="char-count">0/1000</small>
+                ></textarea>
+                <small class="char-count">0/1000</small>
               </div>
               <button type="button" class="remove-card" aria-label="Xóa thẻ">×</button>
             </div>
           </div>
           <div class="actions editor-actions">
             <button type="button" id="undo-remove" class="button button-secondary" hidden>
-              Hoàn tác</button
-            ><button type="button" id="add-card" class="button button-secondary">+ Thêm thẻ</button
-            ><button type="submit" class="button">Lưu bộ thẻ</button
-            ><a
+              Hoàn tác
+            </button>
+            <button type="button" id="add-card" class="button button-secondary">+ Thêm thẻ</button>
+            <button type="submit" class="button">Lưu bộ thẻ</button>
+            <a
               id="leave-editor"
               class="button button-secondary"
               th:href="${personal?'/student/flashcards':'/admin/flashcards'}"
-              >Quay lại</a
             >
+              Quay lại
+            </a>
           </div>
         </form>
       </main>

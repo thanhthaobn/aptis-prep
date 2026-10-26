@@ -30,8 +30,8 @@
           role="search"
         >
           <div class="toolbar-search">
-            <label for="catalogQuery">Tìm kiếm</label
-            ><input
+            <label for="catalogQuery">Tìm kiếm</label>
+            <input
               id="catalogQuery"
               name="q"
               type="search"
@@ -41,8 +41,8 @@
             />
           </div>
           <div>
-            <label for="catalogSkill">Kỹ năng</label
-            ><select id="catalogSkill" name="skill">
+            <label for="catalogSkill">Kỹ năng</label>
+            <select id="catalogSkill" name="skill">
               <option value="">Tất cả kỹ năng</option>
               <option
                 th:each="skill : ${skills}"
@@ -53,8 +53,8 @@
             </select>
           </div>
           <div>
-            <label for="catalogKind" th:text="${catalog.typeLabel}"></label
-            ><select id="catalogKind" name="kind">
+            <label for="catalogKind" th:text="${catalog.typeLabel}"></label>
+            <select id="catalogKind" name="kind">
               <option value="">Tất cả</option>
               <option
                 th:each="kind : ${catalog.kinds}"
@@ -65,8 +65,8 @@
             </select>
           </div>
           <div>
-            <label for="catalogStatus">Trạng thái</label
-            ><select id="catalogStatus" name="status">
+            <label for="catalogStatus">Trạng thái</label>
+            <select id="catalogStatus" name="status">
               <option value="">Tất cả trạng thái</option>
               <option
                 th:if="${catalog.editable()}"
@@ -121,7 +121,7 @@
           ></h2>
           <span class="muted" th:text="|${pageData.totalItems} kết quả|"></span>
         </div>
-        <div class="table-wrap" th:if="${!#lists.isEmpty(pageData.items)}">
+        <div class="table-wrap" th:if="${pageData.items != null and !pageData.items.isEmpty()}">
           <table class="data-table catalog-table">
             <thead>
               <tr>
@@ -168,19 +168,20 @@
                 <td data-label="Ngày cập nhật" th:text="${entry.date}"></td>
                 <td data-label="Thao tác">
                   <div class="catalog-table-actions">
-                    <a th:href="@{${catalog.baseUrl() + '/' + entry.id}}">Xem chi tiết</a
-                    ><a
+                    <a th:href="@{${catalog.baseUrl() + '/' + entry.id}}">Xem chi tiết</a>
+                    <a
                       th:if="${catalog.editable()}"
                       th:href="@{${catalog.baseUrl() + '/' + entry.id + '/edit'}}"
-                      >Chỉnh sửa</a
                     >
+                      Chỉnh sửa
+                    </a>
                   </div>
                 </td>
               </tr>
             </tbody>
           </table>
         </div>
-        <div class="empty-box" th:if="${#lists.isEmpty(pageData.items)}">
+        <div class="empty-box" th:if="${pageData.items == null or pageData.items.isEmpty()}">
           <div th:replace="~{fragments/navi :: navi('empty', 'Navi đang chờ nội dung mới')}"></div>
           <h2>Không tìm thấy nội dung phù hợp</h2>
           <p>Thử từ khóa hoặc bộ lọc khác.</p>
@@ -195,8 +196,9 @@
             class="page-link"
             th:classappend="${pageData.page == 0 ? 'disabled' : ''}"
             th:href="@{${catalog.baseUrl()}(page=${pageData.page - 1},size=${pageData.size},q=${q},skill=${selectedSkill},status=${selectedStatus},kind=${selectedKind})}"
-            >Trang trước</a
           >
+            Trang trước
+          </a>
           <div class="pagination-pages">
             <a
               class="page-link"
@@ -210,8 +212,9 @@
             class="page-link"
             th:classappend="${pageData.page + 1 >= pageData.totalPages ? 'disabled' : ''}"
             th:href="@{${catalog.baseUrl()}(page=${pageData.page + 1},size=${pageData.size},q=${q},skill=${selectedSkill},status=${selectedStatus},kind=${selectedKind})}"
-            >Trang sau</a
           >
+            Trang sau
+          </a>
         </nav>
       </main>
     </div>

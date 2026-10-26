@@ -32,17 +32,22 @@
               <p>Hoạt động từ bài học, luyện tập, flashcard và đề thi trong 53 tuần gần nhất.</p>
             </div>
             <div class="activity-streak">
-              <strong th:text="${activity.currentStreak}">0</strong
-              ><span>ngày liên tiếp hiện tại</span>
+              <strong th:text="${activity.currentStreak}">0</strong>
+              <span>ngày liên tiếp hiện tại</span>
             </div>
           </div>
           <div class="activity-metrics">
-            <div><strong th:text="${activity.activeDays}">0</strong><span>Ngày có học</span></div>
             <div>
-              <strong th:text="${activity.longestStreak}">0</strong><span>Chuỗi dài nhất</span>
+              <strong th:text="${activity.activeDays}">0</strong>
+              <span>Ngày có học</span>
             </div>
             <div>
-              <strong th:text="${activity.totalActivities}">0</strong><span>Tổng hoạt động</span>
+              <strong th:text="${activity.longestStreak}">0</strong>
+              <span>Chuỗi dài nhất</span>
+            </div>
+            <div>
+              <strong th:text="${activity.totalActivities}">0</strong>
+              <span>Tổng hoạt động</span>
             </div>
           </div>
           <div
@@ -52,8 +57,13 @@
           >
             <div class="activity-chart">
               <div class="activity-weekdays" aria-hidden="true">
-                <span>CN</span><span>T2</span><span>T3</span><span>T4</span><span>T5</span
-                ><span>T6</span><span>T7</span>
+                <span>CN</span>
+                <span>T2</span>
+                <span>T3</span>
+                <span>T4</span>
+                <span>T5</span>
+                <span>T6</span>
+                <span>T7</span>
               </div>
               <div class="activity-weeks">
                 <div class="activity-week" th:each="week : ${activity.weeks}">
@@ -69,11 +79,13 @@
             </div>
           </div>
           <div class="activity-legend">
-            <span>Ít</span><i class="activity-day activity-level-0"></i
-            ><i class="activity-day activity-level-1"></i
-            ><i class="activity-day activity-level-2"></i
-            ><i class="activity-day activity-level-3"></i
-            ><i class="activity-day activity-level-4"></i><span>Nhiều</span>
+            <span>Ít</span>
+            <i class="activity-day activity-level-0"></i>
+            <i class="activity-day activity-level-1"></i>
+            <i class="activity-day activity-level-2"></i>
+            <i class="activity-day activity-level-3"></i>
+            <i class="activity-day activity-level-4"></i>
+            <span>Nhiều</span>
           </div>
         </section>
         <form
@@ -85,8 +97,8 @@
           <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
           <h2>Thông tin cá nhân</h2>
           <div class="field">
-            <label for="profileName">Họ và tên</label
-            ><input id="profileName" th:field="*{fullName}" autocomplete="name" maxlength="255" />
+            <label for="profileName">Họ và tên</label>
+            <input id="profileName" th:field="*{fullName}" autocomplete="name" maxlength="255" />
             <p class="field-error" th:errors="*{fullName}"></p>
           </div>
           <button class="button" type="submit">Lưu thay đổi</button>
@@ -107,16 +119,21 @@
           </article>
           <article class="dashboard-panel">
             <h2>Trình độ</h2>
-            <div th:if="${#lists.isEmpty(account.profiles)}"><p>Chưa đánh giá.</p></div>
-            <div th:unless="${#lists.isEmpty(account.profiles)}" class="skill-list">
+            <div th:if="${account.profiles == null or account.profiles.isEmpty()}">
+              <p>Chưa đánh giá.</p>
+            </div>
+            <div
+              th:unless="${account.profiles == null or account.profiles.isEmpty()}"
+              class="skill-list"
+            >
               <div th:each="profile : ${account.profiles}">
-                <span class="skill-name" th:text="${profile.skill}"></span
-                ><span class="badge skill-level" th:text="${profile.currentLevel}"></span>
+                <span class="skill-name" th:text="${profile.skill}"></span>
+                <span class="badge skill-level" th:text="${profile.currentLevel}"></span>
               </div>
             </div>
-            <a class="button button-secondary" th:href="@{/student/placement}"
-              >Xem kiểm tra đầu vào</a
-            >
+            <a class="button button-secondary" th:href="@{/student/placement}">
+              Xem kiểm tra đầu vào
+            </a>
           </article>
         </section>
         <div class="actions">

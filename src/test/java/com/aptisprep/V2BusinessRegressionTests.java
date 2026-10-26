@@ -50,6 +50,13 @@ class V2BusinessRegressionTests {
     @Autowired QuestionOptionRepository questionOptions;
     @Autowired UserFlashcardProgressRepository progress;
     @Autowired MockMvc mvc;
+    @Autowired com.aptisprep.service.student.StudentExamCatalogService studentCatalog;
+    @Autowired com.aptisprep.service.placement.PlacementExamCatalogService placementCatalog;
+    @Autowired com.aptisprep.service.placement.PlacementService placement;
+    @Autowired ExamAttemptRepository attempts;
+    @Autowired UserGoalRepository goals;
+    @Autowired UserSkillProfileRepository profiles;
+    @Autowired com.aptisprep.service.account.AccountAccessService assessmentAccounts;
     User admin, learner;
     Certificate certificate;
     ScoringScheme scheme;
@@ -454,5 +461,224 @@ class V2BusinessRegressionTests {
         assertThrows(
                 BusinessRuleException.class,
                 () -> scoring.saveBand(admin.getEmail(), scheme.getId(), null, band));
+    }
+
+    @Test
+    void placementCannotBePublishedUntilItsPolicyIsConfigured() {
+        var exam = readingExam("PLACEMENT", null);
+        exam.setStatus("DRAFT");
+        exams.saveAndFlush(exam);
+        assertThrows(BusinessRuleException.class, () -> catalog.publishExam(exam.getId()));
+        assertEquals("DRAFT", exams.findById(exam.getId()).orElseThrow().getStatus());
+        completeReadingPolicy();
+        exam.setScoringSchemeId(scheme.getId());
+        exams.saveAndFlush(exam);
+        catalog.publishExam(exam.getId());
+        assertEquals("PUBLISHED", exams.findById(exam.getId()).orElseThrow().getStatus());
+    }
+
+    private MockExamEntity readingExam(String type, Integer policy) {
+        int id = catalog.saveQuestion(null, question("SINGLE_CHOICE", "READING"), null);
+        catalog.publishQuestion(id);
+        var exam = exam(policy, "READING", type);
+        link(exam, id);
+        return exam;
+    }
+
+    private void completeReadingPolicy() {
+        scoring.saveScaleRule(admin.getEmail(), scheme.getId(), "READING", rule());
+        var band = new ScoreBandForm();
+        band.setSkill("READING");
+        band.setCefrLevel("A1");
+        band.setMinScore(BigDecimal.ZERO);
+        band.setMaxScore(BigDecimal.valueOf(50));
+        scoring.saveBand(admin.getEmail(), scheme.getId(), null, band);
+    }
+
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.NullSource
+    @org.junit.jupiter.params.provider.ValueSource(ints = {0, -1})
+    void invalidDurationIsBlockedByTheActualStartEndpointAndCatalog(Integer duration)
+            throws Exception {
+        var exam = readingExam("PRACTICE", null);
+        exam.setDurationMinutes(duration);
+        exams.saveAndFlush(exam);
+        mvc.perform(
+                        post("/student/exams/" + exam.getId() + "/start")
+                                .with(user(learner.getEmail()).roles("STUDENT"))
+                                .with(csrf()))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(flash().attributeExists("error"));
+        assertFalse(studentCatalog.entry("exams", exam.getId()).startable());
+        assertEquals(0, attempts.countByUserId(learner.getId()));
+    }
+
+    @Test
+    void sectionFromAnotherExamCannotBeUsedByStartOrCatalog() {
+        var exam = readingExam("PRACTICE", null);
+        var other = exam(null, "READING", "PRACTICE");
+        var section = new MockExamSectionEntity();
+        section.setMockExamId(other.getId());
+        section.setSkill("READING");
+        section.setDurationMinutes(10);
+        section = sections.saveAndFlush(section);
+        var link = links.findByMockExamIdOrderByPosition(exam.getId()).getFirst();
+        link.setMockExamSectionId(section.getId());
+        links.saveAndFlush(link);
+        assertThrows(
+                BusinessRuleException.class,
+                () -> engine.start(learner.getId(), exam.getId(), "foreign-section"));
+        assertFalse(studentCatalog.entry("exams", exam.getId()).startable());
+        assertEquals(0, attempts.countByUserId(learner.getId()));
+    }
+
+    @Test
+    void sectionAndExamSkillAreBothCheckedAgainstTheQuestion() {
+        var exam = readingExam("PRACTICE", null);
+        var section = new MockExamSectionEntity();
+        section.setMockExamId(exam.getId());
+        section.setSkill("LISTENING");
+        section.setDurationMinutes(10);
+        section = sections.saveAndFlush(section);
+        var link = links.findByMockExamIdOrderByPosition(exam.getId()).getFirst();
+        link.setMockExamSectionId(section.getId());
+        links.saveAndFlush(link);
+        assertThrows(
+                BusinessRuleException.class,
+                () -> engine.start(learner.getId(), exam.getId(), "wrong-section-skill"));
+        section.setSkill("READING");
+        sections.saveAndFlush(section);
+        exam.setSkill("LISTENING");
+        exams.saveAndFlush(exam);
+        assertThrows(
+                BusinessRuleException.class,
+                () -> engine.start(learner.getId(), exam.getId(), "wrong-exam-skill"));
+        assertFalse(studentCatalog.entry("exams", exam.getId()).startable());
+    }
+
+    @Test
+    void placementWithoutPolicyIsHiddenAndCannotStartThroughEitherEntryPoint() throws Exception {
+        var exam = readingExam("PLACEMENT", null);
+        assertThrows(
+                BusinessRuleException.class,
+                () -> engine.startPlacement(learner.getId(), exam.getId(), "placement:missing"));
+        assertThrows(
+                BusinessRuleException.class,
+                () -> engine.start(learner.getId(), exam.getId(), "placement:forged"));
+        assertFalse(studentCatalog.entry("exams", exam.getId()).startable());
+        assertTrue(
+                placementCatalog.findPublished("READING").stream()
+                        .noneMatch(value -> value.id().equals(exam.getId())));
+        mvc.perform(
+                        post("/student/exams/" + exam.getId() + "/start")
+                                .with(user(learner.getEmail()).roles("STUDENT"))
+                                .with(csrf()))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(flash().attributeExists("error"));
+        assertEquals(0, attempts.countByUserId(learner.getId()));
+    }
+
+    @Test
+    void placementRequiresScaleRuleCompleteBandsAndActivePolicy() {
+        var exam = readingExam("PLACEMENT", scheme.getId());
+        assertThrows(
+                BusinessRuleException.class,
+                () -> engine.startPlacement(learner.getId(), exam.getId(), "missing-rule"));
+        // Repository writes deliberately construct legacy invalid policy states for this
+        // regression.
+        var rule = new ScoringScaleRule();
+        rule.setScheme(scheme);
+        rule.setSkill("READING");
+        rule.setRawMin(BigDecimal.ZERO);
+        rule.setRawMax(BigDecimal.valueOf(40));
+        rule.setScaleMin(BigDecimal.ZERO);
+        rule.setScaleMax(BigDecimal.valueOf(50));
+        rules.saveAndFlush(rule);
+        assertThrows(
+                BusinessRuleException.class,
+                () -> engine.startPlacement(learner.getId(), exam.getId(), "missing-bands"));
+        var band = new ScoreBand();
+        band.setScheme(scheme);
+        band.setSkill("READING");
+        band.setCefrLevel("A1");
+        band.setMinScore(BigDecimal.ZERO);
+        band.setMaxScore(BigDecimal.TEN);
+        band = bands.saveAndFlush(band);
+        assertThrows(
+                BusinessRuleException.class,
+                () -> engine.startPlacement(learner.getId(), exam.getId(), "band-gap"));
+        band.setMaxScore(BigDecimal.valueOf(50));
+        bands.saveAndFlush(band);
+        scheme.setStatus(RecordStatus.INACTIVE);
+        schemes.saveAndFlush(scheme);
+        assertThrows(
+                BusinessRuleException.class,
+                () -> engine.startPlacement(learner.getId(), exam.getId(), "inactive-policy"));
+        assertFalse(studentCatalog.entry("exams", exam.getId()).startable());
+        assertEquals(0, attempts.countByUserId(learner.getId()));
+    }
+
+    @Test
+    void validPlacementUsesDedicatedRouteAndReusesAnActiveAttempt() throws Exception {
+        completeReadingPolicy();
+        var exam = readingExam("PLACEMENT", scheme.getId());
+        mvc.perform(
+                        get("/student/exams/" + exam.getId())
+                                .with(user(learner.getEmail()).roles("STUDENT")))
+                .andExpect(status().isOk())
+                .andExpect(
+                        content()
+                                .string(
+                                        org.hamcrest.Matchers.not(
+                                                org.hamcrest.Matchers.containsString(
+                                                        "/student/exams/"
+                                                                + exam.getId()
+                                                                + "/start"))));
+        int first = placement.start(learner.getEmail(), "READING", exam.getId()).attemptId();
+        int second = placement.start(learner.getEmail(), "READING", exam.getId()).attemptId();
+        assertEquals(first, second);
+        engine.submit(learner.getId(), first, "valid-placement-submit");
+        var result = engine.result(learner.getId(), first);
+        assertEquals("COMPLETED", result.state());
+        assertNotNull(result.skills().getFirst().scaleScore());
+        assertNotNull(result.skills().getFirst().estimatedLevel());
+        assessmentAccounts.applyAssessment(learner.getId(), first);
+        var profile = profiles.findByUserIdAndSkill(learner.getId(), "READING").orElseThrow();
+        assertEquals("A1", profile.getCurrentLevel());
+        assessmentAccounts.applyAssessment(learner.getId(), first);
+        assertEquals(
+                profile.getId(),
+                profiles.findByUserIdAndSkill(learner.getId(), "READING").orElseThrow().getId());
+    }
+
+    @Test
+    void newC2GoalIsRejectedWithoutReplacingTheLegacyGoal() throws Exception {
+        var old = new UserGoal();
+        old.setUser(learner);
+        old.setStatus(GoalStatus.ACTIVE);
+        var target = new UserGoalSkill();
+        target.setSkill("READING");
+        target.setTargetLevel("C2");
+        old.addSkill(target);
+        old = goals.saveAndFlush(old);
+        var form = new GoalForm();
+        form.setReading("C2");
+        assertThrows(
+                BusinessRuleException.class, () -> accounts.saveGoal(learner.getEmail(), form));
+        mvc.perform(
+                        post("/student/goals")
+                                .with(user(learner.getEmail()).roles("STUDENT"))
+                                .with(csrf())
+                                .param("reading", "C2"))
+                .andExpect(status().isOk())
+                .andExpect(model().attributeHasFieldErrors("goalForm", "reading"));
+        assertEquals(GoalStatus.ACTIVE, goals.findById(old.getId()).orElseThrow().getStatus());
+        assertEquals("C2", accounts.snapshot(learner.getEmail()).goal().targets().get("READING"));
+        form.setReading("C1");
+        accounts.saveGoal(learner.getEmail(), form);
+        assertEquals("C1", accounts.snapshot(learner.getEmail()).goal().targets().get("READING"));
+        assertEquals(
+                "C2",
+                goals.findById(old.getId()).orElseThrow().getSkills().getFirst().getTargetLevel());
     }
 }

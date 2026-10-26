@@ -245,9 +245,10 @@ public class LearningPathService implements LearningPathContract {
         if (unfinished.isPresent()) return unfinished.get().attemptId();
         int last = previous.stream().mapToInt(AttemptResult::attemptId).max().orElse(0);
         // One stable start operation, a fresh key after each terminal result.
-        return engine.start(
+        return engine.startCheckpoint(
                         userId,
                         checkpoint.examId(),
+                        pathId,
                         "checkpoint:" + userId + ":" + pathId + ":after:" + last)
                 .attemptId();
     }

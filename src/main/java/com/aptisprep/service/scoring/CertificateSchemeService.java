@@ -58,7 +58,9 @@ public class CertificateSchemeService implements CertificateSchemeContract {
     }
 
     @Override
-    @Transactional
+    @Transactional(
+            readOnly = true,
+            noRollbackFor = {BusinessRuleException.class, ResourceNotFoundException.class})
     public SchemeOption requireAvailableScheme(
             Integer certificateId, Integer schemeId, String skill) {
         String normalizedSkill =

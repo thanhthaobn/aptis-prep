@@ -2,6 +2,90 @@
 
 Tài liệu này là hợp đồng giao diện cho mọi Pull Request có Thymeleaf/CSS.
 
+## Cách đọc template và format (26/10/2026)
+
+HTML dùng Prettier, thụt lề 2 khoảng trắng. `htmlWhitespaceSensitivity: ignore`
+giúp thẻ inline đóng/mở trên các dòng riêng, tránh kiểu `</label` rồi dòng sau
+mới có `>`. Nội dung trong textarea/pre vẫn phải được bảo toàn.
+Chạy `npm run format:web` để format và `npm run format:web:check` để kiểm tra.
+
+| Cú pháp | Ý nghĩa |
+| --- | --- |
+| `${catalog.title}` | Lấy dữ liệu controller đã đưa vào model |
+| `*{title}` | Trường của đối tượng form hiện tại, khai báo bằng `th:object` |
+| `@{/admin/questions}` | Tạo URL, có xét context path của ứng dụng |
+| `~{fragments/navbar :: navbar}` | Chọn fragment `navbar` trong file `fragments/navbar.html` |
+| `th:replace` | Thay cả thẻ hiện tại bằng fragment; dùng chung navbar/sidebar/footer |
+| `th:with="itemPath=${'items[' + itemStat.index + ']'}"` | Đặt tên đường dẫn của mục đang lặp, ví dụ `items[0]` |
+| `th:name="${itemPath + '.content'}"` | Ghép đường dẫn với tên trường bằng phép nối chuỗi `+` |
+| `${items != null and !items.isEmpty()}` | Danh sách có dữ liệu; kiểm tra null trước khi gọi phương thức |
+| `${items == null or items.isEmpty()}` | Danh sách chưa có hoặc rỗng |
+| `${items.size()}` | Đếm phần tử của danh sách đã được khởi tạo |
+
+`::` và `~{...}` là cú pháp chuẩn của Thymeleaf, không phải lỗi HTML. Không bỏ
+chúng bằng cách chép navbar/sidebar vào mọi trang hoặc chuyển sang cú pháp cũ.
+
+Tên file dùng chữ thường, ngăn cách bằng dấu `-`; tên fragment dùng camelCase
+theo cùng ý nghĩa. Giữ các thành phần cùng chức năng trong một file khi hợp lý:
+
+| File trong `fragments/` | Fragment |
+| --- | --- |
+| `navbar.html` | `navbar` |
+| `admin-sidebar.html` | `adminSidebar(activePage)` |
+| `student-sidebar.html` | `studentSidebar(activePage)` |
+| `footer.html` | `footer` |
+| `status-badge.html` | `statusBadge(status)`; `statusText(status)` cho dạng chữ |
+| `student-pagination.html` | `studentPagination(currentPage, totalPages, totalItems, baseUrl)` |
+| `lesson-history-context.html` | `lessonHistoryContext(context, mediaPrefix)` |
+| `path-stage.html` | `pathStage(skill)` và `pathLevelRange(skill)` |
+
+Ví dụ: `th:replace="~{fragments/status-badge :: statusBadge(${attempt.status})}"`.
+`pagination.html :: pagination(page, baseUrl)` nhận Spring Data Page, khác với
+`studentPagination` nhận các số trang riêng; không hoán đổi hai contract này.
+
+Điều kiện dài được dùng nhiều lần nên đặt tên bằng `th:with` tại phần tử cha.
+Trang bài học dùng `productive`, `hasQuestions`, `hasAttempts`, `hasMethodReview`,
+`hasMethod` và `hasVideo`; các phần con chỉ cần `th:if="${hasMethod}"` thay vì
+lặp lại toàn bộ điều kiện. Đây là biến trình bày trong template, không truy vấn
+DB hoặc thay đổi điều kiện hoàn thành bài học.
+
+`admin/catalog/form.html` chỉ giữ khung trang và chọn đúng form. Nội dung từng
+form nằm ở `admin/catalog/question-form.html` và `admin/catalog/exam-form.html`.
+Form bài học nằm ở `admin/lesson/form.html`.
+
+Các form như bài học vẫn dùng `th:field="*{title}"` cho trường đơn để giữ binding
+tự động của Spring. Hai fragment catalog dùng đối tượng rõ ràng, ví dụ
+`name="title" th:value="${examForm.title}"`, và khai báo kiểu model bằng comment
+`@thymesVar` để IDE nhận diện các thuộc tính trong fragment. Đây là thông tin
+kiểu cho IDE, không phải tắt kiểm tra lỗi hay thêm dữ liệu nghiệp vụ.
+Các danh sách nhiều cấp khai báo đường dẫn một lần bằng `th:with`, rồi dùng
+phép nối chuỗi `+` quen thuộc. Không lặp lại cả đường dẫn dài ở mỗi ô nhập:
+
+```html
+<div th:each="item, itemStat : ${questionForm.items}"
+     th:with="itemPath=${'items[' + itemStat.index + ']'}">
+  <div th:each="option, optionStat : ${item.options}"
+       th:with="optionPath=${itemPath + '.options[' + optionStat.index + ']'}">
+    <input th:name="${optionPath + '.content'}" th:value="${option.content}" />
+  </div>
+</div>
+```
+
+Sau render, tên là `items[0].options[1].content`; Spring vẫn gán vào DTO tương
+ứng khi POST. Không thể dùng chung `name="content"` cho mọi đáp án vì sẽ mất
+thông tin đáp án thuộc mục nào. Form đề thi dùng `sectionPath`, form bài học
+dùng `checkPath` theo cùng cách. Textarea dùng `th:text`, radio/checkbox dùng `th:checked`, option
+dùng `th:selected` để giữ dữ liệu khi sửa hoặc khi form có lỗi. Không ghép nội
+dung người dùng vào HTML bằng `th:utext`.
+
+`__${...}__` là preprocessing hợp lệ của `th:field` cho danh sách, không phải
+code sai. Các form hiện tại dùng `th:name` tường minh để tránh lồng cú pháp này.
+Không chỉ xóa dấu `__` rồi giữ nguyên `th:field`, vì có thể làm hỏng binding.
+Khi thêm/xóa dòng, phải cập nhật đồng thời `name`, `id` và `label[for]`.
+
+Tham khảo chính thức: [Template fragments](https://www.thymeleaf.org/doc/tutorials/3.1/usingthymeleaf.html#template-layout)
+và [Dynamic fields](https://www.thymeleaf.org/doc/tutorials/3.1/thymeleafspring.html#dynamic-fields).
+
 ## Đọc source và theo dõi form hiện tại (25/10/2026)
 
 Phần này mô tả source đang chạy; những mô tả preview trong các quyết định cũ

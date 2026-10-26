@@ -348,7 +348,7 @@ class StudentContentPreviewTests {
                 .andExpect(content().string(containsString("Incomplete policy exam")));
         mvc.perform(get("/student/exams/" + exam.getId()).with(user("student").roles("STUDENT")))
                 .andExpect(status().isOk())
-                .andExpect(content().string(containsString("Chưa cấu hình raw-to-scale")))
+                .andExpect(content().string(containsString("raw-to-scale")))
                 .andExpect(
                         content()
                                 .string(

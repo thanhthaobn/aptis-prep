@@ -6,6 +6,11 @@ import com.aptisprep.service.contract.IntegrationModels.*;
 public interface ExamAttemptContract {
     AttemptHandle start(Integer userId, Integer examId, String requestKey);
 
+    AttemptHandle startPlacement(Integer userId, Integer examId, String requestKey);
+
+    AttemptHandle startCheckpoint(
+            Integer userId, Integer examId, Integer pathId, String requestKey);
+
     void submit(Integer userId, Integer attemptId, String requestKey);
 
     AttemptResult result(Integer userId, Integer attemptId);

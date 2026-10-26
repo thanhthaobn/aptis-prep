@@ -15,15 +15,15 @@
         </header>
         <form class="dashboard-panel result-filters" method="get" th:action="@{/admin/results}">
           <div class="field">
-            <label for="q">Học viên, email hoặc tên đề</label
-            ><input id="q" name="q" th:value="${q}" maxlength="255" />
+            <label for="q">Học viên, email hoặc tên đề</label>
+            <input id="q" name="q" th:value="${q}" maxlength="255" />
           </div>
           <div class="field">
-            <label for="skill">Kỹ năng</label
-            ><select id="skill" name="skill">
+            <label for="skill">Kỹ năng</label>
+            <select id="skill" name="skill">
               <option value="">Tất cả</option>
               <option
-                th:each="v:${skills}"
+                th:each="v : ${skills}"
                 th:value="${v}"
                 th:text="${#strings.replace(v,'_',' ')}"
                 th:selected="${selectedSkill==v}"
@@ -31,11 +31,11 @@
             </select>
           </div>
           <div class="field">
-            <label for="examType">Loại đề</label
-            ><select id="examType" name="examType">
+            <label for="examType">Loại đề</label>
+            <select id="examType" name="examType">
               <option value="">Tất cả</option>
               <option
-                th:each="v:${T(java.util.List).of('PLACEMENT','PRACTICE','CHECKPOINT','FULL_MOCK')}"
+                th:each="v : ${T(java.util.List).of('PLACEMENT','PRACTICE','CHECKPOINT','FULL_MOCK')}"
                 th:value="${v}"
                 th:text="${@resultLabels.examType(v)}"
                 th:selected="${selectedExamType==v}"
@@ -43,11 +43,11 @@
             </select>
           </div>
           <div class="field">
-            <label for="state">Trạng thái</label
-            ><select id="state" name="state">
+            <label for="state">Trạng thái</label>
+            <select id="state" name="state">
               <option value="">Tất cả</option>
               <option
-                th:each="v:${T(java.util.List).of('IN_PROGRESS','WAITING_GRADING','COMPLETED','ERROR','EXPIRED')}"
+                th:each="v : ${T(java.util.List).of('IN_PROGRESS','WAITING_GRADING','COMPLETED','ERROR','EXPIRED')}"
                 th:value="${v}"
                 th:text="${@resultLabels.state(v)}"
                 th:selected="${selectedState==v}"
@@ -55,15 +55,16 @@
             </select>
           </div>
           <div class="field">
-            <label for="from">Từ ngày</label
-            ><input id="from" type="date" name="from" th:value="${from}" />
+            <label for="from">Từ ngày</label>
+            <input id="from" type="date" name="from" th:value="${from}" />
           </div>
           <div class="field">
-            <label for="to">Đến ngày</label><input id="to" type="date" name="to" th:value="${to}" />
+            <label for="to">Đến ngày</label>
+            <input id="to" type="date" name="to" th:value="${to}" />
           </div>
           <div class="actions">
-            <button class="button" type="submit">Lọc kết quả</button
-            ><a class="button button-secondary" th:href="@{/admin/results}">Xóa bộ lọc</a>
+            <button class="button" type="submit">Lọc kết quả</button>
+            <a class="button button-secondary" th:href="@{/admin/results}">Xóa bộ lọc</a>
           </div>
         </form>
         <div class="section-title-row">
@@ -83,7 +84,7 @@
               </tr>
             </thead>
             <tbody>
-              <tr th:each="item:${history.items}">
+              <tr th:each="item : ${history.items}">
                 <td data-label="Học viên">
                   <strong th:text="${item.learnerName}"></strong>
                   <p class="muted" th:text="${item.learnerEmail}"></p>
@@ -115,13 +116,16 @@
           <a
             th:if="${history.page>0}"
             th:href="@{/admin/results(page=${history.page-1},size=${history.size},q=${q},skill=${selectedSkill},examType=${selectedExamType},state=${selectedState},from=${from},to=${to})}"
-            >Trang trước</a
-          ><span th:text="|Trang ${history.page+1}|"></span
-          ><a
+          >
+            Trang trước
+          </a>
+          <span th:text="|Trang ${history.page+1}|"></span>
+          <a
             th:if="${(history.page+1)*history.size<history.totalItems}"
             th:href="@{/admin/results(page=${history.page+1},size=${history.size},q=${q},skill=${selectedSkill},examType=${selectedExamType},state=${selectedState},from=${from},to=${to})}"
-            >Trang sau</a
           >
+            Trang sau
+          </a>
         </nav>
       </main>
     </div>

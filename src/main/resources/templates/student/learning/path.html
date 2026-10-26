@@ -31,11 +31,12 @@
                 </span>
                 <h2>Reading</h2>
               </div>
-              <span th:replace="~{fragments/path-stage :: levelRange('Reading')}"></span>
+              <span th:replace="~{fragments/path-stage :: pathLevelRange('Reading')}"></span>
             </div>
-            <div th:replace="~{fragments/path-stage :: stageScale('Reading')}"></div>
+            <div th:replace="~{fragments/path-stage :: pathStage('Reading')}"></div>
             <a class="button" th:href="@{/student/learning-path/{skill}(skill='Reading')}">
-              Xem bài Reading <span aria-hidden="true">→</span>
+              Xem bài Reading
+              <span aria-hidden="true">→</span>
             </a>
           </article>
 
@@ -50,11 +51,12 @@
                 </span>
                 <h2>Listening</h2>
               </div>
-              <span th:replace="~{fragments/path-stage :: levelRange('Listening')}"></span>
+              <span th:replace="~{fragments/path-stage :: pathLevelRange('Listening')}"></span>
             </div>
-            <div th:replace="~{fragments/path-stage :: stageScale('Listening')}"></div>
+            <div th:replace="~{fragments/path-stage :: pathStage('Listening')}"></div>
             <a class="button" th:href="@{/student/learning-path/{skill}(skill='Listening')}">
-              Xem bài Listening <span aria-hidden="true">→</span>
+              Xem bài Listening
+              <span aria-hidden="true">→</span>
             </a>
           </article>
 
@@ -69,11 +71,12 @@
                 </span>
                 <h2>Writing</h2>
               </div>
-              <span th:replace="~{fragments/path-stage :: levelRange('Writing')}"></span>
+              <span th:replace="~{fragments/path-stage :: pathLevelRange('Writing')}"></span>
             </div>
-            <div th:replace="~{fragments/path-stage :: stageScale('Writing')}"></div>
+            <div th:replace="~{fragments/path-stage :: pathStage('Writing')}"></div>
             <a class="button" th:href="@{/student/learning-path/{skill}(skill='Writing')}">
-              Xem bài Writing <span aria-hidden="true">→</span>
+              Xem bài Writing
+              <span aria-hidden="true">→</span>
             </a>
           </article>
 
@@ -88,11 +91,12 @@
                 </span>
                 <h2>Speaking</h2>
               </div>
-              <span th:replace="~{fragments/path-stage :: levelRange('Speaking')}"></span>
+              <span th:replace="~{fragments/path-stage :: pathLevelRange('Speaking')}"></span>
             </div>
-            <div th:replace="~{fragments/path-stage :: stageScale('Speaking')}"></div>
+            <div th:replace="~{fragments/path-stage :: pathStage('Speaking')}"></div>
             <a class="button" th:href="@{/student/learning-path/{skill}(skill='Speaking')}">
-              Xem bài Speaking <span aria-hidden="true">→</span>
+              Xem bài Speaking
+              <span aria-hidden="true">→</span>
             </a>
           </article>
 
@@ -109,23 +113,24 @@
                 <h2>Grammar &amp; Vocabulary</h2>
               </div>
               <span
-                th:replace="~{fragments/path-stage :: levelRange('Grammar & Vocabulary')}"
+                th:replace="~{fragments/path-stage :: pathLevelRange('Grammar & Vocabulary')}"
               ></span>
             </div>
-            <div th:replace="~{fragments/path-stage :: stageScale('Grammar & Vocabulary')}"></div>
+            <div th:replace="~{fragments/path-stage :: pathStage('Grammar & Vocabulary')}"></div>
             <a
               class="button"
               th:href="@{/student/learning-path/{skill}(skill='Grammar & Vocabulary')}"
             >
-              Xem bài ngữ pháp &amp; từ vựng <span aria-hidden="true">→</span>
+              Xem bài ngữ pháp &amp; từ vựng
+              <span aria-hidden="true">→</span>
             </a>
           </article>
         </section>
 
         <div class="actions">
-          <a class="button button-secondary" th:href="@{/student/dashboard}"
-            >← Về hành trình tổng quan</a
-          >
+          <a class="button button-secondary" th:href="@{/student/dashboard}">
+            ← Về hành trình tổng quan
+          </a>
           <a class="button" th:href="@{/student/placement}">Làm bài kiểm tra đầu vào</a>
         </div>
       </main>

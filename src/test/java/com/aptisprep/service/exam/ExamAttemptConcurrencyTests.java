@@ -47,6 +47,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 
 @SpringBootTest
+@org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc
 class ExamAttemptConcurrencyTests {
     @Autowired ExamAttemptService attempts;
     @Autowired UserRepository users;
@@ -63,12 +64,15 @@ class ExamAttemptConcurrencyTests {
     @Autowired ExamAttemptRepository attemptRepository;
     @Autowired ExamAttemptSnapshotRepository snapshots;
     @Autowired AttemptOutboxRepository outbox;
+    @Autowired com.aptisprep.repository.LearningPathItemRepository pathItems;
     @Autowired AttemptOutboxService outboxService;
     @Autowired StorageService storage;
     @Autowired com.aptisprep.service.learning.LessonService lessonService;
     @Autowired com.aptisprep.service.learning.LearningPathService learningPaths;
     @Autowired com.aptisprep.repository.LearningPathRepository learningPathRepository;
     @Autowired com.aptisprep.repository.UserSkillProfileRepository skillProfiles;
+    @Autowired org.springframework.test.web.servlet.MockMvc mvc;
+    @Autowired com.aptisprep.service.student.StudentExamCatalogService studentCatalog;
 
     @Test
     void concurrentStartWithSameRequestKeyCreatesOneAttemptAndSnapshot() throws Exception {
@@ -314,9 +318,10 @@ class ExamAttemptConcurrencyTests {
         band.setCefrLevel("C2");
         bands.saveAndFlush(band);
         int id =
-                attempts.start(
+                attempts.startCheckpoint(
                                 fixture.user().getId(),
                                 fixture.exam().getId(),
+                                readyPath(fixture),
                                 "checkpoint:" + fixture.user().getId() + ":1:after:0")
                         .attemptId();
         attempts.saveAnswer(
@@ -343,9 +348,10 @@ class ExamAttemptConcurrencyTests {
         fixture.exam().setTargetLevel("A1");
         exams.saveAndFlush(fixture.exam());
         int id =
-                attempts.start(
+                attempts.startCheckpoint(
                                 fixture.user().getId(),
                                 fixture.exam().getId(),
+                                readyPath(fixture),
                                 "checkpoint:" + fixture.user().getId() + ":1:after:0")
                         .attemptId();
         attempts.submit(fixture.user().getId(), id, "checkpoint-empty-submit");
@@ -431,13 +437,168 @@ class ExamAttemptConcurrencyTests {
                                 fixture.user().getId(), fixture.exam().getId(), "exam:generic"));
         assertEquals(0, attemptRepository.countByUserId(fixture.user().getId()));
 
+        assertThrows(
+                BusinessRuleException.class,
+                () ->
+                        attempts.start(
+                                fixture.user().getId(),
+                                fixture.exam().getId(),
+                                "checkpoint:forged"));
         assertTrue(
-                attempts.start(
+                attempts.startCheckpoint(
                                         fixture.user().getId(),
                                         fixture.exam().getId(),
-                                        "checkpoint:" + fixture.user().getId() + ":1:after:0")
+                                        readyPath(fixture),
+                                        "verified-path")
                                 .attemptId()
                         > 0);
+    }
+
+    @Test
+    @org.springframework.transaction.annotation.Transactional
+    void listeningTranscriptStaysInTheSnapshotAndNeverReachesStudentHtmlOrDto() throws Exception {
+        var f = fixture("private-transcript");
+        String secret = "PRIVATE LISTENING TRANSCRIPT 8271";
+        f.media().setTranscript(secret);
+        media.saveAndFlush(f.media());
+        int id = attempts.start(f.user().getId(), f.exam().getId(), "private-audio").attemptId();
+        f.media().setTranscript("CHANGED LIVE TRANSCRIPT");
+        media.saveAndFlush(f.media());
+        String dto =
+                tools.jackson.databind.json.JsonMapper.builder()
+                        .build()
+                        .writeValueAsString(attempts.page(f.user().getId(), id));
+        org.junit.jupiter.api.Assertions.assertFalse(dto.contains(secret));
+        org.junit.jupiter.api.Assertions.assertFalse(dto.contains("transcript"));
+        mvc.perform(
+                        org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get(
+                                        "/student/attempts/" + id)
+                                .with(
+                                        org.springframework.security.test.web.servlet.request
+                                                .SecurityMockMvcRequestPostProcessors.user(
+                                                        f.user().getEmail())
+                                                .roles("STUDENT")))
+                .andExpect(
+                        org.springframework.test.web.servlet.result.MockMvcResultMatchers.status()
+                                .isOk())
+                .andExpect(
+                        org.springframework.test.web.servlet.result.MockMvcResultMatchers.content()
+                                .string(
+                                        org.hamcrest.Matchers.not(
+                                                org.hamcrest.Matchers.containsString(secret))))
+                .andExpect(
+                        org.springframework.test.web.servlet.result.MockMvcResultMatchers.content()
+                                .string(
+                                        org.hamcrest.Matchers.not(
+                                                org.hamcrest.Matchers.containsString(
+                                                        "data-speech"))));
+        assertTrue(
+                snapshots
+                        .findByAttemptId(id)
+                        .orElseThrow()
+                        .getLockedQuestionSnapshot()
+                        .contains(secret));
+        org.junit.jupiter.api.Assertions.assertFalse(
+                snapshots
+                        .findByAttemptId(id)
+                        .orElseThrow()
+                        .getLockedQuestionSnapshot()
+                        .contains("CHANGED LIVE TRANSCRIPT"));
+        assertEquals(1, attempts.playMedia(f.user().getId(), id, f.media().getId()).playCount());
+        assertEquals(2, attempts.playMedia(f.user().getId(), id, f.media().getId()).playCount());
+        assertThrows(
+                BusinessRuleException.class,
+                () -> attempts.playMedia(f.user().getId(), id, f.media().getId()));
+    }
+
+    @Test
+    @org.springframework.transaction.annotation.Transactional
+    void speechOnlyOrMissingAudioCannotCreateANewAttempt() {
+        var f = fixture("speech-not-audio");
+        f.media().setMediaUrl("speech://legacy");
+        f.media().setTranscript("Secret transcript");
+        media.saveAndFlush(f.media());
+        assertThrows(
+                BusinessRuleException.class,
+                () -> attempts.start(f.user().getId(), f.exam().getId(), "speech-only"));
+        org.junit.jupiter.api.Assertions.assertFalse(
+                studentCatalog.entry("exams", f.exam().getId()).startable());
+        f.media().setMediaUrl("questions/missing-audio.wav");
+        media.saveAndFlush(f.media());
+        assertThrows(
+                BusinessRuleException.class,
+                () -> attempts.start(f.user().getId(), f.exam().getId(), "missing-file"));
+        assertEquals(0, attemptRepository.countByUserId(f.user().getId()));
+    }
+
+    @Test
+    @org.springframework.transaction.annotation.Transactional
+    void checkpointRechecksOwnerStatusAndCompletionAtEngineBoundary() {
+        var f = fixture("checkpoint-verified-context");
+        f.exam().setExamType("CHECKPOINT");
+        f.exam().setTargetLevel("A1");
+        exams.saveAndFlush(f.exam());
+        int pathId = readyPath(f);
+        var other = fixture("checkpoint-foreign-owner");
+        assertThrows(
+                BusinessRuleException.class,
+                () ->
+                        attempts.startCheckpoint(
+                                other.user().getId(), f.exam().getId(), pathId, "foreign-owner"));
+        var path = learningPathRepository.findById(pathId).orElseThrow();
+        path.setStatus("ARCHIVED");
+        learningPathRepository.saveAndFlush(path);
+        assertThrows(
+                BusinessRuleException.class,
+                () ->
+                        attempts.startCheckpoint(
+                                f.user().getId(), f.exam().getId(), pathId, "archived-path"));
+        path.setStatus("ACTIVE");
+        learningPathRepository.saveAndFlush(path);
+        var required = pathItems.findByLearningPathIdOrderByPositionAsc(pathId).getFirst();
+        required.setCompletedAt(null);
+        pathItems.saveAndFlush(required);
+        assertThrows(
+                BusinessRuleException.class,
+                () ->
+                        attempts.startCheckpoint(
+                                f.user().getId(), f.exam().getId(), pathId, "incomplete-required"));
+        assertEquals(0, attemptRepository.countByUserId(f.user().getId()));
+        required.setCompletedAt(LocalDateTime.now());
+        pathItems.saveAndFlush(required);
+        int first =
+                attempts.startCheckpoint(
+                                f.user().getId(), f.exam().getId(), pathId, "verified-idempotency")
+                        .attemptId();
+        assertEquals(
+                first,
+                attempts.startCheckpoint(
+                                f.user().getId(), f.exam().getId(), pathId, "verified-idempotency")
+                        .attemptId());
+    }
+
+    private Integer readyPath(Fixture fixture) {
+        var form = lessonService.newForm("Listening", "A1");
+        form.setTitle("Required checkpoint lesson");
+        form.setStatus("PUBLISHED");
+        var lesson = lessonService.save(null, form);
+        var path = new com.aptisprep.entity.LearningPath();
+        path.setUser(fixture.user());
+        path.setSkill("Listening");
+        path.setTargetLevel("A1");
+        path.setPathSource("FOUNDATION");
+        path.setStatus("ACTIVE");
+        path.setCheckpointExamId(fixture.exam().getId());
+        path = learningPathRepository.saveAndFlush(path);
+        var item = new com.aptisprep.entity.LearningPathItem();
+        item.setLearningPath(path);
+        item.setLesson(lesson);
+        item.setPosition(1);
+        item.setRequired(true);
+        item.setStatus("COMPLETED");
+        item.setCompletedAt(LocalDateTime.now());
+        pathItems.saveAndFlush(item);
+        return path.getId();
     }
 
     private Fixture fixture(String suffix) {

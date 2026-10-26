@@ -23,10 +23,10 @@
             <span
               class="badge"
               th:text="${lesson.status=='PUBLISHED'?'Đã công bố':(lesson.status=='DRAFT'?'Bản nháp':'Đã lưu trữ')}"
-            ></span
-            ><a class="button" th:href="@{/admin/lessons/{id}/edit(id=${lesson.id})}"
-              >Chỉnh sửa bài</a
-            >
+            ></span>
+            <a class="button" th:href="@{/admin/lessons/{id}/edit(id=${lesson.id})}">
+              Chỉnh sửa bài
+            </a>
           </div>
         </header>
         <section class="dashboard-panel">
@@ -42,24 +42,27 @@
           ></span>
           <div class="lesson-flashcard-callout">
             <div th:if="${flashcardSet!=null}">
-              <strong th:text="${flashcardSet.title}"></strong
-              ><span>Bộ thẻ đang gắn với bài học này.</span>
+              <strong th:text="${flashcardSet.title}"></strong>
+              <span>Bộ thẻ đang gắn với bài học này.</span>
             </div>
             <div th:if="${flashcardSet==null}">
-              <strong>Chưa có Flashcard</strong
-              ><span>Tạo bộ từ vựng để học viên ôn ngay từ bài học.</span>
+              <strong>Chưa có Flashcard</strong>
+              <span>Tạo bộ từ vựng để học viên ôn ngay từ bài học.</span>
             </div>
             <a
               class="button button-secondary"
               th:if="${flashcardSet!=null}"
               th:href="@{/admin/flashcards/{id}/edit(id=${flashcardSet.id})}"
-              >Chỉnh sửa bộ thẻ</a
-            ><a
+            >
+              Chỉnh sửa bộ thẻ
+            </a>
+            <a
               class="button button-secondary"
               th:if="${flashcardSet==null}"
               th:href="@{/admin/flashcards/create(lessonId=${lesson.id})}"
-              >Tạo bộ thẻ cho bài</a
             >
+              Tạo bộ thẻ cho bài
+            </a>
           </div>
         </section>
         <section class="dashboard-panel dashboard-section" th:if="${lesson.audioPath!=null}">
@@ -103,10 +106,10 @@
               th:unless="${lesson.skill=='Listening'}"
               th:text="${lesson.material.exampleText}"
             ></blockquote>
-            <th:block th:if="${!#strings.isEmpty(lesson.material.analysis)}"
-              ><h3>Phân tích</h3>
-              <p class="lesson-prose" th:text="${lesson.material.analysis}"></p
-            ></th:block>
+            <th:block th:if="${!#strings.isEmpty(lesson.material.analysis)}">
+              <h3>Phân tích</h3>
+              <p class="lesson-prose" th:text="${lesson.material.analysis}"></p>
+            </th:block>
           </section>
           <section
             class="dashboard-panel dashboard-section"
@@ -133,12 +136,14 @@
           </section>
         </th:block>
         <section class="dashboard-panel dashboard-section">
-          <h2 th:text="|Kiểm tra kiến thức (${#lists.size(questions)} câu)|"></h2>
-          <p th:if="${#lists.isEmpty(questions)}">Bài này không có câu kiểm tra kiến thức.</p>
-          <article class="lesson-question" th:each="question,stat:${questions}">
+          <h2 th:text="|Kiểm tra kiến thức (${questions.size()} câu)|"></h2>
+          <p th:if="${questions == null or questions.isEmpty()}">
+            Bài này không có câu kiểm tra kiến thức.
+          </p>
+          <article class="lesson-question" th:each="question, stat : ${questions}">
             <h3 th:text="|${stat.count}. ${question.prompt()}|"></h3>
             <ol type="A">
-              <li th:each="option:${question.options()}" th:text="${option}"></li>
+              <li th:each="option : ${question.options()}" th:text="${option}"></li>
             </ol>
             <p class="muted">
               Đáp án đúng và lời giải chỉ được hiển thị cho học viên sau khi nộp bài.

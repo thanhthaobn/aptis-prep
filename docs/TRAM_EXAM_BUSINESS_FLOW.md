@@ -1,5 +1,7 @@
 # Luồng và nghiệp vụ của Trâm
 
+> Cập nhật 26/10/2026: xem [bản hoàn thiện tích hợp](GROUP_COMPLETION_2026-10-26.md) cho kiểm tra start, policy Placement, ngữ cảnh Checkpoint và bảo vệ transcript. Nội dung seed Vxxx bên dưới là lịch sử triển khai. Ứng dụng hiện dùng `database/schema-current.sql` và Hibernate validate, không tự chạy Flyway hoặc seed.
+
 ## 1. Phạm vi sở hữu
 
 Trâm phụ trách nội dung đề thi và engine làm bài. Phạm vi này bao gồm:
