@@ -212,8 +212,41 @@
   background: var(--color-surface-soft);
 }
 
-.exam-library .study-content-card > .button {
+.exam-card-readiness {
+  display: grid;
+  gap: 3px;
+  padding: 8px 10px;
+  border: 1px solid #b8ddd4;
+  border-radius: 8px;
+  background: #f2fbf8;
+  color: #11634f;
+  font-size: 0.75rem;
+  line-height: 1.45;
+}
+
+.exam-card-readiness.is-blocked {
+  border-color: #edc5c1;
+  background: #fff7f5;
+  color: #9a3f38;
+}
+
+.exam-card-readiness span {
+  color: var(--color-muted);
+}
+
+.exam-card-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
   margin-top: auto;
+}
+
+.exam-card-actions form {
+  margin: 0;
+}
+
+.exam-library .exam-card-actions .button {
   font-size: 0.8rem;
 }
 

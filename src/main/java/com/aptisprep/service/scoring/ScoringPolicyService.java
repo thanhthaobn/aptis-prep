@@ -104,7 +104,7 @@ public class ScoringPolicyService implements ScoringPolicyContract {
     }
 
     @Override
-    @Transactional(readOnly = true)
+    @Transactional(readOnly = true, noRollbackFor = BusinessRuleException.class)
     public void validatePolicy(Integer schemeId, String skill) {
         requireActiveScheme(schemeId);
         String normalized = normalizeSkill(skill);

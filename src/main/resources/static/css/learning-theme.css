@@ -279,6 +279,22 @@ h1,h2,h3 { letter-spacing: -.015em; font-weight: 700; line-height: 1.3; }
 .compact-catalog .study-facts { gap: 1rem; }.compact-catalog .study-facts dd { font-size: 1.1rem; }
 @media (min-width: 1280px) { .compact-catalog .study-card-grid { grid-template-columns: repeat(3,minmax(0,1fr)); } }
 
+/* Exam details explain readiness before exposing the start action. */
+.compact-catalog .study-overview-card { padding: 1.35rem 1.45rem; background: linear-gradient(135deg, #ffffff 0%, #f5fbfa 100%); }
+.compact-catalog .study-detail-subtitle { margin: .35rem 0 0; color: var(--color-muted); font-size: .95rem; }
+.compact-catalog .exam-readiness { display: grid; gap: .8rem; padding: 1.2rem 1.3rem; border: 1px solid #b8ddd4; background: #f2fbf8; }
+.compact-catalog .exam-readiness.is-blocked { border-color: #edc5c1; background: #fff7f5; }
+.compact-catalog .exam-readiness-heading { display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; }
+.compact-catalog .exam-readiness-heading h2 { margin: 0; font-size: 1.25rem; }
+.compact-catalog .exam-readiness-heading .eyebrow { margin: 0 0 .3rem; }
+.compact-catalog .exam-readiness > p { margin: 0; color: var(--color-muted); line-height: 1.6; }
+.compact-catalog .readiness-status { flex: 0 0 auto; padding: .45rem .7rem; border-radius: 999px; color: #11634f; background: #dff5ed; font-size: .8rem; font-weight: 750; }
+.compact-catalog .is-blocked .readiness-status { color: #9a3f38; background: #ffe2de; }
+.compact-catalog .readiness-checks { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .45rem 1.2rem; margin: 0; padding-left: 1.1rem; color: #365367; font-size: .88rem; }
+.compact-catalog .readiness-checks li::marker { color: var(--color-primary); }
+.compact-catalog .exam-readiness + .study-instructions { margin-top: 0; }
+@media (max-width: 620px) { .compact-catalog .exam-readiness-heading { flex-direction: column; }.compact-catalog .readiness-checks { grid-template-columns: 1fr; }.compact-catalog .study-overview-card { padding: 1.1rem; } }
+
 /* Student page titles stay compact, including placement, orientation and profile. */
 .student-theme .app-main > .page-header { padding: 0; gap: 8px 16px; margin-bottom: 18px; background: transparent; border: 0; border-radius: 0; box-shadow: none; align-items: center; }
 .student-theme .app-main > .page-header h1 { margin: 0; font-family: var(--font-ui); font-size: clamp(1.3rem,2vw,1.6rem); line-height: 1.3; color: var(--color-primary-dark); }

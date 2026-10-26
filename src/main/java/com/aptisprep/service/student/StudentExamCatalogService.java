@@ -2,12 +2,19 @@ package com.aptisprep.service.student;
 
 import com.aptisprep.dto.view.StudentCatalogView.*;
 import com.aptisprep.entity.MockExamEntity;
+import com.aptisprep.entity.MockExamQuestionEntity;
+import com.aptisprep.entity.MockExamSectionEntity;
+import com.aptisprep.entity.QuestionEntity;
+import com.aptisprep.exception.BusinessRuleException;
 import com.aptisprep.exception.ResourceNotFoundException;
 import com.aptisprep.repository.MockExamQuestionRepository;
 import com.aptisprep.repository.MockExamRepository;
 import com.aptisprep.repository.MockExamSectionRepository;
+import com.aptisprep.repository.QuestionRepository;
+import com.aptisprep.service.contract.ScoringPolicyContract;
 import java.text.Normalizer;
 import java.util.*;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
@@ -22,6 +29,8 @@ public class StudentExamCatalogService {
     public static final List<String> EXAM_TYPES =
             List.of("PRACTICE", "FULL_MOCK", "PLACEMENT", "CHECKPOINT");
     public static final List<String> SORT_OPTIONS = List.of("level", "newest", "duration");
+    private static final Set<String> APTIS_SKILLS =
+            Set.of("GRAMMAR_VOCABULARY", "READING", "LISTENING", "WRITING", "SPEAKING");
     private static final List<String> SKILL_ORDER =
             List.of(
                     "GRAMMAR_VOCABULARY",
@@ -39,14 +48,29 @@ public class StudentExamCatalogService {
     private final MockExamRepository exams;
     private final MockExamSectionRepository sections;
     private final MockExamQuestionRepository questions;
+    private final QuestionRepository questionCatalog;
+    private final ScoringPolicyContract scoring;
 
+    @Autowired
+    public StudentExamCatalogService(
+            MockExamRepository exams,
+            MockExamSectionRepository sections,
+            MockExamQuestionRepository questions,
+            QuestionRepository questionCatalog,
+            ScoringPolicyContract scoring) {
+        this.exams = exams;
+        this.sections = sections;
+        this.questions = questions;
+        this.questionCatalog = questionCatalog;
+        this.scoring = scoring;
+    }
+
+    /** Kept for lightweight preview tests that do not need readiness validation. */
     public StudentExamCatalogService(
             MockExamRepository exams,
             MockExamSectionRepository sections,
             MockExamQuestionRepository questions) {
-        this.exams = exams;
-        this.sections = sections;
-        this.questions = questions;
+        this(exams, sections, questions, null, null);
     }
 
     public List<Entry> find(String module, String query, String skill, String level, String state) {
@@ -77,9 +101,13 @@ public class StudentExamCatalogService {
                                                                                 exam.getExamType()))
                                                         .count()))
                         .toList();
+        String selectedType = Objects.toString(examType, "");
         var selected =
                 matches.stream()
-                        .filter(exam -> examType.equals(exam.getExamType()))
+                        .filter(
+                                exam ->
+                                        selectedType.isBlank()
+                                                || selectedType.equals(exam.getExamType()))
                         .sorted(catalogOrder(sort))
                         .toList();
         int size = pageable.getPageSize();
@@ -109,7 +137,7 @@ public class StudentExamCatalogService {
                         MockExamEntity::getUpdatedAt,
                         Comparator.nullsLast(Comparator.reverseOrder()));
         Comparator<MockExamEntity> selected =
-                switch (sort) {
+                switch (Objects.toString(sort, "")) {
                     case "newest" -> recent;
                     case "duration" ->
                             Comparator.comparing(
@@ -207,7 +235,14 @@ public class StudentExamCatalogService {
                     new Block(
                             displaySkill(exam.getSkill()),
                             links.size() + " câu hỏi",
-                            exam.getDurationMinutes() + " phút"));
+                            exam.getDurationMinutes() == null
+                                    ? "Chưa có"
+                                    : exam.getDurationMinutes() + " phút"));
+
+        Readiness readiness =
+                questionCatalog == null
+                        ? new Readiness(true, "Đề đã sẵn sàng để làm bài.", List.of())
+                        : checkReadiness(exam, links, examSections);
         return new Entry(
                 exam.getId(),
                 exam.getTitle(),
@@ -227,8 +262,109 @@ public class StudentExamCatalogService {
                         new Fact("Số câu hỏi", String.valueOf(links.size()))),
                 blocks,
                 exam.getExamType(),
-                normalizeSkill(exam.getSkill()));
+                normalizeSkill(exam.getSkill()),
+                readiness.startable(),
+                readiness.message(),
+                readiness.checks());
     }
+
+    private Readiness checkReadiness(
+            MockExamEntity exam,
+            List<MockExamQuestionEntity> links,
+            List<MockExamSectionEntity> examSections) {
+        List<String> checks = new ArrayList<>();
+        checks.add("Đề đã được công bố");
+        if (links.isEmpty())
+            return blocked(
+                    "Đề chưa có câu hỏi để làm.", checks, "Có ít nhất một câu hỏi đã công bố");
+
+        Map<Integer, QuestionEntity> questionById = new LinkedHashMap<>();
+        for (MockExamQuestionEntity link : links) {
+            QuestionEntity question = questionCatalog.findById(link.getQuestionId()).orElse(null);
+            if (question == null || !"PUBLISHED".equals(question.getStatus()))
+                return blocked(
+                        "Đề đang chứa câu hỏi chưa được công bố.",
+                        checks,
+                        "Mọi câu hỏi trong đề đều đã công bố");
+            if (questionById.put(link.getQuestionId(), question) != null)
+                return blocked(
+                        "Đề đang chứa câu hỏi bị lặp.", checks, "Không có câu hỏi trùng trong đề");
+        }
+        checks.add("Mọi câu hỏi trong đề đều đã công bố");
+
+        Map<Integer, String> sectionSkills = new HashMap<>();
+        for (MockExamSectionEntity section : examSections)
+            sectionSkills.put(section.getId(), section.getSkill());
+        for (MockExamQuestionEntity link : links) {
+            String sectionSkill =
+                    link.getMockExamSectionId() == null
+                            ? null
+                            : sectionSkills.get(link.getMockExamSectionId());
+            QuestionEntity question = questionById.get(link.getQuestionId());
+            if (sectionSkill != null
+                    && !normalizeSkill(sectionSkill).equals(normalizeSkill(question.getSkill())))
+                return blocked(
+                        "Một câu hỏi không thuộc đúng kỹ năng của section.",
+                        checks,
+                        "Câu hỏi khớp với kỹ năng section");
+        }
+        checks.add("Câu hỏi khớp với kỹ năng section");
+
+        Set<String> skills =
+                questionById.values().stream()
+                        .map(QuestionEntity::getSkill)
+                        .map(StudentExamCatalogService::normalizeSkill)
+                        .collect(java.util.stream.Collectors.toCollection(LinkedHashSet::new));
+        if ("FULL_MOCK".equals(exam.getExamType())) {
+            if (!skills.containsAll(APTIS_SKILLS))
+                return blocked(
+                        "Thi thử tổng hợp phải có đủ 5 kỹ năng Aptis.",
+                        checks,
+                        "Đủ Grammar, Reading, Listening, Writing và Speaking");
+            checks.add("Đủ 5 kỹ năng Aptis");
+        } else if (skills.size() != 1) {
+            return blocked(
+                    "Đề theo kỹ năng đang chứa nhiều kỹ năng khác nhau.",
+                    checks,
+                    "Đề theo kỹ năng chỉ có một kỹ năng");
+        } else {
+            checks.add("Đề theo kỹ năng chỉ có một kỹ năng");
+        }
+
+        if (exam.getScoringSchemeId() != null) {
+            try {
+                for (String skill : skills)
+                    scoring.validatePolicy(exam.getScoringSchemeId(), skill);
+            } catch (BusinessRuleException exception) {
+                return blocked(
+                        exception.getMessage(), checks, "Bộ chấm điểm đã phủ đủ miền điểm CEFR");
+            }
+            checks.add("Bộ chấm điểm đã phủ đủ miền điểm CEFR");
+        } else if ("CHECKPOINT".equals(exam.getExamType())) {
+            return blocked(
+                    "Checkpoint chưa có bộ chấm điểm để xác nhận CEFR.",
+                    checks,
+                    "Checkpoint có bộ chấm điểm hợp lệ");
+        } else {
+            checks.add("Chấm điểm raw, không quy đổi CEFR");
+        }
+
+        if ("CHECKPOINT".equals(exam.getExamType()))
+            return blocked(
+                    "Checkpoint chỉ được bắt đầu từ lộ trình học.",
+                    checks,
+                    "Được mở từ đúng lộ trình học");
+        return new Readiness(
+                true, "Đề đã sẵn sàng. Bạn có thể bắt đầu làm bài.", List.copyOf(checks));
+    }
+
+    private Readiness blocked(String message, List<String> checks, String missing) {
+        List<String> values = new ArrayList<>(checks);
+        values.add(missing);
+        return new Readiness(false, message, List.copyOf(values));
+    }
+
+    private record Readiness(boolean startable, String message, List<String> checks) {}
 
     private static String normalize(String value) {
         return Normalizer.normalize(Objects.toString(value, "").trim(), Normalizer.Form.NFD)
