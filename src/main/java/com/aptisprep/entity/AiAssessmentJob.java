@@ -2,67 +2,104 @@ package com.aptisprep.entity;
 
 import com.aptisprep.enums.AiJobState;
 import jakarta.persistence.*;
-
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "ai_assessment_jobs", uniqueConstraints = @UniqueConstraint(name = "uq_ai_job_assessment_key", columnNames = "assessment_key"))
+@Table(
+        name = "ai_assessment_jobs",
+        uniqueConstraints =
+                @UniqueConstraint(
+                        name = "uq_ai_job_assessment_key",
+                        columnNames = "assessment_key"))
 public class AiAssessmentJob {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
+
     @Column(name = "assessment_key", nullable = false, unique = true, length = 255)
     private String assessmentKey;
+
     @Column(name = "user_id", nullable = false)
     private Integer userId;
+
     @Column(name = "attempt_id")
     private Integer attemptId;
+
     @Column(name = "answer_id")
     private Integer answerId;
+
     @Column(name = "source_type", nullable = false, length = 30)
     private String sourceType = "EXAM_ANSWER";
+
     @Column(name = "source_id")
     private Integer sourceId;
 
-    public String getSourceType() { return sourceType; }
-    public void setSourceType(String value) { sourceType = value; }
-    public Integer getSourceId() { return sourceId; }
-    public void setSourceId(Integer value) { sourceId = value; }
+    public String getSourceType() {
+        return sourceType;
+    }
+
+    public void setSourceType(String value) {
+        sourceType = value;
+    }
+
+    public Integer getSourceId() {
+        return sourceId;
+    }
+
+    public void setSourceId(Integer value) {
+        sourceId = value;
+    }
+
     @Column(name = "answer_version", nullable = false)
     private Integer answerVersion;
+
     @Column(nullable = false, length = 30)
     private String skill;
+
     @Column(name = "task_type", nullable = false, length = 30)
     private String taskType;
+
     @Lob
     @Column(name = "task_content", nullable = false, columnDefinition = "NVARCHAR(MAX)")
     private String taskContent;
+
     @Lob
     @Column(name = "locked_content", nullable = false, columnDefinition = "NVARCHAR(MAX)")
     private String lockedContent;
+
     @Column(name = "rubric_version", nullable = false, length = 100)
     private String rubricVersion;
+
     @Column(name = "policy_version", nullable = false, length = 100)
     private String policyVersion;
+
     @Column(name = "max_score", nullable = false, precision = 5, scale = 2)
     private BigDecimal maxScore;
+
     @Lob
     @Column(columnDefinition = "NVARCHAR(MAX)")
     private String transcript;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 30)
     private AiJobState state;
+
     @Column(name = "retry_count", nullable = false)
     private int retryCount;
+
     @Column(name = "last_error", length = 1000)
     private String lastError;
+
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
+
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
+
     @Column(name = "next_retry_at")
     private LocalDateTime nextRetryAt;
+
     @Column(name = "processing_token", length = 64)
     private String processingToken;
 

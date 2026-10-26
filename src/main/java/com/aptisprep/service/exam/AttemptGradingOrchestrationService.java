@@ -13,8 +13,9 @@ import com.aptisprep.service.storage.StorageService;
 import java.math.BigDecimal;
 import java.util.Objects;
 import java.util.stream.Collectors;
-import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;
 
@@ -27,14 +28,23 @@ public class AttemptGradingOrchestrationService {
     private final StorageService storage;
     private final AttemptOutboxService outbox;
 
-    public AttemptGradingOrchestrationService(AiProperties properties, AiAssessmentContract ai,
-            AttemptFinalizationService finalization, SpeakingGradingService speaking, StorageService storage, AttemptOutboxService outbox) {
-        this.properties = properties; this.ai = ai; this.finalization = finalization;
-        this.speaking = speaking; this.storage = storage;
+    public AttemptGradingOrchestrationService(
+            AiProperties properties,
+            AiAssessmentContract ai,
+            AttemptFinalizationService finalization,
+            SpeakingGradingService speaking,
+            StorageService storage,
+            AttemptOutboxService outbox) {
+        this.properties = properties;
+        this.ai = ai;
+        this.finalization = finalization;
+        this.speaking = speaking;
+        this.storage = storage;
         this.outbox = outbox;
     }
 
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
     public void onSubmitted(AttemptSubmittedEvent event) {
         if (!properties.isEnabled()) {
             finalization.markSubjectiveUnavailable(event, "AI_DISABLED");
@@ -51,7 +61,8 @@ public class AttemptGradingOrchestrationService {
             return;
         }
         for (LockedAnswer answer : locked.answers()) {
-            if (!"WRITING_TEXT".equals(answer.questionType()) && !"SPEAKING_AUDIO".equals(answer.questionType())) continue;
+            if (!"WRITING_TEXT".equals(answer.questionType())
+                    && !"SPEAKING_AUDIO".equals(answer.questionType())) continue;
             if (!GradingContextFormatter.hasSubmission(answer)) continue;
             String submission = GradingContextFormatter.submission(answer);
             String taskType = "WRITING_TEXT".equals(answer.questionType()) ? "WRITING" : "SPEAKING";
@@ -59,11 +70,28 @@ public class AttemptGradingOrchestrationService {
             if ("SPEAKING".equals(taskType) && (transcript == null || transcript.isBlank())) {
                 transcript = transcribeSubmission(answer);
             }
-            String key = "attempt:" + event.attemptId() + ":answer:" + answer.answerId() + ":v" + locked.answerVersion();
-            AiAssessmentContract.AssessmentRequest request = new AiAssessmentContract.AssessmentRequest(key,
-                    event.userId(), event.attemptId(), answer.answerId(), locked.answerVersion(), answer.skill(), taskType,
-                    GradingContextFormatter.task(answer), submission, locked.rubricVersion(), locked.policyVersion(), BigDecimal.valueOf(50),
-                    transcript);
+            String key =
+                    "attempt:"
+                            + event.attemptId()
+                            + ":answer:"
+                            + answer.answerId()
+                            + ":v"
+                            + locked.answerVersion();
+            AiAssessmentContract.AssessmentRequest request =
+                    new AiAssessmentContract.AssessmentRequest(
+                            key,
+                            event.userId(),
+                            event.attemptId(),
+                            answer.answerId(),
+                            locked.answerVersion(),
+                            answer.skill(),
+                            taskType,
+                            GradingContextFormatter.task(answer),
+                            submission,
+                            locked.rubricVersion(),
+                            locked.policyVersion(),
+                            BigDecimal.valueOf(50),
+                            transcript);
             ai.request(request);
             ai.process(key);
         }
@@ -72,12 +100,16 @@ public class AttemptGradingOrchestrationService {
     }
 
     private String transcribeSubmission(LockedAnswer answer) {
-        if (answer.items() == null || answer.items().isEmpty()) return transcribePath(answer.lockedContent());
+        if (answer.items() == null || answer.items().isEmpty())
+            return transcribePath(answer.lockedContent());
         return answer.items().stream()
-                .map(item -> {
-                    String transcript = transcribePath(item.lockedContent());
-                    return transcript == null || transcript.isBlank() ? null : "Mục " + item.position() + ":\n" + transcript;
-                })
+                .map(
+                        item -> {
+                            String transcript = transcribePath(item.lockedContent());
+                            return transcript == null || transcript.isBlank()
+                                    ? null
+                                    : "Mục " + item.position() + ":\n" + transcript;
+                        })
                 .filter(Objects::nonNull)
                 .collect(Collectors.joining("\n\n"));
     }
@@ -92,6 +124,7 @@ public class AttemptGradingOrchestrationService {
     }
 
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
     public void onAssessmentCompleted(AiAssessmentCompletedEvent event) {
         finalization.applyAiAssessment(event);
         outbox.markDelivered(event);

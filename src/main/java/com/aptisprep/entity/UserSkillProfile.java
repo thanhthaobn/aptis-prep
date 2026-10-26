@@ -1,36 +1,51 @@
 package com.aptisprep.entity;
 
 import jakarta.persistence.*;
-
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "user_skill_profiles", uniqueConstraints = @UniqueConstraint(name = "uq_skill_profiles_user_skill", columnNames = {"user_id", "skill"}))
+@Table(
+        name = "user_skill_profiles",
+        uniqueConstraints =
+                @UniqueConstraint(
+                        name = "uq_skill_profiles_user_skill",
+                        columnNames = {"user_id", "skill"}))
 public class UserSkillProfile {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
+
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
+
     @Column(nullable = false, length = 30)
     private String skill;
+
     @Column(name = "current_level", nullable = false, length = 10)
     private String currentLevel;
+
     @Column(name = "source_attempt_id")
     private Integer sourceAttemptId;
+
     @Column(name = "checkpoint_floor_level", length = 10)
     private String checkpointFloorLevel;
+
     @Column(name = "checkpoint_source_attempt_id")
     private Integer checkpointSourceAttemptId;
+
     @Column(name = "checkpoint_last_attempt_id")
     private Integer checkpointLastAttemptId;
+
     @Column(name = "checkpoint_last_submitted_at")
     private LocalDateTime checkpointLastSubmittedAt;
+
     @Column(name = "placement_level", length = 10)
     private String placementLevel;
+
     @Column(name = "placement_submitted_at")
     private LocalDateTime placementSubmittedAt;
+
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 

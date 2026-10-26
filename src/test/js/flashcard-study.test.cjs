@@ -3,18 +3,29 @@ const assert = require('node:assert/strict');
 const { readFileSync } = require('node:fs');
 const { resolve } = require('node:path');
 const { runInNewContext } = require('node:vm');
-const source = readFileSync(resolve(__dirname, '../../main/resources/static/js/flashcard-study.js'), 'utf8');
+const source = readFileSync(
+  resolve(__dirname, '../../main/resources/static/js/flashcard-study.js'),
+  'utf8',
+);
 
 function study(responses) {
-  const elements = new Map(), requests = [];
+  const elements = new Map(),
+    requests = [];
   function element(id) {
-    if (!elements.has(id)) elements.set(id, {
-      textContent: '', checked: false, events: {},
-      classList: { toggle() {}, add() {}, remove() {} },
-      setAttribute() {}, replaceChildren() {}, append() {},
-      querySelector: () => null,
-      addEventListener(name, callback) { this.events[name] = callback; }
-    });
+    if (!elements.has(id))
+      elements.set(id, {
+        textContent: '',
+        checked: false,
+        events: {},
+        classList: { toggle() {}, add() {}, remove() {} },
+        setAttribute() {},
+        replaceChildren() {},
+        append() {},
+        querySelector: () => null,
+        addEventListener(name, callback) {
+          this.events[name] = callback;
+        },
+      });
     return elements.get(id);
   }
   let nextKey = 0;
@@ -23,18 +34,26 @@ function study(responses) {
     crypto: { randomUUID: () => `review-action-${++nextKey}` },
     document: {
       querySelector: () => ({ dataset: { setId: '1' } }),
-      querySelectorAll: () => [{ dataset: { id: '7', state: 'LEARNING' },
-        querySelector: selector => ({ textContent: selector === '.term' ? 'hello' : 'xin chào' }) }],
-      getElementById: element, createElement: () => element(Symbol()), addEventListener() {}
+      querySelectorAll: () => [
+        {
+          dataset: { id: '7', state: 'LEARNING' },
+          querySelector: (selector) => ({
+            textContent: selector === '.term' ? 'hello' : 'xin chào',
+          }),
+        },
+      ],
+      getElementById: element,
+      createElement: () => element(Symbol()),
+      addEventListener() {},
     },
     fetch: async (url, request) => {
       requests.push({ key: request.body.get('reviewKey'), state: request.body.get('state') });
       const result = responses.shift();
       if (result instanceof Error) throw result;
       return { ok: result, redirected: false };
-    }
+    },
   });
-  return { requests, click: id => element(id).events.click() };
+  return { requests, click: (id) => element(id).events.click() };
 }
 
 test('network retry keeps its review key and a new round uses a new key', async () => {

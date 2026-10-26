@@ -1,14 +1,14 @@
 package com.aptisprep.service.learning;
 
+import com.aptisprep.entity.LessonProgress;
+import com.aptisprep.enums.CefrLevel;
 import com.aptisprep.repository.LessonProgressRepository;
 import com.aptisprep.service.contract.AccountAccessContract;
 import com.aptisprep.service.contract.IntegrationModels.*;
-
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
 import java.time.LocalDateTime;
 import java.util.*;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 /** Read-only dashboard selection; never creates progress or changes the learner's goal. */
 @Service
@@ -100,8 +100,7 @@ public class LessonRecommendationService {
                 reason);
     }
 
-    private LocalDateTime lastVisit(
-            List<com.aptisprep.entity.LessonProgress> history, String skill) {
+    private LocalDateTime lastVisit(List<LessonProgress> history, String skill) {
         return history.stream()
                 .filter(p -> skill.equals(p.getLesson().getSkill()))
                 .map(p -> p.getLastAccessedAt())
@@ -132,8 +131,7 @@ public class LessonRecommendationService {
     }
 
     private static int rank(String value) {
-        return List.of("A1", "A2", "B1", "B2", "C1", "C2")
-                .indexOf(value == null ? "" : value.toUpperCase(Locale.ROOT));
+        return CefrLevel.codes().indexOf(value == null ? "" : value.toUpperCase(Locale.ROOT));
     }
 
     private static String key(String value) {

@@ -1,7 +1,6 @@
 package com.aptisprep.entity;
 
 import jakarta.persistence.*;
-
 import java.time.LocalDateTime;
 
 /** Immutable learner submission; autosave remains in lesson_responses. */

@@ -2,23 +2,26 @@ package com.aptisprep.service.learning;
 
 import com.aptisprep.dto.form.LessonForm;
 import com.aptisprep.entity.*;
+import com.aptisprep.enums.CefrLevel;
+import com.aptisprep.enums.Skill;
 import com.aptisprep.enums.UserStatus;
 import com.aptisprep.exception.*;
 import com.aptisprep.repository.*;
 import com.aptisprep.service.storage.StorageService;
-
+import java.io.IOException;
+import java.time.LocalDateTime;
+import java.util.*;
+import java.util.ArrayList;
+import java.util.stream.IntStream;
+import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.time.LocalDateTime;
-import java.util.*;
-
 @Service
 public class LessonService {
-    public static final List<String> SKILLS =
-            List.of("Grammar & Vocabulary", "Reading", "Listening", "Writing", "Speaking");
-    public static final List<String> LEVELS = List.of("A1", "A2", "B1", "B2", "C1");
+    public static final List<String> SKILLS = Skill.labels();
+    public static final List<String> LEVELS = CefrLevel.curriculumLevels();
     public static final List<String> STATUSES = List.of("DRAFT", "PUBLISHED", "ARCHIVED");
     private final LessonRepository lessons;
     private final LessonProgressRepository progress;
@@ -141,9 +144,8 @@ public class LessonService {
     public LessonForm form(Integer id) {
         var l = require(id);
         var f = new LessonForm();
-        if (l.getMaterial() != null)
-            org.springframework.beans.BeanUtils.copyProperties(l.getMaterial(), f);
-        f.setChecks(new java.util.ArrayList<>(teaching.editorQuestions(id)));
+        if (l.getMaterial() != null) BeanUtils.copyProperties(l.getMaterial(), f);
+        f.setChecks(new ArrayList<>(teaching.editorQuestions(id)));
         f.setTitle(l.getTitle());
         f.setDescription(l.getDescription());
         f.setSkill(l.getSkill());
@@ -278,7 +280,7 @@ public class LessonService {
                                                 && x.getCefrLevel().equals(current.getCefrLevel()))
                         .toList();
         int index =
-                java.util.stream.IntStream.range(0, branch.size())
+                IntStream.range(0, branch.size())
                         .filter(i -> branch.get(i).getId().equals(id))
                         .findFirst()
                         .orElseThrow();
@@ -363,7 +365,7 @@ public class LessonService {
                                                 && x.getCefrLevel().equals(lesson.getCefrLevel()))
                         .toList();
         int i =
-                java.util.stream.IntStream.range(0, all.size())
+                IntStream.range(0, all.size())
                         .filter(x -> all.get(x).getId().equals(lesson.getId()))
                         .findFirst()
                         .orElse(-1);
@@ -443,7 +445,7 @@ public class LessonService {
                             && (head[3] & 255) == 0xa3;
             if (name.endsWith(".mp4") ? !mp4 : !webm)
                 throw new BusinessRuleException("Nội dung tệp video không đúng định dạng");
-        } catch (java.io.IOException ex) {
+        } catch (IOException ex) {
             throw new BusinessRuleException("Không đọc được video tải lên");
         }
     }

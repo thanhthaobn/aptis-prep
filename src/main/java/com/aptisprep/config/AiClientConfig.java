@@ -13,7 +13,9 @@ public class AiClientConfig {
         var factory = new SimpleClientHttpRequestFactory();
         factory.setConnectTimeout(Duration.ofSeconds(10));
         factory.setReadTimeout(Duration.ofSeconds(90));
-        return RestClient.builder().baseUrl("https://generativelanguage.googleapis.com/v1beta")
-                .requestFactory(factory).build();
+        return RestClient.builder()
+                .baseUrl("https://generativelanguage.googleapis.com/v1beta")
+                .requestFactory(factory)
+                .build();
     }
 }

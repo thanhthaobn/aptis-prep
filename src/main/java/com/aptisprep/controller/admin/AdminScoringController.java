@@ -5,10 +5,9 @@ import com.aptisprep.exception.BusinessRuleException;
 import com.aptisprep.service.scoring.ScoringAdminService;
 import com.aptisprep.service.scoring.ScoringViews;
 import jakarta.validation.Valid;
-
 import java.security.Principal;
 import java.util.List;
-
+import java.util.Locale;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -43,7 +42,7 @@ public class AdminScoringController {
         return "admin/settings/certificate";
     }
 
-    @GetMapping("/admin/certificates/{id:\\d+}")
+    @GetMapping("/admin/certificates/{id}")
     public String certificate(@PathVariable int id, Model model) {
         ScoringViews.CertificateView value = scoring.certificate(id);
         model.addAttribute("certificate", value);
@@ -53,7 +52,7 @@ public class AdminScoringController {
         return "admin/settings/certificate";
     }
 
-    @GetMapping("/admin/certificates/{id:\\d+}/edit")
+    @GetMapping("/admin/certificates/{id}/edit")
     public String editCertificate(@PathVariable int id, Model model) {
         certificate(id, model);
         model.addAttribute("readOnly", false);
@@ -61,7 +60,12 @@ public class AdminScoringController {
     }
 
     @PostMapping("/admin/certificates")
-    public String saveCertificate(Principal principal, @Valid @ModelAttribute("certificateForm") CertificateForm form, BindingResult result, Model model, RedirectAttributes redirect) {
+    public String saveCertificate(
+            Principal principal,
+            @Valid @ModelAttribute("certificateForm") CertificateForm form,
+            BindingResult result,
+            Model model,
+            RedirectAttributes redirect) {
         if (result.hasErrors()) {
             model.addAttribute("editing", false);
             model.addAttribute("readOnly", false);
@@ -80,7 +84,13 @@ public class AdminScoringController {
     }
 
     @PostMapping("/admin/certificates/{id}")
-    public String updateCertificate(@PathVariable int id, Principal principal, @Valid @ModelAttribute("certificateForm") CertificateForm form, BindingResult result, Model model, RedirectAttributes redirect) {
+    public String updateCertificate(
+            @PathVariable int id,
+            Principal principal,
+            @Valid @ModelAttribute("certificateForm") CertificateForm form,
+            BindingResult result,
+            Model model,
+            RedirectAttributes redirect) {
         if (result.hasErrors()) {
             model.addAttribute("certificate", scoring.certificate(id));
             model.addAttribute("editing", true);
@@ -101,7 +111,8 @@ public class AdminScoringController {
     }
 
     @PostMapping("/admin/certificates/{id}/disable")
-    public String disableCertificate(@PathVariable int id, Principal principal, RedirectAttributes redirect) {
+    public String disableCertificate(
+            @PathVariable int id, Principal principal, RedirectAttributes redirect) {
         scoring.disableCertificate(principal.getName(), id);
         redirect.addFlashAttribute("successMessage", "Đã ngừng sử dụng chứng chỉ.");
         return "redirect:/admin/certificates";
@@ -119,18 +130,31 @@ public class AdminScoringController {
         return "admin/settings/scheme";
     }
 
-    @GetMapping("/admin/scoring-schemes/{id:\\d+}")
-    public String scheme(@PathVariable int id, @RequestParam(defaultValue = "Reading") String skill, @RequestParam(required = false) Integer bandId, Model model) {
+    @GetMapping("/admin/scoring-schemes/{id}")
+    public String scheme(
+            @PathVariable int id,
+            @RequestParam(defaultValue = "Reading") String skill,
+            @RequestParam(required = false) Integer bandId,
+            Model model) {
         return loadScheme(id, skill, bandId, true, model);
     }
 
-    @GetMapping("/admin/scoring-schemes/{id:\\d+}/edit")
-    public String editScheme(@PathVariable int id, @RequestParam(defaultValue = "Reading") String skill, @RequestParam(required = false) Integer bandId, Model model) {
+    @GetMapping("/admin/scoring-schemes/{id}/edit")
+    public String editScheme(
+            @PathVariable int id,
+            @RequestParam(defaultValue = "Reading") String skill,
+            @RequestParam(required = false) Integer bandId,
+            Model model) {
         return loadScheme(id, skill, bandId, false, model);
     }
 
     @PostMapping("/admin/scoring-schemes")
-    public String saveScheme(Principal principal, @Valid @ModelAttribute("schemeForm") ScoringSchemeForm form, BindingResult result, Model model, RedirectAttributes redirect) {
+    public String saveScheme(
+            Principal principal,
+            @Valid @ModelAttribute("schemeForm") ScoringSchemeForm form,
+            BindingResult result,
+            Model model,
+            RedirectAttributes redirect) {
         if (result.hasErrors()) {
             schemeOptions(model);
             model.addAttribute("editing", false);
@@ -153,13 +177,23 @@ public class AdminScoringController {
     }
 
     @PostMapping("/admin/scoring-schemes/{id}")
-    public String updateScheme(@PathVariable int id, Principal principal, @Valid @ModelAttribute("schemeForm") ScoringSchemeForm form, BindingResult result, Model model, RedirectAttributes redirect) {
+    public String updateScheme(
+            @PathVariable int id,
+            Principal principal,
+            @Valid @ModelAttribute("schemeForm") ScoringSchemeForm form,
+            BindingResult result,
+            Model model,
+            RedirectAttributes redirect) {
         if (result.hasErrors()) {
             return loadScheme(id, "Reading", null, false, model);
         }
         try {
             Integer nextId = scoring.saveScheme(principal.getName(), id, form);
-            redirect.addFlashAttribute("successMessage", nextId.equals(id) ? "Đã cập nhật bộ chấm điểm." : "Đã tạo phiên bản mới để bảo toàn lịch sử.");
+            redirect.addFlashAttribute(
+                    "successMessage",
+                    nextId.equals(id)
+                            ? "Đã cập nhật bộ chấm điểm."
+                            : "Đã tạo phiên bản mới để bảo toàn lịch sử.");
             return "redirect:/admin/scoring-schemes/" + nextId;
         } catch (BusinessRuleException exception) {
             result.reject("scheme.invalid", exception.getMessage());
@@ -168,14 +202,22 @@ public class AdminScoringController {
     }
 
     @PostMapping("/admin/scoring-schemes/{id}/disable")
-    public String disableScheme(@PathVariable int id, Principal principal, RedirectAttributes redirect) {
+    public String disableScheme(
+            @PathVariable int id, Principal principal, RedirectAttributes redirect) {
         scoring.disableScheme(principal.getName(), id);
         redirect.addFlashAttribute("successMessage", "Đã ngừng sử dụng bộ chấm điểm.");
         return "redirect:/admin/certificates";
     }
 
     @PostMapping("/admin/scoring-schemes/{schemeId}/bands")
-    public String saveBand(@PathVariable int schemeId, Principal principal, @Valid @ModelAttribute("bandForm") ScoreBandForm form, BindingResult result, @RequestParam(defaultValue = "Reading") String skill, Model model, RedirectAttributes redirect) {
+    public String saveBand(
+            @PathVariable int schemeId,
+            Principal principal,
+            @Valid @ModelAttribute("bandForm") ScoreBandForm form,
+            BindingResult result,
+            @RequestParam(defaultValue = "Reading") String skill,
+            Model model,
+            RedirectAttributes redirect) {
         if (result.hasErrors()) {
             return loadScheme(schemeId, skill, form.getId(), false, model);
         }
@@ -190,30 +232,38 @@ public class AdminScoringController {
     }
 
     @PostMapping("/admin/scoring-schemes/{schemeId}/bands/{bandId}/delete")
-    public String deleteBand(@PathVariable int schemeId, @PathVariable int bandId, Principal principal, @RequestParam(defaultValue = "Reading") String skill, RedirectAttributes redirect) {
+    public String deleteBand(
+            @PathVariable int schemeId,
+            @PathVariable int bandId,
+            Principal principal,
+            @RequestParam(defaultValue = "Reading") String skill,
+            RedirectAttributes redirect) {
         scoring.deleteBand(principal.getName(), schemeId, bandId);
         redirect.addFlashAttribute("successMessage", "Đã xóa khoảng điểm.");
         return "redirect:/admin/scoring-schemes/" + schemeId + "?skill=" + skill;
     }
 
     private String loadScheme(int id, String skill, Integer bandId, boolean readOnly, Model model) {
-        skill = switch (skill.toUpperCase(java.util.Locale.ROOT).replaceAll("[^A-Z0-9]+", "_")) {
-            case "GRAMMAR_VOCABULARY" -> "Grammar & Vocabulary";
-            case "READING" -> "Reading";
-            case "LISTENING" -> "Listening";
-            case "WRITING" -> "Writing";
-            case "SPEAKING" -> "Speaking";
-            default -> throw new BusinessRuleException("Kỹ năng không hợp lệ");
-        };
+        skill =
+                switch (skill.toUpperCase(Locale.ROOT).replaceAll("[^A-Z0-9]+", "_")) {
+                    case "GRAMMAR_VOCABULARY" -> "Grammar & Vocabulary";
+                    case "READING" -> "Reading";
+                    case "LISTENING" -> "Listening";
+                    case "WRITING" -> "Writing";
+                    case "SPEAKING" -> "Speaking";
+                    default -> throw new BusinessRuleException("Kỹ năng không hợp lệ");
+                };
         ScoringViews.SchemeView value = scoring.scheme(id);
         schemeOptions(model);
         model.addAttribute("scheme", value);
-        if (!model.containsAttribute("schemeForm")) model.addAttribute("schemeForm", schemeForm(value));
+        if (!model.containsAttribute("schemeForm"))
+            model.addAttribute("schemeForm", schemeForm(value));
         model.addAttribute("editing", true);
         model.addAttribute("readOnly", readOnly);
         model.addAttribute("selectedSkill", skill);
         model.addAttribute("bands", scoring.bandViews(id, skill));
-        if (!model.containsAttribute("scaleRuleForm")) model.addAttribute("scaleRuleForm", scoring.scaleRule(id, skill));
+        if (!model.containsAttribute("scaleRuleForm"))
+            model.addAttribute("scaleRuleForm", scoring.scaleRule(id, skill));
         if (!model.containsAttribute("bandForm")) {
             ScoreBandForm bandForm = new ScoreBandForm();
             if (bandId != null) {
@@ -230,22 +280,31 @@ public class AdminScoringController {
     }
 
     @PostMapping("/admin/scoring-schemes/{schemeId}/scale-rule")
-    public String saveScaleRule(@PathVariable int schemeId, @RequestParam String skill,
-            Principal principal, @Valid @ModelAttribute("scaleRuleForm") ScoringScaleRuleForm form,
-            BindingResult result, Model model, RedirectAttributes redirect) {
+    public String saveScaleRule(
+            @PathVariable int schemeId,
+            @RequestParam String skill,
+            Principal principal,
+            @Valid @ModelAttribute("scaleRuleForm") ScoringScaleRuleForm form,
+            BindingResult result,
+            Model model,
+            RedirectAttributes redirect) {
         if (!result.hasErrors()) {
             try {
                 scoring.saveScaleRule(principal.getName(), schemeId, skill, form);
                 redirect.addFlashAttribute("successMessage", "Đã lưu quy tắc quy đổi điểm.");
                 return "redirect:/admin/scoring-schemes/" + schemeId + "/edit?skill=" + skill;
-            } catch (BusinessRuleException exception) { result.reject("scale.invalid", exception.getMessage()); }
+            } catch (BusinessRuleException exception) {
+                result.reject("scale.invalid", exception.getMessage());
+            }
         }
         return loadScheme(schemeId, skill, null, false, model);
     }
 
     private void schemeOptions(Model model) {
         model.addAttribute("certificates", scoring.certificateViews());
-        model.addAttribute("skills", List.of("Grammar & Vocabulary", "Reading", "Listening", "Writing", "Speaking"));
+        model.addAttribute(
+                "skills",
+                List.of("Grammar & Vocabulary", "Reading", "Listening", "Writing", "Speaking"));
     }
 
     private CertificateForm certificateForm(ScoringViews.CertificateView value) {

@@ -8,10 +8,27 @@ public class AiProperties {
     private String apiKey = "";
     private String gradingModel = "gemini-3.5-flash-lite";
 
-    public boolean isEnabled() { return enabled; }
-    public void setEnabled(boolean enabled) { this.enabled = enabled; }
-    public String getApiKey() { return apiKey; }
-    public void setApiKey(String apiKey) { this.apiKey = apiKey; }
-    public String getGradingModel() { return gradingModel; }
-    public void setGradingModel(String gradingModel) { this.gradingModel = gradingModel; }
+    public boolean isEnabled() {
+        return enabled;
+    }
+
+    public void setEnabled(boolean enabled) {
+        this.enabled = enabled;
+    }
+
+    public String getApiKey() {
+        return apiKey;
+    }
+
+    public void setApiKey(String apiKey) {
+        this.apiKey = apiKey;
+    }
+
+    public String getGradingModel() {
+        return gradingModel;
+    }
+
+    public void setGradingModel(String gradingModel) {
+        this.gradingModel = gradingModel;
+    }
 }

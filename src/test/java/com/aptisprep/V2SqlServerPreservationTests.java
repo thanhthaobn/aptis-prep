@@ -6,29 +6,26 @@ import com.aptisprep.dto.form.LessonForm;
 import com.aptisprep.exception.BusinessRuleException;
 import com.aptisprep.repository.*;
 import com.aptisprep.service.learning.LessonTeachingService;
-
-import org.flywaydb.core.Flyway;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
-
 import java.nio.file.*;
 import java.sql.*;
 import java.util.*;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 
-/** Uses a generated, isolated database. Never migrates or cleans the configured application DB. */
+/** Installs current DDL in an isolated database; never changes the application database. */
 @EnabledIfEnvironmentVariable(named = "APTIS_SQLSERVER_ISOLATED_TESTS", matches = "true")
 class V2SqlServerPreservationTests {
     @Test
-    void upgradeRetainsAllExistingRowsAndLegacyContent() throws Exception {
-        Properties local = new Properties();
-        try (var input =
-                Files.newInputStream(Path.of("src/main/resources/application-dev.properties"))) {
-            local.load(input);
-        }
-        String configured = local.getProperty("spring.datasource.url");
+    void currentSchemaCreatesAnEmptyDatabaseAndRefusesToOverwriteExistingData() throws Exception {
+        String configured =
+                System.getenv()
+                        .getOrDefault(
+                                "DB_URL",
+                                "jdbc:sqlserver://localhost:1433;databaseName=aptisprep_db;encrypt=true;trustServerCertificate=true");
         String server = configured.replaceAll("(?i);databaseName=[^;]*", "");
-        String login = local.getProperty("spring.datasource.username"),
-                password = local.getProperty("spring.datasource.password");
+        String login = System.getenv().getOrDefault("DB_USERNAME", "sa");
+        String password = System.getenv("DB_PASSWORD");
+        assertNotNull(password, "Set DB_PASSWORD for isolated SQL Server tests");
         String name = "codex_v2_test_" + UUID.randomUUID().toString().replace("-", "");
         assertTrue(name.matches("codex_v2_test_[a-f0-9]{32}"));
         try (var master =
@@ -36,163 +33,116 @@ class V2SqlServerPreservationTests {
             master.createStatement().execute("CREATE DATABASE [" + name + "]");
             try {
                 String url = server + ";databaseName=" + name;
-                Flyway.configure()
-                        .dataSource(url, login, password)
-                        .cleanDisabled(true)
-                        .target("37")
-                        .load()
-                        .migrate();
-                Map<String, Snapshot> before;
-                int answerId, jobId;
                 try (var connection = DriverManager.getConnection(url, login, password);
                         var sql = connection.createStatement()) {
+                    installCurrentSchema(connection);
+                    verifyDocumentedSchema(connection);
+                    try (var tables =
+                            sql.executeQuery(
+                                    "SELECT COUNT(*) FROM sys.tables WHERE is_ms_shipped = 0")) {
+                        assertTrue(tables.next());
+                        assertEquals(39, tables.getInt(1));
+                    }
+                    try (var rows = sql.executeQuery("SELECT COUNT(*) FROM users")) {
+                        assertTrue(rows.next());
+                        assertEquals(0, rows.getInt(1), "No demo accounts");
+                    }
+                    try (var rows = sql.executeQuery("SELECT COUNT(*) FROM mock_exams")) {
+                        assertTrue(rows.next());
+                        assertEquals(0, rows.getInt(1), "No demo exams");
+                    }
                     int user =
                             insert(
                                     sql,
                                     "INSERT INTO users(full_name,email,password_hash,role,status)"
-                                        + " OUTPUT INSERTED.id VALUES(N'Preserved"
-                                        + " learner','preserved@test.local','unused','STUDENT','ACTIVE')");
-                    sql.executeUpdate(
-                            "INSERT INTO lesson_engagement(user_id,lesson_id,audio_played_at)"
-                                    + " SELECT TOP 1 "
-                                    + user
-                                    + ",id,SYSDATETIME() FROM lessons ORDER BY id");
+                                            + " OUTPUT INSERTED.id VALUES(N'Preserved"
+                                            + " learner','preserved@test.local','unused','STUDENT','ACTIVE')");
+                    int certificate =
+                            insert(
+                                    sql,
+                                    "INSERT INTO certificates(name,code,status) OUTPUT INSERTED.id"
+                                            + " VALUES(N'Test certificate','SQL-TEST','ACTIVE')");
+                    int lesson =
+                            insert(
+                                    sql,
+                                    "INSERT INTO"
+                                            + " lessons(title,skill,cefr_level,display_order,status)"
+                                            + " OUTPUT INSERTED.id VALUES(N'Preserved"
+                                            + " lesson','Reading','A1',1,'PUBLISHED')");
                     int exam =
                             insert(
                                     sql,
                                     "INSERT INTO mock_exams(certificate_id,title,exam_type,status)"
-                                            + " OUTPUT INSERTED.id SELECT TOP 1 id,N'Preserved"
-                                            + " exam','PRACTICE','DRAFT' FROM certificates ORDER BY"
-                                            + " id");
+                                            + " OUTPUT INSERTED.id VALUES("
+                                            + certificate
+                                            + ",N'Preserved exam','PRACTICE','DRAFT')");
                     int question =
                             insert(
                                     sql,
                                     "INSERT INTO questions(content,question_type,skill,status)"
                                             + " OUTPUT INSERTED.id VALUES(N'Preserved"
                                             + " writing','WRITING_TEXT','WRITING','DRAFT')");
-                    int item =
-                            insert(
-                                    sql,
-                                    "INSERT INTO question_items(question_id,content,position)"
-                                            + " OUTPUT INSERTED.id VALUES("
-                                            + question
-                                            + ",N'Preserved item',1)");
                     int attempt =
                             insert(
                                     sql,
                                     "INSERT INTO"
-                                        + " exam_attempts(user_id,mock_exam_id,status,started_at)"
-                                        + " OUTPUT INSERTED.id VALUES("
+                                            + " exam_attempts(user_id,mock_exam_id,status,started_at)"
+                                            + " OUTPUT INSERTED.id VALUES("
                                             + user
                                             + ","
                                             + exam
                                             + ",'IN_PROGRESS',SYSDATETIME())");
-                    answerId =
-                            insert(
-                                    sql,
-                                    "INSERT INTO user_answers(exam_attempt_id,question_id,status)"
-                                            + " OUTPUT INSERTED.id VALUES("
-                                            + attempt
-                                            + ","
-                                            + question
-                                            + ",'ANSWERED')");
-                    sql.execute(
-                            "INSERT INTO"
-                                + " user_answer_details(user_answer_id,question_item_id,answer_text,audio_path)"
-                                + " VALUES("
-                                    + answerId
-                                    + ","
-                                    + item
-                                    + ",N'Original saved response',N'legacy/recording.wav')");
-                    jobId =
-                            insert(
-                                    sql,
-                                    "INSERT INTO"
-                                        + " ai_assessment_jobs(assessment_key,user_id,attempt_id,answer_id,answer_version,skill,task_type,task_content,locked_content,rubric_version,policy_version,max_score,state)"
-                                        + " OUTPUT INSERTED.id VALUES('lesson-1-submission-42',"
-                                            + user
-                                            + ",99,99,42,'WRITING','WRITING',N'Prompt',N'Original"
-                                            + " answer','lesson-v1','learning-feedback-v1',50,'COMPLETED')");
-                    // Explicit A/B/C fixtures ensure widening the unnamed CHECK preserves each key.
-                    for (int correct = 0; correct < 3; correct++) {
-                        sql.executeUpdate(sixOptionCheck(correct));
-                    }
-                    before = snapshot(connection);
-                }
-                // Also exercise an installation that already applied Lesson V039 before AI V040.
-                Flyway.configure()
-                        .dataSource(url, login, password)
-                        .cleanDisabled(true)
-                        .target("39")
-                        .load()
-                        .migrate();
-                Map<String, Snapshot> beforeAiMigration;
-                try (var connection = DriverManager.getConnection(url, login, password);
-                        var sql = connection.createStatement()) {
                     sql.executeUpdate(
-                            "UPDATE lesson_engagement SET playback_token_hash = 'retained-token', "
-                                    + "playback_sequence = 7, playback_ranges_json = '[[0,45]]' "
-                                    + "WHERE audio_played_at IS NOT NULL");
-                    beforeAiMigration = snapshot(connection);
-                }
-                var flyway =
-                        Flyway.configure()
-                                .dataSource(url, login, password)
-                                .cleanDisabled(true)
-                                .load();
-                flyway.migrate();
-                assertTrue(flyway.validateWithResult().validationSuccessful);
-                validateEntityMappings(url, login, password);
-                try (var connection = DriverManager.getConnection(url, login, password);
-                        var sql = connection.createStatement()) {
-                    verifyDocumentedSchema(connection);
-                    for (var entry : before.entrySet()) {
-                        var after = read(connection, entry.getKey(), entry.getValue().columns());
-                        assertEquals(
-                                entry.getValue().json(),
-                                after.json(),
-                                "Pre-existing data changed in " + entry.getKey());
-                    }
-                    for (var entry : beforeAiMigration.entrySet()) {
-                        assertEquals(
-                                entry.getValue().json(),
-                                read(connection, entry.getKey(), entry.getValue().columns()).json(),
-                                "V040 changed pre-existing data in " + entry.getKey());
-                    }
-                    try (var rows =
-                            sql.executeQuery(
-                                    "SELECT text_answer,audio_manifest FROM user_answers WHERE id="
-                                            + answerId)) {
-                        assertTrue(rows.next());
-                        assertEquals("Original saved response", rows.getString(1));
-                        assertEquals(
-                                "legacy/recording.wav",
-                                tools.jackson.databind.json.JsonMapper.builder()
-                                        .build()
-                                        .readTree(rows.getString(2))
-                                        .get(0)
-                                        .get("path")
-                                        .asText());
-                    }
-                    try (var rows =
-                            sql.executeQuery(
-                                    "SELECT source_type,source_id,attempt_id,answer_id FROM"
-                                            + " ai_assessment_jobs WHERE id="
-                                            + jobId)) {
-                        assertTrue(rows.next());
-                        assertEquals("LESSON_SUBMISSION", rows.getString(1));
-                        assertEquals(42, rows.getInt(2));
-                        assertEquals(99, rows.getInt(3));
-                        assertEquals(99, rows.getInt(4));
-                    }
-                    for (int correct = 3; correct <= 5; correct++)
+                            "INSERT INTO"
+                                    + " user_answers(exam_attempt_id,question_id,status,text_answer)"
+                                    + " VALUES("
+                                    + attempt
+                                    + ","
+                                    + question
+                                    + ",'ANSWERED',N'Original response')");
+                    sql.executeUpdate(
+                            "INSERT INTO"
+                                    + " lesson_engagement(user_id,lesson_id,playback_sequence,playback_ranges_json)"
+                                    + " VALUES("
+                                    + user
+                                    + ","
+                                    + lesson
+                                    + ",7,'[[0,45]]')");
+                    for (int correct = 0; correct <= 5; correct++)
                         assertEquals(1, sql.executeUpdate(sixOptionCheck(correct)));
                     assertThrows(SQLException.class, () -> sql.executeUpdate(sixOptionCheck(6)));
                     assertThrows(SQLException.class, () -> sql.executeUpdate(sixOptionCheck(-1)));
+                    Map<String, Snapshot> before = snapshot(connection);
+                    var refused =
+                            assertThrows(
+                                    SQLException.class, () -> installCurrentSchema(connection));
+                    assertEquals(50001, refused.getErrorCode());
+                    for (var entry : before.entrySet()) {
+                        assertEquals(
+                                entry.getValue().json(),
+                                read(connection, entry.getKey(), entry.getValue().columns()).json(),
+                                "Reinstallation changed existing rows: " + entry.getKey());
+                    }
+                    // Filtered uniqueness must allow multiple legacy NULL request keys.
+                    sql.executeUpdate(
+                            "INSERT INTO exam_attempts(user_id,mock_exam_id,status,started_at)"
+                                    + " VALUES("
+                                    + user
+                                    + ","
+                                    + exam
+                                    + ",'IN_PROGRESS',SYSDATETIME())");
+                    try (var rows =
+                            sql.executeQuery(
+                                    "SELECT filter_definition FROM sys.indexes"
+                                            + " WHERE name='uq_exam_attempts_user_request_key'")) {
+                        assertTrue(rows.next());
+                        assertTrue(rows.getString(1).contains("IS NOT NULL"));
+                    }
                 }
+                validateEntityMappings(url, login, password);
                 verifyKnowledgeCheckService(url, login, password);
             } finally {
-                // The only drop target is the validated UUID-named database created by this test.
+                // Only the validated UUID database created above is ever removed.
                 master.createStatement()
                         .execute(
                                 "ALTER DATABASE ["
@@ -200,6 +150,16 @@ class V2SqlServerPreservationTests {
                                         + "] SET SINGLE_USER WITH ROLLBACK IMMEDIATE");
                 master.createStatement().execute("DROP DATABASE [" + name + "]");
             }
+        }
+    }
+
+    private static void installCurrentSchema(Connection connection) throws Exception {
+        String ddl = Files.readString(Path.of("database/schema-current.sql"));
+        for (String batch : ddl.split("(?im)^\\s*GO\\s*\\r?$")) {
+            if (!batch.isBlank())
+                try (var sql = connection.createStatement()) {
+                    sql.execute(batch);
+                }
         }
     }
 
@@ -240,9 +200,9 @@ class V2SqlServerPreservationTests {
         assertEquals(
                 actual,
                 documented,
-                "Mermaid must list every physical table and column through V040");
+                "Mermaid must list every physical table and column through V041");
         assertEquals(39, documented.size());
-        assertEquals(415, documented.values().stream().mapToInt(Set::size).sum());
+        assertEquals(416, documented.values().stream().mapToInt(Set::size).sum());
     }
 
     /** Real repositories and service operations against the isolated SQL Server, not H2. */
@@ -269,7 +229,13 @@ class V2SqlServerPreservationTests {
                     var attempts = repositories.getRepository(LessonCheckAttemptRepository.class);
                     var teaching =
                             new LessonTeachingService(
-                                    checks,
+                                    new com.aptisprep.service.learning.LessonCheckService(
+                                            checks,
+                                            lessons,
+                                            users,
+                                            attempts,
+                                            tools.jackson.databind.json.JsonMapper.builder()
+                                                    .build()),
                                     lessons,
                                     users,
                                     repositories.getRepository(LessonResponseRepository.class),
@@ -277,7 +243,9 @@ class V2SqlServerPreservationTests {
                                     repositories.getRepository(LessonEngagementRepository.class),
                                     null,
                                     repositories.getRepository(LessonProgressRepository.class),
-                                    null);
+                                    null,
+                                    new com.aptisprep.config.AiProperties(),
+                                    tools.jackson.databind.json.JsonMapper.builder().build());
                     // Storage and AI are intentionally unused by Knowledge Check operations.
                     var lesson = new com.aptisprep.entity.Lesson();
                     lesson.setTitle("SQL Server Knowledge Check regression");
@@ -286,8 +254,8 @@ class V2SqlServerPreservationTests {
                     lesson.setDisplayOrder(
                             em.createQuery(
                                             "select coalesce(max(l.displayOrder), 0) + 1 from"
-                                                + " Lesson l where l.skill = :skill and l.cefrLevel"
-                                                + " = :level",
+                                                    + " Lesson l where l.skill = :skill and l.cefrLevel"
+                                                    + " = :level",
                                             Integer.class)
                                     .setParameter("skill", "Reading")
                                     .setParameter("level", "A1")
@@ -353,6 +321,10 @@ class V2SqlServerPreservationTests {
                     // attempts.
                     assertEquals(6, teaching.questions(lesson.getId()).getFirst().options().size());
                     assertEquals(4, attempts.findByLessonId(lesson.getId()).size());
+                    verifyAiRecoveryQueries(
+                            em,
+                            repositories,
+                            users.findByEmailIgnoreCase(email).orElseThrow().getId());
                     em.getTransaction().commit();
                 } finally {
                     if (em.getTransaction().isActive()) em.getTransaction().rollback();
@@ -361,6 +333,100 @@ class V2SqlServerPreservationTests {
         } finally {
             if (factory.getObject() != null) factory.destroy();
         }
+    }
+
+    private static void verifyAiRecoveryQueries(
+            jakarta.persistence.EntityManager em,
+            org.springframework.data.jpa.repository.support.JpaRepositoryFactory repositories,
+            int owner) {
+        var jobs = repositories.getRepository(AiAssessmentJobRepository.class);
+        var answer =
+                em.createQuery("from UserAnswerEntity", com.aptisprep.entity.UserAnswerEntity.class)
+                        .getResultList()
+                        .getFirst();
+        var examJob = sqlJob("sql-recovery-exam", owner, answer, "EXAM_ANSWER");
+        var lessonJob = sqlJob("sql-recovery-lesson", owner, answer, "LESSON_SUBMISSION");
+        em.persist(examJob);
+        em.persist(lessonJob);
+        em.flush();
+        assertEquals(
+                List.of(examJob.getAssessmentKey()),
+                jobs.findExamJobs(owner, answer.getAttemptId(), 1, "p1", "r1").stream()
+                        .map(com.aptisprep.entity.AiAssessmentJob::getAssessmentKey)
+                        .toList());
+        assertTrue(
+                jobs.findRecoverableKeys(
+                                com.aptisprep.enums.AiJobState.PENDING,
+                                com.aptisprep.enums.AiJobState.PROCESSING,
+                                java.time.LocalDateTime.now(),
+                                java.time.LocalDateTime.now().minusMinutes(15),
+                                org.springframework.data.domain.PageRequest.of(0, 50))
+                        .contains(examJob.getAssessmentKey()));
+        examJob.setState(com.aptisprep.enums.AiJobState.ERROR);
+        lessonJob.setState(com.aptisprep.enums.AiJobState.ERROR);
+        em.flush();
+        assertEquals(
+                List.of(examJob.getAssessmentKey()),
+                jobs
+                        .findExamJobsByState(
+                                owner,
+                                answer.getAttemptId(),
+                                1,
+                                "p1",
+                                "r1",
+                                com.aptisprep.enums.AiJobState.ERROR)
+                        .stream()
+                        .map(com.aptisprep.entity.AiAssessmentJob::getAssessmentKey)
+                        .toList());
+        examJob.setState(com.aptisprep.enums.AiJobState.COMPLETED);
+        var assessment = new com.aptisprep.entity.AiAssessment();
+        assessment.setJob(examJob);
+        assessment.setAssessmentKey(examJob.getAssessmentKey());
+        assessment.setAnswerId(answer.getId());
+        assessment.setAnswerVersion(1);
+        assessment.setPolicyVersion("p1");
+        assessment.setRubricVersion("r1");
+        assessment.setState(com.aptisprep.enums.AiAssessmentState.COMPLETED);
+        assessment.setScore(java.math.BigDecimal.valueOf(20));
+        em.persist(assessment);
+        em.flush();
+        assertTrue(
+                jobs.findCompletedWithoutCallback(
+                                org.springframework.data.domain.PageRequest.of(0, 50))
+                        .contains(examJob.getAssessmentKey()));
+        var row = new com.aptisprep.entity.AttemptOutboxEntity();
+        row.setEventKey("ai:sql-recovery-exam:v1:COMPLETED");
+        row.setEventType("AI_ASSESSMENT_COMPLETED");
+        row.setAggregateId(answer.getAttemptId());
+        row.setPayload("{}");
+        row.setStatus("DISPATCHED");
+        em.persist(row);
+        em.flush();
+        assertFalse(
+                jobs.findCompletedWithoutCallback(
+                                org.springframework.data.domain.PageRequest.of(0, 50))
+                        .contains(examJob.getAssessmentKey()));
+    }
+
+    private static com.aptisprep.entity.AiAssessmentJob sqlJob(
+            String key, int owner, com.aptisprep.entity.UserAnswerEntity answer, String source) {
+        var job = new com.aptisprep.entity.AiAssessmentJob();
+        job.setAssessmentKey(key);
+        job.setUserId(owner);
+        job.setAttemptId(answer.getAttemptId());
+        job.setAnswerId(answer.getId());
+        job.setSourceType(source);
+        job.setSourceId(answer.getId());
+        job.setAnswerVersion(1);
+        job.setPolicyVersion("p1");
+        job.setRubricVersion("r1");
+        job.setSkill("WRITING");
+        job.setTaskType("WRITING");
+        job.setTaskContent("SQL regression task");
+        job.setLockedContent("Preserved response");
+        job.setMaxScore(java.math.BigDecimal.valueOf(50));
+        job.setState(com.aptisprep.enums.AiJobState.PENDING);
+        return job;
     }
 
     private static LessonForm checkForm(int count, int correct) {
@@ -392,15 +458,15 @@ class V2SqlServerPreservationTests {
 
     private static String sixOptionCheck(int correct) {
         return "INSERT INTO"
-                   + " lesson_checks(lesson_id,position,prompt,option_a,option_b,option_c,option_d,option_e,option_f,correct_option,explanation)"
-                   + " SELECT TOP 1 id,"
+                + " lesson_checks(lesson_id,position,prompt,option_a,option_b,option_c,option_d,option_e,option_f,correct_option,explanation)"
+                + " SELECT TOP 1 id,"
                 + (9000 + correct)
                 + ",N'Six options',N'A',N'B',N'C',N'D',N'E',N'F',"
                 + correct
                 + ",N'Explanation' FROM lessons ORDER BY id";
     }
 
-    private static void validateEntityMappings(String url, String login, String password) {
+    static void validateEntityMappings(String url, String login, String password) {
         var factory = new org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean();
         factory.setDataSource(
                 new org.springframework.jdbc.datasource.DriverManagerDataSource(
@@ -433,8 +499,6 @@ class V2SqlServerPreservationTests {
             try (var values = connection.getMetaData().getColumns(null, "dbo", table, "%")) {
                 while (values.next()) {
                     String column = values.getString("COLUMN_NAME");
-                    // This column is deliberately backfilled from the preserved item data.
-                    if (table.equals("user_answers") && column.equals("text_answer")) continue;
                     columns.add(column);
                 }
             }

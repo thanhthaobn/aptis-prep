@@ -31,7 +31,7 @@ Flyway chạy các file SQL trong `src/main/resources/db/migration` theo phiên 
 | Câu kiểm tra, lựa chọn, đáp án, giải thích | Bảng `lesson_checks`, gắn bằng `lesson_id` | Backend chấm và chỉ trả lời giải sau khi nộp |
 | Bộ thẻ và thẻ từ | `flashcard_sets`, `flashcards` | Bộ thư viện có `lesson_id`; bộ riêng có `owner_user_id` |
 | Video | URL trong `lessons.video_url` | Trình duyệt nhúng YouTube; không có tệp MP4 tải về trong project |
-| Âm thanh mới được đóng gói | `src/main/resources/curriculum/audio/listening-a2.wav` đến `listening-c1.wav` | Build đưa vào classpath/JAR; DB lưu đường dẫn tương đối |
+| Âm thanh giáo trình hiện tại | `uploads/curriculum/audio/listening-a2.wav` đến `listening-c1.wav` | File local ngoài JAR; DB/snapshot giữ đường dẫn tương đối `curriculum/audio/...`; sao lưu cùng uploads |
 | Transcript | `lessons.transcript` | Mở sau khi tự nghe để đối chiếu |
 | Hình bài học do Admin tải lên | Mặc định `uploads/lesson-images/<lessonId>/<UUID>.<đuôi>` | DB lưu `image_path`, `image_name` |
 | Âm thanh do Admin tải lên | Mặc định `uploads/lesson-audio/<lessonId>/<UUID>.<đuôi>` | DB lưu `audio_path`, `audio_name` |

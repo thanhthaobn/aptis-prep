@@ -18,8 +18,15 @@ public class PlacementService {
     private final ObjectProvider<ExamAttemptContract> attempts;
     private final ObjectProvider<AccountAccessContract> accounts;
 
-    public PlacementService(PlacementExamCatalogService catalog, ExamCatalogContract examCatalog, ObjectProvider<ExamAttemptContract> attempts, ObjectProvider<AccountAccessContract> accounts) {
-        this.catalog = catalog; this.examCatalog = examCatalog; this.attempts = attempts; this.accounts = accounts;
+    public PlacementService(
+            PlacementExamCatalogService catalog,
+            ExamCatalogContract examCatalog,
+            ObjectProvider<ExamAttemptContract> attempts,
+            ObjectProvider<AccountAccessContract> accounts) {
+        this.catalog = catalog;
+        this.examCatalog = examCatalog;
+        this.attempts = attempts;
+        this.accounts = accounts;
     }
 
     public List<PlacementExamCatalogService.PlacementExam> available(String skill) {
@@ -33,21 +40,33 @@ public class PlacementService {
     public AttemptHandle start(String email, String skill, Integer examId) {
         AccountAccessContract account = accounts.getIfAvailable();
         ExamAttemptContract attempt = attempts.getIfAvailable();
-        if (account == null || attempt == null) throw new BusinessRuleException("Luồng Placement chưa thể bắt đầu vì engine lượt thi của hệ thống chưa sẵn sàng");
+        if (account == null || attempt == null)
+            throw new BusinessRuleException(
+                    "Luồng Placement chưa thể bắt đầu vì engine lượt thi của hệ thống chưa sẵn sàng");
         Integer userId = account.requireActiveStudent(email);
-        PlacementExamCatalogService.PlacementExam exam = available(skill).stream().filter(value -> examId == null || value.id() == examId).findFirst()
-                .orElseThrow(() -> new BusinessRuleException("Chưa có đề Placement đã công bố cho kỹ năng này"));
+        PlacementExamCatalogService.PlacementExam exam =
+                available(skill).stream()
+                        .filter(value -> examId == null || value.id() == examId)
+                        .findFirst()
+                        .orElseThrow(
+                                () ->
+                                        new BusinessRuleException(
+                                                "Chưa có đề Placement đã công bố cho kỹ năng này"));
         examCatalog.publishedExam(userId, exam.id());
         // A new Placement/Practice run must not reuse the key of a terminal attempt.
         // Repeated clicks in the same request are still protected by the engine's
         // active-attempt lookup and the user-row lock.
-        return attempt.start(userId, exam.id(), "placement:" + userId + ":" + exam.id() + ":" + UUID.randomUUID());
+        return attempt.start(
+                userId,
+                exam.id(),
+                "placement:" + userId + ":" + exam.id() + ":" + UUID.randomUUID());
     }
 
     public AttemptResult result(String email, Integer attemptId) {
         AccountAccessContract account = accounts.getIfAvailable();
         ExamAttemptContract attempt = attempts.getIfAvailable();
-        if (account == null || attempt == null) throw new BusinessRuleException("Luồng kết quả Placement chưa sẵn sàng");
+        if (account == null || attempt == null)
+            throw new BusinessRuleException("Luồng kết quả Placement chưa sẵn sàng");
         return attempt.result(account.requireActiveStudent(email), attemptId);
     }
 }

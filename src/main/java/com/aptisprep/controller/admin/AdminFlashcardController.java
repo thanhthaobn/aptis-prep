@@ -1,8 +1,8 @@
 package com.aptisprep.controller.admin;
 
-import com.aptisprep.service.learning.*;
 import com.aptisprep.dto.form.FlashcardSetForm;
 import com.aptisprep.exception.BusinessRuleException;
+import com.aptisprep.service.learning.*;
 import jakarta.validation.Valid;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -24,7 +24,16 @@ public class AdminFlashcardController {
         m.addAttribute("sets", sets);
         m.addAttribute("admin", true);
         m.addAttribute("lessonBranches", FlashcardSetService.groupBySkillAndLevel(sets));
-        m.addAttribute("unclassifiedSets", sets.stream().filter(s -> s.lessonSkill() == null || s.level() == null || !LessonService.SKILLS.contains(s.lessonSkill()) || !LessonService.LEVELS.contains(s.level())).toList());
+        m.addAttribute(
+                "unclassifiedSets",
+                sets.stream()
+                        .filter(
+                                s ->
+                                        s.lessonSkill() == null
+                                                || s.level() == null
+                                                || !LessonService.SKILLS.contains(s.lessonSkill())
+                                                || !LessonService.LEVELS.contains(s.level()))
+                        .toList());
         return "flashcard/list";
     }
 
@@ -42,12 +51,17 @@ public class AdminFlashcardController {
     }
 
     @PostMapping
-    public String create(@Valid @ModelAttribute("form") FlashcardSetForm f, BindingResult b, Model m) {
+    public String create(
+            @Valid @ModelAttribute("form") FlashcardSetForm f, BindingResult b, Model m) {
         return save(null, f, b, m);
     }
 
     @PostMapping("/{id}")
-    public String edit(@PathVariable Integer id, @Valid @ModelAttribute("form") FlashcardSetForm f, BindingResult b, Model m) {
+    public String edit(
+            @PathVariable Integer id,
+            @Valid @ModelAttribute("form") FlashcardSetForm f,
+            BindingResult b,
+            Model m) {
         return save(id, f, b, m);
     }
 

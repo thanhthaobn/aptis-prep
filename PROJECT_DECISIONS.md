@@ -12,8 +12,8 @@ Project đã tích hợp các service nghiệp vụ và DB thật; không còn c
 - Thymeleaf và Spring MVC: Controller → Service → Repository.
 - Session, Spring Security form login, CSRF; không xây REST API cho giao diện.
 - Base package: com.aptisprep.
-- File local application-dev.properties không commit; file example không có secret.
-- Flyway thay đổi schema; không sửa migration đã chạy. Đợt sửa V2 bổ sung V038, giữ nguyên V001–V037.
+- Từ 24/10/2026 dùng một application.properties, đọc DB_PASSWORD/API key từ môi trường; không commit secret.
+- Theo quyết định mới của chủ project, bỏ Flyway và dùng database/schema-current.sql cho DB mới/rỗng, Hibernate validate. Không tự nâng hoặc xóa DB hiện có. Các tên Vxxx bên dưới chỉ giải thích nguồn gốc tương thích dữ liệu cũ, không còn là cơ chế chạy schema.
 - Không dùng cloud storage. File lưu local trong uploads/, database lưu đường dẫn.
 
 ## 3. Các thay đổi theo V2
@@ -91,5 +91,5 @@ Nhóm bổ sung UC-A11–A14 quản lý học viên ngoài V2 gốc: xem danh s�
 - Không đưa tên thuộc tính, enum hay ghi chú đội phát triển lên giao diện.
 - Route và trạng thái triển khai xem docs/ROUTES.md.
 - Feature branch → Pull Request → review → merge; không sửa CSS/fragment chung tùy tiện.
-- Mỗi migration mới đăng ký số trong nhóm; không phân khoảng V1xx/V2xx vì dễ chạy sai thứ tự khi merge.
+- Khi sửa schema, cập nhật schema-current.sql, entity và test; chuẩn bị nâng cấp DB cũ riêng với backup, không tự ghi đè dữ liệu.
 - Mỗi luồng phải có validation, phân quyền, trạng thái rỗng/lỗi, dữ liệu kiểm tra và test nghiệp vụ.

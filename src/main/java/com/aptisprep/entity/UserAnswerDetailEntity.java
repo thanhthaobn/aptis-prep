@@ -1,42 +1,60 @@
 package com.aptisprep.entity;
 
 import jakarta.persistence.*;
-
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "user_answer_details", uniqueConstraints = @UniqueConstraint(name = "uq_answer_details_answer_item", columnNames = {"user_answer_id", "question_item_id"}))
+@Table(
+        name = "user_answer_details",
+        uniqueConstraints =
+                @UniqueConstraint(
+                        name = "uq_answer_details_answer_item",
+                        columnNames = {"user_answer_id", "question_item_id"}))
 public class UserAnswerDetailEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
+
     @Column(name = "user_answer_id", nullable = false)
     private Integer userAnswerId;
+
     @Column(name = "question_item_id", nullable = false)
     private Integer questionItemId;
+
     @Column(name = "selected_option_id")
     private Integer selectedOptionId;
+
     @Column(name = "user_position")
     private Integer userPosition;
+
     @Column(name = "answer_text", columnDefinition = "nvarchar(max)")
     private String answerText;
+
     @Column(name = "audio_path", length = 500)
     private String audioPath;
+
     @Column(name = "transcript", columnDefinition = "nvarchar(max)")
     private String transcript;
+
     @Column(name = "recording_duration_seconds")
     private Integer recordingDurationSeconds;
+
     @Column(name = "auto_score", precision = 5, scale = 2)
     private BigDecimal autoScore;
+
     @Column(name = "feedback", columnDefinition = "nvarchar(max)")
     private String feedback;
+
     @Column(name = "grading_status", length = 30)
     private String gradingStatus;
+
     @Column(name = "graded_at")
     private LocalDateTime gradedAt;
+
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
+
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 

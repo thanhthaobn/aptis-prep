@@ -1,5 +1,8 @@
 package com.aptisprep.controller.student;
 
+import com.aptisprep.exception.BusinessRuleException;
+import com.aptisprep.exception.ResourceNotFoundException;
+import com.aptisprep.service.learning.FlashcardSetService;
 import com.aptisprep.service.learning.LearningPathService;
 import com.aptisprep.service.learning.LessonService;
 import java.security.Principal;
@@ -8,30 +11,66 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
-@Controller @RequestMapping("/student/learning-path")
+@Controller
+@RequestMapping("/student/learning-path")
 public class StudentLearningPathController {
-    private final LearningPathService service; private final LessonService lessons;
-    private final com.aptisprep.service.learning.FlashcardSetService flashcards;
-    public StudentLearningPathController(LearningPathService s,LessonService l,com.aptisprep.service.learning.FlashcardSetService f){service=s;lessons=l;flashcards=f;}
+    private final LearningPathService service;
+    private final LessonService lessons;
+    private final FlashcardSetService flashcards;
+
+    public StudentLearningPathController(
+            LearningPathService s, LessonService l, FlashcardSetService f) {
+        service = s;
+        lessons = l;
+        flashcards = f;
+    }
+
     @PostMapping("/refresh")
     public String refresh(Principal principal, RedirectAttributes redirect) {
         int changed = service.refreshPaths(principal.getName());
-        redirect.addFlashAttribute("message", changed == 0 ? "Lộ trình đã cập nhật mới nhất."
-                : "Đã cập nhật lộ trình. Các bài đã hoàn thành được giữ lại.");
+        redirect.addFlashAttribute(
+                "message",
+                changed == 0
+                        ? "Lộ trình đã cập nhật mới nhất."
+                        : "Đã cập nhật lộ trình. Các bài đã hoàn thành được giữ lại.");
         return "redirect:/student/learning-path";
     }
-    @GetMapping public String paths(Principal principal,Model model){model.addAttribute("paths",service.ensureAndSummaries(principal.getName()));model.addAttribute("stages",service.stages(principal.getName(),null));return "student/learning/path";}
+
+    @GetMapping
+    public String paths(Principal principal, Model model) {
+        model.addAttribute("paths", service.ensureAndSummaries(principal.getName()));
+        model.addAttribute("stages", service.stages(principal.getName(), null));
+        return "student/learning/path";
+    }
+
     @GetMapping("/{skill}")
     public String skill(@PathVariable String skill, Principal principal, Model model) {
-        String selected = LessonService.SKILLS.stream().filter(value -> value.equalsIgnoreCase(skill))
-                .findFirst().orElseThrow(() -> new com.aptisprep.exception.ResourceNotFoundException("Không tìm thấy kỹ năng"));
+        String selected =
+                LessonService.SKILLS.stream()
+                        .filter(value -> value.equalsIgnoreCase(skill))
+                        .findFirst()
+                        .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy kỹ năng"));
         model.addAttribute("selectedSkill", selected);
-        model.addAttribute("lessonSets",flashcards.lessonSets());
-        model.addAttribute("paths", service.ensureAndSummaries(principal.getName()).stream()
-                .filter(path -> path.skill().equals(selected)).toList());
-        model.addAttribute("stages",service.stages(principal.getName(),selected));
+        model.addAttribute("lessonSets", flashcards.lessonSets());
+        model.addAttribute(
+                "paths",
+                service.ensureAndSummaries(principal.getName()).stream()
+                        .filter(path -> path.skill().equals(selected))
+                        .toList());
+        model.addAttribute("stages", service.stages(principal.getName(), selected));
         return "student/learning/skill";
     }
+
     @PostMapping("/{pathId}/checkpoint/start")
-    public String startCheckpoint(@PathVariable Integer pathId,Principal principal,RedirectAttributes redirect){try{var user=service.userId(principal.getName());Integer attemptId=service.startCheckpoint(user,pathId,null);return "redirect:"+service.checkpointDestination(principal.getName(),attemptId);}catch(com.aptisprep.exception.BusinessRuleException|com.aptisprep.exception.ResourceNotFoundException e){redirect.addFlashAttribute("error",e.getMessage());return "redirect:/student/learning-path";}}
+    public String startCheckpoint(
+            @PathVariable Integer pathId, Principal principal, RedirectAttributes redirect) {
+        try {
+            var user = service.userId(principal.getName());
+            Integer attemptId = service.startCheckpoint(user, pathId, null);
+            return "redirect:" + service.checkpointDestination(principal.getName(), attemptId);
+        } catch (BusinessRuleException | ResourceNotFoundException e) {
+            redirect.addFlashAttribute("error", e.getMessage());
+            return "redirect:/student/learning-path";
+        }
+    }
 }

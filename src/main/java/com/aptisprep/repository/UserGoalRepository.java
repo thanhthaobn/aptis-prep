@@ -6,5 +6,6 @@ import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface UserGoalRepository extends JpaRepository<UserGoal, Integer> {
-    Optional<UserGoal> findFirstByUserIdAndStatusOrderByCreatedAtDesc(Integer userId, GoalStatus status);
+    Optional<UserGoal> findFirstByUserIdAndStatusOrderByCreatedAtDesc(
+            Integer userId, GoalStatus status);
 }

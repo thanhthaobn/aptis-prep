@@ -2,6 +2,7 @@ package com.aptisprep.service.learning;
 
 import com.aptisprep.entity.Lesson;
 import com.aptisprep.entity.LessonEngagement;
+import com.aptisprep.entity.User;
 import com.aptisprep.enums.Role;
 import com.aptisprep.enums.UserStatus;
 import com.aptisprep.exception.AccessDeniedException;
@@ -11,19 +12,17 @@ import com.aptisprep.repository.LessonEngagementRepository;
 import com.aptisprep.repository.LessonRepository;
 import com.aptisprep.repository.UserRepository;
 import com.aptisprep.service.storage.AudioDurationService;
-
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
-import tools.jackson.databind.json.JsonMapper;
-
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.*;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import tools.jackson.databind.json.JsonMapper;
 
 /** Server-timed, owner-bound playback. Never credits a range twice or trusts client duration. */
 @Service
@@ -34,15 +33,16 @@ public class LessonListeningService {
     private final LessonEngagementRepository engagements;
     private final AudioDurationService durations;
     private final Clock clock;
-    private final JsonMapper json = JsonMapper.builder().build();
+    private final JsonMapper json;
 
     @Autowired
     public LessonListeningService(
             UserRepository users,
             LessonRepository lessons,
             LessonEngagementRepository engagements,
-            AudioDurationService durations) {
-        this(users, lessons, engagements, durations, Clock.systemDefaultZone());
+            AudioDurationService durations,
+            JsonMapper json) {
+        this(users, lessons, engagements, durations, Clock.systemDefaultZone(), json);
     }
 
     LessonListeningService(
@@ -50,12 +50,14 @@ public class LessonListeningService {
             LessonRepository lessons,
             LessonEngagementRepository engagements,
             AudioDurationService durations,
-            Clock clock) {
+            Clock clock,
+            JsonMapper json) {
         this.users = users;
         this.lessons = lessons;
         this.engagements = engagements;
         this.durations = durations;
         this.clock = clock;
+        this.json = json;
     }
 
     public record Playback(
@@ -202,7 +204,7 @@ public class LessonListeningService {
             throw new BusinessRuleException("Vị trí audio không hợp lệ");
     }
 
-    private com.aptisprep.entity.User activeLearner(String email) {
+    private User activeLearner(String email) {
         var found =
                 users.findByEmailIgnoreCase(email)
                         .orElseThrow(() -> new AccessDeniedException("Không tìm thấy tài khoản"));
@@ -232,7 +234,7 @@ public class LessonListeningService {
                     .formatHex(
                             MessageDigest.getInstance("SHA-256")
                                     .digest(token.getBytes(StandardCharsets.UTF_8)));
-        } catch (java.security.NoSuchAlgorithmException impossible) {
+        } catch (NoSuchAlgorithmException impossible) {
             throw new IllegalStateException(impossible);
         }
     }

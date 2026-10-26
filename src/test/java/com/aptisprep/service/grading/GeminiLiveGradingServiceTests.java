@@ -20,7 +20,8 @@ class GeminiLiveGradingServiceTests {
     @Test
     void writingUsesTheConfiguredGeminiProvider() {
         String apiKey = System.getenv("GEMINI_API_KEY");
-        Assumptions.assumeTrue(apiKey != null && !apiKey.isBlank(), "GEMINI_API_KEY is not configured");
+        Assumptions.assumeTrue(
+                apiKey != null && !apiKey.isBlank(), "GEMINI_API_KEY is not configured");
 
         AiProperties properties = new AiProperties();
         properties.setEnabled(true);
@@ -28,12 +29,19 @@ class GeminiLiveGradingServiceTests {
         String model = System.getenv("GEMINI_GRADING_MODEL");
         if (model != null && !model.isBlank()) properties.setGradingModel(model);
 
-        GeminiGradingService service = new GeminiGradingService(properties,
-                RestClient.builder().baseUrl("https://generativelanguage.googleapis.com/v1beta").build());
-        var result = service.grade(
-                "Write a short message to a classmate about a study plan.",
-                "Hi Lan, I will study English for thirty minutes each evening. "
-                        + "I will review vocabulary first and then practise writing. Would you like to join me on Monday?");
+        GeminiGradingService service =
+                new GeminiGradingService(
+                        properties,
+                        RestClient.builder()
+                                .baseUrl("https://generativelanguage.googleapis.com/v1beta")
+                                .build(),
+                        tools.jackson.databind.json.JsonMapper.builder().build());
+        var result =
+                service.grade(
+                        "Write a short message to a classmate about a study plan.",
+                        "Hi Lan, I will study English for thirty minutes each evening. I will"
+                                + " review vocabulary first and then practise writing. Would you like"
+                                + " to join me on Monday?");
 
         assertNotNull(result);
         assertNotNull(result.estimatedScore());

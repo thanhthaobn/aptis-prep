@@ -1,9 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="title desc">
-  <title id="title">Student studying in a library</title>
-  <desc id="desc">A student reads at a desk surrounded by bookshelves in a quiet library.</desc>
-  <rect width="800" height="480" fill="#f2eadb"/><rect x="80" y="80" width="220" height="270" fill="#98734f"/><rect x="330" y="80" width="220" height="270" fill="#98734f"/>
-  <path d="M100 135h180M100 205h180M100 275h180M350 135h180M350 205h180M350 275h180" stroke="#ead5a8" stroke-width="14"/>
-  <rect x="175" y="390" width="470" height="25" rx="12" fill="#7d563c"/><rect x="220" y="415" width="25" height="55" fill="#7d563c"/><rect x="565" y="415" width="25" height="55" fill="#7d563c"/>
-  <circle cx="430" cy="190" r="32" fill="#7e4d3d"/><path d="M390 225h80v115h-80z" fill="#568b9c"/><path d="M400 340 375 410M460 340l28 70M390 260l-60 85M470 260l60 85" stroke="#394c52" stroke-width="18" fill="none"/>
-  <rect x="355" y="315" width="150" height="12" fill="#e8d5a4" transform="rotate(-8 355 315)"/><circle cx="620" cy="305" r="45" fill="#e4c56b"/>
-</svg>

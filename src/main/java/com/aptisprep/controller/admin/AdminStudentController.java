@@ -13,13 +13,18 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 @RequestMapping("/admin/students")
 public class AdminStudentController {
     private final StudentManagementService students;
-    public AdminStudentController(StudentManagementService students) { this.students = students; }
+
+    public AdminStudentController(StudentManagementService students) {
+        this.students = students;
+    }
 
     @GetMapping
-    public String list(@RequestParam(defaultValue = "") String q,
+    public String list(
+            @RequestParam(defaultValue = "") String q,
             @RequestParam(defaultValue = "") String status,
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size, Model model) {
+            @RequestParam(defaultValue = "20") int size,
+            Model model) {
         UserStatus filter = parseStatus(status);
         model.addAttribute("pageData", students.list(q, filter, page, size));
         model.addAttribute("q", q == null ? "" : q.trim());
@@ -31,18 +36,23 @@ public class AdminStudentController {
     }
 
     @GetMapping("/{id}")
-    public String detail(@PathVariable int id,
+    public String detail(
+            @PathVariable int id,
             @RequestParam(defaultValue = "0") int attemptPage,
-            @RequestParam(defaultValue = "10") int attemptSize, Model model) {
+            @RequestParam(defaultValue = "10") int attemptSize,
+            Model model) {
         model.addAttribute("student", students.detail(id, attemptPage, attemptSize));
         return "admin/student/detail";
     }
 
     @PostMapping("/{id}/lock")
-    public String lock(@PathVariable int id, Principal principal, RedirectAttributes redirectAttributes) {
+    public String lock(
+            @PathVariable int id, Principal principal, RedirectAttributes redirectAttributes) {
         try {
             students.lock(principal.getName(), id);
-            redirectAttributes.addFlashAttribute("successMessage", "Đã khóa tài khoản học viên. Lịch sử và tiến độ được giữ nguyên.");
+            redirectAttributes.addFlashAttribute(
+                    "successMessage",
+                    "Đã khóa tài khoản học viên. Lịch sử và tiến độ được giữ nguyên.");
         } catch (BusinessRuleException exception) {
             redirectAttributes.addFlashAttribute("errorMessage", exception.getMessage());
         }
@@ -50,10 +60,12 @@ public class AdminStudentController {
     }
 
     @PostMapping("/{id}/unlock")
-    public String unlock(@PathVariable int id, Principal principal, RedirectAttributes redirectAttributes) {
+    public String unlock(
+            @PathVariable int id, Principal principal, RedirectAttributes redirectAttributes) {
         try {
             students.unlock(principal.getName(), id);
-            redirectAttributes.addFlashAttribute("successMessage", "Đã mở khóa tài khoản học viên.");
+            redirectAttributes.addFlashAttribute(
+                    "successMessage", "Đã mở khóa tài khoản học viên.");
         } catch (BusinessRuleException exception) {
             redirectAttributes.addFlashAttribute("errorMessage", exception.getMessage());
         }
@@ -62,7 +74,10 @@ public class AdminStudentController {
 
     private UserStatus parseStatus(String value) {
         if (value == null || value.isBlank()) return null;
-        try { return UserStatus.valueOf(value.trim().toUpperCase()); }
-        catch (IllegalArgumentException exception) { throw new BusinessRuleException("Trạng thái tìm kiếm không hợp lệ"); }
+        try {
+            return UserStatus.valueOf(value.trim().toUpperCase());
+        } catch (IllegalArgumentException exception) {
+            throw new BusinessRuleException("Trạng thái tìm kiếm không hợp lệ");
+        }
     }
 }

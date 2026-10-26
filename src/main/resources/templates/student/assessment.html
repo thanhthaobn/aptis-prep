@@ -1,25 +1,71 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="vi" xmlns:th="http://www.thymeleaf.org">
-<head th:replace="~{fragments/head :: head('Phản hồi bài tự luận')}"></head>
-<body class="student-theme">
-<div th:replace="~{fragments/navbar :: navbar}"></div>
-<div class="container ap-container app-shell">
-    <div th:replace="~{fragments/student-sidebar :: studentSidebar('results')}"></div>
-    <main id="main-content" tabindex="-1" class="app-main student-content">
-        <header class="page-header"><div><p class="eyebrow">PHẢN HỒI TỰ LUẬN</p><h1>Đánh giá bài làm</h1></div></header>
+  <head th:replace="~{fragments/head :: head('Phản hồi bài tự luận')}"></head>
+  <body class="student-theme">
+    <div th:replace="~{fragments/navbar :: navbar}"></div>
+    <div class="container ap-container app-shell">
+      <div th:replace="~{fragments/student-sidebar :: studentSidebar('results')}"></div>
+      <main id="main-content" tabindex="-1" class="app-main student-content">
+        <header class="page-header">
+          <div>
+            <p class="eyebrow">PHẢN HỒI TỰ LUẬN</p>
+            <h1>Đánh giá bài làm</h1>
+          </div>
+        </header>
         <div th:replace="~{fragments/messages :: messages}"></div>
         <section class="dashboard-panel">
-            <p class="muted">Trạng thái: <th:block th:replace="~{fragments/status :: statusBadge(${assessment.state})}"></th:block></p>
-            <div th:if="${assessment.score != null}"><h2 th:text="|Điểm ước lượng: ${assessment.score}/50|">Điểm ước lượng</h2><p th:text="|CEFR ước lượng: ${assessment.estimatedCefr}|">CEFR</p></div>
-            <div th:if="${assessment.state == 'PENDING'}" class="alert alert-warning ap-alert ap-alert-warning" role="status"><p>Đang chờ xử lý. Điểm chưa có vẫn giữ là NULL.</p></div>
-            <div th:if="${assessment.state == 'ERROR'}" class="alert alert-danger ap-alert ap-alert-danger" role="alert"><p>Chưa thể hoàn tất đánh giá. Bài làm vẫn được giữ nguyên.</p><form th:action="${assessmentBasePath + assessment.assessmentKey + '/retry'}" method="post"><input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"><button class="button" type="submit">Thử lại phần lỗi</button></form></div>
-            <div th:if="${assessment.feedback != null}" class="dashboard-section"><h2>Nhận xét</h2><p class="feedback-text" th:text="${assessment.feedback}"></p></div>
-            <p class="muted">Đây là điểm ước lượng phục vụ học tập, không phải điểm Aptis chính thức.</p>
-            <p class="muted">Trước khi chấm, bài làm/bản ghi đã khóa được gửi tới Gemini theo cấu hình server. Không hiển thị prompt nội bộ hoặc thông tin khóa.</p>
-            <p class="muted">Speaking hiện được đánh giá qua transcript; hệ thống chưa đánh giá phát âm, ngữ điệu hoặc chất lượng âm thanh.</p>
+          <p class="muted">
+            Trạng thái:
+            <th:block
+              th:replace="~{fragments/status :: statusBadge(${assessment.state})}"
+            ></th:block>
+          </p>
+          <div th:if="${assessment.score != null}">
+            <h2 th:text="|Điểm ước lượng: ${assessment.score}/50|">Điểm ước lượng</h2>
+            <p th:text="|CEFR ước lượng: ${assessment.estimatedCefr}|">CEFR</p>
+          </div>
+          <div
+            th:if="${assessment.state == 'PENDING'}"
+            class="alert alert-warning ap-alert ap-alert-warning"
+            role="status"
+          >
+            <p>Đang chờ xử lý. Điểm chưa có vẫn giữ là NULL.</p>
+          </div>
+          <div
+            th:if="${assessment.state == 'ERROR'}"
+            class="alert alert-danger ap-alert ap-alert-danger"
+            role="alert"
+          >
+            <p>Chưa thể hoàn tất đánh giá. Bài làm vẫn được giữ nguyên.</p>
+            <form
+              th:action="${assessmentBasePath + assessment.assessmentKey + '/retry'}"
+              method="post"
+            >
+              <input
+                type="hidden"
+                th:name="${_csrf.parameterName}"
+                th:value="${_csrf.token}"
+              /><button class="button" type="submit">Thử lại phần lỗi</button>
+            </form>
+          </div>
+          <div th:if="${assessment.feedback != null}" class="dashboard-section">
+            <h2>Nhận xét</h2>
+            <p class="feedback-text" th:text="${assessment.feedback}"></p>
+          </div>
+          <p class="muted">
+            Đây là điểm ước lượng phục vụ học tập, không phải điểm Aptis chính thức.
+          </p>
+          <p class="muted">
+            Trước khi chấm, bài làm/bản ghi đã khóa được gửi tới Gemini theo cấu hình server. Không
+            hiển thị prompt nội bộ hoặc thông tin khóa.
+          </p>
+          <p class="muted">
+            Speaking hiện được đánh giá qua transcript; hệ thống chưa đánh giá phát âm, ngữ điệu
+            hoặc chất lượng âm thanh.
+          </p>
         </section>
-    </main>
-</div>
-<div th:replace="~{fragments/footer :: footer}"></div>
-</body>
+      </main>
+    </div>
+    <div th:replace="~{fragments/footer :: footer}"></div>
+  </body>
 </html>

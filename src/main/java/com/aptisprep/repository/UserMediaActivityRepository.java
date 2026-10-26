@@ -8,8 +8,11 @@ import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
-public interface UserMediaActivityRepository extends JpaRepository<UserMediaActivityEntity, Integer> {
+public interface UserMediaActivityRepository
+        extends JpaRepository<UserMediaActivityEntity, Integer> {
     @Lock(LockModeType.PESSIMISTIC_WRITE)
-    @Query("select value from UserMediaActivityEntity value where value.attemptId = :attemptId and value.mediaId = :mediaId")
-    Optional<UserMediaActivityEntity> findByAttemptIdAndMediaIdForUpdate(@Param("attemptId") Integer attemptId, @Param("mediaId") Integer mediaId);
+    @Query(
+            "select value from UserMediaActivityEntity value where value.attemptId = :attemptId and value.mediaId = :mediaId")
+    Optional<UserMediaActivityEntity> findByAttemptIdAndMediaIdForUpdate(
+            @Param("attemptId") Integer attemptId, @Param("mediaId") Integer mediaId);
 }

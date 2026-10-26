@@ -1,24 +1,33 @@
 package com.aptisprep.entity;
 
 import jakarta.persistence.*;
-
 import java.math.BigDecimal;
 
 @Entity
-@Table(name = "score_bands", uniqueConstraints = @UniqueConstraint(name = "uq_score_bands_level", columnNames = {"scoring_scheme_id", "skill", "cefr_level"}))
+@Table(
+        name = "score_bands",
+        uniqueConstraints =
+                @UniqueConstraint(
+                        name = "uq_score_bands_level",
+                        columnNames = {"scoring_scheme_id", "skill", "cefr_level"}))
 public class ScoreBand {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
+
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "scoring_scheme_id", nullable = false)
     private ScoringScheme scheme;
+
     @Column(nullable = false, length = 30)
     private String skill;
+
     @Column(name = "cefr_level", nullable = false, length = 10)
     private String cefrLevel;
+
     @Column(name = "min_score", nullable = false, precision = 5, scale = 2)
     private BigDecimal minScore;
+
     @Column(name = "max_score", nullable = false, precision = 5, scale = 2)
     private BigDecimal maxScore;
 

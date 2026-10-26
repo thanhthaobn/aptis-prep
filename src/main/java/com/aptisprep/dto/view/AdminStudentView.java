@@ -1,17 +1,20 @@
 package com.aptisprep.dto.view;
 
 import com.aptisprep.enums.UserStatus;
-
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 public final class AdminStudentView {
-    private AdminStudentView() {
-    }
+    private AdminStudentView() {}
 
-    public record ListItem(Integer id, String fullName, String email, String initials,
-                           LocalDateTime joinedAt, UserStatus status, String targetLevel) {
+    public record ListItem(
+            Integer id,
+            String fullName,
+            String email,
+            String initials,
+            LocalDateTime joinedAt,
+            UserStatus status,
+            String targetLevel) {
         public String statusLabel() {
             return labels(status);
         }
@@ -29,25 +32,41 @@ public final class AdminStudentView {
         }
     }
 
-    public record Progress(Integer pathId, String skill, String pathSource, String pathStatus,
-                           int completedLessons, int totalLessons, Integer progressPercent,
-                           int completedRequiredLessons, int totalRequiredLessons,
-                           String nextLessonTitle, String checkpointState) {
+    public record Progress(
+            Integer pathId,
+            String skill,
+            String pathSource,
+            String pathStatus,
+            int completedLessons,
+            int totalLessons,
+            Integer progressPercent,
+            int completedRequiredLessons,
+            int totalRequiredLessons,
+            String nextLessonTitle,
+            String checkpointState) {
         public String percentLabel() {
             return progressPercent == null ? "Chưa có dữ liệu" : progressPercent + "%";
         }
     }
 
-    public record Skill(String name, String level, String target) {
-    }
+    public record Skill(String name, String level, String target) {}
 
-    public record Attempt(String title, String date, String status, String score) {
-    }
+    public record Attempt(String title, String date, String status, String score) {}
 
-    public record Detail(Integer id, String fullName, String email, String initials,
-                         LocalDateTime joinedAt, UserStatus status, AccountSnapshot.GoalView goal,
-                         List<Skill> skills, List<Progress> progress, List<Attempt> attempts,
-                         int attemptPage, int attemptSize, long attemptTotal) {
+    public record Detail(
+            Integer id,
+            String fullName,
+            String email,
+            String initials,
+            LocalDateTime joinedAt,
+            UserStatus status,
+            AccountSnapshot.GoalView goal,
+            List<Skill> skills,
+            List<Progress> progress,
+            List<Attempt> attempts,
+            int attemptPage,
+            int attemptSize,
+            long attemptTotal) {
         public String statusLabel() {
             return labels(status);
         }

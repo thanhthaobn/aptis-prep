@@ -1,131 +1,181 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="vi" xmlns:th="http://www.thymeleaf.org">
-<head th:replace="~{fragments/head :: head('Hành trình học tập')}"></head>
-<body class="student-theme">
-<div th:replace="~{fragments/navbar :: navbar}"></div>
-<div class="container ap-container app-shell">
-    <div th:replace="~{fragments/student-sidebar :: studentSidebar('dashboard')}"></div>
-    <main class="app-main learn-dashboard" id="main-content" tabindex="-1">
+  <head th:replace="~{fragments/head :: head('Hành trình học tập')}"></head>
+  <body class="student-theme">
+    <div th:replace="~{fragments/navbar :: navbar}"></div>
+    <div class="container ap-container app-shell">
+      <div th:replace="~{fragments/student-sidebar :: studentSidebar('dashboard')}"></div>
+      <main class="app-main learn-dashboard" id="main-content" tabindex="-1">
         <header class="learn-topbar">
-            <span class="learn-topbar-title">HÀNH TRÌNH HỌC TẬP</span>
-            <span class="learn-account" th:text="${email}"></span>
+          <span class="learn-topbar-title">HÀNH TRÌNH HỌC TẬP</span>
+          <span class="learn-account" th:text="${email}"></span>
         </header>
 
         <div class="learn-board">
-            <div class="learn-journey">
-                
-                <!-- Unit Banner -->
-                <section class="learn-unit-banner">
-                    <span class="learn-unit-icon" aria-hidden="true">✦</span>
-                    <div>
-                        <p class="eyebrow">LỘ TRÌNH CÁ NHÂN HÓA</p>
-                        <h1>Mỗi ngày một bước nhỏ hướng tới mục tiêu Aptis.</h1>
-                        <span th:if="${!hasLearningContent}">Chưa có bài học được công bố cho lộ trình.</span>
-                    </div>
-                </section>
+          <div class="learn-journey">
+            <!-- Unit Banner -->
+            <section class="learn-unit-banner">
+              <span class="learn-unit-icon" aria-hidden="true">✦</span>
+              <div>
+                <p class="eyebrow">LỘ TRÌNH CÁ NHÂN HÓA</p>
+                <h1>Mỗi ngày một bước nhỏ hướng tới mục tiêu Aptis.</h1>
+                <span th:if="${!hasLearningContent}"
+                  >Chưa có bài học được công bố cho lộ trình.</span
+                >
+              </div>
+            </section>
 
-                <!-- Thẻ học tiếp bài học gần nhất (Quick Continue) -->
-                <section class="dashboard-panel next-lesson-card mb-4" th:if="${recommendation != null}">
-                    <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
-                        <div>
-                            <span class="badge badge-secondary mb-1" th:text="${recommendation.skill()}"></span>
-                            <h2 class="m-0 section-title" th:text="${recommendation.title()}">Tiếp tục bài học</h2>
-                            <p class="muted m-0 mt-1 supporting-text" th:if="${recommendation.path() != null}" th:text="|Tiến độ chặng: ${recommendation.path().completedLessons()}/${recommendation.path().totalLessons()} bài (${recommendation.path().progressPercent()}%)|"></p>
-                        </div>
-                        <a class="button button-primary" th:href="@{/student/lessons/{id}(id=${recommendation.lessonId()})}">Học tiếp ngay →</a>
-                    </div>
-                </section>
-
-                <!-- Thẻ hướng dẫn bắt đầu -->
-                <section class="learn-choice">
-                    <div>
-                        <span class="learn-tag">KHÔNG BẮT BUỘC ĐÁNH GIÁ</span>
-                        <h2>Bắt đầu theo cách của bạn</h2>
-                        <p>Khám phá kho bài giảng theo từng kỹ năng hoặc làm bài kiểm tra đầu vào để nhận lộ trình cá nhân hóa.</p>
-                        <div class="actions">
-                            <a class="button" th:href="@{/student/learning-path}">Khám phá lộ trình</a>
-                        </div>
-                    </div>
-                    <div th:replace="~{fragments/navi :: navi('welcome', 'Navi đồng hành cùng bạn')}"></div>
-                </section>
-
-                <!-- Danh sách các chặng kỹ năng -->
-                <div class="learn-path-heading">
-                    <h2>Tiến độ theo kỹ năng</h2>
-                    <a th:href="@{/student/learning-path}">Xem tất cả lộ trình →</a>
+            <!-- Thẻ học tiếp bài học gần nhất (Quick Continue) -->
+            <section
+              class="dashboard-panel next-lesson-card mb-4"
+              th:if="${recommendation != null}"
+            >
+              <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+                <div>
+                  <span
+                    class="badge badge-secondary mb-1"
+                    th:text="${recommendation.skill()}"
+                  ></span>
+                  <h2 class="m-0 section-title" th:text="${recommendation.title()}">
+                    Tiếp tục bài học
+                  </h2>
+                  <p
+                    class="muted m-0 mt-1 supporting-text"
+                    th:if="${recommendation.path() != null}"
+                    th:text="|Tiến độ chặng: ${recommendation.path().completedLessons()}/${recommendation.path().totalLessons()} bài (${recommendation.path().progressPercent()}%)|"
+                  ></p>
                 </div>
+                <a
+                  class="button button-primary"
+                  th:href="@{/student/lessons/{id}(id=${recommendation.lessonId()})}"
+                  >Học tiếp ngay →</a
+                >
+              </div>
+            </section>
 
-                <section class="learn-path" aria-label="Các lộ trình kỹ năng">
-                    <div class="learn-stop" th:each="path : ${paths}">
-                        <a class="learn-node" 
-                           th:classappend="${path.skill()=='Reading'?'node-blue':(path.skill()=='Listening'?'node-gold':(path.skill()=='Writing'?'node-purple':(path.skill()=='Speaking'?'node-coral':'node-green')))}" 
-                           th:href="@{/student/learning-path/{skill}(skill=${path.skill()})}" 
-                           th:attr="aria-label=|Xem lộ trình ${path.skill()}|,data-skill=${path.skill()}"
-                           th:text="${path.progressPercent() == null ? '—' : path.progressPercent() + '%'}">—</a>
-                        <div>
-                            <h3 th:text="${path.skill()}"></h3>
-                            <p th:if="${path.totalLessons() > 0}" th:text="|${path.completedLessons()}/${path.totalLessons()} bài đã hoàn thành|"></p>
-                            <p th:if="${path.totalLessons() == 0}">Chưa có bài học</p>
-                        </div>
-                    </div>
-                </section>
+            <!-- Thẻ hướng dẫn bắt đầu -->
+            <section class="learn-choice">
+              <div>
+                <span class="learn-tag">KHÔNG BẮT BUỘC ĐÁNH GIÁ</span>
+                <h2>Bắt đầu theo cách của bạn</h2>
+                <p>
+                  Khám phá kho bài giảng theo từng kỹ năng hoặc làm bài kiểm tra đầu vào để nhận lộ
+                  trình cá nhân hóa.
+                </p>
+                <div class="actions">
+                  <a class="button" th:href="@{/student/learning-path}">Khám phá lộ trình</a>
+                </div>
+              </div>
+              <div
+                th:replace="~{fragments/navi :: navi('welcome', 'Navi đồng hành cùng bạn')}"
+              ></div>
+            </section>
+
+            <!-- Danh sách các chặng kỹ năng -->
+            <div class="learn-path-heading">
+              <h2>Tiến độ theo kỹ năng</h2>
+              <a th:href="@{/student/learning-path}">Xem tất cả lộ trình →</a>
             </div>
 
-            <!-- Cột bên phải: Gamification & Thống kê học tập -->
-            <aside class="learn-rail" aria-label="Tổng quan học tập">
-                <article class="learn-rail-card" th:if="${latestResult != null}">
-                    <div class="learn-rail-heading"><h2>Lượt thi gần nhất</h2></div>
-                    <p th:text="${latestResult.examTitle}"></p>
-                    <p class="muted" th:text="${@resultLabels.state(latestResult.state)}"></p>
-                    <a class="button button-secondary button-block" th:href="@{/student/attempts/{id}/result(id=${latestResult.attemptId})}">Xem kết quả</a>
-                </article>
-                
-                <!-- Chuỗi học tập (Streak) -->
-                <article class="learn-rail-card streak-card">
-                    <div class="learn-rail-heading">
-                        <span aria-hidden="true">🔥</span>
-                        <h2>Chuỗi học tập</h2>
-                    </div>
-                    <div class="d-flex align-items-baseline gap-2 mt-2">
-                        <strong class="streak-value" th:text="${activity.currentStreak}">0</strong>
-                        <span class="muted streak-label">ngày liên tiếp</span>
-                    </div>
-                    <p class="muted supporting-text mt-2">Có ít nhất một hoạt động học tập mỗi ngày để duy trì chuỗi.</p>
-                </article>
+            <section class="learn-path" aria-label="Các lộ trình kỹ năng">
+              <div class="learn-stop" th:each="path : ${paths}">
+                <a
+                  class="learn-node"
+                  th:classappend="${path.skill()=='Reading'?'node-blue':(path.skill()=='Listening'?'node-gold':(path.skill()=='Writing'?'node-purple':(path.skill()=='Speaking'?'node-coral':'node-green')))}"
+                  th:href="@{/student/learning-path/{skill}(skill=${path.skill()})}"
+                  th:attr="aria-label=|Xem lộ trình ${path.skill()}|,data-skill=${path.skill()}"
+                  th:text="${path.progressPercent() == null ? '—' : path.progressPercent() + '%'}"
+                  >—</a
+                >
+                <div>
+                  <h3 th:text="${path.skill()}"></h3>
+                  <p
+                    th:if="${path.totalLessons() > 0}"
+                    th:text="|${path.completedLessons()}/${path.totalLessons()} bài đã hoàn thành|"
+                  ></p>
+                  <p th:if="${path.totalLessons() == 0}">Chưa có bài học</p>
+                </div>
+              </div>
+            </section>
+          </div>
 
-                <!-- Trình độ hiện tại & Mục tiêu -->
-                <article class="learn-rail-card skill-overview-card">
-                    <div class="learn-rail-heading">
-                        <span aria-hidden="true">⚑</span>
-                        <h2>Trình độ &amp; mục tiêu</h2>
-                    </div>
-                    <table class="skill-overview-table">
-                        <thead><tr><th scope="col">Kỹ năng</th><th scope="col">Hiện tại</th><th scope="col">Mục tiêu</th></tr></thead>
-                        <tbody><tr th:each="skill:${skillOverview}"><th scope="row" th:text="${skill.label}"></th><td th:text="${skill.current}"></td><td><span class="skill-goal-level" th:text="${skill.goal}"></span></td></tr></tbody>
-                    </table>
-                    <p class="skill-overview-note" th:if="${#lists.isEmpty(account.profiles)}">Chưa có đánh giá đầu vào.</p>
-                    <a class="button button-secondary button-block mt-3" th:href="@{/student/placement}">Kiểm tra đầu vào</a>
-                </article>
+          <!-- Cột bên phải: Gamification & Thống kê học tập -->
+          <aside class="learn-rail" aria-label="Tổng quan học tập">
+            <article class="learn-rail-card" th:if="${latestResult != null}">
+              <div class="learn-rail-heading"><h2>Lượt thi gần nhất</h2></div>
+              <p th:text="${latestResult.examTitle}"></p>
+              <p class="muted" th:text="${@resultLabels.state(latestResult.state)}"></p>
+              <a
+                class="button button-secondary button-block"
+                th:href="@{/student/attempts/{id}/result(id=${latestResult.attemptId})}"
+                >Xem kết quả</a
+              >
+            </article>
 
-                <!-- Thống kê tổng quan -->
-                <article class="learn-rail-card">
-                    <div class="learn-rail-heading">
-                        <span aria-hidden="true">✦</span>
-                        <h2>Tổng quan các chặng đang hiển thị</h2>
-                    </div>
-                    <div class="learn-mini-stat">
-                        <span>Bài học hoàn thành</span>
-                        <strong th:text="|${completedLessons}/${totalLessons}|">0/0</strong>
-                    </div>
-                    <div class="learn-mini-stat">
-                        <span>Kỹ năng đang luyện</span>
-                        <strong th:text="${#lists.size(paths)}">0</strong>
-                    </div>
-                </article>
-            </aside>
+            <!-- Chuỗi học tập (Streak) -->
+            <article class="learn-rail-card streak-card">
+              <div class="learn-rail-heading">
+                <span aria-hidden="true">🔥</span>
+                <h2>Chuỗi học tập</h2>
+              </div>
+              <div class="d-flex align-items-baseline gap-2 mt-2">
+                <strong class="streak-value" th:text="${activity.currentStreak}">0</strong>
+                <span class="muted streak-label">ngày liên tiếp</span>
+              </div>
+              <p class="muted supporting-text mt-2">
+                Có ít nhất một hoạt động học tập mỗi ngày để duy trì chuỗi.
+              </p>
+            </article>
+
+            <!-- Trình độ hiện tại & Mục tiêu -->
+            <article class="learn-rail-card skill-overview-card">
+              <div class="learn-rail-heading">
+                <span aria-hidden="true">⚑</span>
+                <h2>Trình độ &amp; mục tiêu</h2>
+              </div>
+              <table class="skill-overview-table">
+                <thead>
+                  <tr>
+                    <th scope="col">Kỹ năng</th>
+                    <th scope="col">Hiện tại</th>
+                    <th scope="col">Mục tiêu</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr th:each="skill:${skillOverview}">
+                    <th scope="row" th:text="${skill.label}"></th>
+                    <td th:text="${skill.current}"></td>
+                    <td><span class="skill-goal-level" th:text="${skill.goal}"></span></td>
+                  </tr>
+                </tbody>
+              </table>
+              <p class="skill-overview-note" th:if="${#lists.isEmpty(account.profiles)}">
+                Chưa có đánh giá đầu vào.
+              </p>
+              <a class="button button-secondary button-block mt-3" th:href="@{/student/placement}"
+                >Kiểm tra đầu vào</a
+              >
+            </article>
+
+            <!-- Thống kê tổng quan -->
+            <article class="learn-rail-card">
+              <div class="learn-rail-heading">
+                <span aria-hidden="true">✦</span>
+                <h2>Tổng quan các chặng đang hiển thị</h2>
+              </div>
+              <div class="learn-mini-stat">
+                <span>Bài học hoàn thành</span>
+                <strong th:text="|${completedLessons}/${totalLessons}|">0/0</strong>
+              </div>
+              <div class="learn-mini-stat">
+                <span>Kỹ năng đang luyện</span>
+                <strong th:text="${#lists.size(paths)}">0</strong>
+              </div>
+            </article>
+          </aside>
         </div>
-    </main>
-</div>
-<div th:replace="~{fragments/footer :: footer}"></div>
-</body>
+      </main>
+    </div>
+    <div th:replace="~{fragments/footer :: footer}"></div>
+  </body>
 </html>

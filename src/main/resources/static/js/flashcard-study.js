@@ -1,59 +1,225 @@
 (() => {
- const main=document.querySelector('.flashcard-study');if(!main)return;
- const all=[...document.querySelectorAll('#study-data > div')].map(el=>({id:el.dataset.id,state:el.dataset.state,term:el.querySelector('.term').textContent,definition:el.querySelector('.definition').textContent}));
- const get=id=>document.getElementById(id),stage=get('card-stage'),session=get('study-session'),cardEl=get('flip'),message=get('save-message'),complete=get('study-complete');
- let queue=[...all],index=0,flipped=false,busy=false,roundComplete=false;const reviewed=new Set();
- const sizeClass=text=>text.length>500?'text-xlong':text.length>220?'text-long':text.length>90?'text-medium':'text-short';
- function setFace(id,text){const el=get(id);el.textContent=text;el.className=`face-content ${sizeClass(text)}`;}
- function counts(){return{mastered:all.filter(c=>c.state==='MASTERED').length,learning:all.filter(c=>c.state!=='MASTERED').length};}
- function renderSummary(){const total=counts(),learning=all.filter(c=>c.state!=='MASTERED');get('mastered-count').textContent=total.mastered;get('learning-count').textContent=total.learning;get('learning-review').hidden=!learning.length;get('learning-terms').replaceChildren(...learning.map(card=>{const li=document.createElement('li'),term=document.createElement('strong'),definition=document.createElement('span');term.textContent=card.term;definition.textContent=card.definition;li.append(term,definition);return li;}));get('review-learning').disabled=!learning.length;}
- function render(){const card=queue[index],reverse=get('reverse').checked,total=counts(),front=card?(reverse?card.definition:card.term):(all.length?'Không có thẻ trong lượt học này.':'Bộ thẻ chưa có thuật ngữ.'),back=card?(reverse?card.term:card.definition):'';get('front-label').textContent=reverse?'ĐỊNH NGHĨA':'THUẬT NGỮ';get('back-label').textContent=reverse?'THUẬT NGỮ':'ĐỊNH NGHĨA';setFace('front-content',front);setFace('back-content',back);cardEl.classList.toggle('is-flipped',flipped);cardEl.setAttribute('aria-pressed',String(flipped));cardEl.setAttribute('aria-label',flipped?'Mặt sau. Bấm để quay lại mặt trước':'Mặt trước. Bấm để xem mặt sau');get('position').textContent=card?`${index+1} / ${queue.length}`:'0 / 0';get('study-stats').textContent=`${total.mastered} đã nhớ · ${total.learning} cần học lại`;cardEl.disabled=!card;session.hidden=roundComplete;complete.hidden=!roundComplete;get('previous').disabled=busy||index===0;get('next').disabled=busy||index>=queue.length-1;for(const id of ['learning','mastered']){get(id).disabled=busy||!card;get(id).setAttribute('aria-pressed',String(card?.state===(id==='mastered'?'MASTERED':'LEARNING')));}if(roundComplete)renderSummary();}
- function startRound(cards){queue=[...cards];index=0;flipped=false;roundComplete=false;reviewed.clear();message.textContent='';if(!queue.length)roundComplete=true;render();}
- cardEl.addEventListener('click',()=>{if(busy)return;flipped=!flipped;render();});
- function move(delta){if(busy||index+delta<0||index+delta>=queue.length)return;busy=true;const direction=delta>0?'left':'right';stage.classList.add(`slide-out-${direction}`);setTimeout(()=>{index+=delta;flipped=false;render();stage.className=`flashcard-stage slide-in-${direction}`;requestAnimationFrame(()=>requestAnimationFrame(()=>stage.className='flashcard-stage'));setTimeout(()=>{busy=false;render();},260);},180);}
- get('previous').addEventListener('click',()=>move(-1));get('next').addEventListener('click',()=>move(1));
- get('reverse').addEventListener('change',()=>{flipped=false;render();});get('unlearned').addEventListener('change',()=>startRound(get('unlearned').checked?all.filter(c=>c.state!=='MASTERED'):all));get('shuffle').addEventListener('click',()=>{for(let i=queue.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[queue[i],queue[j]]=[queue[j],queue[i]];}index=0;flipped=false;stage.classList.add('shuffle-pulse');setTimeout(()=>stage.classList.remove('shuffle-pulse'),350);render();});
- async function mark(state) {
-  const current = queue[index];
-  if (!current || busy) return;
-  busy = true;
-  render();
-  message.textContent = 'Đang lưu…';
-  // A network retry reuses its action key; a different choice is a new action.
-  if (!current.pendingReview || current.pendingReview.state !== state) {
-   current.pendingReview = { state, key: crypto.randomUUID() };
+  const main = document.querySelector('.flashcard-study');
+  if (!main) return;
+  const all = [...document.querySelectorAll('#study-data > div')].map((el) => ({
+    id: el.dataset.id,
+    state: el.dataset.state,
+    term: el.querySelector('.term').textContent,
+    definition: el.querySelector('.definition').textContent,
+  }));
+  const get = (id) => document.getElementById(id),
+    stage = get('card-stage'),
+    session = get('study-session'),
+    cardEl = get('flip'),
+    message = get('save-message'),
+    complete = get('study-complete');
+  let queue = [...all],
+    index = 0,
+    flipped = false,
+    busy = false,
+    roundComplete = false;
+  const reviewed = new Set();
+  const sizeClass = (text) =>
+    text.length > 500
+      ? 'text-xlong'
+      : text.length > 220
+        ? 'text-long'
+        : text.length > 90
+          ? 'text-medium'
+          : 'text-short';
+  function setFace(id, text) {
+    const el = get(id);
+    el.textContent = text;
+    el.className = `face-content ${sizeClass(text)}`;
   }
-  const csrf = get('csrf-holder').querySelector('input[type="hidden"]');
-  const body = new URLSearchParams({ state, reviewKey: current.pendingReview.key });
-  if (csrf) body.set(csrf.name, csrf.value);
-  try {
-   const response = await fetch(`/student/flashcards/${main.dataset.setId}/cards/${current.id}/state`, {
-    method: 'POST', body, credentials: 'same-origin', headers: { Accept: 'application/json' }
-   });
-   if (!response.ok || response.redirected) throw Error();
-   current.pendingReview = null;
-   current.state = state;
-   reviewed.add(current.id);
-   message.textContent = state === 'MASTERED' ? 'Đã lưu vào nhóm đã nhớ.' : 'Đã lưu vào nhóm cần học lại.';
-   if (reviewed.size >= queue.length) {
-    roundComplete = true;
-   } else {
-    let next = index + 1;
-    while (next < queue.length && reviewed.has(queue[next].id)) next++;
-    if (next >= queue.length) {
-     next = 0;
-     while (next < queue.length && reviewed.has(queue[next].id)) next++;
+  function counts() {
+    return {
+      mastered: all.filter((c) => c.state === 'MASTERED').length,
+      learning: all.filter((c) => c.state !== 'MASTERED').length,
+    };
+  }
+  function renderSummary() {
+    const total = counts(),
+      learning = all.filter((c) => c.state !== 'MASTERED');
+    get('mastered-count').textContent = total.mastered;
+    get('learning-count').textContent = total.learning;
+    get('learning-review').hidden = !learning.length;
+    get('learning-terms').replaceChildren(
+      ...learning.map((card) => {
+        const li = document.createElement('li'),
+          term = document.createElement('strong'),
+          definition = document.createElement('span');
+        term.textContent = card.term;
+        definition.textContent = card.definition;
+        li.append(term, definition);
+        return li;
+      }),
+    );
+    get('review-learning').disabled = !learning.length;
+  }
+  function render() {
+    const card = queue[index],
+      reverse = get('reverse').checked,
+      total = counts(),
+      front = card
+        ? reverse
+          ? card.definition
+          : card.term
+        : all.length
+          ? 'Không có thẻ trong lượt học này.'
+          : 'Bộ thẻ chưa có thuật ngữ.',
+      back = card ? (reverse ? card.term : card.definition) : '';
+    get('front-label').textContent = reverse ? 'ĐỊNH NGHĨA' : 'THUẬT NGỮ';
+    get('back-label').textContent = reverse ? 'THUẬT NGỮ' : 'ĐỊNH NGHĨA';
+    setFace('front-content', front);
+    setFace('back-content', back);
+    cardEl.classList.toggle('is-flipped', flipped);
+    cardEl.setAttribute('aria-pressed', String(flipped));
+    cardEl.setAttribute(
+      'aria-label',
+      flipped ? 'Mặt sau. Bấm để quay lại mặt trước' : 'Mặt trước. Bấm để xem mặt sau',
+    );
+    get('position').textContent = card ? `${index + 1} / ${queue.length}` : '0 / 0';
+    get('study-stats').textContent = `${total.mastered} đã nhớ · ${total.learning} cần học lại`;
+    cardEl.disabled = !card;
+    session.hidden = roundComplete;
+    complete.hidden = !roundComplete;
+    get('previous').disabled = busy || index === 0;
+    get('next').disabled = busy || index >= queue.length - 1;
+    for (const id of ['learning', 'mastered']) {
+      get(id).disabled = busy || !card;
+      get(id).setAttribute(
+        'aria-pressed',
+        String(card?.state === (id === 'mastered' ? 'MASTERED' : 'LEARNING')),
+      );
     }
-    index = Math.min(next, queue.length - 1);
-   }
-   flipped = false;
-  } catch {
-   message.textContent = 'Chưa lưu được. Hãy kiểm tra kết nối rồi thử lại.';
-  } finally {
-   busy = false;
-   render();
+    if (roundComplete) renderSummary();
   }
- }
- get('learning').addEventListener('click',()=>mark('LEARNING'));get('mastered').addEventListener('click',()=>mark('MASTERED'));get('review-learning').addEventListener('click',()=>{get('unlearned').checked=true;startRound(all.filter(c=>c.state!=='MASTERED'));});get('restart-all').addEventListener('click',()=>{get('unlearned').checked=false;startRound(all);});
- document.addEventListener('keydown',event=>{if(['INPUT','TEXTAREA','SELECT','BUTTON','A','SUMMARY'].includes(document.activeElement.tagName))return;if(event.code==='Space'){event.preventDefault();cardEl.click();}if(event.key==='ArrowLeft')move(-1);if(event.key==='ArrowRight')move(1);});render();
+  function startRound(cards) {
+    queue = [...cards];
+    index = 0;
+    flipped = false;
+    roundComplete = false;
+    reviewed.clear();
+    message.textContent = '';
+    if (!queue.length) roundComplete = true;
+    render();
+  }
+  cardEl.addEventListener('click', () => {
+    if (busy) return;
+    flipped = !flipped;
+    render();
+  });
+  function move(delta) {
+    if (busy || index + delta < 0 || index + delta >= queue.length) return;
+    busy = true;
+    const direction = delta > 0 ? 'left' : 'right';
+    stage.classList.add(`slide-out-${direction}`);
+    setTimeout(() => {
+      index += delta;
+      flipped = false;
+      render();
+      stage.className = `flashcard-stage slide-in-${direction}`;
+      requestAnimationFrame(() =>
+        requestAnimationFrame(() => (stage.className = 'flashcard-stage')),
+      );
+      setTimeout(() => {
+        busy = false;
+        render();
+      }, 260);
+    }, 180);
+  }
+  get('previous').addEventListener('click', () => move(-1));
+  get('next').addEventListener('click', () => move(1));
+  get('reverse').addEventListener('change', () => {
+    flipped = false;
+    render();
+  });
+  get('unlearned').addEventListener('change', () =>
+    startRound(get('unlearned').checked ? all.filter((c) => c.state !== 'MASTERED') : all),
+  );
+  get('shuffle').addEventListener('click', () => {
+    for (let i = queue.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [queue[i], queue[j]] = [queue[j], queue[i]];
+    }
+    index = 0;
+    flipped = false;
+    stage.classList.add('shuffle-pulse');
+    setTimeout(() => stage.classList.remove('shuffle-pulse'), 350);
+    render();
+  });
+  async function mark(state) {
+    const current = queue[index];
+    if (!current || busy) return;
+    busy = true;
+    render();
+    message.textContent = 'Đang lưu…';
+    // A network retry reuses its action key; a different choice is a new action.
+    if (!current.pendingReview || current.pendingReview.state !== state) {
+      current.pendingReview = { state, key: crypto.randomUUID() };
+    }
+    const csrf = get('csrf-holder').querySelector('input[type="hidden"]');
+    const body = new URLSearchParams({ state, reviewKey: current.pendingReview.key });
+    if (csrf) body.set(csrf.name, csrf.value);
+    try {
+      const response = await fetch(
+        `/student/flashcards/${main.dataset.setId}/cards/${current.id}/state`,
+        {
+          method: 'POST',
+          body,
+          credentials: 'same-origin',
+          headers: { Accept: 'application/json' },
+        },
+      );
+      if (!response.ok || response.redirected) throw Error();
+      current.pendingReview = null;
+      current.state = state;
+      reviewed.add(current.id);
+      message.textContent =
+        state === 'MASTERED' ? 'Đã lưu vào nhóm đã nhớ.' : 'Đã lưu vào nhóm cần học lại.';
+      if (reviewed.size >= queue.length) {
+        roundComplete = true;
+      } else {
+        let next = index + 1;
+        while (next < queue.length && reviewed.has(queue[next].id)) next++;
+        if (next >= queue.length) {
+          next = 0;
+          while (next < queue.length && reviewed.has(queue[next].id)) next++;
+        }
+        index = Math.min(next, queue.length - 1);
+      }
+      flipped = false;
+    } catch {
+      message.textContent = 'Chưa lưu được. Hãy kiểm tra kết nối rồi thử lại.';
+    } finally {
+      busy = false;
+      render();
+    }
+  }
+  get('learning').addEventListener('click', () => mark('LEARNING'));
+  get('mastered').addEventListener('click', () => mark('MASTERED'));
+  get('review-learning').addEventListener('click', () => {
+    get('unlearned').checked = true;
+    startRound(all.filter((c) => c.state !== 'MASTERED'));
+  });
+  get('restart-all').addEventListener('click', () => {
+    get('unlearned').checked = false;
+    startRound(all);
+  });
+  document.addEventListener('keydown', (event) => {
+    if (
+      ['INPUT', 'TEXTAREA', 'SELECT', 'BUTTON', 'A', 'SUMMARY'].includes(
+        document.activeElement.tagName,
+      )
+    )
+      return;
+    if (event.code === 'Space') {
+      event.preventDefault();
+      cardEl.click();
+    }
+    if (event.key === 'ArrowLeft') move(-1);
+    if (event.key === 'ArrowRight') move(1);
+  });
+  render();
 })();

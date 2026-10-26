@@ -6,16 +6,12 @@ import com.aptisprep.exception.*;
 import com.aptisprep.repository.*;
 import com.aptisprep.service.contract.*;
 import com.aptisprep.service.contract.IntegrationModels.*;
-
 import jakarta.persistence.*;
-
+import java.time.LocalDateTime;
+import java.util.*;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.*;
-
-import java.time.LocalDateTime;
-import java.time.ZoneId;
-import java.util.*;
 
 /** Owns path/progress only; Profile and attempt state are delegated to the team contracts. */
 @Service
@@ -30,6 +26,7 @@ public class LearningPathService implements LearningPathContract {
     private final ObjectProvider<ExamAttemptContract> attempts;
     private final ExamCatalogContract catalog;
     private final AccountAccessContract accounts;
+    private final CheckpointStatusReader checkpointStatus;
 
     public LearningPathService(
             LearningPathRepository paths,
@@ -40,7 +37,8 @@ public class LearningPathService implements LearningPathContract {
             UserGoalRepository goals,
             ObjectProvider<ExamAttemptContract> attempts,
             ExamCatalogContract catalog,
-            AccountAccessContract accounts) {
+            AccountAccessContract accounts,
+            CheckpointStatusReader checkpointStatus) {
         this.paths = paths;
         this.items = items;
         this.lessons = lessons;
@@ -50,6 +48,7 @@ public class LearningPathService implements LearningPathContract {
         this.attempts = attempts;
         this.catalog = catalog;
         this.accounts = accounts;
+        this.checkpointStatus = checkpointStatus;
     }
 
     @Override
@@ -233,14 +232,16 @@ public class LearningPathService implements LearningPathContract {
         var engine = engine();
         if (path.getCheckpointExamId() != null) {
             var running =
-                    checkpointHistory(path, engine).stream().filter(this::unfinished).findFirst();
+                    checkpointStatus.history(path, engine).stream()
+                            .filter(checkpointStatus::unfinished)
+                            .findFirst();
             if (running.isPresent()) return running.get().attemptId();
         }
         var checkpoint = catalog.checkpoint(codeSkill(path.getSkill()), path.getTargetLevel());
         path.setCheckpointExamId(checkpoint.examId());
         paths.save(path);
-        var previous = checkpointHistory(path, engine);
-        var unfinished = previous.stream().filter(this::unfinished).findFirst();
+        var previous = checkpointStatus.history(path, engine);
+        var unfinished = previous.stream().filter(checkpointStatus::unfinished).findFirst();
         if (unfinished.isPresent()) return unfinished.get().attemptId();
         int last = previous.stream().mapToInt(AttemptResult::attemptId).max().orElse(0);
         // One stable start operation, a fresh key after each terminal result.
@@ -270,7 +271,7 @@ public class LearningPathService implements LearningPathContract {
                 || !Objects.equals(result.userId(), userId)
                 || !Objects.equals(result.attemptId(), attemptId)
                 || !"CHECKPOINT".equals(result.examType())
-                || !terminal(result))
+                || !checkpointStatus.terminal(result))
             throw new BusinessRuleException("Checkpoint chưa có kết quả hoàn tất hợp lệ");
         var path =
                 paths.findByUserIdAndStatusOrderBySkillAscCreatedAtDesc(userId, "ACTIVE").stream()
@@ -278,7 +279,7 @@ public class LearningPathService implements LearningPathContract {
                                 value ->
                                         Objects.equals(
                                                 value.getCheckpointExamId(), result.examId()))
-                        .filter(value -> notBeforePath(result, value))
+                        .filter(value -> checkpointStatus.notBeforePath(result, value))
                         .findFirst()
                         .orElseThrow(
                                 () ->
@@ -471,7 +472,9 @@ public class LearningPathService implements LearningPathContract {
                         ? "passed"
                         : path.getTargetLevel() == null || required == 0
                                 ? "not_configured"
-                                : completedRequired < required ? "locked" : checkpointState(path);
+                                : completedRequired < required
+                                        ? "locked"
+                                        : checkpointStatus.state(path);
         return new PathProgress(
                 path.getId(),
                 path.getSkill(),
@@ -485,91 +488,6 @@ public class LearningPathService implements LearningPathContract {
                 next == null ? null : next.getLesson().getId(),
                 next == null ? null : next.getLesson().getTitle(),
                 checkpoint);
-    }
-
-    private String checkpointState(LearningPath path) {
-        var engine = attempts.getIfAvailable();
-        if (engine != null && path.getCheckpointExamId() != null) {
-            var history = checkpointHistory(path, engine);
-            if (!history.isEmpty()) {
-                var latest = history.getFirst();
-                if (unfinished(latest))
-                    return "IN_PROGRESS".equals(latest.state()) ? "in_progress" : "grading";
-                if (latest.skills() != null
-                        && latest.skills().stream()
-                                .anyMatch(skill -> "ERROR".equals(skill.gradingState())))
-                    return "error";
-                if (terminal(latest)) {
-                    boolean passed =
-                            latest.skills() != null
-                                    && latest.skills().stream()
-                                            .anyMatch(
-                                                    skill ->
-                                                            codeSkill(path.getSkill())
-                                                                            .equals(
-                                                                                    codeSkill(
-                                                                                            skill
-                                                                                                    .skill()))
-                                                                    && skill.passed());
-                    return passed ? "grading" : "failed";
-                }
-            }
-        }
-        try {
-            catalog.checkpoint(codeSkill(path.getSkill()), path.getTargetLevel());
-            return "available";
-        } catch (ResourceNotFoundException | BusinessRuleException missing) {
-            return "not_configured";
-        }
-    }
-
-    private List<AttemptResult> checkpointHistory(LearningPath path, ExamAttemptContract engine) {
-        var history =
-                engine.history(
-                        path.getUser().getId(),
-                        0,
-                        100,
-                        new HistoryFilter("", codeSkill(path.getSkill()), "CHECKPOINT", ""));
-        if (history == null || history.items() == null) return List.of();
-        return history.items().stream()
-                .filter(result -> Objects.equals(result.examId(), path.getCheckpointExamId()))
-                .filter(result -> result.submittedAt() == null || notBeforePath(result, path))
-                .sorted(Comparator.comparing(AttemptResult::attemptId).reversed())
-                .toList();
-    }
-
-    private boolean unfinished(AttemptResult result) {
-        return "IN_PROGRESS".equals(result.state())
-                || "SUBMITTED".equals(result.state())
-                || "WAITING_GRADING".equals(result.state())
-                || ("EXPIRED".equals(result.state())
-                        && (result.skills() == null
-                                || result.skills().stream()
-                                        .anyMatch(
-                                                skill ->
-                                                        "PENDING".equals(skill.gradingState())
-                                                                || "WAITING"
-                                                                        .equals(
-                                                                                skill
-                                                                                        .gradingState())
-                                                                || "GRADING"
-                                                                        .equals(
-                                                                                skill
-                                                                                        .gradingState()))));
-    }
-
-    private boolean terminal(AttemptResult result) {
-        return "COMPLETED".equals(result.state()) || "EXPIRED".equals(result.state());
-    }
-
-    private boolean notBeforePath(AttemptResult result, LearningPath path) {
-        return result.submittedAt() != null
-                && (path.getCreatedAt() == null
-                        || !result.submittedAt()
-                                .isBefore(
-                                        path.getCreatedAt()
-                                                .atZone(ZoneId.systemDefault())
-                                                .toInstant()));
     }
 
     private boolean completed(LearningPathItem item) {
@@ -630,10 +548,7 @@ public class LearningPathService implements LearningPathContract {
     }
 
     private static int rank(String value) {
-        return value == null
-                ? -1
-                : List.of("A1", "A2", "B1", "B2", "C1", "C2")
-                        .indexOf(value.toUpperCase(Locale.ROOT));
+        return value == null ? -1 : CefrLevel.codes().indexOf(value.toUpperCase(Locale.ROOT));
     }
 
     private static String validLevel(String value) {

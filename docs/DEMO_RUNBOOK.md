@@ -1,5 +1,7 @@
 # Runbook demo AptisPrep
 
+> Tài liệu lịch sử trước đợt dọn 24–25/10/2026. Không còn runner tạo demo hoặc file application-dev.properties; các hướng dẫn seed/Flyway bên dưới không dùng cho source hiện tại. Dựng DB mới và cấu hình môi trường theo [SETUP_LOCAL.md](SETUP_LOCAL.md). Không chạy script seed trên DB đang dùng.
+
 Tài liệu này dùng cho buổi demo chạy trực tiếp, theo thứ tự ít rủi ro nhất.
 Không xóa DB, sửa điểm bằng SQL hoặc dùng dữ liệu người thật để làm lại demo.
 

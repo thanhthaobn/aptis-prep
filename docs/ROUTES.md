@@ -1,5 +1,34 @@
 # Route contract
 
+## Cách viết route hiện tại (25/10/2026)
+
+Controller dùng đường dẫn cụ thể và biến đơn giản, không dùng regex trong
+annotation mapping. `AdminCatalogController` có `@RequestMapping("/admin")`
+trên class; method viết như sau:
+
+```java
+@PostMapping("/questions/{id}/media/{mediaId}/delete")
+public String deleteMedia(@PathVariable int id, @PathVariable int mediaId) {
+    catalogService.deleteMedia(id, mediaId);
+    return "redirect:/admin/questions/" + id;
+}
+```
+
+Request POST `/admin/questions/12/media/3/delete` có `id = 12`, `mediaId = 3`.
+URL thực tế, method HTTP, tham số form và redirect vẫn giữ nguyên. Spring chuyển
+`@PathVariable int/Integer` sang số; ID chứa chữ hoặc vượt phạm vi `int` trả 400
+trước khi chạy nghiệp vụ. ID không tồn tại vẫn do service xử lý. Trước đây URL
+chứa chữ không khớp regex nên thường trả 404; đây là khác biệt với input lỗi.
+
+Admin khai báo riêng `/questions`, `/exams`, các route tạo/xem/sửa tương ứng,
+nhưng dùng helper chung để tránh lặp nghiệp vụ. Student khai báo `/exams` và
+`/exams/{id}`. Không thay regex module bằng `/{module}` tổng quát vì có thể bắt
+nhầm route của những controller khác. Route tĩnh như `/questions/create` và
+`/admin/certificates/create` được ưu tiên hơn route `{id}`.
+
+Các phần ghi preview/chưa triển khai bên dưới là lịch sử quy hoạch; trạng thái
+triển khai hiện tại tham khảo source controller và `UI_GUIDE.md`.
+
 Chứng chỉ & Chấm điểm đã có GET danh sách/tạo/xem/sửa tại `/admin/certificates` và `/admin/scoring-schemes`; `/admin/settings` redirect sang `/admin/certificates`. Người 3 tiếp nhận toàn bộ POST/validation/DB sau, xem [SCORING_UI_HANDOFF.md](SCORING_UI_HANDOFF.md).
 
 | Method | URL | Quyền | Controller | Template |

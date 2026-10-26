@@ -2,13 +2,14 @@ package com.aptisprep.controller;
 
 import com.aptisprep.enums.Role;
 import com.aptisprep.exception.ResourceNotFoundException;
-import com.aptisprep.repository.UserRepository;
 import com.aptisprep.repository.LessonResponseRepository;
+import com.aptisprep.repository.UserRepository;
 import com.aptisprep.service.learning.LessonService;
+import com.aptisprep.service.learning.LessonTeachingService;
 import com.aptisprep.service.storage.StorageService;
-
 import java.security.Principal;
-
+import java.util.List;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
 import org.springframework.http.*;
 import org.springframework.stereotype.Controller;
@@ -17,27 +18,41 @@ import org.springframework.web.bind.annotation.*;
 @Controller
 public class LessonAudioController {
     @GetMapping("/student/lessons/{id}/history/{kind}/{historyId}/media/{media}")
-    public ResponseEntity<Resource> historyMedia(@PathVariable Integer id, @PathVariable String kind, @PathVariable Integer historyId, @PathVariable String media, Principal principal) {
-        if (!java.util.List.of("attempts", "submissions").contains(kind))
+    public ResponseEntity<Resource> historyMedia(
+            @PathVariable Integer id,
+            @PathVariable String kind,
+            @PathVariable Integer historyId,
+            @PathVariable String media,
+            Principal principal) {
+        if (!List.of("attempts", "submissions").contains(kind))
             throw new ResourceNotFoundException("Không tìm thấy lịch sử");
-        var item = teaching.historicalMedia(id, historyId, media, principal.getName(), "attempts".equals(kind));
-        var type = switch (media) {
-            case "image" -> imageType(item.path());
-            case "audio" -> mediaType(item.path());
-            default ->
-                    MediaType.parseMediaType(item.path().toLowerCase().endsWith(".webm") ? "video/webm" : "video/mp4");
-        };
-        return ResponseEntity.ok().contentType(type).header(HttpHeaders.CACHE_CONTROL, "private, no-store").body(storage.load(item.path()));
+        var item =
+                teaching.historicalMedia(
+                        id, historyId, media, principal.getName(), "attempts".equals(kind));
+        var type =
+                switch (media) {
+                    case "image" -> imageType(item.path());
+                    case "audio" -> mediaType(item.path());
+                    default ->
+                            MediaType.parseMediaType(
+                                    item.path().toLowerCase().endsWith(".webm")
+                                            ? "video/webm"
+                                            : "video/mp4");
+                };
+        return ResponseEntity.ok()
+                .contentType(type)
+                .header(HttpHeaders.CACHE_CONTROL, "private, no-store")
+                .body(storage.load(item.path()));
     }
 
-    @org.springframework.beans.factory.annotation.Autowired
-    private com.aptisprep.service.learning.LessonTeachingService teaching;
+    @Autowired private LessonTeachingService teaching;
     private final LessonService lessons;
     private final StorageService storage;
     private final UserRepository users;
     private final LessonResponseRepository responses;
 
-    public LessonAudioController(LessonService l, StorageService s, UserRepository u, LessonResponseRepository r) {
+    public LessonAudioController(
+            LessonService l, StorageService s, UserRepository u, LessonResponseRepository r) {
         lessons = l;
         storage = s;
         users = u;
@@ -50,16 +65,28 @@ public class LessonAudioController {
         var user = users.findByEmailIgnoreCase(principal.getName()).orElseThrow();
         if (user.getRole() != Role.ADMIN && !"PUBLISHED".equals(lesson.getStatus()))
             throw new ResourceNotFoundException("Không tìm thấy âm thanh");
-        if (lesson.getAudioPath() == null) throw new ResourceNotFoundException("Bài học chưa có âm thanh");
+        if (lesson.getAudioPath() == null)
+            throw new ResourceNotFoundException("Bài học chưa có âm thanh");
         var resource = storage.load(lesson.getAudioPath());
-        return ResponseEntity.ok().contentType(mediaType(lesson.getAudioName())).header(HttpHeaders.CONTENT_DISPOSITION, "inline").body(resource);
+        return ResponseEntity.ok()
+                .contentType(mediaType(lesson.getAudioName()))
+                .header(HttpHeaders.CONTENT_DISPOSITION, "inline")
+                .body(resource);
     }
 
     @GetMapping("/student/lessons/{id}/recording")
     public ResponseEntity<Resource> recording(@PathVariable Integer id, Principal principal) {
         var user = users.findByEmailIgnoreCase(principal.getName()).orElseThrow();
-        var work = responses.findByUserIdAndLessonId(user.getId(), id).filter(r -> r.getAudioPath() != null).orElseThrow(() -> new ResourceNotFoundException("Chưa có bản ghi"));
-        return ResponseEntity.ok().contentType(mediaType(work.getAudioPath())).header(HttpHeaders.CACHE_CONTROL, "private, no-store").header(HttpHeaders.CONTENT_DISPOSITION, "inline").body(storage.load(work.getAudioPath()));
+        var work =
+                responses
+                        .findByUserIdAndLessonId(user.getId(), id)
+                        .filter(r -> r.getAudioPath() != null)
+                        .orElseThrow(() -> new ResourceNotFoundException("Chưa có bản ghi"));
+        return ResponseEntity.ok()
+                .contentType(mediaType(work.getAudioPath()))
+                .header(HttpHeaders.CACHE_CONTROL, "private, no-store")
+                .header(HttpHeaders.CONTENT_DISPOSITION, "inline")
+                .body(storage.load(work.getAudioPath()));
     }
 
     @GetMapping("/lesson-media/{id}/image")
@@ -68,8 +95,12 @@ public class LessonAudioController {
         var user = users.findByEmailIgnoreCase(principal.getName()).orElseThrow();
         if (user.getRole() != Role.ADMIN && !"PUBLISHED".equals(lesson.getStatus()))
             throw new ResourceNotFoundException("Không tìm thấy hình ảnh");
-        if (lesson.getImagePath() == null) throw new ResourceNotFoundException("Bài học chưa có hình ảnh");
-        return ResponseEntity.ok().contentType(imageType(lesson.getImageName())).header(HttpHeaders.CONTENT_DISPOSITION, "inline").body(storage.load(lesson.getImagePath()));
+        if (lesson.getImagePath() == null)
+            throw new ResourceNotFoundException("Bài học chưa có hình ảnh");
+        return ResponseEntity.ok()
+                .contentType(imageType(lesson.getImagePath()))
+                .header(HttpHeaders.CONTENT_DISPOSITION, "inline")
+                .body(storage.load(lesson.getImagePath()));
     }
 
     private static MediaType mediaType(String name) {
@@ -85,15 +116,27 @@ public class LessonAudioController {
     public ResponseEntity<Resource> video(@PathVariable Integer id, Principal principal) {
         var lesson = lessons.require(id);
         var user = users.findByEmailIgnoreCase(principal.getName()).orElseThrow();
-        if (user.getRole() != Role.ADMIN && !"PUBLISHED".equals(lesson.getStatus()) || lesson.getVideoPath() == null)
+        if (user.getRole() != Role.ADMIN && !"PUBLISHED".equals(lesson.getStatus())
+                || lesson.getVideoPath() == null)
             throw new ResourceNotFoundException("Không tìm thấy video");
-        return ResponseEntity.ok().contentType(MediaType.parseMediaType(lesson.getVideoPath().toLowerCase().endsWith(".webm") ? "video/webm" : "video/mp4")).header(HttpHeaders.CONTENT_DISPOSITION, "inline").body(storage.load(lesson.getVideoPath()));
+        return ResponseEntity.ok()
+                .contentType(
+                        MediaType.parseMediaType(
+                                lesson.getVideoPath().toLowerCase().endsWith(".webm")
+                                        ? "video/webm"
+                                        : "video/mp4"))
+                .header(HttpHeaders.CONTENT_DISPOSITION, "inline")
+                .body(storage.load(lesson.getVideoPath()));
     }
 
     @GetMapping("/student/lessons/{id}/submissions/{submissionId}/audio")
-    public ResponseEntity<Resource> submissionAudio(@PathVariable Integer id, @PathVariable Integer submissionId, Principal principal) {
+    public ResponseEntity<Resource> submissionAudio(
+            @PathVariable Integer id, @PathVariable Integer submissionId, Principal principal) {
         String path = teaching.submissionAudio(id, submissionId, principal.getName());
-        return ResponseEntity.ok().contentType(mediaType(path)).header(HttpHeaders.CACHE_CONTROL, "private, no-store").body(storage.load(path));
+        return ResponseEntity.ok()
+                .contentType(mediaType(path))
+                .header(HttpHeaders.CACHE_CONTROL, "private, no-store")
+                .body(storage.load(path));
     }
 
     private static MediaType imageType(String name) {
@@ -101,6 +144,7 @@ public class LessonAudioController {
         if (n.endsWith(".png")) return MediaType.IMAGE_PNG;
         if (n.endsWith(".gif")) return MediaType.IMAGE_GIF;
         if (n.endsWith(".webp")) return MediaType.parseMediaType("image/webp");
+        if (n.endsWith(".svg")) return MediaType.parseMediaType("image/svg+xml");
         return MediaType.IMAGE_JPEG;
     }
 }

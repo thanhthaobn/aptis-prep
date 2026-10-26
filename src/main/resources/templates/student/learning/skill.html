@@ -1,85 +1,167 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="vi" xmlns:th="http://www.thymeleaf.org">
-<head th:replace="~{fragments/head :: head(${selectedSkill})}"></head>
-<body class="student-theme">
-<div th:replace="~{fragments/navbar :: navbar}"></div>
-<div class="container ap-container app-shell">
-    <div th:replace="~{fragments/student-sidebar :: studentSidebar('learning-path')}"></div>
-    <main class="app-main student-content" id="main-content" tabindex="-1">
-        <div th:replace="~{fragments/breadcrumb :: breadcrumb('Lộ trình của tôi', @{/student/learning-path}, ${selectedSkill})}"></div>
+  <head th:replace="~{fragments/head :: head(${selectedSkill})}"></head>
+  <body class="student-theme">
+    <div th:replace="~{fragments/navbar :: navbar}"></div>
+    <div class="container ap-container app-shell">
+      <div th:replace="~{fragments/student-sidebar :: studentSidebar('learning-path')}"></div>
+      <main class="app-main student-content" id="main-content" tabindex="-1">
+        <div
+          th:replace="~{fragments/breadcrumb :: breadcrumb('Lộ trình của tôi', @{/student/learning-path}, ${selectedSkill})}"
+        ></div>
 
         <header class="page-header">
-            <div>
-                <p class="eyebrow">LỘ TRÌNH KỸ NĂNG</p>
-                <h1 th:text="${selectedSkill}"></h1>
-            </div>
-            <div th:replace="~{fragments/path-stage :: levelRange(${selectedSkill})}"></div>
+          <div>
+            <p class="eyebrow">LỘ TRÌNH KỸ NĂNG</p>
+            <h1 th:text="${selectedSkill}"></h1>
+          </div>
+          <div th:replace="~{fragments/path-stage :: levelRange(${selectedSkill})}"></div>
         </header>
 
         <!-- Thông báo alert chuẩn thống nhất -->
         <div th:replace="~{fragments/messages :: messages}"></div>
 
         <div class="actions">
-            <a class="button button-secondary" th:href="@{/student/learning-path}">← Tất cả kỹ năng</a>
+          <a class="button button-secondary" th:href="@{/student/learning-path}"
+            >← Tất cả kỹ năng</a
+          >
         </div>
 
         <section class="curriculum-tree" aria-label="Kỹ năng, cấp độ và bài học">
-            <p th:if="${#lists.isEmpty(paths)}" class="empty-box">Chưa có chặng phù hợp hoặc mục tiêu hiện tại đã đạt. Bạn vẫn có thể ôn bài trong thư viện.</p>
-            <a class="button button-secondary" th:href="@{/student/lessons(skill=${selectedSkill})}">Xem tất cả bài học của kỹ năng</a>
-            <article class="dashboard-panel skill-branch" th:each="path : ${paths}" th:attr="data-skill=${path.skill()}">
-                <header>
-                    <strong th:text="${path.skill()}"></strong>
-                    <span th:text="${path.totalLessons() == 0 ? 'Chưa có bài học' : path.completedLessons() + '/' + path.totalLessons() + ' bài · ' + path.progressPercent() + '%'}"></span>
-                </header>
-                <div th:replace="~{fragments/path-stage :: stageScale(${path.skill()})}"></div>
-                <div th:each="stage : ${stages}" th:if="${stage.pathId == path.pathId}">
-                    <h2>Bài học được giao trong chặng</h2>
-                    <ol class="lesson-leaves"><li th:each="lesson : ${stage.lessons}">
-                        <div class="path-lesson-content">
-                        <small class="muted" th:if="${lesson.topic != null}" th:text="${lesson.topic}"></small>
-                        <a class="path-lesson-title" th:if="${lesson.available}" th:href="@{/student/lessons/{id}(id=${lesson.id})}" th:text="${lesson.title}"></a>
-                        <span th:unless="${lesson.available}" th:text="|${lesson.title} · Nội dung đang được cập nhật|"></span>
-                        </div>
-                        <div class="path-lesson-actions">
-                        <span th:if="${lesson.completed}" class="badge badge-success">Đã hoàn thành</span>
-                        <a class="path-set-link" th:if="${lesson.available and lessonSets.containsKey(lesson.id)}" th:href="@{/student/flashcards/{id}(id=${lessonSets.get(lesson.id).id()})}" th:text="|Ôn ${lessonSets.get(lesson.id).count()} thẻ từ vựng →|"></a>
-                        </div>
-                    </li></ol>
-                </div>
+          <p th:if="${#lists.isEmpty(paths)}" class="empty-box">
+            Chưa có chặng phù hợp hoặc mục tiêu hiện tại đã đạt. Bạn vẫn có thể ôn bài trong thư
+            viện.
+          </p>
+          <a class="button button-secondary" th:href="@{/student/lessons(skill=${selectedSkill})}"
+            >Xem tất cả bài học của kỹ năng</a
+          >
+          <article
+            class="dashboard-panel skill-branch"
+            th:each="path : ${paths}"
+            th:attr="data-skill=${path.skill()}"
+          >
+            <header>
+              <strong th:text="${path.skill()}"></strong>
+              <span
+                th:text="${path.totalLessons() == 0 ? 'Chưa có bài học' : path.completedLessons() + '/' + path.totalLessons() + ' bài · ' + path.progressPercent() + '%'}"
+              ></span>
+            </header>
+            <div th:replace="~{fragments/path-stage :: stageScale(${path.skill()})}"></div>
+            <div th:each="stage : ${stages}" th:if="${stage.pathId == path.pathId}">
+              <h2>Bài học được giao trong chặng</h2>
+              <ol class="lesson-leaves">
+                <li th:each="lesson : ${stage.lessons}">
+                  <div class="path-lesson-content">
+                    <small
+                      class="muted"
+                      th:if="${lesson.topic != null}"
+                      th:text="${lesson.topic}"
+                    ></small>
+                    <a
+                      class="path-lesson-title"
+                      th:if="${lesson.available}"
+                      th:href="@{/student/lessons/{id}(id=${lesson.id})}"
+                      th:text="${lesson.title}"
+                    ></a>
+                    <span
+                      th:unless="${lesson.available}"
+                      th:text="|${lesson.title} · Nội dung đang được cập nhật|"
+                    ></span>
+                  </div>
+                  <div class="path-lesson-actions">
+                    <span th:if="${lesson.completed}" class="badge badge-success"
+                      >Đã hoàn thành</span
+                    >
+                    <a
+                      class="path-set-link"
+                      th:if="${lesson.available and lessonSets.containsKey(lesson.id)}"
+                      th:href="@{/student/flashcards/{id}(id=${lessonSets.get(lesson.id).id()})}"
+                      th:text="|Ôn ${lessonSets.get(lesson.id).count()} thẻ từ vựng →|"
+                    ></a>
+                  </div>
+                </li>
+              </ol>
+            </div>
 
-                <!-- Khu vực Bài kiểm tra cuối chặng -->
-                <div class="dashboard-section final-test-section">
-                    <h3>Bài kiểm tra cuối chặng</h3>
-                    <p th:if="${path.totalRequiredLessons() > 0}" class="checkpoint-requirements" th:text="|Đã hoàn thành ${path.completedRequiredLessons()}/${path.totalRequiredLessons()} bài bắt buộc.|"></p>
-                    <div th:if="${path.completedRequiredLessons() < path.totalRequiredLessons()}" class="checkpoint-missing">
-                        <strong th:text="|Còn ${path.totalRequiredLessons() - path.completedRequiredLessons()} bài cần hoàn thành|"></strong>
-                        <th:block th:each="stage : ${stages}" th:if="${stage.pathId == path.pathId}">
-                            <ul class="checkpoint-missing-list"><li th:each="lesson : ${stage.missingRequiredLessons()}">
-                                <a th:if="${lesson.available}" th:href="@{/student/lessons/{id}(id=${lesson.id})}" th:text="${lesson.title}"></a>
-                                <span th:unless="${lesson.available}" th:text="|${lesson.title} · Chưa thể truy cập, cần quản trị cập nhật|"></span>
-                            </li></ul>
-                        </th:block>
-                    </div>
-                    <div th:if="${path.checkpointState() == 'passed'}" class="alert alert-success ap-alert ap-alert-success" role="status">
-                        Bạn đã vượt qua bài kiểm tra cuối chặng của kỹ năng này.
-                    </div>
-                    <th:block th:if="${path.checkpointState == 'not_configured'}">
-                        <p th:if="${path.totalRequiredLessons() == 0}">Chặng chưa có bài học bắt buộc để mở kiểm tra.</p>
-                        <p th:if="${path.totalRequiredLessons() > 0}">Chưa có đề kiểm tra phù hợp với kỹ năng và cấp độ của chặng. Quản trị viên cần cấu hình và công bố đề.</p>
-                    </th:block>
-                    <p th:if="${path.checkpointState == 'grading'}">Bài đã nộp và đang chờ chấm hoặc xác nhận kết quả. Không cần tạo lượt mới.</p>
-                    <p th:if="${path.checkpointState == 'failed'}">Chưa đạt cấp độ của chặng. Trình độ và các bài đã hoàn thành được giữ lại.</p>
-                    <p th:if="${path.checkpointState == 'error'}">Chấm chưa thành công. Mở lịch sử kết quả để thử lại phần lỗi trên bài đã lưu.</p>
-                    <a th:if="${path.checkpointState == 'error'}" class="button button-secondary" th:href="@{/student/results(examType='CHECKPOINT')}">Xem kết quả checkpoint</a>
-                    <form th:if="${path.checkpointState == 'available' or path.checkpointState == 'failed' or path.checkpointState == 'in_progress' or path.checkpointState == 'grading'}" method="post" th:action="@{/student/learning-path/{id}/checkpoint/start(id=${path.pathId()})}">
-                        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
-                        <button class="button" type="submit" th:text="${path.checkpointState == 'in_progress' ? 'Tiếp tục bài đang làm' : path.checkpointState == 'grading' ? 'Xem trạng thái chấm' : path.checkpointState == 'failed' ? 'Làm lại kiểm tra cuối chặng' : 'Bắt đầu bài kiểm tra cuối chặng'}"></button>
-                    </form>
-                </div>
-            </article>
+            <!-- Khu vực Bài kiểm tra cuối chặng -->
+            <div class="dashboard-section final-test-section">
+              <h3>Bài kiểm tra cuối chặng</h3>
+              <p
+                th:if="${path.totalRequiredLessons() > 0}"
+                class="checkpoint-requirements"
+                th:text="|Đã hoàn thành ${path.completedRequiredLessons()}/${path.totalRequiredLessons()} bài bắt buộc.|"
+              ></p>
+              <div
+                th:if="${path.completedRequiredLessons() < path.totalRequiredLessons()}"
+                class="checkpoint-missing"
+              >
+                <strong
+                  th:text="|Còn ${path.totalRequiredLessons() - path.completedRequiredLessons()} bài cần hoàn thành|"
+                ></strong>
+                <th:block th:each="stage : ${stages}" th:if="${stage.pathId == path.pathId}">
+                  <ul class="checkpoint-missing-list">
+                    <li th:each="lesson : ${stage.missingRequiredLessons()}">
+                      <a
+                        th:if="${lesson.available}"
+                        th:href="@{/student/lessons/{id}(id=${lesson.id})}"
+                        th:text="${lesson.title}"
+                      ></a>
+                      <span
+                        th:unless="${lesson.available}"
+                        th:text="|${lesson.title} · Chưa thể truy cập, cần quản trị cập nhật|"
+                      ></span>
+                    </li>
+                  </ul>
+                </th:block>
+              </div>
+              <div
+                th:if="${path.checkpointState() == 'passed'}"
+                class="alert alert-success ap-alert ap-alert-success"
+                role="status"
+              >
+                Bạn đã vượt qua bài kiểm tra cuối chặng của kỹ năng này.
+              </div>
+              <th:block th:if="${path.checkpointState == 'not_configured'}">
+                <p th:if="${path.totalRequiredLessons() == 0}">
+                  Chặng chưa có bài học bắt buộc để mở kiểm tra.
+                </p>
+                <p th:if="${path.totalRequiredLessons() > 0}">
+                  Chưa có đề kiểm tra phù hợp với kỹ năng và cấp độ của chặng. Quản trị viên cần cấu
+                  hình và công bố đề.
+                </p>
+              </th:block>
+              <p th:if="${path.checkpointState == 'grading'}">
+                Bài đã nộp và đang chờ chấm hoặc xác nhận kết quả. Không cần tạo lượt mới.
+              </p>
+              <p th:if="${path.checkpointState == 'failed'}">
+                Chưa đạt cấp độ của chặng. Trình độ và các bài đã hoàn thành được giữ lại.
+              </p>
+              <p th:if="${path.checkpointState == 'error'}">
+                Chấm chưa thành công. Mở lịch sử kết quả để thử lại phần lỗi trên bài đã lưu.
+              </p>
+              <a
+                th:if="${path.checkpointState == 'error'}"
+                class="button button-secondary"
+                th:href="@{/student/results(examType='CHECKPOINT')}"
+                >Xem kết quả checkpoint</a
+              >
+              <form
+                th:if="${path.checkpointState == 'available' or path.checkpointState == 'failed' or path.checkpointState == 'in_progress' or path.checkpointState == 'grading'}"
+                method="post"
+                th:action="@{/student/learning-path/{id}/checkpoint/start(id=${path.pathId()})}"
+              >
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+                <button
+                  class="button"
+                  type="submit"
+                  th:text="${path.checkpointState == 'in_progress' ? 'Tiếp tục bài đang làm' : path.checkpointState == 'grading' ? 'Xem trạng thái chấm' : path.checkpointState == 'failed' ? 'Làm lại kiểm tra cuối chặng' : 'Bắt đầu bài kiểm tra cuối chặng'}"
+                ></button>
+              </form>
+            </div>
+          </article>
         </section>
-    </main>
-</div>
-<div th:replace="~{fragments/footer :: footer}"></div>
-</body>
+      </main>
+    </div>
+    <div th:replace="~{fragments/footer :: footer}"></div>
+  </body>
 </html>

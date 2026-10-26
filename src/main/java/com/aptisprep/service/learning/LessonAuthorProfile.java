@@ -34,7 +34,7 @@ public record LessonAuthorProfile(
                             "Tiêu chí nghe hiểu",
                             "Gợi ý làm bài nghe",
                             "Audio đặt ngay trước câu hỏi nghe. Ảnh chỉ minh họa bối cảnh, không"
-                                + " chứa đáp án. Video hướng dẫn không thay thế audio thực hành.",
+                                    + " chứa đáp án. Video hướng dẫn không thay thế audio thực hành.",
                             List.of("Hội thoại", "Thông báo", "Phỏng vấn"));
             case "Writing" ->
                     new LessonAuthorProfile(

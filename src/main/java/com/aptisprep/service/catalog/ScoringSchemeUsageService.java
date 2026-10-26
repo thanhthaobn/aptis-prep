@@ -20,6 +20,7 @@ public class ScoringSchemeUsageService implements ScoringSchemeUsageContract {
     @Override
     @Transactional(readOnly = true)
     public boolean isUsed(Integer schemeId) {
-        return exams.existsByScoringSchemeId(schemeId) || attempts.existsByScoringSchemeId(schemeId);
+        return exams.existsByScoringSchemeId(schemeId)
+                || attempts.existsByScoringSchemeId(schemeId);
     }
 }

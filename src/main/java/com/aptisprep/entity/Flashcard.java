@@ -1,7 +1,6 @@
 package com.aptisprep.entity;
 
 import jakarta.persistence.*;
-
 import java.time.LocalDateTime;
 
 @Entity
@@ -10,9 +9,11 @@ public class Flashcard {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
+
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "set_id", nullable = false)
     private FlashcardSet set;
+
     @Column(nullable = false, length = 30)
     private String status = "ACTIVE";
 
@@ -34,14 +35,19 @@ public class Flashcard {
 
     @Column(name = "front_content", nullable = false, columnDefinition = "nvarchar(max)")
     private String frontContent;
+
     @Column(name = "back_content", nullable = false, columnDefinition = "nvarchar(max)")
     private String backContent;
+
     @Column(name = "cefr_level", length = 10)
     private String cefrLevel;
+
     @Column(name = "display_order", nullable = false)
     private Integer displayOrder;
+
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
+
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 

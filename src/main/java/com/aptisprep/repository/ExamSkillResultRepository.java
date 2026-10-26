@@ -7,5 +7,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface ExamSkillResultRepository extends JpaRepository<ExamSkillResultEntity, Integer> {
     List<ExamSkillResultEntity> findByAttemptIdOrderBySkillAsc(Integer attemptId);
+
     Optional<ExamSkillResultEntity> findByAttemptIdAndSkill(Integer attemptId, String skill);
 }

@@ -1,7 +1,6 @@
 package com.aptisprep.entity;
 
 import jakarta.persistence.*;
-
 import java.time.LocalDateTime;
 
 @Entity
@@ -21,16 +20,22 @@ public class LessonCheckAttempt {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
+
     @Column(name = "user_id", nullable = false)
     private Integer userId;
+
     @Column(name = "lesson_id", nullable = false)
     private Integer lessonId;
+
     @Column(nullable = false)
     private int score;
+
     @Column(nullable = false)
     private int total;
+
     @Column(name = "answers_json", nullable = false, columnDefinition = "nvarchar(max)")
     private String answersJson;
+
     @Column(name = "review_json", columnDefinition = "nvarchar(max)")
     private String reviewJson;
 

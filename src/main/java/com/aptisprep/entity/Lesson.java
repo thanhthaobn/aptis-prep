@@ -1,14 +1,12 @@
 package com.aptisprep.entity;
 
 import jakarta.persistence.*;
-
 import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "lessons")
 public class Lesson {
-    @Embedded
-    private LessonMaterial material = new LessonMaterial();
+    @Embedded private LessonMaterial material = new LessonMaterial();
 
     public LessonMaterial getMaterial() {
         return material;
@@ -21,36 +19,52 @@ public class Lesson {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
+
     @Column(nullable = false, length = 255)
     private String title;
+
     @Column(columnDefinition = "nvarchar(max)")
     private String description;
+
     @Column(nullable = false, length = 30)
     private String skill;
+
     @Column(name = "cefr_level", nullable = false, length = 10)
     private String cefrLevel;
+
     @Column(name = "video_path", length = 500)
     private String videoPath;
+
     @Column(name = "audio_path", length = 500)
     private String audioPath;
+
     @Column(name = "audio_name", length = 255)
     private String audioName;
+
     @Column(name = "image_path", length = 500)
     private String imagePath;
+
     @Column(name = "image_name", length = 255)
     private String imageName;
+
     @Column(name = "transcript", columnDefinition = "nvarchar(max)")
     private String transcript;
+
     @Column(name = "min_word_count")
     private Integer minWordCount;
+
     @Column(name = "max_word_count")
     private Integer maxWordCount;
+
     @Column(name = "display_order", nullable = false)
     private Integer displayOrder;
+
     @Column(nullable = false, length = 30)
     private String status;
+
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
+
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 

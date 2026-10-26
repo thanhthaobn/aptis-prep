@@ -26,25 +26,156 @@ public class QuestionForm {
     public QuestionForm() {
         items.add(new ItemForm());
     }
-    public String getContent() { return content; } public void setContent(String v) { content = v; }
-    public String getInstruction() { return instruction; } public void setInstruction(String v) { instruction = v; }
-    public String getReadingPassage() { return readingPassage; } public void setReadingPassage(String v) { readingPassage = v; }
-    public String getQuestionType() { return questionType; } public void setQuestionType(String v) { questionType = v; }
-    public String getSkill() { return skill; } public void setSkill(String v) { skill = v; }
-    public Integer getPartNo() { return partNo; } public void setPartNo(Integer v) { partNo = v; }
-    public String getCefrLevel() { return cefrLevel; } public void setCefrLevel(String v) { cefrLevel = v; }
-    public String getDifficulty() { return difficulty; } public void setDifficulty(String v) { difficulty = v; }
-    public boolean isAllowOptionReuse() { return allowOptionReuse; } public void setAllowOptionReuse(boolean v) { allowOptionReuse = v; }
-    public Integer getPreparationSeconds() { return preparationSeconds; } public void setPreparationSeconds(Integer v) { preparationSeconds = v; }
-    public String getStatus() { return status; } public void setStatus(String v) { status = v; }
-    public String getItemContent() { return first().getContent(); } public void setItemContent(String v) { first().setContent(v); itemContent = v; }
-    public Integer getCorrectPosition() { return first().getCorrectPosition(); } public void setCorrectPosition(Integer v) { first().setCorrectPosition(v); correctPosition = v; }
-    public Integer getMinWordCount() { return first().getMinWordCount(); } public void setMinWordCount(Integer v) { first().setMinWordCount(v); minWordCount = v; }
-    public Integer getMaxWordCount() { return first().getMaxWordCount(); } public void setMaxWordCount(Integer v) { first().setMaxWordCount(v); maxWordCount = v; }
-    public Integer getResponseSeconds() { return first().getResponseSeconds(); } public void setResponseSeconds(Integer v) { first().setResponseSeconds(v); responseSeconds = v; }
-    public List<OptionForm> getOptions() { return first().getOptions(); } public void setOptions(List<OptionForm> v) { first().setOptions(v); options = v; }
-    public List<ItemForm> getItems() { return items; }
-    public void setItems(List<ItemForm> value) { items = value == null || value.isEmpty() ? new ArrayList<>(List.of(new ItemForm())) : value; }
+
+    public String getContent() {
+        return content;
+    }
+
+    public void setContent(String v) {
+        content = v;
+    }
+
+    public String getInstruction() {
+        return instruction;
+    }
+
+    public void setInstruction(String v) {
+        instruction = v;
+    }
+
+    public String getReadingPassage() {
+        return readingPassage;
+    }
+
+    public void setReadingPassage(String v) {
+        readingPassage = v;
+    }
+
+    public String getQuestionType() {
+        return questionType;
+    }
+
+    public void setQuestionType(String v) {
+        questionType = v;
+    }
+
+    public String getSkill() {
+        return skill;
+    }
+
+    public void setSkill(String v) {
+        skill = v;
+    }
+
+    public Integer getPartNo() {
+        return partNo;
+    }
+
+    public void setPartNo(Integer v) {
+        partNo = v;
+    }
+
+    public String getCefrLevel() {
+        return cefrLevel;
+    }
+
+    public void setCefrLevel(String v) {
+        cefrLevel = v;
+    }
+
+    public String getDifficulty() {
+        return difficulty;
+    }
+
+    public void setDifficulty(String v) {
+        difficulty = v;
+    }
+
+    public boolean isAllowOptionReuse() {
+        return allowOptionReuse;
+    }
+
+    public void setAllowOptionReuse(boolean v) {
+        allowOptionReuse = v;
+    }
+
+    public Integer getPreparationSeconds() {
+        return preparationSeconds;
+    }
+
+    public void setPreparationSeconds(Integer v) {
+        preparationSeconds = v;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String v) {
+        status = v;
+    }
+
+    public String getItemContent() {
+        return first().getContent();
+    }
+
+    public void setItemContent(String v) {
+        first().setContent(v);
+        itemContent = v;
+    }
+
+    public Integer getCorrectPosition() {
+        return first().getCorrectPosition();
+    }
+
+    public void setCorrectPosition(Integer v) {
+        first().setCorrectPosition(v);
+        correctPosition = v;
+    }
+
+    public Integer getMinWordCount() {
+        return first().getMinWordCount();
+    }
+
+    public void setMinWordCount(Integer v) {
+        first().setMinWordCount(v);
+        minWordCount = v;
+    }
+
+    public Integer getMaxWordCount() {
+        return first().getMaxWordCount();
+    }
+
+    public void setMaxWordCount(Integer v) {
+        first().setMaxWordCount(v);
+        maxWordCount = v;
+    }
+
+    public Integer getResponseSeconds() {
+        return first().getResponseSeconds();
+    }
+
+    public void setResponseSeconds(Integer v) {
+        first().setResponseSeconds(v);
+        responseSeconds = v;
+    }
+
+    public List<OptionForm> getOptions() {
+        return first().getOptions();
+    }
+
+    public void setOptions(List<OptionForm> v) {
+        first().setOptions(v);
+        options = v;
+    }
+
+    public List<ItemForm> getItems() {
+        return items;
+    }
+
+    public void setItems(List<ItemForm> value) {
+        items = value == null || value.isEmpty() ? new ArrayList<>(List.of(new ItemForm())) : value;
+    }
 
     private ItemForm first() {
         if (items == null || items.isEmpty()) items = new ArrayList<>(List.of(new ItemForm()));
@@ -119,8 +250,7 @@ public class QuestionForm {
         private String content;
         private boolean correct;
 
-        public OptionForm() {
-        }
+        public OptionForm() {}
 
         public OptionForm(String code) {
             this.code = code;
