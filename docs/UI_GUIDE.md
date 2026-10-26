@@ -1,5 +1,31 @@
 # Quy chuẩn giao diện AptisPrep
 
+## Cách viết dễ đọc cập nhật 27/10/2026
+
+Template không dùng các helper bắt đầu bằng `#strings`, `#lists`, `#fields`,
+`#numbers` hoặc `#temporals`. Dấu `#` trong màu CSS, selector và liên kết tới một
+phần của trang vẫn giữ nguyên vì đó là cú pháp HTML/CSS cần thiết.
+
+- Chuỗi có nội dung: `${text != null and !text.isBlank()}`. Giữ kiểm tra khoảng
+  trắng vì helper `#strings.isEmpty` trước đây cũng coi chuỗi toàn khoảng trắng là rỗng.
+- Lỗi form: `th:errors="*{global}"` cho lỗi chung, `th:errors="*{all}"` cho toàn bộ
+  lỗi. Thymeleaf tự bỏ phần tử khi không có lỗi và escape nội dung lỗi.
+- Ngày giờ: `${display.date(value)}`, `${display.dateTime(value)}`,
+  `${display.dateTimeWithSeconds(value)}` hoặc `${display.timeAndDate(value)}`.
+- Các số trang: `${display.pageNumbers(start, end)}`.
+- Nhãn trạng thái: dùng `th:switch`/`th:case` trong fragment `statusBadge`, tránh
+  lặp cùng phép chuyển chuỗi và một điều kiện fallback quá dài.
+
+`DisplayFormatting` trong package `controller` là lớp hỗ trợ trình bày được
+`NavigationModelAdvice` đưa vào Model dưới tên `display`. Lớp này không đọc DB,
+không xử lý nghiệp vụ hoặc lưu dữ liệu. Các định dạng ngày giữ nguyên như trước.
+
+`AccountProfileService.snapshot()` được chia thành các bước lấy học viên, lấy
+Goal hiện tại, chuyển Goal và chuyển Profile sang DTO. Hai hàm riêng
+`toGoalView()` và `loadSkillViews()` dùng vòng lặp rõ ràng; danh sách kỹ năng
+Goal được lấy một lần rồi tạo cả map cấp độ và map điểm mục tiêu. Không đổi
+cấu trúc `AccountSnapshot` hoặc dữ liệu lịch sử.
+
 Tài liệu này là hợp đồng giao diện cho mọi Pull Request có Thymeleaf/CSS.
 
 ## Cách đọc template và format (26/10/2026)

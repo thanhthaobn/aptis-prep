@@ -34,7 +34,7 @@
           </div>
           <span
             class="badge"
-            th:classappend="${set.cefrLevel != null ? 'badge-cefr-' + #strings.toLowerCase(set.cefrLevel) : ''}"
+            th:classappend="${set.cefrLevel != null ? 'badge-cefr-' + (set.cefrLevel == null ? null : set.cefrLevel.toLowerCase()) : ''}"
             th:text="${set.cefrLevel}"
           ></span>
         </header>
@@ -140,7 +140,7 @@
               <dd
                 class="muted"
                 th:if="${card.nextReviewAt != null}"
-                th:text="|Ôn tiếp: ${#temporals.format(card.nextReviewAt,'dd/MM/yyyy HH:mm')}|"
+                th:text="|Ôn tiếp: ${display.dateTime(card.nextReviewAt)}|"
               ></dd>
             </div>
           </dl>

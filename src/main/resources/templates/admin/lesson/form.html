@@ -36,13 +36,11 @@
           th:object="${form}"
           th:action="${editing ? '/admin/lessons/'+lessonId : '/admin/lessons'}"
         >
-          <ul
+          <div
             class="alert alert-danger ap-alert ap-alert-danger"
-            th:if="${#fields.hasAnyErrors()}"
+            th:errors="*{all}"
             role="alert"
-          >
-            <li th:each="error : ${#fields.allErrors()}" th:text="${error}"></li>
-          </ul>
+          ></div>
           <section class="dashboard-panel lesson-form-section">
             <h2>Thông tin bài học</h2>
             <div class="field">

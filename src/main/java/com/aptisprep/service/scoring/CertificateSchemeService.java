@@ -14,26 +14,26 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class CertificateSchemeService implements CertificateSchemeContract {
     private static final Set<String> SKILLS = Set.copyOf(Skill.codes());
-    private final CertificateRepository certificates;
-    private final ScoringSchemeRepository schemes;
-    private final ScoreBandRepository bands;
-    private final ScoringScaleRuleRepository scaleRules;
+    private final CertificateRepository certificateRepository;
+    private final ScoringSchemeRepository scoringSchemeRepository;
+    private final ScoreBandRepository scoreBandRepository;
+    private final ScoringScaleRuleRepository scoringScaleRuleRepository;
 
     public CertificateSchemeService(
-            CertificateRepository certificates,
-            ScoringSchemeRepository schemes,
-            ScoreBandRepository bands,
-            ScoringScaleRuleRepository scaleRules) {
-        this.certificates = certificates;
-        this.schemes = schemes;
-        this.bands = bands;
-        this.scaleRules = scaleRules;
+            CertificateRepository certificateRepository,
+            ScoringSchemeRepository scoringSchemeRepository,
+            ScoreBandRepository scoreBandRepository,
+            ScoringScaleRuleRepository scoringScaleRuleRepository) {
+        this.certificateRepository = certificateRepository;
+        this.scoringSchemeRepository = scoringSchemeRepository;
+        this.scoreBandRepository = scoreBandRepository;
+        this.scoringScaleRuleRepository = scoringScaleRuleRepository;
     }
 
     @Override
     @Transactional(readOnly = true)
     public List<CertificateOption> activeCertificates() {
-        return certificates.findByStatusOrderByNameAsc(RecordStatus.ACTIVE).stream()
+        return certificateRepository.findByStatusOrderByNameAsc(RecordStatus.ACTIVE).stream()
                 .map(
                         value ->
                                 new CertificateOption(
@@ -45,13 +45,13 @@ public class CertificateSchemeService implements CertificateSchemeContract {
     @Transactional(readOnly = true)
     public List<SchemeOption> activeSchemes(Integer certificateId) {
         if (certificateId == null
-                || certificates
+                || certificateRepository
                         .findById(certificateId)
                         .filter(value -> value.getStatus() == RecordStatus.ACTIVE)
                         .isEmpty()) {
             return List.of();
         }
-        return schemes.findByCertificateIdOrderByVersionDesc(certificateId).stream()
+        return scoringSchemeRepository.findByCertificateIdOrderByVersionDesc(certificateId).stream()
                 .filter(value -> value.getStatus() == RecordStatus.ACTIVE)
                 .map(this::option)
                 .toList();
@@ -70,7 +70,8 @@ public class CertificateSchemeService implements CertificateSchemeContract {
         if (!SKILLS.contains(normalizedSkill))
             throw new BusinessRuleException("Kỹ năng không hợp lệ");
         ScoringScheme scheme =
-                schemes.findByIdAndCertificateId(schemeId, certificateId)
+                scoringSchemeRepository
+                        .findByIdAndCertificateId(schemeId, certificateId)
                         .orElseThrow(
                                 () ->
                                         new ResourceNotFoundException(
@@ -80,7 +81,7 @@ public class CertificateSchemeService implements CertificateSchemeContract {
             throw new BusinessRuleException("Bộ chấm điểm hoặc chứng chỉ đã ngừng sử dụng");
         }
         ScoringScaleRule rule =
-                scaleRules
+                scoringScaleRuleRepository
                         .findBySchemeIdAndSkillIgnoreCase(schemeId, normalizedSkill)
                         .orElseThrow(
                                 () ->
@@ -89,13 +90,16 @@ public class CertificateSchemeService implements CertificateSchemeContract {
                                                         + " cho kỹ năng này"));
         ScoreBandCoverage.requireComplete(
                 rule,
-                bands.findBySchemeIdAndSkillOrderByMinScoreAsc(scheme.getId(), normalizedSkill));
+                scoreBandRepository.findBySchemeIdAndSkillOrderByMinScoreAsc(
+                        scheme.getId(), normalizedSkill));
         return option(scheme);
     }
 
     private SchemeOption option(ScoringScheme scheme) {
         List<String> skills =
-                bands.findBySchemeIdOrderBySkillAscMinScoreAsc(scheme.getId()).stream()
+                scoreBandRepository
+                        .findBySchemeIdOrderBySkillAscMinScoreAsc(scheme.getId())
+                        .stream()
                         .map(ScoreBand::getSkill)
                         .distinct()
                         .toList();

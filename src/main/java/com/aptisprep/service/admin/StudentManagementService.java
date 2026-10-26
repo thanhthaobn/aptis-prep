@@ -15,6 +15,7 @@ import com.aptisprep.service.contract.LearningPathContract;
 import java.util.*;
 import java.util.stream.Collectors;
 import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,24 +23,24 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class StudentManagementService {
     private static final List<String> SKILLS = Skill.codes();
-    private final UserRepository users;
-    private final UserGoalRepository goals;
-    private final UserGoalSkillRepository goalSkills;
-    private final UserSkillProfileRepository profiles;
+    private final UserRepository userRepository;
+    private final UserGoalRepository userGoalRepository;
+    private final UserGoalSkillRepository userGoalSkillRepository;
+    private final UserSkillProfileRepository userSkillProfileRepository;
     private final ObjectProvider<LearningPathContract> paths;
     private final ObjectProvider<ExamAttemptContract> attempts;
 
     public StudentManagementService(
-            UserRepository users,
-            UserGoalRepository goals,
-            UserGoalSkillRepository goalSkills,
-            UserSkillProfileRepository profiles,
+            UserRepository userRepository,
+            UserGoalRepository userGoalRepository,
+            UserGoalSkillRepository userGoalSkillRepository,
+            UserSkillProfileRepository userSkillProfileRepository,
             ObjectProvider<LearningPathContract> paths,
             ObjectProvider<ExamAttemptContract> attempts) {
-        this.users = users;
-        this.goals = goals;
-        this.goalSkills = goalSkills;
-        this.profiles = profiles;
+        this.userRepository = userRepository;
+        this.userGoalRepository = userGoalRepository;
+        this.userGoalSkillRepository = userGoalSkillRepository;
+        this.userSkillProfileRepository = userSkillProfileRepository;
         this.paths = paths;
         this.attempts = attempts;
     }
@@ -53,8 +54,8 @@ public class StudentManagementService {
             throw new BusinessRuleException("Từ khóa tìm kiếm tối đa 255 ký tự");
         String pattern =
                 term.isBlank() ? "%" : "%" + escapeLike(term.toLowerCase(Locale.ROOT)) + "%";
-        var result =
-                users.searchStudents(
+        Page<User> result =
+                userRepository.searchStudents(
                         pattern,
                         status == null ? null : status.name(),
                         PageRequest.of(safePage, safeSize));
@@ -73,7 +74,7 @@ public class StudentManagementService {
         AccountSnapshot.GoalView goal = goalView(user.getId());
         Map<String, String> targetMap = goal == null ? Map.of() : goal.targets();
         Map<String, UserSkillProfile> profileMap =
-                profiles.findByUserIdOrderBySkillAsc(user.getId()).stream()
+                userSkillProfileRepository.findByUserIdOrderBySkillAsc(user.getId()).stream()
                         .collect(
                                 Collectors.toMap(
                                         UserSkillProfile::getSkill,
@@ -123,21 +124,22 @@ public class StudentManagementService {
     }
 
     public long totalStudents() {
-        return users.countByRole(Role.STUDENT);
+        return userRepository.countByRole(Role.STUDENT);
     }
 
     public long activeStudents() {
-        return users.countByRoleAndStatus(Role.STUDENT, UserStatus.ACTIVE);
+        return userRepository.countByRoleAndStatus(Role.STUDENT, UserStatus.ACTIVE);
     }
 
     public long lockedStudents() {
-        return users.countByRoleAndStatus(Role.STUDENT, UserStatus.LOCKED);
+        return userRepository.countByRoleAndStatus(Role.STUDENT, UserStatus.LOCKED);
     }
 
     private void changeStatus(
             String adminEmail, Integer id, UserStatus expected, UserStatus next, String action) {
         User admin =
-                users.findByEmailIgnoreCase(adminEmail)
+                userRepository
+                        .findByEmailIgnoreCase(adminEmail)
                         .orElseThrow(
                                 () ->
                                         new AccessDeniedException(
@@ -145,7 +147,8 @@ public class StudentManagementService {
         if (admin.getRole() != Role.ADMIN)
             throw new AccessDeniedException("Chỉ quản trị viên mới được quản lý học viên");
         User target =
-                users.findByIdForUpdate(id)
+                userRepository
+                        .findByIdForUpdate(id)
                         .orElseThrow(
                                 () -> new ResourceNotFoundException("Không tìm thấy học viên"));
         if (Objects.equals(admin.getId(), target.getId()))
@@ -176,25 +179,21 @@ public class StudentManagementService {
     }
 
     private AccountSnapshot.GoalView goalView(Integer userId) {
-        return goals.findFirstByUserIdAndStatusOrderByCreatedAtDesc(userId, GoalStatus.ACTIVE)
-                .map(
-                        goal ->
-                                new AccountSnapshot.GoalView(
-                                        goal.getCertificate() == null
-                                                ? null
-                                                : goal.getCertificate().getId(),
-                                        goal.getCertificate() == null
-                                                ? null
-                                                : goal.getCertificate().getName(),
-                                        goal.getTargetDate(),
-                                        goalSkills.findByGoalId(goal.getId()).stream()
-                                                .collect(
-                                                        Collectors.toMap(
-                                                                UserGoalSkill::getSkill,
-                                                                UserGoalSkill::getTargetLevel,
-                                                                (left, right) -> right,
-                                                                LinkedHashMap::new))))
-                .orElse(null);
+        UserGoal goal =
+                userGoalRepository
+                        .findFirstByUserIdAndStatusOrderByCreatedAtDesc(userId, GoalStatus.ACTIVE)
+                        .orElse(null);
+        if (goal == null) return null;
+        Certificate certificate = goal.getCertificate();
+        Map<String, String> targets = new LinkedHashMap<>();
+        for (UserGoalSkill skill : userGoalSkillRepository.findByGoalId(goal.getId())) {
+            targets.put(skill.getSkill(), Objects.requireNonNull(skill.getTargetLevel()));
+        }
+        return new AccountSnapshot.GoalView(
+                certificate == null ? null : certificate.getId(),
+                certificate == null ? null : certificate.getName(),
+                goal.getTargetDate(),
+                targets);
     }
 
     private List<AdminStudentView.Progress> progressFor(Integer userId) {
@@ -253,7 +252,8 @@ public class StudentManagementService {
 
     private User studentsOnly(Integer id) {
         User user =
-                users.findById(id)
+                userRepository
+                        .findById(id)
                         .orElseThrow(
                                 () -> new ResourceNotFoundException("Không tìm thấy học viên"));
         if (user.getRole() != Role.STUDENT)

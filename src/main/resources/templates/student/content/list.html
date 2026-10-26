@@ -144,15 +144,15 @@
                 <span class="badge badge-secondary" th:text="${entry.skill}"></span>
                 <span
                   class="badge"
-                  th:if="${!#strings.isEmpty(entry.level)}"
-                  th:classappend="${'badge-cefr-' + #strings.toLowerCase(entry.level)}"
+                  th:if="${(entry.level != null and !entry.level.isBlank())}"
+                  th:classappend="${'badge-cefr-' + (entry.level == null ? null : entry.level.toLowerCase())}"
                   th:text="${entry.level}"
                 ></span>
               </div>
               <h4 th:text="${entry.title}"></h4>
               <p
                 class="exam-card-summary"
-                th:if="${!#strings.isEmpty(entry.summary)}"
+                th:if="${(entry.summary != null and !entry.summary.isBlank())}"
                 th:text="${entry.summary}"
               ></p>
               <div class="exam-card-facts">

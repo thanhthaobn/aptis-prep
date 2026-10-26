@@ -50,9 +50,7 @@
               </select>
             </div>
           </fieldset>
-          <div class="alert alert-danger" th:if="${#fields.hasGlobalErrors()}">
-            <p th:each="error : ${#fields.globalErrors()}" th:text="${error}"></p>
-          </div>
+          <div class="alert alert-danger" th:errors="*{global}"></div>
           <div class="actions">
             <a
               th:if="${readOnly}"

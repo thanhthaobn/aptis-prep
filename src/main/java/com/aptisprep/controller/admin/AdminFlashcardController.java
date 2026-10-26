@@ -1,30 +1,32 @@
 package com.aptisprep.controller.admin;
 
 import com.aptisprep.dto.form.FlashcardSetForm;
+import com.aptisprep.dto.view.FlashcardViews.SetView;
 import com.aptisprep.exception.BusinessRuleException;
-import com.aptisprep.service.learning.*;
+import com.aptisprep.service.learning.FlashcardSetService;
+import com.aptisprep.service.learning.LessonService;
 import jakarta.validation.Valid;
+import java.util.List;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 
 @Controller
-@RequestMapping("/admin/flashcards")
 public class AdminFlashcardController {
-    private final FlashcardSetService service;
+    private final FlashcardSetService flashcardSetService;
 
-    public AdminFlashcardController(FlashcardSetService s) {
-        service = s;
+    public AdminFlashcardController(FlashcardSetService flashcardSetService) {
+        this.flashcardSetService = flashcardSetService;
     }
 
-    @GetMapping
-    public String list(Model m) {
-        var sets = service.list(true);
-        m.addAttribute("sets", sets);
-        m.addAttribute("admin", true);
-        m.addAttribute("lessonBranches", FlashcardSetService.groupBySkillAndLevel(sets));
-        m.addAttribute(
+    @GetMapping("/admin/flashcards")
+    public String showFlashcardList(Model model) {
+        List<SetView> sets = flashcardSetService.list(true);
+        model.addAttribute("sets", sets);
+        model.addAttribute("admin", true);
+        model.addAttribute("lessonBranches", FlashcardSetService.groupBySkillAndLevel(sets));
+        model.addAttribute(
                 "unclassifiedSets",
                 sets.stream()
                         .filter(
@@ -37,52 +39,55 @@ public class AdminFlashcardController {
         return "flashcard/list";
     }
 
-    @GetMapping("/create")
-    public String create(@RequestParam(required = false) Integer lessonId, Model m) {
-        var f = new FlashcardSetForm();
-        f.getRows().add(new FlashcardSetForm.Row());
-        service.prepareForLesson(f, lessonId);
-        return form(m, f, null);
+    @GetMapping("/admin/flashcards/create")
+    public String showCreateForm(@RequestParam(required = false) Integer lessonId, Model model) {
+        FlashcardSetForm form = new FlashcardSetForm();
+        form.getRows().add(new FlashcardSetForm.Row());
+        flashcardSetService.prepareForLesson(form, lessonId);
+        return renderForm(model, form, null);
     }
 
-    @GetMapping("/{id}/edit")
-    public String edit(@PathVariable Integer id, Model m) {
-        return form(m, service.form(id), id);
+    @GetMapping("/admin/flashcards/{id}/edit")
+    public String showEditForm(@PathVariable Integer id, Model model) {
+        return renderForm(model, flashcardSetService.form(id), id);
     }
 
-    @PostMapping
-    public String create(
-            @Valid @ModelAttribute("form") FlashcardSetForm f, BindingResult b, Model m) {
-        return save(null, f, b, m);
+    @PostMapping("/admin/flashcards")
+    public String createFlashcardSet(
+            @Valid @ModelAttribute("form") FlashcardSetForm form,
+            BindingResult bindingResult,
+            Model model) {
+        return saveFlashcardSet(null, form, bindingResult, model);
     }
 
-    @PostMapping("/{id}")
-    public String edit(
+    @PostMapping("/admin/flashcards/{id}")
+    public String updateFlashcardSet(
             @PathVariable Integer id,
-            @Valid @ModelAttribute("form") FlashcardSetForm f,
-            BindingResult b,
-            Model m) {
-        return save(id, f, b, m);
+            @Valid @ModelAttribute("form") FlashcardSetForm form,
+            BindingResult bindingResult,
+            Model model) {
+        return saveFlashcardSet(id, form, bindingResult, model);
     }
 
-    private String save(Integer id, FlashcardSetForm f, BindingResult b, Model m) {
-        if (!b.hasErrors()) {
+    private String saveFlashcardSet(
+            Integer id, FlashcardSetForm form, BindingResult bindingResult, Model model) {
+        if (!bindingResult.hasErrors()) {
             try {
-                service.saveAdmin(id, f);
+                flashcardSetService.saveAdmin(id, form);
                 return "redirect:/admin/flashcards";
             } catch (BusinessRuleException e) {
-                b.reject("invalid", e.getMessage());
+                bindingResult.reject("invalid", e.getMessage());
             }
         }
-        return form(m, f, id);
+        return renderForm(model, form, id);
     }
 
-    private String form(Model m, FlashcardSetForm f, Integer id) {
-        m.addAttribute("form", f);
-        m.addAttribute("setId", id);
-        m.addAttribute("levels", LessonService.LEVELS);
-        m.addAttribute("lessons", service.availableLessons());
-        m.addAttribute("personal", false);
+    private String renderForm(Model model, FlashcardSetForm form, Integer id) {
+        model.addAttribute("form", form);
+        model.addAttribute("setId", id);
+        model.addAttribute("levels", LessonService.LEVELS);
+        model.addAttribute("lessons", flashcardSetService.availableLessons());
+        model.addAttribute("personal", false);
         return "flashcard/form";
     }
 }

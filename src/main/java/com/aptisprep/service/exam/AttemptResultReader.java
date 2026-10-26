@@ -9,6 +9,7 @@ import com.aptisprep.service.contract.IntegrationModels.*;
 import com.aptisprep.service.scoring.CheckpointScorePolicy;
 import java.time.*;
 import java.util.*;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -16,26 +17,26 @@ import org.springframework.transaction.annotation.Transactional;
 /** Query/read-model responsibility only; student expiration stays in the attempt command service. */
 @Service
 public class AttemptResultReader {
-    private final ExamAttemptRepository attempts;
-    private final MockExamRepository exams;
-    private final UserRepository users;
-    private final UserAnswerRepository answers;
-    private final QuestionRepository questions;
-    private final ExamSkillResultRepository skillResults;
+    private final ExamAttemptRepository examAttemptRepository;
+    private final MockExamRepository mockExamRepository;
+    private final UserRepository userRepository;
+    private final UserAnswerRepository userAnswerRepository;
+    private final QuestionRepository questionRepository;
+    private final ExamSkillResultRepository examSkillResultRepository;
 
     public AttemptResultReader(
-            ExamAttemptRepository attempts,
-            MockExamRepository exams,
-            UserRepository users,
-            UserAnswerRepository answers,
-            QuestionRepository questions,
-            ExamSkillResultRepository skillResults) {
-        this.attempts = attempts;
-        this.exams = exams;
-        this.users = users;
-        this.answers = answers;
-        this.questions = questions;
-        this.skillResults = skillResults;
+            ExamAttemptRepository examAttemptRepository,
+            MockExamRepository mockExamRepository,
+            UserRepository userRepository,
+            UserAnswerRepository userAnswerRepository,
+            QuestionRepository questionRepository,
+            ExamSkillResultRepository examSkillResultRepository) {
+        this.examAttemptRepository = examAttemptRepository;
+        this.mockExamRepository = mockExamRepository;
+        this.userRepository = userRepository;
+        this.userAnswerRepository = userAnswerRepository;
+        this.questionRepository = questionRepository;
+        this.examSkillResultRepository = examSkillResultRepository;
     }
 
     @Transactional(readOnly = true)
@@ -53,8 +54,8 @@ public class AttemptResultReader {
         String skill = normalizedFilter(safeFilter.skill());
         String examType = normalizedFilter(safeFilter.examType());
         String state = normalizedFilter(safeFilter.state());
-        var result =
-                attempts.searchHistory(
+        Page<ExamAttemptEntity> result =
+                examAttemptRepository.searchHistory(
                         userId,
                         pattern,
                         skill,
@@ -64,7 +65,7 @@ public class AttemptResultReader {
         if (result.isEmpty() && result.getTotalElements() > 0 && safePage > 0) {
             safePage = (int) ((result.getTotalElements() - 1) / safeSize);
             result =
-                    attempts.searchHistory(
+                    examAttemptRepository.searchHistory(
                             userId,
                             pattern,
                             skill,
@@ -95,8 +96,8 @@ public class AttemptResultReader {
                 f.submittedTo() == null
                         ? null
                         : LocalDateTime.ofInstant(f.submittedTo(), ZoneOffset.UTC);
-        var pageData =
-                attempts.searchAllHistory(
+        Page<ExamAttemptEntity> pageData =
+                examAttemptRepository.searchAllHistory(
                         pattern,
                         normalizedFilter(f.skill()),
                         normalizedFilter(f.examType()),
@@ -104,11 +105,12 @@ public class AttemptResultReader {
                         from,
                         to,
                         PageRequest.of(safePage, safeSize));
-        var values =
+        List<AdminHistoryItem> values =
                 pageData.stream()
                         .map(
                                 a -> {
-                                    var user = users.findById(a.getUserId()).orElseThrow();
+                                    User user =
+                                            userRepository.findById(a.getUserId()).orElseThrow();
                                     return new AdminHistoryItem(
                                             user.getFullName(),
                                             user.getEmail(),
@@ -121,15 +123,16 @@ public class AttemptResultReader {
     @Transactional(readOnly = true)
     public AttemptResult adminResult(String adminEmail, Integer attemptId) {
         requireAdmin(adminEmail);
-        var attempt =
-                attempts.findById(attemptId)
+        ExamAttemptEntity attempt =
+                examAttemptRepository
+                        .findById(attemptId)
                         .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy kết quả"));
         return view(attempt, examFor(attempt));
     }
 
     AttemptResult view(ExamAttemptEntity attempt, MockExamEntity exam) {
         List<SkillResult> skills =
-                skillResults.findByAttemptIdOrderBySkillAsc(attempt.getId()).stream()
+                examSkillResultRepository.findByAttemptIdOrderBySkillAsc(attempt.getId()).stream()
                         .map(
                                 value -> {
                                     String confirmedLevel =
@@ -188,9 +191,11 @@ public class AttemptResultReader {
 
     private String feedbackFor(Integer attemptId, String skill) {
         StringJoiner feedback = new StringJoiner("\n\n");
-        for (UserAnswerEntity answer : answers.findByAttemptIdOrderByQuestionIdAsc(attemptId)) {
+        for (UserAnswerEntity answer :
+                userAnswerRepository.findByAttemptIdOrderByQuestionIdAsc(attemptId)) {
             if (answer.getAiFeedback() == null || answer.getAiFeedback().isBlank()) continue;
-            QuestionEntity question = questions.findById(answer.getQuestionId()).orElse(null);
+            QuestionEntity question =
+                    questionRepository.findById(answer.getQuestionId()).orElse(null);
             if (question != null && Objects.equals(question.getSkill(), skill))
                 feedback.add(answer.getAiFeedback().trim());
         }
@@ -199,7 +204,8 @@ public class AttemptResultReader {
 
     private User requireAdmin(String email) {
         User user =
-                users.findByEmailIgnoreCase(email)
+                userRepository
+                        .findByEmailIgnoreCase(email)
                         .orElseThrow(() -> new AccessDeniedException("Không có quyền quản trị"));
         if (user.getRole() != Role.ADMIN || user.getStatus() != UserStatus.ACTIVE)
             throw new AccessDeniedException("Không có quyền quản trị");
@@ -211,7 +217,8 @@ public class AttemptResultReader {
     }
 
     private MockExamEntity examFor(ExamAttemptEntity attempt) {
-        return exams.findById(attempt.getMockExamId())
+        return mockExamRepository
+                .findById(attempt.getMockExamId())
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy đề thi"));
     }
 

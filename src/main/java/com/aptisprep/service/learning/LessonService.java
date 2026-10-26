@@ -7,8 +7,10 @@ import com.aptisprep.enums.Skill;
 import com.aptisprep.enums.UserStatus;
 import com.aptisprep.exception.*;
 import com.aptisprep.repository.*;
+import com.aptisprep.service.learning.LessonTeachingService.CompletionState;
 import com.aptisprep.service.storage.StorageService;
 import java.io.IOException;
+import java.io.InputStream;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.ArrayList;
@@ -23,36 +25,36 @@ public class LessonService {
     public static final List<String> SKILLS = Skill.labels();
     public static final List<String> LEVELS = CefrLevel.curriculumLevels();
     public static final List<String> STATUSES = List.of("DRAFT", "PUBLISHED", "ARCHIVED");
-    private final LessonRepository lessons;
-    private final LessonProgressRepository progress;
-    private final UserRepository users;
+    private final LessonRepository lessonRepository;
+    private final LessonProgressRepository lessonProgressRepository;
+    private final UserRepository userRepository;
     private final LearningPathService learningPaths;
     private final LessonTeachingService teaching;
     private final StorageService storage;
 
     public LessonService(
-            LessonRepository l,
-            LessonProgressRepository p,
-            UserRepository u,
+            LessonRepository lessonRepository,
+            LessonProgressRepository lessonProgressRepository,
+            UserRepository userRepository,
             LearningPathService lp,
             LessonTeachingService t,
             StorageService s) {
-        lessons = l;
-        progress = p;
-        users = u;
+        this.lessonRepository = lessonRepository;
+        this.lessonProgressRepository = lessonProgressRepository;
+        this.userRepository = userRepository;
         learningPaths = lp;
         teaching = t;
         storage = s;
     }
 
     public List<Lesson> adminLessons() {
-        return lessons.findAllByOrderBySkillAscCefrLevelAscDisplayOrderAsc();
+        return lessonRepository.findAllByOrderBySkillAscCefrLevelAscDisplayOrderAsc();
     }
 
     public record LevelBranch(String level, List<Lesson> lessons) {
         public Map<String, List<Lesson>> topics() {
-            var result = new LinkedHashMap<String, List<Lesson>>();
-            for (var lesson : lessons) {
+            LinkedHashMap<String, List<Lesson>> result = new LinkedHashMap<String, List<Lesson>>();
+            for (Lesson lesson : lessons) {
                 String topic =
                         lesson.getMaterial() == null ? null : lesson.getMaterial().getTopic();
                 if (topic == null || topic.isBlank()) topic = "Bài học độc lập";
@@ -65,7 +67,7 @@ public class LessonService {
     public record SkillBranch(String skill, List<LevelBranch> levels, int count) {}
 
     public List<SkillBranch> adminTree() {
-        var all = adminLessons();
+        List<Lesson> all = adminLessons();
         return SKILLS.stream()
                 .map(
                         skill ->
@@ -107,7 +109,7 @@ public class LessonService {
                         .orElse(0);
         if (max == Integer.MAX_VALUE)
             throw new BusinessRuleException("Không thể gợi ý thêm thứ tự cho nhánh này");
-        var form = new LessonForm();
+        LessonForm form = new LessonForm();
         form.setSkill(skill);
         form.setCefrLevel(level);
         form.setDisplayOrder(max + 1);
@@ -118,16 +120,17 @@ public class LessonService {
     }
 
     public List<Lesson> publishedLessons() {
-        return lessons.findByStatusOrderBySkillAscCefrLevelAscDisplayOrderAsc("PUBLISHED");
+        return lessonRepository.findByStatusOrderBySkillAscCefrLevelAscDisplayOrderAsc("PUBLISHED");
     }
 
     public Lesson require(Integer id) {
-        return lessons.findById(id)
+        return lessonRepository
+                .findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy bài học"));
     }
 
     public Lesson requirePublished(Integer id) {
-        var l = require(id);
+        Lesson l = require(id);
         if (!"PUBLISHED".equals(l.getStatus()))
             throw new ResourceNotFoundException("Bài học chưa được công bố");
         return l;
@@ -142,8 +145,8 @@ public class LessonService {
     }
 
     public LessonForm form(Integer id) {
-        var l = require(id);
-        var f = new LessonForm();
+        Lesson l = require(id);
+        LessonForm f = new LessonForm();
         if (l.getMaterial() != null) BeanUtils.copyProperties(l.getMaterial(), f);
         f.setChecks(new ArrayList<>(teaching.editorQuestions(id)));
         f.setTitle(l.getTitle());
@@ -192,75 +195,30 @@ public class LessonService {
             MultipartFile video,
             boolean removeVideo) {
         if (video != null && !video.isEmpty()) validateVideo(video);
-        if ("PUBLISHED".equals(f.getStatus()) && "Listening".equals(f.getSkill())) {
-            boolean available =
-                    audio != null && !audio.isEmpty()
-                            || id != null && !removeAudio && has(require(id).getAudioPath());
-            boolean transcriptAfterListen =
-                    has(f.getTranscript())
-                            && (!has(f.getTranscriptVisibility())
-                                    || "AFTER_LISTEN".equals(f.getTranscriptVisibility()));
-            boolean sampleAfterListen =
-                    has(f.getSampleResponse()) && "AFTER_LISTEN".equals(f.getSampleVisibility());
-            if (!available && (transcriptAfterListen || sampleAfterListen))
-                throw new BusinessRuleException(
-                        "Cần tải audio để mở transcript / bài mẫu sau khi nghe, hoặc chọn thời điểm"
-                                + " mở khác");
-        }
+        validateListeningRelease(id, f, audio, removeAudio);
         validate(f, id);
         teaching.validate(f);
-        var l = id == null ? new Lesson() : require(id);
-        l.setTitle(f.getTitle().trim());
-        l.setDescription(trim(f.getDescription()));
-        l.setSkill(f.getSkill());
-        l.setCefrLevel(f.getCefrLevel());
-        l.setDisplayOrder(f.getDisplayOrder());
-        l.setStatus(f.getStatus());
-        l.setMaterial(f.copy());
-        l.setTranscript(trim(f.getTranscript()));
-        l.setMinWordCount(f.getMinWordCount());
-        l.setMaxWordCount(f.getMaxWordCount());
-        l = lessons.save(l);
-        teaching.saveChecks(l.getId(), f.getChecks());
-        if (removeAudio && l.getAudioPath() != null) {
-            teaching.resetAudioEngagement(l.getId());
-            l.setAudioPath(null);
-            l.setAudioName(null);
-        }
-        if (audio != null && !audio.isEmpty()) {
-            validateAudio(f.getSkill(), audio);
-            teaching.resetAudioEngagement(l.getId());
-            String path = storage.store(audio, "lesson-audio/" + l.getId());
-            l.setAudioPath(path);
-            l.setAudioName(cleanName(audio.getOriginalFilename()));
-        }
-        if (removeImage && l.getImagePath() != null) {
-            l.setImagePath(null);
-            l.setImageName(null);
-        }
-        if (image != null && !image.isEmpty()) {
-            validateImage(image);
-            String path = storage.store(image, "lesson-images/" + l.getId());
-            l.setImagePath(path);
-            l.setImageName(cleanName(image.getOriginalFilename()));
-        }
-        if (removeVideo) l.setVideoPath(null);
-        if (video != null && !video.isEmpty())
-            l.setVideoPath(storage.store(video, "lesson-video/" + l.getId()));
-        return lessons.save(l);
+        Lesson lesson = id == null ? new Lesson() : require(id);
+        applyLessonFields(lesson, f);
+        lesson = lessonRepository.save(lesson);
+        teaching.saveChecks(lesson.getId(), f.getChecks());
+        updateAudio(lesson, f.getSkill(), audio, removeAudio);
+        updateImage(lesson, image, removeImage);
+        updateVideo(lesson, video, removeVideo);
+        return lessonRepository.save(lesson);
     }
 
     @Transactional
     public void archive(Integer id) {
-        var l = require(id);
+        Lesson l = require(id);
         l.setStatus("ARCHIVED");
-        lessons.save(l);
+        lessonRepository.save(l);
     }
 
     @Transactional
     public Lesson duplicate(Integer id) {
-        var source = require(id);
-        var f = form(id);
+        Lesson source = require(id);
+        LessonForm f = form(id);
         f.setTitle(source.getTitle() + " — Bản sao");
         f.setStatus("DRAFT");
         f.setDisplayOrder(newForm(source.getSkill(), source.getCefrLevel()).getDisplayOrder());
@@ -271,8 +229,8 @@ public class LessonService {
     public void move(Integer id, int direction) {
         if (direction != -1 && direction != 1)
             throw new BusinessRuleException("Hướng di chuyển không hợp lệ");
-        var current = require(id);
-        var branch =
+        Lesson current = require(id);
+        List<Lesson> branch =
                 adminLessons().stream()
                         .filter(
                                 x ->
@@ -286,57 +244,59 @@ public class LessonService {
                         .orElseThrow();
         int target = index + direction;
         if (target < 0 || target >= branch.size()) return;
-        var other = branch.get(target);
+        Lesson other = branch.get(target);
         int a = current.getDisplayOrder(),
                 b = other.getDisplayOrder(),
                 temp = branch.stream().mapToInt(Lesson::getDisplayOrder).max().orElse(0) + 1000;
         current.setDisplayOrder(temp);
-        lessons.saveAndFlush(current);
+        lessonRepository.saveAndFlush(current);
         other.setDisplayOrder(a);
-        lessons.saveAndFlush(other);
+        lessonRepository.saveAndFlush(other);
         current.setDisplayOrder(b);
-        lessons.save(current);
+        lessonRepository.save(current);
     }
 
     @Transactional
     public LessonProgress recordOpen(String email, Integer lessonId) {
-        var u = active(email);
-        var l = requirePublished(lessonId);
-        var p =
-                progress.findByUserIdAndLessonId(u.getId(), l.getId())
+        User u = active(email);
+        Lesson l = requirePublished(lessonId);
+        LessonProgress p =
+                lessonProgressRepository
+                        .findByUserIdAndLessonId(u.getId(), l.getId())
                         .orElseGet(
                                 () -> {
-                                    var x = new LessonProgress();
+                                    LessonProgress x = new LessonProgress();
                                     x.setUser(u);
                                     x.setLesson(l);
                                     x.setStatus("IN_PROGRESS");
                                     return x;
                                 });
         p.setLastAccessedAt(LocalDateTime.now());
-        return progress.save(p);
+        return lessonProgressRepository.save(p);
     }
 
     @Transactional
     public LessonProgress complete(String email, Integer lessonId) {
-        var u = active(email);
-        var lesson = requirePublished(lessonId);
-        var state = teaching.completion(lessonId, email);
+        User u = active(email);
+        Lesson lesson = requirePublished(lessonId);
+        CompletionState state = teaching.completion(lessonId, email);
         if (!state.eligible()) throw new BusinessRuleException(state.message(lesson.getSkill()));
         learningPaths.completeLesson(u.getId(), lessonId);
-        return progress.findByUserIdAndLessonId(u.getId(), lessonId).orElseThrow();
+        return lessonProgressRepository.findByUserIdAndLessonId(u.getId(), lessonId).orElseThrow();
     }
 
     public Optional<LessonProgress> progress(String email, Integer lessonId) {
-        var u = active(email);
-        return progress.findByUserIdAndLessonId(u.getId(), lessonId);
+        User u = active(email);
+        return lessonProgressRepository.findByUserIdAndLessonId(u.getId(), lessonId);
     }
 
     @Transactional(readOnly = true)
     public Map<Integer, String> lessonStatuses(String email, Collection<Integer> lessonIds) {
-        var user = active(email);
+        User user = active(email);
         if (lessonIds.isEmpty()) return Map.of();
-        var statuses = new HashMap<Integer, String>();
-        for (var value : progress.findByUserIdAndLessonIdIn(user.getId(), lessonIds)) {
+        HashMap<Integer, String> statuses = new HashMap<Integer, String>();
+        for (LessonProgress value :
+                lessonProgressRepository.findByUserIdAndLessonIdIn(user.getId(), lessonIds)) {
             boolean completed =
                     "COMPLETED".equals(value.getStatus()) && value.getCompletedAt() != null;
             statuses.put(value.getLesson().getId(), completed ? "COMPLETED" : "IN_PROGRESS");
@@ -345,8 +305,9 @@ public class LessonService {
     }
 
     private User active(String email) {
-        var u =
-                users.findByEmailIgnoreCase(email)
+        User u =
+                userRepository
+                        .findByEmailIgnoreCase(email)
                         .orElseThrow(
                                 () -> new ResourceNotFoundException("Không tìm thấy tài khoản"));
         if (u.getStatus() != UserStatus.ACTIVE)
@@ -357,7 +318,7 @@ public class LessonService {
     public record Neighbors(Lesson previous, Lesson next) {}
 
     public Neighbors neighbors(Lesson lesson) {
-        var all =
+        List<Lesson> all =
                 publishedLessons().stream()
                         .filter(
                                 x ->
@@ -383,7 +344,7 @@ public class LessonService {
                 && f.getMaxWordCount() != null
                 && f.getMinWordCount() > f.getMaxWordCount())
             throw new BusinessRuleException("Số từ tối thiểu không được lớn hơn số từ tối đa");
-        if (lessons.existsBySkillAndCefrLevelAndDisplayOrderAndIdNot(
+        if (lessonRepository.existsBySkillAndCefrLevelAndDisplayOrderAndIdNot(
                 f.getSkill(), f.getCefrLevel(), f.getDisplayOrder(), id == null ? -1 : id))
             throw new BusinessRuleException(
                     "Thứ tự bài học đã tồn tại trong kỹ năng và cấp độ này");
@@ -429,7 +390,7 @@ public class LessonService {
                 || !(name.endsWith(".mp4") && type.equals("video/mp4")
                         || name.endsWith(".webm") && type.equals("video/webm")))
             throw new BusinessRuleException("Video chỉ nhận MP4 hoặc WEBM, tối đa 50 MB");
-        try (var input = file.getInputStream()) {
+        try (InputStream input = file.getInputStream()) {
             byte[] head = input.readNBytes(12);
             boolean mp4 =
                     head.length >= 12
@@ -463,5 +424,70 @@ public class LessonService {
 
     private static String trim(String s) {
         return s == null ? null : s.trim();
+    }
+
+    private void validateListeningRelease(
+            Integer id, LessonForm form, MultipartFile audio, boolean removeAudio) {
+        if (!"PUBLISHED".equals(form.getStatus()) || !"Listening".equals(form.getSkill())) return;
+        boolean available =
+                audio != null && !audio.isEmpty()
+                        || id != null && !removeAudio && has(require(id).getAudioPath());
+        boolean transcriptAfterListen =
+                has(form.getTranscript())
+                        && (!has(form.getTranscriptVisibility())
+                                || "AFTER_LISTEN".equals(form.getTranscriptVisibility()));
+        boolean sampleAfterListen =
+                has(form.getSampleResponse()) && "AFTER_LISTEN".equals(form.getSampleVisibility());
+        if (!available && (transcriptAfterListen || sampleAfterListen)) {
+            throw new BusinessRuleException(
+                    "Cần tải audio để mở transcript / bài mẫu sau khi nghe, hoặc chọn thời điểm mở khác");
+        }
+    }
+
+    private void applyLessonFields(Lesson lesson, LessonForm form) {
+        lesson.setTitle(form.getTitle().trim());
+        lesson.setDescription(trim(form.getDescription()));
+        lesson.setSkill(form.getSkill());
+        lesson.setCefrLevel(form.getCefrLevel());
+        lesson.setDisplayOrder(form.getDisplayOrder());
+        lesson.setStatus(form.getStatus());
+        lesson.setMaterial(form.copy());
+        lesson.setTranscript(trim(form.getTranscript()));
+        lesson.setMinWordCount(form.getMinWordCount());
+        lesson.setMaxWordCount(form.getMaxWordCount());
+    }
+
+    private void updateAudio(
+            Lesson lesson, String skill, MultipartFile audio, boolean removeAudio) {
+        if (removeAudio && lesson.getAudioPath() != null) {
+            teaching.resetAudioEngagement(lesson.getId());
+            lesson.setAudioPath(null);
+            lesson.setAudioName(null);
+        }
+        if (audio != null && !audio.isEmpty()) {
+            validateAudio(skill, audio);
+            teaching.resetAudioEngagement(lesson.getId());
+            lesson.setAudioPath(storage.store(audio, "lesson-audio/" + lesson.getId()));
+            lesson.setAudioName(cleanName(audio.getOriginalFilename()));
+        }
+    }
+
+    private void updateImage(Lesson lesson, MultipartFile image, boolean removeImage) {
+        if (removeImage && lesson.getImagePath() != null) {
+            lesson.setImagePath(null);
+            lesson.setImageName(null);
+        }
+        if (image != null && !image.isEmpty()) {
+            validateImage(image);
+            lesson.setImagePath(storage.store(image, "lesson-images/" + lesson.getId()));
+            lesson.setImageName(cleanName(image.getOriginalFilename()));
+        }
+    }
+
+    private void updateVideo(Lesson lesson, MultipartFile video, boolean removeVideo) {
+        if (removeVideo) lesson.setVideoPath(null);
+        if (video != null && !video.isEmpty()) {
+            lesson.setVideoPath(storage.store(video, "lesson-video/" + lesson.getId()));
+        }
     }
 }

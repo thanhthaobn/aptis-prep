@@ -22,39 +22,46 @@ import java.util.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
 
 /** Server-timed, owner-bound playback. Never credits a range twice or trusts client duration. */
 @Service
 @Transactional
 public class LessonListeningService {
-    private final UserRepository users;
-    private final LessonRepository lessons;
-    private final LessonEngagementRepository engagements;
+    private final UserRepository userRepository;
+    private final LessonRepository lessonRepository;
+    private final LessonEngagementRepository lessonEngagementRepository;
     private final AudioDurationService durations;
     private final Clock clock;
     private final JsonMapper json;
 
     @Autowired
     public LessonListeningService(
-            UserRepository users,
-            LessonRepository lessons,
-            LessonEngagementRepository engagements,
+            UserRepository userRepository,
+            LessonRepository lessonRepository,
+            LessonEngagementRepository lessonEngagementRepository,
             AudioDurationService durations,
             JsonMapper json) {
-        this(users, lessons, engagements, durations, Clock.systemDefaultZone(), json);
+        this(
+                userRepository,
+                lessonRepository,
+                lessonEngagementRepository,
+                durations,
+                Clock.systemDefaultZone(),
+                json);
     }
 
     LessonListeningService(
-            UserRepository users,
-            LessonRepository lessons,
-            LessonEngagementRepository engagements,
+            UserRepository userRepository,
+            LessonRepository lessonRepository,
+            LessonEngagementRepository lessonEngagementRepository,
             AudioDurationService durations,
             Clock clock,
             JsonMapper json) {
-        this.users = users;
-        this.lessons = lessons;
-        this.engagements = engagements;
+        this.userRepository = userRepository;
+        this.lessonRepository = lessonRepository;
+        this.lessonEngagementRepository = lessonEngagementRepository;
         this.durations = durations;
         this.clock = clock;
         this.json = json;
@@ -64,10 +71,10 @@ public class LessonListeningService {
             String token, int sequence, double duration, double listened, boolean verified) {}
 
     public Playback start(Integer lessonId, String email, double position) {
-        var user = activeLearner(email);
-        var lesson = publishedAudio(lessonId);
-        var value =
-                engagements
+        User user = activeLearner(email);
+        Lesson lesson = publishedAudio(lessonId);
+        LessonEngagement value =
+                lessonEngagementRepository
                         .findByUserIdAndLessonId(user.getId(), lessonId)
                         .orElseGet(LessonEngagement::new);
         value.setUserId(user.getId());
@@ -87,7 +94,7 @@ public class LessonListeningService {
         value.setPlaybackExpiresAt(now().plusMinutes(5));
         value.setPlaybackSequence(0);
         value.setPlaybackRunning(true);
-        engagements.save(value);
+        lessonEngagementRepository.save(value);
         return view(value, token);
     }
 
@@ -99,10 +106,10 @@ public class LessonListeningService {
             double position,
             boolean playing,
             boolean discontinuity) {
-        var user = activeLearner(email);
-        var lesson = publishedAudio(lessonId);
-        var value =
-                engagements
+        User user = activeLearner(email);
+        Lesson lesson = publishedAudio(lessonId);
+        LessonEngagement value =
+                lessonEngagementRepository
                         .findByUserIdAndLessonId(user.getId(), lessonId)
                         .orElseThrow(
                                 () -> new BusinessRuleException("Hãy bắt đầu phiên nghe trước"));
@@ -129,7 +136,7 @@ public class LessonListeningService {
                         Duration.between(value.getPlaybackLastPingAt(), now()).toNanos()
                                 / 1_000_000_000.0);
         double advance = position - value.getPlaybackPositionSeconds();
-        var ranges = ranges(value);
+        List<double[]> ranges = ranges(value);
         // Large jumps are seeks, not listening. Credit can never exceed elapsed server time.
         if (value.isPlaybackRunning()
                 && !discontinuity
@@ -154,7 +161,7 @@ public class LessonListeningService {
             value.setAudioPlayedAt(now());
             value.setVerifiedAudioPath(lesson.getAudioPath());
         }
-        engagements.save(value);
+        lessonEngagementRepository.save(value);
         return view(value, null);
     }
 
@@ -177,17 +184,17 @@ public class LessonListeningService {
     }
 
     private List<double[]> ranges(LessonEngagement value) {
-        var result = new ArrayList<double[]>();
+        ArrayList<double[]> result = new ArrayList<double[]>();
         if (value.getPlaybackRangesJson() != null)
-            for (var range : json.readTree(value.getPlaybackRangesJson()))
+            for (JsonNode range : json.readTree(value.getPlaybackRangesJson()))
                 result.add(new double[] {range.get(0).asDouble(), range.get(1).asDouble()});
         return result;
     }
 
     private static List<double[]> merge(List<double[]> ranges) {
         ranges.sort(Comparator.comparingDouble(range -> range[0]));
-        var result = new ArrayList<double[]>();
-        for (var range : ranges) {
+        ArrayList<double[]> result = new ArrayList<double[]>();
+        for (double[] range : ranges) {
             if (result.isEmpty() || range[0] > result.getLast()[1]) result.add(range.clone());
             else result.getLast()[1] = Math.max(result.getLast()[1], range[1]);
         }
@@ -205,17 +212,19 @@ public class LessonListeningService {
     }
 
     private User activeLearner(String email) {
-        var found =
-                users.findByEmailIgnoreCase(email)
+        User found =
+                userRepository
+                        .findByEmailIgnoreCase(email)
                         .orElseThrow(() -> new AccessDeniedException("Không tìm thấy tài khoản"));
-        var user = users.findByIdForUpdate(found.getId()).orElseThrow();
+        User user = userRepository.findByIdForUpdate(found.getId()).orElseThrow();
         if (user.getRole() != Role.STUDENT || user.getStatus() != UserStatus.ACTIVE)
             throw new AccessDeniedException("Tài khoản không được phép học");
         return user;
     }
 
     private Lesson publishedAudio(Integer id) {
-        return lessons.findById(id)
+        return lessonRepository
+                .findById(id)
                 .filter(
                         lesson ->
                                 "PUBLISHED".equals(lesson.getStatus())

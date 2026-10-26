@@ -2,9 +2,11 @@ package com.aptisprep.controller.student;
 
 import com.aptisprep.dto.form.GoalForm;
 import com.aptisprep.dto.form.ProfileForm;
+import com.aptisprep.dto.view.AccountSnapshot;
 import com.aptisprep.exception.BusinessRuleException;
 import com.aptisprep.service.account.AccountProfileService;
 import com.aptisprep.service.account.LearningActivityService;
+import com.aptisprep.service.contract.IntegrationModels.AttemptHandle;
 import com.aptisprep.service.placement.PlacementService;
 import jakarta.validation.Valid;
 import java.security.Principal;
@@ -32,7 +34,7 @@ public class StudentAccountController {
 
     @GetMapping("/student/profile")
     public String profile(Principal principal, Model model) {
-        var snapshot = accounts.snapshot(principal.getName());
+        AccountSnapshot snapshot = accounts.snapshot(principal.getName());
         model.addAttribute("account", snapshot);
         model.addAttribute("activity", activity.activity(principal.getName()));
         if (!model.containsAttribute("profileForm")) {
@@ -66,7 +68,7 @@ public class StudentAccountController {
 
     @GetMapping("/student/goals")
     public String goals(Principal principal, Model model) {
-        var snapshot = accounts.snapshot(principal.getName());
+        AccountSnapshot snapshot = accounts.snapshot(principal.getName());
         model.addAttribute("account", snapshot);
         model.addAttribute("certificates", accounts.activeCertificates());
         if (!model.containsAttribute("goalForm"))
@@ -116,7 +118,7 @@ public class StudentAccountController {
             Principal principal,
             RedirectAttributes redirect) {
         try {
-            var handle = placement.start(principal.getName(), skill, examId);
+            AttemptHandle handle = placement.start(principal.getName(), skill, examId);
             return "redirect:/student/attempts/" + handle.attemptId();
         } catch (BusinessRuleException e) {
             redirect.addFlashAttribute("error", e.getMessage());

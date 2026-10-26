@@ -3,6 +3,7 @@ package com.aptisprep.controller.student;
 import com.aptisprep.exception.BusinessRuleException;
 import com.aptisprep.service.account.AccountAccessService;
 import com.aptisprep.service.exam.ExamAttemptService;
+import com.aptisprep.service.exam.ExamAttemptService.MediaResource;
 import java.io.IOException;
 import java.security.Principal;
 import java.util.Map;
@@ -12,6 +13,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.ResponseEntity.BodyBuilder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -127,10 +129,10 @@ public class StudentExamController {
             @PathVariable Integer mediaId,
             @RequestParam(required = false) String token,
             Principal principal) {
-        var media =
+        MediaResource media =
                 attempts.mediaContent(
                         accounts.requireActiveStudent(principal.getName()), id, mediaId, token);
-        var response =
+        BodyBuilder response =
                 ResponseEntity.ok()
                         .contentType(resolveType(media.contentType()))
                         .header(HttpHeaders.CONTENT_DISPOSITION, "inline")
@@ -148,7 +150,7 @@ public class StudentExamController {
     @GetMapping("/student/attempts/{id}/answers/{answerId}/audio")
     public ResponseEntity<Resource> speakingAudio(
             @PathVariable Integer id, @PathVariable Integer answerId, Principal principal) {
-        var media =
+        MediaResource media =
                 attempts.speakingAudio(
                         accounts.requireActiveStudent(principal.getName()), id, answerId);
         return ResponseEntity.ok()

@@ -16,26 +16,26 @@ import tools.jackson.databind.json.JsonMapper;
 /** Answer persistence only. Caller holds the owner-bound attempt lock and transaction. */
 @Component
 public class ExamAnswerWriter {
-    private final QuestionRepository questions;
-    private final QuestionItemRepository items;
-    private final UserAnswerRepository answers;
-    private final UserAnswerDetailRepository details;
+    private final QuestionRepository questionRepository;
+    private final QuestionItemRepository questionItemRepository;
+    private final UserAnswerRepository userAnswerRepository;
+    private final UserAnswerDetailRepository userAnswerDetailRepository;
     private final ExamSnapshotService examSnapshots;
     private final AudioUploadService audioUploads;
     private final JsonMapper json;
 
     public ExamAnswerWriter(
-            QuestionRepository questions,
-            QuestionItemRepository items,
-            UserAnswerRepository answers,
-            UserAnswerDetailRepository details,
+            QuestionRepository questionRepository,
+            QuestionItemRepository questionItemRepository,
+            UserAnswerRepository userAnswerRepository,
+            UserAnswerDetailRepository userAnswerDetailRepository,
             ExamSnapshotService examSnapshots,
             AudioUploadService audioUploads,
             JsonMapper json) {
-        this.questions = questions;
-        this.items = items;
-        this.answers = answers;
-        this.details = details;
+        this.questionRepository = questionRepository;
+        this.questionItemRepository = questionItemRepository;
+        this.userAnswerRepository = userAnswerRepository;
+        this.userAnswerDetailRepository = userAnswerDetailRepository;
         this.examSnapshots = examSnapshots;
         this.audioUploads = audioUploads;
         this.json = json;
@@ -48,13 +48,14 @@ public class ExamAnswerWriter {
             MultipartFile audioFile) {
         Integer attemptId = attempt.getId();
         QuestionEntity question =
-                questions
+                questionRepository
                         .findById(questionId)
                         .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy câu hỏi"));
         if (!"SPEAKING_AUDIO".equals(question.getQuestionType()))
             throw new BusinessRuleException("Câu hỏi không yêu cầu file ghi âm");
         UserAnswerEntity answer =
-                answers.findByAttemptIdAndQuestionId(attemptId, questionId)
+                userAnswerRepository
+                        .findByAttemptIdAndQuestionId(attemptId, questionId)
                         .orElseThrow(
                                 () ->
                                         new BusinessRuleException(
@@ -62,14 +63,16 @@ public class ExamAnswerWriter {
         JsonNode lockedQuestion = examSnapshots.lockedQuestions(attemptId).get(questionId);
         JsonNode lockedItem = chooseLockedItem(lockedQuestion, itemId);
         QuestionItemEntity item =
-                items.findById(lockedItem.path("id").asInt())
+                questionItemRepository
+                        .findById(lockedItem.path("id").asInt())
                         .orElseThrow(
                                 () ->
                                         new ResourceNotFoundException(
                                                 "Mục câu hỏi không còn tồn tại"));
         String path = audioUploads.store(audioFile, attemptId);
         UserAnswerDetailEntity detail =
-                details.findByUserAnswerIdAndQuestionItemId(answer.getId(), item.getId())
+                userAnswerDetailRepository
+                        .findByUserAnswerIdAndQuestionItemId(answer.getId(), item.getId())
                         .orElseGet(
                                 () -> {
                                     UserAnswerDetailEntity value = new UserAnswerDetailEntity();
@@ -82,9 +85,9 @@ public class ExamAnswerWriter {
         answer.setStatus("ANSWERED");
         if (answer.getStartedAt() == null) answer.setStartedAt(LocalDateTime.now());
         answer.setAnswerVersion(answer.getAnswerVersion() + 1);
-        details.saveAndFlush(detail);
+        userAnswerDetailRepository.saveAndFlush(detail);
         syncSubjectiveContent(answer, "SPEAKING_AUDIO");
-        answers.save(answer);
+        userAnswerRepository.save(answer);
     }
 
     void saveAnswer(
@@ -96,7 +99,8 @@ public class ExamAnswerWriter {
             String textAnswer) {
         Integer attemptId = attempt.getId();
         UserAnswerEntity answer =
-                answers.findByAttemptIdAndQuestionId(attemptId, questionId)
+                userAnswerRepository
+                        .findByAttemptIdAndQuestionId(attemptId, questionId)
                         .orElseThrow(
                                 () ->
                                         new BusinessRuleException(
@@ -106,14 +110,16 @@ public class ExamAnswerWriter {
             throw new BusinessRuleException("Câu hỏi không thuộc snapshot của lượt thi");
         JsonNode lockedItem = chooseLockedItem(lockedQuestion, itemId);
         QuestionItemEntity item =
-                items.findById(lockedItem.path("id").asInt())
+                questionItemRepository
+                        .findById(lockedItem.path("id").asInt())
                         .orElseThrow(
                                 () ->
                                         new ResourceNotFoundException(
                                                 "Mục câu hỏi không còn tồn tại"));
         String questionType = lockedQuestion.path("type").asText();
         UserAnswerDetailEntity detail =
-                details.findByUserAnswerIdAndQuestionItemId(answer.getId(), item.getId())
+                userAnswerDetailRepository
+                        .findByUserAnswerIdAndQuestionItemId(answer.getId(), item.getId())
                         .orElseGet(
                                 () -> {
                                     UserAnswerDetailEntity value = new UserAnswerDetailEntity();
@@ -153,13 +159,15 @@ public class ExamAnswerWriter {
         if (answer.getStartedAt() == null) answer.setStartedAt(LocalDateTime.now());
         answer.setAnswerVersion(answer.getAnswerVersion() + 1);
         answer.setStatus("ANSWERED");
-        details.saveAndFlush(detail);
+        userAnswerDetailRepository.saveAndFlush(detail);
         syncSubjectiveContent(answer, questionType);
-        answers.save(answer);
+        userAnswerRepository.save(answer);
     }
 
     private void syncSubjectiveContent(UserAnswerEntity answer, String type) {
-        var values = details.findByUserAnswerIdOrderByQuestionItemIdAsc(answer.getId());
+        List<UserAnswerDetailEntity> values =
+                userAnswerDetailRepository.findByUserAnswerIdOrderByQuestionItemIdAsc(
+                        answer.getId());
         if ("WRITING_TEXT".equals(type)) {
             answer.setTextAnswer(
                     values.stream()
@@ -167,7 +175,7 @@ public class ExamAnswerWriter {
                             .filter(Objects::nonNull)
                             .collect(Collectors.joining("\n--- ITEM ---\n")));
         } else if ("SPEAKING_AUDIO".equals(type)) {
-            var paths =
+            List<String> paths =
                     values.stream()
                             .map(UserAnswerDetailEntity::getAudioPath)
                             .filter(Objects::nonNull)

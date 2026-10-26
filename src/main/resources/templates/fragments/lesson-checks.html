@@ -40,7 +40,7 @@
         <summary th:text="|Lịch sử làm bài (${attempts.size()} lần)|"></summary>
         <details class="lesson-work-history" th:each="attempt : ${attempts}">
           <summary
-            th:text="|${#temporals.format(attempt.submittedAt(),'dd/MM/yyyy HH:mm:ss')} — ${attempt.score()}/${attempt.total()} câu đúng|"
+            th:text="|${display.dateTimeWithSeconds(attempt.submittedAt())} — ${attempt.score()}/${attempt.total()} câu đúng|"
           ></summary>
           <div
             th:replace="~{fragments/lesson-history-context :: lessonHistoryContext(${attempt.context},${'/student/lessons/'+lesson.id+'/history/attempts/'+attempt.id+'/media'})}"

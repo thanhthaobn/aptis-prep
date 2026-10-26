@@ -202,7 +202,7 @@
           <div class="pagination-pages">
             <a
               class="page-link"
-              th:each="number : ${#numbers.sequence(0, pageData.totalPages - 1)}"
+              th:each="number : ${display.pageNumbers(0, pageData.totalPages - 1)}"
               th:classappend="${number == pageData.page ? 'active' : ''}"
               th:href="@{${catalog.baseUrl()}(page=${number},size=${pageData.size},q=${q},skill=${selectedSkill},status=${selectedStatus},kind=${selectedKind})}"
               th:text="${number + 1}"

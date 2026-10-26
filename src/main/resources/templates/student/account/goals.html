@@ -99,9 +99,7 @@
               </select>
             </div>
           </div>
-          <div class="alert alert-danger" th:if="${#fields.hasGlobalErrors()}">
-            <p th:each="error : ${#fields.globalErrors()}" th:text="${error}"></p>
-          </div>
+          <div class="alert alert-danger" th:errors="*{global}"></div>
           <fieldset class="dashboard-section">
             <legend>Điểm mục tiêu theo kỹ năng (không bắt buộc)</legend>
             <p class="muted">Chọn mức CEFR ở trên trước khi đặt điểm ước lượng trong thang 0–50.</p>
@@ -112,7 +110,7 @@
               >
                 <label
                   th:for="|target-score-${skill}|"
-                  th:text="${#strings.replace(skill,'_',' ')}"
+                  th:text="${(skill == null ? null : skill.replace('_', ' '))}"
                 ></label>
                 <input
                   type="number"

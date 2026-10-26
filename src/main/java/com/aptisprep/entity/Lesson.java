@@ -70,7 +70,7 @@ public class Lesson {
 
     @PrePersist
     void create() {
-        var now = LocalDateTime.now();
+        LocalDateTime now = LocalDateTime.now();
         createdAt = now;
         updatedAt = now;
     }

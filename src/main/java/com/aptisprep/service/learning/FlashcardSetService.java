@@ -1,6 +1,7 @@
 package com.aptisprep.service.learning;
 
 import com.aptisprep.dto.form.FlashcardSetForm;
+import com.aptisprep.dto.form.FlashcardSetForm.Row;
 import com.aptisprep.dto.view.FlashcardViews.*;
 import com.aptisprep.entity.*;
 import com.aptisprep.enums.*;
@@ -15,56 +16,47 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 @Transactional
 public class FlashcardSetService {
-    private final FlashcardSetRepository sets;
-    private final FlashcardRepository cards;
-    private final UserRepository users;
-    private final UserFlashcardProgressRepository progress;
-    private final LessonRepository lessons;
+    private final FlashcardSetRepository flashcardSetRepository;
+    private final FlashcardRepository flashcardRepository;
+    private final UserRepository userRepository;
+    private final UserFlashcardProgressRepository userFlashcardProgressRepository;
+    private final LessonRepository lessonRepository;
     @PersistenceContext private EntityManager em;
 
     public FlashcardSetService(
-            FlashcardSetRepository s,
-            FlashcardRepository c,
-            UserRepository u,
-            UserFlashcardProgressRepository p,
-            LessonRepository l) {
-        sets = s;
-        cards = c;
-        users = u;
-        progress = p;
-        lessons = l;
+            FlashcardSetRepository flashcardSetRepository,
+            FlashcardRepository flashcardRepository,
+            UserRepository userRepository,
+            UserFlashcardProgressRepository userFlashcardProgressRepository,
+            LessonRepository lessonRepository) {
+        this.flashcardSetRepository = flashcardSetRepository;
+        this.flashcardRepository = flashcardRepository;
+        this.userRepository = userRepository;
+        this.userFlashcardProgressRepository = userFlashcardProgressRepository;
+        this.lessonRepository = lessonRepository;
     }
 
     public static List<SkillSets> groupBySkillAndLevel(List<SetView> values) {
-        var branches = new ArrayList<SkillSets>();
-        for (var skill : LessonService.SKILLS) {
-            var levels = new ArrayList<LevelSets>();
-            for (var level : LessonService.LEVELS) {
-                var grouped =
-                        values.stream()
-                                .filter(
-                                        s ->
-                                                !s.personal()
-                                                        && skill.equals(s.lessonSkill())
-                                                        && level.equals(s.level()))
-                                .toList();
-                if (!grouped.isEmpty()) levels.add(new LevelSets(level, grouped));
+        List<SkillSets> branches = new ArrayList<>();
+        for (String skill : LessonService.SKILLS) {
+            List<LevelSets> levels = new ArrayList<>();
+            int setCount = 0;
+            for (String level : LessonService.LEVELS) {
+                List<SetView> grouped = lessonSetsFor(values, skill, level);
+                if (grouped.isEmpty()) continue;
+                levels.add(new LevelSets(level, grouped));
+                setCount += grouped.size();
             }
-            if (!levels.isEmpty())
-                branches.add(
-                        new SkillSets(
-                                skill,
-                                levels.stream().mapToInt(l -> l.sets().size()).sum(),
-                                levels));
+            if (!levels.isEmpty()) branches.add(new SkillSets(skill, setCount, levels));
         }
         return List.copyOf(branches);
     }
 
     @Transactional(readOnly = true)
     public StudySetView studySet(Integer id, String email) {
-        var set = requireForStudent(id, email);
-        var lesson = set.getLesson();
-        var link =
+        FlashcardSet set = requireForStudent(id, email);
+        Lesson lesson = set.getLesson();
+        LessonLink link =
                 lesson == null
                         ? null
                         : new LessonLink(lesson.getId(), lesson.getTitle(), lesson.getSkill());
@@ -75,8 +67,8 @@ public class FlashcardSetService {
     public List<SetView> list(boolean admin) {
         return view(
                 (admin
-                                ? sets.findByOwnerIsNullOrderByIdDesc()
-                                : sets.findByStatusOrderByIdDesc("PUBLISHED"))
+                                ? flashcardSetRepository.findByOwnerIsNullOrderByIdDesc()
+                                : flashcardSetRepository.findByStatusOrderByIdDesc("PUBLISHED"))
                         .stream()
                                 .filter(
                                         s ->
@@ -86,14 +78,14 @@ public class FlashcardSetService {
     }
 
     public List<SetView> listForStudent(String email) {
-        var u = learner(email);
-        var all = new ArrayList<FlashcardSet>();
+        User u = learner(email);
+        ArrayList<FlashcardSet> all = new ArrayList<FlashcardSet>();
         all.addAll(
-                sets.findByStatusOrderByIdDesc("PUBLISHED").stream()
+                flashcardSetRepository.findByStatusOrderByIdDesc("PUBLISHED").stream()
                         .filter(this::publishedLessonSet)
                         .toList());
         all.addAll(
-                sets.findByOwnerIdOrderByIdDesc(u.getId()).stream()
+                flashcardSetRepository.findByOwnerIdOrderByIdDesc(u.getId()).stream()
                         .filter(s -> !"ARCHIVED".equals(s.getStatus()))
                         .toList());
         return view(all);
@@ -109,7 +101,8 @@ public class FlashcardSetService {
                                         s.getDescription(),
                                         s.getCefrLevel(),
                                         s.getStatus(),
-                                        cards.findBySetIdAndStatusOrderByDisplayOrderAsc(
+                                        flashcardRepository
+                                                .findBySetIdAndStatusOrderByDisplayOrderAsc(
                                                         s.getId(), "ACTIVE")
                                                 .size(),
                                         s.getOwner() != null,
@@ -121,10 +114,10 @@ public class FlashcardSetService {
 
     @Transactional(readOnly = true)
     public Map<Integer, SetView> lessonSets() {
-        var result = new LinkedHashMap<Integer, SetView>();
-        for (var set :
+        LinkedHashMap<Integer, SetView> result = new LinkedHashMap<Integer, SetView>();
+        for (SetView set :
                 view(
-                        sets.findByStatusOrderByIdDesc("PUBLISHED").stream()
+                        flashcardSetRepository.findByStatusOrderByIdDesc("PUBLISHED").stream()
                                 .filter(
                                         s ->
                                                 s.getOwner() == null
@@ -136,14 +129,16 @@ public class FlashcardSetService {
     }
 
     public FlashcardSet require(Integer id, boolean admin) {
-        return sets.findById(id)
+        return flashcardSetRepository
+                .findById(id)
                 .filter(s -> s.getOwner() == null && (admin || "PUBLISHED".equals(s.getStatus())))
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy bộ thẻ"));
     }
 
     public FlashcardSet requireForStudent(Integer id, String email) {
-        var u = learner(email);
-        return sets.findById(id)
+        User u = learner(email);
+        return flashcardSetRepository
+                .findById(id)
                 .filter(
                         s ->
                                 publishedLessonSet(s)
@@ -165,14 +160,16 @@ public class FlashcardSetService {
     }
 
     private FlashcardSetForm toForm(FlashcardSet s) {
-        var f = new FlashcardSetForm();
+        FlashcardSetForm f = new FlashcardSetForm();
         f.setTitle(s.getTitle());
         f.setDescription(s.getDescription());
         f.setCefrLevel(s.getCefrLevel());
         f.setStatus(s.getStatus());
         f.setLessonId(s.getLesson() == null ? null : s.getLesson().getId());
-        for (var c : cards.findBySetIdAndStatusOrderByDisplayOrderAsc(s.getId(), "ACTIVE")) {
-            var r = new FlashcardSetForm.Row();
+        for (Flashcard c :
+                flashcardRepository.findBySetIdAndStatusOrderByDisplayOrderAsc(
+                        s.getId(), "ACTIVE")) {
+            Row r = new FlashcardSetForm.Row();
             r.setId(c.getId());
             r.setTerm(c.getFrontContent());
             r.setDefinition(c.getBackContent());
@@ -187,23 +184,25 @@ public class FlashcardSetService {
             throw new BusinessRuleException("Cấp độ hoặc trạng thái không hợp lệ");
         if (f.getRows() == null || f.getRows().isEmpty() || f.getRows().size() > 200)
             throw new BusinessRuleException("Bộ thẻ cần từ 1 đến 200 cặp từ và nghĩa");
-        var set =
+        FlashcardSet set =
                 id == null
                         ? new FlashcardSet()
-                        : sets.findById(id)
+                        : flashcardSetRepository
+                                .findById(id)
                                 .orElseThrow(
                                         () ->
                                                 new ResourceNotFoundException(
                                                         "Không tìm thấy bộ thẻ"));
         if (id != null) em.lock(set, LockModeType.PESSIMISTIC_WRITE);
-        var existing =
+        List<Flashcard> existing =
                 id == null
                         ? List.<Flashcard>of()
-                        : cards.findBySetIdAndStatusOrderByDisplayOrderAsc(id, "ACTIVE");
-        var byId = new HashMap<Integer, Flashcard>();
+                        : flashcardRepository.findBySetIdAndStatusOrderByDisplayOrderAsc(
+                                id, "ACTIVE");
+        HashMap<Integer, Flashcard> byId = new HashMap<Integer, Flashcard>();
         existing.forEach(c -> byId.put(c.getId(), c));
-        var seen = new HashSet<Integer>();
-        for (var row : f.getRows()) {
+        HashSet<Integer> seen = new HashSet<Integer>();
+        for (Row row : f.getRows()) {
             if (row.getTerm() == null
                     || row.getTerm().isBlank()
                     || row.getDefinition() == null
@@ -217,8 +216,9 @@ public class FlashcardSetService {
                 throw new BusinessRuleException("Thẻ không thuộc bộ này hoặc bị lặp");
         }
         if (lesson != null) {
-            var linked =
-                    sets.findFirstByLessonIdAndOwnerIsNullOrderByIdDesc(lesson.getId())
+            FlashcardSet linked =
+                    flashcardSetRepository
+                            .findFirstByLessonIdAndOwnerIsNullOrderByIdDesc(lesson.getId())
                             .orElse(null);
             if (linked != null && !Objects.equals(linked.getId(), id))
                 throw new BusinessRuleException("Bài học này đã có một bộ thẻ");
@@ -230,22 +230,22 @@ public class FlashcardSetService {
         set.setLesson(lesson);
         set.setOwner(owner);
         set.setVisibility(owner == null ? "PUBLIC" : "PRIVATE");
-        sets.save(set);
+        flashcardSetRepository.save(set);
         int position = existing.stream().mapToInt(Flashcard::getDisplayOrder).max().orElse(0) + 1;
-        for (var c : existing) {
+        for (Flashcard c : existing) {
             c.setStatus("ARCHIVED");
-            cards.save(c);
+            flashcardRepository.save(c);
         }
-        cards.flush();
-        for (var row : f.getRows()) {
-            var c = row.getId() == null ? new Flashcard() : byId.get(row.getId());
+        flashcardRepository.flush();
+        for (Row row : f.getRows()) {
+            Flashcard c = row.getId() == null ? new Flashcard() : byId.get(row.getId());
             c.setSet(set);
             c.setFrontContent(row.getTerm().trim());
             c.setBackContent(row.getDefinition().trim());
             c.setCefrLevel(f.getCefrLevel());
             c.setDisplayOrder(position++);
             c.setStatus("ACTIVE");
-            cards.save(c);
+            flashcardRepository.save(c);
         }
         return set.getId();
     }
@@ -254,8 +254,9 @@ public class FlashcardSetService {
         if (id != null) require(id, true);
         if (f.getLessonId() == null)
             throw new BusinessRuleException("Hãy chọn bài học sử dụng bộ thẻ này");
-        var lesson =
-                lessons.findById(f.getLessonId())
+        Lesson lesson =
+                lessonRepository
+                        .findById(f.getLessonId())
                         .filter(l -> !"ARCHIVED".equals(l.getStatus()))
                         .orElseThrow(() -> new BusinessRuleException("Bài học không còn khả dụng"));
         if (!lesson.getCefrLevel().equals(f.getCefrLevel()))
@@ -264,8 +265,9 @@ public class FlashcardSetService {
     }
 
     private User learner(String email) {
-        var u =
-                users.findByEmailIgnoreCase(email)
+        User u =
+                userRepository
+                        .findByEmailIgnoreCase(email)
                         .orElseThrow(
                                 () -> new ResourceNotFoundException("Không tìm thấy tài khoản"));
         if (u.getStatus() != UserStatus.ACTIVE || u.getRole() != Role.STUDENT)
@@ -274,14 +276,14 @@ public class FlashcardSetService {
     }
 
     public FlashcardSetForm personalForm(Integer id, String email) {
-        var set = requireForStudent(id, email);
+        FlashcardSet set = requireForStudent(id, email);
         if (set.getOwner() == null)
             throw new BusinessRuleException("Không thể sửa bộ thẻ thư viện");
         return toForm(set);
     }
 
     public Integer savePersonal(Integer id, FlashcardSetForm f, String email) {
-        var u = learner(email);
+        User u = learner(email);
         if (id != null && requireForStudent(id, email).getOwner() == null)
             throw new BusinessRuleException("Không thể sửa bộ thẻ thư viện");
         f.setStatus("PUBLISHED");
@@ -290,9 +292,10 @@ public class FlashcardSetService {
     }
 
     public void archivePersonal(Integer id, String email) {
-        var u = learner(email);
-        var set =
-                sets.findById(id)
+        User u = learner(email);
+        FlashcardSet set =
+                flashcardSetRepository
+                        .findById(id)
                         .filter(
                                 s ->
                                         s.getOwner() != null
@@ -303,17 +306,18 @@ public class FlashcardSetService {
                                         new ResourceNotFoundException(
                                                 "Không tìm thấy bộ thẻ cá nhân"));
         set.setStatus("ARCHIVED");
-        sets.save(set);
+        flashcardSetRepository.save(set);
     }
 
     public List<CardView> study(Integer id, String email) {
-        var u = learner(email);
+        User u = learner(email);
         requireForStudent(id, email);
-        return cards.findBySetIdAndStatusOrderByDisplayOrderAsc(id, "ACTIVE").stream()
+        return flashcardRepository.findBySetIdAndStatusOrderByDisplayOrderAsc(id, "ACTIVE").stream()
                 .map(
                         c -> {
-                            var p =
-                                    progress.findByUserIdAndFlashcardId(u.getId(), c.getId())
+                            UserFlashcardProgress p =
+                                    userFlashcardProgressRepository
+                                            .findByUserIdAndFlashcardId(u.getId(), c.getId())
                                             .orElse(null);
                             return new CardView(
                                     c.getId(),
@@ -330,23 +334,25 @@ public class FlashcardSetService {
     }
 
     public Optional<FlashcardSet> publishedForLesson(Integer lessonId) {
-        return sets.findFirstByLessonIdAndOwnerIsNullAndStatusOrderByIdDesc(lessonId, "PUBLISHED");
+        return flashcardSetRepository.findFirstByLessonIdAndOwnerIsNullAndStatusOrderByIdDesc(
+                lessonId, "PUBLISHED");
     }
 
     public Optional<FlashcardSet> forLesson(Integer lessonId) {
-        return sets.findFirstByLessonIdAndOwnerIsNullOrderByIdDesc(lessonId);
+        return flashcardSetRepository.findFirstByLessonIdAndOwnerIsNullOrderByIdDesc(lessonId);
     }
 
     public List<Lesson> availableLessons() {
-        return lessons.findAllByOrderBySkillAscCefrLevelAscDisplayOrderAsc().stream()
+        return lessonRepository.findAllByOrderBySkillAscCefrLevelAscDisplayOrderAsc().stream()
                 .filter(l -> !"ARCHIVED".equals(l.getStatus()))
                 .toList();
     }
 
     public void prepareForLesson(FlashcardSetForm form, Integer lessonId) {
         if (lessonId == null) return;
-        var lesson =
-                lessons.findById(lessonId)
+        Lesson lesson =
+                lessonRepository
+                        .findById(lessonId)
                         .filter(l -> !"ARCHIVED".equals(l.getStatus()))
                         .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy bài học"));
         form.setLessonId(lesson.getId());
@@ -363,11 +369,12 @@ public class FlashcardSetService {
         if (reviewKey == null || !reviewKey.matches("[A-Za-z0-9-]{16,80}"))
             throw new BusinessRuleException("Mã lượt ôn không hợp lệ");
 
-        var user = learner(email);
+        User user = learner(email);
         em.lock(user, LockModeType.PESSIMISTIC_WRITE);
         requireForStudent(setId, email);
-        var card =
-                cards.findById(cardId)
+        Flashcard card =
+                flashcardRepository
+                        .findById(cardId)
                         .filter(
                                 value ->
                                         value.getSet() != null
@@ -375,24 +382,25 @@ public class FlashcardSetService {
                                                 && "ACTIVE".equals(value.getStatus()))
                         .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy thẻ"));
         String key = user.getId() + ":" + cardId + ":" + reviewKey;
-        var prior = em.find(FlashcardReview.class, key);
+        FlashcardReview prior = em.find(FlashcardReview.class, key);
         if (prior != null) {
             if (!state.equals(prior.getState()))
                 throw new BusinessRuleException("Mã lượt ôn đã được dùng cho nội dung khác");
             return;
         }
 
-        var value =
-                progress.findByUserIdAndFlashcardId(user.getId(), cardId)
+        UserFlashcardProgress value =
+                userFlashcardProgressRepository
+                        .findByUserIdAndFlashcardId(user.getId(), cardId)
                         .orElseGet(
                                 () -> {
-                                    var created = new UserFlashcardProgress();
+                                    UserFlashcardProgress created = new UserFlashcardProgress();
                                     created.setUser(user);
                                     created.setFlashcard(card);
                                     created.setReviewCount(0);
                                     return created;
                                 });
-        var now = LocalDateTime.now();
+        LocalDateTime now = LocalDateTime.now();
         value.setReviewCount(value.getReviewCount() + 1);
         value.setLastReviewedAt(now);
         value.setStatus(state);
@@ -405,7 +413,17 @@ public class FlashcardSetService {
                         : 0;
         value.setIntervalDays(days);
         value.setNextReviewAt(days == 0 ? now.plusMinutes(10) : now.plusDays(days));
-        progress.save(value);
+        userFlashcardProgressRepository.save(value);
         em.persist(new FlashcardReview(key, user.getId(), cardId, state, now));
+    }
+
+    private static List<SetView> lessonSetsFor(List<SetView> values, String skill, String level) {
+        List<SetView> result = new ArrayList<>();
+        for (SetView set : values) {
+            if (!set.personal() && skill.equals(set.lessonSkill()) && level.equals(set.level())) {
+                result.add(set);
+            }
+        }
+        return List.copyOf(result);
     }
 }

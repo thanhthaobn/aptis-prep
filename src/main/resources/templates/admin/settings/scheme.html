@@ -69,9 +69,7 @@
               </div>
             </div>
           </fieldset>
-          <div class="alert alert-danger" th:if="${#fields.hasGlobalErrors()}">
-            <p th:each="error : ${#fields.globalErrors()}" th:text="${error}"></p>
-          </div>
+          <div class="alert alert-danger" th:errors="*{global}"></div>
           <div class="actions">
             <button th:unless="${readOnly}" class="button" type="submit">Lưu bộ chấm điểm</button>
             <a
@@ -223,9 +221,7 @@
                 </div>
               </div>
             </fieldset>
-            <div class="alert alert-danger" th:if="${#fields.hasErrors('*')}">
-              <p th:each="error : ${#fields.allErrors()}" th:text="${error}"></p>
-            </div>
+            <div class="alert alert-danger" th:errors="*{all}"></div>
             <button class="button" type="submit" th:unless="${readOnly}">Lưu quy đổi điểm</button>
           </form>
           <form
@@ -277,9 +273,7 @@
                 />
               </div>
             </div>
-            <div class="alert alert-danger" th:if="${#fields.hasGlobalErrors()}">
-              <p th:each="error : ${#fields.globalErrors()}" th:text="${error}"></p>
-            </div>
+            <div class="alert alert-danger" th:errors="*{global}"></div>
             <div class="actions"><button class="button" type="submit">Lưu khoảng điểm</button></div>
           </form>
         </section>

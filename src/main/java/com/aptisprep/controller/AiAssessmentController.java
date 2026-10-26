@@ -14,19 +14,33 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 @Controller
 public class AiAssessmentController {
     private final AiAssessmentContract assessments;
-    private final UserRepository users;
+    private final UserRepository userRepository;
 
-    public AiAssessmentController(AiAssessmentContract assessments, UserRepository users) {
+    public AiAssessmentController(AiAssessmentContract assessments, UserRepository userRepository) {
         this.assessments = assessments;
-        this.users = users;
+        this.userRepository = userRepository;
     }
 
-    @GetMapping({"/student/assessments/{key}", "/admin/assessments/{key}"})
-    public String detail(
+    @GetMapping("/student/assessments/{key}")
+    public String showStudentAssessment(
             @PathVariable String key,
             Principal principal,
             Authentication authentication,
             Model model) {
+        return renderAssessment(key, principal, authentication, model);
+    }
+
+    @GetMapping("/admin/assessments/{key}")
+    public String showAdminAssessment(
+            @PathVariable String key,
+            Principal principal,
+            Authentication authentication,
+            Model model) {
+        return renderAssessment(key, principal, authentication, model);
+    }
+
+    private String renderAssessment(
+            String key, Principal principal, Authentication authentication, Model model) {
         User user = user(principal);
         boolean admin =
                 authentication.getAuthorities().stream()
@@ -37,9 +51,26 @@ public class AiAssessmentController {
         return "student/assessment";
     }
 
-    @PostMapping({"/student/assessments/{key}/retry", "/admin/assessments/{key}/retry"})
-    public String retry(
+    @PostMapping("/student/assessments/{key}/retry")
+    public String retryStudentAssessment(
             @PathVariable String key,
+            Principal principal,
+            Authentication authentication,
+            RedirectAttributes redirect) {
+        return retryAssessment(key, principal, authentication, redirect);
+    }
+
+    @PostMapping("/admin/assessments/{key}/retry")
+    public String retryAdminAssessment(
+            @PathVariable String key,
+            Principal principal,
+            Authentication authentication,
+            RedirectAttributes redirect) {
+        return retryAssessment(key, principal, authentication, redirect);
+    }
+
+    private String retryAssessment(
+            String key,
             Principal principal,
             Authentication authentication,
             RedirectAttributes redirect) {
@@ -53,7 +84,8 @@ public class AiAssessmentController {
     }
 
     private User user(Principal principal) {
-        return users.findByEmailIgnoreCase(principal.getName())
+        return userRepository
+                .findByEmailIgnoreCase(principal.getName())
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy tài khoản"));
     }
 }
