@@ -163,7 +163,9 @@
                       class="catalog-speech-fallback"
                     >
                       <strong>Giọng đọc trình duyệt</strong>
-                      <p class="muted">Học viên sẽ nghe transcript bằng giọng tiếng Anh của trình duyệt.</p>
+                      <p class="muted">
+                        Học viên sẽ nghe transcript bằng giọng tiếng Anh của trình duyệt.
+                      </p>
                     </div>
                     <audio
                       th:if="${media.mediaType == 'AUDIO' and !#strings.startsWith(media.mediaUrl, 'speech://')}"

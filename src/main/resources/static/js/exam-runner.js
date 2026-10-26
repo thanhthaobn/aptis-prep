@@ -197,8 +197,7 @@
     });
     showPage(0);
   }
-  const csrfHeader =
-    document.querySelector('meta[name="_csrf_header"]')?.content || 'X-CSRF-TOKEN';
+  const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.content || 'X-CSRF-TOKEN';
   document.querySelectorAll('.media-audio').forEach((player) => {
     const status = player.parentElement.querySelector('.media-status');
     const playButton = player.parentElement.querySelector('.media-play-button');

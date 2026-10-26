@@ -458,7 +458,8 @@ public class ExamAttemptService implements ExamAttemptContract {
                                                         item.path("content").asText(),
                                                         item.path("responseSeconds").isNull()
                                                                 ? null
-                                                                : item.path("responseSeconds").asInt(),
+                                                                : item.path("responseSeconds")
+                                                                        .asInt(),
                                                         itemOptions,
                                                         detail == null
                                                                 ? null
