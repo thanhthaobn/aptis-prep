@@ -3,6 +3,8 @@ package com.aptisprep.service.account;
 import com.aptisprep.dto.form.GoalForm;
 import com.aptisprep.dto.form.ProfileForm;
 import com.aptisprep.dto.view.AccountSnapshot;
+import com.aptisprep.dto.view.AccountSnapshot.GoalView;
+import com.aptisprep.dto.view.AccountSnapshot.SkillView;
 import com.aptisprep.entity.*;
 import com.aptisprep.enums.*;
 import com.aptisprep.enums.Skill;
@@ -12,7 +14,6 @@ import com.aptisprep.exception.ResourceNotFoundException;
 import com.aptisprep.repository.*;
 import java.math.BigDecimal;
 import java.util.*;
-import java.util.stream.Collectors;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -20,27 +21,27 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class AccountProfileService {
     private static final List<String> SKILLS = Skill.codes();
-    private final UserRepository users;
-    private final CertificateRepository certificates;
-    private final UserGoalRepository goals;
-    private final UserGoalSkillRepository goalSkills;
-    private final UserSkillProfileRepository profiles;
+    private final UserRepository userRepository;
+    private final CertificateRepository certificateRepository;
+    private final UserGoalRepository userGoalRepository;
+    private final UserGoalSkillRepository userGoalSkillRepository;
+    private final UserSkillProfileRepository userSkillProfileRepository;
     private final AccountAccessService access;
     private final ApplicationEventPublisher events;
 
     public AccountProfileService(
-            UserRepository users,
-            CertificateRepository certificates,
-            UserGoalRepository goals,
-            UserGoalSkillRepository goalSkills,
-            UserSkillProfileRepository profiles,
+            UserRepository userRepository,
+            CertificateRepository certificateRepository,
+            UserGoalRepository userGoalRepository,
+            UserGoalSkillRepository userGoalSkillRepository,
+            UserSkillProfileRepository userSkillProfileRepository,
             AccountAccessService access,
             ApplicationEventPublisher events) {
-        this.users = users;
-        this.certificates = certificates;
-        this.goals = goals;
-        this.goalSkills = goalSkills;
-        this.profiles = profiles;
+        this.userRepository = userRepository;
+        this.certificateRepository = certificateRepository;
+        this.userGoalRepository = userGoalRepository;
+        this.userGoalSkillRepository = userGoalSkillRepository;
+        this.userSkillProfileRepository = userSkillProfileRepository;
         this.access = access;
         this.events = events;
     }
@@ -49,57 +50,58 @@ public class AccountProfileService {
     public AccountSnapshot snapshot(String principalEmail) {
         Integer userId = access.requireActiveStudent(principalEmail);
         User user =
-                users.findById(userId)
+                userRepository
+                        .findById(userId)
                         .orElseThrow(
                                 () -> new ResourceNotFoundException("Không tìm thấy tài khoản"));
-        var goal =
-                goals.findFirstByUserIdAndStatusOrderByCreatedAtDesc(userId, GoalStatus.ACTIVE)
-                        .map(
-                                current ->
-                                        new AccountSnapshot.GoalView(
-                                                current.getCertificate() == null
-                                                        ? null
-                                                        : current.getCertificate().getId(),
-                                                current.getCertificate() == null
-                                                        ? null
-                                                        : current.getCertificate().getName(),
-                                                current.getTargetDate(),
-                                                goalSkills.findByGoalId(current.getId()).stream()
-                                                        .collect(
-                                                                Collectors.toMap(
-                                                                        UserGoalSkill::getSkill,
-                                                                        UserGoalSkill
-                                                                                ::getTargetLevel,
-                                                                        (left, right) -> right,
-                                                                        LinkedHashMap::new)),
-                                                goalSkills.findByGoalId(current.getId()).stream()
-                                                        .filter(
-                                                                item ->
-                                                                        item.getTargetScore()
-                                                                                != null)
-                                                        .collect(
-                                                                Collectors.toMap(
-                                                                        UserGoalSkill::getSkill,
-                                                                        UserGoalSkill
-                                                                                ::getTargetScore))))
+        UserGoal activeGoal =
+                userGoalRepository
+                        .findFirstByUserIdAndStatusOrderByCreatedAtDesc(userId, GoalStatus.ACTIVE)
                         .orElse(null);
-        var currentProfiles =
-                profiles.findByUserIdOrderBySkillAsc(userId).stream()
-                        .map(
-                                profile ->
-                                        new AccountSnapshot.SkillView(
-                                                profile.getSkill(),
-                                                levelLabel(profile.getCurrentLevel()),
-                                                profile.getSourceAttemptId()))
-                        .toList();
+        GoalView goal = toGoalView(activeGoal);
+        List<SkillView> currentProfiles = loadSkillViews(userId);
         return new AccountSnapshot(user.getFullName(), user.getEmail(), goal, currentProfiles);
+    }
+
+    private GoalView toGoalView(UserGoal goal) {
+        if (goal == null) return null;
+
+        Certificate certificate = goal.getCertificate();
+        Integer certificateId = certificate == null ? null : certificate.getId();
+        String certificateName = certificate == null ? null : certificate.getName();
+        Map<String, String> targets = new LinkedHashMap<>();
+        Map<String, BigDecimal> targetScores = new HashMap<>();
+        List<UserGoalSkill> goalSkills = userGoalSkillRepository.findByGoalId(goal.getId());
+        for (UserGoalSkill goalSkill : goalSkills) {
+            targets.put(goalSkill.getSkill(), goalSkill.getTargetLevel());
+            if (goalSkill.getTargetScore() != null) {
+                targetScores.put(goalSkill.getSkill(), goalSkill.getTargetScore());
+            }
+        }
+        return new GoalView(
+                certificateId, certificateName, goal.getTargetDate(), targets, targetScores);
+    }
+
+    private List<SkillView> loadSkillViews(Integer userId) {
+        List<SkillView> result = new ArrayList<>();
+        List<UserSkillProfile> profiles =
+                userSkillProfileRepository.findByUserIdOrderBySkillAsc(userId);
+        for (UserSkillProfile profile : profiles) {
+            result.add(
+                    new SkillView(
+                            profile.getSkill(),
+                            levelLabel(profile.getCurrentLevel()),
+                            profile.getSourceAttemptId()));
+        }
+        return List.copyOf(result);
     }
 
     @Transactional
     public void updateProfile(String principalEmail, ProfileForm form) {
         Integer userId = access.requireActiveStudent(principalEmail);
         User user =
-                users.findByIdForUpdate(userId)
+                userRepository
+                        .findByIdForUpdate(userId)
                         .orElseThrow(
                                 () -> new ResourceNotFoundException("Không tìm thấy tài khoản"));
         String name = form.getFullName() == null ? "" : form.getFullName().trim();
@@ -111,7 +113,8 @@ public class AccountProfileService {
     public void saveGoal(String principalEmail, GoalForm form) {
         Integer userId = access.requireActiveStudent(principalEmail);
         User user =
-                users.findByIdForUpdate(userId)
+                userRepository
+                        .findByIdForUpdate(userId)
                         .orElseThrow(
                                 () -> new ResourceNotFoundException("Không tìm thấy tài khoản"));
         Map<String, String> targets = new LinkedHashMap<>();
@@ -138,7 +141,7 @@ public class AccountProfileService {
         Certificate certificate = null;
         if (form.getCertificateId() != null) {
             certificate =
-                    certificates
+                    certificateRepository
                             .findById(form.getCertificateId())
                             .orElseThrow(
                                     () ->
@@ -147,7 +150,8 @@ public class AccountProfileService {
             if (certificate.getStatus() != RecordStatus.ACTIVE)
                 throw new BusinessRuleException("Chứng chỉ đã ngừng sử dụng");
         }
-        goals.findFirstByUserIdAndStatusOrderByCreatedAtDesc(userId, GoalStatus.ACTIVE)
+        userGoalRepository
+                .findFirstByUserIdAndStatusOrderByCreatedAtDesc(userId, GoalStatus.ACTIVE)
                 .ifPresent(old -> old.setStatus(GoalStatus.ARCHIVED));
         UserGoal goal = new UserGoal();
         goal.setUser(user);
@@ -162,7 +166,7 @@ public class AccountProfileService {
                     item.setTargetScore(form.getTargetScores().get(skill));
                     goal.addSkill(item);
                 });
-        goals.save(goal);
+        userGoalRepository.save(goal);
         events.publishEvent(new GoalChangedEvent(userId));
     }
 
@@ -182,7 +186,7 @@ public class AccountProfileService {
 
     @Transactional(readOnly = true)
     public List<Certificate> activeCertificates() {
-        return certificates.findByStatusOrderByNameAsc(RecordStatus.ACTIVE);
+        return certificateRepository.findByStatusOrderByNameAsc(RecordStatus.ACTIVE);
     }
 
     private void addTarget(Map<String, String> targets, String skill, String value) {

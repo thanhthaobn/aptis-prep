@@ -1,6 +1,7 @@
 package com.aptisprep.controller.admin;
 
 import com.aptisprep.dto.form.LessonForm;
+import com.aptisprep.entity.Lesson;
 import com.aptisprep.exception.BusinessRuleException;
 import com.aptisprep.service.learning.FlashcardSetService;
 import com.aptisprep.service.learning.LessonAuthorProfile;
@@ -15,7 +16,6 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 @Controller
-@RequestMapping("/admin/lessons")
 public class AdminLessonController {
     private final LessonService service;
     private final FlashcardSetService flashcards;
@@ -25,13 +25,13 @@ public class AdminLessonController {
         flashcards = f;
     }
 
-    @GetMapping
+    @GetMapping("/admin/lessons")
     public String list(Model m) {
         m.addAttribute("tree", service.adminTree());
         return "admin/lesson/list";
     }
 
-    @GetMapping("/{id}")
+    @GetMapping("/admin/lessons/{id}")
     public String detail(@PathVariable Integer id, Model m) {
         m.addAttribute("lesson", service.require(id));
         m.addAttribute("flashcardSet", flashcards.forLesson(id).orElse(null));
@@ -40,21 +40,21 @@ public class AdminLessonController {
         return "admin/lesson/detail";
     }
 
-    @GetMapping("/create")
-    public String create(
+    @GetMapping("/admin/lessons/create")
+    public String showCreateForm(
             @RequestParam(defaultValue = "Reading") String skill,
             @RequestParam(defaultValue = "A1") String level,
             @RequestParam(defaultValue = "") String topic,
             Model m) {
         if (topic.length() > 160) throw new BusinessRuleException("Tên chủ đề tối đa 160 ký tự");
-        var form = service.newForm(skill, level);
+        LessonForm form = service.newForm(skill, level);
         form.setTopic(topic);
         formModel(m, form, false, null);
         return "admin/lesson/form";
     }
 
-    @PostMapping
-    public String create(
+    @PostMapping("/admin/lessons")
+    public String createLesson(
             @Valid @ModelAttribute("form") LessonForm f,
             BindingResult b,
             @RequestParam(required = false) MultipartFile audio,
@@ -65,14 +65,14 @@ public class AdminLessonController {
         return save(null, f, b, audio, false, image, false, video, false, m, r);
     }
 
-    @GetMapping("/{id}/edit")
-    public String edit(@PathVariable Integer id, Model m) {
+    @GetMapping("/admin/lessons/{id}/edit")
+    public String showEditForm(@PathVariable Integer id, Model m) {
         formModel(m, service.form(id), true, id);
         return "admin/lesson/form";
     }
 
-    @PostMapping("/{id}")
-    public String edit(
+    @PostMapping("/admin/lessons/{id}")
+    public String updateLesson(
             @PathVariable Integer id,
             @Valid @ModelAttribute("form") LessonForm f,
             BindingResult b,
@@ -101,7 +101,7 @@ public class AdminLessonController {
             RedirectAttributes r) {
         if (!b.hasErrors()) {
             try {
-                var lesson =
+                Lesson lesson =
                         service.save(
                                 id, f, audio, removeAudio, image, removeImage, video, removeVideo);
                 r.addFlashAttribute(
@@ -115,21 +115,21 @@ public class AdminLessonController {
         return "admin/lesson/form";
     }
 
-    @PostMapping("/{id}/archive")
+    @PostMapping("/admin/lessons/{id}/archive")
     public String archive(@PathVariable Integer id, RedirectAttributes r) {
         service.archive(id);
         r.addFlashAttribute("message", "Đã lưu trữ bài học. Lịch sử học vẫn được giữ lại");
         return "redirect:/admin/lessons/" + id;
     }
 
-    @PostMapping("/{id}/duplicate")
+    @PostMapping("/admin/lessons/{id}/duplicate")
     public String duplicate(@PathVariable Integer id, RedirectAttributes r) {
-        var copy = service.duplicate(id);
+        Lesson copy = service.duplicate(id);
         r.addFlashAttribute("message", "Đã tạo bản sao ở trạng thái Bản nháp");
         return "redirect:/admin/lessons/" + copy.getId() + "/edit";
     }
 
-    @PostMapping("/{id}/move")
+    @PostMapping("/admin/lessons/{id}/move")
     public String move(
             @PathVariable Integer id, @RequestParam int direction, RedirectAttributes r) {
         service.move(id, direction);
@@ -139,7 +139,8 @@ public class AdminLessonController {
 
     private void formModel(Model m, LessonForm f, boolean editing, Integer id) {
         m.addAttribute("profile", LessonAuthorProfile.forSkill(f.getSkill()));
-        var authorProfiles = new LinkedHashMap<String, LessonAuthorProfile>();
+        LinkedHashMap<String, LessonAuthorProfile> authorProfiles =
+                new LinkedHashMap<String, LessonAuthorProfile>();
         LessonService.SKILLS.forEach(
                 skill -> authorProfiles.put(skill, LessonAuthorProfile.forSkill(skill)));
         m.addAttribute("authorProfiles", authorProfiles);

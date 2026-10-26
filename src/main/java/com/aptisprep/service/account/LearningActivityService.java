@@ -59,29 +59,30 @@ public class LearningActivityService {
     }
 
     private final AccountAccessService access;
-    private final LessonProgressRepository lessons;
-    private final LessonCheckAttemptRepository checks;
-    private final UserFlashcardProgressRepository flashcards;
-    private final ExamAttemptRepository exams;
+    private final LessonProgressRepository lessonProgressRepository;
+    private final LessonCheckAttemptRepository lessonCheckAttemptRepository;
+    private final UserFlashcardProgressRepository userFlashcardProgressRepository;
+    private final ExamAttemptRepository examAttemptRepository;
 
     public LearningActivityService(
             AccountAccessService access,
-            LessonProgressRepository lessons,
-            LessonCheckAttemptRepository checks,
-            UserFlashcardProgressRepository flashcards,
-            ExamAttemptRepository exams) {
+            LessonProgressRepository lessonProgressRepository,
+            LessonCheckAttemptRepository lessonCheckAttemptRepository,
+            UserFlashcardProgressRepository userFlashcardProgressRepository,
+            ExamAttemptRepository examAttemptRepository) {
         this.access = access;
-        this.lessons = lessons;
-        this.checks = checks;
-        this.flashcards = flashcards;
-        this.exams = exams;
+        this.lessonProgressRepository = lessonProgressRepository;
+        this.lessonCheckAttemptRepository = lessonCheckAttemptRepository;
+        this.userFlashcardProgressRepository = userFlashcardProgressRepository;
+        this.examAttemptRepository = examAttemptRepository;
     }
 
     @Transactional(readOnly = true)
     public ActivityView activity(String email) {
         Integer userId = access.requireActiveStudent(email);
         Map<LocalDate, DailyCount> counts = new HashMap<>();
-        lessons.findByUserId(userId)
+        lessonProgressRepository
+                .findByUserId(userId)
                 .forEach(
                         item -> {
                             add(counts, item.getLastAccessedAt(), Kind.LESSON);
@@ -89,12 +90,15 @@ public class LearningActivityService {
                                     && !sameDay(item.getCompletedAt(), item.getLastAccessedAt()))
                                 add(counts, item.getCompletedAt(), Kind.LESSON);
                         });
-        checks.findByUserId(userId)
+        lessonCheckAttemptRepository
+                .findByUserId(userId)
                 .forEach(item -> add(counts, item.getSubmittedAt(), Kind.PRACTICE));
-        flashcards
+        userFlashcardProgressRepository
                 .findByUserId(userId)
                 .forEach(item -> add(counts, item.getLastReviewedAt(), Kind.FLASHCARD));
-        exams.findByUserId(userId).forEach(item -> add(counts, item.getSubmittedAt(), Kind.EXAM));
+        examAttemptRepository
+                .findByUserId(userId)
+                .forEach(item -> add(counts, item.getSubmittedAt(), Kind.EXAM));
         return summarizeDetailed(counts, LocalDate.now());
     }
 
@@ -102,7 +106,7 @@ public class LearningActivityService {
         Map<LocalDate, DailyCount> detailed = new HashMap<>();
         source.forEach(
                 (date, count) -> {
-                    var value = new DailyCount();
+                    DailyCount value = new DailyCount();
                     value.lesson = Math.max(0, count);
                     detailed.put(date, value);
                 });

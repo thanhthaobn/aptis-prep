@@ -2,6 +2,7 @@ package com.aptisprep.controller.student;
 
 import com.aptisprep.dto.form.FlashcardSetForm;
 import com.aptisprep.dto.view.FlashcardViews;
+import com.aptisprep.dto.view.FlashcardViews.SetView;
 import com.aptisprep.exception.BusinessRuleException;
 import com.aptisprep.service.learning.FlashcardSetService;
 import com.aptisprep.service.learning.LessonService;
@@ -20,7 +21,6 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 @Controller
-@RequestMapping("/student/flashcards")
 public class StudentFlashcardController {
     private final FlashcardSetService service;
 
@@ -28,7 +28,7 @@ public class StudentFlashcardController {
         service = s;
     }
 
-    @GetMapping
+    @GetMapping("/student/flashcards")
     public String list(
             @RequestParam(defaultValue = "all") String source,
             @RequestParam(defaultValue = "") String q,
@@ -39,13 +39,13 @@ public class StudentFlashcardController {
             Model m) {
         if (!List.of("all", "mine", "lesson").contains(source))
             throw new BusinessRuleException("Bộ lọc bộ thẻ không hợp lệ");
-        var all = service.listForStudent(p.getName());
+        List<SetView> all = service.listForStudent(p.getName());
         if (q.length() > 255
                 || (!skill.isBlank() && !LessonService.SKILLS.contains(skill))
                 || (!level.isBlank() && !LessonService.LEVELS.contains(level))
                 || !List.of("learning", "newest").contains(sort))
             throw new BusinessRuleException("Bộ lọc bộ thẻ không hợp lệ");
-        var query = fold(q);
+        String query = fold(q);
         Comparator<FlashcardViews.SetView> order =
                 "newest".equals(sort)
                         ? Comparator.comparing(FlashcardViews.SetView::id).reversed()
@@ -58,7 +58,7 @@ public class StudentFlashcardController {
                                 .thenComparingInt(set -> LessonService.LEVELS.indexOf(set.level()))
                                 .thenComparing(set -> fold(set.title()))
                                 .thenComparing(FlashcardViews.SetView::id);
-        var visible =
+        List<SetView> visible =
                 all.stream()
                         .filter(
                                 set ->
@@ -108,20 +108,20 @@ public class StudentFlashcardController {
         return "flashcard/list";
     }
 
-    @GetMapping("/create")
-    public String create(Model m) {
-        var f = new FlashcardSetForm();
+    @GetMapping("/student/flashcards/create")
+    public String showCreateForm(Model m) {
+        FlashcardSetForm f = new FlashcardSetForm();
         f.getRows().add(new FlashcardSetForm.Row());
         return form(m, f, null);
     }
 
-    @GetMapping("/{id}/edit")
-    public String edit(@PathVariable Integer id, Principal p, Model m) {
+    @GetMapping("/student/flashcards/{id}/edit")
+    public String showEditForm(@PathVariable Integer id, Principal p, Model m) {
         return form(m, service.personalForm(id, p.getName()), id);
     }
 
-    @PostMapping
-    public String create(
+    @PostMapping("/student/flashcards")
+    public String createPersonalSet(
             @Valid @ModelAttribute("form") FlashcardSetForm f,
             BindingResult b,
             Principal p,
@@ -129,8 +129,8 @@ public class StudentFlashcardController {
         return save(null, f, b, p, m);
     }
 
-    @PostMapping("/{id}")
-    public String edit(
+    @PostMapping("/student/flashcards/{id}")
+    public String updatePersonalSet(
             @PathVariable Integer id,
             @Valid @ModelAttribute("form") FlashcardSetForm f,
             BindingResult b,
@@ -139,7 +139,7 @@ public class StudentFlashcardController {
         return save(id, f, b, p, m);
     }
 
-    @PostMapping("/{id}/archive")
+    @PostMapping("/student/flashcards/{id}/archive")
     public String archive(@PathVariable Integer id, Principal p, RedirectAttributes r) {
         service.archivePersonal(id, p.getName());
         r.addFlashAttribute("message", "Đã lưu trữ bộ thẻ. Bạn có thể tạo lại khi cần.");
@@ -172,14 +172,14 @@ public class StudentFlashcardController {
         return "flashcard/form";
     }
 
-    @GetMapping("/{id}")
+    @GetMapping("/student/flashcards/{id}")
     public String study(@PathVariable Integer id, Principal p, Model m) {
         m.addAttribute("cards", service.study(id, p.getName()));
         m.addAttribute("set", service.studySet(id, p.getName()));
         return "flashcard/study";
     }
 
-    @PostMapping("/{setId}/cards/{cardId}/state")
+    @PostMapping("/student/flashcards/{setId}/cards/{cardId}/state")
     @ResponseBody
     public ResponseEntity<Void> mark(
             @PathVariable Integer setId,

@@ -3,6 +3,7 @@ package com.aptisprep.service.grading;
 import com.aptisprep.entity.AiAssessment;
 import com.aptisprep.entity.AiAssessmentJob;
 import com.aptisprep.entity.ExamAttemptEntity;
+import com.aptisprep.entity.ExamAttemptSnapshotEntity;
 import com.aptisprep.entity.ExamSkillResultEntity;
 import com.aptisprep.entity.MockExamEntity;
 import com.aptisprep.entity.QuestionEntity;
@@ -47,43 +48,43 @@ import org.springframework.transaction.support.TransactionTemplate;
 /** Owner: Thông. Combines accepted grading components and owns the final attempt state. */
 @Service
 public class AttemptFinalizationService {
-    private final ExamAttemptRepository attempts;
-    private final ExamSkillResultRepository skillResults;
-    private final MockExamRepository exams;
-    private final UserAnswerRepository answers;
-    private final QuestionRepository questions;
-    private final ExamAttemptSnapshotRepository snapshots;
+    private final ExamAttemptRepository examAttemptRepository;
+    private final ExamSkillResultRepository examSkillResultRepository;
+    private final MockExamRepository mockExamRepository;
+    private final UserAnswerRepository userAnswerRepository;
+    private final QuestionRepository questionRepository;
+    private final ExamAttemptSnapshotRepository examAttemptSnapshotRepository;
     private final AiAssessmentContract ai;
-    private final AiAssessmentJobRepository jobs;
-    private final AiAssessmentRepository assessments;
+    private final AiAssessmentJobRepository aiAssessmentJobRepository;
+    private final AiAssessmentRepository aiAssessmentRepository;
     private final ScoringPolicyContract scoring;
     private final AttemptOutboxService outbox;
     private final ApplicationEventPublisher events;
     private final TransactionTemplate transactions;
 
     public AttemptFinalizationService(
-            ExamAttemptRepository attempts,
-            ExamSkillResultRepository skillResults,
-            MockExamRepository exams,
-            UserAnswerRepository answers,
-            QuestionRepository questions,
-            ExamAttemptSnapshotRepository snapshots,
+            ExamAttemptRepository examAttemptRepository,
+            ExamSkillResultRepository examSkillResultRepository,
+            MockExamRepository mockExamRepository,
+            UserAnswerRepository userAnswerRepository,
+            QuestionRepository questionRepository,
+            ExamAttemptSnapshotRepository examAttemptSnapshotRepository,
             AiAssessmentContract ai,
-            AiAssessmentJobRepository jobs,
-            AiAssessmentRepository assessments,
+            AiAssessmentJobRepository aiAssessmentJobRepository,
+            AiAssessmentRepository aiAssessmentRepository,
             ScoringPolicyContract scoring,
             AttemptOutboxService outbox,
             ApplicationEventPublisher events,
             PlatformTransactionManager transactionManager) {
-        this.attempts = attempts;
-        this.skillResults = skillResults;
-        this.exams = exams;
-        this.answers = answers;
-        this.questions = questions;
-        this.snapshots = snapshots;
+        this.examAttemptRepository = examAttemptRepository;
+        this.examSkillResultRepository = examSkillResultRepository;
+        this.mockExamRepository = mockExamRepository;
+        this.userAnswerRepository = userAnswerRepository;
+        this.questionRepository = questionRepository;
+        this.examAttemptSnapshotRepository = examAttemptSnapshotRepository;
         this.ai = ai;
-        this.jobs = jobs;
-        this.assessments = assessments;
+        this.aiAssessmentJobRepository = aiAssessmentJobRepository;
+        this.aiAssessmentRepository = aiAssessmentRepository;
         this.scoring = scoring;
         this.outbox = outbox;
         this.events = events;
@@ -94,12 +95,12 @@ public class AttemptFinalizationService {
     public boolean finalizeIfReady(ExamAttemptEntity attempt, MockExamEntity exam) {
         if ("COMPLETED".equals(attempt.getStatus())) return false;
         List<ExamSkillResultEntity> results =
-                skillResults.findByAttemptIdOrderBySkillAsc(attempt.getId());
+                examSkillResultRepository.findByAttemptIdOrderBySkillAsc(attempt.getId());
         if (results.isEmpty()) return false;
         if (results.stream().anyMatch(this::hasPolicyError)) {
             attempt.setStatus("ERROR");
             attempt.setGradingStatus("ERROR");
-            attempts.save(attempt);
+            examAttemptRepository.save(attempt);
             return false;
         }
         if (results.stream().anyMatch(value -> !isComplete(value))) return false;
@@ -123,7 +124,7 @@ public class AttemptFinalizationService {
         attempt.setCompletedAt(LocalDateTime.now());
         attempt.setGradingStatus("COMPLETED");
         attempt.setStatus("EXPIRED".equals(attempt.getStatus()) ? "EXPIRED" : "COMPLETED");
-        attempts.save(attempt);
+        examAttemptRepository.save(attempt);
         return true;
     }
 
@@ -137,10 +138,12 @@ public class AttemptFinalizationService {
     @Transactional
     public void applyAiAssessment(AiAssessmentCompletedEvent event) {
         if (event.attemptId() == null || event.answerId() == null) return;
-        AiAssessmentJob callbackJob = jobs.findByAssessmentKey(event.assessmentKey()).orElse(null);
+        AiAssessmentJob callbackJob =
+                aiAssessmentJobRepository.findByAssessmentKey(event.assessmentKey()).orElse(null);
         if (!isCurrentExamCallback(callbackJob, event)) return;
         ExamAttemptEntity attempt =
-                attempts.findByIdAndUserIdForUpdate(event.attemptId(), event.userId())
+                examAttemptRepository
+                        .findByIdAndUserIdForUpdate(event.attemptId(), event.userId())
                         .orElseThrow(
                                 () ->
                                         new AccessDeniedException(
@@ -151,20 +154,21 @@ public class AttemptFinalizationService {
                 || !Objects.equals(callbackJob.getRubricVersion(), attempt.getRubricVersion()))
             return;
         UserAnswerEntity answer =
-                answers.findByIdAndAttemptId(event.answerId(), attempt.getId())
+                userAnswerRepository
+                        .findByIdAndAttemptId(event.answerId(), attempt.getId())
                         .orElseThrow(
                                 () ->
                                         new ResourceNotFoundException(
                                                 "Không tìm thấy câu trả lời cần chấm"));
         QuestionEntity question =
-                questions
+                questionRepository
                         .findById(answer.getQuestionId())
                         .orElseThrow(
                                 () ->
                                         new ResourceNotFoundException(
                                                 "Không tìm thấy câu hỏi cần chấm"));
         ExamSkillResultEntity result =
-                skillResults
+                examSkillResultRepository
                         .findByAttemptIdAndSkill(attempt.getId(), question.getSkill())
                         .orElseGet(
                                 () -> {
@@ -186,10 +190,10 @@ public class AttemptFinalizationService {
             result.setGradingStatus("ERROR");
             result.setGradingMethod(
                     result.getObjectiveRawScore() == null ? "AI_ERROR" : "OBJECTIVE_ERROR");
-            skillResults.save(result);
+            examSkillResultRepository.save(result);
             attempt.setStatus("ERROR");
             attempt.setGradingStatus("ERROR");
-            attempts.save(attempt);
+            examAttemptRepository.save(attempt);
             return;
         }
         if (assessment.score() == null
@@ -204,10 +208,10 @@ public class AttemptFinalizationService {
         answer.setGradedAt(LocalDateTime.now());
         answer.setStatus("GRADED");
         if (assessment.transcript() != null) answer.setTranscript(assessment.transcript());
-        answers.save(answer);
+        userAnswerRepository.save(answer);
 
         List<AiAssessmentJob> skillJobs =
-                jobs
+                aiAssessmentJobRepository
                         .findExamJobs(
                                 attempt.getUserId(),
                                 attempt.getId(),
@@ -242,7 +246,9 @@ public class AttemptFinalizationService {
                                             && value.getScore() != null)
                     .ifPresent(
                             value ->
-                                    answers.findByIdAndAttemptId(job.getAnswerId(), attempt.getId())
+                                    userAnswerRepository
+                                            .findByIdAndAttemptId(
+                                                    job.getAnswerId(), attempt.getId())
                                             .filter(saved -> !"GRADED".equals(saved.getStatus()))
                                             .ifPresent(
                                                     saved -> {
@@ -255,7 +261,7 @@ public class AttemptFinalizationService {
                                                         if (value.getTranscript() != null)
                                                             saved.setTranscript(
                                                                     value.getTranscript());
-                                                        answers.save(saved);
+                                                        userAnswerRepository.save(saved);
                                                     }));
         }
         long expected = subjectiveAnswers(attempt.getId(), question.getSkill());
@@ -279,10 +285,10 @@ public class AttemptFinalizationService {
                 result.setRawScore(null);
                 result.setScaleScore(null);
                 result.setCefrLevel(null);
-                skillResults.save(result);
+                examSkillResultRepository.save(result);
                 attempt.setStatus("ERROR");
                 attempt.setGradingStatus("ERROR");
-                attempts.save(attempt);
+                examAttemptRepository.save(attempt);
                 return;
             }
             result.setGradingStatus("WAITING");
@@ -290,7 +296,7 @@ public class AttemptFinalizationService {
             result.setRawScore(null);
             result.setScaleScore(null);
             result.setCefrLevel(null);
-            skillResults.save(result);
+            examSkillResultRepository.save(result);
             return;
         }
         BigDecimal subjective =
@@ -312,7 +318,7 @@ public class AttemptFinalizationService {
             result.setCefrLevel(null);
             result.setGradingMethod("UNSCALED");
             result.setGradingStatus("COMPLETED");
-            skillResults.save(result);
+            examSkillResultRepository.save(result);
             if (finalizeIfReady(attempt, exam(attempt))) publishCompleted(attempt, exam(attempt));
             return;
         }
@@ -330,7 +336,7 @@ public class AttemptFinalizationService {
             result.setGradingMethod(result.getObjectiveRawScore() == null ? "AI" : "OBJECTIVE_AI");
             result.setGradingStatus("COMPLETED");
         }
-        skillResults.save(result);
+        examSkillResultRepository.save(result);
         if (finalizeIfReady(attempt, exam(attempt))) publishCompleted(attempt, exam(attempt));
     }
 
@@ -355,11 +361,12 @@ public class AttemptFinalizationService {
         }
         if (unavailableSkills.isEmpty()) return;
         ExamAttemptEntity attempt =
-                attempts.findByIdAndUserIdForUpdate(event.attemptId(), event.userId())
+                examAttemptRepository
+                        .findByIdAndUserIdForUpdate(event.attemptId(), event.userId())
                         .orElseThrow();
         for (String skill : unavailableSkills) {
             ExamSkillResultEntity result =
-                    skillResults
+                    examSkillResultRepository
                             .findByAttemptIdAndSkill(attempt.getId(), skill)
                             .orElseGet(
                                     () -> {
@@ -373,12 +380,12 @@ public class AttemptFinalizationService {
             result.setRawScore(null);
             result.setScaleScore(null);
             result.setCefrLevel(null);
-            skillResults.save(result);
+            examSkillResultRepository.save(result);
         }
         if (!unavailableSkills.isEmpty()) {
             attempt.setStatus("ERROR");
             attempt.setGradingStatus("ERROR");
-            attempts.save(attempt);
+            examAttemptRepository.save(attempt);
         }
     }
 
@@ -394,7 +401,9 @@ public class AttemptFinalizationService {
             return false;
         }
         ExamAttemptEntity attempt =
-                attempts.findByIdAndUserId(event.attemptId(), event.userId()).orElse(null);
+                examAttemptRepository
+                        .findByIdAndUserId(event.attemptId(), event.userId())
+                        .orElse(null);
         if (attempt == null
                 || "COMPLETED".equals(attempt.getStatus())
                 || "ERROR".equals(attempt.getStatus())) return false;
@@ -415,7 +424,8 @@ public class AttemptFinalizationService {
                         attempt.getRubricVersion(), event.lockedAttempt().rubricVersion())) {
             return false;
         }
-        var lockedSnapshot = snapshots.findByAttemptId(attempt.getId()).orElse(null);
+        ExamAttemptSnapshotEntity lockedSnapshot =
+                examAttemptSnapshotRepository.findByAttemptId(attempt.getId()).orElse(null);
         if (lockedSnapshot == null
                 || !Objects.equals(
                         lockedSnapshot.getGradingContext(), event.lockedAttempt().gradingContext())
@@ -427,7 +437,7 @@ public class AttemptFinalizationService {
         }
         if (event.lockedAttempt().answers() == null) return false;
         List<UserAnswerEntity> expected =
-                answers.findByAttemptIdOrderByQuestionIdAsc(attempt.getId());
+                userAnswerRepository.findByAttemptIdOrderByQuestionIdAsc(attempt.getId());
         if (expected.size() != event.lockedAttempt().answers().size()) return false;
         Set<Integer> seen = new HashSet<>();
         for (LockedAnswer snapshot : event.lockedAttempt().answers()) {
@@ -452,7 +462,8 @@ public class AttemptFinalizationService {
 
     private List<String> prepareRetryInTransaction(Integer userId, Integer attemptId) {
         ExamAttemptEntity attempt =
-                attempts.findByIdAndUserIdForUpdate(attemptId, userId)
+                examAttemptRepository
+                        .findByIdAndUserIdForUpdate(attemptId, userId)
                         .orElseThrow(
                                 () ->
                                         new AccessDeniedException(
@@ -461,7 +472,7 @@ public class AttemptFinalizationService {
             throw new BusinessRuleException("Lượt thi này không có phần chấm lỗi");
         }
         List<AiAssessmentJob> failed =
-                jobs
+                aiAssessmentJobRepository
                         .findExamJobsByState(
                                 attempt.getUserId(),
                                 attemptId,
@@ -479,21 +490,22 @@ public class AttemptFinalizationService {
         for (AiAssessmentJob job : failed) {
             keys.add(job.getAssessmentKey());
             QuestionEntity question =
-                    answers.findByIdAndAttemptId(job.getAnswerId(), attemptId)
-                            .flatMap(answer -> questions.findById(answer.getQuestionId()))
+                    userAnswerRepository
+                            .findByIdAndAttemptId(job.getAnswerId(), attemptId)
+                            .flatMap(answer -> questionRepository.findById(answer.getQuestionId()))
                             .orElse(null);
             if (question != null)
-                skillResults
+                examSkillResultRepository
                         .findByAttemptIdAndSkill(attemptId, question.getSkill())
                         .ifPresent(
                                 result -> {
                                     result.setGradingStatus("WAITING");
-                                    skillResults.save(result);
+                                    examSkillResultRepository.save(result);
                                 });
         }
         attempt.setStatus("WAITING_GRADING");
         attempt.setGradingStatus("WAITING");
-        attempts.save(attempt);
+        examAttemptRepository.save(attempt);
         return keys;
     }
 
@@ -504,8 +516,8 @@ public class AttemptFinalizationService {
     }
 
     private long subjectiveAnswers(Integer attemptId, String skill) {
-        return answers.findByAttemptIdOrderByQuestionIdAsc(attemptId).stream()
-                .map(answer -> questions.findById(answer.getQuestionId()).orElse(null))
+        return userAnswerRepository.findByAttemptIdOrderByQuestionIdAsc(attemptId).stream()
+                .map(answer -> questionRepository.findById(answer.getQuestionId()).orElse(null))
                 .filter(Objects::nonNull)
                 .filter(question -> skill.equalsIgnoreCase(question.getSkill()))
                 .filter(
@@ -516,7 +528,7 @@ public class AttemptFinalizationService {
     }
 
     private Optional<AiAssessment> acceptedAssessment(AiAssessmentJob job) {
-        return assessments
+        return aiAssessmentRepository
                 .findFirstByJobIdAndAnswerVersionOrderByIdDesc(job.getId(), job.getAnswerVersion())
                 .filter(
                         value ->
@@ -547,8 +559,9 @@ public class AttemptFinalizationService {
         if (!"EXAM_ANSWER".equals(job.getSourceType())
                 || job.getAnswerId() == null
                 || !Objects.equals(job.getSourceId(), job.getAnswerId())) return false;
-        return answers.findByIdAndAttemptId(job.getAnswerId(), attemptId)
-                .flatMap(answer -> questions.findById(answer.getQuestionId()))
+        return userAnswerRepository
+                .findByIdAndAttemptId(job.getAnswerId(), attemptId)
+                .flatMap(answer -> questionRepository.findById(answer.getQuestionId()))
                 .filter(question -> skill.equalsIgnoreCase(question.getSkill()))
                 .filter(
                         question ->
@@ -581,7 +594,8 @@ public class AttemptFinalizationService {
     }
 
     private MockExamEntity exam(ExamAttemptEntity attempt) {
-        return exams.findById(attempt.getMockExamId())
+        return mockExamRepository
+                .findById(attempt.getMockExamId())
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy đề thi"));
     }
 }

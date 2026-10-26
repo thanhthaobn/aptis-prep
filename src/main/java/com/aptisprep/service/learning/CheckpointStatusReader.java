@@ -24,11 +24,11 @@ final class CheckpointStatusReader {
     }
 
     String state(LearningPath path) {
-        var engine = attempts.getIfAvailable();
+        ExamAttemptContract engine = attempts.getIfAvailable();
         if (engine != null && path.getCheckpointExamId() != null) {
-            var history = history(path, engine);
+            List<AttemptResult> history = history(path, engine);
             if (!history.isEmpty()) {
-                var latest = history.getFirst();
+                AttemptResult latest = history.getFirst();
                 if (unfinished(latest))
                     return "IN_PROGRESS".equals(latest.state()) ? "in_progress" : "grading";
                 if (latest.skills() != null
@@ -60,7 +60,7 @@ final class CheckpointStatusReader {
     }
 
     List<AttemptResult> history(LearningPath path, ExamAttemptContract engine) {
-        var history =
+        HistoryPage history =
                 engine.history(
                         path.getUser().getId(),
                         0,

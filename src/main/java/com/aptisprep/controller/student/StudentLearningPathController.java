@@ -12,7 +12,6 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 @Controller
-@RequestMapping("/student/learning-path")
 public class StudentLearningPathController {
     private final LearningPathService service;
     private final LessonService lessons;
@@ -25,7 +24,7 @@ public class StudentLearningPathController {
         flashcards = f;
     }
 
-    @PostMapping("/refresh")
+    @PostMapping("/student/learning-path/refresh")
     public String refresh(Principal principal, RedirectAttributes redirect) {
         int changed = service.refreshPaths(principal.getName());
         redirect.addFlashAttribute(
@@ -36,14 +35,14 @@ public class StudentLearningPathController {
         return "redirect:/student/learning-path";
     }
 
-    @GetMapping
+    @GetMapping("/student/learning-path")
     public String paths(Principal principal, Model model) {
         model.addAttribute("paths", service.ensureAndSummaries(principal.getName()));
         model.addAttribute("stages", service.stages(principal.getName(), null));
         return "student/learning/path";
     }
 
-    @GetMapping("/{skill}")
+    @GetMapping("/student/learning-path/{skill}")
     public String skill(@PathVariable String skill, Principal principal, Model model) {
         String selected =
                 LessonService.SKILLS.stream()
@@ -61,11 +60,11 @@ public class StudentLearningPathController {
         return "student/learning/skill";
     }
 
-    @PostMapping("/{pathId}/checkpoint/start")
+    @PostMapping("/student/learning-path/{pathId}/checkpoint/start")
     public String startCheckpoint(
             @PathVariable Integer pathId, Principal principal, RedirectAttributes redirect) {
         try {
-            var user = service.userId(principal.getName());
+            Integer user = service.userId(principal.getName());
             Integer attemptId = service.startCheckpoint(user, pathId, null);
             return "redirect:" + service.checkpointDestination(principal.getName(), attemptId);
         } catch (BusinessRuleException | ResourceNotFoundException e) {

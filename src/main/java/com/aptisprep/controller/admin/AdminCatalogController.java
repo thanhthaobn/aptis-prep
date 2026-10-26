@@ -14,7 +14,6 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 @Controller
-@RequestMapping("/admin")
 public class AdminCatalogController {
     private final CatalogService catalogService;
 
@@ -22,7 +21,7 @@ public class AdminCatalogController {
         this.catalogService = catalogService;
     }
 
-    @GetMapping("/questions")
+    @GetMapping("/admin/questions")
     public String questions(
             @RequestParam(defaultValue = "") String q,
             @RequestParam(defaultValue = "") String skill,
@@ -34,7 +33,7 @@ public class AdminCatalogController {
         return list("questions", q, skill, status, kind, page, size, model);
     }
 
-    @GetMapping("/exams")
+    @GetMapping("/admin/exams")
     public String exams(
             @RequestParam(defaultValue = "") String q,
             @RequestParam(defaultValue = "") String skill,
@@ -68,12 +67,12 @@ public class AdminCatalogController {
         return "admin/catalog/list";
     }
 
-    @GetMapping("/questions/{id}")
+    @GetMapping("/admin/questions/{id}")
     public String question(@PathVariable int id, Model model) {
         return detail("questions", id, model);
     }
 
-    @GetMapping("/exams/{id}")
+    @GetMapping("/admin/exams/{id}")
     public String exam(@PathVariable int id, Model model) {
         return detail("exams", id, model);
     }
@@ -87,12 +86,12 @@ public class AdminCatalogController {
         return "admin/catalog/detail";
     }
 
-    @GetMapping("/questions/create")
+    @GetMapping("/admin/questions/create")
     public String createQuestion(Model model) {
         return create("questions", model);
     }
 
-    @GetMapping("/exams/create")
+    @GetMapping("/admin/exams/create")
     public String createExam(Model model) {
         return create("exams", model);
     }
@@ -106,12 +105,12 @@ public class AdminCatalogController {
         return "admin/catalog/form";
     }
 
-    @GetMapping("/questions/{id}/edit")
+    @GetMapping("/admin/questions/{id}/edit")
     public String editQuestion(@PathVariable int id, Model model) {
         return edit("questions", id, model);
     }
 
-    @GetMapping("/exams/{id}/edit")
+    @GetMapping("/admin/exams/{id}/edit")
     public String editExam(@PathVariable int id, Model model) {
         return edit("exams", id, model);
     }
@@ -126,7 +125,7 @@ public class AdminCatalogController {
         return "admin/catalog/form";
     }
 
-    @PostMapping("/questions")
+    @PostMapping("/admin/questions")
     public String saveQuestion(
             @ModelAttribute QuestionForm form,
             @RequestParam(name = "file", required = false) MultipartFile file,
@@ -139,7 +138,7 @@ public class AdminCatalogController {
         }
     }
 
-    @PostMapping("/questions/{id}/edit")
+    @PostMapping("/admin/questions/{id}/edit")
     public String updateQuestion(
             @PathVariable int id,
             @ModelAttribute QuestionForm form,
@@ -154,13 +153,13 @@ public class AdminCatalogController {
         }
     }
 
-    @PostMapping("/questions/{id}/publish")
+    @PostMapping("/admin/questions/{id}/publish")
     public String publishQuestion(@PathVariable int id) {
         catalogService.publishQuestion(id);
         return "redirect:/admin/questions/" + id;
     }
 
-    @PostMapping("/questions/{id}/media")
+    @PostMapping("/admin/questions/{id}/media")
     public String addMedia(
             @PathVariable int id,
             @RequestParam(name = "files", required = false) MultipartFile[] files) {
@@ -168,13 +167,13 @@ public class AdminCatalogController {
         return "redirect:/admin/questions/" + id;
     }
 
-    @PostMapping("/questions/{id}/media/{mediaId}/delete")
+    @PostMapping("/admin/questions/{id}/media/{mediaId}/delete")
     public String deleteMedia(@PathVariable int id, @PathVariable int mediaId) {
         catalogService.deleteMedia(id, mediaId);
         return "redirect:/admin/questions/" + id;
     }
 
-    @PostMapping("/questions/{id}/media/{mediaId}")
+    @PostMapping("/admin/questions/{id}/media/{mediaId}")
     public String updateMedia(
             @PathVariable int id,
             @PathVariable int mediaId,
@@ -185,14 +184,14 @@ public class AdminCatalogController {
         return "redirect:/admin/questions/" + id;
     }
 
-    @PostMapping("/questions/{id}/media/{mediaId}/move")
+    @PostMapping("/admin/questions/{id}/media/{mediaId}/move")
     public String moveMedia(
             @PathVariable int id, @PathVariable int mediaId, @RequestParam int direction) {
         catalogService.moveMedia(id, mediaId, direction);
         return "redirect:/admin/questions/" + id;
     }
 
-    @GetMapping("/questions/{id}/media/{mediaId}/content")
+    @GetMapping("/admin/questions/{id}/media/{mediaId}/content")
     public ResponseEntity<Resource> mediaContent(@PathVariable int id, @PathVariable int mediaId) {
         CatalogService.MediaContent value = catalogService.mediaContent(id, mediaId);
         MediaType type;
@@ -207,30 +206,30 @@ public class AdminCatalogController {
         return ResponseEntity.ok().contentType(type).body(value.resource());
     }
 
-    @PostMapping("/questions/{id}/archive")
+    @PostMapping("/admin/questions/{id}/archive")
     public String archiveQuestion(@PathVariable int id) {
         catalogService.archiveQuestion(id);
         return "redirect:/admin/questions/" + id;
     }
 
-    @PostMapping("/questions/{id}/restore")
+    @PostMapping("/admin/questions/{id}/restore")
     public String restoreQuestion(@PathVariable int id) {
         catalogService.restoreQuestion(id);
         return "redirect:/admin/questions/" + id;
     }
 
-    @PostMapping("/exams")
+    @PostMapping("/admin/exams")
     public String saveExam(@ModelAttribute ExamForm form) {
         return "redirect:/admin/exams/" + catalogService.saveExam(null, form);
     }
 
-    @PostMapping("/exams/{id}/edit")
+    @PostMapping("/admin/exams/{id}/edit")
     public String updateExam(@PathVariable int id, @ModelAttribute ExamForm form) {
         catalogService.saveExam(id, form);
         return "redirect:/admin/exams/" + id;
     }
 
-    @PostMapping("/exams/{id}/publish")
+    @PostMapping("/admin/exams/{id}/publish")
     public String publishExam(@PathVariable int id) {
         catalogService.publishExam(id);
         return "redirect:/admin/exams/" + id;

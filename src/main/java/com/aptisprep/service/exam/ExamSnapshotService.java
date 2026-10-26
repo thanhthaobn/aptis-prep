@@ -11,42 +11,42 @@ import tools.jackson.databind.json.JsonMapper;
 /** Owns immutable exam content snapshots; writes join the caller's attempt transaction. */
 @Service
 final class ExamSnapshotService {
-    private final QuestionRepository questions;
-    private final QuestionItemRepository items;
-    private final QuestionOptionRepository options;
-    private final QuestionMediaRepository questionMedia;
-    private final ExamAttemptSnapshotRepository snapshots;
+    private final QuestionRepository questionRepository;
+    private final QuestionItemRepository questionItemRepository;
+    private final QuestionOptionRepository questionOptionRepository;
+    private final QuestionMediaRepository questionMediaRepository;
+    private final ExamAttemptSnapshotRepository examAttemptSnapshotRepository;
     private final JsonMapper json;
 
     ExamSnapshotService(
-            QuestionRepository questions,
-            QuestionItemRepository items,
-            QuestionOptionRepository options,
-            QuestionMediaRepository questionMedia,
-            ExamAttemptSnapshotRepository snapshots,
+            QuestionRepository questionRepository,
+            QuestionItemRepository questionItemRepository,
+            QuestionOptionRepository questionOptionRepository,
+            QuestionMediaRepository questionMediaRepository,
+            ExamAttemptSnapshotRepository examAttemptSnapshotRepository,
             JsonMapper json) {
-        this.questions = questions;
-        this.items = items;
-        this.options = options;
-        this.questionMedia = questionMedia;
-        this.snapshots = snapshots;
+        this.questionRepository = questionRepository;
+        this.questionItemRepository = questionItemRepository;
+        this.questionOptionRepository = questionOptionRepository;
+        this.questionMediaRepository = questionMediaRepository;
+        this.examAttemptSnapshotRepository = examAttemptSnapshotRepository;
         this.json = json;
     }
 
     ExamAttemptSnapshotEntity require(Integer attemptId) {
-        return snapshots
+        return examAttemptSnapshotRepository
                 .findByAttemptId(attemptId)
                 .orElseThrow(
                         () -> new BusinessRuleException("Không tìm thấy snapshot của lượt thi"));
     }
 
     void updateAnswerVersion(Integer attemptId, int version) {
-        snapshots
+        examAttemptSnapshotRepository
                 .findByAttemptId(attemptId)
                 .ifPresent(
                         snapshot -> {
                             snapshot.setAnswerVersion(version);
-                            snapshots.save(snapshot);
+                            examAttemptSnapshotRepository.save(snapshot);
                         });
     }
 
@@ -71,7 +71,8 @@ final class ExamSnapshotService {
         grading.put("answerVersion", 1);
         List<Map<String, Object>> lockedQuestions = new ArrayList<>();
         for (MockExamQuestionEntity link : links) {
-            QuestionEntity question = questions.findById(link.getQuestionId()).orElseThrow();
+            QuestionEntity question =
+                    questionRepository.findById(link.getQuestionId()).orElseThrow();
             Map<String, Object> q = new LinkedHashMap<>();
             q.put("id", question.getId());
             q.put("position", link.getPosition());
@@ -82,7 +83,7 @@ final class ExamSnapshotService {
             q.put("skill", question.getSkill());
             List<Map<String, Object>> lockedItems = new ArrayList<>();
             for (QuestionItemEntity item :
-                    items.findByQuestionIdOrderByPosition(question.getId())) {
+                    questionItemRepository.findByQuestionIdOrderByPosition(question.getId())) {
                 Map<String, Object> i = new LinkedHashMap<>();
                 i.put("id", item.getId());
                 i.put("position", item.getPosition());
@@ -92,7 +93,8 @@ final class ExamSnapshotService {
                 i.put("maxWordCount", item.getMaxWordCount());
                 i.put("responseSeconds", item.getResponseSeconds());
                 List<Map<String, Object>> lockedOptions = new ArrayList<>();
-                options.findByQuestionItemIdOrderByPosition(item.getId())
+                questionOptionRepository
+                        .findByQuestionItemIdOrderByPosition(item.getId())
                         .forEach(
                                 option -> {
                                     Map<String, Object> o = new LinkedHashMap<>();
@@ -108,7 +110,7 @@ final class ExamSnapshotService {
             }
             List<Map<String, Object>> lockedMedia = new ArrayList<>();
             for (QuestionMediaEntity media :
-                    questionMedia.findByQuestionIdOrderByPosition(question.getId())) {
+                    questionMediaRepository.findByQuestionIdOrderByPosition(question.getId())) {
                 Map<String, Object> m = new LinkedHashMap<>();
                 m.put("id", media.getId());
                 m.put("questionId", question.getId());
@@ -132,12 +134,12 @@ final class ExamSnapshotService {
         } catch (RuntimeException exception) {
             throw new BusinessRuleException("Không thể khóa nội dung đề thi cho lượt làm bài");
         }
-        snapshots.save(snapshot);
+        examAttemptSnapshotRepository.save(snapshot);
     }
 
     Map<Integer, JsonNode> lockedQuestions(Integer attemptId) {
         ExamAttemptSnapshotEntity snapshot =
-                snapshots
+                examAttemptSnapshotRepository
                         .findByAttemptId(attemptId)
                         .orElseThrow(
                                 () ->

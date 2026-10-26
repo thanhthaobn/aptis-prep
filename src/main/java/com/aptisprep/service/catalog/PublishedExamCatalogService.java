@@ -9,38 +9,40 @@ import com.aptisprep.service.contract.ExamCatalogContract;
 import com.aptisprep.service.contract.IntegrationModels.ExamSummary;
 import com.aptisprep.service.contract.IntegrationModels.ExamView;
 import com.aptisprep.service.contract.IntegrationModels.QuestionView;
+import java.util.List;
 import org.springframework.stereotype.Service;
 
 @Service
 public class PublishedExamCatalogService implements ExamCatalogContract {
-    private final MockExamRepository exams;
-    private final MockExamQuestionRepository examQuestions;
-    private final QuestionRepository questions;
+    private final MockExamRepository mockExamRepository;
+    private final MockExamQuestionRepository mockExamQuestionRepository;
+    private final QuestionRepository questionRepository;
 
     public PublishedExamCatalogService(
-            MockExamRepository exams,
-            MockExamQuestionRepository examQuestions,
-            QuestionRepository questions) {
-        this.exams = exams;
-        this.examQuestions = examQuestions;
-        this.questions = questions;
+            MockExamRepository mockExamRepository,
+            MockExamQuestionRepository mockExamQuestionRepository,
+            QuestionRepository questionRepository) {
+        this.mockExamRepository = mockExamRepository;
+        this.mockExamQuestionRepository = mockExamQuestionRepository;
+        this.questionRepository = questionRepository;
     }
 
     @Override
     public ExamView publishedExam(Integer userId, Integer examId) {
         MockExamEntity exam =
-                exams.findById(examId)
+                mockExamRepository
+                        .findById(examId)
                         .filter(x -> "PUBLISHED".equals(x.getStatus()) && !x.isDemoOnly())
                         .orElseThrow(
                                 () ->
                                         new ResourceNotFoundException(
                                                 "Đề thi chưa được công bố hoặc không tồn tại"));
-        var summary = summary(exam);
-        var views =
-                examQuestions.findByMockExamIdOrderByPosition(examId).stream()
+        ExamSummary summary = summary(exam);
+        List<QuestionView> views =
+                mockExamQuestionRepository.findByMockExamIdOrderByPosition(examId).stream()
                         .map(
                                 link ->
-                                        questions
+                                        questionRepository
                                                 .findById(link.getQuestionId())
                                                 .filter(q -> "PUBLISHED".equals(q.getStatus()))
                                                 .map(
@@ -62,14 +64,18 @@ public class PublishedExamCatalogService implements ExamCatalogContract {
 
     @Override
     public ExamSummary checkpoint(String skill, String targetLevel) {
-        return exams.findByStatusOrderByUpdatedAtDesc("PUBLISHED").stream()
+        return mockExamRepository.findByStatusOrderByUpdatedAtDesc("PUBLISHED").stream()
                 .filter(x -> !x.isDemoOnly())
                 .filter(
                         x ->
                                 "CHECKPOINT".equals(x.getExamType())
                                         && skill.equals(x.getSkill())
                                         && targetLevel.equals(x.getTargetLevel()))
-                .filter(x -> !examQuestions.findByMockExamIdOrderByPosition(x.getId()).isEmpty())
+                .filter(
+                        x ->
+                                !mockExamQuestionRepository
+                                        .findByMockExamIdOrderByPosition(x.getId())
+                                        .isEmpty())
                 .findFirst()
                 .map(this::summary)
                 .orElseThrow(() -> new ResourceNotFoundException("Chưa có đề checkpoint phù hợp"));

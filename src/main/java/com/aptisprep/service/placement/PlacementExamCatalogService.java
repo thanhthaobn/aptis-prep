@@ -13,16 +13,16 @@ import org.springframework.stereotype.Service;
 /** Read model for Placement only. It deliberately does not expose the admin catalog model. */
 @Service
 public class PlacementExamCatalogService {
-    private final MockExamRepository exams;
-    private final MockExamQuestionRepository examQuestions;
+    private final MockExamRepository mockExamRepository;
+    private final MockExamQuestionRepository mockExamQuestionRepository;
     private final ExamStartValidator startValidator;
 
     public PlacementExamCatalogService(
-            MockExamRepository exams,
-            MockExamQuestionRepository examQuestions,
+            MockExamRepository mockExamRepository,
+            MockExamQuestionRepository mockExamQuestionRepository,
             ExamStartValidator startValidator) {
-        this.exams = exams;
-        this.examQuestions = examQuestions;
+        this.mockExamRepository = mockExamRepository;
+        this.mockExamQuestionRepository = mockExamQuestionRepository;
         this.startValidator = startValidator;
     }
 
@@ -30,7 +30,9 @@ public class PlacementExamCatalogService {
         String normalized = skill == null ? "" : skill.trim().toUpperCase(Locale.ROOT);
         if (!Skill.codes().contains(normalized))
             throw new BusinessRuleException("Kỹ năng Placement không hợp lệ");
-        return exams.findBySkillAndStatusOrderByUpdatedAtDesc(normalized, "PUBLISHED").stream()
+        return mockExamRepository
+                .findBySkillAndStatusOrderByUpdatedAtDesc(normalized, "PUBLISHED")
+                .stream()
                 .filter(exam -> !exam.isDemoOnly())
                 .filter(exam -> "PLACEMENT".equals(exam.getExamType()))
                 .filter(this::isReady)
@@ -44,7 +46,7 @@ public class PlacementExamCatalogService {
     private boolean isReady(MockExamEntity exam) {
         try {
             startValidator.validate(
-                    exam, examQuestions.findByMockExamIdOrderByPosition(exam.getId()));
+                    exam, mockExamQuestionRepository.findByMockExamIdOrderByPosition(exam.getId()));
             return true;
         } catch (BusinessRuleException exception) {
             return false;

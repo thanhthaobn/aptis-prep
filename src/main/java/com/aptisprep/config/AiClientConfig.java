@@ -10,7 +10,7 @@ import org.springframework.web.client.RestClient;
 public class AiClientConfig {
     @Bean("geminiClient")
     RestClient geminiClient() {
-        var factory = new SimpleClientHttpRequestFactory();
+        SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
         factory.setConnectTimeout(Duration.ofSeconds(10));
         factory.setReadTimeout(Duration.ofSeconds(90));
         return RestClient.builder()

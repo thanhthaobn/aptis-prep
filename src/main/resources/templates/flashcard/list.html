@@ -124,7 +124,7 @@
                     <div class="set-badges">
                       <span
                         class="badge"
-                        th:classappend="${set.level() != null ? 'badge-cefr-' + #strings.toLowerCase(set.level()) : ''}"
+                        th:classappend="${set.level() != null ? 'badge-cefr-' + (set.level() == null ? null : set.level().toLowerCase()) : ''}"
                         th:text="${set.level()}"
                       ></span>
                       <span th:if="${set.personal()}" class="badge personal-badge">Riêng tư</span>

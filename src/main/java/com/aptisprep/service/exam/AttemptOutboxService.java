@@ -18,13 +18,15 @@ import tools.jackson.databind.json.JsonMapper;
 /** Durable replay queue for attempt events. Handlers are idempotent by attempt/event keys. */
 @Service
 public class AttemptOutboxService {
-    private final AttemptOutboxRepository outbox;
+    private final AttemptOutboxRepository attemptOutboxRepository;
     private final ApplicationEventPublisher events;
     private final JsonMapper json;
 
     public AttemptOutboxService(
-            AttemptOutboxRepository outbox, ApplicationEventPublisher events, JsonMapper json) {
-        this.outbox = outbox;
+            AttemptOutboxRepository attemptOutboxRepository,
+            ApplicationEventPublisher events,
+            JsonMapper json) {
+        this.attemptOutboxRepository = attemptOutboxRepository;
         this.events = events;
         this.json = json;
     }
@@ -70,8 +72,9 @@ public class AttemptOutboxService {
     @Transactional
     public void recoverPending() {
         List<AttemptOutboxEntity> pending =
-                outbox.findTop50ByStatusInAndNextAttemptAtLessThanEqualOrderByIdAsc(
-                        List.of("PENDING", "PROCESSING"), LocalDateTime.now());
+                attemptOutboxRepository
+                        .findTop50ByStatusInAndNextAttemptAtLessThanEqualOrderByIdAsc(
+                                List.of("PENDING", "PROCESSING"), LocalDateTime.now());
         for (AttemptOutboxEntity row : pending) {
             try {
                 row.setStatus("PROCESSING");
@@ -79,36 +82,37 @@ public class AttemptOutboxService {
                 // Persist the retry lease before publication: after-commit listener failures
                 // cannot be caught here and must not permanently monopolize the first page.
                 row.setNextAttemptAt(LocalDateTime.now().plusSeconds(backoff(row.getAttempts())));
-                outbox.save(row);
+                attemptOutboxRepository.save(row);
                 dispatch(row);
                 // The event listeners run after this transaction commits. Keep the
                 // row PROCESSING until the delivery marker is committed, so a
                 // crash between publication and listener execution is recoverable.
                 row.setLastError(null);
-                outbox.save(row);
+                attemptOutboxRepository.save(row);
             } catch (RuntimeException exception) {
                 row.setStatus("PENDING");
                 row.setLastError(clean(exception.getMessage()));
                 row.setNextAttemptAt(LocalDateTime.now().plusSeconds(backoff(row.getAttempts())));
-                outbox.save(row);
+                attemptOutboxRepository.save(row);
             }
         }
     }
 
     private void enqueue(String key, String type, Integer aggregateId, String payload) {
-        if (outbox.findByEventKey(key).isPresent()) return;
+        if (attemptOutboxRepository.findByEventKey(key).isPresent()) return;
         AttemptOutboxEntity row = new AttemptOutboxEntity();
         row.setEventKey(key);
         row.setEventType(type);
         row.setAggregateId(aggregateId);
         row.setPayload(payload);
         row.setStatus("PENDING");
-        outbox.save(row);
+        attemptOutboxRepository.save(row);
     }
 
     private void saveAiEvent(AiAssessmentCompletedEvent event, boolean replaceExisting) {
         String key = aiEventKey(event);
-        AttemptOutboxEntity row = outbox.findByEventKey(key).orElseGet(AttemptOutboxEntity::new);
+        AttemptOutboxEntity row =
+                attemptOutboxRepository.findByEventKey(key).orElseGet(AttemptOutboxEntity::new);
         if (row.getEventKey() != null && !replaceExisting) return;
         row.setEventKey(key);
         row.setEventType("AI_ASSESSMENT_COMPLETED");
@@ -128,7 +132,7 @@ public class AttemptOutboxService {
         row.setNextAttemptAt(LocalDateTime.now());
         row.setLastError(null);
         row.setProcessedAt(null);
-        outbox.save(row);
+        attemptOutboxRepository.save(row);
     }
 
     private String aiEventKey(AiAssessmentCompletedEvent event) {
@@ -192,13 +196,14 @@ public class AttemptOutboxService {
     }
 
     private void markDeliveredKey(String key) {
-        outbox.findByEventKey(key)
+        attemptOutboxRepository
+                .findByEventKey(key)
                 .ifPresent(
                         row -> {
                             row.setStatus("DISPATCHED");
                             row.setProcessedAt(LocalDateTime.now());
                             row.setLastError(null);
-                            outbox.save(row);
+                            attemptOutboxRepository.save(row);
                         });
     }
 

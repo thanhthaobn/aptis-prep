@@ -3,6 +3,7 @@ package com.aptisprep.service.student;
 import com.aptisprep.dto.view.StudentCatalogView.*;
 import com.aptisprep.entity.MockExamEntity;
 import com.aptisprep.entity.MockExamQuestionEntity;
+import com.aptisprep.entity.MockExamSectionEntity;
 import com.aptisprep.exception.BusinessRuleException;
 import com.aptisprep.exception.ResourceNotFoundException;
 import com.aptisprep.repository.MockExamQuestionRepository;
@@ -42,29 +43,29 @@ public class StudentExamCatalogService {
 
     public record Catalog(Page<Entry> page, List<Category> categories) {}
 
-    private final MockExamRepository exams;
-    private final MockExamSectionRepository sections;
-    private final MockExamQuestionRepository questions;
+    private final MockExamRepository mockExamRepository;
+    private final MockExamSectionRepository mockExamSectionRepository;
+    private final MockExamQuestionRepository mockExamQuestionRepository;
     private final ExamStartValidator startValidator;
 
     @Autowired
     public StudentExamCatalogService(
-            MockExamRepository exams,
-            MockExamSectionRepository sections,
-            MockExamQuestionRepository questions,
+            MockExamRepository mockExamRepository,
+            MockExamSectionRepository mockExamSectionRepository,
+            MockExamQuestionRepository mockExamQuestionRepository,
             ExamStartValidator startValidator) {
-        this.exams = exams;
-        this.sections = sections;
-        this.questions = questions;
+        this.mockExamRepository = mockExamRepository;
+        this.mockExamSectionRepository = mockExamSectionRepository;
+        this.mockExamQuestionRepository = mockExamQuestionRepository;
         this.startValidator = startValidator;
     }
 
     /** Kept for lightweight preview tests that do not need readiness validation. */
     public StudentExamCatalogService(
-            MockExamRepository exams,
-            MockExamSectionRepository sections,
-            MockExamQuestionRepository questions) {
-        this(exams, sections, questions, null);
+            MockExamRepository mockExamRepository,
+            MockExamSectionRepository mockExamSectionRepository,
+            MockExamQuestionRepository mockExamQuestionRepository) {
+        this(mockExamRepository, mockExamSectionRepository, mockExamQuestionRepository, null);
     }
 
     public List<Entry> find(String module, String query, String skill, String level, String state) {
@@ -80,8 +81,8 @@ public class StudentExamCatalogService {
             String examType,
             String sort,
             Pageable pageable) {
-        var matches = filteredExams(query, skill, level, state);
-        var categories =
+        List<MockExamEntity> matches = filteredExams(query, skill, level, state);
+        List<Category> categories =
                 EXAM_TYPES.stream()
                         .map(
                                 type ->
@@ -96,7 +97,7 @@ public class StudentExamCatalogService {
                                                         .count()))
                         .toList();
         String selectedType = Objects.toString(examType, "");
-        var selected =
+        List<MockExamEntity> selected =
                 matches.stream()
                         .filter(
                                 exam ->
@@ -108,7 +109,7 @@ public class StudentExamCatalogService {
         int lastPage = selected.isEmpty() ? 0 : (selected.size() - 1) / size;
         int page = Math.min(pageable.getPageNumber(), lastPage);
         int from = page * size;
-        var entries =
+        List<Entry> entries =
                 selected.subList(from, Math.min(from + size, selected.size())).stream()
                         .map(this::entry)
                         .toList();
@@ -157,7 +158,7 @@ public class StudentExamCatalogService {
     private List<MockExamEntity> filteredExams(
             String query, String skill, String level, String state) {
         String term = normalize(query);
-        return exams.findByStatusOrderByUpdatedAtDesc("PUBLISHED").stream()
+        return mockExamRepository.findByStatusOrderByUpdatedAtDesc("PUBLISHED").stream()
                 .filter(exam -> !exam.isDemoOnly())
                 .filter(
                         exam ->
@@ -188,14 +189,15 @@ public class StudentExamCatalogService {
         if ("FULL_MOCK".equals(code) && "FULL_MOCK".equals(exam.getExamType())) return true;
         if (code.equals(normalizeSkill(exam.getSkill()))) return true;
         return "FULL_MOCK".equals(exam.getExamType())
-                && sections.findByMockExamIdOrderById(exam.getId()).stream()
+                && mockExamSectionRepository.findByMockExamIdOrderById(exam.getId()).stream()
                         .anyMatch(section -> code.equals(normalizeSkill(section.getSkill())));
     }
 
     public Entry entry(String module, int id) {
         if (!"exams".equals(module)) throw new ResourceNotFoundException("Không tìm thấy nội dung");
         return entry(
-                exams.findById(id)
+                mockExamRepository
+                        .findById(id)
                         .filter(exam -> "PUBLISHED".equals(exam.getStatus()) && !exam.isDemoOnly())
                         .orElseThrow(
                                 () ->
@@ -205,8 +207,10 @@ public class StudentExamCatalogService {
 
     private Entry entry(MockExamEntity exam) {
         List<Block> blocks = new ArrayList<>();
-        var links = questions.findByMockExamIdOrderByPosition(exam.getId());
-        var examSections = sections.findByMockExamIdOrderById(exam.getId());
+        List<MockExamQuestionEntity> links =
+                mockExamQuestionRepository.findByMockExamIdOrderByPosition(exam.getId());
+        List<MockExamSectionEntity> examSections =
+                mockExamSectionRepository.findByMockExamIdOrderById(exam.getId());
         examSections.stream()
                 .sorted(Comparator.comparingInt(section -> section.getDisplayOrder()))
                 .forEach(

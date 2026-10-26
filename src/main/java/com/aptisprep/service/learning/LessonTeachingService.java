@@ -7,6 +7,7 @@ import com.aptisprep.enums.*;
 import com.aptisprep.exception.*;
 import com.aptisprep.repository.*;
 import com.aptisprep.service.contract.AiAssessmentContract;
+import com.aptisprep.service.contract.AiAssessmentContract.AssessmentRequest;
 import com.aptisprep.service.storage.StorageService;
 import jakarta.persistence.*;
 import java.math.BigDecimal;
@@ -24,13 +25,13 @@ import tools.jackson.databind.json.JsonMapper;
 @Transactional
 public class LessonTeachingService {
     private final LessonCheckService checkService;
-    private final LessonRepository lessons;
-    private final UserRepository users;
-    private final LessonResponseRepository responses;
-    private final LessonCheckAttemptRepository attempts;
-    private final LessonEngagementRepository engagements;
+    private final LessonRepository lessonRepository;
+    private final UserRepository userRepository;
+    private final LessonResponseRepository lessonResponseRepository;
+    private final LessonCheckAttemptRepository lessonCheckAttemptRepository;
+    private final LessonEngagementRepository lessonEngagementRepository;
     private final StorageService storage;
-    private final LessonProgressRepository progress;
+    private final LessonProgressRepository lessonProgressRepository;
     private final AiAssessmentContract assessments;
     @PersistenceContext private EntityManager em;
 
@@ -41,15 +42,16 @@ public class LessonTeachingService {
             boolean transcript, boolean sample, String transcriptHint, String sampleHint) {}
 
     public ReleaseState releaseState(Integer id, String email) {
-        var u = user(email);
-        var l = lessons.findById(id).orElseThrow();
-        var m = l.getMaterial();
+        User u = user(email);
+        Lesson l = lessonRepository.findById(id).orElseThrow();
+        LessonMaterial m = l.getMaterial();
         boolean completed =
-                progress.findByUserIdAndLessonId(u.getId(), id)
+                lessonProgressRepository
+                        .findByUserIdAndLessonId(u.getId(), id)
                         .map(p -> "COMPLETED".equals(p.getStatus()))
                         .orElse(false);
         boolean played =
-                engagements
+                lessonEngagementRepository
                         .findByUserIdAndLessonId(u.getId(), id)
                         .map(e -> LessonListeningService.verified(l, e))
                         .orElse(false);
@@ -57,7 +59,8 @@ public class LessonTeachingService {
         boolean submitted =
                 productive
                         ? !submissionHistory(id, email).isEmpty()
-                        : !attempts.findByUserIdAndLessonIdOrderBySubmittedAtDesc(u.getId(), id)
+                        : !lessonCheckAttemptRepository
+                                .findByUserIdAndLessonIdOrderBySubmittedAtDesc(u.getId(), id)
                                 .isEmpty();
         boolean noSubmission = !productive && !checkService.hasChecks(id);
         String transcript = policy(m == null ? null : m.getTranscriptVisibility(), "AFTER_LISTEN"),
@@ -110,11 +113,12 @@ public class LessonTeachingService {
 
     public HistoricalMedia historicalMedia(
             Integer lessonId, Integer historyId, String kind, String email, boolean quiz) {
-        var u = user(email);
+        User u = user(email);
         LessonContextSnapshot snapshot;
         if (quiz) {
-            var a =
-                    attempts.findById(historyId)
+            LessonCheckAttempt a =
+                    lessonCheckAttemptRepository
+                            .findById(historyId)
                             .filter(
                                     x ->
                                             x.getUserId().equals(u.getId())
@@ -125,7 +129,7 @@ public class LessonTeachingService {
                                                     "Không tìm thấy lượt làm bài"));
             snapshot = a.getContext();
         } else {
-            var s = em.find(LessonWorkSubmission.class, historyId);
+            LessonWorkSubmission s = em.find(LessonWorkSubmission.class, historyId);
             if (s == null || !s.getUserId().equals(u.getId()) || !s.getLessonId().equals(lessonId))
                 throw new ResourceNotFoundException("Không tìm thấy bài làm");
             snapshot = s.getContext();
@@ -151,41 +155,42 @@ public class LessonTeachingService {
 
     public LessonTeachingService(
             LessonCheckService c,
-            LessonRepository l,
-            UserRepository u,
-            LessonResponseRepository r,
-            LessonCheckAttemptRepository a,
-            LessonEngagementRepository e,
+            LessonRepository lessonRepository,
+            UserRepository userRepository,
+            LessonResponseRepository lessonResponseRepository,
+            LessonCheckAttemptRepository lessonCheckAttemptRepository,
+            LessonEngagementRepository lessonEngagementRepository,
             StorageService s,
-            LessonProgressRepository p,
+            LessonProgressRepository lessonProgressRepository,
             AiAssessmentContract ai,
             AiProperties aiProperties,
             JsonMapper json) {
         checkService = c;
-        lessons = l;
-        users = u;
-        responses = r;
-        attempts = a;
-        engagements = e;
+        this.lessonRepository = lessonRepository;
+        this.userRepository = userRepository;
+        this.lessonResponseRepository = lessonResponseRepository;
+        this.lessonCheckAttemptRepository = lessonCheckAttemptRepository;
+        this.lessonEngagementRepository = lessonEngagementRepository;
         storage = s;
-        progress = p;
+        this.lessonProgressRepository = lessonProgressRepository;
         assessments = ai;
         this.aiProperties = aiProperties;
         this.json = json;
     }
 
     public Optional<LessonResponse> savedWork(Integer lessonId, String email) {
-        var u = user(email);
-        return responses.findByUserIdAndLessonId(u.getId(), lessonId);
+        User u = user(email);
+        return lessonResponseRepository.findByUserIdAndLessonId(u.getId(), lessonId);
     }
 
     public void saveRecording(Integer lessonId, MultipartFile file, String email) {
-        var u = user(email);
+        User u = user(email);
         if (u.getStatus() != UserStatus.ACTIVE || u.getRole() != Role.STUDENT)
             throw new BusinessRuleException("Tài khoản không được phép học");
         em.lock(u, LockModeType.PESSIMISTIC_WRITE);
-        var lesson =
-                lessons.findById(lessonId)
+        Lesson lesson =
+                lessonRepository
+                        .findById(lessonId)
                         .filter(
                                 l ->
                                         "PUBLISHED".equals(l.getStatus())
@@ -203,8 +208,8 @@ public class LessonTeachingService {
                 || !type.startsWith("audio/")
                 || !name.matches(".*\\.(webm|wav|mp3|ogg|m4a)$"))
             throw new BusinessRuleException("Bản ghi âm không hợp lệ hoặc lớn hơn 20 MB");
-        var r =
-                responses
+        LessonResponse r =
+                lessonResponseRepository
                         .findByUserIdAndLessonId(u.getId(), lessonId)
                         .orElseGet(LessonResponse::new);
         // Keep old files: immutable history entries may still reference them.
@@ -217,7 +222,7 @@ public class LessonTeachingService {
         r.setResponseVersion((r.getResponseVersion() == null ? 0 : r.getResponseVersion()) + 1);
         r.setAssessmentKey(null);
         r.setUpdatedAt(LocalDateTime.now());
-        responses.save(r);
+        lessonResponseRepository.save(r);
         em.persist(new LessonWorkSubmission(u.getId(), lesson, r));
     }
 
@@ -250,8 +255,10 @@ public class LessonTeachingService {
     }
 
     public List<AttemptView> history(Integer lessonId, String email) {
-        var u = user(email);
-        return attempts.findByUserIdAndLessonIdOrderBySubmittedAtDesc(u.getId(), lessonId).stream()
+        User u = user(email);
+        return lessonCheckAttemptRepository
+                .findByUserIdAndLessonIdOrderBySubmittedAtDesc(u.getId(), lessonId)
+                .stream()
                 .map(
                         a ->
                                 new AttemptView(
@@ -270,7 +277,7 @@ public class LessonTeachingService {
     }
 
     public List<LessonWorkSubmission> submissionHistory(Integer lessonId, String email) {
-        var u = user(email);
+        User u = user(email);
         return em.createQuery(
                         "select s from LessonWorkSubmission s where s.userId=:user and"
                                 + " s.lessonId=:lesson order by s.submittedAt desc,s.id desc",
@@ -281,7 +288,7 @@ public class LessonTeachingService {
     }
 
     public List<LessonWorkSubmission> assessableSubmissions(Integer lessonId, String email) {
-        var lesson = lessons.findById(lessonId).orElseThrow();
+        Lesson lesson = lessonRepository.findById(lessonId).orElseThrow();
         return submissionHistory(lessonId, email).stream()
                 .filter(
                         s ->
@@ -292,8 +299,8 @@ public class LessonTeachingService {
     }
 
     public String submissionAudio(Integer lessonId, Integer submissionId, String email) {
-        var u = user(email);
-        var s = em.find(LessonWorkSubmission.class, submissionId);
+        User u = user(email);
+        LessonWorkSubmission s = em.find(LessonWorkSubmission.class, submissionId);
         if (s == null
                 || !Objects.equals(s.getUserId(), u.getId())
                 || !Objects.equals(s.getLessonId(), lessonId)
@@ -304,9 +311,10 @@ public class LessonTeachingService {
 
     public void submitResponse(Integer lessonId, String text, String email) {
         saveResponse(lessonId, text, email);
-        var u = user(email);
-        var lesson = lessons.findById(lessonId).orElseThrow();
-        var work = responses.findByUserIdAndLessonId(u.getId(), lessonId).orElseThrow();
+        User u = user(email);
+        Lesson lesson = lessonRepository.findById(lessonId).orElseThrow();
+        LessonResponse work =
+                lessonResponseRepository.findByUserIdAndLessonId(u.getId(), lessonId).orElseThrow();
         if (!has(text)) throw new BusinessRuleException("Hãy nhập bài làm trước khi lưu");
         if ("Writing".equals(lesson.getSkill())) {
             int words = text.trim().split("\\s+").length;
@@ -320,52 +328,73 @@ public class LessonTeachingService {
     }
 
     public CompletionState completion(Integer lessonId, String email) {
-        var u = user(email);
-        var l = lessons.findById(lessonId).orElseThrow();
-        boolean h = checkService.hasChecks(lessonId),
-                c =
-                        attempts
-                                .findByUserIdAndLessonIdOrderBySubmittedAtDesc(u.getId(), lessonId)
-                                .stream()
-                                .anyMatch(
-                                        a ->
-                                                a.getTotal() > 0
-                                                        && a.getScore() * 100 >= a.getTotal() * 60);
-        boolean nr = List.of("Writing", "Speaking").contains(l.getSkill());
-        boolean rs =
-                submissionHistory(lessonId, email).stream()
-                        .anyMatch(
-                                s ->
-                                        "Speaking".equals(l.getSkill())
-                                                ? has(s.getAudioPath())
-                                                : has(s.getText()));
-        boolean na = "Listening".equals(l.getSkill()) && has(l.getAudioPath()),
-                ap =
-                        engagements
-                                .findByUserIdAndLessonId(u.getId(), lessonId)
-                                .map(x -> LessonListeningService.verified(l, x))
-                                .orElse(false);
-        return new CompletionState(h, c, nr, rs, na, ap, (!h || c) && (!nr || rs) && (!na || ap));
+        User learner = user(email);
+        Lesson lesson = lessonRepository.findById(lessonId).orElseThrow();
+        boolean hasKnowledgeCheck = checkService.hasChecks(lessonId);
+        boolean passedKnowledgeCheck = passedKnowledgeCheck(learner.getId(), lessonId);
+        boolean requiresSubmission = List.of("Writing", "Speaking").contains(lesson.getSkill());
+        boolean hasSubmission = hasPracticeSubmission(lesson, email);
+        boolean requiresListening =
+                "Listening".equals(lesson.getSkill()) && has(lesson.getAudioPath());
+        boolean verifiedListening =
+                lessonEngagementRepository
+                        .findByUserIdAndLessonId(learner.getId(), lessonId)
+                        .map(engagement -> LessonListeningService.verified(lesson, engagement))
+                        .orElse(false);
+        boolean eligible =
+                (!hasKnowledgeCheck || passedKnowledgeCheck)
+                        && (!requiresSubmission || hasSubmission)
+                        && (!requiresListening || verifiedListening);
+        return new CompletionState(
+                hasKnowledgeCheck,
+                passedKnowledgeCheck,
+                requiresSubmission,
+                hasSubmission,
+                requiresListening,
+                verifiedListening,
+                eligible);
+    }
+
+    private boolean passedKnowledgeCheck(Integer userId, Integer lessonId) {
+        for (LessonCheckAttempt attempt :
+                lessonCheckAttemptRepository.findByUserIdAndLessonIdOrderBySubmittedAtDesc(
+                        userId, lessonId)) {
+            if (attempt.getTotal() > 0 && attempt.getScore() * 100 >= attempt.getTotal() * 60)
+                return true;
+        }
+        return false;
+    }
+
+    private boolean hasPracticeSubmission(Lesson lesson, String email) {
+        for (LessonWorkSubmission submission : submissionHistory(lesson.getId(), email)) {
+            if ("Speaking".equals(lesson.getSkill())
+                    ? has(submission.getAudioPath())
+                    : has(submission.getText())) return true;
+        }
+        return false;
     }
 
     public void section(Integer lessonId, String section, String email) {
         if (!Set.of("overview", "media", "method", "example", "practice").contains(section))
             throw new BusinessRuleException("Phần bài học không hợp lệ");
-        var u = user(email);
-        lessons.findById(lessonId).filter(l -> "PUBLISHED".equals(l.getStatus())).orElseThrow();
-        var e =
-                engagements
+        User u = user(email);
+        lessonRepository
+                .findById(lessonId)
+                .filter(l -> "PUBLISHED".equals(l.getStatus()))
+                .orElseThrow();
+        LessonEngagement e =
+                lessonEngagementRepository
                         .findByUserIdAndLessonId(u.getId(), lessonId)
                         .orElseGet(LessonEngagement::new);
         e.setUserId(u.getId());
         e.setLessonId(lessonId);
         e.setLastSection(section);
-        engagements.save(e);
+        lessonEngagementRepository.save(e);
     }
 
     public String lastSection(Integer lessonId, String email) {
-        var u = user(email);
-        return engagements
+        User u = user(email);
+        return lessonEngagementRepository
                 .findByUserIdAndLessonId(u.getId(), lessonId)
                 .map(LessonEngagement::getLastSection)
                 .orElse(null);
@@ -379,7 +408,7 @@ public class LessonTeachingService {
             double averagePercent) {}
 
     public LessonStats stats(Integer lessonId) {
-        var all = attempts.findByLessonId(lessonId);
+        List<LessonCheckAttempt> all = lessonCheckAttemptRepository.findByLessonId(lessonId);
         double avg =
                 all.stream()
                         .mapToDouble(
@@ -387,31 +416,33 @@ public class LessonTeachingService {
                         .average()
                         .orElse(0);
         return new LessonStats(
-                progress.countByLessonId(lessonId),
-                progress.countByLessonIdAndStatus(lessonId, "COMPLETED"),
-                engagements.countByLessonIdAndAudioPlayedAtIsNotNull(lessonId),
+                lessonProgressRepository.countByLessonId(lessonId),
+                lessonProgressRepository.countByLessonIdAndStatus(lessonId, "COMPLETED"),
+                lessonEngagementRepository.countByLessonIdAndAudioPlayedAtIsNotNull(lessonId),
                 all.size(),
                 avg);
     }
 
     public String response(Integer lessonId, String email) {
-        var u = users.findByEmailIgnoreCase(email).orElseThrow();
-        return responses
+        User u = userRepository.findByEmailIgnoreCase(email).orElseThrow();
+        return lessonResponseRepository
                 .findByUserIdAndLessonId(u.getId(), lessonId)
                 .map(LessonResponse::getText)
                 .orElse("");
     }
 
     public void saveResponse(Integer lessonId, String text, String email) {
-        var u =
-                users.findByEmailIgnoreCase(email)
+        User u =
+                userRepository
+                        .findByEmailIgnoreCase(email)
                         .orElseThrow(
                                 () -> new ResourceNotFoundException("Không tìm thấy tài khoản"));
         em.lock(u, LockModeType.PESSIMISTIC_WRITE);
         em.refresh(u);
         if (u.getStatus() != UserStatus.ACTIVE || u.getRole() != Role.STUDENT)
             throw new BusinessRuleException("Tài khoản không được phép học");
-        lessons.findById(lessonId)
+        lessonRepository
+                .findById(lessonId)
                 .filter(
                         l ->
                                 "PUBLISHED".equals(l.getStatus())
@@ -422,8 +453,8 @@ public class LessonTeachingService {
                                         "Chỉ lưu bài viết hoặc transcript Speaking"));
         if (text == null || text.length() > 10000)
             throw new BusinessRuleException("Bài thực hành tối đa 10000 ký tự");
-        var r =
-                responses
+        LessonResponse r =
+                lessonResponseRepository
                         .findByUserIdAndLessonId(u.getId(), lessonId)
                         .orElseGet(LessonResponse::new);
         if (!Objects.equals(r.getText(), text)) {
@@ -434,18 +465,19 @@ public class LessonTeachingService {
         r.setLessonId(lessonId);
         r.setText(text);
         r.setUpdatedAt(LocalDateTime.now());
-        responses.save(r);
+        lessonResponseRepository.save(r);
     }
 
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
     public String assess(Integer lessonId, Integer submissionId, String email) {
         if (!aiProperties.isEnabled() || !has(aiProperties.getApiKey()))
             throw new BusinessRuleException("Phản hồi AI chưa được bật");
-        var u = user(email);
+        User u = user(email);
         if (u.getStatus() != UserStatus.ACTIVE || u.getRole() != Role.STUDENT)
             throw new BusinessRuleException("Tài khoản không được phép học");
-        var lesson =
-                lessons.findById(lessonId)
+        Lesson lesson =
+                lessonRepository
+                        .findById(lessonId)
                         .filter(
                                 l ->
                                         "PUBLISHED".equals(l.getStatus())
@@ -453,14 +485,14 @@ public class LessonTeachingService {
                                                         .contains(l.getSkill()))
                         .orElseThrow(
                                 () -> new ResourceNotFoundException("Không tìm thấy bài tự luận"));
-        var response =
-                responses
+        LessonResponse response =
+                lessonResponseRepository
                         .findByUserIdAndLessonId(u.getId(), lessonId)
                         .orElseThrow(
                                 () ->
                                         new BusinessRuleException(
                                                 "Hãy lưu bài làm trước khi yêu cầu chấm"));
-        var submitted =
+        LessonWorkSubmission submitted =
                 Optional.ofNullable(em.find(LessonWorkSubmission.class, submissionId))
                         .filter(
                                 s ->
@@ -475,7 +507,7 @@ public class LessonTeachingService {
         int version = submitted.getId();
         String key = "lesson-" + lessonId + "-submission-" + submitted.getId();
         String prompt = has(submitted.getPrompt()) ? submitted.getPrompt() : lesson.getTitle();
-        var request =
+        AssessmentRequest request =
                 new AiAssessmentContract.AssessmentRequest(
                         key,
                         u.getId(),
@@ -521,7 +553,7 @@ public class LessonTeachingService {
         videoId(f.getVideoUrl());
         safeLink(f.getSourceUrl());
         checkService.validateChecks(f.getChecks());
-        for (var rule :
+        for (String rule :
                 List.of(
                         policy(f.getTranscriptVisibility(), "AFTER_LISTEN"),
                         policy(f.getSampleVisibility(), "AFTER_SUBMIT")))
@@ -547,7 +579,7 @@ public class LessonTeachingService {
     public static String videoId(String url) {
         if (!has(url)) return null;
         try {
-            var uri = URI.create(url.trim());
+            URI uri = URI.create(url.trim());
             String host = uri.getHost();
             if (!"https".equalsIgnoreCase(uri.getScheme())
                     || host == null
@@ -574,7 +606,7 @@ public class LessonTeachingService {
     private static void safeLink(String value) {
         if (!has(value)) return;
         try {
-            var u = URI.create(value);
+            URI u = URI.create(value);
             if (!"https".equalsIgnoreCase(u.getScheme())
                     || u.getHost() == null
                     || u.getUserInfo() != null) throw new IllegalArgumentException();
@@ -588,7 +620,8 @@ public class LessonTeachingService {
     }
 
     private User user(String email) {
-        return users.findByEmailIgnoreCase(email)
+        return userRepository
+                .findByEmailIgnoreCase(email)
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy tài khoản"));
     }
 }

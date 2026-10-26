@@ -1,6 +1,7 @@
 package com.aptisprep.service.learning;
 
 import com.aptisprep.dto.form.LessonForm;
+import com.aptisprep.dto.form.LessonForm.CheckForm;
 import com.aptisprep.entity.*;
 import com.aptisprep.enums.*;
 import com.aptisprep.exception.*;
@@ -18,40 +19,40 @@ import tools.jackson.databind.json.JsonMapper;
 @Service
 @Transactional
 public class LessonCheckService {
-    private final LessonCheckRepository checks;
-    private final LessonRepository lessons;
-    private final UserRepository users;
-    private final LessonCheckAttemptRepository attempts;
+    private final LessonCheckRepository lessonCheckRepository;
+    private final LessonRepository lessonRepository;
+    private final UserRepository userRepository;
+    private final LessonCheckAttemptRepository lessonCheckAttemptRepository;
     private final JsonMapper json;
 
     public LessonCheckService(
-            LessonCheckRepository checks,
-            LessonRepository lessons,
-            UserRepository users,
-            LessonCheckAttemptRepository attempts,
+            LessonCheckRepository lessonCheckRepository,
+            LessonRepository lessonRepository,
+            UserRepository userRepository,
+            LessonCheckAttemptRepository lessonCheckAttemptRepository,
             JsonMapper json) {
-        this.checks = checks;
-        this.lessons = lessons;
-        this.users = users;
-        this.attempts = attempts;
+        this.lessonCheckRepository = lessonCheckRepository;
+        this.lessonRepository = lessonRepository;
+        this.userRepository = userRepository;
+        this.lessonCheckAttemptRepository = lessonCheckAttemptRepository;
         this.json = json;
     }
 
     public boolean hasChecks(Integer lessonId) {
-        return checks.countByLessonId(lessonId) > 0;
+        return lessonCheckRepository.countByLessonId(lessonId) > 0;
     }
 
     public List<CheckView> questions(Integer id) {
-        return checks.findByLessonIdOrderByPositionAsc(id).stream()
+        return lessonCheckRepository.findByLessonIdOrderByPositionAsc(id).stream()
                 .map(q -> new CheckView(q.getId(), q.getPrompt(), options(q)))
                 .toList();
     }
 
     public List<LessonForm.CheckForm> editorQuestions(Integer id) {
-        return checks.findByLessonIdOrderByPositionAsc(id).stream()
+        return lessonCheckRepository.findByLessonIdOrderByPositionAsc(id).stream()
                 .map(
                         q -> {
-                            var f = new LessonForm.CheckForm();
+                            CheckForm f = new LessonForm.CheckForm();
                             f.setPrompt(q.getPrompt());
                             f.setOptionA(q.getOptionA());
                             f.setOptionB(q.getOptionB());
@@ -69,9 +70,9 @@ public class LessonCheckService {
     public void validateChecks(List<LessonForm.CheckForm> forms) {
         if (forms == null || forms.size() > 20)
             throw new BusinessRuleException("Mỗi bài tối đa 20 câu kiểm tra kiến thức");
-        for (var q : forms) {
+        for (CheckForm q : forms) {
             if (empty(q)) continue;
-            var opts = options(q);
+            List<String> opts = options(q);
             if (!has(q.getPrompt())
                     || opts.size() < 2
                     || !has(q.getExplanation())
@@ -82,9 +83,9 @@ public class LessonCheckService {
                         "Mỗi câu kiểm tra cần câu hỏi, từ 2 đến 6 lựa chọn liên tiếp, đáp án đúng"
                                 + " và giải thích");
         }
-        for (var q : forms) {
+        for (CheckForm q : forms) {
             boolean gap = false;
-            for (var option :
+            for (String option :
                     Arrays.asList(
                             q.getOptionA(),
                             q.getOptionB(),
@@ -101,12 +102,12 @@ public class LessonCheckService {
     }
 
     public void saveChecks(Integer id, List<LessonForm.CheckForm> forms) {
-        checks.deleteByLessonId(id);
-        checks.flush();
+        lessonCheckRepository.deleteByLessonId(id);
+        lessonCheckRepository.flush();
         int position = 1;
-        for (var f : forms) {
+        for (CheckForm f : forms) {
             if (empty(f)) continue;
-            var q = new LessonCheck();
+            LessonCheck q = new LessonCheck();
             q.setLessonId(id);
             q.setPosition(position++);
             q.setPrompt(f.getPrompt());
@@ -118,27 +119,29 @@ public class LessonCheckService {
             q.setOptionF(blankToNull(f.getOptionF()));
             q.setCorrectOption(f.getCorrectOption());
             q.setExplanation(f.getExplanation());
-            checks.save(q);
+            lessonCheckRepository.save(q);
         }
     }
 
     public Feedback grade(Integer id, Map<String, String> answers, String email) {
-        var u =
-                users.findByEmailIgnoreCase(email)
+        User u =
+                userRepository
+                        .findByEmailIgnoreCase(email)
                         .orElseThrow(
                                 () -> new ResourceNotFoundException("Không tìm thấy tài khoản"));
         if (u.getStatus() != UserStatus.ACTIVE || u.getRole() != Role.STUDENT)
             throw new BusinessRuleException("Tài khoản không được phép học");
-        lessons.findById(id)
+        lessonRepository
+                .findById(id)
                 .filter(l -> "PUBLISHED".equals(l.getStatus()))
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy bài học"));
-        var all = checks.findByLessonIdOrderByPositionAsc(id);
+        List<LessonCheck> all = lessonCheckRepository.findByLessonIdOrderByPositionAsc(id);
         if (all.isEmpty()) throw new BusinessRuleException("Bài chưa có câu kiểm tra kiến thức");
-        var feedback = new ArrayList<AnswerFeedback>();
+        ArrayList<AnswerFeedback> feedback = new ArrayList<AnswerFeedback>();
         int score = 0;
-        for (var q : all) {
-            var selected = answers.get("q" + q.getId());
-            var options = options(q);
+        for (LessonCheck q : all) {
+            String selected = answers.get("q" + q.getId());
+            List<String> options = options(q);
             int value;
             try {
                 value = Integer.parseInt(selected);
@@ -158,7 +161,7 @@ public class LessonCheckService {
                             q.getExplanation(),
                             options));
         }
-        var attempt = new LessonCheckAttempt();
+        LessonCheckAttempt attempt = new LessonCheckAttempt();
         attempt.setUserId(u.getId());
         attempt.setLessonId(id);
         attempt.setScore(score);
@@ -170,8 +173,8 @@ public class LessonCheckService {
                         .map(e -> e.getKey() + "=" + e.getValue())
                         .collect(Collectors.joining("&")));
         attempt.setReviewJson(json.writeValueAsString(feedback));
-        attempt.snapshot(lessons.findById(id).orElseThrow());
-        attempts.save(attempt);
+        attempt.snapshot(lessonRepository.findById(id).orElseThrow());
+        lessonCheckAttemptRepository.save(attempt);
         return new Feedback(score, all.size(), feedback);
     }
 

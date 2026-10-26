@@ -25,7 +25,7 @@
               <option
                 th:each="v : ${skills}"
                 th:value="${v}"
-                th:text="${#strings.replace(v,'_',' ')}"
+                th:text="${(v == null ? null : v.replace('_', ' '))}"
                 th:selected="${selectedSkill==v}"
               ></option>
             </select>
@@ -100,7 +100,7 @@
                 ></td>
                 <td
                   data-label="Nộp bài"
-                  th:text="${item.result.submittedAt==null?'Chưa nộp':#temporals.format(item.result.submittedAt,'dd/MM/yyyy HH:mm')}"
+                  th:text="${item.result.submittedAt==null?'Chưa nộp':display.dateTime(item.result.submittedAt)}"
                 ></td>
                 <td data-label="Thao tác">
                   <a th:href="@{/admin/results/{id}(id=${item.result.attemptId})}">Xem chi tiết</a>

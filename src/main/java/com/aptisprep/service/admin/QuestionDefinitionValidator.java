@@ -34,7 +34,7 @@ final class QuestionDefinitionValidator {
         if (f.getStatus() == null
                 || !List.of("DRAFT", "PUBLISHED", "ARCHIVED").contains(f.getStatus()))
             throw new BusinessRuleException("Trạng thái lưu không hợp lệ");
-        var type = QuestionType.valueOf(f.getQuestionType());
+        QuestionType type = QuestionType.valueOf(f.getQuestionType());
         if (!type.supportsSkill(f.getSkill()))
             throw new BusinessRuleException("Dạng câu hỏi không phù hợp với kỹ năng");
         if (f.getItems() == null

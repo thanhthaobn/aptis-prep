@@ -8,26 +8,27 @@ import com.aptisprep.repository.*;
 import com.aptisprep.service.contract.CertificateSchemeContract;
 import com.aptisprep.service.storage.StorageService;
 import java.util.*;
+import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Component;
 
 /** Shared readiness checks for the catalog and the actual start transaction. */
 @Component
 public class ExamStartValidator {
-    private final QuestionRepository questions;
-    private final MockExamSectionRepository sections;
-    private final QuestionMediaRepository media;
+    private final QuestionRepository questionRepository;
+    private final MockExamSectionRepository mockExamSectionRepository;
+    private final QuestionMediaRepository questionMediaRepository;
     private final CertificateSchemeContract schemes;
     private final StorageService storage;
 
     public ExamStartValidator(
-            QuestionRepository questions,
-            MockExamSectionRepository sections,
-            QuestionMediaRepository media,
+            QuestionRepository questionRepository,
+            MockExamSectionRepository mockExamSectionRepository,
+            QuestionMediaRepository questionMediaRepository,
             CertificateSchemeContract schemes,
             StorageService storage) {
-        this.questions = questions;
-        this.sections = sections;
-        this.media = media;
+        this.questionRepository = questionRepository;
+        this.mockExamSectionRepository = mockExamSectionRepository;
+        this.questionMediaRepository = questionMediaRepository;
         this.schemes = schemes;
         this.storage = storage;
     }
@@ -39,20 +40,21 @@ public class ExamStartValidator {
             throw new BusinessRuleException("Thời lượng đề thi phải lớn hơn 0");
         if (links.isEmpty()) throw new BusinessRuleException("Đề thi chưa có câu hỏi");
         Map<Integer, MockExamSectionEntity> sectionById = new HashMap<>();
-        for (var section : sections.findByMockExamIdOrderById(exam.getId())) {
+        for (MockExamSectionEntity section :
+                mockExamSectionRepository.findByMockExamIdOrderById(exam.getId())) {
             if (section.getDurationMinutes() <= 0)
                 throw new BusinessRuleException("Thời lượng section phải lớn hơn 0");
             sectionById.put(section.getId(), section);
         }
         Set<Integer> uniqueQuestions = new HashSet<>();
         Set<String> skills = new HashSet<>();
-        for (var link : links) {
+        for (MockExamQuestionEntity link : links) {
             if (!Objects.equals(link.getMockExamId(), exam.getId()))
                 throw new BusinessRuleException("Câu hỏi không thuộc đề thi");
             if (!uniqueQuestions.add(link.getQuestionId()))
                 throw new BusinessRuleException("Đề thi chứa câu hỏi bị lặp");
-            var question =
-                    questions
+            QuestionEntity question =
+                    questionRepository
                             .findById(link.getQuestionId())
                             .orElseThrow(
                                     () ->
@@ -65,14 +67,15 @@ public class ExamStartValidator {
                 throw new BusinessRuleException("Kỹ năng câu hỏi không hợp lệ");
             skills.add(skill);
             if (link.getMockExamSectionId() != null) {
-                var section = sectionById.get(link.getMockExamSectionId());
+                MockExamSectionEntity section = sectionById.get(link.getMockExamSectionId());
                 if (section == null) throw new BusinessRuleException("Section không thuộc đề thi");
                 if (!skill.equals(normalizeSkill(section.getSkill())))
                     throw new BusinessRuleException("Kỹ năng section không khớp với câu hỏi");
             } else if (!sectionById.isEmpty()) {
                 throw new BusinessRuleException("Câu hỏi chưa được gán vào section của đề");
             }
-            for (var audio : media.findByQuestionIdOrderByPosition(question.getId())) {
+            for (QuestionMediaEntity audio :
+                    questionMediaRepository.findByQuestionIdOrderByPosition(question.getId())) {
                 if ("AUDIO".equals(audio.getMediaType())) validateAudio(audio.getMediaUrl());
             }
         }
@@ -99,7 +102,7 @@ public class ExamStartValidator {
     void validateAudio(String path) {
         if (path != null && !path.isBlank() && !path.startsWith("speech://")) {
             try {
-                var resource = storage.load(path);
+                Resource resource = storage.load(path);
                 if (resource.exists() && resource.isReadable()) return;
             } catch (RuntimeException ignored) {
                 // A transcript is never a substitute for a missing exam audio file.

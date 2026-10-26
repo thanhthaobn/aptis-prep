@@ -33,7 +33,7 @@
           <h2>Mục tiêu bài học</h2>
           <p
             class="lesson-prose"
-            th:text="${lesson.material!=null and !#strings.isEmpty(lesson.material.objectives)?lesson.material.objectives:lesson.description}"
+            th:text="${lesson.material!=null and (lesson.material.objectives != null and !lesson.material.objectives.isBlank())?lesson.material.objectives:lesson.description}"
           ></p>
           <span
             class="badge"
@@ -86,14 +86,14 @@
         <th:block th:if="${lesson.material!=null}">
           <section
             class="dashboard-panel dashboard-section"
-            th:if="${!#strings.isEmpty(lesson.material.strategy)}"
+            th:if="${(lesson.material.strategy != null and !lesson.material.strategy.isBlank())}"
           >
             <h2>Cách làm từng bước</h2>
             <p class="lesson-prose" th:text="${lesson.material.strategy}"></p>
           </section>
           <section
             class="dashboard-panel dashboard-section"
-            th:if="${!#strings.isEmpty(lesson.material.exampleText)}"
+            th:if="${(lesson.material.exampleText != null and !lesson.material.exampleText.isBlank())}"
           >
             <h2 th:text="${lesson.skill=='Listening'?'Trước khi nghe':'Ví dụ có hướng dẫn'}"></h2>
             <p
@@ -106,32 +106,38 @@
               th:unless="${lesson.skill=='Listening'}"
               th:text="${lesson.material.exampleText}"
             ></blockquote>
-            <th:block th:if="${!#strings.isEmpty(lesson.material.analysis)}">
+            <th:block
+              th:if="${(lesson.material.analysis != null and !lesson.material.analysis.isBlank())}"
+            >
               <h3>Phân tích</h3>
               <p class="lesson-prose" th:text="${lesson.material.analysis}"></p>
             </th:block>
           </section>
           <section
             class="dashboard-panel dashboard-section"
-            th:if="${!#strings.isEmpty(lesson.material.commonMistakes)}"
+            th:if="${(lesson.material.commonMistakes != null and !lesson.material.commonMistakes.isBlank())}"
           >
             <h2>Lỗi thường gặp</h2>
             <p class="lesson-prose" th:text="${lesson.material.commonMistakes}"></p>
           </section>
           <section
             class="dashboard-panel dashboard-section"
-            th:if="${!#strings.isEmpty(lesson.material.practicePrompt)}"
+            th:if="${(lesson.material.practicePrompt != null and !lesson.material.practicePrompt.isBlank())}"
           >
             <h2>Yêu cầu thực hành</h2>
             <p class="lesson-prose" th:text="${lesson.material.practicePrompt}"></p>
             <details
               class="lesson-model"
-              th:if="${!#strings.isEmpty(lesson.material.sampleResponse)}"
+              th:if="${(lesson.material.sampleResponse != null and !lesson.material.sampleResponse.isBlank())}"
             >
               <summary>Xem gợi ý / bài mẫu</summary>
               <p class="lesson-prose" th:text="${lesson.material.sampleResponse}"></p>
             </details>
-            <h3 th:if="${!#strings.isEmpty(lesson.material.checklist)}">Tự đánh giá</h3>
+            <h3
+              th:if="${(lesson.material.checklist != null and !lesson.material.checklist.isBlank())}"
+            >
+              Tự đánh giá
+            </h3>
             <p class="lesson-prose" th:text="${lesson.material.checklist}"></p>
           </section>
         </th:block>

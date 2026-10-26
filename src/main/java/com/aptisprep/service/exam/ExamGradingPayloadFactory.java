@@ -19,18 +19,18 @@ import tools.jackson.databind.json.JsonMapper;
 @Component
 final class ExamGradingPayloadFactory {
     private final ExamSnapshotService examSnapshots;
-    private final UserAnswerRepository answers;
-    private final UserAnswerDetailRepository details;
+    private final UserAnswerRepository userAnswerRepository;
+    private final UserAnswerDetailRepository userAnswerDetailRepository;
     private final JsonMapper json;
 
     ExamGradingPayloadFactory(
             ExamSnapshotService examSnapshots,
-            UserAnswerRepository answers,
-            UserAnswerDetailRepository details,
+            UserAnswerRepository userAnswerRepository,
+            UserAnswerDetailRepository userAnswerDetailRepository,
             JsonMapper json) {
         this.examSnapshots = examSnapshots;
-        this.answers = answers;
-        this.details = details;
+        this.userAnswerRepository = userAnswerRepository;
+        this.userAnswerDetailRepository = userAnswerDetailRepository;
         this.json = json;
     }
 
@@ -38,7 +38,7 @@ final class ExamGradingPayloadFactory {
         ExamAttemptSnapshotEntity snapshot = examSnapshots.require(attempt.getId());
         Map<Integer, JsonNode> lockedByQuestion = examSnapshots.lockedQuestions(attempt.getId());
         List<LockedAnswer> lockedAnswers =
-                answers.findByAttemptIdOrderByQuestionIdAsc(attempt.getId()).stream()
+                userAnswerRepository.findByAttemptIdOrderByQuestionIdAsc(attempt.getId()).stream()
                         .map(
                                 answer -> {
                                     JsonNode question =
@@ -53,8 +53,9 @@ final class ExamGradingPayloadFactory {
                                                     ? content
                                                     : instruction + "\n" + content;
                                     List<UserAnswerDetailEntity> answerDetails =
-                                            details.findByUserAnswerIdOrderByQuestionItemIdAsc(
-                                                    answer.getId());
+                                            userAnswerDetailRepository
+                                                    .findByUserAnswerIdOrderByQuestionItemIdAsc(
+                                                            answer.getId());
                                     String legacyLockedContent =
                                             firstNonBlank(
                                                     answer.getTextAnswer(),
@@ -91,7 +92,8 @@ final class ExamGradingPayloadFactory {
                                     List<LockedItem> lockedItems = new ArrayList<>();
                                     for (JsonNode item : question.path("items")) {
                                         UserAnswerDetailEntity detail =
-                                                details.findByUserAnswerIdAndQuestionItemId(
+                                                userAnswerDetailRepository
+                                                        .findByUserAnswerIdAndQuestionItemId(
                                                                 answer.getId(),
                                                                 item.path("id").asInt())
                                                         .orElse(null);

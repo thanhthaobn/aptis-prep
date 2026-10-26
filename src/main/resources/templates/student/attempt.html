@@ -357,12 +357,12 @@
           <h2 th:text="${question.content}"></h2>
           <p
             class="question-instruction"
-            th:if="${question.skill == 'READING' and !#strings.isEmpty(question.instruction)}"
+            th:if="${question.skill == 'READING' and (question.instruction != null and !question.instruction.isBlank())}"
             th:text="${question.instruction}"
           ></p>
           <article
             class="reading-passage"
-            th:if="${question.skill == 'READING' and !#strings.isEmpty(question.readingPassage)}"
+            th:if="${question.skill == 'READING' and (question.readingPassage != null and !question.readingPassage.isBlank())}"
           >
             <h3>Đoạn văn</h3>
             <div class="reading-passage-text" th:text="${question.readingPassage}"></div>

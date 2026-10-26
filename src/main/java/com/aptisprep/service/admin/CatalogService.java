@@ -31,36 +31,36 @@ public class CatalogService {
     private static final List<String> TYPES =
             Arrays.stream(QuestionType.values()).map(Enum::name).toList();
     private static final List<String> EXAM_TYPES = ExamDefinitionValidator.TYPES;
-    private final QuestionRepository questions;
-    private final QuestionItemRepository items;
-    private final QuestionOptionRepository options;
-    private final QuestionMediaRepository media;
-    private final MockExamRepository exams;
-    private final CertificateRepository certificates;
-    private final ScoringSchemeRepository schemes;
-    private final UserAnswerRepository answers;
+    private final QuestionRepository questionRepository;
+    private final QuestionItemRepository questionItemRepository;
+    private final QuestionOptionRepository questionOptionRepository;
+    private final QuestionMediaRepository questionMediaRepository;
+    private final MockExamRepository mockExamRepository;
+    private final CertificateRepository certificateRepository;
+    private final ScoringSchemeRepository scoringSchemeRepository;
+    private final UserAnswerRepository userAnswerRepository;
     private final StorageService storage;
     private final AdminExamService examCatalog;
 
     public CatalogService(
-            QuestionRepository questions,
-            QuestionItemRepository items,
-            QuestionOptionRepository options,
-            QuestionMediaRepository media,
-            MockExamRepository exams,
-            CertificateRepository certificates,
-            ScoringSchemeRepository schemes,
-            UserAnswerRepository answers,
+            QuestionRepository questionRepository,
+            QuestionItemRepository questionItemRepository,
+            QuestionOptionRepository questionOptionRepository,
+            QuestionMediaRepository questionMediaRepository,
+            MockExamRepository mockExamRepository,
+            CertificateRepository certificateRepository,
+            ScoringSchemeRepository scoringSchemeRepository,
+            UserAnswerRepository userAnswerRepository,
             StorageService storage,
             AdminExamService examCatalog) {
-        this.questions = questions;
-        this.items = items;
-        this.options = options;
-        this.media = media;
-        this.exams = exams;
-        this.certificates = certificates;
-        this.schemes = schemes;
-        this.answers = answers;
+        this.questionRepository = questionRepository;
+        this.questionItemRepository = questionItemRepository;
+        this.questionOptionRepository = questionOptionRepository;
+        this.questionMediaRepository = questionMediaRepository;
+        this.mockExamRepository = mockExamRepository;
+        this.certificateRepository = certificateRepository;
+        this.scoringSchemeRepository = scoringSchemeRepository;
+        this.userAnswerRepository = userAnswerRepository;
         this.storage = storage;
         this.examCatalog = examCatalog;
     }
@@ -97,7 +97,7 @@ public class CatalogService {
     public List<Entry> find(String key, String q, String skill, String status, String kind) {
         String term = q == null ? "" : q.trim().toLowerCase(Locale.ROOT);
         if ("questions".equals(key))
-            return questions.findAll().stream()
+            return questionRepository.findAll().stream()
                     .filter(
                             x ->
                                     matches(
@@ -112,7 +112,7 @@ public class CatalogService {
                     .map(this::questionEntry)
                     .toList();
         if ("exams".equals(key))
-            return exams.findAll().stream()
+            return mockExamRepository.findAll().stream()
                     .filter(x -> matches(term, x.getTitle(), x.getDescription()))
                     .filter(x -> skill.isBlank() || Objects.equals(x.getSkill(), skill))
                     .filter(x -> status.isBlank() || x.getStatus().equals(status))
@@ -141,13 +141,14 @@ public class CatalogService {
     public Entry entry(String key, int id) {
         if ("questions".equals(key))
             return questionEntry(
-                    questions
+                    questionRepository
                             .findById(id)
                             .orElseThrow(
                                     () -> new ResourceNotFoundException("Không tìm thấy câu hỏi")));
         if ("exams".equals(key))
             return examCatalog.entry(
-                    exams.findById(id)
+                    mockExamRepository
+                            .findById(id)
                             .orElseThrow(
                                     () -> new ResourceNotFoundException("Không tìm thấy đề thi")));
         throw new ResourceNotFoundException("Không tìm thấy nội dung");
@@ -157,7 +158,7 @@ public class CatalogService {
         QuestionForm form = new QuestionForm();
         if (id == null) return form;
         QuestionEntity q =
-                questions
+                questionRepository
                         .findById(id)
                         .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy câu hỏi"));
         form.setContent(q.getContent());
@@ -172,7 +173,7 @@ public class CatalogService {
         form.setPreparationSeconds(q.getPreparationSeconds());
         form.setStatus(q.getStatus());
         List<QuestionForm.ItemForm> values = new ArrayList<>();
-        for (QuestionItemEntity item : items.findByQuestionIdOrderByPosition(id)) {
+        for (QuestionItemEntity item : questionItemRepository.findByQuestionIdOrderByPosition(id)) {
             QuestionForm.ItemForm itemForm = new QuestionForm.ItemForm();
             itemForm.setContent(item.getContent());
             itemForm.setCorrectPosition(item.getCorrectPosition());
@@ -180,7 +181,9 @@ public class CatalogService {
             itemForm.setMaxWordCount(item.getMaxWordCount());
             itemForm.setResponseSeconds(item.getResponseSeconds());
             List<QuestionForm.OptionForm> os =
-                    options.findByQuestionItemIdOrderByPosition(item.getId()).stream()
+                    questionOptionRepository
+                            .findByQuestionItemIdOrderByPosition(item.getId())
+                            .stream()
                             .map(
                                     o -> {
                                         QuestionForm.OptionForm f =
@@ -202,81 +205,39 @@ public class CatalogService {
         normalizeItems(form);
         normalizeQuestionFields(form);
         QuestionDefinitionValidator.validate(form);
-        QuestionEntity q =
+        QuestionEntity question =
                 id == null
                         ? new QuestionEntity()
-                        : questions
+                        : questionRepository
                                 .findById(id)
                                 .orElseThrow(
                                         () ->
                                                 new ResourceNotFoundException(
                                                         "Không tìm thấy câu hỏi"));
-        if (id != null && answers.existsByQuestionId(id)) {
+        if (id != null && userAnswerRepository.existsByQuestionId(id)) {
             throw new BusinessRuleException(
-                    "Câu hỏi đã có trong lịch sử làm bài. Hãy lưu trữ và tạo phiên bản câu hỏi"
-                            + " mới");
+                    "Câu hỏi đã có trong lịch sử làm bài. Hãy lưu trữ và tạo phiên bản câu hỏi mới");
         }
-        if ("PUBLISHED".equals(q.getStatus()) && !"PUBLISHED".equals(form.getStatus()))
+        if ("PUBLISHED".equals(question.getStatus()) && !"PUBLISHED".equals(form.getStatus())) {
             throw new BusinessRuleException("Câu hỏi đã công bố không thể quay về bản nháp");
-        q.setContent(form.getContent().trim());
-        q.setInstruction(blankToNull(form.getInstruction()));
-        q.setReadingPassage(
-                "READING".equals(form.getSkill()) ? blankToNull(form.getReadingPassage()) : null);
-        q.setQuestionType(form.getQuestionType());
-        q.setSkill(form.getSkill());
-        q.setPartNo(form.getPartNo());
-        q.setCefrLevel(form.getCefrLevel());
-        q.setDifficulty(form.getDifficulty());
-        q.setAllowOptionReuse(form.isAllowOptionReuse());
-        q.setPreparationSeconds(form.getPreparationSeconds());
-        q.setStatus(form.getStatus());
-        q = questions.save(q);
-        if (id != null) {
-            for (QuestionItemEntity old : items.findByQuestionIdOrderByPosition(id)) {
-                options.deleteByQuestionItemId(old.getId());
-            }
-            items.deleteByQuestionId(id);
         }
-        int itemPosition = 1;
-        for (QuestionForm.ItemForm value : form.getItems()) {
-            QuestionItemEntity item = new QuestionItemEntity();
-            item.setQuestionId(q.getId());
-            item.setContent(value.getContent().trim());
-            item.setPosition(itemPosition++);
-            item.setCorrectPosition(value.getCorrectPosition());
-            item.setMinWordCount(value.getMinWordCount());
-            item.setMaxWordCount(value.getMaxWordCount());
-            item.setResponseSeconds(value.getResponseSeconds());
-            item = items.save(item);
-            if (usesOptions(form.getQuestionType()))
-                for (int optionIndex = 0; optionIndex < value.getOptions().size(); optionIndex++) {
-                    QuestionForm.OptionForm option = value.getOptions().get(optionIndex);
-                    if (option.getContent() != null && !option.getContent().isBlank()) {
-                        QuestionOptionEntity entity = new QuestionOptionEntity();
-                        entity.setQuestionItemId(item.getId());
-                        entity.setContent(option.getContent().trim());
-                        entity.setOptionCode(option.getCode());
-                        entity.setCorrect(
-                                Objects.equals(optionIndex + 1, value.getCorrectPosition()));
-                        entity.setPosition(optionIndex + 1);
-                        options.save(entity);
-                    }
-                }
-        }
-        if (upload != null && !upload.isEmpty()) saveMedia(q, upload);
-        return q.getId();
+        applyQuestionFields(question, form);
+        question = questionRepository.save(question);
+        replaceQuestionItems(question.getId(), form, id != null);
+        if (upload != null && !upload.isEmpty()) saveMedia(question, upload);
+        return question.getId();
     }
 
     @Transactional
     public void publishQuestion(Integer id) {
         QuestionEntity q =
-                questions
+                questionRepository
                         .findById(id)
                         .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy câu hỏi"));
         QuestionForm form = questionForm(id);
         QuestionDefinitionValidator.validate(form);
         q.setStatus("PUBLISHED");
-        questions.save(q);
+        questionRepository.save(q);
     }
 
     public ExamForm examForm(Integer id) {
@@ -296,7 +257,7 @@ public class CatalogService {
     @Transactional
     public void addMedia(Integer questionId, MultipartFile[] uploads) {
         QuestionEntity question =
-                questions
+                questionRepository
                         .findById(questionId)
                         .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy câu hỏi"));
         assertQuestionNotAnswered(questionId);
@@ -310,7 +271,8 @@ public class CatalogService {
     public void deleteMedia(Integer questionId, Integer mediaId) {
         assertQuestionNotAnswered(questionId);
         QuestionMediaEntity value =
-                media.findById(mediaId)
+                questionMediaRepository
+                        .findById(mediaId)
                         .filter(item -> Objects.equals(item.getQuestionId(), questionId))
                         .orElseThrow(
                                 () ->
@@ -319,12 +281,13 @@ public class CatalogService {
         // Do not remove the physical object here: active attempts keep a
         // snapshot of this media and must remain playable after an admin edits
         // the catalogue. A later retention job can delete unreferenced files.
-        media.delete(value);
-        List<QuestionMediaEntity> remaining = media.findByQuestionIdOrderByPosition(questionId);
+        questionMediaRepository.delete(value);
+        List<QuestionMediaEntity> remaining =
+                questionMediaRepository.findByQuestionIdOrderByPosition(questionId);
         int position = 1;
         for (QuestionMediaEntity item : remaining) {
             item.setPosition(position++);
-            media.save(item);
+            questionMediaRepository.save(item);
         }
     }
 
@@ -337,7 +300,8 @@ public class CatalogService {
             Integer maxPlayCount) {
         assertQuestionNotAnswered(questionId);
         QuestionMediaEntity value =
-                media.findById(mediaId)
+                questionMediaRepository
+                        .findById(mediaId)
                         .filter(item -> Objects.equals(item.getQuestionId(), questionId))
                         .orElseThrow(
                                 () ->
@@ -358,7 +322,7 @@ public class CatalogService {
         }
         value.setAltText(cleanAlt);
         value.setTranscript(cleanTranscript);
-        media.save(value);
+        questionMediaRepository.save(value);
     }
 
     @Transactional
@@ -367,7 +331,8 @@ public class CatalogService {
         if (direction != -1 && direction != 1)
             throw new BusinessRuleException("Hướng sắp xếp không hợp lệ");
         List<QuestionMediaEntity> values =
-                new ArrayList<>(media.findByQuestionIdOrderByPosition(questionId));
+                new ArrayList<>(
+                        questionMediaRepository.findByQuestionIdOrderByPosition(questionId));
         int index = -1;
         for (int i = 0; i < values.size(); i++)
             if (Objects.equals(values.get(i).getId(), mediaId)) {
@@ -380,14 +345,15 @@ public class CatalogService {
         Collections.swap(values, index, target);
         for (int i = 0; i < values.size(); i++) {
             values.get(i).setPosition(i + 1);
-            media.save(values.get(i));
+            questionMediaRepository.save(values.get(i));
         }
     }
 
     @Transactional(readOnly = true)
     public MediaContent mediaContent(Integer questionId, Integer mediaId) {
         QuestionMediaEntity value =
-                media.findById(mediaId)
+                questionMediaRepository
+                        .findById(mediaId)
                         .filter(item -> Objects.equals(item.getQuestionId(), questionId))
                         .orElseThrow(
                                 () ->
@@ -399,41 +365,41 @@ public class CatalogService {
     @Transactional
     public void archiveQuestion(Integer id) {
         QuestionEntity q =
-                questions
+                questionRepository
                         .findById(id)
                         .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy câu hỏi"));
         q.setStatus("ARCHIVED");
-        questions.save(q);
+        questionRepository.save(q);
     }
 
     @Transactional
     public void restoreQuestion(Integer id) {
         QuestionEntity q =
-                questions
+                questionRepository
                         .findById(id)
                         .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy câu hỏi"));
         if (!"ARCHIVED".equals(q.getStatus()))
             throw new BusinessRuleException("Câu hỏi chưa được lưu trữ");
         q.setStatus("DRAFT");
-        questions.save(q);
+        questionRepository.save(q);
     }
 
     public record MediaContent(Resource resource, String contentType) {}
 
     public List<Certificate> activeCertificates() {
-        return certificates.findByStatusOrderByName(RecordStatus.ACTIVE);
+        return certificateRepository.findByStatusOrderByName(RecordStatus.ACTIVE);
     }
 
     public List<ScoringScheme> activeSchemes() {
-        return schemes.findByStatusOrderByName(RecordStatus.ACTIVE);
+        return scoringSchemeRepository.findByStatusOrderByName(RecordStatus.ACTIVE);
     }
 
     public List<QuestionEntity> publishedQuestions() {
-        return questions.findByStatusOrderByUpdatedAtDesc("PUBLISHED");
+        return questionRepository.findByStatusOrderByUpdatedAtDesc("PUBLISHED");
     }
 
     public List<QuestionMediaEntity> mediaItems(Integer questionId) {
-        return media.findByQuestionIdOrderByPosition(questionId);
+        return questionMediaRepository.findByQuestionIdOrderByPosition(questionId);
     }
 
     public List<String> skills() {
@@ -453,11 +419,11 @@ public class CatalogService {
     }
 
     private void saveMedia(QuestionEntity q, MultipartFile file) {
-        new QuestionMediaWriter(media, storage).save(q.getId(), file);
+        new QuestionMediaWriter(questionMediaRepository, storage).save(q.getId(), file);
     }
 
     private void assertQuestionNotAnswered(Integer questionId) {
-        if (answers.existsByQuestionId(questionId)) {
+        if (userAnswerRepository.existsByQuestionId(questionId)) {
             throw new BusinessRuleException(
                     "Câu hỏi đã có trong lịch sử làm bài. Hãy lưu trữ và tạo phiên bản câu hỏi"
                             + " mới");
@@ -492,7 +458,8 @@ public class CatalogService {
                                     : passage,
                             "Văn bản nguồn"));
         }
-        for (QuestionItemEntity item : items.findByQuestionIdOrderByPosition(q.getId())) {
+        for (QuestionItemEntity item :
+                questionItemRepository.findByQuestionIdOrderByPosition(q.getId())) {
             rows.add(
                     new Row(
                             String.valueOf(item.getPosition()),
@@ -500,7 +467,8 @@ public class CatalogService {
                             item.getCorrectPosition() == null
                                     ? ""
                                     : "Đúng vị trí " + item.getCorrectPosition()));
-            options.findByQuestionItemIdOrderByPosition(item.getId())
+            questionOptionRepository
+                    .findByQuestionItemIdOrderByPosition(item.getId())
                     .forEach(
                             o ->
                                     rows.add(
@@ -511,7 +479,8 @@ public class CatalogService {
                                                             ? "Đáp án đúng"
                                                             : "")));
         }
-        media.findByQuestionIdOrderByPosition(q.getId())
+        questionMediaRepository
+                .findByQuestionIdOrderByPosition(q.getId())
                 .forEach(
                         m ->
                                 rows.add(
@@ -575,5 +544,57 @@ public class CatalogService {
             case "ARCHIVED" -> "Đã lưu trữ";
             default -> "Bản nháp";
         };
+    }
+
+    private void applyQuestionFields(QuestionEntity question, QuestionForm form) {
+        question.setContent(form.getContent().trim());
+        question.setInstruction(blankToNull(form.getInstruction()));
+        question.setReadingPassage(
+                "READING".equals(form.getSkill()) ? blankToNull(form.getReadingPassage()) : null);
+        question.setQuestionType(form.getQuestionType());
+        question.setSkill(form.getSkill());
+        question.setPartNo(form.getPartNo());
+        question.setCefrLevel(form.getCefrLevel());
+        question.setDifficulty(form.getDifficulty());
+        question.setAllowOptionReuse(form.isAllowOptionReuse());
+        question.setPreparationSeconds(form.getPreparationSeconds());
+        question.setStatus(form.getStatus());
+    }
+
+    private void replaceQuestionItems(Integer questionId, QuestionForm form, boolean editing) {
+        if (editing) {
+            for (QuestionItemEntity item :
+                    questionItemRepository.findByQuestionIdOrderByPosition(questionId)) {
+                questionOptionRepository.deleteByQuestionItemId(item.getId());
+            }
+            questionItemRepository.deleteByQuestionId(questionId);
+        }
+        int position = 1;
+        for (QuestionForm.ItemForm itemForm : form.getItems()) {
+            QuestionItemEntity item = new QuestionItemEntity();
+            item.setQuestionId(questionId);
+            item.setContent(itemForm.getContent().trim());
+            item.setPosition(position++);
+            item.setCorrectPosition(itemForm.getCorrectPosition());
+            item.setMinWordCount(itemForm.getMinWordCount());
+            item.setMaxWordCount(itemForm.getMaxWordCount());
+            item.setResponseSeconds(itemForm.getResponseSeconds());
+            item = questionItemRepository.save(item);
+            if (usesOptions(form.getQuestionType())) saveItemOptions(item.getId(), itemForm);
+        }
+    }
+
+    private void saveItemOptions(Integer itemId, QuestionForm.ItemForm itemForm) {
+        for (int index = 0; index < itemForm.getOptions().size(); index++) {
+            QuestionForm.OptionForm optionForm = itemForm.getOptions().get(index);
+            if (optionForm.getContent() == null || optionForm.getContent().isBlank()) continue;
+            QuestionOptionEntity option = new QuestionOptionEntity();
+            option.setQuestionItemId(itemId);
+            option.setContent(optionForm.getContent().trim());
+            option.setOptionCode(optionForm.getCode());
+            option.setCorrect(Objects.equals(index + 1, itemForm.getCorrectPosition()));
+            option.setPosition(index + 1);
+            questionOptionRepository.save(option);
+        }
     }
 }

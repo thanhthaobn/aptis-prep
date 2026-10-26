@@ -32,7 +32,7 @@
     <!-- Fragment alert đơn lẻ dùng chung với tham số (type: success | danger | warning | info, text) -->
     <div
       th:fragment="alert(type, text)"
-      th:if="${text != null and !#strings.isEmpty(text)}"
+      th:if="${text != null and (text != null and !text.isBlank())}"
       th:class="|alert alert-${type == 'error' ? 'danger' : type} ap-alert ap-alert-${type == 'error' ? 'danger' : type}|"
       th:attr="role=${(type == 'danger' or type == 'error' or type == 'warning') ? 'alert' : 'status'}"
       th:text="${text}"
