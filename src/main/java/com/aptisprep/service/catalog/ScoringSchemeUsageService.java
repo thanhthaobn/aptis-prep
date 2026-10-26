@@ -9,18 +9,19 @@ import org.springframework.transaction.annotation.Transactional;
 /** A referenced policy is immutable, including policies retained by old attempts. */
 @Service
 public class ScoringSchemeUsageService implements ScoringSchemeUsageContract {
-    private final MockExamRepository exams;
-    private final ExamAttemptRepository attempts;
+    private final MockExamRepository mockExamRepository;
+    private final ExamAttemptRepository examAttemptRepository;
 
-    public ScoringSchemeUsageService(MockExamRepository exams, ExamAttemptRepository attempts) {
-        this.exams = exams;
-        this.attempts = attempts;
+    public ScoringSchemeUsageService(
+            MockExamRepository mockExamRepository, ExamAttemptRepository examAttemptRepository) {
+        this.mockExamRepository = mockExamRepository;
+        this.examAttemptRepository = examAttemptRepository;
     }
 
     @Override
     @Transactional(readOnly = true)
     public boolean isUsed(Integer schemeId) {
-        return exams.existsByScoringSchemeId(schemeId)
-                || attempts.existsByScoringSchemeId(schemeId);
+        return mockExamRepository.existsByScoringSchemeId(schemeId)
+                || examAttemptRepository.existsByScoringSchemeId(schemeId);
     }
 }

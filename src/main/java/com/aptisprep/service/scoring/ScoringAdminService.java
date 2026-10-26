@@ -22,36 +22,38 @@ import org.springframework.transaction.annotation.Transactional;
 public class ScoringAdminService {
     private static final Set<String> SKILLS = Set.copyOf(Skill.codes());
     private static final Set<String> LEVELS = Set.copyOf(CefrLevel.codes());
-    private final CertificateRepository certificates;
-    private final ScoringSchemeRepository schemes;
-    private final ScoreBandRepository bands;
-    private final UserRepository users;
+    private final CertificateRepository certificateRepository;
+    private final ScoringSchemeRepository scoringSchemeRepository;
+    private final ScoreBandRepository scoreBandRepository;
+    private final UserRepository userRepository;
     private final ObjectProvider<ScoringSchemeUsageContract> usage;
-    private final ScoringScaleRuleRepository scaleRules;
+    private final ScoringScaleRuleRepository scoringScaleRuleRepository;
 
     public ScoringAdminService(
-            CertificateRepository certificates,
-            ScoringSchemeRepository schemes,
-            ScoreBandRepository bands,
-            UserRepository users,
+            CertificateRepository certificateRepository,
+            ScoringSchemeRepository scoringSchemeRepository,
+            ScoreBandRepository scoreBandRepository,
+            UserRepository userRepository,
             ObjectProvider<ScoringSchemeUsageContract> usage,
-            ScoringScaleRuleRepository scaleRules) {
-        this.certificates = certificates;
-        this.schemes = schemes;
-        this.bands = bands;
-        this.users = users;
+            ScoringScaleRuleRepository scoringScaleRuleRepository) {
+        this.certificateRepository = certificateRepository;
+        this.scoringSchemeRepository = scoringSchemeRepository;
+        this.scoreBandRepository = scoreBandRepository;
+        this.userRepository = userRepository;
         this.usage = usage;
-        this.scaleRules = scaleRules;
+        this.scoringScaleRuleRepository = scoringScaleRuleRepository;
     }
 
     @Transactional(readOnly = true)
     public List<ScoringViews.CertificateView> certificateViews() {
-        return certificates.findAllByOrderByNameAsc().stream().map(this::certificateView).toList();
+        return certificateRepository.findAllByOrderByNameAsc().stream()
+                .map(this::certificateView)
+                .toList();
     }
 
     @Transactional(readOnly = true)
     public List<ScoringViews.SchemeView> schemeViews() {
-        return schemes.findAllByOrderByCertificateNameAscVersionDesc().stream()
+        return scoringSchemeRepository.findAllByOrderByCertificateNameAscVersionDesc().stream()
                 .map(this::schemeView)
                 .toList();
     }
@@ -59,7 +61,7 @@ public class ScoringAdminService {
     @Transactional(readOnly = true)
     public ScoringViews.CertificateView certificate(Integer id) {
         return certificateView(
-                certificates
+                certificateRepository
                         .findById(id)
                         .orElseThrow(
                                 () -> new ResourceNotFoundException("Không tìm thấy chứng chỉ")));
@@ -68,7 +70,8 @@ public class ScoringAdminService {
     @Transactional(readOnly = true)
     public ScoringViews.SchemeView scheme(Integer id) {
         return schemeView(
-                schemes.findById(id)
+                scoringSchemeRepository
+                        .findById(id)
                         .orElseThrow(
                                 () ->
                                         new ResourceNotFoundException(
@@ -79,7 +82,9 @@ public class ScoringAdminService {
     public List<ScoringViews.BandView> bandViews(Integer schemeId, String skill) {
         ScoringScheme scheme = requireScheme(schemeId);
         String normalized = normalizeSkill(skill);
-        return bands.findBySchemeIdAndSkillOrderByMinScoreAsc(scheme.getId(), normalized).stream()
+        return scoreBandRepository
+                .findBySchemeIdAndSkillOrderByMinScoreAsc(scheme.getId(), normalized)
+                .stream()
                 .map(this::bandView)
                 .toList();
     }
@@ -88,7 +93,8 @@ public class ScoringAdminService {
     public ScoringViews.BandView band(Integer schemeId, Integer bandId) {
         requireScheme(schemeId);
         return bandView(
-                bands.findByIdAndSchemeId(bandId, schemeId)
+                scoreBandRepository
+                        .findByIdAndSchemeId(bandId, schemeId)
                         .orElseThrow(
                                 () -> new ResourceNotFoundException("Không tìm thấy khoảng điểm")));
     }
@@ -96,7 +102,7 @@ public class ScoringAdminService {
     @Transactional(readOnly = true)
     public List<ScoringViews.BandView> allBandViews(Integer schemeId) {
         requireScheme(schemeId);
-        return bands.findBySchemeIdOrderBySkillAscMinScoreAsc(schemeId).stream()
+        return scoreBandRepository.findBySchemeIdOrderBySkillAscMinScoreAsc(schemeId).stream()
                 .map(this::bandView)
                 .toList();
     }
@@ -105,7 +111,7 @@ public class ScoringAdminService {
     public Integer createCertificate(String adminEmail, CertificateForm form) {
         User admin = requireAdmin(adminEmail);
         String code = normalizeCode(form.getCode());
-        if (certificates.existsByCodeIgnoreCase(code))
+        if (certificateRepository.existsByCodeIgnoreCase(code))
             throw new BusinessRuleException("Mã chứng chỉ đã tồn tại");
         Certificate value = new Certificate();
         value.setName(required(form.getName(), "Tên chứng chỉ"));
@@ -114,7 +120,7 @@ public class ScoringAdminService {
         value.setStatus(status(form.getStatus()));
         value.setCreatedBy(admin);
         try {
-            return certificates.save(value).getId();
+            return certificateRepository.save(value).getId();
         } catch (DataIntegrityViolationException exception) {
             throw new BusinessRuleException("Mã chứng chỉ đã tồn tại");
         }
@@ -124,12 +130,12 @@ public class ScoringAdminService {
     public void updateCertificate(String adminEmail, Integer id, CertificateForm form) {
         requireAdmin(adminEmail);
         Certificate value =
-                certificates
+                certificateRepository
                         .findById(id)
                         .orElseThrow(
                                 () -> new ResourceNotFoundException("Không tìm thấy chứng chỉ"));
         String code = normalizeCode(form.getCode());
-        if (certificates.existsByCodeIgnoreCaseAndIdNot(code, id))
+        if (certificateRepository.existsByCodeIgnoreCaseAndIdNot(code, id))
             throw new BusinessRuleException("Mã chứng chỉ đã tồn tại");
         value.setName(required(form.getName(), "Tên chứng chỉ"));
         value.setCode(code);
@@ -141,7 +147,7 @@ public class ScoringAdminService {
     public void disableCertificate(String adminEmail, Integer id) {
         requireAdmin(adminEmail);
         Certificate value =
-                certificates
+                certificateRepository
                         .findById(id)
                         .orElseThrow(
                                 () -> new ResourceNotFoundException("Không tìm thấy chứng chỉ"));
@@ -152,7 +158,7 @@ public class ScoringAdminService {
     public Integer saveScheme(String adminEmail, Integer id, ScoringSchemeForm form) {
         requireAdmin(adminEmail);
         Certificate certificate =
-                certificates
+                certificateRepository
                         .findById(form.getCertificateId())
                         .orElseThrow(
                                 () -> new ResourceNotFoundException("Không tìm thấy chứng chỉ"));
@@ -163,7 +169,7 @@ public class ScoringAdminService {
             ensureSchemeVersion(certificate.getId(), version, null);
             ScoringScheme value = new ScoringScheme();
             setScheme(value, certificate, form, version);
-            return schemes.save(value).getId();
+            return scoringSchemeRepository.save(value).getId();
         }
         ScoringScheme current = requireSchemeForUpdate(id);
         if (!current.getCertificate().getId().equals(certificate.getId())
@@ -171,26 +177,8 @@ public class ScoringAdminService {
             ensureSchemeVersion(certificate.getId(), version, null);
             ScoringScheme replacement = new ScoringScheme();
             setScheme(replacement, certificate, form, version);
-            replacement = schemes.save(replacement);
-            for (ScoreBand old : bands.findBySchemeIdOrderBySkillAscMinScoreAsc(id)) {
-                ScoreBand copy = new ScoreBand();
-                copy.setScheme(replacement);
-                copy.setSkill(old.getSkill());
-                copy.setCefrLevel(old.getCefrLevel());
-                copy.setMinScore(old.getMinScore());
-                copy.setMaxScore(old.getMaxScore());
-                bands.save(copy);
-            }
-            for (ScoringScaleRule old : scaleRules.findBySchemeId(id)) {
-                ScoringScaleRule copy = new ScoringScaleRule();
-                copy.setScheme(replacement);
-                copy.setSkill(old.getSkill());
-                copy.setRawMin(old.getRawMin());
-                copy.setRawMax(old.getRawMax());
-                copy.setScaleMin(old.getScaleMin());
-                copy.setScaleMax(old.getScaleMax());
-                scaleRules.save(copy);
-            }
+            replacement = scoringSchemeRepository.save(replacement);
+            copySchemeConfiguration(id, replacement);
             return replacement.getId();
         }
         if (schemeIsUsed(current.getId())) {
@@ -227,7 +215,7 @@ public class ScoringAdminService {
             throw new BusinessRuleException("Khoảng điểm phải có min ≤ max");
         if (min.signum() < 0 || max.compareTo(BigDecimal.valueOf(50)) > 0)
             throw new BusinessRuleException("Khoảng điểm CEFR phải nằm trong 0–50");
-        scaleRules
+        scoringScaleRuleRepository
                 .findBySchemeIdAndSkillIgnoreCase(schemeId, skill)
                 .ifPresent(
                         rule -> {
@@ -237,14 +225,15 @@ public class ScoringAdminService {
                                         "Khoảng điểm CEFR nằm ngoài thang điểm đã cấu hình");
                         });
         if (id == null
-                && bands.existsBySchemeIdAndSkillAndCefrLevelIgnoreCase(schemeId, skill, level))
+                && scoreBandRepository.existsBySchemeIdAndSkillAndCefrLevelIgnoreCase(
+                        schemeId, skill, level))
             throw new BusinessRuleException("CEFR này đã có khoảng điểm");
         if (id != null
-                && bands.existsBySchemeIdAndSkillAndCefrLevelIgnoreCaseAndIdNot(
+                && scoreBandRepository.existsBySchemeIdAndSkillAndCefrLevelIgnoreCaseAndIdNot(
                         schemeId, skill, level, id))
             throw new BusinessRuleException("CEFR này đã có khoảng điểm");
         List<ScoreBand> overlaps =
-                bands
+                scoreBandRepository
                         .findBySchemeIdAndSkillAndMaxScoreGreaterThanEqualAndMinScoreLessThanEqual(
                                 schemeId, skill, min, max)
                         .stream()
@@ -255,7 +244,8 @@ public class ScoringAdminService {
         ScoreBand value =
                 id == null
                         ? new ScoreBand()
-                        : bands.findByIdAndSchemeId(id, schemeId)
+                        : scoreBandRepository
+                                .findByIdAndSchemeId(id, schemeId)
                                 .orElseThrow(
                                         () ->
                                                 new ResourceNotFoundException(
@@ -265,7 +255,7 @@ public class ScoringAdminService {
         value.setCefrLevel(level);
         value.setMinScore(min);
         value.setMaxScore(max);
-        bands.save(value);
+        scoreBandRepository.save(value);
     }
 
     @Transactional
@@ -276,10 +266,11 @@ public class ScoringAdminService {
             throw new BusinessRuleException(
                     "Bộ chấm điểm đã được sử dụng. Hãy tạo phiên bản mới để bảo toàn lịch sử");
         ScoreBand value =
-                bands.findByIdAndSchemeId(id, schemeId)
+                scoreBandRepository
+                        .findByIdAndSchemeId(id, schemeId)
                         .orElseThrow(
                                 () -> new ResourceNotFoundException("Không tìm thấy khoảng điểm"));
-        bands.delete(value);
+        scoreBandRepository.delete(value);
     }
 
     private void setScheme(
@@ -292,14 +283,16 @@ public class ScoringAdminService {
     }
 
     private void ensureSchemeVersion(Integer certificateId, String version, Integer ignored) {
-        if (schemes.existsByCertificateIdAndVersionIgnoreCase(certificateId, version))
+        if (scoringSchemeRepository.existsByCertificateIdAndVersionIgnoreCase(
+                certificateId, version))
             throw new BusinessRuleException(
                     "Phiên bản đã tồn tại trong chứng chỉ. Hãy tăng version để bảo toàn lịch sử");
     }
 
     private User requireAdmin(String email) {
         User user =
-                users.findByEmailIgnoreCase(email)
+                userRepository
+                        .findByEmailIgnoreCase(email)
                         .orElseThrow(
                                 () ->
                                         new AccessDeniedException(
@@ -310,12 +303,14 @@ public class ScoringAdminService {
     }
 
     private ScoringScheme requireScheme(Integer id) {
-        return schemes.findById(id)
+        return scoringSchemeRepository
+                .findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy bộ chấm điểm"));
     }
 
     private ScoringScheme requireSchemeForUpdate(Integer id) {
-        return schemes.findByIdForUpdate(id)
+        return scoringSchemeRepository
+                .findByIdForUpdate(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy bộ chấm điểm"));
     }
 
@@ -329,8 +324,8 @@ public class ScoringAdminService {
     @Transactional(readOnly = true)
     public ScoringScaleRuleForm scaleRule(Integer schemeId, String skill) {
         requireScheme(schemeId);
-        var form = new ScoringScaleRuleForm();
-        scaleRules
+        ScoringScaleRuleForm form = new ScoringScaleRuleForm();
+        scoringScaleRuleRepository
                 .findBySchemeIdAndSkillIgnoreCase(schemeId, normalizeSkill(skill))
                 .ifPresent(
                         rule -> {
@@ -365,7 +360,9 @@ public class ScoringAdminService {
                 || scaleMax.compareTo(BigDecimal.valueOf(50)) > 0)
             throw new BusinessRuleException(
                     "Khoảng raw/scale không hợp lệ; scale phải nằm trong 0–50");
-        if (bands.findBySchemeIdAndSkillOrderByMinScoreAsc(schemeId, normalized).stream()
+        if (scoreBandRepository
+                .findBySchemeIdAndSkillOrderByMinScoreAsc(schemeId, normalized)
+                .stream()
                 .anyMatch(
                         band ->
                                 band.getMinScore().compareTo(scaleMin) < 0
@@ -373,7 +370,7 @@ public class ScoringAdminService {
             throw new BusinessRuleException(
                     "Khoảng scale phải chứa các khoảng điểm CEFR đã cấu hình");
         ScoringScaleRule rule =
-                scaleRules
+                scoringScaleRuleRepository
                         .findBySchemeIdAndSkillIgnoreCase(schemeId, normalized)
                         .orElseGet(ScoringScaleRule::new);
         rule.setScheme(scheme);
@@ -382,7 +379,7 @@ public class ScoringAdminService {
         rule.setRawMax(rawMax);
         rule.setScaleMin(scaleMin);
         rule.setScaleMax(scaleMax);
-        scaleRules.save(rule);
+        scoringScaleRuleRepository.save(rule);
     }
 
     private ScoringViews.CertificateView certificateView(Certificate value) {
@@ -460,5 +457,27 @@ public class ScoringAdminService {
 
     private String statusLabel(RecordStatus value) {
         return value == RecordStatus.ACTIVE ? "Đang sử dụng" : "Ngừng sử dụng";
+    }
+
+    private void copySchemeConfiguration(Integer id, ScoringScheme replacement) {
+        for (ScoreBand old : scoreBandRepository.findBySchemeIdOrderBySkillAscMinScoreAsc(id)) {
+            ScoreBand copy = new ScoreBand();
+            copy.setScheme(replacement);
+            copy.setSkill(old.getSkill());
+            copy.setCefrLevel(old.getCefrLevel());
+            copy.setMinScore(old.getMinScore());
+            copy.setMaxScore(old.getMaxScore());
+            scoreBandRepository.save(copy);
+        }
+        for (ScoringScaleRule old : scoringScaleRuleRepository.findBySchemeId(id)) {
+            ScoringScaleRule copy = new ScoringScaleRule();
+            copy.setScheme(replacement);
+            copy.setSkill(old.getSkill());
+            copy.setRawMin(old.getRawMin());
+            copy.setRawMax(old.getRawMax());
+            copy.setScaleMin(old.getScaleMin());
+            copy.setScaleMax(old.getScaleMax());
+            scoringScaleRuleRepository.save(copy);
+        }
     }
 }

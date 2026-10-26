@@ -34,18 +34,18 @@ import tools.jackson.databind.JsonNode;
 public class ExamAttemptService implements ExamAttemptContract {
     private static final Set<String> ACTIVE_STATES =
             Set.of("IN_PROGRESS", "SUBMITTED", "WAITING_GRADING");
-    private final UserRepository users;
-    private final MockExamRepository exams;
-    private final MockExamQuestionRepository examQuestions;
-    private final QuestionMediaRepository questionMedia;
-    private final UserMediaActivityRepository mediaActivities;
+    private final UserRepository userRepository;
+    private final MockExamRepository mockExamRepository;
+    private final MockExamQuestionRepository mockExamQuestionRepository;
+    private final QuestionMediaRepository questionMediaRepository;
+    private final UserMediaActivityRepository userMediaActivityRepository;
     private final ExamSnapshotService examSnapshots;
     private final ExamGradingPayloadFactory gradingPayloads;
     private final AttemptResultReader resultReader;
-    private final ExamAttemptRepository attempts;
-    private final UserAnswerRepository answers;
-    private final UserAnswerDetailRepository details;
-    private final ExamSkillResultRepository skillResults;
+    private final ExamAttemptRepository examAttemptRepository;
+    private final UserAnswerRepository userAnswerRepository;
+    private final UserAnswerDetailRepository userAnswerDetailRepository;
+    private final ExamSkillResultRepository examSkillResultRepository;
     private final ScoringPolicyContract scoring;
     private final StorageService storage;
     private final AttemptOutboxService outbox;
@@ -57,18 +57,18 @@ public class ExamAttemptService implements ExamAttemptContract {
     private final CheckpointStartValidator checkpointValidator;
 
     public ExamAttemptService(
-            UserRepository users,
-            MockExamRepository exams,
-            MockExamQuestionRepository examQuestions,
-            QuestionMediaRepository questionMedia,
-            UserMediaActivityRepository mediaActivities,
+            UserRepository userRepository,
+            MockExamRepository mockExamRepository,
+            MockExamQuestionRepository mockExamQuestionRepository,
+            QuestionMediaRepository questionMediaRepository,
+            UserMediaActivityRepository userMediaActivityRepository,
             ExamSnapshotService examSnapshots,
             ExamGradingPayloadFactory gradingPayloads,
             AttemptResultReader resultReader,
-            ExamAttemptRepository attempts,
-            UserAnswerRepository answers,
-            UserAnswerDetailRepository details,
-            ExamSkillResultRepository skillResults,
+            ExamAttemptRepository examAttemptRepository,
+            UserAnswerRepository userAnswerRepository,
+            UserAnswerDetailRepository userAnswerDetailRepository,
+            ExamSkillResultRepository examSkillResultRepository,
             ScoringPolicyContract scoring,
             StorageService storage,
             AttemptOutboxService outbox,
@@ -78,18 +78,18 @@ public class ExamAttemptService implements ExamAttemptContract {
             ExamAnswerWriter answerWriter,
             ExamStartValidator startValidator,
             CheckpointStartValidator checkpointValidator) {
-        this.users = users;
-        this.exams = exams;
-        this.examQuestions = examQuestions;
-        this.questionMedia = questionMedia;
-        this.mediaActivities = mediaActivities;
+        this.userRepository = userRepository;
+        this.mockExamRepository = mockExamRepository;
+        this.mockExamQuestionRepository = mockExamQuestionRepository;
+        this.questionMediaRepository = questionMediaRepository;
+        this.userMediaActivityRepository = userMediaActivityRepository;
         this.examSnapshots = examSnapshots;
         this.gradingPayloads = gradingPayloads;
         this.resultReader = resultReader;
-        this.attempts = attempts;
-        this.answers = answers;
-        this.details = details;
-        this.skillResults = skillResults;
+        this.examAttemptRepository = examAttemptRepository;
+        this.userAnswerRepository = userAnswerRepository;
+        this.userAnswerDetailRepository = userAnswerDetailRepository;
+        this.examSkillResultRepository = examSkillResultRepository;
         this.scoring = scoring;
         this.storage = storage;
         this.outbox = outbox;
@@ -137,10 +137,12 @@ public class ExamAttemptService implements ExamAttemptContract {
         }
         if (placement != "PLACEMENT".equals(exam.getExamType()))
             throw new BusinessRuleException("Placement chỉ được bắt đầu từ trang kiểm tra đầu vào");
-        List<MockExamQuestionEntity> links = examQuestions.findByMockExamIdOrderByPosition(examId);
+        List<MockExamQuestionEntity> links =
+                mockExamQuestionRepository.findByMockExamIdOrderByPosition(examId);
         if (links.isEmpty()) throw new BusinessRuleException("Đề thi chưa có câu hỏi");
         String key = normalizeRequestKey(requestKey, userId, examId);
-        Optional<ExamAttemptEntity> byKey = attempts.findByUserIdAndRequestKey(userId, key);
+        Optional<ExamAttemptEntity> byKey =
+                examAttemptRepository.findByUserIdAndRequestKey(userId, key);
         if (byKey.isPresent()) {
             if (!Objects.equals(byKey.get().getMockExamId(), examId)) {
                 throw new BusinessRuleException("Request key đã được dùng cho một đề thi khác");
@@ -154,7 +156,8 @@ public class ExamAttemptService implements ExamAttemptContract {
         startValidator.validate(exam, links);
         if ("PLACEMENT".equals(exam.getExamType())) {
             Optional<ExamAttemptEntity> active =
-                    attempts.findActivePlacement(userId, exam.getSkill(), ACTIVE_STATES);
+                    examAttemptRepository.findActivePlacement(
+                            userId, exam.getSkill(), ACTIVE_STATES);
             if (active.isPresent()) {
                 MockExamEntity activeExam = examFor(active.get());
                 if (!expireIfNeeded(active.get(), activeExam))
@@ -177,7 +180,7 @@ public class ExamAttemptService implements ExamAttemptContract {
                                 + ":"
                                 + scoring.policyVersion(exam.getScoringSchemeId()));
         attempt.setRubricVersion(DEFAULT_RUBRIC_VERSION);
-        attempt = attempts.save(attempt);
+        attempt = examAttemptRepository.save(attempt);
         examSnapshots.createSnapshot(attempt, exam, links);
         Integer newAttemptId = attempt.getId();
         for (MockExamQuestionEntity link : links) {
@@ -185,15 +188,15 @@ public class ExamAttemptService implements ExamAttemptContract {
             answer.setAttemptId(newAttemptId);
             answer.setQuestionId(link.getQuestionId());
             answer.setStatus("NOT_STARTED");
-            answers.save(answer);
-            questionMedia.findByQuestionIdOrderByPosition(link.getQuestionId()).stream()
+            userAnswerRepository.save(answer);
+            questionMediaRepository.findByQuestionIdOrderByPosition(link.getQuestionId()).stream()
                     .filter(media -> "AUDIO".equals(media.getMediaType()))
                     .forEach(
                             media -> {
                                 UserMediaActivityEntity activity = new UserMediaActivityEntity();
                                 activity.setAttemptId(newAttemptId);
                                 activity.setMediaId(media.getId());
-                                mediaActivities.save(activity);
+                                userMediaActivityRepository.save(activity);
                             });
         }
         return handle(attempt, exam);
@@ -213,7 +216,8 @@ public class ExamAttemptService implements ExamAttemptContract {
     @Transactional
     public MediaPlayResult playMedia(Integer userId, Integer attemptId, Integer mediaId) {
         ExamAttemptEntity attempt =
-                attempts.findByIdAndUserIdForUpdate(attemptId, userId)
+                examAttemptRepository
+                        .findByIdAndUserIdForUpdate(attemptId, userId)
                         .orElseThrow(
                                 () ->
                                         new AccessDeniedException(
@@ -226,14 +230,15 @@ public class ExamAttemptService implements ExamAttemptContract {
         JsonNode lockedMedia = examSnapshots.lockedMedia(attemptId, mediaId);
         if (lockedMedia == null
                 || !"AUDIO".equals(lockedMedia.path("type").asText())
-                || !answers.findByAttemptIdAndQuestionId(
+                || !userAnswerRepository
+                        .findByAttemptIdAndQuestionId(
                                 attemptId, lockedMedia.path("questionId").asInt())
                         .isPresent()) throw new AccessDeniedException("Media không thuộc lượt thi");
         ensureMediaWindow(attempt);
         startValidator.validateAudio(lockedMedia.path("mediaUrl").asText());
         int limit = Math.min(2, lockedMedia.path("maxPlayCount").asInt(2));
         UserMediaActivityEntity activity =
-                mediaActivities
+                userMediaActivityRepository
                         .findByAttemptIdAndMediaIdForUpdate(attemptId, mediaId)
                         .orElseThrow(
                                 () ->
@@ -246,7 +251,7 @@ public class ExamAttemptService implements ExamAttemptContract {
         activity.setLastPlayedAt(LocalDateTime.now());
         activity.setPlayTokenHash(hashToken(contentToken));
         activity.setPlayTokenExpiresAt(LocalDateTime.now().plusMinutes(1));
-        mediaActivities.save(activity);
+        userMediaActivityRepository.save(activity);
         return new MediaPlayResult(mediaId, activity.getPlayCount(), limit, contentToken);
     }
 
@@ -254,7 +259,8 @@ public class ExamAttemptService implements ExamAttemptContract {
     public MediaResource mediaContent(
             Integer userId, Integer attemptId, Integer mediaId, String contentToken) {
         ExamAttemptEntity attempt =
-                attempts.findByIdAndUserId(attemptId, userId)
+                examAttemptRepository
+                        .findByIdAndUserId(attemptId, userId)
                         .orElseThrow(
                                 () ->
                                         new AccessDeniedException(
@@ -264,13 +270,14 @@ public class ExamAttemptService implements ExamAttemptContract {
             throw new BusinessRuleException("Lượt thi đã hết thời gian");
         JsonNode lockedMedia = examSnapshots.lockedMedia(attemptId, mediaId);
         if (lockedMedia == null
-                || !answers.findByAttemptIdAndQuestionId(
+                || !userAnswerRepository
+                        .findByAttemptIdAndQuestionId(
                                 attemptId, lockedMedia.path("questionId").asInt())
                         .isPresent()) throw new AccessDeniedException("Media không thuộc lượt thi");
         ensureMediaWindow(attempt);
         if ("AUDIO".equals(lockedMedia.path("type").asText())) {
             UserMediaActivityEntity activity =
-                    mediaActivities
+                    userMediaActivityRepository
                             .findByAttemptIdAndMediaIdForUpdate(attemptId, mediaId)
                             .orElseThrow(
                                     () ->
@@ -303,10 +310,12 @@ public class ExamAttemptService implements ExamAttemptContract {
 
     @Transactional(readOnly = true)
     public MediaResource speakingAudio(Integer userId, Integer attemptId, Integer answerId) {
-        attempts.findByIdAndUserId(attemptId, userId)
+        examAttemptRepository
+                .findByIdAndUserId(attemptId, userId)
                 .orElseThrow(() -> new AccessDeniedException("Bạn không có quyền xem audio này"));
         UserAnswerEntity answer =
-                answers.findByIdAndAttemptId(answerId, attemptId)
+                userAnswerRepository
+                        .findByIdAndAttemptId(answerId, attemptId)
                         .orElseThrow(() -> new AccessDeniedException("Audio không thuộc lượt thi"));
         if (answer.getAudioUrl() == null)
             throw new ResourceNotFoundException("Chưa có file ghi âm");
@@ -335,7 +344,8 @@ public class ExamAttemptService implements ExamAttemptContract {
     @Transactional
     public void submit(Integer userId, Integer attemptId, String requestKey) {
         ExamAttemptEntity attempt =
-                attempts.findByIdAndUserIdForUpdate(attemptId, userId)
+                examAttemptRepository
+                        .findByIdAndUserIdForUpdate(attemptId, userId)
                         .orElseThrow(
                                 () ->
                                         new AccessDeniedException(
@@ -379,14 +389,14 @@ public class ExamAttemptService implements ExamAttemptContract {
         LockedAttempt locked = gradingPayloads.build(attempt, exam);
         objectiveGrading.gradeObjective(locked, exam);
         boolean waiting =
-                skillResults.findByAttemptIdOrderBySkillAsc(attempt.getId()).stream()
+                examSkillResultRepository.findByAttemptIdOrderBySkillAsc(attempt.getId()).stream()
                         .anyMatch(x -> !"COMPLETED".equals(x.getGradingStatus()));
         if (waiting) {
             attempt.setStatus(expired ? "EXPIRED" : "WAITING_GRADING");
             attempt.setGradingStatus("WAITING");
         }
         boolean completed = !waiting && finalization.finalizeIfReady(attempt, exam);
-        attempts.save(attempt);
+        examAttemptRepository.save(attempt);
         if (completed) {
             finalization.publishCompleted(attempt, exam);
         } else if ("WAITING_GRADING".equals(attempt.getStatus())
@@ -405,7 +415,8 @@ public class ExamAttemptService implements ExamAttemptContract {
     public AttemptResult result(Integer userId, Integer attemptId) {
         activeUser(userId);
         ExamAttemptEntity attempt =
-                attempts.findByIdAndUserId(attemptId, userId)
+                examAttemptRepository
+                        .findByIdAndUserId(attemptId, userId)
                         .orElseThrow(
                                 () ->
                                         new AccessDeniedException(
@@ -443,85 +454,18 @@ public class ExamAttemptService implements ExamAttemptContract {
     public AttemptPage page(Integer userId, Integer attemptId) {
         activeUser(userId);
         ExamAttemptEntity attempt =
-                attempts.findByIdAndUserId(attemptId, userId)
+                examAttemptRepository
+                        .findByIdAndUserId(attemptId, userId)
                         .orElseThrow(
                                 () ->
                                         new AccessDeniedException(
                                                 "Bạn không có quyền với lượt thi này"));
         MockExamEntity exam = examFor(attempt);
         expireIfNeeded(attempt, exam);
-        List<QuestionPage> questionsView =
-                examSnapshots.lockedQuestionList(attemptId).stream()
-                        .map(
-                                q -> {
-                                    Integer questionId = q.path("id").asInt();
-                                    UserAnswerEntity answer =
-                                            answers.findByAttemptIdAndQuestionId(
-                                                            attemptId, questionId)
-                                                    .orElseThrow();
-                                    Map<Integer, UserAnswerDetailEntity> detailByItem =
-                                            new HashMap<>();
-                                    details.findByUserAnswerIdOrderByQuestionItemIdAsc(
-                                                    answer.getId())
-                                            .forEach(
-                                                    detail ->
-                                                            detailByItem.put(
-                                                                    detail.getQuestionItemId(),
-                                                                    detail));
-                                    List<ItemPage> itemPages = new ArrayList<>();
-                                    for (JsonNode item : q.path("items")) {
-                                        Integer itemId = item.path("id").asInt();
-                                        UserAnswerDetailEntity detail = detailByItem.get(itemId);
-                                        List<OptionPage> itemOptions = new ArrayList<>();
-                                        for (JsonNode option : item.path("options"))
-                                            itemOptions.add(
-                                                    new OptionPage(
-                                                            option.path("id").asInt(),
-                                                            option.path("code").asText(),
-                                                            option.path("content").asText()));
-                                        itemPages.add(
-                                                new ItemPage(
-                                                        itemId,
-                                                        item.path("position").asInt(),
-                                                        item.path("content").asText(),
-                                                        item.path("responseSeconds").isNull()
-                                                                ? null
-                                                                : item.path("responseSeconds")
-                                                                        .asInt(),
-                                                        itemOptions,
-                                                        detail == null
-                                                                ? null
-                                                                : detail.getSelectedOptionId(),
-                                                        detail == null
-                                                                ? null
-                                                                : detail.getUserPosition(),
-                                                        detail == null
-                                                                ? null
-                                                                : detail.getAnswerText(),
-                                                        detail != null
-                                                                && detail.getAudioPath() != null));
-                                    }
-                                    List<MediaPage> mediaPages = new ArrayList<>();
-                                    for (JsonNode media : q.path("media")) {
-                                        mediaPages.add(
-                                                new MediaPage(
-                                                        media.path("id").asInt(),
-                                                        media.path("type").asText(),
-                                                        media.path("filename").asText(),
-                                                        media.path("contentType").asText()));
-                                    }
-                                    return new QuestionPage(
-                                            questionId,
-                                            q.path("content").asText(),
-                                            q.path("instruction").asText(),
-                                            q.path("readingPassage").asText(null),
-                                            q.path("skill").asText(),
-                                            q.path("type").asText(),
-                                            q.path("position").asInt(),
-                                            itemPages,
-                                            mediaPages);
-                                })
-                        .toList();
+        List<QuestionPage> questionPages = new ArrayList<>();
+        for (JsonNode question : examSnapshots.lockedQuestionList(attemptId)) {
+            questionPages.add(toQuestionPage(attemptId, question));
+        }
         Instant deadline =
                 exam.getDurationMinutes() == null || attempt.getStartedAt() == null
                         ? null
@@ -531,7 +475,7 @@ public class ExamAttemptService implements ExamAttemptContract {
                 exam.getTitle(),
                 exam.getExamType(),
                 remainingSeconds(attempt, exam),
-                questionsView,
+                List.copyOf(questionPages),
                 deadline);
     }
 
@@ -625,7 +569,7 @@ public class ExamAttemptService implements ExamAttemptContract {
     private void refreshSnapshotAnswerVersion(ExamAttemptEntity attempt) {
         Integer attemptId = attempt.getId();
         int version =
-                answers.findByAttemptIdOrderByQuestionIdAsc(attemptId).stream()
+                userAnswerRepository.findByAttemptIdOrderByQuestionIdAsc(attemptId).stream()
                         .mapToInt(UserAnswerEntity::getAnswerVersion)
                         .max()
                         .orElse(1);
@@ -635,7 +579,8 @@ public class ExamAttemptService implements ExamAttemptContract {
 
     private ExamAttemptEntity editableAttempt(Integer userId, Integer attemptId) {
         ExamAttemptEntity attempt =
-                attempts.findByIdAndUserIdForUpdate(attemptId, userId)
+                examAttemptRepository
+                        .findByIdAndUserIdForUpdate(attemptId, userId)
                         .orElseThrow(
                                 () ->
                                         new AccessDeniedException(
@@ -667,24 +612,27 @@ public class ExamAttemptService implements ExamAttemptContract {
                 .isBefore(LocalDateTime.now())) return false;
         attempt.setStatus("EXPIRED");
         attempt.setGradingStatus("EXPIRED");
-        attempts.save(attempt);
+        examAttemptRepository.save(attempt);
         return true;
     }
 
     private MockExamEntity publishedExam(Integer id) {
-        return exams.findById(id)
+        return mockExamRepository
+                .findById(id)
                 .filter(x -> "PUBLISHED".equals(x.getStatus()))
                 .orElseThrow(() -> new ResourceNotFoundException("Đề thi chưa được công bố"));
     }
 
     private MockExamEntity examFor(ExamAttemptEntity attempt) {
-        return exams.findById(attempt.getMockExamId())
+        return mockExamRepository
+                .findById(attempt.getMockExamId())
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy đề thi"));
     }
 
     private User activeUser(Integer id) {
         User user =
-                users.findById(id)
+                userRepository
+                        .findById(id)
                         .orElseThrow(
                                 () -> new ResourceNotFoundException("Không tìm thấy tài khoản"));
         if (user.getRole() != Role.STUDENT || user.getStatus() != UserStatus.ACTIVE)
@@ -694,7 +642,8 @@ public class ExamAttemptService implements ExamAttemptContract {
 
     private User activeUserForUpdate(Integer id) {
         User user =
-                users.findByIdForUpdate(id)
+                userRepository
+                        .findByIdForUpdate(id)
                         .orElseThrow(
                                 () -> new ResourceNotFoundException("Không tìm thấy tài khoản"));
         if (user.getRole() != Role.STUDENT || user.getStatus() != UserStatus.ACTIVE)
@@ -751,5 +700,65 @@ public class ExamAttemptService implements ExamAttemptContract {
         } catch (NoSuchAlgorithmException exception) {
             throw new IllegalStateException("SHA-256 unavailable", exception);
         }
+    }
+
+    private QuestionPage toQuestionPage(Integer attemptId, JsonNode question) {
+        Integer questionId = question.path("id").asInt();
+        UserAnswerEntity answer =
+                userAnswerRepository
+                        .findByAttemptIdAndQuestionId(attemptId, questionId)
+                        .orElseThrow();
+        Map<Integer, UserAnswerDetailEntity> detailByItem = new HashMap<>();
+        for (UserAnswerDetailEntity detail :
+                userAnswerDetailRepository.findByUserAnswerIdOrderByQuestionItemIdAsc(
+                        answer.getId())) {
+            detailByItem.put(detail.getQuestionItemId(), detail);
+        }
+        List<ItemPage> itemPages = new ArrayList<>();
+        for (JsonNode item : question.path("items")) {
+            itemPages.add(toItemPage(item, detailByItem.get(item.path("id").asInt())));
+        }
+        List<MediaPage> mediaPages = new ArrayList<>();
+        for (JsonNode media : question.path("media")) {
+            mediaPages.add(
+                    new MediaPage(
+                            media.path("id").asInt(),
+                            media.path("type").asText(),
+                            media.path("filename").asText(),
+                            media.path("contentType").asText()));
+        }
+        return new QuestionPage(
+                questionId,
+                question.path("content").asText(),
+                question.path("instruction").asText(),
+                question.path("readingPassage").asText(null),
+                question.path("skill").asText(),
+                question.path("type").asText(),
+                question.path("position").asInt(),
+                itemPages,
+                mediaPages);
+    }
+
+    private ItemPage toItemPage(JsonNode item, UserAnswerDetailEntity answer) {
+        List<OptionPage> options = new ArrayList<>();
+        for (JsonNode option : item.path("options")) {
+            options.add(
+                    new OptionPage(
+                            option.path("id").asInt(),
+                            option.path("code").asText(),
+                            option.path("content").asText()));
+        }
+        Integer responseSeconds =
+                item.path("responseSeconds").isNull() ? null : item.path("responseSeconds").asInt();
+        return new ItemPage(
+                item.path("id").asInt(),
+                item.path("position").asInt(),
+                item.path("content").asText(),
+                responseSeconds,
+                options,
+                answer == null ? null : answer.getSelectedOptionId(),
+                answer == null ? null : answer.getUserPosition(),
+                answer == null ? null : answer.getAnswerText(),
+                answer != null && answer.getAudioPath() != null);
     }
 }

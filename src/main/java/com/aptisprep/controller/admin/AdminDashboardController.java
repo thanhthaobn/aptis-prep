@@ -15,40 +15,39 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
 
 @Controller
-@RequestMapping("/admin")
 public class AdminDashboardController {
     private final StudentManagementService students;
-    private final LessonRepository lessons;
-    private final QuestionRepository questions;
-    private final MockExamRepository exams;
+    private final LessonRepository lessonRepository;
+    private final QuestionRepository questionRepository;
+    private final MockExamRepository mockExamRepository;
     private final ExamAttemptContract attempts;
 
     public AdminDashboardController(
             StudentManagementService students,
-            LessonRepository lessons,
-            QuestionRepository questions,
-            MockExamRepository exams,
+            LessonRepository lessonRepository,
+            QuestionRepository questionRepository,
+            MockExamRepository mockExamRepository,
             ExamAttemptContract attempts) {
         this.students = students;
-        this.lessons = lessons;
-        this.questions = questions;
-        this.exams = exams;
+        this.lessonRepository = lessonRepository;
+        this.questionRepository = questionRepository;
+        this.mockExamRepository = mockExamRepository;
         this.attempts = attempts;
     }
 
-    @GetMapping("/dashboard")
+    @GetMapping("/admin/dashboard")
     public String dashboard(Principal principal, Model model) {
         model.addAttribute("email", principal.getName());
         model.addAttribute("studentCount", students.totalStudents());
-        model.addAttribute("lessonCount", lessons.count());
-        model.addAttribute("questionCount", questions.count());
-        model.addAttribute("publishedExamCount", exams.countByStatus("PUBLISHED"));
-        var recent = PageRequest.of(0, 5, Sort.by(Sort.Direction.DESC, "updatedAt", "id"));
-        var content = new ArrayList<ContentUpdate>();
-        lessons.findAll(recent)
+        model.addAttribute("lessonCount", lessonRepository.count());
+        model.addAttribute("questionCount", questionRepository.count());
+        model.addAttribute("publishedExamCount", mockExamRepository.countByStatus("PUBLISHED"));
+        PageRequest recent = PageRequest.of(0, 5, Sort.by(Sort.Direction.DESC, "updatedAt", "id"));
+        ArrayList<ContentUpdate> content = new ArrayList<ContentUpdate>();
+        lessonRepository
+                .findAll(recent)
                 .forEach(
                         value ->
                                 content.add(
@@ -57,7 +56,7 @@ public class AdminDashboardController {
                                                 "Bài học",
                                                 "/admin/lessons/" + value.getId(),
                                                 value.getUpdatedAt())));
-        questions
+        questionRepository
                 .findAll(recent)
                 .forEach(
                         value ->
@@ -67,7 +66,8 @@ public class AdminDashboardController {
                                                 "Câu hỏi",
                                                 "/admin/questions/" + value.getId(),
                                                 value.getUpdatedAt())));
-        exams.findAll(recent)
+        mockExamRepository
+                .findAll(recent)
                 .forEach(
                         value ->
                                 content.add(

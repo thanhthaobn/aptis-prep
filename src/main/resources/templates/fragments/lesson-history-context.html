@@ -50,7 +50,7 @@
         th:src="|${mediaPrefix}/video|"
       ></video>
       <a
-        th:if="${context.videoPath==null and !#strings.isEmpty(context.videoUrl)}"
+        th:if="${context.videoPath==null and (context.videoUrl != null and !context.videoUrl.isBlank())}"
         th:href="${context.videoUrl}"
         target="_blank"
         rel="noopener noreferrer"

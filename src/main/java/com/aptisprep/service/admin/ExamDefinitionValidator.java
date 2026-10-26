@@ -19,19 +19,19 @@ final class ExamDefinitionValidator {
     static final List<String> TYPES = List.of("PLACEMENT", "PRACTICE", "CHECKPOINT", "FULL_MOCK");
     private static final List<String> SKILLS = Skill.codes();
     private static final List<String> LEVELS = CefrLevel.codes();
-    private final CertificateRepository certificates;
-    private final ScoringSchemeRepository schemes;
-    private final QuestionRepository questions;
+    private final CertificateRepository certificateRepository;
+    private final ScoringSchemeRepository scoringSchemeRepository;
+    private final QuestionRepository questionRepository;
     private final CertificateSchemeContract certificateSchemes;
 
     ExamDefinitionValidator(
-            CertificateRepository certificates,
-            ScoringSchemeRepository schemes,
-            QuestionRepository questions,
+            CertificateRepository certificateRepository,
+            ScoringSchemeRepository scoringSchemeRepository,
+            QuestionRepository questionRepository,
             CertificateSchemeContract certificateSchemes) {
-        this.certificates = certificates;
-        this.schemes = schemes;
-        this.questions = questions;
+        this.certificateRepository = certificateRepository;
+        this.scoringSchemeRepository = scoringSchemeRepository;
+        this.questionRepository = questionRepository;
         this.certificateSchemes = certificateSchemes;
     }
 
@@ -70,13 +70,14 @@ final class ExamDefinitionValidator {
                                 section.getDurationMinutes() == null
                                         || section.getDurationMinutes() <= 0))
             throw new BusinessRuleException("Thời lượng section phải lớn hơn 0");
-        if (f.getCertificateId() == null || !certificates.existsById(f.getCertificateId()))
+        if (f.getCertificateId() == null || !certificateRepository.existsById(f.getCertificateId()))
             throw new BusinessRuleException("Chứng chỉ không hợp lệ");
         if (Set.of("CHECKPOINT", "PLACEMENT").contains(f.getExamType())
                 && f.getScoringSchemeId() == null)
             throw new BusinessRuleException(
                     "Placement và Checkpoint cần bộ chấm điểm để xác nhận CEFR");
-        if (f.getScoringSchemeId() != null && !schemes.existsById(f.getScoringSchemeId()))
+        if (f.getScoringSchemeId() != null
+                && !scoringSchemeRepository.existsById(f.getScoringSchemeId()))
             throw new BusinessRuleException("Bộ chấm điểm không hợp lệ");
         if (f.getScoringSchemeId() != null)
             for (ExamForm.SectionForm section : f.getSections())
@@ -90,7 +91,7 @@ final class ExamDefinitionValidator {
             throw new BusinessRuleException("Một câu hỏi không được chọn lặp trong cùng đề");
         for (Integer id : ids) {
             QuestionEntity q =
-                    questions
+                    questionRepository
                             .findById(id)
                             .orElseThrow(
                                     () ->

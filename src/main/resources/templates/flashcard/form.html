@@ -32,12 +32,7 @@
           th:object="${form}"
         >
           <section class="dashboard-panel">
-            <ul
-              class="alert alert-danger ap-alert ap-alert-danger"
-              th:if="${#fields.hasAnyErrors()}"
-            >
-              <li th:each="err : ${#fields.allErrors()}" th:text="${err}"></li>
-            </ul>
+            <div class="alert alert-danger ap-alert ap-alert-danger" th:errors="*{all}"></div>
             <div class="field">
               <label for="title">Tên bộ thẻ</label>
               <input

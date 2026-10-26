@@ -71,7 +71,7 @@
               <dd th:if="${student.goal == null}">Chưa đặt mục tiêu</dd>
               <dd
                 th:unless="${student.goal == null}"
-                th:text="${#strings.listJoin(student.goal.targets.values(), ', ')}"
+                th:text="${display.join(student.goal.targets.values(), ', ')}"
               ></dd>
             </div>
             <div>
@@ -79,7 +79,7 @@
               <dd th:if="${student.goal == null or student.goal.targetDate == null}">Chưa đặt</dd>
               <dd
                 th:unless="${student.goal == null or student.goal.targetDate == null}"
-                th:text="${#temporals.format(student.goal.targetDate, 'dd/MM/yyyy')}"
+                th:text="${display.date(student.goal.targetDate)}"
               ></dd>
             </div>
           </dl>

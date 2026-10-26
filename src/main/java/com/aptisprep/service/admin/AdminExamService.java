@@ -17,38 +17,38 @@ import org.springframework.transaction.annotation.Transactional;
 /** Exam authoring only; catalog facade retains its public controller contract. */
 @Service
 public class AdminExamService {
-    private final MockExamRepository exams;
-    private final MockExamSectionRepository sections;
-    private final MockExamQuestionRepository examQuestions;
-    private final CertificateRepository certificates;
-    private final ScoringSchemeRepository schemes;
-    private final ExamAttemptRepository attempts;
+    private final MockExamRepository mockExamRepository;
+    private final MockExamSectionRepository mockExamSectionRepository;
+    private final MockExamQuestionRepository mockExamQuestionRepository;
+    private final CertificateRepository certificateRepository;
+    private final ScoringSchemeRepository scoringSchemeRepository;
+    private final ExamAttemptRepository examAttemptRepository;
     private final ExamDefinitionValidator examValidator;
 
     public AdminExamService(
-            MockExamRepository exams,
-            MockExamSectionRepository sections,
-            MockExamQuestionRepository examQuestions,
-            CertificateRepository certificates,
-            ScoringSchemeRepository schemes,
-            ExamAttemptRepository attempts,
+            MockExamRepository mockExamRepository,
+            MockExamSectionRepository mockExamSectionRepository,
+            MockExamQuestionRepository mockExamQuestionRepository,
+            CertificateRepository certificateRepository,
+            ScoringSchemeRepository scoringSchemeRepository,
+            ExamAttemptRepository examAttemptRepository,
             ExamDefinitionValidator examValidator) {
-        this.exams = exams;
-        this.sections = sections;
-        this.examQuestions = examQuestions;
-        this.certificates = certificates;
-        this.schemes = schemes;
-        this.attempts = attempts;
+        this.mockExamRepository = mockExamRepository;
+        this.mockExamSectionRepository = mockExamSectionRepository;
+        this.mockExamQuestionRepository = mockExamQuestionRepository;
+        this.certificateRepository = certificateRepository;
+        this.scoringSchemeRepository = scoringSchemeRepository;
+        this.examAttemptRepository = examAttemptRepository;
         this.examValidator = examValidator;
     }
 
     public ExamForm examForm(Integer id) {
         ExamForm form = new ExamForm();
-        certificates.findByStatusOrderByName(RecordStatus.ACTIVE).stream()
+        certificateRepository.findByStatusOrderByName(RecordStatus.ACTIVE).stream()
                 .findFirst()
                 .ifPresent(x -> form.setCertificateId(x.getId()));
         if (form.getCertificateId() != null)
-            schemes
+            scoringSchemeRepository
                     .findByCertificateIdAndStatusOrderByVersionDesc(
                             form.getCertificateId(), RecordStatus.ACTIVE)
                     .stream()
@@ -63,7 +63,8 @@ public class AdminExamService {
             return form;
         }
         MockExamEntity exam =
-                exams.findById(id)
+                mockExamRepository
+                        .findById(id)
                         .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy đề thi"));
         form.setTitle(exam.getTitle());
         form.setDescription(exam.getDescription());
@@ -77,16 +78,17 @@ public class AdminExamService {
         form.setScoringSchemeId(exam.getScoringSchemeId());
         form.setStatus(exam.getStatus());
         form.setQuestionIds(
-                examQuestions.findByMockExamIdOrderByPosition(id).stream()
+                mockExamQuestionRepository.findByMockExamIdOrderByPosition(id).stream()
                         .map(x -> "" + x.getQuestionId())
                         .collect(Collectors.joining(",")));
         List<ExamForm.SectionForm> sectionForms = new ArrayList<>();
-        for (MockExamSectionEntity section : sections.findByMockExamIdOrderById(id)) {
+        for (MockExamSectionEntity section :
+                mockExamSectionRepository.findByMockExamIdOrderById(id)) {
             ExamForm.SectionForm sectionForm = new ExamForm.SectionForm();
             sectionForm.setSkill(section.getSkill());
             sectionForm.setDurationMinutes(section.getDurationMinutes());
             sectionForm.setQuestionIds(
-                    examQuestions.findByMockExamIdOrderByPosition(id).stream()
+                    mockExamQuestionRepository.findByMockExamIdOrderByPosition(id).stream()
                             .filter(
                                     link ->
                                             Objects.equals(
@@ -111,67 +113,30 @@ public class AdminExamService {
         MockExamEntity exam =
                 id == null
                         ? new MockExamEntity()
-                        : exams.findById(id)
+                        : mockExamRepository
+                                .findById(id)
                                 .orElseThrow(
                                         () ->
                                                 new ResourceNotFoundException(
                                                         "Không tìm thấy đề thi"));
-        if (id != null && attempts.existsByMockExamId(id)) {
+        if (id != null && examAttemptRepository.existsByMockExamId(id)) {
             throw new BusinessRuleException(
                     "Đề thi đã có lịch sử làm bài. Hãy tạo phiên bản đề mới");
         }
-        if ("PUBLISHED".equals(exam.getStatus()) && !"PUBLISHED".equals(form.getStatus()))
+        if ("PUBLISHED".equals(exam.getStatus()) && !"PUBLISHED".equals(form.getStatus())) {
             throw new BusinessRuleException("Đề đã công bố không thể quay về bản nháp");
-        exam.setTitle(form.getTitle().trim());
-        exam.setDescription(blankToNull(form.getDescription()));
-        exam.setDemoOnly(form.isDemoOnly());
-        exam.setExamType(form.getExamType());
-        exam.setTargetLevel(blankToNull(form.getTargetLevel()));
-        exam.setSkill(
-                "FULL_MOCK".equals(form.getExamType())
-                        ? "FULL_MOCK"
-                        : form.getSections().get(0).getSkill());
-        exam.setDurationMinutes(form.getDurationMinutes());
-        exam.setCertificateId(form.getCertificateId());
-        exam.setScoringSchemeId(form.getScoringSchemeId());
-        exam.setStatus("PUBLISHED".equals(form.getStatus()) ? "DRAFT" : form.getStatus());
-        exam = exams.save(exam);
-        if (id != null) {
-            examQuestions.deleteByMockExamId(id);
-            sections.deleteByMockExamId(id);
         }
-        int pos = 1;
-        int sectionOrder = 1;
-        Set<Integer> allQuestionIds = new HashSet<>();
-        for (ExamForm.SectionForm sectionForm : form.getSections()) {
-            List<Integer> ids = parseIds(sectionForm.getQuestionIds());
-            examValidator.validateQuestionSelection(ids, sectionForm.getSkill());
-            if (ids.stream().anyMatch(questionId -> !allQuestionIds.add(questionId)))
-                throw new BusinessRuleException("Một câu hỏi không được lặp giữa các section");
-            MockExamSectionEntity section = new MockExamSectionEntity();
-            section.setMockExamId(exam.getId());
-            section.setSkill(sectionForm.getSkill());
-            section.setDisplayOrder(sectionOrder++);
-            section.setDurationMinutes(sectionForm.getDurationMinutes());
-            section.setStatus("ACTIVE");
-            if (explicitSections || "FULL_MOCK".equals(form.getExamType()))
-                section = sections.save(section);
-            for (Integer questionId : ids) {
-                MockExamQuestionEntity link = new MockExamQuestionEntity();
-                link.setMockExamId(exam.getId());
-                link.setMockExamSectionId(section.getId());
-                link.setQuestionId(questionId);
-                link.setPosition(pos++);
-                examQuestions.save(link);
-            }
-        }
+        applyExamFields(exam, form);
+        exam = mockExamRepository.save(exam);
+        replaceExamSections(exam.getId(), form, explicitSections, id != null);
         return exam.getId();
     }
 
     @Transactional
     public void publishExam(Integer id) {
         MockExamEntity exam =
-                exams.findById(id)
+                mockExamRepository
+                        .findById(id)
                         .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy đề thi"));
         ExamForm form = examForm(id);
         normalizeSections(form);
@@ -186,7 +151,7 @@ public class AdminExamService {
         }
         if (all.isEmpty()) throw new BusinessRuleException("Không thể công bố đề trống");
         exam.setStatus("PUBLISHED");
-        exams.save(exam);
+        mockExamRepository.save(exam);
     }
 
     private void normalizeSections(ExamForm form) {
@@ -213,7 +178,7 @@ public class AdminExamService {
 
     Entry entry(MockExamEntity e) {
         List<Row> rows =
-                sections.findByMockExamIdOrderById(e.getId()).stream()
+                mockExamSectionRepository.findByMockExamIdOrderById(e.getId()).stream()
                         .map(s -> new Row(s.getSkill(), "Các câu hỏi đã chọn", "Section"))
                         .toList();
         return new Entry(
@@ -242,5 +207,56 @@ public class AdminExamService {
 
     private String blankToNull(String value) {
         return value == null || value.isBlank() ? null : value.trim();
+    }
+
+    private void applyExamFields(MockExamEntity exam, ExamForm form) {
+        exam.setTitle(form.getTitle().trim());
+        exam.setDescription(blankToNull(form.getDescription()));
+        exam.setDemoOnly(form.isDemoOnly());
+        exam.setExamType(form.getExamType());
+        exam.setTargetLevel(blankToNull(form.getTargetLevel()));
+        exam.setSkill(
+                "FULL_MOCK".equals(form.getExamType())
+                        ? "FULL_MOCK"
+                        : form.getSections().getFirst().getSkill());
+        exam.setDurationMinutes(form.getDurationMinutes());
+        exam.setCertificateId(form.getCertificateId());
+        exam.setScoringSchemeId(form.getScoringSchemeId());
+        exam.setStatus("PUBLISHED".equals(form.getStatus()) ? "DRAFT" : form.getStatus());
+    }
+
+    private void replaceExamSections(
+            Integer examId, ExamForm form, boolean explicitSections, boolean editing) {
+        if (editing) {
+            mockExamQuestionRepository.deleteByMockExamId(examId);
+            mockExamSectionRepository.deleteByMockExamId(examId);
+        }
+        int position = 1;
+        int sectionOrder = 1;
+        Set<Integer> allQuestionIds = new HashSet<>();
+        for (ExamForm.SectionForm sectionForm : form.getSections()) {
+            List<Integer> questionIds = parseIds(sectionForm.getQuestionIds());
+            examValidator.validateQuestionSelection(questionIds, sectionForm.getSkill());
+            for (Integer questionId : questionIds) {
+                if (!allQuestionIds.add(questionId))
+                    throw new BusinessRuleException("Một câu hỏi không được lặp giữa các section");
+            }
+            MockExamSectionEntity section = new MockExamSectionEntity();
+            section.setMockExamId(examId);
+            section.setSkill(sectionForm.getSkill());
+            section.setDisplayOrder(sectionOrder++);
+            section.setDurationMinutes(sectionForm.getDurationMinutes());
+            section.setStatus("ACTIVE");
+            if (explicitSections || "FULL_MOCK".equals(form.getExamType()))
+                section = mockExamSectionRepository.save(section);
+            for (Integer questionId : questionIds) {
+                MockExamQuestionEntity link = new MockExamQuestionEntity();
+                link.setMockExamId(examId);
+                link.setMockExamSectionId(section.getId());
+                link.setQuestionId(questionId);
+                link.setPosition(position++);
+                mockExamQuestionRepository.save(link);
+            }
+        }
     }
 }

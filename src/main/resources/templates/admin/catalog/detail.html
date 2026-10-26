@@ -98,7 +98,7 @@
               <div
                 class="catalog-answer"
                 th:each="row : ${entry.rows}"
-                th:if="${!#strings.startsWith(row.title, 'MEDIA #') and row.title != 'ĐOẠN VĂN'}"
+                th:if="${(row.title != null and !row.title.startsWith('MEDIA #')) and row.title != 'ĐOẠN VĂN'}"
               >
                 <div>
                   <strong th:text="${row.title}"></strong>
@@ -110,7 +110,7 @@
                 </div>
                 <span
                   class="badge"
-                  th:if="${!#strings.isEmpty(row.value)}"
+                  th:if="${(row.value != null and !row.value.isBlank())}"
                   th:text="${row.value}"
                 ></span>
               </div>
@@ -158,10 +158,10 @@
                       class="catalog-media-preview"
                       loading="lazy"
                       th:src="@{/admin/questions/{id}/media/{mediaId}/content(id=${entry.id},mediaId=${media.id})}"
-                      th:alt="${!#strings.isEmpty(media.altText) ? media.altText : media.originalFilename}"
+                      th:alt="${(media.altText != null and !media.altText.isBlank()) ? media.altText : media.originalFilename}"
                     />
                     <div
-                      th:if="${media.mediaType == 'AUDIO' and #strings.startsWith(media.mediaUrl, 'speech://')}"
+                      th:if="${media.mediaType == 'AUDIO' and (media.mediaUrl != null and media.mediaUrl.startsWith('speech://'))}"
                       class="catalog-speech-fallback"
                     >
                       <strong>Giọng đọc trình duyệt</strong>
@@ -170,7 +170,7 @@
                       </p>
                     </div>
                     <audio
-                      th:if="${media.mediaType == 'AUDIO' and !#strings.startsWith(media.mediaUrl, 'speech://')}"
+                      th:if="${media.mediaType == 'AUDIO' and (media.mediaUrl != null and !media.mediaUrl.startsWith('speech://'))}"
                       class="catalog-media-audio"
                       controls
                       preload="none"

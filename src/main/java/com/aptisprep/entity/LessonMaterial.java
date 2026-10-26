@@ -189,7 +189,7 @@ public class LessonMaterial {
     }
 
     public LessonMaterial copy() {
-        var value = new LessonMaterial();
+        LessonMaterial value = new LessonMaterial();
         value.transcriptVisibility = this.transcriptVisibility;
         value.sampleVisibility = this.sampleVisibility;
         value.topic = this.topic;

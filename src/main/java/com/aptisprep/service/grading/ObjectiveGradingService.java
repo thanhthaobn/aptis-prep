@@ -25,19 +25,19 @@ import org.springframework.transaction.annotation.Transactional;
 /** Owner: Thông. Objective grading and raw/scale/CEFR conversion from a server snapshot. */
 @Service
 public class ObjectiveGradingService {
-    private final UserAnswerRepository answers;
-    private final UserAnswerDetailRepository details;
-    private final ExamSkillResultRepository skillResults;
+    private final UserAnswerRepository userAnswerRepository;
+    private final UserAnswerDetailRepository userAnswerDetailRepository;
+    private final ExamSkillResultRepository examSkillResultRepository;
     private final ScoringPolicyContract scoring;
 
     public ObjectiveGradingService(
-            UserAnswerRepository answers,
-            UserAnswerDetailRepository details,
-            ExamSkillResultRepository skillResults,
+            UserAnswerRepository userAnswerRepository,
+            UserAnswerDetailRepository userAnswerDetailRepository,
+            ExamSkillResultRepository examSkillResultRepository,
             ScoringPolicyContract scoring) {
-        this.answers = answers;
-        this.details = details;
-        this.skillResults = skillResults;
+        this.userAnswerRepository = userAnswerRepository;
+        this.userAnswerDetailRepository = userAnswerDetailRepository;
+        this.examSkillResultRepository = examSkillResultRepository;
         this.scoring = scoring;
     }
 
@@ -64,7 +64,8 @@ public class ObjectiveGradingService {
         boolean subjective = false;
         for (LockedAnswer lockedAnswer : skillAnswers) {
             UserAnswerEntity answer =
-                    answers.findByIdAndAttemptId(lockedAnswer.answerId(), locked.attemptId())
+                    userAnswerRepository
+                            .findByIdAndAttemptId(lockedAnswer.answerId(), locked.attemptId())
                             .orElseThrow(
                                     () ->
                                             new ResourceNotFoundException(
@@ -78,14 +79,15 @@ public class ObjectiveGradingService {
             for (LockedItem item : lockedItems) {
                 total++;
                 UserAnswerDetailEntity detail =
-                        details.findByUserAnswerIdAndQuestionItemId(answer.getId(), item.itemId())
+                        userAnswerDetailRepository
+                                .findByUserAnswerIdAndQuestionItemId(answer.getId(), item.itemId())
                                 .orElse(null);
                 if (isCorrect(lockedAnswer.questionType(), item, detail)) correct++;
             }
         }
 
         ExamSkillResultEntity result =
-                skillResults
+                examSkillResultRepository
                         .findByAttemptIdAndSkill(locked.attemptId(), skill)
                         .orElseGet(
                                 () -> {
@@ -136,7 +138,7 @@ public class ObjectiveGradingService {
                 }
             }
         }
-        skillResults.save(result);
+        examSkillResultRepository.save(result);
     }
 
     private void applyPolicy(

@@ -2,6 +2,7 @@ package com.aptisprep.service.storage;
 
 import com.aptisprep.exception.BusinessRuleException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -10,6 +11,7 @@ import java.util.Locale;
 import java.util.concurrent.TimeUnit;
 import org.jaudiotagger.audio.AudioFileIO;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 
 /** Duration comes from server-side media, never from a learner's request. */
@@ -25,20 +27,13 @@ public class AudioDurationService {
     }
 
     public double seconds(String relativePath) {
-        var resource = storage.load(relativePath);
+        Resource resource = storage.load(relativePath);
         Path temporary = null;
         try {
-            Path path;
-            try {
-                path = resource.getFile().toPath();
-            } catch (IOException bundledInsideJar) {
-                String extension =
-                        relativePath
-                                .substring(relativePath.lastIndexOf('.'))
-                                .toLowerCase(Locale.ROOT);
-                if (!extension.matches("\\.[a-z0-9]{2,5}")) extension = ".audio";
-                temporary = Files.createTempFile("aptis-audio-metadata-", extension);
-                try (var input = resource.getInputStream()) {
+            Path path = localFile(resource);
+            if (path == null) {
+                temporary = Files.createTempFile("aptis-audio-metadata-", extension(relativePath));
+                try (InputStream input = resource.getInputStream()) {
                     Files.copy(input, temporary, StandardCopyOption.REPLACE_EXISTING);
                 }
                 path = temporary;
@@ -47,23 +42,50 @@ public class AudioDurationService {
         } catch (IOException unreadable) {
             throw new BusinessRuleException("Không đọc được file audio trên máy chủ");
         } finally {
-            if (temporary != null)
-                try {
-                    Files.deleteIfExists(temporary);
-                } catch (IOException cleanupFailed) {
-                    temporary.toFile().deleteOnExit();
-                }
+            deleteTemporaryFile(temporary);
+        }
+    }
+
+    private Path localFile(Resource resource) {
+        try {
+            return resource.getFile().toPath();
+        } catch (IOException bundledInsideJar) {
+            return null;
+        }
+    }
+
+    private String extension(String relativePath) {
+        String extension =
+                relativePath.substring(relativePath.lastIndexOf('.')).toLowerCase(Locale.ROOT);
+        return extension.matches("\\.[a-z0-9]{2,5}") ? extension : ".audio";
+    }
+
+    private void deleteTemporaryFile(Path temporary) {
+        if (temporary == null) return;
+        try {
+            Files.deleteIfExists(temporary);
+        } catch (IOException cleanupFailed) {
+            temporary.toFile().deleteOnExit();
         }
     }
 
     private double read(Path path) {
+        Double duration = readWithLibrary(path);
+        return duration != null ? duration : readWithFfprobe(path);
+    }
+
+    private Double readWithLibrary(Path path) {
         try {
             double seconds =
                     AudioFileIO.read(path.toFile()).getAudioHeader().getPreciseTrackLength();
-            if (valid(seconds)) return seconds;
+            if (isValidDuration(seconds)) return seconds;
         } catch (Exception unsupportedFormat) {
             // WEBM and files without supported headers can use a configured ffprobe.
         }
+        return null;
+    }
+
+    private double readWithFfprobe(Path path) {
         Process process = null;
         try {
             process =
@@ -85,7 +107,7 @@ public class AudioDurationService {
                                                 process.getInputStream().readNBytes(128),
                                                 StandardCharsets.UTF_8)
                                         .trim());
-                if (valid(seconds)) return seconds;
+                if (isValidDuration(seconds)) return seconds;
             }
         } catch (InterruptedException interrupted) {
             Thread.currentThread().interrupt();
@@ -99,7 +121,7 @@ public class AudioDurationService {
                         + " ffprobe.");
     }
 
-    private boolean valid(double seconds) {
+    private boolean isValidDuration(double seconds) {
         return Double.isFinite(seconds) && seconds > 0 && seconds <= 86400;
     }
 }

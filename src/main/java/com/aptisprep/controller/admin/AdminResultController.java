@@ -11,7 +11,6 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
 @Controller
-@RequestMapping("/admin/results")
 public class AdminResultController {
     private final ExamAttemptContract attempts;
 
@@ -19,7 +18,7 @@ public class AdminResultController {
         this.attempts = attempts;
     }
 
-    @GetMapping
+    @GetMapping("/admin/results")
     public String list(
             @RequestParam(defaultValue = "") String q,
             @RequestParam(defaultValue = "") String skill,
@@ -60,7 +59,7 @@ public class AdminResultController {
         return "admin/result/list";
     }
 
-    @GetMapping("/{id}")
+    @GetMapping("/admin/results/{id}")
     public String detail(@PathVariable Integer id, Principal principal, Model model) {
         model.addAttribute("attemptResult", attempts.adminResult(principal.getName(), id));
         return "admin/result/detail";

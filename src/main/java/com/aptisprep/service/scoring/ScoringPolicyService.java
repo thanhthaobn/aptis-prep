@@ -27,17 +27,17 @@ import org.springframework.transaction.annotation.Transactional;
  */
 @Service
 public class ScoringPolicyService implements ScoringPolicyContract {
-    private final ScoringSchemeRepository schemes;
-    private final ScoreBandRepository bands;
-    private final ScoringScaleRuleRepository scaleRules;
+    private final ScoringSchemeRepository scoringSchemeRepository;
+    private final ScoreBandRepository scoreBandRepository;
+    private final ScoringScaleRuleRepository scoringScaleRuleRepository;
 
     public ScoringPolicyService(
-            ScoringSchemeRepository schemes,
-            ScoreBandRepository bands,
-            ScoringScaleRuleRepository scaleRules) {
-        this.schemes = schemes;
-        this.bands = bands;
-        this.scaleRules = scaleRules;
+            ScoringSchemeRepository scoringSchemeRepository,
+            ScoreBandRepository scoreBandRepository,
+            ScoringScaleRuleRepository scoringScaleRuleRepository) {
+        this.scoringSchemeRepository = scoringSchemeRepository;
+        this.scoreBandRepository = scoreBandRepository;
+        this.scoringScaleRuleRepository = scoringScaleRuleRepository;
     }
 
     @Override
@@ -87,7 +87,9 @@ public class ScoringPolicyService implements ScoringPolicyContract {
                 || scaleScore.compareTo(rule.getScaleMax()) > 0) {
             throw new BusinessRuleException("Điểm scale nằm ngoài policy của kỹ năng");
         }
-        return bands.findBySchemeIdAndSkillOrderByMinScoreAsc(schemeId, normalized).stream()
+        return scoreBandRepository
+                .findBySchemeIdAndSkillOrderByMinScoreAsc(schemeId, normalized)
+                .stream()
                 .filter(
                         band ->
                                 scaleScore.compareTo(band.getMinScore()) >= 0
@@ -110,7 +112,8 @@ public class ScoringPolicyService implements ScoringPolicyContract {
         String normalized = normalizeSkill(skill);
         ScoringScaleRule rule = requireRule(schemeId, normalized);
         ScoreBandCoverage.requireComplete(
-                rule, bands.findBySchemeIdAndSkillOrderByMinScoreAsc(schemeId, normalized));
+                rule,
+                scoreBandRepository.findBySchemeIdAndSkillOrderByMinScoreAsc(schemeId, normalized));
     }
 
     @Override
@@ -140,7 +143,8 @@ public class ScoringPolicyService implements ScoringPolicyContract {
     private ScoringScheme requireActiveScheme(Integer id) {
         if (id == null) throw new BusinessRuleException("Thiếu phiên bản bộ chấm điểm");
         ScoringScheme scheme =
-                schemes.findById(id)
+                scoringSchemeRepository
+                        .findById(id)
                         .orElseThrow(
                                 () -> new ResourceNotFoundException("Không tìm thấy bộ chấm điểm"));
         if (scheme.getStatus() != RecordStatus.ACTIVE
@@ -153,13 +157,14 @@ public class ScoringPolicyService implements ScoringPolicyContract {
     /** Historical attempts keep using their immutable scheme even after it is retired. */
     private ScoringScheme requireHistoricalScheme(Integer id) {
         if (id == null) throw new BusinessRuleException("Thiếu phiên bản bộ chấm điểm");
-        return schemes.findById(id)
+        return scoringSchemeRepository
+                .findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy bộ chấm điểm"));
     }
 
     private ScoringScaleRule requireRule(Integer schemeId, String skill) {
         requireHistoricalScheme(schemeId);
-        return scaleRules
+        return scoringScaleRuleRepository
                 .findBySchemeIdAndSkillIgnoreCase(schemeId, skill)
                 .orElseThrow(
                         () ->

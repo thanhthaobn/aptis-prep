@@ -35,7 +35,7 @@
             th:each="skill : ${attemptResult.skills}"
           >
             <div class="result-skill-heading">
-              <h2 th:text="${#strings.replace(skill.skill,'_',' ')}"></h2>
+              <h2 th:text="${(skill.skill == null ? null : skill.skill.replace('_', ' '))}"></h2>
               <strong th:text="${skill.estimatedLevel==null?'—':skill.estimatedLevel}"></strong>
             </div>
             <dl class="result-score-list">

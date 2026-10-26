@@ -168,7 +168,7 @@
                   type="checkbox"
                   class="section-question"
                   th:attr="data-question-id=${question.id},data-section-index=${sectionStat.index},data-skill=${question.skill}"
-                  th:checked="${section.questionIds != null and #strings.contains(',' + section.questionIds + ',', ',' + question.id + ',')}"
+                  th:checked="${section.questionIds != null and (',' + section.questionIds + ',').contains(',' + question.id + ',')}"
                 />
                 <span
                   th:text="${question.id + ' · ' + question.skill + ' · ' + question.content}"

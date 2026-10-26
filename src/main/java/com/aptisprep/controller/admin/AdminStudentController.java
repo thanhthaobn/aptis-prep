@@ -10,7 +10,6 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 @Controller
-@RequestMapping("/admin/students")
 public class AdminStudentController {
     private final StudentManagementService students;
 
@@ -18,7 +17,7 @@ public class AdminStudentController {
         this.students = students;
     }
 
-    @GetMapping
+    @GetMapping("/admin/students")
     public String list(
             @RequestParam(defaultValue = "") String q,
             @RequestParam(defaultValue = "") String status,
@@ -35,7 +34,7 @@ public class AdminStudentController {
         return "admin/student/list";
     }
 
-    @GetMapping("/{id}")
+    @GetMapping("/admin/students/{id}")
     public String detail(
             @PathVariable int id,
             @RequestParam(defaultValue = "0") int attemptPage,
@@ -45,7 +44,7 @@ public class AdminStudentController {
         return "admin/student/detail";
     }
 
-    @PostMapping("/{id}/lock")
+    @PostMapping("/admin/students/{id}/lock")
     public String lock(
             @PathVariable int id, Principal principal, RedirectAttributes redirectAttributes) {
         try {
@@ -59,7 +58,7 @@ public class AdminStudentController {
         return "redirect:/admin/students/" + id;
     }
 
-    @PostMapping("/{id}/unlock")
+    @PostMapping("/admin/students/{id}/unlock")
     public String unlock(
             @PathVariable int id, Principal principal, RedirectAttributes redirectAttributes) {
         try {

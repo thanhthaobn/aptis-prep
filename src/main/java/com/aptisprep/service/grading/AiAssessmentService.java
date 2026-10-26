@@ -35,9 +35,9 @@ public class AiAssessmentService implements AiAssessmentContract {
     private static final Logger log = LoggerFactory.getLogger(AiAssessmentService.class);
     private static final Set<String> SKILLS = Set.of("WRITING", "SPEAKING");
     private static final Set<String> LEVELS = Set.copyOf(CefrLevel.codes());
-    private final AiAssessmentJobRepository jobs;
-    private final AiAssessmentRepository assessments;
-    private final UserRepository users;
+    private final AiAssessmentJobRepository aiAssessmentJobRepository;
+    private final AiAssessmentRepository aiAssessmentRepository;
+    private final UserRepository userRepository;
     private final WritingGradingService writing;
     private final SpeakingGradingService speaking;
     private final TransactionTemplate transactions;
@@ -46,31 +46,40 @@ public class AiAssessmentService implements AiAssessmentContract {
     private final AiProperties properties;
 
     public AiAssessmentService(
-            AiAssessmentJobRepository jobs,
-            AiAssessmentRepository assessments,
-            UserRepository users,
+            AiAssessmentJobRepository aiAssessmentJobRepository,
+            AiAssessmentRepository aiAssessmentRepository,
+            UserRepository userRepository,
             WritingGradingService writing,
             SpeakingGradingService speaking,
             PlatformTransactionManager transactionManager,
             ApplicationEventPublisher events,
             AttemptOutboxService outbox) {
-        this(jobs, assessments, users, writing, speaking, transactionManager, events, outbox, null);
+        this(
+                aiAssessmentJobRepository,
+                aiAssessmentRepository,
+                userRepository,
+                writing,
+                speaking,
+                transactionManager,
+                events,
+                outbox,
+                null);
     }
 
     @Autowired
     public AiAssessmentService(
-            AiAssessmentJobRepository jobs,
-            AiAssessmentRepository assessments,
-            UserRepository users,
+            AiAssessmentJobRepository aiAssessmentJobRepository,
+            AiAssessmentRepository aiAssessmentRepository,
+            UserRepository userRepository,
             WritingGradingService writing,
             SpeakingGradingService speaking,
             PlatformTransactionManager transactionManager,
             ApplicationEventPublisher events,
             AttemptOutboxService outbox,
             AiProperties properties) {
-        this.jobs = jobs;
-        this.assessments = assessments;
-        this.users = users;
+        this.aiAssessmentJobRepository = aiAssessmentJobRepository;
+        this.aiAssessmentRepository = aiAssessmentRepository;
+        this.userRepository = userRepository;
         this.writing = writing;
         this.speaking = speaking;
         this.transactions = new TransactionTemplate(transactionManager);
@@ -83,65 +92,9 @@ public class AiAssessmentService implements AiAssessmentContract {
     public AssessmentView request(AssessmentRequest request) {
         validateRequest(request);
         try {
-            return transactions.execute(
-                    status -> {
-                        Optional<AiAssessmentJob> found =
-                                jobs.findByAssessmentKeyForUpdate(request.assessmentKey());
-                        if (found.isPresent()) {
-                            AiAssessmentJob job = found.get();
-                            if (!sameRequest(job, request))
-                                throw new BusinessRuleException(
-                                        "assessmentKey đã được dùng cho một phiên bản bài khác");
-                            return viewFor(job);
-                        }
-                        User user = activeUser(request.userId());
-                        AiAssessmentJob job = new AiAssessmentJob();
-                        job.setSourceType(request.sourceType());
-                        job.setSourceId(request.sourceId());
-                        job.setAssessmentKey(request.assessmentKey());
-                        job.setUserId(user.getId());
-                        job.setAttemptId(request.attemptId());
-                        job.setAnswerId(request.answerId());
-                        job.setAnswerVersion(request.answerVersion());
-                        job.setSkill(normalizeSkill(request.skill()));
-                        job.setTaskType(normalizeTask(request.taskType()));
-                        job.setTaskContent(request.taskContent().trim());
-                        job.setLockedContent(request.lockedContent().trim());
-                        job.setRubricVersion(request.rubricVersion().trim());
-                        job.setPolicyVersion(request.policyVersion().trim());
-                        job.setMaxScore(request.maxScore());
-                        job.setTranscript(blankToNull(request.transcript()));
-                        job.setState(AiJobState.PENDING);
-                        job.setRetryCount(0);
-                        jobs.save(job);
-                        AiAssessment assessment = new AiAssessment();
-                        assessment.setJob(job);
-                        assessment.setAssessmentKey(job.getAssessmentKey());
-                        assessment.setAnswerId(job.getAnswerId());
-                        assessment.setAnswerVersion(job.getAnswerVersion());
-                        assessment.setState(AiAssessmentState.PENDING);
-                        assessment.setRubricVersion(job.getRubricVersion());
-                        assessment.setPolicyVersion(job.getPolicyVersion());
-                        assessments.save(assessment);
-                        return viewFor(job);
-                    });
+            return transactions.execute(status -> createOrReadAssessment(request));
         } catch (DataIntegrityViolationException duplicate) {
-            return transactions.execute(
-                    status ->
-                            jobs.findByAssessmentKeyForUpdate(request.assessmentKey())
-                                    .map(
-                                            job -> {
-                                                if (!sameRequest(job, request))
-                                                    throw new BusinessRuleException(
-                                                            "assessmentKey đã được dùng cho một"
-                                                                    + " phiên bản bài khác");
-                                                return viewFor(job);
-                                            })
-                                    .orElseThrow(
-                                            () ->
-                                                    new BusinessRuleException(
-                                                            "Không thể tạo tác vụ đánh giá lúc"
-                                                                    + " này")));
+            return transactions.execute(status -> readExistingAssessment(request));
         }
     }
 
@@ -191,15 +144,15 @@ public class AiAssessmentService implements AiAssessmentContract {
                     job.setProcessingToken(null);
                     job.setLastError(null);
                     job.setNextRetryAt(null);
-                    jobs.save(job);
-                    assessments
+                    aiAssessmentJobRepository.save(job);
+                    aiAssessmentRepository
                             .findFirstByJobIdAndAnswerVersionOrderByIdDesc(
                                     job.getId(), job.getAnswerVersion())
                             .ifPresent(
                                     value -> {
                                         value.setState(AiAssessmentState.PENDING);
                                         value.setErrorMessage(null);
-                                        assessments.save(value);
+                                        aiAssessmentRepository.save(value);
                                     });
                 });
         return process(assessmentKey);
@@ -219,7 +172,8 @@ public class AiAssessmentService implements AiAssessmentContract {
 
     private JobSnapshot claim(String key) {
         AiAssessmentJob job =
-                jobs.findByAssessmentKeyForUpdate(key)
+                aiAssessmentJobRepository
+                        .findByAssessmentKeyForUpdate(key)
                         .orElseThrow(
                                 () ->
                                         new ResourceNotFoundException(
@@ -282,7 +236,7 @@ public class AiAssessmentService implements AiAssessmentContract {
         job.setProcessingToken(processingToken);
         job.setNextRetryAt(null);
         job.setRetryCount(job.getRetryCount() + 1);
-        jobs.save(job);
+        aiAssessmentJobRepository.save(job);
         return new JobSnapshot(
                 key,
                 job.getTaskType(),
@@ -312,9 +266,9 @@ public class AiAssessmentService implements AiAssessmentContract {
                             job.setProcessingToken(null);
                             job.setLastError(null);
                             job.setNextRetryAt(null);
-                            jobs.save(job);
+                            aiAssessmentJobRepository.save(job);
                             AiAssessment assessment =
-                                    assessments
+                                    aiAssessmentRepository
                                             .findFirstByJobIdAndAnswerVersionOrderByIdDesc(
                                                     job.getId(), job.getAnswerVersion())
                                             .orElseThrow();
@@ -330,7 +284,7 @@ public class AiAssessmentService implements AiAssessmentContract {
                             assessment.setModel(result.model());
                             assessment.setErrorMessage(null);
                             assessment.setCompletedAt(LocalDateTime.now());
-                            assessments.save(assessment);
+                            aiAssessmentRepository.save(assessment);
                             AiAssessmentCompletedEvent event = completedEvent(job);
                             if (event != null) outbox.enqueueAiAssessmentCompleted(event);
                             return new FinishSnapshot(viewFor(job), event, true);
@@ -345,7 +299,8 @@ public class AiAssessmentService implements AiAssessmentContract {
                 Boolean.TRUE.equals(
                         transactions.execute(
                                 status ->
-                                        jobs.findByAssessmentKey(event.assessmentKey())
+                                        aiAssessmentJobRepository
+                                                .findByAssessmentKey(event.assessmentKey())
                                                 .map(
                                                         job ->
                                                                 "EXAM_ANSWER"
@@ -370,10 +325,10 @@ public class AiAssessmentService implements AiAssessmentContract {
     @Scheduled(fixedDelayString = "${app.ai.recovery-ms:30000}")
     public void recoverAiJobs() {
         LocalDateTime now = LocalDateTime.now();
-        var page = PageRequest.of(0, AiProcessingPolicy.RECOVERY_BATCH_SIZE);
-        var recoverable =
+        PageRequest page = PageRequest.of(0, AiProcessingPolicy.RECOVERY_BATCH_SIZE);
+        List<String> recoverable =
                 properties == null || properties.isEnabled()
-                        ? jobs.findRecoverableKeys(
+                        ? aiAssessmentJobRepository.findRecoverableKeys(
                                 AiJobState.PENDING,
                                 AiJobState.PROCESSING,
                                 now,
@@ -388,7 +343,7 @@ public class AiAssessmentService implements AiAssessmentContract {
                 deferPending(key);
             }
         }
-        for (String key : jobs.findCompletedWithoutCallback(page)) {
+        for (String key : aiAssessmentJobRepository.findCompletedWithoutCallback(page)) {
             try {
                 transactions.executeWithoutResult(
                         status -> {
@@ -412,7 +367,7 @@ public class AiAssessmentService implements AiAssessmentContract {
                             job.setNextRetryAt(
                                     LocalDateTime.now()
                                             .plusSeconds(AiProcessingPolicy.CLAIM_RETRY_SECONDS));
-                            jobs.save(job);
+                            aiAssessmentJobRepository.save(job);
                         }
                     });
         } catch (RuntimeException unavailable) {
@@ -426,8 +381,8 @@ public class AiAssessmentService implements AiAssessmentContract {
         job.setProcessingToken(null);
         job.setNextRetryAt(null);
         job.setLastError(message);
-        jobs.save(job);
-        assessments
+        aiAssessmentJobRepository.save(job);
+        aiAssessmentRepository
                 .findFirstByJobIdAndAnswerVersionOrderByIdDesc(job.getId(), job.getAnswerVersion())
                 .ifPresent(
                         value -> {
@@ -437,7 +392,7 @@ public class AiAssessmentService implements AiAssessmentContract {
                             value.setFeedback(null);
                             value.setCompletedAt(null);
                             value.setErrorMessage(message);
-                            assessments.save(value);
+                            aiAssessmentRepository.save(value);
                         });
         AiAssessmentCompletedEvent event =
                 "EXAM_ANSWER".equals(job.getSourceType())
@@ -480,7 +435,7 @@ public class AiAssessmentService implements AiAssessmentContract {
         if (!"EXAM_ANSWER".equals(job.getSourceType())
                 || job.getAttemptId() == null
                 || job.getAnswerId() == null) return null;
-        return assessments
+        return aiAssessmentRepository
                 .findFirstByJobIdAndAnswerVersionOrderByIdDesc(job.getId(), job.getAnswerVersion())
                 .filter(
                         value ->
@@ -512,9 +467,9 @@ public class AiAssessmentService implements AiAssessmentContract {
                             job.setProcessingToken(null);
                             job.setNextRetryAt(null);
                             job.setLastError(error);
-                            jobs.save(job);
+                            aiAssessmentJobRepository.save(job);
                             AiAssessment assessment =
-                                    assessments
+                                    aiAssessmentRepository
                                             .findFirstByJobIdAndAnswerVersionOrderByIdDesc(
                                                     job.getId(), job.getAnswerVersion())
                                             .orElseThrow();
@@ -524,7 +479,7 @@ public class AiAssessmentService implements AiAssessmentContract {
                             assessment.setFeedback(null);
                             assessment.setErrorMessage(error);
                             assessment.setCompletedAt(null);
-                            assessments.save(assessment);
+                            aiAssessmentRepository.save(assessment);
                             AiAssessmentCompletedEvent event =
                                     new AiAssessmentCompletedEvent(
                                             job.getAssessmentKey(),
@@ -544,7 +499,7 @@ public class AiAssessmentService implements AiAssessmentContract {
 
     private AssessmentView viewFor(AiAssessmentJob job) {
         AiAssessment assessment =
-                assessments
+                aiAssessmentRepository
                         .findFirstByJobIdAndAnswerVersionOrderByIdDesc(
                                 job.getId(), job.getAnswerVersion())
                         .orElse(null);
@@ -642,7 +597,8 @@ public class AiAssessmentService implements AiAssessmentContract {
 
     private User activeUser(Integer id) {
         User user =
-                users.findById(id)
+                userRepository
+                        .findById(id)
                         .orElseThrow(
                                 () -> new ResourceNotFoundException("Không tìm thấy tài khoản"));
         if (user.getRole() != Role.STUDENT || user.getStatus() != UserStatus.ACTIVE) {
@@ -652,18 +608,21 @@ public class AiAssessmentService implements AiAssessmentContract {
     }
 
     private AiAssessmentJob job(String key) {
-        return jobs.findByAssessmentKey(key)
+        return aiAssessmentJobRepository
+                .findByAssessmentKey(key)
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy tác vụ đánh giá"));
     }
 
     private AiAssessmentJob jobForUpdate(String key) {
-        return jobs.findByAssessmentKeyForUpdate(key)
+        return aiAssessmentJobRepository
+                .findByAssessmentKeyForUpdate(key)
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy tác vụ đánh giá"));
     }
 
     private void authorize(AiAssessmentJob job, Integer requesterId, boolean admin) {
         User requester =
-                users.findById(requesterId)
+                userRepository
+                        .findById(requesterId)
                         .orElseThrow(
                                 () ->
                                         new AccessDeniedException(
@@ -747,4 +706,63 @@ public class AiAssessmentService implements AiAssessmentContract {
 
     private record FailureSnapshot(
             AssessmentView view, AiAssessmentCompletedEvent event, boolean applied) {}
+
+    private AssessmentView createOrReadAssessment(AssessmentRequest request) {
+        Optional<AiAssessmentJob> existing =
+                aiAssessmentJobRepository.findByAssessmentKeyForUpdate(request.assessmentKey());
+        if (existing.isPresent()) return matchingAssessment(existing.get(), request);
+        User user = activeUser(request.userId());
+        AiAssessmentJob job = newPendingJob(request, user.getId());
+        aiAssessmentJobRepository.save(job);
+        AiAssessment assessment = new AiAssessment();
+        assessment.setJob(job);
+        assessment.setAssessmentKey(job.getAssessmentKey());
+        assessment.setAnswerId(job.getAnswerId());
+        assessment.setAnswerVersion(job.getAnswerVersion());
+        assessment.setState(AiAssessmentState.PENDING);
+        assessment.setRubricVersion(job.getRubricVersion());
+        assessment.setPolicyVersion(job.getPolicyVersion());
+        aiAssessmentRepository.save(assessment);
+        return viewFor(job);
+    }
+
+    private AiAssessmentJob newPendingJob(AssessmentRequest request, Integer userId) {
+        AiAssessmentJob job = new AiAssessmentJob();
+        job.setSourceType(request.sourceType());
+        job.setSourceId(request.sourceId());
+        job.setAssessmentKey(request.assessmentKey());
+        job.setUserId(userId);
+        job.setAttemptId(request.attemptId());
+        job.setAnswerId(request.answerId());
+        job.setAnswerVersion(request.answerVersion());
+        job.setSkill(normalizeSkill(request.skill()));
+        job.setTaskType(normalizeTask(request.taskType()));
+        job.setTaskContent(request.taskContent().trim());
+        job.setLockedContent(request.lockedContent().trim());
+        job.setRubricVersion(request.rubricVersion().trim());
+        job.setPolicyVersion(request.policyVersion().trim());
+        job.setMaxScore(request.maxScore());
+        job.setTranscript(blankToNull(request.transcript()));
+        job.setState(AiJobState.PENDING);
+        job.setRetryCount(0);
+        return job;
+    }
+
+    private AssessmentView readExistingAssessment(AssessmentRequest request) {
+        AiAssessmentJob job =
+                aiAssessmentJobRepository
+                        .findByAssessmentKeyForUpdate(request.assessmentKey())
+                        .orElseThrow(
+                                () ->
+                                        new BusinessRuleException(
+                                                "Không thể tạo tác vụ đánh giá lúc này"));
+        return matchingAssessment(job, request);
+    }
+
+    private AssessmentView matchingAssessment(AiAssessmentJob job, AssessmentRequest request) {
+        if (!sameRequest(job, request))
+            throw new BusinessRuleException(
+                    "assessmentKey đã được dùng cho một phiên bản bài khác");
+        return viewFor(job);
+    }
 }

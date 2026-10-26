@@ -112,7 +112,7 @@
                 th:text="${account.goal.certificateName != null ? account.goal.certificateName : 'Chưa chọn chứng chỉ'}"
               ></p>
               <p
-                th:text="${account.goal.targetDate != null ? 'Ngày mục tiêu: ' + #temporals.format(account.goal.targetDate, 'dd/MM/yyyy') : 'Chưa đặt ngày mục tiêu'}"
+                th:text="${account.goal.targetDate != null ? 'Ngày mục tiêu: ' + display.date(account.goal.targetDate) : 'Chưa đặt ngày mục tiêu'}"
               ></p>
             </div>
             <a class="button button-secondary" th:href="@{/student/goals}">Thiết lập mục tiêu</a>

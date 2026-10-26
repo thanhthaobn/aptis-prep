@@ -20,25 +20,25 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class AccountAccessService implements AccountAccessContract {
-    private final UserRepository users;
-    private final UserGoalRepository goals;
-    private final UserGoalSkillRepository goalSkills;
-    private final UserSkillProfileRepository profiles;
-    private final ProfileApplicationRepository applications;
+    private final UserRepository userRepository;
+    private final UserGoalRepository userGoalRepository;
+    private final UserGoalSkillRepository userGoalSkillRepository;
+    private final UserSkillProfileRepository userSkillProfileRepository;
+    private final ProfileApplicationRepository profileApplicationRepository;
     private final ObjectProvider<ExamAttemptContract> attempts;
 
     public AccountAccessService(
-            UserRepository users,
-            UserGoalRepository goals,
-            UserGoalSkillRepository goalSkills,
-            UserSkillProfileRepository profiles,
-            ProfileApplicationRepository applications,
+            UserRepository userRepository,
+            UserGoalRepository userGoalRepository,
+            UserGoalSkillRepository userGoalSkillRepository,
+            UserSkillProfileRepository userSkillProfileRepository,
+            ProfileApplicationRepository profileApplicationRepository,
             ObjectProvider<ExamAttemptContract> attempts) {
-        this.users = users;
-        this.goals = goals;
-        this.goalSkills = goalSkills;
-        this.profiles = profiles;
-        this.applications = applications;
+        this.userRepository = userRepository;
+        this.userGoalRepository = userGoalRepository;
+        this.userGoalSkillRepository = userGoalSkillRepository;
+        this.userSkillProfileRepository = userSkillProfileRepository;
+        this.profileApplicationRepository = profileApplicationRepository;
         this.attempts = attempts;
     }
 
@@ -46,7 +46,8 @@ public class AccountAccessService implements AccountAccessContract {
     @Transactional(readOnly = true)
     public Integer requireActiveStudent(String principalEmail) {
         User user =
-                users.findByEmailIgnoreCase(normalizeEmail(principalEmail))
+                userRepository
+                        .findByEmailIgnoreCase(normalizeEmail(principalEmail))
                         .orElseThrow(
                                 () -> new ResourceNotFoundException("Không tìm thấy tài khoản"));
         if (user.getRole() != Role.STUDENT || user.getStatus() != UserStatus.ACTIVE) {
@@ -65,11 +66,12 @@ public class AccountAccessService implements AccountAccessContract {
     public LearnerContext context(Integer userId) {
         User user = activeStudent(userId);
         List<SkillTarget> targets =
-                goals.findFirstByUserIdAndStatusOrderByCreatedAtDesc(
+                userGoalRepository
+                        .findFirstByUserIdAndStatusOrderByCreatedAtDesc(
                                 user.getId(), GoalStatus.ACTIVE)
                         .map(
                                 goal ->
-                                        goalSkills.findByGoalId(goal.getId()).stream()
+                                        userGoalSkillRepository.findByGoalId(goal.getId()).stream()
                                                 .map(
                                                         skill ->
                                                                 new SkillTarget(
@@ -78,7 +80,7 @@ public class AccountAccessService implements AccountAccessContract {
                                                 .toList())
                         .orElseGet(List::of);
         List<SkillLevel> levels =
-                profiles.findByUserIdOrderBySkillAsc(user.getId()).stream()
+                userSkillProfileRepository.findByUserIdOrderBySkillAsc(user.getId()).stream()
                         .map(
                                 profile ->
                                         new SkillLevel(
@@ -132,11 +134,13 @@ public class AccountAccessService implements AccountAccessContract {
                 || !"COMPLETED".equalsIgnoreCase(result.gradingState())) {
             throw new BusinessRuleException("Kết quả kỹ năng chưa đủ điều kiện cập nhật hồ sơ");
         }
-        if (applications.existsByUserIdAndAttemptIdAndSkill(user.getId(), attemptId, skill)) {
+        if (profileApplicationRepository.existsByUserIdAndAttemptIdAndSkill(
+                user.getId(), attemptId, skill)) {
             return;
         }
         UserSkillProfile profile =
-                profiles.findByUserIdAndSkill(user.getId(), skill)
+                userSkillProfileRepository
+                        .findByUserIdAndSkill(user.getId(), skill)
                         .orElseGet(
                                 () -> {
                                     UserSkillProfile created = new UserSkillProfile();
@@ -181,7 +185,7 @@ public class AccountAccessService implements AccountAccessContract {
             // profile. user_skill_profiles.current_level is NOT NULL, so do
             // not persist a newly-created empty profile or invent A1.
             if (profile.getId() != null && profile.getCurrentLevel() != null) {
-                profiles.save(profile);
+                userSkillProfileRepository.save(profile);
             }
             saveApplication(user, attemptId, skill);
             return;
@@ -197,7 +201,7 @@ public class AccountAccessService implements AccountAccessContract {
         if (placement == null && profile.getCheckpointSourceAttemptId() != null) {
             profile.setSourceAttemptId(profile.getCheckpointSourceAttemptId());
         }
-        profiles.save(profile);
+        userSkillProfileRepository.save(profile);
         saveApplication(user, attemptId, skill);
     }
 
@@ -206,7 +210,7 @@ public class AccountAccessService implements AccountAccessContract {
         application.setUserId(user.getId());
         application.setAttemptId(attemptId);
         application.setSkill(skill);
-        applications.save(application);
+        profileApplicationRepository.save(application);
     }
 
     private boolean isNewer(
@@ -228,7 +232,8 @@ public class AccountAccessService implements AccountAccessContract {
 
     private User activeStudent(Integer userId) {
         User user =
-                users.findById(userId)
+                userRepository
+                        .findById(userId)
                         .orElseThrow(
                                 () -> new ResourceNotFoundException("Không tìm thấy tài khoản"));
         if (user.getRole() != Role.STUDENT || user.getStatus() != UserStatus.ACTIVE) {
@@ -239,7 +244,8 @@ public class AccountAccessService implements AccountAccessContract {
 
     private User activeStudentForUpdate(Integer userId) {
         User user =
-                users.findByIdForUpdate(userId)
+                userRepository
+                        .findByIdForUpdate(userId)
                         .orElseThrow(
                                 () -> new ResourceNotFoundException("Không tìm thấy tài khoản"));
         if (user.getRole() != Role.STUDENT || user.getStatus() != UserStatus.ACTIVE) {

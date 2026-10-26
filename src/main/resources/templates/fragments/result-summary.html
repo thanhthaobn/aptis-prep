@@ -26,7 +26,7 @@
               </span>
               <span class="result-meta-item" th:if="${res.submittedAt != null}">
                 <strong>Thời gian nộp:</strong>
-                <span th:text="${#temporals.format(res.submittedAt, 'HH:mm dd/MM/yyyy')}"></span>
+                <span th:text="${display.timeAndDate(res.submittedAt)}"></span>
               </span>
             </div>
           </div>
@@ -134,7 +134,7 @@
               </span>
               <span
                 class="badge"
-                th:classappend="${skill.estimatedLevel != null ? 'badge-cefr-' + #strings.toLowerCase(skill.estimatedLevel) : 'badge-secondary'}"
+                th:classappend="${skill.estimatedLevel != null ? 'badge-cefr-' + (skill.estimatedLevel == null ? null : skill.estimatedLevel.toLowerCase()) : 'badge-secondary'}"
                 th:text="${skill.estimatedLevel != null ? skill.estimatedLevel : (skill.gradingState == 'ERROR' ? 'Chấm lỗi' : (skill.gradingState == 'PENDING' or skill.gradingState == 'WAITING' ? 'Đang chấm' : 'Chưa đánh giá'))}"
               ></span>
             </div>
@@ -168,7 +168,7 @@
             <!-- Phản hồi nhận xét từ hệ thống hoặc AI -->
             <div
               class="skill-feedback-box"
-              th:if="${skill.feedback != null and !#strings.isEmpty(skill.feedback)}"
+              th:if="${skill.feedback != null and (skill.feedback != null and !skill.feedback.isBlank())}"
             >
               <strong>Nhận xét:</strong>
               <span th:text="${skill.feedback}"></span>

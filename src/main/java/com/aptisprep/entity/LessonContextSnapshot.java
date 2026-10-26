@@ -23,7 +23,7 @@ public record LessonContextSnapshot(
     private static final JsonMapper JSON = JsonMapper.builder().build();
 
     public static LessonContextSnapshot capture(Lesson l) {
-        var m = l.getMaterial();
+        LessonMaterial m = l.getMaterial();
         return new LessonContextSnapshot(
                 l.getTitle(),
                 l.getSkill(),

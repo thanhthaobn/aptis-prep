@@ -10,18 +10,21 @@ import org.springframework.stereotype.Component;
 /** Rechecks persisted path authorization inside the attempt transaction, after locking the learner. */
 @Component
 final class CheckpointStartValidator {
-    private final LearningPathRepository paths;
-    private final LearningPathItemRepository items;
+    private final LearningPathRepository learningPathRepository;
+    private final LearningPathItemRepository learningPathItemRepository;
 
-    CheckpointStartValidator(LearningPathRepository paths, LearningPathItemRepository items) {
-        this.paths = paths;
-        this.items = items;
+    CheckpointStartValidator(
+            LearningPathRepository learningPathRepository,
+            LearningPathItemRepository learningPathItemRepository) {
+        this.learningPathRepository = learningPathRepository;
+        this.learningPathItemRepository = learningPathItemRepository;
     }
 
     void validate(Integer userId, MockExamEntity exam, Integer pathId) {
         if (pathId == null) throw new BusinessRuleException("Checkpoint cần ngữ cảnh lộ trình học");
-        var path =
-                paths.findByIdAndUserId(pathId, userId)
+        LearningPath path =
+                learningPathRepository
+                        .findByIdAndUserId(pathId, userId)
                         .orElseThrow(
                                 () -> new BusinessRuleException("Lộ trình không thuộc học viên"));
         if (!"ACTIVE".equals(path.getStatus())
@@ -32,8 +35,8 @@ final class CheckpointStartValidator {
                 || !ExamStartValidator.normalizeSkill(path.getSkill())
                         .equals(ExamStartValidator.normalizeSkill(exam.getSkill())))
             throw new BusinessRuleException("Checkpoint không khớp chặng học đang hoạt động");
-        var required =
-                items.findByLearningPathIdOrderByPositionAsc(pathId).stream()
+        List<LearningPathItem> required =
+                learningPathItemRepository.findByLearningPathIdOrderByPositionAsc(pathId).stream()
                         .filter(LearningPathItem::isRequired)
                         .toList();
         if (required.isEmpty()

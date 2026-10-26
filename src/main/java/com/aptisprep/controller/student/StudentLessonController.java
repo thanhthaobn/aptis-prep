@@ -1,6 +1,7 @@
 package com.aptisprep.controller.student;
 
 import com.aptisprep.entity.Lesson;
+import com.aptisprep.entity.LessonMaterial;
 import com.aptisprep.exception.BusinessRuleException;
 import com.aptisprep.service.learning.FlashcardSetService;
 import com.aptisprep.service.learning.LessonListeningService;
@@ -19,7 +20,6 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 @Controller
-@RequestMapping("/student/lessons")
 public class StudentLessonController {
     @Autowired private LessonListeningService listening;
 
@@ -34,7 +34,7 @@ public class StudentLessonController {
         flashcards = f;
     }
 
-    @GetMapping
+    @GetMapping("/student/lessons")
     public String list(
             @RequestParam(defaultValue = "") String q,
             @RequestParam(defaultValue = "") String skill,
@@ -43,8 +43,8 @@ public class StudentLessonController {
             Model m) {
         if (q.length() > 255 || skill.length() > 80 || level.length() > 40)
             throw new BusinessRuleException("Bộ lọc không hợp lệ");
-        var query = fold(q);
-        var items =
+        String query = fold(q);
+        List<Lesson> items =
                 service.publishedLessons().stream()
                         .filter(
                                 l ->
@@ -73,9 +73,9 @@ public class StudentLessonController {
         return "student/lesson/list";
     }
 
-    @GetMapping("/{id}")
+    @GetMapping("/student/lessons/{id}")
     public String detail(@PathVariable Integer id, Principal p, Model m) {
-        var l = service.requirePublished(id);
+        Lesson l = service.requirePublished(id);
         service.recordOpen(p.getName(), id);
         m.addAttribute("release", teaching.releaseState(id, p.getName()));
         m.addAttribute("canAssess", teaching.canAssess(id, p.getName()));
@@ -99,20 +99,20 @@ public class StudentLessonController {
         return "student/lesson/detail";
     }
 
-    @PostMapping("/{id}/check")
+    @PostMapping("/student/lessons/{id}/check")
     public String check(
             @PathVariable Integer id,
             @RequestParam Map<String, String> answers,
             Principal principal,
             RedirectAttributes redirect) {
         redirect.addFlashAttribute("feedback", teaching.grade(id, answers, principal.getName()));
-        var skill = service.requirePublished(id).getSkill();
+        String skill = service.requirePublished(id).getSkill();
         return "redirect:/student/lessons/"
                 + id
                 + (List.of("Writing", "Speaking").contains(skill) ? "#method" : "#practice");
     }
 
-    @PostMapping("/{id}/response")
+    @PostMapping("/student/lessons/{id}/response")
     public String response(
             @PathVariable Integer id,
             @RequestParam String response,
@@ -127,7 +127,7 @@ public class StudentLessonController {
         return "redirect:/student/lessons/" + id;
     }
 
-    @PostMapping("/{id}/assess")
+    @PostMapping("/student/lessons/{id}/assess")
     public String assess(
             @PathVariable Integer id,
             @RequestParam Integer submissionId,
@@ -142,14 +142,14 @@ public class StudentLessonController {
         }
     }
 
-    @PostMapping("/{id}/response/autosave")
+    @PostMapping("/student/lessons/{id}/response/autosave")
     @ResponseBody
     public void autosave(
             @PathVariable Integer id, @RequestParam String response, Principal principal) {
         teaching.saveResponse(id, response, principal.getName());
     }
 
-    @PostMapping("/{id}/complete")
+    @PostMapping("/student/lessons/{id}/complete")
     public String complete(@PathVariable Integer id, Principal p, RedirectAttributes r) {
         try {
             service.complete(p.getName(), id);
@@ -160,14 +160,14 @@ public class StudentLessonController {
         return "redirect:/student/lessons/" + id;
     }
 
-    @PostMapping("/{id}/listening/start")
+    @PostMapping("/student/lessons/{id}/listening/start")
     @ResponseBody
     public LessonListeningService.Playback startListening(
             @PathVariable Integer id, @RequestParam double position, Principal principal) {
         return listening.start(id, principal.getName(), position);
     }
 
-    @PostMapping("/{id}/listening/heartbeat")
+    @PostMapping("/student/lessons/{id}/listening/heartbeat")
     @ResponseBody
     public LessonListeningService.Playback listeningHeartbeat(
             @PathVariable Integer id,
@@ -181,20 +181,20 @@ public class StudentLessonController {
                 id, principal.getName(), token, sequence, position, playing, discontinuity);
     }
 
-    @PostMapping("/{id}/audio-played")
+    @PostMapping("/student/lessons/{id}/audio-played")
     @ResponseBody
     public void audioPlayed(@PathVariable Integer id) {
         throw new BusinessRuleException(
                 "Hãy phát audio và nghe đủ 90% qua phiên nghe được xác thực");
     }
 
-    @PostMapping("/{id}/section")
+    @PostMapping("/student/lessons/{id}/section")
     @ResponseBody
     public void section(@PathVariable Integer id, @RequestParam String section, Principal p) {
         teaching.section(id, section, p.getName());
     }
 
-    @PostMapping("/{id}/recording")
+    @PostMapping("/student/lessons/{id}/recording")
     public String recording(
             @PathVariable Integer id,
             @RequestParam MultipartFile recording,
@@ -212,23 +212,25 @@ public class StudentLessonController {
     public record SkillBranch(String skill, int count, List<LevelBranch> levels) {}
 
     private static String topic(Lesson lesson) {
-        var material = lesson.getMaterial();
+        LessonMaterial material = lesson.getMaterial();
         return material == null || material.getTopic() == null ? "" : material.getTopic().trim();
     }
 
     private static List<SkillBranch> tree(List<Lesson> lessons) {
-        var result = new ArrayList<SkillBranch>();
-        for (var skill : LessonService.SKILLS) {
-            var skillLessons = lessons.stream().filter(l -> skill.equals(l.getSkill())).toList();
-            var levels = new ArrayList<LevelBranch>();
-            for (var level : LessonService.LEVELS) {
-                var levelLessons =
+        ArrayList<SkillBranch> result = new ArrayList<SkillBranch>();
+        for (String skill : LessonService.SKILLS) {
+            List<Lesson> skillLessons =
+                    lessons.stream().filter(l -> skill.equals(l.getSkill())).toList();
+            ArrayList<LevelBranch> levels = new ArrayList<LevelBranch>();
+            for (String level : LessonService.LEVELS) {
+                List<Lesson> levelLessons =
                         skillLessons.stream().filter(l -> level.equals(l.getCefrLevel())).toList();
                 if (levelLessons.isEmpty()) continue;
-                var groups = new LinkedHashMap<String, List<Lesson>>();
-                for (var lesson : levelLessons)
+                LinkedHashMap<String, List<Lesson>> groups =
+                        new LinkedHashMap<String, List<Lesson>>();
+                for (Lesson lesson : levelLessons)
                     groups.computeIfAbsent(topic(lesson), key -> new ArrayList<>()).add(lesson);
-                var topics =
+                List<TopicBranch> topics =
                         groups.entrySet().stream()
                                 .map(
                                         e ->

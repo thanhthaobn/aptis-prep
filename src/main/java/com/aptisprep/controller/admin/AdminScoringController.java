@@ -27,8 +27,17 @@ public class AdminScoringController {
         return "redirect:/admin/certificates";
     }
 
-    @GetMapping({"/admin/certificates", "/admin/scoring-schemes"})
-    public String index(Model model) {
+    @GetMapping("/admin/certificates")
+    public String showCertificates(Model model) {
+        return renderScoringIndex(model);
+    }
+
+    @GetMapping("/admin/scoring-schemes")
+    public String showScoringSchemes(Model model) {
+        return renderScoringIndex(model);
+    }
+
+    private String renderScoringIndex(Model model) {
         model.addAttribute("certificates", scoring.certificateViews());
         model.addAttribute("schemes", scoring.schemeViews());
         return "admin/settings/index";

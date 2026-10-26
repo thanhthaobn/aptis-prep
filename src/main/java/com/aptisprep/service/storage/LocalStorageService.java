@@ -3,6 +3,7 @@ package com.aptisprep.service.storage;
 import com.aptisprep.config.StorageProperties;
 import com.aptisprep.exception.BusinessRuleException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -57,7 +58,7 @@ public class LocalStorageService implements StorageService {
 
         try {
             Files.createDirectories(targetDirectory);
-            try (var input = file.getInputStream()) {
+            try (InputStream input = file.getInputStream()) {
                 Files.copy(input, target, StandardCopyOption.REPLACE_EXISTING);
             }
             return root.relativize(target).toString().replace('\\', '/');

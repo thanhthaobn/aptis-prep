@@ -1,11 +1,15 @@
 package com.aptisprep.controller;
 
+import com.aptisprep.entity.Lesson;
+import com.aptisprep.entity.LessonResponse;
+import com.aptisprep.entity.User;
 import com.aptisprep.enums.Role;
 import com.aptisprep.exception.ResourceNotFoundException;
 import com.aptisprep.repository.LessonResponseRepository;
 import com.aptisprep.repository.UserRepository;
 import com.aptisprep.service.learning.LessonService;
 import com.aptisprep.service.learning.LessonTeachingService;
+import com.aptisprep.service.learning.LessonTeachingService.HistoricalMedia;
 import com.aptisprep.service.storage.StorageService;
 import java.security.Principal;
 import java.util.List;
@@ -26,10 +30,10 @@ public class LessonAudioController {
             Principal principal) {
         if (!List.of("attempts", "submissions").contains(kind))
             throw new ResourceNotFoundException("Không tìm thấy lịch sử");
-        var item =
+        HistoricalMedia item =
                 teaching.historicalMedia(
                         id, historyId, media, principal.getName(), "attempts".equals(kind));
-        var type =
+        MediaType type =
                 switch (media) {
                     case "image" -> imageType(item.path());
                     case "audio" -> mediaType(item.path());
@@ -48,26 +52,29 @@ public class LessonAudioController {
     @Autowired private LessonTeachingService teaching;
     private final LessonService lessons;
     private final StorageService storage;
-    private final UserRepository users;
-    private final LessonResponseRepository responses;
+    private final UserRepository userRepository;
+    private final LessonResponseRepository lessonResponseRepository;
 
     public LessonAudioController(
-            LessonService l, StorageService s, UserRepository u, LessonResponseRepository r) {
+            LessonService l,
+            StorageService s,
+            UserRepository userRepository,
+            LessonResponseRepository lessonResponseRepository) {
         lessons = l;
         storage = s;
-        users = u;
-        responses = r;
+        this.userRepository = userRepository;
+        this.lessonResponseRepository = lessonResponseRepository;
     }
 
     @GetMapping("/lesson-media/{id}/audio")
     public ResponseEntity<Resource> audio(@PathVariable Integer id, Principal principal) {
-        var lesson = lessons.require(id);
-        var user = users.findByEmailIgnoreCase(principal.getName()).orElseThrow();
+        Lesson lesson = lessons.require(id);
+        User user = userRepository.findByEmailIgnoreCase(principal.getName()).orElseThrow();
         if (user.getRole() != Role.ADMIN && !"PUBLISHED".equals(lesson.getStatus()))
             throw new ResourceNotFoundException("Không tìm thấy âm thanh");
         if (lesson.getAudioPath() == null)
             throw new ResourceNotFoundException("Bài học chưa có âm thanh");
-        var resource = storage.load(lesson.getAudioPath());
+        Resource resource = storage.load(lesson.getAudioPath());
         return ResponseEntity.ok()
                 .contentType(mediaType(lesson.getAudioName()))
                 .header(HttpHeaders.CONTENT_DISPOSITION, "inline")
@@ -76,9 +83,9 @@ public class LessonAudioController {
 
     @GetMapping("/student/lessons/{id}/recording")
     public ResponseEntity<Resource> recording(@PathVariable Integer id, Principal principal) {
-        var user = users.findByEmailIgnoreCase(principal.getName()).orElseThrow();
-        var work =
-                responses
+        User user = userRepository.findByEmailIgnoreCase(principal.getName()).orElseThrow();
+        LessonResponse work =
+                lessonResponseRepository
                         .findByUserIdAndLessonId(user.getId(), id)
                         .filter(r -> r.getAudioPath() != null)
                         .orElseThrow(() -> new ResourceNotFoundException("Chưa có bản ghi"));
@@ -91,8 +98,8 @@ public class LessonAudioController {
 
     @GetMapping("/lesson-media/{id}/image")
     public ResponseEntity<Resource> image(@PathVariable Integer id, Principal principal) {
-        var lesson = lessons.require(id);
-        var user = users.findByEmailIgnoreCase(principal.getName()).orElseThrow();
+        Lesson lesson = lessons.require(id);
+        User user = userRepository.findByEmailIgnoreCase(principal.getName()).orElseThrow();
         if (user.getRole() != Role.ADMIN && !"PUBLISHED".equals(lesson.getStatus()))
             throw new ResourceNotFoundException("Không tìm thấy hình ảnh");
         if (lesson.getImagePath() == null)
@@ -114,8 +121,8 @@ public class LessonAudioController {
 
     @GetMapping("/lesson-media/{id}/video")
     public ResponseEntity<Resource> video(@PathVariable Integer id, Principal principal) {
-        var lesson = lessons.require(id);
-        var user = users.findByEmailIgnoreCase(principal.getName()).orElseThrow();
+        Lesson lesson = lessons.require(id);
+        User user = userRepository.findByEmailIgnoreCase(principal.getName()).orElseThrow();
         if (user.getRole() != Role.ADMIN && !"PUBLISHED".equals(lesson.getStatus())
                 || lesson.getVideoPath() == null)
             throw new ResourceNotFoundException("Không tìm thấy video");

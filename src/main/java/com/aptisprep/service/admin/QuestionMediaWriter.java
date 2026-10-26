@@ -5,16 +5,17 @@ import com.aptisprep.exception.BusinessRuleException;
 import com.aptisprep.repository.QuestionMediaRepository;
 import com.aptisprep.service.storage.StorageService;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.Locale;
 import org.springframework.web.multipart.MultipartFile;
 
 /** Media validation/storage collaborator; the caller owns the catalog transaction. */
 final class QuestionMediaWriter {
-    private final QuestionMediaRepository media;
+    private final QuestionMediaRepository questionMediaRepository;
     private final StorageService storage;
 
-    QuestionMediaWriter(QuestionMediaRepository media, StorageService storage) {
-        this.media = media;
+    QuestionMediaWriter(QuestionMediaRepository questionMediaRepository, StorageService storage) {
+        this.questionMediaRepository = questionMediaRepository;
         this.storage = storage;
     }
 
@@ -29,7 +30,7 @@ final class QuestionMediaWriter {
         if (file.getSize() <= 0 || file.getSize() > maxBytes) {
             throw new BusinessRuleException("Media vượt quá dung lượng cho phép");
         }
-        try (var input = file.getInputStream()) {
+        try (InputStream input = file.getInputStream()) {
             byte[] header = input.readNBytes(16);
             if (audio ? !looksLikeAudio(header) : !looksLikeImage(header)) {
                 throw new BusinessRuleException("Nội dung file không khớp với định dạng media");
@@ -37,7 +38,7 @@ final class QuestionMediaWriter {
         } catch (IOException exception) {
             throw new BusinessRuleException("Không thể đọc file media");
         }
-        var value = new QuestionMediaEntity();
+        QuestionMediaEntity value = new QuestionMediaEntity();
         value.setQuestionId(questionId);
         value.setMediaType(audio ? "AUDIO" : "IMAGE");
         value.setMediaUrl(storage.store(file, "questions/"));
@@ -46,8 +47,9 @@ final class QuestionMediaWriter {
         value.setFileSize(file.getSize());
         value.setMaxPlayCount(audio ? 2 : null);
         value.setAltText(cleanFilename(file.getOriginalFilename()));
-        value.setPosition(media.findByQuestionIdOrderByPosition(questionId).size() + 1);
-        media.save(value);
+        value.setPosition(
+                questionMediaRepository.findByQuestionIdOrderByPosition(questionId).size() + 1);
+        questionMediaRepository.save(value);
     }
 
     private boolean looksLikeAudio(byte[] bytes) {

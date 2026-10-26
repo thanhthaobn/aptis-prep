@@ -1,5 +1,6 @@
 package com.aptisprep.service.learning;
 
+import com.aptisprep.entity.Lesson;
 import com.aptisprep.entity.LessonProgress;
 import com.aptisprep.enums.CefrLevel;
 import com.aptisprep.repository.LessonProgressRepository;
@@ -13,12 +14,12 @@ import org.springframework.transaction.annotation.Transactional;
 /** Read-only dashboard selection; never creates progress or changes the learner's goal. */
 @Service
 public class LessonRecommendationService {
-    private final LessonProgressRepository progress;
+    private final LessonProgressRepository lessonProgressRepository;
     private final AccountAccessContract accounts;
 
     public LessonRecommendationService(
-            LessonProgressRepository progress, AccountAccessContract accounts) {
-        this.progress = progress;
+            LessonProgressRepository lessonProgressRepository, AccountAccessContract accounts) {
+        this.lessonProgressRepository = lessonProgressRepository;
         this.accounts = accounts;
     }
 
@@ -27,8 +28,8 @@ public class LessonRecommendationService {
 
     @Transactional(readOnly = true)
     public Recommendation recommend(Integer userId, List<PathProgress> paths) {
-        var history = progress.findByUserId(userId);
-        var recent =
+        List<LessonProgress> history = lessonProgressRepository.findByUserId(userId);
+        Optional<LessonProgress> recent =
                 history.stream()
                         .filter(
                                 p ->
@@ -42,8 +43,8 @@ public class LessonRecommendationService {
                                                         ? LocalDateTime.MIN
                                                         : p.getLastAccessedAt()));
         if (recent.isPresent()) {
-            var lesson = recent.get().getLesson();
-            var path =
+            Lesson lesson = recent.get().getLesson();
+            PathProgress path =
                     paths.stream()
                             .filter(
                                     p ->
@@ -59,12 +60,12 @@ public class LessonRecommendationService {
                     path,
                     "Tiếp tục bài đang học dở gần nhất");
         }
-        var context = accounts.context(userId);
+        LearnerContext context = accounts.context(userId);
         List<SkillTarget> targets =
                 context == null || context.targets() == null ? List.of() : context.targets();
         List<SkillLevel> levels =
                 context == null || context.levels() == null ? List.of() : context.levels();
-        var selected =
+        PathProgress selected =
                 paths.stream()
                         .filter(p -> "ACTIVE".equals(p.pathStatus()) && p.nextLessonId() != null)
                         .min(
