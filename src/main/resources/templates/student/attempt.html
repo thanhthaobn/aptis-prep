@@ -61,6 +61,16 @@
         border-radius: 14px;
         background: #f2fbfd;
       }
+      .media-play-button {
+        justify-self: start;
+        min-width: 10rem;
+      }
+      .media-speech-player {
+        align-items: start;
+      }
+      .media-speech-button {
+        min-width: 12rem;
+      }
       .media-audio {
         width: 100%;
         height: 42px;
@@ -69,6 +79,17 @@
       .media-status {
         min-height: 1.1rem;
         font-size: 0.8rem;
+      }
+      .attempt-media > img {
+        display: block;
+        width: min(100%, 760px);
+        max-height: 420px;
+        margin: 1.25rem 0 1.5rem;
+        object-fit: contain;
+        border: 1px solid #c8dce5;
+        border-radius: 16px;
+        background: #f7fbfc;
+        box-shadow: 0 8px 20px rgba(34, 73, 96, 0.08);
       }
       .question-item {
         margin-top: 1.25rem;
@@ -170,6 +191,29 @@
         flex: 1 1 100%;
         margin: 0.15rem 0 0;
         font-size: 0.82rem;
+      }
+      .recording-meter {
+        display: grid;
+        gap: 0.45rem;
+        flex: 1 1 100%;
+        margin-top: 0.35rem;
+        padding: 0.75rem 0.85rem;
+        border: 1px solid #c8dce5;
+        border-radius: 12px;
+        background: #f2fbfd;
+      }
+      .recording-meter-heading {
+        display: flex;
+        justify-content: space-between;
+        gap: 1rem;
+        color: #075c78;
+        font-size: 0.8rem;
+        font-weight: 800;
+      }
+      .recording-meter progress {
+        width: 100%;
+        height: 0.7rem;
+        accent-color: #087a9d;
       }
       .speaking-recorder .recording-preview {
         width: min(100%, 460px);
@@ -333,11 +377,26 @@
               th:src="@{/student/attempts/{id}/media/{mediaId}/content(id=${attempt.attemptId},mediaId=${media.id})}"
               th:alt="${media.filename}"
             />
-            <div th:if="${media.type == 'AUDIO'}" class="media-player">
+            <div
+              th:if="${media.type == 'AUDIO' and media.browserSpeech}"
+              class="media-player media-speech-player"
+              th:attr="data-play=@{/student/attempts/{id}/media/{mediaId}/play(id=${attempt.attemptId},mediaId=${media.id})},data-speech=${media.transcript}"
+            >
+              <button class="button button-secondary media-speech-button" type="button">
+                ▶ Nghe giọng đọc
+              </button>
+              <span class="media-status muted" aria-live="polite">
+                Dùng giọng đọc tiếng Anh của trình duyệt. Audio WAV có thể thay thế sau khi upload.
+              </span>
+            </div>
+            <div th:if="${media.type == 'AUDIO' and !media.browserSpeech}" class="media-player">
+              <button class="button button-secondary media-play-button" type="button">
+                ▶ Phát audio
+              </button>
               <audio
                 class="media-audio"
                 controls
-                preload="none"
+                preload="metadata"
                 th:attr="data-play=@{/student/attempts/{id}/media/{mediaId}/play(id=${attempt.attemptId},mediaId=${media.id})},data-content=@{/student/attempts/{id}/media/{mediaId}/content(id=${attempt.attemptId},mediaId=${media.id})}"
               >
                 Trình duyệt không hỗ trợ phát audio.
@@ -411,7 +470,7 @@
               class="speaking-recorder"
               method="post"
               enctype="multipart/form-data"
-              th:attr="data-audio-action=@{/student/attempts/{id}/answers/audio(id=${attempt.attemptId})},data-question-id=${question.questionId},data-item-id=${item.itemId}"
+              th:attr="data-audio-action=@{/student/attempts/{id}/answers/audio(id=${attempt.attemptId})},data-question-id=${question.questionId},data-item-id=${item.itemId},data-response-seconds=${item.responseSeconds}"
             >
               <span class="speaking-recorder-label">Ghi âm câu trả lời trực tiếp</span>
               <div class="speaking-recorder-actions">
@@ -428,6 +487,13 @@
                 <span class="recording-status muted" aria-live="polite"
                   >Nhấn “Bắt đầu ghi” và cho phép trình duyệt sử dụng microphone.</span
                 >
+                <div class="recording-meter" hidden>
+                  <div class="recording-meter-heading">
+                    <span>Thời gian ghi âm</span>
+                    <strong class="recording-time">00:00 / 00:45</strong>
+                  </div>
+                  <progress class="recording-progress" value="0" max="45"></progress>
+                </div>
               </div>
               <audio class="recording-preview" controls preload="metadata" hidden></audio>
               <span class="muted" th:if="${item.audioSaved}">Đã lưu bản ghi cho mục này.</span>

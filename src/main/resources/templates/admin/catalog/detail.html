@@ -141,7 +141,7 @@
                       ></strong>
                       <p
                         class="muted catalog-media-meta"
-                        th:text="${media.contentType + ' · ' + media.fileSize + ' bytes'}"
+                        th:text="${media.contentType == 'audio/x-aptis-speech' ? 'Giọng đọc trình duyệt từ transcript' : media.contentType + ' · ' + media.fileSize + ' bytes'}"
                       ></p>
                     </div>
                     <span
@@ -158,8 +158,15 @@
                       th:src="@{/admin/questions/{id}/media/{mediaId}/content(id=${entry.id},mediaId=${media.id})}"
                       th:alt="${!#strings.isEmpty(media.altText) ? media.altText : media.originalFilename}"
                     />
+                    <div
+                      th:if="${media.mediaType == 'AUDIO' and #strings.startsWith(media.mediaUrl, 'speech://')}"
+                      class="catalog-speech-fallback"
+                    >
+                      <strong>Giọng đọc trình duyệt</strong>
+                      <p class="muted">Học viên sẽ nghe transcript bằng giọng tiếng Anh của trình duyệt.</p>
+                    </div>
                     <audio
-                      th:if="${media.mediaType == 'AUDIO'}"
+                      th:if="${media.mediaType == 'AUDIO' and !#strings.startsWith(media.mediaUrl, 'speech://')}"
                       class="catalog-media-audio"
                       controls
                       preload="none"

@@ -197,8 +197,11 @@
     });
     showPage(0);
   }
+  const csrfHeader =
+    document.querySelector('meta[name="_csrf_header"]')?.content || 'X-CSRF-TOKEN';
   document.querySelectorAll('.media-audio').forEach((player) => {
     const status = player.parentElement.querySelector('.media-status');
+    const playButton = player.parentElement.querySelector('.media-play-button');
     let tokenReady = false;
     let loading = false;
     let exhausted = false;
@@ -216,19 +219,27 @@
         const response = await fetch(player.dataset.play, {
           method: 'POST',
           headers: {
-            'X-CSRF-TOKEN': csrf,
+            [csrfHeader]: csrf,
             'X-Requested-With': 'XMLHttpRequest',
             Accept: 'application/json',
           },
         });
-        const result = await response.json();
+        const contentType = response.headers.get('content-type') || '';
+        const result = contentType.includes('application/json') ? await response.json() : {};
         if (!response.ok) throw new Error(result.message || 'Không thể phát audio');
         if (!result.contentToken) throw new Error('Máy chủ chưa cấp quyền phát audio');
         player.src = player.dataset.content + '?token=' + encodeURIComponent(result.contentToken);
         player.load();
         tokenReady = true;
+        playButton.disabled = false;
         status.textContent = `Đã dùng ${result.playCount}/${result.maxPlayCount} lượt nghe`;
-        await player.play();
+        try {
+          await player.play();
+        } catch (error) {
+          // Browsers can block playback after the asynchronous token request.
+          // The source is still loaded, so the native play control remains usable.
+          status.textContent = 'Audio đã sẵn sàng. Bấm nút phát để nghe.';
+        }
         player.dataset.playCount = result.playCount;
         player.dataset.maxPlayCount = result.maxPlayCount;
       } catch (error) {
@@ -238,6 +249,7 @@
         loading = false;
       }
     };
+    playButton?.addEventListener('click', requestPlayback);
     player.addEventListener('click', (event) => {
       if (!tokenReady) {
         event.preventDefault();
@@ -263,6 +275,75 @@
       if (exhausted) status.textContent = `Đã dùng hết ${maxPlayCount} lượt nghe.`;
       else status.textContent = `Bạn còn ${Math.max(0, maxPlayCount - playCount)} lượt nghe.`;
     });
+    if (playButton) playButton.disabled = false;
+  });
+  document.querySelectorAll('.media-speech-player').forEach((box) => {
+    const button = box.querySelector('.media-speech-button');
+    const status = box.querySelector('.media-status');
+    const text = box.dataset.speech || '';
+    let exhausted = false;
+    let speaking = false;
+    button?.addEventListener('click', async () => {
+      if (speaking) {
+        window.speechSynthesis.cancel();
+        return;
+      }
+      if (!text) {
+        status.textContent = 'Chưa có transcript để đọc.';
+        return;
+      }
+      if (!('speechSynthesis' in window)) {
+        status.textContent = 'Trình duyệt này không hỗ trợ giọng đọc.';
+        return;
+      }
+      if (exhausted) {
+        status.textContent = 'Đã dùng hết số lượt nghe cho audio này.';
+        return;
+      }
+      button.disabled = true;
+      status.textContent = 'Đang kiểm tra lượt nghe…';
+      try {
+        const response = await fetch(box.dataset.play, {
+          method: 'POST',
+          headers: {
+            [csrfHeader]: csrf,
+            'X-Requested-With': 'XMLHttpRequest',
+            Accept: 'application/json',
+          },
+        });
+        const contentType = response.headers.get('content-type') || '';
+        const result = contentType.includes('application/json') ? await response.json() : {};
+        if (!response.ok) throw new Error(result.message || 'Không thể phát giọng đọc');
+        const utterance = new SpeechSynthesisUtterance(text);
+        const voices = window.speechSynthesis.getVoices();
+        utterance.voice =
+          voices.find((voice) => voice.lang.toLowerCase() === 'en-gb') ||
+          voices.find((voice) => voice.lang.toLowerCase().startsWith('en')) ||
+          null;
+        utterance.lang = utterance.voice?.lang || 'en-GB';
+        utterance.rate = 0.92;
+        utterance.pitch = 1;
+        speaking = true;
+        status.textContent = `Đã dùng ${result.playCount}/${result.maxPlayCount} lượt nghe`;
+        utterance.onend = () => {
+          speaking = false;
+          button.disabled = false;
+          exhausted = result.playCount >= result.maxPlayCount;
+          status.textContent = exhausted
+            ? `Đã dùng hết ${result.maxPlayCount} lượt nghe.`
+            : `Bạn còn ${Math.max(0, result.maxPlayCount - result.playCount)} lượt nghe.`;
+        };
+        utterance.onerror = () => {
+          speaking = false;
+          button.disabled = false;
+          status.textContent = 'Không phát được giọng đọc. Hãy bấm lại.';
+        };
+        window.speechSynthesis.speak(utterance);
+      } catch (error) {
+        button.disabled = false;
+        status.textContent = error.message || 'Không thể phát giọng đọc';
+      }
+    });
   });
   document.querySelectorAll('.speaking-recorder').forEach((box) => {
     const start = box.querySelector('.recording-start');
@@ -271,11 +352,18 @@
     const saveRecording = box.querySelector('.recording-save');
     const preview = box.querySelector('.recording-preview');
     const status = box.querySelector('.recording-status');
+    const meter = box.querySelector('.recording-meter');
+    const progress = box.querySelector('.recording-progress');
+    const timeLabel = box.querySelector('.recording-time');
+    const maxSeconds = Math.max(1, Number(box.dataset.responseSeconds || 45));
     let recorder;
     let stream;
     let chunks = [];
     let recordingBlob;
     let previewUrl;
+    let timerId;
+    let recordingStartedAt;
+    let elapsedSeconds = 0;
     const supportedMime = [
       'audio/webm;codecs=opus',
       'audio/webm',
@@ -290,6 +378,44 @@
           : 'webm';
     const setStatus = (message) => {
       status.textContent = message;
+    };
+    const formatTime = (seconds) => {
+      const safeSeconds = Math.max(0, Math.floor(seconds));
+      return `${String(Math.floor(safeSeconds / 60)).padStart(2, '0')}:${String(
+        safeSeconds % 60,
+      ).padStart(2, '0')}`;
+    };
+    const updateTimer = () => {
+      if (!recordingStartedAt) return;
+      elapsedSeconds = Math.min(maxSeconds, (performance.now() - recordingStartedAt) / 1000);
+      progress.value = elapsedSeconds;
+      timeLabel.textContent = `${formatTime(elapsedSeconds)} / ${formatTime(maxSeconds)}`;
+      if (elapsedSeconds >= maxSeconds && recorder?.state === 'recording') {
+        stopRecording();
+      }
+    };
+    const startTimer = () => {
+      meter.hidden = false;
+      progress.max = maxSeconds;
+      progress.value = 0;
+      elapsedSeconds = 0;
+      recordingStartedAt = performance.now();
+      timeLabel.textContent = `00:00 / ${formatTime(maxSeconds)}`;
+      clearInterval(timerId);
+      timerId = setInterval(updateTimer, 200);
+    };
+    const stopTimer = () => {
+      updateTimer();
+      clearInterval(timerId);
+      timerId = null;
+      recordingStartedAt = null;
+    };
+    const stopRecording = () => {
+      if (recorder?.state !== 'recording') return;
+      stopTimer();
+      recorder.stop();
+      stop.disabled = true;
+      start.disabled = false;
     };
     const clearPreview = () => {
       if (previewUrl) URL.revokeObjectURL(previewUrl);
@@ -328,6 +454,7 @@
           setStatus('Đã ghi xong. Hãy nghe lại trước khi lưu.');
         };
         recorder.onerror = () => {
+          stopTimer();
           stream?.getTracks().forEach((track) => track.stop());
           stream = null;
           start.disabled = false;
@@ -336,6 +463,7 @@
         };
         recorder.start();
         stop.disabled = false;
+        startTimer();
         setStatus('Đang ghi âm…');
       } catch (error) {
         stream?.getTracks().forEach((track) => track.stop());
@@ -345,15 +473,15 @@
       }
     });
     stop.addEventListener('click', () => {
-      if (recorder?.state === 'recording') {
-        recorder.stop();
-        stop.disabled = true;
-        start.disabled = false;
-      }
+      stopRecording();
     });
     reset.addEventListener('click', () => {
       recordingBlob = null;
       clearPreview();
+      stopTimer();
+      meter.hidden = true;
+      progress.value = 0;
+      timeLabel.textContent = `00:00 / ${formatTime(maxSeconds)}`;
       reset.disabled = true;
       saveRecording.disabled = true;
       start.disabled = false;

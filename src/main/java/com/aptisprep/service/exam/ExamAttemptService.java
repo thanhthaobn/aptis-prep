@@ -23,6 +23,7 @@ import java.time.*;
 import java.util.*;
 import java.util.stream.Stream;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -259,9 +260,17 @@ public class ExamAttemptService implements ExamAttemptContract {
             // once while building the native player, so invalidating it after
             // the first request leaves the player stuck at 0:00 / 0:00.
         }
-        return new MediaResource(
-                storage.load(lockedMedia.path("mediaUrl").asText()),
-                lockedMedia.path("contentType").asText("application/octet-stream"));
+        String mediaUrl = lockedMedia.path("mediaUrl").asText();
+        String contentType = lockedMedia.path("contentType").asText("application/octet-stream");
+        Resource resource;
+        try {
+            resource = storage.load(mediaUrl);
+        } catch (BusinessRuleException exception) {
+            if (!"IMAGE".equals(lockedMedia.path("type").asText())) throw exception;
+            resource = new ClassPathResource("static/images/speaking-community.svg");
+            contentType = "image/svg+xml";
+        }
+        return new MediaResource(resource, contentType);
     }
 
     @Transactional(readOnly = true)
@@ -447,6 +456,9 @@ public class ExamAttemptService implements ExamAttemptContract {
                                                         itemId,
                                                         item.path("position").asInt(),
                                                         item.path("content").asText(),
+                                                        item.path("responseSeconds").isNull()
+                                                                ? null
+                                                                : item.path("responseSeconds").asInt(),
                                                         itemOptions,
                                                         detail == null
                                                                 ? null
@@ -461,13 +473,18 @@ public class ExamAttemptService implements ExamAttemptContract {
                                                                 && detail.getAudioPath() != null));
                                     }
                                     List<MediaPage> mediaPages = new ArrayList<>();
-                                    for (JsonNode media : q.path("media"))
+                                    for (JsonNode media : q.path("media")) {
+                                        ExamSnapshotService.MediaPresentation mediaView =
+                                                examSnapshots.mediaPresentation(media);
                                         mediaPages.add(
                                                 new MediaPage(
-                                                        media.path("id").asInt(),
-                                                        media.path("type").asText(),
-                                                        media.path("filename").asText(),
-                                                        media.path("contentType").asText()));
+                                                        mediaView.id(),
+                                                        mediaView.type(),
+                                                        mediaView.filename(),
+                                                        mediaView.contentType(),
+                                                        mediaView.browserSpeech(),
+                                                        mediaView.transcript()));
+                                    }
                                     return new QuestionPage(
                                             questionId,
                                             q.path("content").asText(),
@@ -564,6 +581,7 @@ public class ExamAttemptService implements ExamAttemptContract {
             Integer itemId,
             int position,
             String content,
+            Integer responseSeconds,
             List<OptionPage> options,
             Integer selectedOptionId,
             Integer userPosition,
@@ -572,7 +590,13 @@ public class ExamAttemptService implements ExamAttemptContract {
 
     public record OptionPage(Integer id, String code, String content) {}
 
-    public record MediaPage(Integer id, String type, String filename, String contentType) {}
+    public record MediaPage(
+            Integer id,
+            String type,
+            String filename,
+            String contentType,
+            boolean browserSpeech,
+            String transcript) {}
 
     public record MediaPlayResult(
             Integer mediaId, int playCount, int maxPlayCount, String contentToken) {}

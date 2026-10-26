@@ -3,6 +3,7 @@ package com.aptisprep.controller.student;
 import com.aptisprep.exception.BusinessRuleException;
 import com.aptisprep.service.account.AccountAccessService;
 import com.aptisprep.service.exam.ExamAttemptService;
+import java.io.IOException;
 import java.security.Principal;
 import java.util.Map;
 import java.util.UUID;
@@ -129,11 +130,19 @@ public class StudentExamController {
         var media =
                 attempts.mediaContent(
                         accounts.requireActiveStudent(principal.getName()), id, mediaId, token);
-        return ResponseEntity.ok()
-                .contentType(resolveType(media.contentType()))
-                .header(HttpHeaders.CONTENT_DISPOSITION, "inline")
-                .header(HttpHeaders.CACHE_CONTROL, "private, no-store")
-                .body(media.resource());
+        var response =
+                ResponseEntity.ok()
+                        .contentType(resolveType(media.contentType()))
+                        .header(HttpHeaders.CONTENT_DISPOSITION, "inline")
+                        .header(HttpHeaders.CACHE_CONTROL, "private, no-store")
+                        .header(HttpHeaders.ACCEPT_RANGES, "bytes");
+        try {
+            response.header(
+                    HttpHeaders.CONTENT_LENGTH, String.valueOf(media.resource().contentLength()));
+        } catch (IOException ignored) {
+            // The resource converter can still stream a readable file without a known length.
+        }
+        return response.body(media.resource());
     }
 
     @GetMapping("/student/attempts/{id}/answers/{answerId}/audio")

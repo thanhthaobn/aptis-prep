@@ -9,7 +9,7 @@ EXEC @lockResult = sys.sp_getapplock @Resource=N'library-curriculum-a1', @LockMo
 IF @lockResult < 0 THROW 51000, 'Cannot lock curriculum import.', 1;
 DECLARE @image nvarchar(500)=(SELECT image_path FROM lessons WHERE id=40 AND title=N'Viết lời mời tham gia câu lạc bộ đọc sách');
 DECLARE @audio nvarchar(500)=(SELECT audio_path FROM lessons WHERE id=37 AND skill='Listening');
-IF @image IS NULL OR @audio IS NULL THROW 51000, 'Required library media is missing; import image and audio first.', 1;
+IF @image IS NULL THROW 51000, 'Required library image is missing; import the image first.', 1;
 DECLARE @certificate int=(SELECT TOP(1) id FROM certificates WHERE status='ACTIVE' ORDER BY id);
 IF @certificate IS NULL THROW 51000, 'No active certificate.', 1;
 -- This syllabus assesses A1 only, including grammar. It is not a placement scale.
@@ -139,8 +139,17 @@ WHILE @@FETCH_STATUS=0 BEGIN
             VALUES(@question,@prompt,1,CASE WHEN @code='WRITING' THEN 20 END,CASE WHEN @code='WRITING' THEN 60 END,CASE WHEN @code='SPEAKING' THEN 45 END);
         END;
         IF @code='LISTENING'
-            INSERT question_media(question_id,media_type,media_url,original_filename,content_type,max_play_count,position,alt_text)
-            VALUES(@question,'AUDIO',@audio,N'Thông báo thư viện.wav','audio/wav',2,1,N'Thông báo giờ mở cửa và câu lạc bộ đọc sách');
+            INSERT question_media(question_id,media_type,media_url,original_filename,content_type,max_play_count,position,alt_text,transcript)
+            VALUES(
+                @question,
+                'AUDIO',
+                COALESCE(@audio,N'speech://library-listening-a1'),
+                N'Thông báo thư viện.wav',
+                CASE WHEN @audio IS NULL THEN 'audio/x-aptis-speech' ELSE 'audio/wav' END,
+                2,
+                1,
+                N'Thông báo giờ mở cửa và câu lạc bộ đọc sách',
+                N'Welcome to the community library. We open at nine in the morning. The reading club meets on Saturday. Please bring your library card.');
         IF @code='SPEAKING'
             INSERT question_media(question_id,media_type,media_url,original_filename,content_type,position,alt_text)
             VALUES(@question,'IMAGE',@image,N'Thông báo thư viện.png','image/png',1,N'Thư viện mở cửa 9 giờ; câu lạc bộ đọc sách vào thứ Bảy lúc 10 giờ');

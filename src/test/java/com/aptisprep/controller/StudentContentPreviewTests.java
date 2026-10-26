@@ -9,6 +9,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.aptisprep.dto.view.StudentCatalogView.Entry;
 import com.aptisprep.entity.MockExamEntity;
+import com.aptisprep.entity.MockExamQuestionEntity;
+import com.aptisprep.entity.QuestionEntity;
+import com.aptisprep.entity.ScoringScheme;
+import com.aptisprep.enums.RecordStatus;
 import com.aptisprep.service.student.StudentExamCatalogService.Category;
 import java.util.HashSet;
 import java.util.List;
@@ -26,8 +30,11 @@ import org.springframework.test.web.servlet.MockMvc;
 class StudentContentPreviewTests {
     @Autowired MockMvc mvc;
     @Autowired com.aptisprep.repository.MockExamRepository exams;
+    @Autowired com.aptisprep.repository.MockExamQuestionRepository examQuestions;
     @Autowired com.aptisprep.repository.MockExamSectionRepository sections;
+    @Autowired com.aptisprep.repository.QuestionRepository questions;
     @Autowired com.aptisprep.repository.CertificateRepository certificates;
+    @Autowired com.aptisprep.repository.ScoringSchemeRepository schemes;
     private final java.util.List<Integer> examIds = new java.util.ArrayList<>();
 
     @org.junit.jupiter.api.BeforeEach
@@ -299,6 +306,87 @@ class StudentContentPreviewTests {
                     .andExpect(status().isOk())
                     .andExpect(content().string(containsString("Chưa có")));
         }
+    }
+
+    @Test
+    void incompleteScoringPolicyBlocksAnExamWithoutBreakingTheStudentCatalog() throws Exception {
+        var certificate =
+                certificates
+                        .findById(
+                                exams.findById(examIds.getFirst()).orElseThrow().getCertificateId())
+                        .orElseThrow();
+        var scheme = new ScoringScheme();
+        scheme.setCertificate(certificate);
+        scheme.setName("Incomplete student catalog policy");
+        scheme.setVersion("TEST-" + System.nanoTime());
+        scheme.setStatus(RecordStatus.ACTIVE);
+        scheme = schemes.saveAndFlush(scheme);
+
+        var question = new QuestionEntity();
+        question.setContent("Choose the correct answer.");
+        question.setQuestionType("SINGLE_CHOICE");
+        question.setSkill("READING");
+        question.setCefrLevel("B1");
+        question.setStatus("PUBLISHED");
+        question = questions.saveAndFlush(question);
+
+        var exam = catalogExam("Incomplete policy exam", "PRACTICE", "READING", "B1", 35);
+        exam.setScoringSchemeId(scheme.getId());
+        exams.saveAndFlush(exam);
+
+        var link = new MockExamQuestionEntity();
+        link.setMockExamId(exam.getId());
+        link.setQuestionId(question.getId());
+        link.setPosition(1);
+        examQuestions.saveAndFlush(link);
+
+        mvc.perform(
+                        get("/student/exams")
+                                .param("q", "Incomplete policy exam")
+                                .with(user("student").roles("STUDENT")))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("Incomplete policy exam")));
+        mvc.perform(get("/student/exams/" + exam.getId()).with(user("student").roles("STUDENT")))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("Chưa cấu hình raw-to-scale")))
+                .andExpect(
+                        content()
+                                .string(
+                                        not(
+                                                containsString(
+                                                        "/student/exams/"
+                                                                + exam.getId()
+                                                                + "/start"))));
+    }
+
+    @Test
+    void startablePracticeExamExposesStartActionInCatalog() throws Exception {
+        var question = new QuestionEntity();
+        question.setContent("Choose the correct answer.");
+        question.setQuestionType("SINGLE_CHOICE");
+        question.setSkill("READING");
+        question.setCefrLevel("B1");
+        question.setStatus("PUBLISHED");
+        question = questions.saveAndFlush(question);
+
+        var exam = catalogExam("Startable practice exam", "PRACTICE", "READING", "B1", 35);
+        var link = new MockExamQuestionEntity();
+        link.setMockExamId(exam.getId());
+        link.setQuestionId(question.getId());
+        link.setPosition(1);
+        examQuestions.saveAndFlush(link);
+
+        mvc.perform(
+                        get("/student/exams")
+                                .param("q", "Startable practice exam")
+                                .with(user("student").roles("STUDENT")))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("Bắt đầu làm bài")))
+                .andExpect(
+                        content()
+                                .string(
+                                        containsString(
+                                                "/student/exams/" + exam.getId() + "/start")));
     }
 
     private MockExamEntity catalogExam(

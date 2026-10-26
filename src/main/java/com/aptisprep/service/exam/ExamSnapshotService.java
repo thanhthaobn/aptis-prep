@@ -3,7 +3,9 @@ package com.aptisprep.service.exam;
 import com.aptisprep.entity.*;
 import com.aptisprep.exception.BusinessRuleException;
 import com.aptisprep.repository.*;
+import com.aptisprep.service.storage.StorageService;
 import java.util.*;
+import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
@@ -15,6 +17,8 @@ final class ExamSnapshotService {
     private final QuestionItemRepository items;
     private final QuestionOptionRepository options;
     private final QuestionMediaRepository questionMedia;
+    private final LessonRepository lessons;
+    private final StorageService storage;
     private final ExamAttemptSnapshotRepository snapshots;
     private final JsonMapper json;
 
@@ -23,12 +27,16 @@ final class ExamSnapshotService {
             QuestionItemRepository items,
             QuestionOptionRepository options,
             QuestionMediaRepository questionMedia,
+            LessonRepository lessons,
+            StorageService storage,
             ExamAttemptSnapshotRepository snapshots,
             JsonMapper json) {
         this.questions = questions;
         this.items = items;
         this.options = options;
         this.questionMedia = questionMedia;
+        this.lessons = lessons;
+        this.storage = storage;
         this.snapshots = snapshots;
         this.json = json;
     }
@@ -109,13 +117,33 @@ final class ExamSnapshotService {
             List<Map<String, Object>> lockedMedia = new ArrayList<>();
             for (QuestionMediaEntity media :
                     questionMedia.findByQuestionIdOrderByPosition(question.getId())) {
+                String transcript = media.getTranscript();
+                if (isBlank(transcript) && "AUDIO".equals(media.getMediaType())) {
+                    transcript = transcriptFromLesson(media.getMediaUrl());
+                }
+                String mediaUrl = media.getMediaUrl();
+                boolean browserSpeech =
+                        "AUDIO".equals(media.getMediaType())
+                                && !isBlank(transcript)
+                                && (mediaUrl.startsWith("speech://") || !fileExists(mediaUrl));
+                if (browserSpeech) {
+                    mediaUrl = "speech://question-" + question.getId() + "-media-" + media.getId();
+                }
                 Map<String, Object> m = new LinkedHashMap<>();
                 m.put("id", media.getId());
                 m.put("questionId", question.getId());
                 m.put("type", media.getMediaType());
-                m.put("mediaUrl", media.getMediaUrl());
-                m.put("filename", media.getOriginalFilename());
-                m.put("contentType", media.getContentType());
+                m.put("mediaUrl", mediaUrl);
+                m.put(
+                        "filename",
+                        browserSpeech
+                                ? Objects.toString(media.getOriginalFilename(), "Audio")
+                                        + " (giọng đọc trình duyệt)"
+                                : media.getOriginalFilename());
+                m.put(
+                        "contentType",
+                        browserSpeech ? "audio/x-aptis-speech" : media.getContentType());
+                m.put("transcript", transcript);
                 m.put(
                         "maxPlayCount",
                         media.getMaxPlayCount() == null ? 2 : media.getMaxPlayCount());
@@ -132,6 +160,52 @@ final class ExamSnapshotService {
             throw new BusinessRuleException("Không thể khóa nội dung đề thi cho lượt làm bài");
         }
         snapshots.save(snapshot);
+    }
+
+    MediaPresentation mediaPresentation(JsonNode media) {
+        String mediaUrl = media.path("mediaUrl").asText("");
+        String transcript = media.path("transcript").asText(null);
+        if (isBlank(transcript) && "AUDIO".equals(media.path("type").asText())) {
+            transcript = transcriptFromLesson(mediaUrl);
+        }
+        boolean browserSpeech =
+                "AUDIO".equals(media.path("type").asText())
+                        && !isBlank(transcript)
+                        && (mediaUrl.startsWith("speech://") || !fileExists(mediaUrl));
+        return new MediaPresentation(
+                media.path("id").asInt(),
+                media.path("type").asText(),
+                media.path("filename").asText(),
+                browserSpeech ? "audio/x-aptis-speech" : media.path("contentType").asText(),
+                browserSpeech,
+                transcript);
+    }
+
+    record MediaPresentation(
+            Integer id,
+            String type,
+            String filename,
+            String contentType,
+            boolean browserSpeech,
+            String transcript) {}
+
+    private String transcriptFromLesson(String audioPath) {
+        if (isBlank(audioPath) || audioPath.startsWith("speech://")) return null;
+        return lessons.findFirstByAudioPath(audioPath).map(Lesson::getTranscript).orElse(null);
+    }
+
+    private boolean fileExists(String relativePath) {
+        if (isBlank(relativePath) || relativePath.startsWith("speech://")) return false;
+        try {
+            Resource resource = storage.load(relativePath);
+            return resource.exists() && resource.isReadable();
+        } catch (RuntimeException exception) {
+            return false;
+        }
+    }
+
+    private static boolean isBlank(String value) {
+        return value == null || value.isBlank();
     }
 
     Map<Integer, JsonNode> lockedQuestions(Integer attemptId) {

@@ -208,6 +208,8 @@
 .catalog-media-position { display: grid; min-width: 32px; height: 32px; place-items: center; flex: 0 0 32px; border-radius: 10px; background: #edf5f3; color: var(--color-primary-dark); font-size: .8rem; font-weight: 800; }
 .catalog-media-preview-box { display: grid; min-height: 64px; place-items: center; overflow: hidden; border: 1px solid #dbe8e5; border-radius: 12px; background: #eef8f6; }
 .catalog-media-preview { display: block; width: 100%; max-height: 230px; object-fit: contain; }
+.catalog-speech-fallback { display: grid; gap: .35rem; width: calc(100% - 1.5rem); margin: .75rem; padding: 1rem; border-radius: 12px; background: #e4f7f1; color: #087a68; }
+.catalog-speech-fallback p { margin: 0; color: var(--color-muted); }
 .catalog-media-audio { width: calc(100% - 1.5rem); margin: .75rem; }
 .catalog-media-form { display: grid; gap: .75rem; padding-top: .9rem; border-top: 1px solid #e6efed; }
 .catalog-media-form .field { margin: 0; }
