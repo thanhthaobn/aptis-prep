@@ -7,7 +7,13 @@
   const forms = [...document.querySelectorAll('.answer-form')];
   const timers = new Map();
   const inFlight = new Set();
-  let submitting = false;
+  const failedForms = new Set();
+  const submitForm = document.getElementById('submit-attempt-form');
+  const submitButton = document.getElementById('submit-attempt');
+  const submitError = document.getElementById('attempt-submit-error');
+  let submitting = false,
+    confirming = false,
+    deadlineReached = false;
   const save = (form) => {
     const status = form.querySelector('.autosave-status');
     if (!csrf || !status) return Promise.resolve(true);
@@ -26,15 +32,20 @@
       )
       .then((result) => {
         if (!result.saved) throw new Error(result.message || 'Chưa lưu được');
+        failedForms.delete(form);
         status.textContent = 'Đã tự động lưu';
         return true;
       })
       .catch((error) => {
+        failedForms.add(form);
         status.textContent = error.message || 'Mất kết nối, câu trả lời chưa được lưu';
         throw error;
       });
     inFlight.add(request);
-    request.finally(() => inFlight.delete(request));
+    request.then(
+      () => inFlight.delete(request),
+      () => inFlight.delete(request),
+    );
     return request;
   };
   const schedule = (form) => {
@@ -56,29 +67,62 @@
     });
   });
   const submit = async (automatic) => {
-    if (submitting) return;
-    if (
-      !automatic &&
-      !window.confirm(
-        'Bạn chắc chắn muốn nộp bài? Hệ thống sẽ lưu các câu trả lời cuối cùng trước khi nộp.',
-      )
-    )
-      return;
+    if (automatic) {
+      deadlineReached = true;
+      window.AppDialog.dismiss();
+    }
+    if (submitting || (!automatic && confirming)) return;
+    if (!automatic) {
+      confirming = true;
+      const confirmed = await window.AppDialog.confirm({
+        title: 'Nộp bài thi?',
+        message:
+          'Hệ thống sẽ lưu các câu trả lời cuối cùng trước khi nộp. Sau khi nộp, bạn không thể chỉnh sửa bài làm.',
+        confirmText: 'Nộp bài',
+        cancelText: 'Tiếp tục làm bài',
+      });
+      confirming = false;
+      if (!confirmed || submitting || deadlineReached) return;
+    }
     submitting = true;
+    if (submitButton) {
+      submitButton.disabled = true;
+      submitButton.textContent = 'Đang nộp bài…';
+    }
+    if (submitError) submitError.hidden = true;
+    submitForm?.setAttribute('aria-busy', 'true');
+    forms.forEach((form) => {
+      form.inert = true;
+    });
     timers.forEach((timer, form) => {
       clearTimeout(timer);
       save(form).catch(() => {});
     });
     timers.clear();
-    const results = await Promise.allSettled([...inFlight]);
-    if (!automatic && results.some((result) => result.status === 'rejected')) {
+    await Promise.allSettled([...inFlight]);
+    // A previously failed autosave must be retried before a manual submission can lock the attempt.
+    if (!automatic && !deadlineReached) await Promise.allSettled([...failedForms].map(save));
+    if (!automatic && !deadlineReached && failedForms.size) {
       submitting = false;
-      window.alert('Chưa thể lưu đầy đủ đáp án. Vui lòng kiểm tra kết nối và thử lại.');
+      if (submitButton) {
+        submitButton.disabled = false;
+        submitButton.textContent = 'Nộp bài';
+      }
+      forms.forEach((form) => {
+        form.inert = false;
+      });
+      submitForm?.removeAttribute('aria-busy');
+      if (submitError) {
+        submitError.textContent =
+          'Chưa thể lưu đầy đủ đáp án. Bài chưa được nộp. Vui lòng kiểm tra kết nối và thử lại.';
+        submitError.hidden = false;
+        submitError.focus();
+      }
       return;
     }
-    document.getElementById('submit-attempt-form')?.submit();
+    submitForm?.submit();
   };
-  document.getElementById('submit-attempt-form')?.addEventListener('submit', (event) => {
+  submitForm?.addEventListener('submit', (event) => {
     event.preventDefault();
     submit(false);
   });

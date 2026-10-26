@@ -31,7 +31,7 @@ public interface ExamAttemptRepository extends JpaRepository<ExamAttemptEntity, 
                             + " :pattern) and (:examType = '' or e.examType = :examType) and (:state ="
                             + " '' or a.status = :state) and (:skill = '' or e.skill = :skill or exists"
                             + " (select r.id from ExamSkillResultEntity r where r.attemptId = a.id and"
-                            + " r.skill = :skill)) order by a.createdAt desc",
+                            + " r.skill = :skill)) order by a.createdAt desc, a.id desc",
             countQuery =
                     "select count(a) from ExamAttemptEntity a join MockExamEntity e on e.id ="
                             + " a.mockExamId where a.userId = :userId and (:pattern = '' or"

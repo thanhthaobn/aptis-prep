@@ -12,7 +12,7 @@
         th:attr="data-skill=${entry.skill},data-kind=${entry.kind}"
       >
         <div
-          th:replace="~{fragments/breadcrumb :: breadcrumb(${title}, @{${'/student/' + module}}, 'Chi tiết')}"
+          th:replace="~{fragments/breadcrumb :: breadcrumb(${title}, @{/student/exams(examType=${entry.examType})}, 'Chi tiết')}"
         ></div>
         <div th:replace="~{fragments/messages :: messages}"></div>
         <header class="page-header study-detail-header">
@@ -24,7 +24,11 @@
             </p>
           </div>
           <div class="page-actions">
-            <a class="button button-secondary" th:href="@{${'/student/' + module}}">Về danh sách</a>
+            <a
+              class="button button-secondary"
+              th:href="@{/student/exams(examType=${entry.examType})}"
+              >Về danh sách</a
+            >
           </div>
         </header>
         <section class="dashboard-panel study-overview-card">
@@ -171,11 +175,7 @@
               <li>Điểm và CEFR là kết quả ước lượng, không phải chứng chỉ.</li>
             </ul>
           </details>
-          <div
-            class="alert alert-info"
-            th:if="${entry.kind == 'Kiểm tra cuối chặng'}"
-            role="status"
-          >
+          <div class="alert alert-info" th:if="${entry.examType == 'CHECKPOINT'}" role="status">
             Checkpoint chỉ mở khi bạn hoàn thành các bài bắt buộc trong lộ trình học.
           </div>
           <div class="actions">
@@ -193,7 +193,17 @@
               th:href="@{/student/learning-path/{skill}(skill=${entry.skill})}"
               >Mở từ lộ trình học</a
             >
-            <a class="button button-secondary" th:href="@{/student/exams}">Vào danh sách đề thi</a>
+            <a
+              class="button"
+              th:if="${entry.state == 'PUBLISHED' and entry.examType == 'PLACEMENT'}"
+              th:href="@{/student/placement(skill=${entry.skillCode})}"
+              >Mở kiểm tra đầu vào</a
+            >
+            <a
+              class="button button-secondary"
+              th:href="@{/student/exams(examType=${entry.examType})}"
+              >Vào danh sách đề thi</a
+            >
           </div>
         </section>
 
