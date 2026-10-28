@@ -61,7 +61,7 @@
         </form>
         <div class="section-title-row">
           <h2>Danh sách học viên</h2>
-          <span class="muted" th:text="|${pageData.totalItems} kết quả|">0 kết quả</span>
+          <span class="muted" th:text="${'' + (pageData.totalItems) + ' kết quả'}">0 kết quả</span>
         </div>
         <div class="table-wrap" th:if="${pageData.items != null and !pageData.items.isEmpty()}">
           <table class="data-table student-table admin-responsive-table">
@@ -126,7 +126,9 @@
           >
             Trang trước
           </a>
-          <span th:text="|Trang ${pageData.page + 1}/${pageData.totalPages}|">Trang 1/1</span>
+          <span th:text="${'Trang ' + (pageData.page + 1) + '/' + (pageData.totalPages)}">
+            Trang 1/1
+          </span>
           <a
             th:if="${pageData.hasNext}"
             th:href="@{/admin/students(page=${pageData.nextPage},size=${pageData.size},q=${q},status=${selectedStatus})}"

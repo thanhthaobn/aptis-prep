@@ -398,6 +398,7 @@ class AiRecoveryBusinessTests {
         delivery.ensureAiAssessmentCompleted(event(job));
         var row = outbox.findByEventKey(callbackKey(job, "COMPLETED")).orElseThrow();
         row.setStatus("PROCESSING");
+        row.setNextAttemptAt(LocalDateTime.now().minusSeconds(1));
         outbox.saveAndFlush(row);
         restarted().recoverAiJobs();
         delivery.recoverPending();

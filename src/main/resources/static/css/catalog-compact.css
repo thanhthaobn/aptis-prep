@@ -253,22 +253,35 @@
 .skill-practice .lesson-model { margin-block:16px; }
 .skill-practice .speaking-recorder { display:block; }
 .skill-practice .speaking-recorder .actions { margin-block:12px; }
-.orientation-page .explore-grid { gap: 12px; margin-top: 18px; }
-.orientation-page .explore-card { padding: 16px 18px; gap: 7px; border-radius: 18px; }
+.orientation-page.app-main { width: 100%; max-width: 1440px; margin-inline: auto; }
+.orientation-page .explore-grid { grid-template-columns: repeat(6,minmax(0,1fr)); gap: 22px; margin-top: 22px; }
+.orientation-page .explore-card { grid-column: span 2; padding: 22px 24px; gap: 7px; border-radius: 18px; }
+.orientation-page .explore-card:nth-child(4) { grid-column: 2 / span 2; }
 .orientation-page .explore-card h2 { font-size: 1.35rem; line-height: 1.35; }
 .orientation-page .explore-number { font-size: 1.15rem; }
 .orientation-page .explore-icon { width: 36px; height: 36px; border-radius: 11px; }
 .orientation-page .explore-icon svg { width: 22px; height: 22px; }
-.orientation-page .explore-card > .button { font-size: .875rem; padding: 8px 12px; min-height: 40px; }
-.orientation-page .explore-card { gap: 10px; border-width: 1px; box-shadow: none; }
+.orientation-page .explore-card > .button { font-size: .875rem; padding: 10px 18px; min-height: 44px; }
+.orientation-page .explore-card { gap: 14px; border-width: 1px; box-shadow: none; }
 .orientation-page .explore-card-top { gap: 12px; flex-wrap: wrap; }
+.orientation-page .explore-card-top .stage-range { flex-basis: 100%; margin-left: 0; text-align: left; }
+.orientation-page .stage-scale .stage-goal-label { font-size: .6rem; white-space: nowrap; }
 .path-skill-heading { display: flex; align-items: center; gap: 10px; min-width: 0; }
 .orientation-page .path-skill-heading h2 { margin: 0; font-size: 1.1rem; }
 .orientation-page .stage-overview { margin: 4px 0; width: 100%; }
 .orientation-page .stage-range { margin-left: auto; font-size: .75rem; }
 .orientation-page .stage-current { margin-bottom: 8px; font-size: .85rem; }
 .orientation-page .stage-current .badge { font-size: .72rem; }
-.orientation-page .explore-card > .button { align-self: stretch; justify-content: space-between; margin-top: auto; font-size: .82rem; }
+.orientation-page .explore-card > .button { align-self: flex-start; justify-content: center; width: fit-content; max-width: 100%; gap: 12px; margin-top: auto; font-size: .82rem; }
+@media(max-width:1180px) {
+    .orientation-page .explore-grid { grid-template-columns: repeat(4,minmax(0,1fr)); }
+    .orientation-page .explore-card:nth-child(4) { grid-column: span 2; }
+    .orientation-page .explore-card:last-child { grid-column: 2 / span 2; }
+}
+@media(max-width:760px) {
+    .orientation-page .explore-grid { grid-template-columns: minmax(0,1fr); gap: 16px; }
+    .orientation-page .explore-card,.orientation-page .explore-card:nth-child(4),.orientation-page .explore-card:last-child { grid-column: auto; padding: 20px; }
+}
 .lesson-catalog-grid { gap: 12px; }
 .lesson-catalog-grid .lesson-catalog-card { padding: 14px; gap: 10px; border-radius: 16px; }
 .lesson-catalog-card .lesson-card-body { gap: 6px; }

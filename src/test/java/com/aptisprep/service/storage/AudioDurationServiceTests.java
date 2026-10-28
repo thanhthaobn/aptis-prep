@@ -37,6 +37,18 @@ class AudioDurationServiceTests {
     }
 
     @Test
+    void extensionlessInvalidStreamReturnsABusinessErrorRatherThanAnIndexError() {
+        StorageService storage = mock(StorageService.class);
+        when(storage.load("audio/legacy-recording"))
+                .thenReturn(new ByteArrayResource(new byte[] {1, 2, 3}));
+        assertThrows(
+                BusinessRuleException.class,
+                () ->
+                        new AudioDurationService(storage, "missing-ffprobe-for-test")
+                                .seconds("audio/legacy-recording"));
+    }
+
+    @Test
     void invalidMediaFailsClosedRatherThanAcceptingAnInventedDuration() {
         var storage = mock(StorageService.class);
         when(storage.load("invalid.wav")).thenReturn(new ByteArrayResource(new byte[] {1, 2, 3}));

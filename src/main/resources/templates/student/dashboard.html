@@ -42,7 +42,7 @@
                   <p
                     class="muted m-0 mt-1 supporting-text"
                     th:if="${recommendation.path() != null}"
-                    th:text="|Tiến độ chặng: ${recommendation.path().completedLessons()}/${recommendation.path().totalLessons()} bài (${recommendation.path().progressPercent()}%)|"
+                    th:text="${'Tiến độ chặng: ' + (recommendation.path().completedLessons()) + '/' + (recommendation.path().totalLessons()) + ' bài (' + (recommendation.path().progressPercent()) + '%)'}"
                   ></p>
                 </div>
                 <a
@@ -84,7 +84,7 @@
                   class="learn-node"
                   th:classappend="${path.skill()=='Reading'?'node-blue':(path.skill()=='Listening'?'node-gold':(path.skill()=='Writing'?'node-purple':(path.skill()=='Speaking'?'node-coral':'node-green')))}"
                   th:href="@{/student/learning-path/{skill}(skill=${path.skill()})}"
-                  th:attr="aria-label=|Xem lộ trình ${path.skill()}|,data-skill=${path.skill()}"
+                  th:attr="aria-label=${'Xem lộ trình ' + (path.skill())},data-skill=${path.skill()}"
                   th:text="${path.progressPercent() == null ? '—' : path.progressPercent() + '%'}"
                 >
                   —
@@ -93,7 +93,7 @@
                   <h3 th:text="${path.skill()}"></h3>
                   <p
                     th:if="${path.totalLessons() > 0}"
-                    th:text="|${path.completedLessons()}/${path.totalLessons()} bài đã hoàn thành|"
+                    th:text="${'' + (path.completedLessons()) + '/' + (path.totalLessons()) + ' bài đã hoàn thành'}"
                   ></p>
                   <p th:if="${path.totalLessons() == 0}">Chưa có bài học</p>
                 </div>
@@ -171,7 +171,7 @@
               </div>
               <div class="learn-mini-stat">
                 <span>Bài học hoàn thành</span>
-                <strong th:text="|${completedLessons}/${totalLessons}|">0/0</strong>
+                <strong th:text="${'' + (completedLessons) + '/' + (totalLessons)}">0/0</strong>
               </div>
               <div class="learn-mini-stat">
                 <span>Kỹ năng đang luyện</span>

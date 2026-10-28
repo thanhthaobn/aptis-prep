@@ -21,8 +21,8 @@
             ></th:block>
           </p>
           <div th:if="${assessment.score != null}">
-            <h2 th:text="|Điểm ước lượng: ${assessment.score}/50|">Điểm ước lượng</h2>
-            <p th:text="|CEFR ước lượng: ${assessment.estimatedCefr}|">CEFR</p>
+            <h2 th:text="${'Điểm ước lượng: ' + (assessment.score) + '/50'}">Điểm ước lượng</h2>
+            <p th:text="${'CEFR ước lượng: ' + (assessment.estimatedCefr)}">CEFR</p>
           </div>
           <div
             th:if="${assessment.state == 'PENDING'}"

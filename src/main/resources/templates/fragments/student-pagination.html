@@ -6,7 +6,7 @@
       class="pagination student-pagination"
       aria-label="Phân trang"
     >
-      <span th:text="|${totalItems} kết quả|">0 kết quả</span>
+      <span th:text="${'' + (totalItems) + ' kết quả'}">0 kết quả</span>
       <div class="pagination-pages" th:if="${totalPages > 0}">
         <a
           class="page-link"
@@ -41,14 +41,14 @@
               class="page-link active"
               th:if="${index == currentPage}"
               aria-current="page"
-              th:attr="aria-label=|Trang ${index + 1}|"
+              th:attr="aria-label=${'Trang ' + (index + 1)}"
               th:text="${index + 1}"
             ></span>
             <a
               class="page-link"
               th:unless="${index == currentPage}"
               th:href="${baseUrl + '&page=' + index}"
-              th:attr="aria-label=|Trang ${index + 1}|"
+              th:attr="aria-label=${'Trang ' + (index + 1)}"
               th:text="${index + 1}"
             ></a>
           </th:block>
@@ -57,7 +57,7 @@
             class="page-link"
             th:if="${end < totalPages - 1}"
             th:href="${baseUrl + '&page=' + (totalPages - 1)}"
-            th:attr="aria-label=|Trang ${totalPages}|"
+            th:attr="aria-label=${'Trang ' + (totalPages)}"
             th:text="${totalPages}"
           ></a>
         </th:block>
@@ -78,7 +78,10 @@
           ›
         </span>
       </div>
-      <span th:if="${totalPages > 0}" th:text="|Trang ${currentPage + 1} / ${totalPages}|"></span>
+      <span
+        th:if="${totalPages > 0}"
+        th:text="${'Trang ' + (currentPage + 1) + ' / ' + (totalPages)}"
+      ></span>
     </nav>
   </body>
 </html>

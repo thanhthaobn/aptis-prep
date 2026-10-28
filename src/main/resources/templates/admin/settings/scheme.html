@@ -1,4 +1,8 @@
 <!doctype html>
+<!--/*@thymesVar id="display" type="com.aptisprep.controller.DisplayFormatting"*/-->
+<!--/*@thymesVar id="schemeForm" type="com.aptisprep.dto.form.ScoringSchemeForm"*/-->
+<!--/*@thymesVar id="scaleRuleForm" type="com.aptisprep.dto.form.ScoringScaleRuleForm"*/-->
+<!--/*@thymesVar id="bandForm" type="com.aptisprep.dto.form.ScoreBandForm"*/-->
 <html lang="vi" xmlns:th="http://www.thymeleaf.org">
   <head th:replace="~{fragments/head :: head('Bộ chấm điểm & CEFR')}"></head>
   <body class="admin-theme">
@@ -69,7 +73,12 @@
               </div>
             </div>
           </fieldset>
-          <div class="alert alert-danger" th:errors="*{global}"></div>
+          <div class="alert alert-danger" th:if="${!display.globalErrors('schemeForm').isEmpty()}">
+            <span th:each="message, status : ${display.globalErrors('schemeForm')}">
+              <br th:if="${!status.first}" />
+              <span th:text="${message}"></span>
+            </span>
+          </div>
           <div class="actions">
             <button th:unless="${readOnly}" class="button" type="submit">Lưu bộ chấm điểm</button>
             <a
@@ -221,7 +230,15 @@
                 </div>
               </div>
             </fieldset>
-            <div class="alert alert-danger" th:errors="*{all}"></div>
+            <div
+              class="alert alert-danger"
+              th:if="${!display.allErrors('scaleRuleForm').isEmpty()}"
+            >
+              <span th:each="message, status : ${display.allErrors('scaleRuleForm')}">
+                <br th:if="${!status.first}" />
+                <span th:text="${message}"></span>
+              </span>
+            </div>
             <button class="button" type="submit" th:unless="${readOnly}">Lưu quy đổi điểm</button>
           </form>
           <form
@@ -244,7 +261,7 @@
                 <label for="bandLevel">CEFR</label>
                 <select id="bandLevel" th:field="*{cefrLevel}">
                   <option
-                    th:each="level : ${ {'A1','A2','B1','B2','C1','C2'} }"
+                    th:each="level : ${display.scoringLevels()}"
                     th:value="${level}"
                     th:text="${level}"
                   ></option>
@@ -273,7 +290,12 @@
                 />
               </div>
             </div>
-            <div class="alert alert-danger" th:errors="*{global}"></div>
+            <div class="alert alert-danger" th:if="${!display.globalErrors('bandForm').isEmpty()}">
+              <span th:each="message, status : ${display.globalErrors('bandForm')}">
+                <br th:if="${!status.first}" />
+                <span th:text="${message}"></span>
+              </span>
+            </div>
             <div class="actions"><button class="button" type="submit">Lưu khoảng điểm</button></div>
           </form>
         </section>

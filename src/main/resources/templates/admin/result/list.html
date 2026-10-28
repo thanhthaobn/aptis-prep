@@ -1,4 +1,5 @@
 <!doctype html>
+<!--/*@thymesVar id="display" type="com.aptisprep.controller.DisplayFormatting"*/-->
 <html lang="vi" xmlns:th="http://www.thymeleaf.org">
   <head th:replace="~{fragments/head :: head('Kết quả học viên')}"></head>
   <body class="admin-theme">
@@ -35,7 +36,7 @@
             <select id="examType" name="examType">
               <option value="">Tất cả</option>
               <option
-                th:each="v : ${T(java.util.List).of('PLACEMENT','PRACTICE','CHECKPOINT','FULL_MOCK')}"
+                th:each="v : ${display.examTypes()}"
                 th:value="${v}"
                 th:text="${@resultLabels.examType(v)}"
                 th:selected="${selectedExamType==v}"
@@ -47,7 +48,7 @@
             <select id="state" name="state">
               <option value="">Tất cả</option>
               <option
-                th:each="v : ${T(java.util.List).of('IN_PROGRESS','WAITING_GRADING','COMPLETED','ERROR','EXPIRED')}"
+                th:each="v : ${display.resultStates()}"
                 th:value="${v}"
                 th:text="${@resultLabels.state(v)}"
                 th:selected="${selectedState==v}"
@@ -69,7 +70,7 @@
         </form>
         <div class="section-title-row">
           <h2>Lịch sử lượt thi</h2>
-          <span class="muted" th:text="|${history.totalItems} lượt|"></span>
+          <span class="muted" th:text="${'' + (history.totalItems) + ' lượt'}"></span>
         </div>
         <div class="table-wrap" th:if="${!history.items.isEmpty()}">
           <table class="data-table admin-responsive-table result-history-table">
@@ -119,7 +120,7 @@
           >
             Trang trước
           </a>
-          <span th:text="|Trang ${history.page+1}|"></span>
+          <span th:text="${'Trang ' + (history.page+1)}"></span>
           <a
             th:if="${(history.page+1)*history.size<history.totalItems}"
             th:href="@{/admin/results(page=${history.page+1},size=${history.size},q=${q},skill=${selectedSkill},examType=${selectedExamType},state=${selectedState},from=${from},to=${to})}"

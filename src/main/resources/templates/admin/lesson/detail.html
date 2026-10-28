@@ -142,12 +142,12 @@
           </section>
         </th:block>
         <section class="dashboard-panel dashboard-section">
-          <h2 th:text="|Kiểm tra kiến thức (${questions.size()} câu)|"></h2>
+          <h2 th:text="${'Kiểm tra kiến thức (' + (questions.size()) + ' câu)'}"></h2>
           <p th:if="${questions == null or questions.isEmpty()}">
             Bài này không có câu kiểm tra kiến thức.
           </p>
           <article class="lesson-question" th:each="question, stat : ${questions}">
-            <h3 th:text="|${stat.count}. ${question.prompt()}|"></h3>
+            <h3 th:text="${'' + (stat.count) + '. ' + (question.prompt())}"></h3>
             <ol type="A">
               <li th:each="option : ${question.options()}" th:text="${option}"></li>
             </ol>

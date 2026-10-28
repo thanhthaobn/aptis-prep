@@ -122,7 +122,22 @@ public class StudentContentController {
     public String result(@PathVariable int id, Principal principal, Model model) {
         Integer userId = accounts.requireActiveStudent(principal.getName());
         model.addAttribute("attemptResult", attempts.result(userId, id));
+        model.addAttribute("canRegradeEmpty", attempts.canRegradeEmpty(userId, id));
         return "student/attempt-result";
+    }
+
+    @PostMapping("/student/attempts/{id}/regrade-empty")
+    public String regradeEmpty(
+            @PathVariable int id, Principal principal, RedirectAttributes redirect) {
+        Integer userId = accounts.requireActiveStudent(principal.getName());
+        try {
+            attempts.regradeEmpty(userId, id);
+            redirect.addFlashAttribute(
+                    "successMessage", "Đã tính lại phần bỏ trống thành 0 điểm từ bài làm đã lưu.");
+        } catch (BusinessRuleException exception) {
+            redirect.addFlashAttribute("error", exception.getMessage());
+        }
+        return "redirect:/student/attempts/" + id + "/result";
     }
 
     @PostMapping("/student/attempts/{id}/retry-grading")

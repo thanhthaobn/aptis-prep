@@ -3,6 +3,7 @@ package com.aptisprep.controller;
 import static org.junit.jupiter.api.Assertions.*;
 
 import com.aptisprep.enums.RecordStatus;
+import com.aptisprep.service.contract.IntegrationModels.SkillResult;
 import java.time.*;
 import java.util.*;
 import org.junit.jupiter.api.Test;
@@ -16,6 +17,20 @@ import org.thymeleaf.templateresolver.ClassLoaderTemplateResolver;
 
 class DisplayFormattingTests {
     private final DisplayFormatting display = new DisplayFormatting();
+
+    @Test
+    void gradingBannersAndRetryKeepTheirIndependentConditions() {
+        SkillResult pending = new SkillResult("WRITING", null, null, null, "PENDING", null);
+        SkillResult failed =
+                new SkillResult("SPEAKING", null, null, null, "ERROR", null, false, true);
+        assertFalse(display.hasPendingGrades(null));
+        assertFalse(display.hasGradingErrors(List.of()));
+        assertFalse(display.hasRetryableGrades(List.of(pending)));
+        assertTrue(display.hasPendingGrades(List.of(pending, failed)));
+        assertTrue(display.hasGradingErrors(List.of(pending, failed)));
+        assertTrue(display.hasRetryableGrades(List.of(pending, failed)));
+        assertFalse(display.hasPendingGrades(List.of(failed)));
+    }
 
     @Test
     void datesRetainThePreviousFormattingForLocalDatesAndInstants() {

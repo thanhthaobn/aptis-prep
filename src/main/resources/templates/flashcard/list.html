@@ -1,4 +1,5 @@
 <!doctype html>
+<!--/*@thymesVar id="display" type="com.aptisprep.controller.DisplayFormatting"*/-->
 <html lang="vi" xmlns:th="http://www.thymeleaf.org">
   <head th:replace="~{fragments/head :: head('Flashcard')}"></head>
   <body th:class="${admin?'admin-theme flashcard-page':'student-theme flashcard-page'}">
@@ -49,14 +50,16 @@
           </div>
         </form>
 
-        <th:block th:each="group : ${admin ? {'admin'} : {'mine','lesson'}}">
+        <th:block th:each="group : ${display.flashcardGroups(admin)}">
           <section
             class="flashcard-function-group"
             th:if="${admin or group=='mine' or lessonResultCount>0}"
           >
             <header class="flashcard-group-heading" th:unless="${admin}">
               <h2 th:text="${group=='lesson'?'Ôn theo bài học':'Bộ thẻ của tôi'}"></h2>
-              <span th:text="|${group=='lesson'?lessonResultCount:mineResultCount} bộ|"></span>
+              <span
+                th:text="${'' + (group=='lesson'?lessonResultCount:mineResultCount) + ' bộ'}"
+              ></span>
             </header>
             <div
               class="flashcard-personal-empty"
@@ -79,13 +82,13 @@
               >
                 <summary>
                   <strong th:text="${branch.skill}"></strong>
-                  <span th:text="|${branch.count} bộ|"></span>
+                  <span th:text="${'' + (branch.count) + ' bộ'}"></span>
                 </summary>
                 <div class="flashcard-level-branches">
                   <details class="flashcard-level-branch" th:each="tier : ${branch.levels}">
                     <summary>
                       <strong th:text="${tier.level}"></strong>
-                      <span th:text="|${tier.sets.size()} bộ|"></span>
+                      <span th:text="${'' + (tier.sets.size()) + ' bộ'}"></span>
                     </summary>
                     <div th:replace="~{flashcard/list :: setRows(${tier.sets})}"></div>
                   </details>
@@ -97,7 +100,7 @@
               >
                 <summary>
                   <strong>Chưa phân loại</strong>
-                  <span th:text="|${unclassifiedSets.size()} bộ|"></span>
+                  <span th:text="${'' + (unclassifiedSets.size()) + ' bộ'}"></span>
                 </summary>
                 <div th:replace="~{flashcard/list :: setRows(${unclassifiedSets})}"></div>
               </details>
@@ -140,8 +143,8 @@
                       th:if="${set.lessonId()!=null}"
                       th:href="${admin?'/admin/lessons/'+set.lessonId():'/student/lessons/'+set.lessonId()}"
                     >
-                      <small th:text="|${set.lessonSkill()} · Bài học nguồn|"></small>
-                      <span th:text="|${set.lessonTitle()} ↗|"></span>
+                      <small th:text="${'' + (set.lessonSkill()) + ' · Bài học nguồn'}"></small>
+                      <span th:text="${'' + (set.lessonTitle()) + ' ↗'}"></span>
                     </a>
                     <p
                       class="set-lesson muted"
@@ -156,7 +159,7 @@
                     ></p>
                     <div class="flashcard-set-meta">
                       <span aria-hidden="true">▤</span>
-                      <strong th:text="|${set.count()} thuật ngữ|"></strong>
+                      <strong th:text="${'' + (set.count()) + ' thuật ngữ'}"></strong>
                     </div>
                   </div>
                   <div class="flashcard-set-actions">

@@ -1,4 +1,5 @@
 <!doctype html>
+<!--/*@thymesVar id="display" type="com.aptisprep.controller.DisplayFormatting"*/-->
 <html lang="vi" xmlns:th="http://www.thymeleaf.org">
   <head th:replace="~{fragments/head :: head(${selectedSkill})}"></head>
   <body class="student-theme">
@@ -65,7 +66,7 @@
                     ></a>
                     <span
                       th:unless="${lesson.available}"
-                      th:text="|${lesson.title} · Nội dung đang được cập nhật|"
+                      th:text="${'' + (lesson.title) + ' · Nội dung đang được cập nhật'}"
                     ></span>
                   </div>
                   <div class="path-lesson-actions">
@@ -76,7 +77,7 @@
                       class="path-set-link"
                       th:if="${lesson.available and lessonSets.containsKey(lesson.id)}"
                       th:href="@{/student/flashcards/{id}(id=${lessonSets.get(lesson.id).id()})}"
-                      th:text="|Ôn ${lessonSets.get(lesson.id).count()} thẻ từ vựng →|"
+                      th:text="${'Ôn ' + (lessonSets.get(lesson.id).count()) + ' thẻ từ vựng →'}"
                     ></a>
                   </div>
                 </li>
@@ -89,14 +90,14 @@
               <p
                 th:if="${path.totalRequiredLessons() > 0}"
                 class="checkpoint-requirements"
-                th:text="|Đã hoàn thành ${path.completedRequiredLessons()}/${path.totalRequiredLessons()} bài bắt buộc.|"
+                th:text="${'Đã hoàn thành ' + (path.completedRequiredLessons()) + '/' + (path.totalRequiredLessons()) + ' bài bắt buộc.'}"
               ></p>
               <div
                 th:if="${path.completedRequiredLessons() < path.totalRequiredLessons()}"
                 class="checkpoint-missing"
               >
                 <strong
-                  th:text="|Còn ${path.totalRequiredLessons() - path.completedRequiredLessons()} bài cần hoàn thành|"
+                  th:text="${'Còn ' + (path.totalRequiredLessons() - path.completedRequiredLessons()) + ' bài cần hoàn thành'}"
                 ></strong>
                 <th:block th:each="stage : ${stages}" th:if="${stage.pathId == path.pathId}">
                   <ul class="checkpoint-missing-list">
@@ -108,7 +109,7 @@
                       ></a>
                       <span
                         th:unless="${lesson.available}"
-                        th:text="|${lesson.title} · Chưa thể truy cập, cần quản trị cập nhật|"
+                        th:text="${'' + (lesson.title) + ' · Chưa thể truy cập, cần quản trị cập nhật'}"
                       ></span>
                     </li>
                   </ul>
@@ -155,7 +156,7 @@
                 <button
                   class="button"
                   type="submit"
-                  th:text="${path.checkpointState == 'in_progress' ? 'Tiếp tục bài đang làm' : path.checkpointState == 'grading' ? 'Xem trạng thái chấm' : path.checkpointState == 'failed' ? 'Làm lại kiểm tra cuối chặng' : 'Bắt đầu bài kiểm tra cuối chặng'}"
+                  th:text="${display.checkpointAction(path.checkpointState)}"
                 ></button>
               </form>
             </div>
