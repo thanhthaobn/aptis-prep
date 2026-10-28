@@ -21,19 +21,19 @@
           >
             <summary>
               <strong th:text="${branch.skill()}"></strong>
-              <span th:text="|${branch.count()} bài học|"></span>
+              <span th:text="${'' + (branch.count()) + ' bài học'}"></span>
             </summary>
             <details class="level-branch" th:each="level : ${branch.levels()}">
               <summary>
                 <strong th:text="${level.level()}"></strong>
-                <span th:text="|${level.lessons().size()} bài học|"></span>
+                <span th:text="${'' + (level.lessons().size()) + ' bài học'}"></span>
               </summary>
               <details class="topic-branch" th:each="topic : ${level.topics()}">
                 <summary th:text="${topic.key}"></summary>
                 <ul class="lesson-leaves">
                   <li th:each="lesson : ${topic.value}" class="admin-lesson-leaf">
                     <div class="lesson-leaf-title">
-                      <span class="muted" th:text="|${lesson.displayOrder}.|"></span>
+                      <span class="muted" th:text="${'' + (lesson.displayOrder) + '.'}"></span>
                       <a
                         th:href="@{/admin/lessons/{id}(id=${lesson.id})}"
                         th:text="${lesson.title}"
@@ -69,7 +69,7 @@
               <a
                 class="button button-secondary"
                 th:href="@{/admin/lessons/create(skill=${branch.skill()},level=${level.level()})}"
-                th:text="|+ Thêm bài vào ${branch.skill()} ${level.level()}|"
+                th:text="${'+ Thêm bài vào ' + (branch.skill()) + ' ' + (level.level())}"
               ></a>
             </details>
           </details>

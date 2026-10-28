@@ -1,4 +1,6 @@
 <!doctype html>
+<!--/*@thymesVar id="display" type="com.aptisprep.controller.DisplayFormatting"*/-->
+<!--/*@thymesVar id="form" type="com.aptisprep.dto.form.LessonForm"*/-->
 <html lang="vi" xmlns:th="http://www.thymeleaf.org">
   <head
     th:replace="~{fragments/head :: head(${editing ? 'Chỉnh sửa bài học' : 'Tạo bài học'})}"
@@ -38,9 +40,14 @@
         >
           <div
             class="alert alert-danger ap-alert ap-alert-danger"
-            th:errors="*{all}"
+            th:if="${!display.allErrors('form').isEmpty()}"
             role="alert"
-          ></div>
+          >
+            <span th:each="message, status : ${display.allErrors('form')}">
+              <br th:if="${!status.first}" />
+              <span th:text="${message}"></span>
+            </span>
+          </div>
           <section class="dashboard-panel lesson-form-section">
             <h2>Thông tin bài học</h2>
             <div class="field">
@@ -219,7 +226,7 @@
             ></audio>
             <p
               th:if="${editing and lesson.audioName!=null}"
-              th:text="|Tệp hiện tại: ${lesson.audioName}|"
+              th:text="${'Tệp hiện tại: ' + (lesson.audioName)}"
             ></p>
             <div class="field">
               <label for="audio">Chọn tệp âm thanh mới</label>
@@ -355,12 +362,12 @@
                 th:with="checkPath=${'checks[' + stat.index + ']'}"
                 th:attr="data-question-index=${stat.index}"
               >
-                <legend th:text="|Câu ${stat.count}|"></legend>
+                <legend th:text="${'Câu ' + (stat.count)}"></legend>
                 <button class="remove-question" type="button">Xóa câu</button>
                 <div class="field">
-                  <label th:for="|checks-${stat.index}-prompt|">Câu hỏi</label>
+                  <label th:for="${'checks-' + (stat.index) + '-prompt'}">Câu hỏi</label>
                   <textarea
-                    th:id="|checks-${stat.index}-prompt|"
+                    th:id="${'checks-' + (stat.index) + '-prompt'}"
                     th:name="${checkPath + '.prompt'}"
                     th:text="${check.prompt}"
                     rows="2"
@@ -368,27 +375,31 @@
                 </div>
                 <div class="question-option-grid">
                   <div class="field question-option" data-option-index="0">
-                    <label th:for="|checks-${stat.index}-optionA|">Đáp án A (bắt buộc)</label>
+                    <label th:for="${'checks-' + (stat.index) + '-optionA'}">
+                      Đáp án A (bắt buộc)
+                    </label>
                     <textarea
-                      th:id="|checks-${stat.index}-optionA|"
+                      th:id="${'checks-' + (stat.index) + '-optionA'}"
                       th:name="${checkPath + '.optionA'}"
                       th:text="${check.optionA}"
                       rows="2"
                     ></textarea>
                   </div>
                   <div class="field question-option" data-option-index="1">
-                    <label th:for="|checks-${stat.index}-optionB|">Đáp án B (bắt buộc)</label>
+                    <label th:for="${'checks-' + (stat.index) + '-optionB'}">
+                      Đáp án B (bắt buộc)
+                    </label>
                     <textarea
-                      th:id="|checks-${stat.index}-optionB|"
+                      th:id="${'checks-' + (stat.index) + '-optionB'}"
                       th:name="${checkPath + '.optionB'}"
                       th:text="${check.optionB}"
                       rows="2"
                     ></textarea>
                   </div>
                   <div class="field question-option" data-option-index="2">
-                    <label th:for="|checks-${stat.index}-optionC|">Đáp án C</label>
+                    <label th:for="${'checks-' + (stat.index) + '-optionC'}">Đáp án C</label>
                     <textarea
-                      th:id="|checks-${stat.index}-optionC|"
+                      th:id="${'checks-' + (stat.index) + '-optionC'}"
                       th:name="${checkPath + '.optionC'}"
                       th:text="${check.optionC}"
                       rows="2"
@@ -398,9 +409,9 @@
                     </button>
                   </div>
                   <div class="field question-option" data-option-index="3">
-                    <label th:for="|checks-${stat.index}-optionD|">Đáp án D</label>
+                    <label th:for="${'checks-' + (stat.index) + '-optionD'}">Đáp án D</label>
                     <textarea
-                      th:id="|checks-${stat.index}-optionD|"
+                      th:id="${'checks-' + (stat.index) + '-optionD'}"
                       th:name="${checkPath + '.optionD'}"
                       th:text="${check.optionD}"
                       rows="2"
@@ -410,9 +421,9 @@
                     </button>
                   </div>
                   <div class="field question-option" data-option-index="4">
-                    <label th:for="|checks-${stat.index}-optionE|">Đáp án E</label>
+                    <label th:for="${'checks-' + (stat.index) + '-optionE'}">Đáp án E</label>
                     <textarea
-                      th:id="|checks-${stat.index}-optionE|"
+                      th:id="${'checks-' + (stat.index) + '-optionE'}"
                       th:name="${checkPath + '.optionE'}"
                       th:text="${check.optionE}"
                       rows="2"
@@ -422,9 +433,9 @@
                     </button>
                   </div>
                   <div class="field question-option" data-option-index="5">
-                    <label th:for="|checks-${stat.index}-optionF|">Đáp án F</label>
+                    <label th:for="${'checks-' + (stat.index) + '-optionF'}">Đáp án F</label>
                     <textarea
-                      th:id="|checks-${stat.index}-optionF|"
+                      th:id="${'checks-' + (stat.index) + '-optionF'}"
                       th:name="${checkPath + '.optionF'}"
                       th:text="${check.optionF}"
                       rows="2"
@@ -440,10 +451,12 @@
                 <small class="option-limit">Mỗi câu có từ 2 đến 6 đáp án.</small>
                 <div class="lesson-form-grid">
                   <div class="field">
-                    <label th:for="|checks-${stat.index}-correctOption|">Đáp án đúng</label>
+                    <label th:for="${'checks-' + (stat.index) + '-correctOption'}">
+                      Đáp án đúng
+                    </label>
                     <select
                       class="correct-option"
-                      th:id="|checks-${stat.index}-correctOption|"
+                      th:id="${'checks-' + (stat.index) + '-correctOption'}"
                       th:name="${checkPath + '.correctOption'}"
                     >
                       <option value="">Chọn đáp án</option>
@@ -456,9 +469,11 @@
                     </select>
                   </div>
                   <div class="field">
-                    <label th:for="|checks-${stat.index}-explanation|">Giải thích đáp án</label>
+                    <label th:for="${'checks-' + (stat.index) + '-explanation'}">
+                      Giải thích đáp án
+                    </label>
                     <textarea
-                      th:id="|checks-${stat.index}-explanation|"
+                      th:id="${'checks-' + (stat.index) + '-explanation'}"
                       th:name="${checkPath + '.explanation'}"
                       th:text="${check.explanation}"
                       rows="2"

@@ -25,6 +25,7 @@ import com.aptisprep.repository.MockExamRepository;
 import com.aptisprep.repository.QuestionRepository;
 import com.aptisprep.repository.UserAnswerRepository;
 import com.aptisprep.service.contract.AiAssessmentContract;
+import com.aptisprep.service.contract.GradingContextFormatter;
 import com.aptisprep.service.contract.IntegrationModels.LockedAnswer;
 import com.aptisprep.service.contract.ScoringPolicyContract;
 import com.aptisprep.service.contract.ScoringPolicyContract.SkillScore;
@@ -226,15 +227,30 @@ public class AttemptFinalizationService {
                                                 job, attempt.getId(), question.getSkill()))
                         .toList();
         List<BigDecimal> subjectiveScores =
-                skillJobs.stream()
-                        .map(job -> acceptedAssessment(job).orElse(null))
-                        .filter(Objects::nonNull)
-                        .filter(
-                                value ->
-                                        value.getState() == AiAssessmentState.COMPLETED
-                                                && value.getScore() != null)
-                        .map(AiAssessment::getScore)
-                        .toList();
+                new ArrayList<>(
+                        skillJobs.stream()
+                                .map(job -> acceptedAssessment(job).orElse(null))
+                                .filter(Objects::nonNull)
+                                .filter(
+                                        value ->
+                                                value.getState() == AiAssessmentState.COMPLETED
+                                                        && value.getScore() != null)
+                                .map(AiAssessment::getScore)
+                                .toList());
+        for (UserAnswerEntity saved :
+                userAnswerRepository.findByAttemptIdOrderByQuestionIdAsc(attempt.getId())) {
+            if (!"GRADED".equals(saved.getStatus())
+                    || !"RULE".equals(saved.getAiProvider())
+                    || !"EMPTY_SUBMISSION".equals(saved.getAiModel())) continue;
+            questionRepository
+                    .findById(saved.getQuestionId())
+                    .filter(value -> question.getSkill().equalsIgnoreCase(value.getSkill()))
+                    .filter(
+                            value ->
+                                    "WRITING_TEXT".equals(value.getQuestionType())
+                                            || "SPEAKING_AUDIO".equals(value.getQuestionType()))
+                    .ifPresent(value -> subjectiveScores.add(BigDecimal.ZERO));
+        }
         // A restart may lose several callbacks after their assessments were already saved.
         // Synchronize every accepted answer before completing the aggregate, not just this event's
         // answer.
@@ -343,20 +359,13 @@ public class AttemptFinalizationService {
     @Transactional
     public void markSubjectiveUnavailable(AttemptSubmittedEvent event, String reason) {
         if (event == null || event.lockedAttempt() == null || !accepts(event)) return;
+        if (reason == null) return;
         Set<String> unavailableSkills = new HashSet<>();
         for (LockedAnswer answer : event.lockedAttempt().answers()) {
             if (("WRITING_TEXT".equals(answer.questionType())
                             || "SPEAKING_AUDIO".equals(answer.questionType()))
-                    && (answer.lockedContent() == null || answer.lockedContent().isBlank())) {
+                    && GradingContextFormatter.hasSubmission(answer)) {
                 unavailableSkills.add(answer.skill());
-            }
-        }
-        if (reason != null) {
-            for (LockedAnswer answer : event.lockedAttempt().answers()) {
-                if ("WRITING_TEXT".equals(answer.questionType())
-                        || "SPEAKING_AUDIO".equals(answer.questionType())) {
-                    unavailableSkills.add(answer.skill());
-                }
             }
         }
         if (unavailableSkills.isEmpty()) return;

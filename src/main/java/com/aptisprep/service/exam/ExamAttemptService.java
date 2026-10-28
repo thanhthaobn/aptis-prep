@@ -11,6 +11,7 @@ import com.aptisprep.exception.BusinessRuleException;
 import com.aptisprep.exception.ResourceNotFoundException;
 import com.aptisprep.repository.*;
 import com.aptisprep.service.contract.ExamAttemptContract;
+import com.aptisprep.service.contract.GradingContextFormatter;
 import com.aptisprep.service.contract.IntegrationModels.*;
 import com.aptisprep.service.contract.ScoringPolicyContract;
 import com.aptisprep.service.grading.AttemptFinalizationService;
@@ -448,6 +449,73 @@ public class ExamAttemptService implements ExamAttemptContract {
     @Override
     public void retryFailedGrading(Integer userId, Integer attemptId, String requestKey) {
         finalization.retryFailedGrading(userId, attemptId);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public boolean canRegradeEmpty(Integer userId, Integer attemptId) {
+        activeUser(userId);
+        ExamAttemptEntity attempt =
+                examAttemptRepository
+                        .findByIdAndUserId(attemptId, userId)
+                        .orElseThrow(
+                                () ->
+                                        new AccessDeniedException(
+                                                "Bạn không có quyền với lượt thi này"));
+        return canRegradeEmpty(attempt);
+    }
+
+    private boolean canRegradeEmpty(ExamAttemptEntity attempt) {
+        if (!"ERROR".equals(attempt.getStatus())) return false;
+        List<ExamSkillResultEntity> results =
+                examSkillResultRepository.findByAttemptIdOrderBySkillAsc(attempt.getId());
+        boolean emptyError = false;
+        for (ExamSkillResultEntity result : results) {
+            if (!"ERROR".equals(result.getGradingStatus())) continue;
+            if (!"AI_EMPTY".equals(result.getGradingMethod())
+                    && !"AI_DISABLED".equals(result.getGradingMethod())) return false;
+            emptyError = true;
+        }
+        if (!emptyError) return false;
+        LockedAttempt locked;
+        try {
+            locked = gradingPayloads.build(attempt, examFor(attempt));
+        } catch (BusinessRuleException | ResourceNotFoundException unavailableSnapshot) {
+            return false;
+        }
+        boolean hasSubjective = false;
+        for (LockedAnswer answer : locked.answers()) {
+            if (!Set.of("WRITING_TEXT", "SPEAKING_AUDIO").contains(answer.questionType())) continue;
+            hasSubjective = true;
+            if (GradingContextFormatter.hasSubmission(answer)) return false;
+        }
+        return hasSubjective;
+    }
+
+    @Override
+    @Transactional
+    public void regradeEmpty(Integer userId, Integer attemptId) {
+        activeUser(userId);
+        ExamAttemptEntity attempt =
+                examAttemptRepository
+                        .findByIdAndUserIdForUpdate(attemptId, userId)
+                        .orElseThrow(
+                                () ->
+                                        new AccessDeniedException(
+                                                "Bạn không có quyền với lượt thi này"));
+        if ("COMPLETED".equals(attempt.getStatus())) return;
+        if (!canRegradeEmpty(attempt)) {
+            throw new BusinessRuleException(
+                    "Chỉ tính lại phần bỏ trống của lượt thi bị AI_EMPTY hoặc AI_DISABLED; lỗi AI của bài có nội dung không được đổi thành 0.");
+        }
+        MockExamEntity exam = examFor(attempt);
+        LockedAttempt locked = gradingPayloads.build(attempt, exam);
+        objectiveGrading.gradeObjective(locked, exam);
+        if (!finalization.finalizeIfReady(attempt, exam)) {
+            throw new BusinessRuleException(
+                    "Bộ chấm điểm chưa thể tổng hợp kết quả. Dữ liệu cũ được giữ nguyên.");
+        }
+        finalization.publishCompleted(attempt, exam);
     }
 
     @Transactional

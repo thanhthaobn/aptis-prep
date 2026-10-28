@@ -1,4 +1,6 @@
 <!doctype html>
+<!--/*@thymesVar id="display" type="com.aptisprep.controller.DisplayFormatting"*/-->
+<!--/*@thymesVar id="form" type="com.aptisprep.dto.form.FlashcardSetForm"*/-->
 <html lang="vi" xmlns:th="http://www.thymeleaf.org">
   <head
     th:replace="~{fragments/head :: head(${setId==null?'Tạo bộ thẻ':'Chỉnh sửa bộ thẻ'})}"
@@ -32,7 +34,15 @@
           th:object="${form}"
         >
           <section class="dashboard-panel">
-            <div class="alert alert-danger ap-alert ap-alert-danger" th:errors="*{all}"></div>
+            <div
+              class="alert alert-danger ap-alert ap-alert-danger"
+              th:if="${!display.allErrors('form').isEmpty()}"
+            >
+              <span th:each="message, status : ${display.allErrors('form')}">
+                <br th:if="${!status.first}" />
+                <span th:text="${message}"></span>
+              </span>
+            </div>
             <div class="field">
               <label for="title">Tên bộ thẻ</label>
               <input
@@ -60,7 +70,7 @@
                   th:each="lesson : ${lessons}"
                   th:value="${lesson.id}"
                   th:attr="data-level=${lesson.cefrLevel}"
-                  th:text="|${lesson.skill} · ${lesson.cefrLevel} · ${lesson.title}|"
+                  th:text="${'' + (lesson.skill) + ' · ' + (lesson.cefrLevel) + ' · ' + (lesson.title)}"
                 ></option>
               </select>
               <small>Bộ thẻ sẽ xuất hiện trong đúng bài học này.</small>
@@ -109,14 +119,14 @@
               <input
                 type="hidden"
                 data-name="id"
-                th:name="|rows[${stat.index}].id|"
+                th:name="${'rows[' + (stat.index) + '].id'}"
                 th:value="${row.id}"
               />
               <div class="field">
                 <label>Thuật ngữ</label>
                 <textarea
                   data-name="term"
-                  th:name="|rows[${stat.index}].term|"
+                  th:name="${'rows[' + (stat.index) + '].term'}"
                   th:text="${row.term}"
                   required
                   maxlength="200"
@@ -128,7 +138,7 @@
                 <label>Định nghĩa</label>
                 <textarea
                   data-name="definition"
-                  th:name="|rows[${stat.index}].definition|"
+                  th:name="${'rows[' + (stat.index) + '].definition'}"
                   th:text="${row.definition}"
                   required
                   maxlength="1000"

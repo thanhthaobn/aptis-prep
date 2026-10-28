@@ -21,8 +21,8 @@ public class LocalStorageService implements StorageService {
 
     private static final Set<String> ALLOWED_EXTENSIONS =
             Set.of(
-                    ".jpg", ".jpeg", ".png", ".webp", ".pdf", ".mp3", ".wav", ".webm", ".m4a",
-                    ".mp4", ".ogg");
+                    ".jpg", ".jpeg", ".png", ".webp", ".gif", ".pdf", ".mp3", ".wav", ".webm",
+                    ".m4a", ".mp4", ".ogg");
     private static final long MAX_BYTES = 50L * 1024 * 1024;
 
     private final Path root;

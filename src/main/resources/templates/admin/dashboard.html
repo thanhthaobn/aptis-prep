@@ -1,4 +1,5 @@
 <!doctype html>
+<!--/*@thymesVar id="display" type="com.aptisprep.controller.DisplayFormatting"*/-->
 <html lang="vi" xmlns:th="http://www.thymeleaf.org">
   <head th:replace="~{fragments/head :: head('Trung tâm quản trị')}"></head>
   <body class="admin-theme">
@@ -99,7 +100,7 @@
                 <span class="panel-kicker">THƯ VIỆN</span>
                 <h2>Nội dung mới cập nhật</h2>
               </div>
-              <span class="muted" th:text="|${recentContent.size()} gần nhất|"></span>
+              <span class="muted" th:text="${'' + (recentContent.size()) + ' gần nhất'}"></span>
             </div>
             <ul
               class="dashboard-recent-list"

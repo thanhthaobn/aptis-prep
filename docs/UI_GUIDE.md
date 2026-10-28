@@ -8,8 +8,13 @@ phần của trang vẫn giữ nguyên vì đó là cú pháp HTML/CSS cần thi
 
 - Chuỗi có nội dung: `${text != null and !text.isBlank()}`. Giữ kiểm tra khoảng
   trắng vì helper `#strings.isEmpty` trước đây cũng coi chuỗi toàn khoảng trắng là rỗng.
-- Lỗi form: `th:errors="*{global}"` cho lỗi chung, `th:errors="*{all}"` cho toàn bộ
-  lỗi. Thymeleaf tự bỏ phần tử khi không có lỗi và escape nội dung lỗi.
+- Lỗi tổng hợp: `${display.globalErrors('form')}` cho lỗi chung,
+  `${display.allErrors('form')}` cho toàn bộ lỗi; thay `form` bằng tên Model của form.
+  Dùng `th:if` để ẩn khi không có lỗi, `th:each` và `th:text` để hiển thị an toàn.
+  Lỗi từng trường vẫn dùng `th:errors="*{title}"` với đúng tên thuộc tính DTO.
+- Chuỗi ghép: dùng `${'Bài học ' + lesson.title}` thay cú pháp `|...|`.
+  Danh sách cấp độ/kỹ năng lấy qua `display.learningLevels()`, `display.scoringLevels()`
+  và `display.skillCodes()`, không viết danh sách lồng trực tiếp trong biểu thức.
 - Ngày giờ: `${display.date(value)}`, `${display.dateTime(value)}`,
   `${display.dateTimeWithSeconds(value)}` hoặc `${display.timeAndDate(value)}`.
 - Các số trang: `${display.pageNumbers(start, end)}`.

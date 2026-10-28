@@ -1,4 +1,5 @@
 <!doctype html>
+<!--/*@thymesVar id="form" type="com.aptisprep.dto.form.QuestionForm"*/-->
 <html lang="vi" xmlns:th="http://www.thymeleaf.org">
   <body>
     <form
@@ -180,9 +181,11 @@
               </button>
             </div>
             <div class="field">
-              <label th:for="|items-${itemStat.index}-content|">Nội dung mục câu hỏi</label>
+              <label th:for="${'items-' + (itemStat.index) + '-content'}">
+                Nội dung mục câu hỏi
+              </label>
               <textarea
-                th:id="|items-${itemStat.index}-content|"
+                th:id="${'items-' + (itemStat.index) + '-content'}"
                 th:name="${itemPath + '.content'}"
                 th:text="${item.content}"
                 rows="3"
@@ -194,13 +197,13 @@
                 class="field conditional-field correct-position-field"
                 data-only-types="ORDERING"
               >
-                <label th:for="|items-${itemStat.index}-correctPosition|">
+                <label th:for="${'items-' + (itemStat.index) + '-correctPosition'}">
                   Vị trí đúng trong thứ tự
                 </label>
                 <input
                   type="number"
                   min="1"
-                  th:id="|items-${itemStat.index}-correctPosition|"
+                  th:id="${'items-' + (itemStat.index) + '-correctPosition'}"
                   th:name="${itemPath + '.correctPosition'}"
                   th:value="${item.correctPosition}"
                 />
@@ -209,21 +212,25 @@
                 </small>
               </div>
               <div class="field conditional-field item-writing-rule" data-only-types="WRITING_TEXT">
-                <label th:for="|items-${itemStat.index}-minWordCount|">Số từ tối thiểu</label>
+                <label th:for="${'items-' + (itemStat.index) + '-minWordCount'}">
+                  Số từ tối thiểu
+                </label>
                 <input
                   type="number"
                   min="0"
-                  th:id="|items-${itemStat.index}-minWordCount|"
+                  th:id="${'items-' + (itemStat.index) + '-minWordCount'}"
                   th:name="${itemPath + '.minWordCount'}"
                   th:value="${item.minWordCount}"
                 />
               </div>
               <div class="field conditional-field item-writing-rule" data-only-types="WRITING_TEXT">
-                <label th:for="|items-${itemStat.index}-maxWordCount|">Số từ tối đa</label>
+                <label th:for="${'items-' + (itemStat.index) + '-maxWordCount'}">
+                  Số từ tối đa
+                </label>
                 <input
                   type="number"
                   min="0"
-                  th:id="|items-${itemStat.index}-maxWordCount|"
+                  th:id="${'items-' + (itemStat.index) + '-maxWordCount'}"
                   th:name="${itemPath + '.maxWordCount'}"
                   th:value="${item.maxWordCount}"
                 />
@@ -232,13 +239,13 @@
                 class="field conditional-field item-response-rule"
                 data-only-types="WRITING_TEXT,SPEAKING_AUDIO"
               >
-                <label th:for="|items-${itemStat.index}-responseSeconds|">
+                <label th:for="${'items-' + (itemStat.index) + '-responseSeconds'}">
                   Thời gian trả lời (giây)
                 </label>
                 <input
                   type="number"
                   min="1"
-                  th:id="|items-${itemStat.index}-responseSeconds|"
+                  th:id="${'items-' + (itemStat.index) + '-responseSeconds'}"
                   th:name="${itemPath + '.responseSeconds'}"
                   th:value="${item.responseSeconds}"
                 />
@@ -258,19 +265,19 @@
               >
                 <label
                   class="option-code-label"
-                  th:text="|Phương án ${option.code}|"
-                  th:for="|items-${itemStat.index}-options-${optionStat.index}-content|"
+                  th:text="${'Phương án ' + (option.code)}"
+                  th:for="${'items-' + (itemStat.index) + '-options-' + (optionStat.index) + '-content'}"
                 ></label>
                 <input
                   type="text"
-                  th:id="|items-${itemStat.index}-options-${optionStat.index}-content|"
+                  th:id="${'items-' + (itemStat.index) + '-options-' + (optionStat.index) + '-content'}"
                   th:name="${optionPath + '.content'}"
                   th:value="${option.content}"
                 />
                 <label class="option-correct-label">
                   <input
                     type="radio"
-                    th:id="|items-${itemStat.index}-options-${optionStat.index}-correct|"
+                    th:id="${'items-' + (itemStat.index) + '-options-' + (optionStat.index) + '-correct'}"
                     th:name="${itemPath + '.correctPosition'}"
                     th:value="${optionStat.index + 1}"
                     th:checked="${item.correctPosition == optionStat.index + 1}"

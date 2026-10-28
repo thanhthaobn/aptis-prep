@@ -28,26 +28,26 @@
       ></p>
       <p
         th:if="${context.minWords!=null or context.maxWords!=null}"
-        th:text="|Yêu cầu bài viết lúc nộp: ${context.minWords!=null?context.minWords:0}–${context.maxWords!=null?context.maxWords:'không giới hạn'} từ|"
+        th:text="${'Yêu cầu bài viết lúc nộp: ' + (context.minWords!=null?context.minWords:0) + '–' + (context.maxWords!=null?context.maxWords:'không giới hạn') + ' từ'}"
       ></p>
       <img
         th:if="${context.imagePath!=null}"
         class="lesson-hero-image"
-        th:src="|${mediaPrefix}/image|"
+        th:src="${'' + (mediaPrefix) + '/image'}"
         alt="Ảnh của đề bài lúc nộp"
       />
       <audio
         th:if="${context.audioPath!=null}"
         controls
         preload="none"
-        th:src="|${mediaPrefix}/audio|"
+        th:src="${'' + (mediaPrefix) + '/audio'}"
       ></audio>
       <video
         th:if="${context.videoPath!=null}"
         class="lesson-video"
         controls
         preload="none"
-        th:src="|${mediaPrefix}/video|"
+        th:src="${'' + (mediaPrefix) + '/video'}"
       ></video>
       <a
         th:if="${context.videoPath==null and (context.videoUrl != null and !context.videoUrl.isBlank())}"

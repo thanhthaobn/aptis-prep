@@ -7,6 +7,7 @@ import com.aptisprep.exception.BusinessRuleException;
 import com.aptisprep.support.TestAudio;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Base64;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.springframework.mock.web.MockMultipartFile;
@@ -32,6 +33,19 @@ class LocalStorageServiceTests {
         assertTrue(name.endsWith(".png"));
         assertArrayEquals(new byte[] {1, 2, 3}, storage.load(name).getContentAsByteArray());
         assertTrue(Files.exists(root.resolve(name)));
+    }
+
+    @Test
+    void storesGifAcceptedByTheLessonEditor() throws Exception {
+        LocalStorageService storage = storage();
+        byte[] image =
+                Base64.getDecoder().decode("R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==");
+        String relativePath =
+                storage.store(
+                        new MockMultipartFile("image", "illustration.gif", "image/gif", image),
+                        "lesson-images/1");
+        assertTrue(relativePath.endsWith(".gif"));
+        assertArrayEquals(image, storage.load(relativePath).getContentAsByteArray());
     }
 
     @Test

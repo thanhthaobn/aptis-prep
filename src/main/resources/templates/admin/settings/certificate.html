@@ -1,4 +1,6 @@
 <!doctype html>
+<!--/*@thymesVar id="display" type="com.aptisprep.controller.DisplayFormatting"*/-->
+<!--/*@thymesVar id="certificateForm" type="com.aptisprep.dto.form.CertificateForm"*/-->
 <html lang="vi" xmlns:th="http://www.thymeleaf.org">
   <head th:replace="~{fragments/head :: head('Chứng chỉ')}"></head>
   <body class="admin-theme">
@@ -50,7 +52,15 @@
               </select>
             </div>
           </fieldset>
-          <div class="alert alert-danger" th:errors="*{global}"></div>
+          <div
+            class="alert alert-danger"
+            th:if="${!display.globalErrors('certificateForm').isEmpty()}"
+          >
+            <span th:each="message, status : ${display.globalErrors('certificateForm')}">
+              <br th:if="${!status.first}" />
+              <span th:text="${message}"></span>
+            </span>
+          </div>
           <div class="actions">
             <a
               th:if="${readOnly}"

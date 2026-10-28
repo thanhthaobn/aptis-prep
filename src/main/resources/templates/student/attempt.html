@@ -326,7 +326,7 @@
             <span>Tiến độ bài thi</span>
             <strong
               id="full-mock-progress-count"
-              th:text="|${attempt.answeredItems} / ${attempt.totalItems} câu đã trả lời|"
+              th:text="${'' + (attempt.answeredItems) + ' / ' + (attempt.totalItems) + ' câu đã trả lời'}"
             >
               0 / 0 câu đã trả lời
             </strong>
@@ -340,7 +340,7 @@
             <div
               id="full-mock-progress-bar"
               class="full-mock-progress-bar"
-              th:style="|width: ${attempt.totalItems == 0 ? 0 : (attempt.answeredItems * 100 / attempt.totalItems)}%|"
+              th:style="${'width: ' + (attempt.totalItems == 0 ? 0 : (attempt.answeredItems * 100 / attempt.totalItems)) + '%'}"
             ></div>
           </div>
           <p id="full-mock-progress-note" class="full-mock-progress-note">
@@ -353,7 +353,10 @@
           th:each="question, questionStat : ${attempt.questions}"
           th:attr="data-question-page=${questionStat.index}"
         >
-          <p class="eyebrow" th:text="|Câu ${question.position} · ${question.skill}|"></p>
+          <p
+            class="eyebrow"
+            th:text="${'Câu ' + (question.position) + ' · ' + (question.skill)}"
+          ></p>
           <h2 th:text="${question.content}"></h2>
           <p
             class="question-instruction"
@@ -410,13 +413,13 @@
               <input type="hidden" name="questionId" th:value="${question.questionId}" />
               <input type="hidden" name="itemId" th:value="${item.itemId}" />
               <div th:if="${question.type == 'ORDERING'}" class="field">
-                <label th:for="|position-${item.itemId}|">Vị trí trong thứ tự</label>
+                <label th:for="${'position-' + (item.itemId)}">Vị trí trong thứ tự</label>
                 <input
                   type="number"
                   min="1"
                   th:max="${question.items.size()}"
                   name="userPosition"
-                  th:id="|position-${item.itemId}|"
+                  th:id="${'position-' + (item.itemId)}"
                   th:value="${item.userPosition}"
                 />
               </div>
@@ -435,9 +438,9 @@
                 </label>
               </div>
               <div class="field" th:if="${question.type == 'WRITING_TEXT'}">
-                <label th:for="|answer-${item.itemId}|">Câu trả lời</label>
+                <label th:for="${'answer-' + (item.itemId)}">Câu trả lời</label>
                 <textarea
-                  th:id="|answer-${item.itemId}|"
+                  th:id="${'answer-' + (item.itemId)}"
                   name="textAnswer"
                   rows="6"
                   th:text="${item.textAnswer}"
