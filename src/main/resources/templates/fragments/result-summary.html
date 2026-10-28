@@ -1,4 +1,5 @@
 <!doctype html>
+<!--/*@thymesVar id="display" type="com.aptisprep.controller.DisplayFormatting"*/-->
 <html lang="vi" xmlns:th="http://www.thymeleaf.org">
   <body>
     <div th:fragment="resultSummary(res, isPlacement)" class="result-container">
@@ -16,7 +17,7 @@
             <div class="result-meta-list">
               <span class="result-meta-item">
                 <strong>Mã lượt thi:</strong>
-                <span th:text="|#${res.attemptId}|"></span>
+                <span th:text="${'#' + (res.attemptId)}"></span>
               </span>
               <span class="result-meta-item" th:if="${res.examType != null}">
                 <strong>Loại đề:</strong>
@@ -48,7 +49,7 @@
             <h3>Trình độ ước lượng tổng quan</h3>
             <strong
               th:if="${res.overallScaleScore != null}"
-              th:text="|Điểm tổng: ${res.overallScaleScore}/50|"
+              th:text="${'Điểm tổng: ' + (res.overallScaleScore) + '/50'}"
             ></strong>
             <p th:if="${res.state == 'COMPLETED'}">
               Kết quả đánh giá theo khung tham chiếu trình độ ngôn ngữ chung Châu Âu (CEFR).
@@ -74,7 +75,7 @@
 
       <!-- Banner thông báo khi có kỹ năng chờ chấm điểm (WAITING_GRADING / PENDING) -->
       <div
-        th:if="${res.state == 'WAITING_GRADING' or (res.skills != null and !res.skills.?[gradingState == 'PENDING' or gradingState == 'WAITING'].isEmpty())}"
+        th:if="${res.state == 'WAITING_GRADING' or display.hasPendingGrades(res.skills)}"
         class="result-pending-banner"
         role="status"
       >
@@ -95,7 +96,7 @@
         </a>
       </div>
       <div
-        th:if="${res.state == 'ERROR' or (res.skills != null and !res.skills.?[gradingState == 'ERROR'].isEmpty())}"
+        th:if="${res.state == 'ERROR' or display.hasGradingErrors(res.skills)}"
         class="alert alert-error"
         role="alert"
       >
@@ -104,7 +105,17 @@
           kết quả trượt.
         </p>
         <form
-          th:if="${res.state == 'ERROR' and (res.skills != null and !res.skills.?[retryable == true].isEmpty())}"
+          th:if="${canRegradeEmpty == true}"
+          method="post"
+          th:action="@{/student/attempts/{id}/regrade-empty(id=${res.attemptId})}"
+        >
+          <p>Phần tự luận của lượt thi này đang bỏ trống và được ghi lỗi theo quy tắc cũ.</p>
+          <button class="button button-secondary" type="submit">
+            Tính lại phần bỏ trống: 0 điểm
+          </button>
+        </form>
+        <form
+          th:if="${res.state == 'ERROR' and display.hasRetryableGrades(res.skills)}"
           method="post"
           th:action="@{/student/attempts/{id}/retry-grading(id=${res.attemptId})}"
         >
@@ -156,12 +167,12 @@
               <div class="skill-progress-track" aria-hidden="true">
                 <div
                   class="skill-progress-bar"
-                  th:style="|width: ${skill.scaleScore != null ? (skill.scaleScore * 2) : 0}%;|"
+                  th:style="${'width: ' + (skill.scaleScore != null ? (skill.scaleScore * 2) : 0) + '%;'}"
                 ></div>
               </div>
 
               <div class="skill-raw-score" th:if="${skill.rawScore != null}">
-                <small th:text="|Điểm thô: ${skill.rawScore}|"></small>
+                <small th:text="${'Điểm thô: ' + (skill.rawScore)}"></small>
               </div>
             </div>
 

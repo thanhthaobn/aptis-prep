@@ -1,4 +1,5 @@
 <!doctype html>
+<!--/*@thymesVar id="display" type="com.aptisprep.controller.DisplayFormatting"*/-->
 <html lang="vi" xmlns:th="http://www.thymeleaf.org">
   <head th:replace="~{fragments/head :: head('Đề thi')}"></head>
   <body class="student-theme">
@@ -31,7 +32,7 @@
             <span th:text="${category.label}"></span>
             <small
               th:text="${category.count}"
-              th:attr="aria-label=|${category.count} đề phù hợp|"
+              th:attr="aria-label=${'' + (category.count) + ' đề phù hợp'}"
             ></small>
           </a>
         </nav>
@@ -90,7 +91,7 @@
             <select id="studyLevel" name="level">
               <option value="">Tất cả cấp độ</option>
               <option
-                th:each="level : ${ {'A1','A2','B1','B2','C1'} }"
+                th:each="level : ${display.learningLevels()}"
                 th:value="${level}"
                 th:text="${level}"
                 th:selected="${selectedLevel == level}"
@@ -122,7 +123,7 @@
 
         <div class="section-title-row exam-library-heading">
           <h2 th:text="${categoryTitle}"></h2>
-          <span class="muted" th:text="|${catalogPage.totalElements} đề phù hợp|"></span>
+          <span class="muted" th:text="${'' + (catalogPage.totalElements) + ' đề phù hợp'}"></span>
         </div>
 
         <section
@@ -132,7 +133,7 @@
         >
           <header class="exam-group-heading">
             <h3 th:text="${group.key}"></h3>
-            <small th:text="|${group.value.size()} đề trên trang này|"></small>
+            <small th:text="${'' + (group.value.size()) + ' đề trên trang này'}"></small>
           </header>
           <div class="study-card-grid">
             <article

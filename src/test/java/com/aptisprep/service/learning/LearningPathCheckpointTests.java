@@ -15,6 +15,7 @@ import com.aptisprep.service.contract.IntegrationModels.*;
 import com.aptisprep.service.exam.ExamAttemptService;
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.time.ZoneId;
 import java.util.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -288,7 +289,7 @@ class LearningPathCheckpointTests {
                                                 true)),
                                 null,
                                 null,
-                                Instant.now()));
+                                afterStageCreated(user)));
         assertThatThrownBy(() -> service.applyCheckpoint(user.getId(), 1005))
                 .isInstanceOf(BusinessRuleException.class);
         assertThat(current(user).getId()).isEqualTo(path.getId());
@@ -516,6 +517,16 @@ class LearningPathCheckpointTests {
                 List.of(skill),
                 null,
                 null,
-                Instant.now());
+                afterStageCreated(user));
+    }
+
+    private Instant afterStageCreated(User user) {
+        // The stub must represent a submission after this persisted stage, regardless of
+        // OS clock adjustments or database timestamp precision during a fast test.
+        return current(user)
+                .getCreatedAt()
+                .atZone(ZoneId.systemDefault())
+                .toInstant()
+                .plusSeconds(1);
     }
 }

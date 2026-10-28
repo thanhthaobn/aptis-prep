@@ -57,7 +57,7 @@
           th:if="${lessons != null and !lessons.isEmpty()}"
           aria-label="Cây bài học theo kỹ năng và cấp độ"
         >
-          <p class="library-count" th:text="|${lessons.size()} bài học|"></p>
+          <p class="library-count" th:text="${'' + (lessons.size()) + ' bài học'}"></p>
           <details
             class="library-skill"
             th:each="branch : ${lessonTree}"
@@ -65,19 +65,24 @@
           >
             <summary>
               <span class="library-skill-name" th:text="${branch.skill}"></span>
-              <span class="library-count" th:text="|${branch.count} bài học|"></span>
+              <span class="library-count" th:text="${'' + (branch.count) + ' bài học'}"></span>
             </summary>
             <div class="library-levels">
               <details class="library-level" th:each="tier : ${branch.levels}">
-                <summary th:attr="aria-label=|Cấp độ ${tier.level}, ${tier.count} bài học|">
+                <summary
+                  th:attr="aria-label=${'Cấp độ ' + (tier.level) + ', ' + (tier.count) + ' bài học'}"
+                >
                   <span class="library-level-badge" th:text="${tier.level}"></span>
-                  <span class="library-count" th:text="|${tier.count} bài|"></span>
+                  <span class="library-count" th:text="${'' + (tier.count) + ' bài'}"></span>
                 </summary>
                 <div class="library-topics">
                   <section class="library-topic" th:each="group : ${tier.topics}">
                     <header>
                       <h3 th:text="${group.name}"></h3>
-                      <span class="library-count" th:text="|${group.lessons.size()} bài|"></span>
+                      <span
+                        class="library-count"
+                        th:text="${'' + (group.lessons.size()) + ' bài'}"
+                      ></span>
                     </header>
                     <ol class="library-lessons">
                       <li
@@ -118,8 +123,8 @@
                             class="library-flashcard-link"
                             th:if="${lessonSets.containsKey(lesson.id)}"
                             th:href="@{/student/flashcards/{id}(id=${lessonSets.get(lesson.id).id()})}"
-                            th:attr="aria-label=|Ôn bộ thẻ ${lessonSets.get(lesson.id).title()}|"
-                            th:text="|${lessonSets.get(lesson.id).count()} thẻ từ vựng ↗|"
+                            th:attr="aria-label=${'Ôn bộ thẻ ' + (lessonSets.get(lesson.id).title())}"
+                            th:text="${'' + (lessonSets.get(lesson.id).count()) + ' thẻ từ vựng ↗'}"
                           ></a>
                           <a
                             class="button button-secondary button-small library-open"

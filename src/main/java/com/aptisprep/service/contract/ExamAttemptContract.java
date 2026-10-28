@@ -26,4 +26,8 @@ public interface ExamAttemptContract {
     AttemptResult adminResult(String adminEmail, Integer attemptId);
 
     void retryFailedGrading(Integer userId, Integer attemptId, String requestKey);
+
+    boolean canRegradeEmpty(Integer userId, Integer attemptId);
+
+    void regradeEmpty(Integer userId, Integer attemptId);
 }

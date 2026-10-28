@@ -55,8 +55,9 @@ public class AudioDurationService {
     }
 
     private String extension(String relativePath) {
-        String extension =
-                relativePath.substring(relativePath.lastIndexOf('.')).toLowerCase(Locale.ROOT);
+        int dot = relativePath.lastIndexOf('.');
+        if (dot < 0) return ".audio";
+        String extension = relativePath.substring(dot).toLowerCase(Locale.ROOT);
         return extension.matches("\\.[a-z0-9]{2,5}") ? extension : ".audio";
     }
 

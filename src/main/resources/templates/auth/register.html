@@ -1,4 +1,6 @@
 <!doctype html>
+<!--/*@thymesVar id="display" type="com.aptisprep.controller.DisplayFormatting"*/-->
+<!--/*@thymesVar id="registerForm" type="com.aptisprep.dto.form.RegisterForm"*/-->
 <html lang="vi" xmlns:th="http://www.thymeleaf.org">
   <head th:replace="~{fragments/head :: head('Đăng ký')}"></head>
   <body class="landing-theme">
@@ -25,7 +27,16 @@
           <p class="form-intro">Tạo tài khoản để bắt đầu học.</p>
           <form th:action="@{/register}" th:object="${registerForm}" method="post">
             <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
-            <div class="alert alert-danger" th:errors="*{global}" role="alert"></div>
+            <div
+              class="alert alert-danger"
+              th:if="${!display.globalErrors('registerForm').isEmpty()}"
+              role="alert"
+            >
+              <span th:each="message, status : ${display.globalErrors('registerForm')}">
+                <br th:if="${!status.first}" />
+                <span th:text="${message}"></span>
+              </span>
+            </div>
             <div class="field">
               <label for="fullName">Họ và tên</label>
               <input

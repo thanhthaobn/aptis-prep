@@ -11,7 +11,7 @@
           <div>
             <p class="eyebrow" th:text="${@resultLabels.examType(attemptResult.examType)}"></p>
             <h1 th:text="${attemptResult.examTitle}"></h1>
-            <p th:text="|Mã lượt thi: ${attemptResult.attemptId}|"></p>
+            <p th:text="${'Mã lượt thi: ' + (attemptResult.attemptId)}"></p>
           </div>
           <span class="result-status" th:text="${@resultLabels.state(attemptResult.state)}"></span>
         </header>

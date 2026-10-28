@@ -8,12 +8,14 @@ import com.aptisprep.exception.ResourceNotFoundException;
 import com.aptisprep.repository.ExamSkillResultRepository;
 import com.aptisprep.repository.UserAnswerDetailRepository;
 import com.aptisprep.repository.UserAnswerRepository;
+import com.aptisprep.service.contract.GradingContextFormatter;
 import com.aptisprep.service.contract.IntegrationModels.LockedAnswer;
 import com.aptisprep.service.contract.IntegrationModels.LockedAttempt;
 import com.aptisprep.service.contract.IntegrationModels.LockedItem;
 import com.aptisprep.service.contract.ScoringPolicyContract;
 import com.aptisprep.service.scoring.CheckpointScorePolicy;
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -62,6 +64,7 @@ public class ObjectiveGradingService {
         int total = 0;
         int correct = 0;
         boolean subjective = false;
+        int emptySubjective = 0;
         for (LockedAnswer lockedAnswer : skillAnswers) {
             UserAnswerEntity answer =
                     userAnswerRepository
@@ -71,7 +74,18 @@ public class ObjectiveGradingService {
                                             new ResourceNotFoundException(
                                                     "Không tìm thấy câu trả lời của lượt thi"));
             if (isSubjective(lockedAnswer.questionType())) {
-                subjective = true;
+                if (GradingContextFormatter.hasSubmission(lockedAnswer)) {
+                    subjective = true;
+                } else {
+                    emptySubjective++;
+                    answer.setAiScore(BigDecimal.ZERO);
+                    answer.setAiFeedback("Không có câu trả lời khi nộp bài: 0 điểm.");
+                    answer.setAiProvider("RULE");
+                    answer.setAiModel("EMPTY_SUBMISSION");
+                    answer.setGradedAt(LocalDateTime.now());
+                    answer.setStatus("GRADED");
+                    userAnswerRepository.save(answer);
+                }
                 continue;
             }
             List<LockedItem> lockedItems =
@@ -96,7 +110,21 @@ public class ObjectiveGradingService {
                                     value.setSkill(skill);
                                     return value;
                                 });
-        if (total == 0) {
+        if (total == 0 && !subjective && emptySubjective > 0) {
+            Integer schemeId =
+                    locked.scoringSchemeId() == null
+                            ? exam.getScoringSchemeId()
+                            : locked.scoringSchemeId();
+            result.setCorrectCount(null);
+            result.setTotalItems(null);
+            result.setObjectiveRawScore(null);
+            result.setSubjectiveRawScore(BigDecimal.ZERO);
+            applyPolicy(result, schemeId, skill, BigDecimal.ZERO, exam);
+            result.setGradingMethod(schemeId == null ? "UNSCALED" : "EMPTY_SUBMISSION");
+            result.setGradingStatus(
+                    schemeId != null && result.getCefrLevel() == null ? "ERROR" : "COMPLETED");
+            if ("ERROR".equals(result.getGradingStatus())) result.setGradingMethod("POLICY_ERROR");
+        } else if (total == 0) {
             result.setCorrectCount(null);
             result.setTotalItems(null);
             result.setObjectiveRawScore(null);

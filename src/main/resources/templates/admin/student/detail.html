@@ -1,4 +1,5 @@
 <!doctype html>
+<!--/*@thymesVar id="display" type="com.aptisprep.controller.DisplayFormatting"*/-->
 <html lang="vi" xmlns:th="http://www.thymeleaf.org">
   <head th:replace="~{fragments/head :: head('Chi tiết học viên')}"></head>
   <body class="admin-theme">
@@ -91,7 +92,7 @@
               <div th:each="skill : ${student.skills}">
                 <span class="skill-name" th:text="${skill.name}"></span>
                 <span class="badge skill-level" th:text="${skill.level}"></span>
-                <span class="muted skill-target" th:text="|Mục tiêu: ${skill.target}|"></span>
+                <span class="muted skill-target" th:text="${'Mục tiêu: ' + (skill.target)}"></span>
               </div>
             </div>
           </article>
@@ -102,8 +103,13 @@
               th:each="path : ${student.progress}"
               class="dashboard-section"
             >
-              <p class="student-target" th:text="|${path.skill} · ${path.pathSource}|"></p>
-              <p th:text="|${path.completedLessons}/${path.totalLessons} bài học|" />
+              <p
+                class="student-target"
+                th:text="${'' + (path.skill) + ' · ' + (path.pathSource)}"
+              ></p>
+              <p
+                th:text="${'' + (path.completedLessons) + '/' + (path.totalLessons) + ' bài học'}"
+              />
               <progress
                 th:if="${path.progressPercent != null}"
                 max="100"
@@ -135,7 +141,7 @@
         <section class="dashboard-section">
           <div class="section-title-row">
             <h2>Lịch sử thi</h2>
-            <span class="muted" th:text="|${student.attemptTotal} lượt|">0 lượt</span>
+            <span class="muted" th:text="${'' + (student.attemptTotal) + ' lượt'}">0 lượt</span>
           </div>
           <div
             class="table-wrap"
@@ -181,7 +187,7 @@
             >
               Trang trước
             </a>
-            <span th:text="|Trang ${student.attemptPage + 1}|">Trang 1</span>
+            <span th:text="${'Trang ' + (student.attemptPage + 1)}">Trang 1</span>
             <a
               th:if="${(student.attemptPage + 1) * student.attemptSize < student.attemptTotal}"
               th:href="@{/admin/students/{id}(id=${student.id},attemptPage=${student.attemptPage + 1},attemptSize=${student.attemptSize})}"

@@ -7,7 +7,9 @@
       th:if="${page != null and page.totalPages > 0}"
       aria-label="Phân trang"
     >
-      <span th:text="|Hiển thị ${page.numberOfElements} / ${page.totalElements} kết quả|">
+      <span
+        th:text="${'Hiển thị ' + (page.numberOfElements) + ' / ' + (page.totalElements) + ' kết quả'}"
+      >
         Hiển thị kết quả
       </span>
       <div class="pagination-pages">

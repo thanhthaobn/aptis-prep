@@ -21,8 +21,10 @@
           th:if="${set.lesson!=null}"
           th:href="@{/student/lessons/{id}(id=${set.lesson.id})}"
         >
-          <small th:text="|${set.lesson.skill} · ${set.cefrLevel} · Bài học nguồn|"></small>
-          <span th:text="|${set.lesson.title} ↗|"></span>
+          <small
+            th:text="${'' + (set.lesson.skill) + ' · ' + (set.cefrLevel) + ' · Bài học nguồn'}"
+          ></small>
+          <span th:text="${'' + (set.lesson.title) + ' ↗'}"></span>
         </a>
         <header
           class="page-header d-flex flex-wrap align-items-center justify-content-between gap-3"
@@ -140,7 +142,7 @@
               <dd
                 class="muted"
                 th:if="${card.nextReviewAt != null}"
-                th:text="|Ôn tiếp: ${display.dateTime(card.nextReviewAt)}|"
+                th:text="${'Ôn tiếp: ' + (display.dateTime(card.nextReviewAt))}"
               ></dd>
             </div>
           </dl>
