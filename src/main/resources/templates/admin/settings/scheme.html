@@ -43,6 +43,29 @@
                 <p class="field-error" th:errors="*{certificateId}"></p>
               </div>
               <div class="field">
+                <label for="schemeExamType">Loại đề thi</label>
+                <select id="schemeExamType" th:field="*{examType}" th:required="${!editing}">
+                  <option value="">Chọn loại đề</option>
+                  <option
+                    th:each="type : ${display.examTypes()}"
+                    th:value="${type}"
+                    th:text="${display.historyExamType(type)}"
+                  ></option>
+                </select>
+                <p class="field-error" th:errors="*{examType}"></p>
+              </div>
+              <div class="field" id="scheme-skill-field">
+                <label for="schemeScopeSkill">Kỹ năng của đề một kỹ năng</label>
+                <select id="schemeScopeSkill" th:field="*{scopeSkill}">
+                  <option value="">Chọn kỹ năng</option>
+                  <option
+                    th:each="skill : ${display.skillCodes()}"
+                    th:value="${skill}"
+                    th:text="${display.catalogSkill(skill)}"
+                  ></option>
+                </select>
+              </div>
+              <div class="field">
                 <label for="schemeName">Tên bộ chấm điểm</label>
                 <input id="schemeName" th:field="*{name}" maxlength="255" required />
                 <p class="field-error" th:errors="*{name}"></p>
@@ -61,6 +84,7 @@
               <div class="field">
                 <label for="schemeStatus">Trạng thái</label>
                 <select id="schemeStatus" th:field="*{status}">
+                  <option value="DRAFT">Bản nháp</option>
                   <option value="ACTIVE">Đang sử dụng</option>
                   <option value="INACTIVE">Ngừng sử dụng</option>
                 </select>
@@ -78,7 +102,14 @@
             </span>
           </div>
           <div class="actions">
-            <button th:unless="${readOnly}" class="button" type="submit">Lưu bộ chấm điểm</button>
+            <button
+              th:unless="${readOnly}"
+              class="button"
+              type="submit"
+              th:text="${editing ? 'Lưu bộ chấm điểm' : 'Lưu và thiết lập thang điểm'}"
+            >
+              Lưu bộ chấm điểm
+            </button>
             <a
               th:if="${readOnly}"
               class="button"
@@ -313,5 +344,6 @@
       </main>
     </div>
     <div th:replace="~{fragments/footer :: footer}"></div>
+    <script th:src="@{/js/catalog-editor.js}" defer></script>
   </body>
 </html>

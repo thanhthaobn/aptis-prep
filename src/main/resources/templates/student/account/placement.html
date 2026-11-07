@@ -39,6 +39,9 @@
             <div class="field">
               <label for="entranceSkill">Kỹ năng muốn đánh giá</label>
               <select id="entranceSkill" name="skill">
+                <option value="FULL_MOCK" th:selected="${skill == 'FULL_MOCK'}">
+                  Đầu vào tổng hợp
+                </option>
                 <option value="GRAMMAR_VOCABULARY" th:selected="${skill == 'GRAMMAR_VOCABULARY'}">
                   Grammar &amp; Vocabulary
                 </option>
@@ -68,7 +71,10 @@
               <p class="muted" th:text="${exam.subtitle}"></p>
             </div>
             <div class="placement-exam-actions">
-              <a class="button button-secondary" th:href="@{/student/exams/{id}(id=${exam.id})}">
+              <a
+                class="button button-secondary"
+                th:href="@{/student/exams/{id}(id=${exam.id},fromPlacement=true)}"
+              >
                 Thang điểm
               </a>
               <form method="post" th:action="@{/student/placement/start}">

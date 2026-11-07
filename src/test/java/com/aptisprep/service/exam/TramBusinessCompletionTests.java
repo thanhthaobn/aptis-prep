@@ -250,6 +250,7 @@ class TramBusinessCompletionTests {
     @Test
     void adminDemoFlagRoundTripsEvenAfterRenamingTheExam() {
         var f = fixture(2);
+        admin.unpublishExam(f.exam().getId());
         var form = admin.examForm(f.exam().getId());
         form.setDemoOnly(true);
         form.setTitle("Ordinary-looking renamed exam");

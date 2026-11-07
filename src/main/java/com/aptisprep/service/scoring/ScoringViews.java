@@ -22,6 +22,8 @@ public final class ScoringViews {
             String version,
             String status,
             String statusLabel,
+            String examType,
+            String scopeSkill,
             LocalDateTime effectiveFrom) {}
 
     public record BandView(

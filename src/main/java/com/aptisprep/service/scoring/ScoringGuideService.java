@@ -43,7 +43,7 @@ public class ScoringGuideService {
                                         e.getScoringSchemeId(),
                                         e.getSkill(),
                                         Map.of(),
-                                        "FULL_MOCK".equals(e.getExamType())))
+                                        "FULL_MOCK".equals(e.getSkill())))
                 .orElse(List.of());
     }
 
@@ -62,7 +62,7 @@ public class ScoringGuideService {
         result.skills().forEach(s -> skills.add(s.skill()));
         String snapshotSkill = snapshot.map(s -> s.getSkill()).orElse(null);
         if (skills.isEmpty() && snapshotSkill != null)
-            return guides(scheme, snapshotSkill, levels, "FULL_MOCK".equals(result.examType()));
+            return guides(scheme, snapshotSkill, levels, "FULL_MOCK".equals(snapshotSkill));
         return guides(scheme, null, levels, result.hasFullMockTotal()).stream()
                 .filter(g -> skills.contains(g.skill()))
                 .toList();

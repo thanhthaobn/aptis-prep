@@ -16,7 +16,7 @@ public class CertificateForm {
     private String description;
 
     @NotBlank(message = "Trạng thái không được để trống")
-    private String status = "ACTIVE";
+    private String status = "DRAFT";
 
     public String getName() {
         return name;

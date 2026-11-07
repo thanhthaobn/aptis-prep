@@ -3,7 +3,7 @@
   <head th:replace="~{fragments/head :: head(${attempt.title})}"></head>
   <body
     class="student-theme exam-page"
-    th:classappend="${attempt.examType == 'FULL_MOCK'} ? ' full-mock-exam'"
+    th:classappend="${(attempt.examType == 'FULL_MOCK' or (attempt.examType == 'PLACEMENT' and attempt.sectionSkill != null))} ? ' full-mock-exam'"
   >
     <!-- Non-JS Fallback: hiển thị tất cả các câu hỏi. -->
     <noscript>
@@ -321,11 +321,16 @@
     <div class="container exam-workspace">
       <aside class="exam-control-panel" aria-label="Thông tin bài thi">
         <div class="exam-control-heading">BÀI THI</div>
+        <p
+          class="muted"
+          th:if="${attempt.sectionSkill != null}"
+          th:text="${display.catalogSkill(attempt.sectionSkill)}"
+        ></p>
         <div
           class="exam-timer-badge"
           id="exam-timer"
           th:if="${attempt.deadline != null}"
-          th:attr="data-deadline=${attempt.deadline}"
+          th:attr="data-deadline=${attempt.deadline},data-next-section=${attempt.nextSection},data-section-seconds=${attempt.sectionSkill == null ? null : attempt.remainingSeconds}"
         >
           Còn
           <strong id="timer-display">--:--</strong>
@@ -389,7 +394,7 @@
 
         <section
           class="full-mock-progress"
-          th:if="${attempt.examType == 'FULL_MOCK'}"
+          th:if="${(attempt.examType == 'FULL_MOCK' or (attempt.examType == 'PLACEMENT' and attempt.sectionSkill != null))}"
           aria-label="Tiến độ bài thi"
         >
           <div class="full-mock-progress-heading">
@@ -570,7 +575,7 @@
         </section>
         <nav
           class="full-mock-pagination"
-          th:if="${attempt.examType == 'FULL_MOCK'}"
+          th:if="${(attempt.examType == 'FULL_MOCK' or (attempt.examType == 'PLACEMENT' and attempt.sectionSkill != null))}"
           aria-label="Điều hướng câu hỏi Full Mock"
         >
           <button id="full-mock-prev" class="button button-secondary" type="button">

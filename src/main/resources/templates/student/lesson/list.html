@@ -147,9 +147,6 @@
           <h2>Không tìm thấy bài học phù hợp</h2>
           <p>Thử bộ lọc khác hoặc quay lại sau khi có nội dung mới.</p>
         </div>
-        <div
-          th:replace="~{fragments/student-pagination :: studentPagination(${lessonPage.number}, ${lessonPage.totalPages}, ${lessonPage.totalElements}, @{/student/lessons(q=${q},skill=${selectedSkill},level=${selectedLevel})})}"
-        ></div>
       </main>
     </div>
     <div th:replace="~{fragments/footer :: footer}"></div>

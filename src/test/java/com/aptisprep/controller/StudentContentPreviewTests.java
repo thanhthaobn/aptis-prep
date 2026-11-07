@@ -57,6 +57,7 @@ class StudentContentPreviewTests {
             exam.setTargetLevel(i == 1 ? "B1" : "B2");
             exam.setDurationMinutes(35);
             exam.setStatus("PUBLISHED");
+            if (i == 0) attachScoring(exam, com.aptisprep.enums.Skill.codes());
             exam = exams.saveAndFlush(exam);
             examIds.add(exam.getId());
             addExamQuestions(exam);
@@ -270,6 +271,23 @@ class StudentContentPreviewTests {
                                             type.equals("CHECKPOINT")
                                                     ? "/student/learning-path/Reading"
                                                     : "/student/placement?skill=READING")));
+            if ("PLACEMENT".equals(type)) {
+                detail.andExpect(
+                        content()
+                                .string(
+                                        containsString(
+                                                "class=\"back-link\" href=\"/student/exams?examType=PLACEMENT\"")));
+                mvc.perform(
+                                get("/student/exams/" + exam.getId())
+                                        .param("fromPlacement", "true")
+                                        .with(user("student").roles("STUDENT")))
+                        .andExpect(status().isOk())
+                        .andExpect(
+                                content()
+                                        .string(
+                                                containsString(
+                                                        "class=\"back-link\" href=\"/student/placement?skill=READING\"")));
+            }
             mvc.perform(
                             get("/student/exams")
                                     .param("examType", type)
@@ -350,13 +368,22 @@ class StudentContentPreviewTests {
         exam.setTargetLevel(level);
         exam.setDurationMinutes(minutes);
         exam.setStatus("PUBLISHED");
-        if (List.of("PLACEMENT", "CHECKPOINT").contains(type)) {
-            var scheme = new ScoringScheme();
-            scheme.setCertificate(certificates.findById(exam.getCertificateId()).orElseThrow());
-            scheme.setName("Test policy");
-            scheme.setVersion("TEST-" + System.nanoTime());
-            scheme.setStatus(RecordStatus.ACTIVE);
-            scheme = schemes.saveAndFlush(scheme);
+        if ("FULL_MOCK".equals(type)) attachScoring(exam, com.aptisprep.enums.Skill.codes());
+        else if (List.of("PLACEMENT", "CHECKPOINT").contains(type))
+            attachScoring(exam, List.of(skill));
+        var saved = exams.saveAndFlush(exam);
+        addExamQuestions(saved);
+        return saved;
+    }
+
+    private void attachScoring(MockExamEntity exam, List<String> skillCodes) {
+        var scheme = new ScoringScheme();
+        scheme.setCertificate(certificates.findById(exam.getCertificateId()).orElseThrow());
+        scheme.setName("Test policy");
+        scheme.setVersion("TEST-" + System.nanoTime());
+        scheme.setStatus(RecordStatus.ACTIVE);
+        scheme = schemes.saveAndFlush(scheme);
+        for (String skill : skillCodes) {
             var rule = new com.aptisprep.entity.ScoringScaleRule();
             rule.setScheme(scheme);
             rule.setSkill(skill);
@@ -372,11 +399,8 @@ class StudentContentPreviewTests {
             band.setMinScore(java.math.BigDecimal.ZERO);
             band.setMaxScore(java.math.BigDecimal.TEN);
             bands.saveAndFlush(band);
-            exam.setScoringSchemeId(scheme.getId());
         }
-        var saved = exams.saveAndFlush(exam);
-        addExamQuestions(saved);
-        return saved;
+        exam.setScoringSchemeId(scheme.getId());
     }
 
     private void addExamQuestions(MockExamEntity exam) {

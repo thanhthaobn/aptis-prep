@@ -64,6 +64,8 @@
     /* Typography */
     --font-sans: Arial, "Liberation Sans", sans-serif;
     --font-ui: var(--font-sans);
+    --bs-font-sans-serif: var(--font-ui);
+    --bs-body-font-family: var(--font-ui);
     --text-small: 0.875rem;
     --text-base: 1rem;
     --text-large: 1.125rem;

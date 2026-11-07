@@ -19,7 +19,26 @@ public class ScoringSchemeForm {
     private String version;
 
     @NotBlank(message = "Trạng thái không được để trống")
-    private String status = "ACTIVE";
+    private String status = "DRAFT";
+
+    private String examType;
+    private String scopeSkill;
+
+    public String getExamType() {
+        return examType;
+    }
+
+    public void setExamType(String value) {
+        examType = value;
+    }
+
+    public String getScopeSkill() {
+        return scopeSkill;
+    }
+
+    public void setScopeSkill(String value) {
+        scopeSkill = value;
+    }
 
     @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
     private LocalDateTime effectiveFrom;

@@ -16,6 +16,8 @@ JDK 21, SQL Server Developer/Express, Maven Wrapper và IntelliJ. Mở thư mụ
 
 ## 3. Database đang dùng
 
+Chạy [upgrade-scoring-scheme-scope.sql](../database/upgrade-scoring-scheme-scope.sql) sau khi sao lưu để bổ sung loại đề và kỹ năng vào bộ chấm điểm. Các bộ đã lưu tiếp tục dùng được trên đề đã gán.
+
 Để dùng thang điểm quy đổi trên 50, chạy [upgrade-custom-scoring-scales.sql](../database/upgrade-custom-scoring-scales.sql) trên database đang dùng sau khi sao lưu. Script cập nhật các ràng buộc kiểm tra điểm và giữ nguyên dữ liệu hiện có.
 
 **Không xóa/recreate database để vượt lỗi validate.** Sao lưu DB bằng SQL Server Backup và đối chiếu schema trước khi nâng cấp thủ công có kiểm chứng.

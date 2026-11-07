@@ -254,6 +254,31 @@ public class CatalogService {
         examCatalog.publishExam(id);
     }
 
+    public void unpublishExam(Integer id) {
+        examCatalog.unpublishExam(id);
+    }
+
+    public List<ExamPreviewSection> examPreview(Integer id) {
+        ExamForm form = examCatalog.examForm(id);
+        examCatalog.normalizeSections(form);
+        return form.getSections().stream()
+                .map(
+                        section ->
+                                new ExamPreviewSection(
+                                        section.getSkill(),
+                                        section.getDurationMinutes(),
+                                        Arrays.stream(section.getQuestionIds().split(","))
+                                                .filter(value -> !value.isBlank())
+                                                .map(Integer::valueOf)
+                                                .map(questionRepository::findById)
+                                                .flatMap(Optional::stream)
+                                                .toList()))
+                .toList();
+    }
+
+    public record ExamPreviewSection(
+            String skill, Integer minutes, List<QuestionEntity> questions) {}
+
     @Transactional
     public void addMedia(Integer questionId, MultipartFile[] uploads) {
         QuestionEntity question =

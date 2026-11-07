@@ -118,6 +118,8 @@ public class AccountAccessService implements AccountAccessContract {
             throw new BusinessRuleException("Kết quả chưa có kỹ năng đủ điều kiện");
         }
         for (SkillResult skillResult : result.skills()) {
+            if (result.hasFullMockTotal() && "GRAMMAR_VOCABULARY".equals(skillResult.skill()))
+                continue;
             applySkillResult(user, attemptId, type, result.submittedAt(), skillResult);
         }
     }

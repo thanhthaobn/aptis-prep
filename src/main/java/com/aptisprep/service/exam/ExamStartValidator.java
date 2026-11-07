@@ -47,6 +47,7 @@ public class ExamStartValidator {
             sectionById.put(section.getId(), section);
         }
         Set<Integer> uniqueQuestions = new HashSet<>();
+        Set<Integer> usedSections = new HashSet<>();
         Set<String> skills = new HashSet<>();
         for (MockExamQuestionEntity link : links) {
             if (!Objects.equals(link.getMockExamId(), exam.getId()))
@@ -71,6 +72,7 @@ public class ExamStartValidator {
                 if (section == null) throw new BusinessRuleException("Section không thuộc đề thi");
                 if (!skill.equals(normalizeSkill(section.getSkill())))
                     throw new BusinessRuleException("Kỹ năng section không khớp với câu hỏi");
+                usedSections.add(section.getId());
             } else if (!sectionById.isEmpty()) {
                 throw new BusinessRuleException("Câu hỏi chưa được gán vào section của đề");
             }
@@ -79,7 +81,11 @@ public class ExamStartValidator {
                 if ("AUDIO".equals(audio.getMediaType())) validateAudio(audio.getMediaUrl());
             }
         }
-        if ("FULL_MOCK".equals(exam.getExamType())) {
+        if (usedSections.size() != sectionById.size())
+            throw new BusinessRuleException("Đề thi có phần chưa được gán câu hỏi");
+        if ("FULL_MOCK".equals(exam.getExamType())
+                || ("PLACEMENT".equals(exam.getExamType())
+                        && "FULL_MOCK".equals(exam.getSkill()))) {
             if (!skills.equals(new HashSet<>(Skill.codes())))
                 throw new BusinessRuleException("Thi thử tổng hợp phải có đủ 5 kỹ năng Aptis");
         } else if (skills.size() != 1 || !skills.contains(normalizeSkill(exam.getSkill()))) {
@@ -93,9 +99,8 @@ public class ExamStartValidator {
             } catch (ResourceNotFoundException exception) {
                 throw new BusinessRuleException(exception.getMessage());
             }
-        } else if (Set.of("CHECKPOINT", "PLACEMENT").contains(exam.getExamType())) {
-            throw new BusinessRuleException(
-                    "Placement và Checkpoint cần bộ chấm điểm để xác nhận CEFR");
+        } else if (Set.of("CHECKPOINT", "PLACEMENT", "FULL_MOCK").contains(exam.getExamType())) {
+            throw new BusinessRuleException("Loại đề này cần bộ chấm điểm để xác định CEFR");
         }
     }
 

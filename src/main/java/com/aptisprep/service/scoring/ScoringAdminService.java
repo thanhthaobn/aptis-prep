@@ -162,8 +162,9 @@ public class ScoringAdminService {
                         .findById(form.getCertificateId())
                         .orElseThrow(
                                 () -> new ResourceNotFoundException("Không tìm thấy chứng chỉ"));
-        if (certificate.getStatus() != RecordStatus.ACTIVE)
-            throw new BusinessRuleException("Chứng chỉ đã ngừng sử dụng");
+        if (status(form.getStatus()) == RecordStatus.ACTIVE
+                && certificate.getStatus() != RecordStatus.ACTIVE)
+            throw new BusinessRuleException("Cần kích hoạt chứng chỉ trước khi dùng bộ chấm điểm");
         String version = required(form.getVersion(), "Phiên bản");
         if (id == null) {
             ensureSchemeVersion(certificate.getId(), version, null);
@@ -185,9 +186,7 @@ public class ScoringAdminService {
             throw new BusinessRuleException(
                     "Bộ chấm điểm đã được sử dụng. Hãy tạo phiên bản mới để bảo toàn lịch sử");
         }
-        current.setName(required(form.getName(), "Tên bộ chấm điểm"));
-        current.setStatus(status(form.getStatus()));
-        current.setEffectiveFrom(form.getEffectiveFrom());
+        setScheme(current, certificate, form, version);
         return current.getId();
     }
 
@@ -203,8 +202,9 @@ public class ScoringAdminService {
         requireAdmin(adminEmail);
         ScoringScheme scheme = requireSchemeForUpdate(schemeId);
         String skill = normalizeSkill(form.getSkill());
+        requireScopeSkill(scheme, skill);
         String level = normalizeLevel(form.getCefrLevel());
-        if (scheme.getStatus() != RecordStatus.ACTIVE)
+        if (scheme.getStatus() == RecordStatus.INACTIVE)
             throw new BusinessRuleException("Không thể sửa bộ chấm điểm đã ngừng sử dụng");
         if (schemeIsUsed(schemeId))
             throw new BusinessRuleException(
@@ -278,6 +278,16 @@ public class ScoringAdminService {
         value.setCertificate(certificate);
         value.setName(required(form.getName(), "Tên bộ chấm điểm"));
         value.setVersion(version);
+        String type = blankToNull(form.getExamType());
+        String skill = blankToNull(form.getScopeSkill());
+        if (type != null
+                && !Set.of("PLACEMENT", "FULL_MOCK", "CHECKPOINT", "PRACTICE").contains(type))
+            throw new BusinessRuleException("Loại đề không hợp lệ");
+        boolean singleSkill = "CHECKPOINT".equals(type) || "PRACTICE".equals(type);
+        if (singleSkill && (skill == null || !Skill.codes().contains(skill)))
+            throw new BusinessRuleException("Chọn kỹ năng cho bộ chấm điểm");
+        value.setExamType(type);
+        value.setScopeSkill(singleSkill ? skill : null);
         value.setStatus(status(form.getStatus()));
         value.setEffectiveFrom(form.getEffectiveFrom());
     }
@@ -342,10 +352,11 @@ public class ScoringAdminService {
             String adminEmail, Integer schemeId, String skill, ScoringScaleRuleForm form) {
         requireAdmin(adminEmail);
         ScoringScheme scheme = requireSchemeForUpdate(schemeId);
-        if (scheme.getStatus() != RecordStatus.ACTIVE || schemeIsUsed(schemeId))
+        if (scheme.getStatus() == RecordStatus.INACTIVE || schemeIsUsed(schemeId))
             throw new BusinessRuleException(
                     "Hãy tạo phiên bản mới trước khi thay quy tắc của bộ chấm điểm đã dùng");
         String normalized = normalizeSkill(skill);
+        requireScopeSkill(scheme, normalized);
         BigDecimal rawMin = decimal(form.getRawMin()), rawMax = decimal(form.getRawMax());
         BigDecimal scaleMin = decimal(form.getScaleMin()), scaleMax = decimal(form.getScaleMax());
         if (rawMin == null
@@ -401,6 +412,8 @@ public class ScoringAdminService {
                 value.getVersion(),
                 value.getStatus().name(),
                 statusLabel(value.getStatus()),
+                value.getExamType(),
+                value.getScopeSkill(),
                 value.getEffectiveFrom());
     }
 
@@ -411,6 +424,11 @@ public class ScoringAdminService {
                 value.getCefrLevel(),
                 value.getMinScore(),
                 value.getMaxScore());
+    }
+
+    private void requireScopeSkill(ScoringScheme scheme, String skill) {
+        if (scheme.getScopeSkill() != null && !scheme.getScopeSkill().equals(skill))
+            throw new BusinessRuleException("Kỹ năng không thuộc phạm vi của bộ chấm điểm");
     }
 
     private RecordStatus status(String value) {
@@ -456,7 +474,11 @@ public class ScoringAdminService {
     }
 
     private String statusLabel(RecordStatus value) {
-        return value == RecordStatus.ACTIVE ? "Đang sử dụng" : "Ngừng sử dụng";
+        return switch (value) {
+            case ACTIVE -> "Đang sử dụng";
+            case INACTIVE -> "Ngừng sử dụng";
+            case DRAFT -> "Bản nháp";
+        };
     }
 
     private void copySchemeConfiguration(Integer id, ScoringScheme replacement) {

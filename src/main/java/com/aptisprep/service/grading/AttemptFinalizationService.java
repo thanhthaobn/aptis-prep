@@ -121,7 +121,10 @@ public class AttemptFinalizationService {
                         .toList();
         BigDecimal total = null;
         String overall = null;
-        if (schemeId != null && "FULL_MOCK".equals(exam.getExamType())) {
+        if (schemeId != null
+                && ("FULL_MOCK".equals(exam.getExamType())
+                        || ("PLACEMENT".equals(exam.getExamType())
+                                && "FULL_MOCK".equals(exam.getSkill())))) {
             var summary = scoring.fullMockScore(schemeId, scores);
             total = summary.total();
             overall = summary.cefrLevel();

@@ -133,6 +133,51 @@ class AdminScoringPreviewTests {
     }
 
     @Test
+    @Transactional
+    void aNewSchemeIsFilteredByItsScopeBeforeAnyExamUsesIt() throws Exception {
+        mvc.perform(
+                        post("/admin/scoring-schemes")
+                                .param("certificateId", certificate.getId().toString())
+                                .param("name", "Reading practice scope")
+                                .param("version", "scope-test")
+                                .param("examType", "PRACTICE")
+                                .param("scopeSkill", "READING")
+                                .with(user("admin@aptis.local").roles("ADMIN"))
+                                .with(csrf()))
+                .andExpect(status().is3xxRedirection());
+        var created =
+                schemes.findByCertificateIdOrderByVersionDesc(certificate.getId()).stream()
+                        .filter(value -> "scope-test".equals(value.getVersion()))
+                        .findFirst()
+                        .orElseThrow();
+        org.junit.jupiter.api.Assertions.assertEquals("READING", created.getScopeSkill());
+        mvc.perform(
+                        post("/admin/exams")
+                                .param("title", "Mismatched practice")
+                                .param("examType", "PRACTICE")
+                                .param("certificateId", certificate.getId().toString())
+                                .param("scoringSchemeId", created.getId().toString())
+                                .param("sections[0].skill", "LISTENING")
+                                .param("sections[0].durationMinutes", "20")
+                                .with(user("admin@aptis.local").roles("ADMIN"))
+                                .with(csrf()))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("Bộ chấm điểm không phù hợp")));
+        mvc.perform(
+                        get("/admin/scoring-schemes")
+                                .param("examType", "PRACTICE")
+                                .with(user("admin@aptis.local").roles("ADMIN")))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("Reading practice scope")));
+        mvc.perform(
+                        get("/admin/scoring-schemes")
+                                .param("examType", "FULL_MOCK")
+                                .with(user("admin@aptis.local").roles("ADMIN")))
+                .andExpect(status().isOk())
+                .andExpect(content().string(not(containsString("Reading practice scope"))));
+    }
+
+    @Test
     void allScoringPagesRender() throws Exception {
         String certificateId = certificate.getId().toString();
         String schemeId = scheme.getId().toString();
