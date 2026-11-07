@@ -12,6 +12,8 @@ import com.aptisprep.repository.*;
 import com.aptisprep.service.contract.ScoringSchemeUsageContract;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.*;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -20,6 +22,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class ScoringAdminService {
+    private static final ZoneId EFFECTIVE_TIME_ZONE = ZoneId.of("Asia/Ho_Chi_Minh");
     private static final Set<String> SKILLS = Set.copyOf(Skill.codes());
     private static final Set<String> LEVELS = Set.copyOf(CefrLevel.codes());
     private final CertificateRepository certificateRepository;
@@ -197,7 +200,9 @@ public class ScoringAdminService {
                             scale.getScaleMax());
                 }
             } else {
-                for (String level : CefrLevel.codes()) {
+                for (String level : CefrLevel.scoringCodes()) {
+                    if (CefrLevel.BELOW_A1.equals(level) && !supportsBelowA1(scheme, skill))
+                        continue;
                     ScoreBandForm band = form.getRanges().get(skill + "_" + level);
                     if (band.getMinScore() != null || band.getMaxScore() != null)
                         saveConfiguredBand(
@@ -317,7 +322,12 @@ public class ScoringAdminService {
         ScoringScheme scheme = requireSchemeForUpdate(schemeId);
         String skill = normalizeSkill(form.getSkill());
         requireScopeSkill(scheme, skill);
-        String level = normalizeLevel(form.getCefrLevel());
+        String level =
+                CefrLevel.BELOW_A1.equals(form.getCefrLevel()) && supportsBelowA1(scheme, skill)
+                        ? CefrLevel.BELOW_A1
+                        : normalizeLevel(form.getCefrLevel());
+        if (scheme.getCertificate().isAptisGeneral() && CefrLevel.C2.name().equals(level))
+            throw new BusinessRuleException("Aptis ESOL General chỉ có mức tối đa C1");
         if (scheme.getStatus() == RecordStatus.INACTIVE)
             throw new BusinessRuleException("Không thể sửa bộ chấm điểm đã ngừng sử dụng");
         if (schemeIsUsed(schemeId))
@@ -402,8 +412,17 @@ public class ScoringAdminService {
             throw new BusinessRuleException("Chọn kỹ năng cho bộ chấm điểm");
         value.setExamType(type);
         value.setScopeSkill(singleSkill ? skill : null);
-        value.setStatus(status(form.getStatus()));
-        value.setEffectiveFrom(form.getEffectiveFrom());
+        RecordStatus nextStatus = status(form.getStatus());
+        LocalDateTime now = LocalDateTime.now(EFFECTIVE_TIME_ZONE);
+        if (nextStatus == RecordStatus.DRAFT) {
+            value.setEffectiveFrom(null);
+        } else if (nextStatus == RecordStatus.ACTIVE
+                && (value.getStatus() != RecordStatus.ACTIVE
+                        || value.getEffectiveFrom() == null
+                        || value.getEffectiveFrom().isAfter(now))) {
+            value.setEffectiveFrom(now);
+        }
+        value.setStatus(nextStatus);
     }
 
     private void ensureSchemeVersion(Integer certificateId, String version, Integer ignored) {
@@ -518,6 +537,12 @@ public class ScoringAdminService {
     }
 
     private ScoringViews.SchemeView schemeView(ScoringScheme value) {
+        LocalDateTime effectiveFrom = value.getEffectiveFrom();
+        if (value.getStatus() == RecordStatus.DRAFT
+                || (effectiveFrom != null
+                        && effectiveFrom.isAfter(LocalDateTime.now(EFFECTIVE_TIME_ZONE)))) {
+            effectiveFrom = null;
+        }
         return new ScoringViews.SchemeView(
                 value.getId(),
                 value.getCertificate().getId(),
@@ -528,7 +553,7 @@ public class ScoringAdminService {
                 statusLabel(value.getStatus()),
                 value.getExamType(),
                 value.getScopeSkill(),
-                value.getEffectiveFrom());
+                effectiveFrom);
     }
 
     private ScoringViews.BandView bandView(ScoreBand value) {
@@ -565,6 +590,11 @@ public class ScoringAdminService {
                         .replaceAll("[^A-Z0-9]+", "_");
         if (!SKILLS.contains(normalized)) throw new BusinessRuleException("Kỹ năng không hợp lệ");
         return normalized;
+    }
+
+    private boolean supportsBelowA1(ScoringScheme scheme, String skill) {
+        return "FULL_MOCK".equals(scheme.getExamType())
+                && !Skill.GRAMMAR_VOCABULARY.name().equals(skill);
     }
 
     private String normalizeLevel(String value) {

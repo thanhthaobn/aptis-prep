@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+  <head th:replace="~{fragments/head :: head('Xem lại bài làm')}"></head>
+  <body class="student-theme">
+    <div th:replace="~{fragments/navbar :: navbar}"></div>
+    <div class="container ap-container app-shell">
+      <div th:replace="~{fragments/student-sidebar :: studentSidebar('results')}"></div>
+      <main class="app-main student-content" id="main-content" tabindex="-1">
+        <div
+          th:replace="~{fragments/back-link :: backLink(@{/student/attempts/{id}/result(id=${attemptId})})}"
+        ></div>
+        <header class="page-header">
+          <h1 th:text="${review.title}">Xem lại bài làm</h1>
+        </header>
+        <section class="dashboard-panel dashboard-section" th:each="question : ${review.questions}">
+          <p class="eyebrow" th:text="${display.catalogSkill(question.skill)}"></p>
+          <h2 th:text="${question.content}"></h2>
+          <p th:if="${question.instruction != null}" th:text="${question.instruction}"></p>
+          <p
+            class="reading-passage-text"
+            th:if="${question.readingPassage != null}"
+            th:text="${question.readingPassage}"
+          ></p>
+          <div class="attempt-media" th:each="media : ${question.media}">
+            <audio
+              th:if="${media.type == 'AUDIO'}"
+              controls
+              preload="none"
+              th:src="@{/student/attempts/{id}/review/media/{mediaId}(id=${attemptId},mediaId=${media.id})}"
+            ></audio>
+            <img
+              th:if="${media.type == 'IMAGE'}"
+              alt="Hình minh họa câu hỏi"
+              class="img-fluid"
+              th:src="@{/student/attempts/{id}/review/media/{mediaId}(id=${attemptId},mediaId=${media.id})}"
+            />
+          </div>
+          <div th:each="item : ${question.items}">
+            <h3 th:text="${item.position + '. ' + item.content}"></h3>
+            <ul th:if="${!item.options.isEmpty()}">
+              <li th:each="option : ${item.options}">
+                <span th:text="${option.content}"></span>
+                <strong th:if="${item.selectedOptionId == option.id}">· Đã chọn</strong>
+              </li>
+            </ul>
+            <p th:if="${!item.answered()}" class="muted">Chưa trả lời</p>
+            <p
+              th:if="${item.userPosition != null}"
+              th:text="${'Vị trí đã chọn: ' + item.userPosition}"
+            ></p>
+            <p th:if="${item.textAnswer != null}" th:text="${item.textAnswer}"></p>
+            <audio
+              th:if="${item.audioSaved}"
+              controls
+              preload="none"
+              th:src="@{/student/attempts/{id}/review/recording/{questionId}/{itemId}(id=${attemptId},questionId=${question.questionId},itemId=${item.itemId})}"
+            ></audio>
+          </div>
+        </section>
+      </main>
+    </div>
+    <div th:replace="~{fragments/footer :: footer}"></div>
+  </body>
+</html>

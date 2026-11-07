@@ -26,7 +26,7 @@
           <div>
             <span>CEFR</span>
             <strong
-              th:text="${attemptResult.overallCefr==null?'—':attemptResult.overallCefr}"
+              th:text="${attemptResult.overallCefr==null?'—':display.cefrLabel(attemptResult.overallCefr)}"
             ></strong>
           </div>
         </section>
@@ -36,17 +36,17 @@
             th:each="skill : ${attemptResult.skills}"
           >
             <div class="result-skill-heading">
-              <h2 th:text="${(skill.skill == null ? null : skill.skill.replace('_', ' '))}"></h2>
-              <strong th:text="${skill.estimatedLevel==null?'—':skill.estimatedLevel}"></strong>
+              <h2 th:text="${display.catalogSkill(skill.skill)}"></h2>
+              <strong
+                th:text="${skill.estimatedLevel==null?'—':display.cefrLabel(skill.estimatedLevel)}"
+              ></strong>
             </div>
             <dl class="result-score-list">
-              <div>
-                <dt>Điểm thô</dt>
-                <dd th:text="${skill.rawScore==null?'Chưa có':skill.rawScore}"></dd>
-              </div>
-              <div>
-                <dt>Điểm quy đổi</dt>
-                <dd th:text="${skill.scaleScore==null?'Chưa có':skill.scaleScore}"></dd>
+              <div th:with="score=${skill.rawScore != null ? skill.rawScore : skill.scaleScore}">
+                <dt>Điểm</dt>
+                <dd
+                  th:text="${score == null ? 'Chưa có' : score.stripTrailingZeros().toPlainString()}"
+                ></dd>
               </div>
             </dl>
             <div class="result-feedback" th:if="${skill.feedback!=null}">

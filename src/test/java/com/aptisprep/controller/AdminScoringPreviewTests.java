@@ -212,6 +212,7 @@ class AdminScoringPreviewTests {
                         .orElseThrow();
         org.junit.jupiter.api.Assertions.assertEquals(
                 2, bands.findBySchemeIdOrderBySkillAscMinScoreAsc(created.getId()).size());
+        org.junit.jupiter.api.Assertions.assertNull(created.getEffectiveFrom());
         var raw = new java.math.BigDecimal("33.25");
         org.junit.jupiter.api.Assertions.assertEquals(
                 raw, scoringPolicy.scale(created.getId(), "READING", raw));
@@ -235,6 +236,7 @@ class AdminScoringPreviewTests {
                                 .param("scopeSkill", "READING")
                                 .param("configureScores", "true")
                                 .param("status", "ACTIVE")
+                                .param("effectiveFrom", "2099-01-01T09:00")
                                 .param("scale.rawMin", "0")
                                 .param("scale.rawMax", "50")
                                 .param("targetLevel", "B1")
@@ -246,6 +248,10 @@ class AdminScoringPreviewTests {
                         .findFirst()
                         .orElseThrow();
         var below = new java.math.BigDecimal("24.99");
+        var vietnamNow = LocalDateTime.now(java.time.ZoneId.of("Asia/Ho_Chi_Minh"));
+        org.junit.jupiter.api.Assertions.assertTrue(
+                created.getEffectiveFrom().isAfter(vietnamNow.minusMinutes(1))
+                        && !created.getEffectiveFrom().isAfter(vietnamNow));
         var threshold = new java.math.BigDecimal("25.00");
         org.junit.jupiter.api.Assertions.assertTrue(
                 scoringPolicy.belowConfiguredTarget(created.getId(), "READING", below));
@@ -253,6 +259,25 @@ class AdminScoringPreviewTests {
                 scoringPolicy.estimatedLevel(created.getId(), "READING", below));
         org.junit.jupiter.api.Assertions.assertEquals(
                 "B1", scoringPolicy.estimatedLevel(created.getId(), "READING", threshold));
+    }
+
+    @Test
+    @Transactional
+    void aptisGeneralRejectsC2ScoringBands() throws Exception {
+        certificate.setCode("APTIS_GENERAL");
+        certificates.saveAndFlush(certificate);
+        mvc.perform(
+                        post("/admin/scoring-schemes/" + scheme.getId() + "/bands")
+                                .with(user("admin@aptis.local").roles("ADMIN"))
+                                .with(csrf())
+                                .param("skill", "READING")
+                                .param("cefrLevel", "C2")
+                                .param("minScore", "49")
+                                .param("maxScore", "50"))
+                .andExpect(status().isOk())
+                .andExpect(
+                        content()
+                                .string(containsString("Aptis ESOL General chỉ có mức tối đa C1")));
     }
 
     @Test

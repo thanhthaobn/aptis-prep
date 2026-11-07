@@ -11,14 +11,9 @@
         tabindex="-1"
         class="app-main student-content compact-catalog exam-library"
       >
-        <div
-          th:replace="~{fragments/breadcrumb :: breadcrumb('Tổng quan', @{/student/dashboard}, 'Đề thi')}"
-        ></div>
         <header class="page-header">
           <div>
-            <p class="eyebrow">NGÂN HÀNG ĐỀ THI</p>
-            <h1>Chọn bài thi phù hợp</h1>
-            <p>Luyện từng kỹ năng hoặc làm đề tổng hợp theo mục tiêu của bạn.</p>
+            <h1>Đề thi</h1>
           </div>
         </header>
 
@@ -37,21 +32,16 @@
           </a>
         </nav>
 
-        <div class="exam-category-context" th:switch="${selectedExamType}">
-          <p th:case="'PRACTICE'">
-            Tập trung vào một kỹ năng. Đề được chia theo kỹ năng và cấp độ để bạn dễ chọn bài luyện.
-          </p>
-          <p th:case="'FULL_MOCK'">
-            Luyện nhiều kỹ năng trong cùng một lượt thi. Xem cấu trúc từng đề trước khi bắt đầu.
-          </p>
-          <p th:case="'PLACEMENT'">
-            Xác định trình độ hiện tại để xây dựng lộ trình phù hợp.
-            <a th:href="@{/student/placement}">Đến kiểm tra đầu vào →</a>
-          </p>
-          <p th:case="'CHECKPOINT'">
-            Chỉ bắt đầu sau khi hoàn thành các bài bắt buộc của chặng.
-            <a th:href="@{/student/learning-path}">Xem điều kiện trong lộ trình →</a>
-          </p>
+        <div
+          class="exam-category-context"
+          th:if="${selectedExamType == 'PLACEMENT' or selectedExamType == 'CHECKPOINT'}"
+        >
+          <a th:if="${selectedExamType == 'PLACEMENT'}" th:href="@{/student/placement}">
+            Đến kiểm tra đầu vào →
+          </a>
+          <a th:if="${selectedExamType == 'CHECKPOINT'}" th:href="@{/student/learning-path}">
+            Xem điều kiện trong lộ trình →
+          </a>
         </div>
 
         <form

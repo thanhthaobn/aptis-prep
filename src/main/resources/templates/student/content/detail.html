@@ -14,9 +14,6 @@
         <div
           th:replace="~{fragments/back-link :: backLink(${fromPlacement and entry.examType == 'PLACEMENT'} ? @{/student/placement(skill=${entry.skillCode})} : @{/student/exams(examType=${entry.examType})})}"
         ></div>
-        <div
-          th:replace="~{fragments/breadcrumb :: breadcrumb(${title}, @{/student/exams(examType=${entry.examType})}, 'Chi tiết')}"
-        ></div>
         <div th:replace="~{fragments/messages :: messages}"></div>
         <header class="page-header study-detail-header">
           <div>

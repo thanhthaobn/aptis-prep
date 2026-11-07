@@ -21,13 +21,7 @@
           <dt>Mục tiêu</dt>
           <dd>
             <span th:if="${stage.goalLevel != null}" th:text="${stage.goalLevel}"></span>
-            <a
-              th:if="${stage.goalLevel == null}"
-              th:href="@{/student/goals}"
-              aria-label="Đặt mục tiêu cá nhân"
-            >
-              Chưa đặt ↗
-            </a>
+            <span th:if="${stage.goalLevel == null}" class="muted">Chưa đặt</span>
           </dd>
         </div>
       </dl>
@@ -48,6 +42,7 @@
       aria-label="Trình độ và đích chặng"
     >
       <div th:replace="~{fragments/path-stage :: pathOverview(${skill})}"></div>
+      <a class="stage-goal-action" th:href="@{/student/goals}">Thiết lập mục tiêu</a>
     </section>
     <ol
       th:fragment="stageScale(stage)"

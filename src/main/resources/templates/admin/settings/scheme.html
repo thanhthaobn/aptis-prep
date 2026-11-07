@@ -11,9 +11,6 @@
       <div th:replace="~{fragments/admin-sidebar :: adminSidebar('scoring')}"></div>
       <main id="main-content" tabindex="-1" class="app-main admin-catalog">
         <div th:replace="~{fragments/back-link :: backLink(@{/admin/scoring-schemes})}"></div>
-        <div
-          th:replace="~{fragments/breadcrumb :: breadcrumb('Chấm điểm', @{/admin/scoring-schemes}, 'Bộ chấm điểm')}"
-        ></div>
         <div th:replace="~{fragments/messages :: messages}"></div>
         <header class="page-header">
           <h1
@@ -37,6 +34,7 @@
                     th:each="certificate : ${certificates}"
                     th:value="${certificate.id}"
                     th:text="${certificate.name}"
+                    th:attr="data-certificate-code=${certificate.code}"
                     th:selected="${editing and scheme.certificateId == certificate.id}"
                   ></option>
                 </select>
@@ -53,17 +51,6 @@
                   ></option>
                 </select>
                 <p class="field-error" th:errors="*{examType}"></p>
-              </div>
-              <div class="field" id="scheme-skill-field">
-                <label for="schemeScopeSkill">Kỹ năng của đề một kỹ năng</label>
-                <select id="schemeScopeSkill" th:field="*{scopeSkill}">
-                  <option value="">Chọn kỹ năng</option>
-                  <option
-                    th:each="skill : ${display.skillCodes()}"
-                    th:value="${skill}"
-                    th:text="${display.catalogSkill(skill)}"
-                  ></option>
-                </select>
               </div>
               <div class="field">
                 <label for="schemeName">Tên bộ chấm điểm</label>
@@ -89,10 +76,6 @@
                   <option value="INACTIVE">Ngừng sử dụng</option>
                 </select>
               </div>
-              <div class="field">
-                <label for="schemeDate">Ngày hiệu lực</label>
-                <input id="schemeDate" type="datetime-local" th:field="*{effectiveFrom}" />
-              </div>
             </div>
           </fieldset>
           <input type="hidden" name="configureScores" value="true" />
@@ -101,11 +84,11 @@
             class="catalog-form-section"
             th:disabled="${readOnly}"
           >
-            <legend>Thang điểm Raw</legend>
-            <p class="muted">Các ngưỡng CEFR dùng điểm Raw. Speaking và Writing dùng Raw 0–50.</p>
+            <legend>Thang điểm</legend>
+            <p class="muted">Speaking và Writing dùng thang điểm 0–50.</p>
             <div class="catalog-form-grid">
               <div class="field">
-                <label for="schemeRawMin">Raw thấp nhất</label>
+                <label for="schemeRawMin">Điểm thấp nhất</label>
                 <input
                   id="schemeRawMin"
                   type="number"
@@ -115,7 +98,7 @@
                 />
               </div>
               <div class="field">
-                <label for="schemeRawMax">Raw cao nhất</label>
+                <label for="schemeRawMax">Điểm cao nhất</label>
                 <input
                   id="schemeRawMax"
                   type="number"
@@ -126,6 +109,17 @@
               </div>
             </div>
             <div id="scheme-target-score" class="catalog-form-grid">
+              <div class="field" id="scheme-skill-field">
+                <label for="schemeScopeSkill">Kỹ năng</label>
+                <select id="schemeScopeSkill" th:field="*{scopeSkill}">
+                  <option value="">Chọn kỹ năng</option>
+                  <option
+                    th:each="skill : ${display.skillCodes()}"
+                    th:value="${skill}"
+                    th:text="${display.catalogSkill(skill)}"
+                  ></option>
+                </select>
+              </div>
               <div class="field">
                 <label for="schemeTargetLevel">Trình độ cần đạt</label>
                 <select id="schemeTargetLevel" th:field="*{targetLevel}">
@@ -134,11 +128,12 @@
                     th:each="level : ${display.scoringLevels()}"
                     th:value="${level}"
                     th:text="${level}"
+                    th:attr="data-c2=${level == 'C2' ? 'true' : null}"
                   ></option>
                 </select>
               </div>
               <div class="field">
-                <label for="schemePassingScore">Điểm Raw tối thiểu để đạt</label>
+                <label for="schemePassingScore">Điểm tối thiểu để đạt</label>
                 <input
                   id="schemePassingScore"
                   type="number"
@@ -162,10 +157,12 @@
                     </thead>
                     <tbody>
                       <tr
-                        th:each="level : ${display.scoringLevels()}"
+                        th:each="level : ${skill == 'GRAMMAR_VOCABULARY' ? display.scoringLevels() : display.fullMockScoringLevels()}"
+                        th:classappend="${level == 'A0'} ? 'below-a1-row'"
                         th:with="key=${skill + '_' + level}"
+                        th:attr="data-c2=${level == 'C2' ? 'true' : null}"
                       >
-                        <th scope="row" th:text="${level}"></th>
+                        <th scope="row" th:text="${display.cefrLabel(level)}"></th>
                         <td>
                           <input
                             type="number"
@@ -307,7 +304,7 @@
             <fieldset th:disabled="${readOnly}">
               <div class="catalog-form-grid">
                 <div class="field">
-                  <label for="rawMin">Raw thấp nhất</label>
+                  <label for="rawMin">Điểm đầu vào thấp nhất</label>
                   <input
                     id="rawMin"
                     th:field="*{rawMin}"
@@ -319,7 +316,7 @@
                   />
                 </div>
                 <div class="field">
-                  <label for="rawMax">Raw cao nhất</label>
+                  <label for="rawMax">Điểm đầu vào cao nhất</label>
                   <input
                     id="rawMax"
                     th:field="*{rawMax}"
@@ -389,6 +386,7 @@
                     th:each="level : ${display.scoringLevels()}"
                     th:value="${level}"
                     th:text="${level}"
+                    th:attr="data-c2=${level == 'C2' ? 'true' : null}"
                   ></option>
                 </select>
               </div>

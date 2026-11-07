@@ -75,6 +75,7 @@ class ScoringAdminServiceTests {
         User admin = new User();
         admin.setRole(Role.ADMIN);
         ScoringScheme scheme = new ScoringScheme();
+        scheme.setCertificate(new Certificate());
         scheme.setStatus(RecordStatus.ACTIVE);
         when(users.findByEmailIgnoreCase("admin@aptis.local")).thenReturn(Optional.of(admin));
         when(schemes.findByIdForUpdate(20)).thenReturn(Optional.of(scheme));

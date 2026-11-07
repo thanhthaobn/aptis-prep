@@ -10,7 +10,7 @@ import java.util.*;
 /** Validates a question definition without database writes or Spring state. */
 final class QuestionDefinitionValidator {
     private static final List<String> SKILLS = Skill.codes();
-    private static final List<String> LEVELS = CefrLevel.codes();
+    private static final List<String> LEVELS = CefrLevel.curriculumLevels();
     private static final List<String> TYPES =
             Arrays.stream(QuestionType.values()).map(Enum::name).toList();
     private static final List<String> DIFFICULTIES = List.of("EASY", "MEDIUM", "HARD");

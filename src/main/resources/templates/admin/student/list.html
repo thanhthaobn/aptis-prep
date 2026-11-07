@@ -6,9 +6,6 @@
     <div class="container ap-container app-shell">
       <div th:replace="~{fragments/admin-sidebar :: adminSidebar('students')}"></div>
       <main id="main-content" tabindex="-1" class="app-main student-management">
-        <div
-          th:replace="~{fragments/breadcrumb :: breadcrumb('Tổng quan', @{/admin/dashboard}, 'Học viên')}"
-        ></div>
         <header class="page-header">
           <div><h1>Học viên</h1></div>
         </header>

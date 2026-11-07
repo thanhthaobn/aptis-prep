@@ -7,38 +7,40 @@
       aria-label="Thang điểm và trình độ"
     >
       <h2>Thang điểm và trình độ</h2>
-      <p class="muted">CEFR ước lượng theo từng kỹ năng.</p>
       <p th:if="${scoreGuides == null or scoreGuides.isEmpty()}">
         Chưa có bảng quy đổi cho đề này.
       </p>
       <article th:each="guide : ${scoreGuides}">
-        <h3 th:text="${guide.skill.replace('_', ' & ')}"></h3>
-        <p
-          class="muted"
-          th:text="${'Thang điểm ' + guide.min.stripTrailingZeros().toPlainString() + '–' + guide.max.stripTrailingZeros().toPlainString()}"
-        ></p>
-        <div class="table-responsive" th:unless="${guide.bands.isEmpty()}">
-          <table class="table">
-            <thead>
-              <tr>
-                <th scope="col">Khoảng điểm</th>
-                <th scope="col">Trình độ</th>
-                <th scope="col" class="visually-hidden">Kết quả</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr
-                th:each="band : ${guide.bands}"
-                th:classappend="${band.attained ? 'table-success' : ''}"
-              >
-                <td th:text="${band.min + ' – ' + band.max}"></td>
-                <td th:text="${band.level}"></td>
-                <td th:text="${band.attained ? '✓ Bạn đạt' : ''}"></td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
+        <th:block th:replace="~{fragments/scoring-guide :: skillGuide(${guide})}"></th:block>
       </article>
     </section>
+    <th:block th:fragment="skillGuide(guide)">
+      <h3 th:text="${display.catalogSkill(guide.skill)}"></h3>
+      <p
+        class="muted"
+        th:text="${'Thang điểm ' + guide.min.stripTrailingZeros().toPlainString() + '–' + guide.max.stripTrailingZeros().toPlainString()}"
+      ></p>
+      <div class="table-responsive" th:unless="${guide.bands.isEmpty()}">
+        <table class="table">
+          <thead>
+            <tr>
+              <th scope="col">Khoảng điểm</th>
+              <th scope="col">Trình độ</th>
+              <th scope="col" class="visually-hidden">Kết quả</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr
+              th:each="band : ${guide.bands}"
+              th:classappend="${band.attained ? 'table-success' : ''}"
+            >
+              <td th:text="${band.min + ' – ' + band.max}"></td>
+              <td th:text="${display.cefrLabel(band.level)}"></td>
+              <td th:text="${band.attained ? 'Bạn đạt' : ''}"></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </th:block>
   </body>
 </html>

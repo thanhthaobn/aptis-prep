@@ -9,6 +9,7 @@ import com.aptisprep.enums.RecordStatus;
 import com.aptisprep.exception.BusinessRuleException;
 import com.aptisprep.exception.ResourceNotFoundException;
 import com.aptisprep.repository.*;
+import com.aptisprep.service.exam.ExamSnapshotService;
 import java.util.*;
 import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
@@ -23,6 +24,7 @@ public class AdminExamService {
     private final CertificateRepository certificateRepository;
     private final ExamAttemptRepository examAttemptRepository;
     private final ExamDefinitionValidator examValidator;
+    private final ExamSnapshotService examSnapshots;
 
     public AdminExamService(
             MockExamRepository mockExamRepository,
@@ -30,13 +32,15 @@ public class AdminExamService {
             MockExamQuestionRepository mockExamQuestionRepository,
             CertificateRepository certificateRepository,
             ExamAttemptRepository examAttemptRepository,
-            ExamDefinitionValidator examValidator) {
+            ExamDefinitionValidator examValidator,
+            ExamSnapshotService examSnapshots) {
         this.mockExamRepository = mockExamRepository;
         this.mockExamSectionRepository = mockExamSectionRepository;
         this.mockExamQuestionRepository = mockExamQuestionRepository;
         this.certificateRepository = certificateRepository;
         this.examAttemptRepository = examAttemptRepository;
         this.examValidator = examValidator;
+        this.examSnapshots = examSnapshots;
     }
 
     public ExamForm examForm(Integer id) {
@@ -115,17 +119,22 @@ public class AdminExamService {
                 id == null
                         ? new MockExamEntity()
                         : mockExamRepository
-                                .findById(id)
+                                .findByIdForUpdate(id)
                                 .orElseThrow(
                                         () ->
                                                 new ResourceNotFoundException(
                                                         "Không tìm thấy đề thi"));
-        if (id != null && examAttemptRepository.existsByMockExamId(id)) {
-            throw new BusinessRuleException(
-                    "Đề thi đã có lịch sử làm bài. Hãy tạo phiên bản đề mới");
-        }
         if ("PUBLISHED".equals(exam.getStatus())) {
             throw new BusinessRuleException("Hãy ngừng công bố trước khi chỉnh sửa đề");
+        }
+        if (id != null) {
+            var legacyAttempts = examAttemptRepository.findWithoutSnapshot(id);
+            if (!legacyAttempts.isEmpty()) {
+                var links = mockExamQuestionRepository.findByMockExamIdOrderByPosition(id);
+                for (var attempt : legacyAttempts) {
+                    examSnapshots.preserveLegacyAttempt(attempt, exam, links);
+                }
+            }
         }
         applyExamFields(exam, form);
         exam = mockExamRepository.save(exam);
@@ -137,7 +146,7 @@ public class AdminExamService {
     public void publishExam(Integer id) {
         MockExamEntity exam =
                 mockExamRepository
-                        .findById(id)
+                        .findByIdForUpdate(id)
                         .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy đề thi"));
         ExamForm form = examForm(id);
         normalizeSections(form);
@@ -162,7 +171,7 @@ public class AdminExamService {
     public void unpublishExam(Integer id) {
         MockExamEntity exam =
                 mockExamRepository
-                        .findById(id)
+                        .findByIdForUpdate(id)
                         .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy đề thi"));
         if ("PUBLISHED".equals(exam.getStatus())) exam.setStatus("ARCHIVED");
     }

@@ -59,6 +59,14 @@ public class Certificate {
         return code;
     }
 
+    public boolean isAptisGeneral() {
+        return "APTIS_GENERAL".equalsIgnoreCase(code);
+    }
+
+    public String scoringLevel(String level) {
+        return isAptisGeneral() && "C2".equals(level) ? "C1" : level;
+    }
+
     public String getDescription() {
         return description;
     }

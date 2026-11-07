@@ -1,6 +1,7 @@
 package com.aptisprep.service.exam;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -292,6 +293,78 @@ class ExamAttemptConcurrencyTests {
         var page = attempts.page(fixture.user().getId(), attemptId);
         assertEquals("Audio question", page.questions().getFirst().content());
         assertEquals("Choose the answer", page.questions().getFirst().items().getFirst().content());
+    }
+
+    @Test
+    void editingAnAttemptedExamPreservesExistingAndReconstructedSnapshots() throws Exception {
+        Fixture original = fixture("editable-with-history");
+        Fixture replacement = fixture("editable-replacement");
+        int examId = original.exam().getId();
+        int userId = original.user().getId();
+        int completed = attempts.start(userId, examId, "legacy-completed").attemptId();
+        attempts.saveAnswer(
+                userId,
+                completed,
+                original.question().getId(),
+                original.item().getId(),
+                original.option().getId(),
+                null,
+                null);
+        attempts.submit(userId, completed, "submit-legacy-completed");
+        snapshots.delete(snapshots.findByAttemptId(completed).orElseThrow());
+        snapshots.flush();
+        int ongoing = attempts.start(userId, examId, "existing-snapshot").attemptId();
+
+        adminExams.unpublishExam(examId);
+        var edit = adminExams.examForm(examId);
+        edit.setTitle("Revised exam");
+        edit.setQuestionIds(replacement.question().getId().toString());
+        adminExams.saveExam(examId, edit);
+        adminExams.publishExam(examId);
+
+        assertEquals(original.exam().getTitle(), attempts.result(userId, completed).examTitle());
+        assertEquals(
+                original.question().getId(),
+                attempts.review(userId, completed).questions().getFirst().questionId());
+        var student =
+                org.springframework.security.test.web.servlet.request
+                        .SecurityMockMvcRequestPostProcessors.user(original.user().getEmail())
+                        .roles("STUDENT");
+        mvc.perform(
+                        org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get(
+                                        "/student/attempts/{id}/review", completed)
+                                .with(student))
+                .andExpect(
+                        org.springframework.test.web.servlet.result.MockMvcResultMatchers.status()
+                                .isOk())
+                .andExpect(
+                        org.springframework.test.web.servlet.result.MockMvcResultMatchers.content()
+                                .string(org.hamcrest.Matchers.containsString("Đã chọn")));
+        mvc.perform(
+                        org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get(
+                                        "/student/attempts/{id}/result", completed)
+                                .with(student))
+                .andExpect(
+                        org.springframework.test.web.servlet.result.MockMvcResultMatchers.status()
+                                .isOk())
+                .andExpect(
+                        org.springframework.test.web.servlet.result.MockMvcResultMatchers.content()
+                                .string(
+                                        org.hamcrest.Matchers.allOf(
+                                                org.hamcrest.Matchers.containsString(
+                                                        "Điểm theo kỹ năng"),
+                                                org.hamcrest.Matchers.containsString(
+                                                        "Xem lại bài làm"),
+                                                org.hamcrest.Matchers.not(
+                                                        org.hamcrest.Matchers.containsString(
+                                                                "result-navi")))));
+        assertEquals(
+                original.question().getId(),
+                attempts.page(userId, ongoing).questions().getFirst().questionId());
+        int next = attempts.start(userId, examId, "new-revision").attemptId();
+        assertEquals(
+                replacement.question().getId(),
+                attempts.page(userId, next).questions().getFirst().questionId());
     }
 
     @Test
@@ -593,6 +666,16 @@ class ExamAttemptConcurrencyTests {
         second.setSkill("LISTENING");
         second.setStatus("PUBLISHED");
         int secondId = questions.saveAndFlush(second).getId();
+        var extraItem = new QuestionItemEntity();
+        extraItem.setQuestionId(fixture.question().getId());
+        extraItem.setContent("Second item in the same audio");
+        extraItem.setPosition(2);
+        items.saveAndFlush(extraItem);
+        var secondSectionItem = new QuestionItemEntity();
+        secondSectionItem.setQuestionId(secondId);
+        secondSectionItem.setContent("First item of the next section");
+        secondSectionItem.setPosition(1);
+        items.saveAndFlush(secondSectionItem);
         var firstLink = examQuestions.findByMockExamIdOrderByPosition(examId).getFirst();
         var secondLink = new MockExamQuestionEntity();
         secondLink.setMockExamId(examId);
@@ -609,16 +692,44 @@ class ExamAttemptConcurrencyTests {
             examQuestions.saveAndFlush(link);
         }
         int attemptId = attempts.start(userId, examId, "timed-section").attemptId();
+        var firstPage = attempts.page(userId, attemptId);
+        assertEquals(
+                List.of(1, 2),
+                firstPage.questions().getFirst().items().stream()
+                        .map(ExamAttemptService.ItemPage::position)
+                        .toList());
+        assertEquals(2, firstPage.totalItems());
+        attempts.saveAnswer(
+                userId,
+                attemptId,
+                fixture.question().getId(),
+                fixture.item().getId(),
+                fixture.option().getId(),
+                null,
+                null);
         assertTrue(attempts.page(userId, attemptId).nextSection());
+        assertEquals(1, attempts.page(userId, attemptId).answeredItems());
         assertEquals(
                 fixture.question().getId(),
                 attempts.page(userId, attemptId).questions().getFirst().questionId());
         assertThrows(
                 BusinessRuleException.class,
                 () -> attempts.saveAnswer(userId, attemptId, secondId, null, null, null, null));
-        var attempt = attemptRepository.findById(attemptId).orElseThrow();
-        attempt.setStartedAt(LocalDateTime.now().minusMinutes(3));
-        attemptRepository.saveAndFlush(attempt);
+        attempts.advanceSection(userId, attemptId, 4);
+        assertEquals(
+                fixture.question().getId(),
+                attempts.page(userId, attemptId).questions().getFirst().questionId());
+        attempts.advanceSection(userId, attemptId, 2);
+        var next = attempts.page(userId, attemptId);
+        assertEquals(1, next.totalItems());
+        assertEquals(0, next.answeredItems());
+        assertEquals(
+                secondSectionItem.getId(), next.questions().getFirst().items().getFirst().itemId());
+        assertEquals(1, next.questions().getFirst().items().getFirst().position());
+        assertFalse(next.nextSection());
+        assertTrue(next.remainingSeconds() > 115 && next.remainingSeconds() <= 120);
+        attempts.advanceSection(userId, attemptId, 2);
+        assertEquals(next.deadline(), attempts.page(userId, attemptId).deadline());
         assertEquals(
                 secondId, attempts.page(userId, attemptId).questions().getFirst().questionId());
         assertThrows(
