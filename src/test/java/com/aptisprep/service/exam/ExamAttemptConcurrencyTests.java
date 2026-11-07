@@ -41,15 +41,17 @@ import com.aptisprep.repository.ScoringSchemeRepository;
 import com.aptisprep.repository.UserRepository;
 import com.aptisprep.service.storage.StorageService;
 import com.aptisprep.support.TestAudio;
+
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
 
 @SpringBootTest
 @org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc
@@ -597,6 +599,14 @@ class ExamAttemptConcurrencyTests {
         second.setSkill("LISTENING");
         second.setStatus("PUBLISHED");
         int secondId = questions.saveAndFlush(second).getId();
+        QuestionMediaEntity secondAudio = new QuestionMediaEntity();
+        secondAudio.setQuestionId(secondId);
+        secondAudio.setMediaType("AUDIO");
+        secondAudio.setMediaUrl(TestAudio.store(storage));
+        secondAudio.setOriginalFilename("second.wav");
+        secondAudio.setContentType("audio/wav");
+        secondAudio.setPosition(1);
+        media.saveAndFlush(secondAudio);
         var firstLink = examQuestions.findByMockExamIdOrderByPosition(examId).getFirst();
         var secondLink = new MockExamQuestionEntity();
         secondLink.setMockExamId(examId);

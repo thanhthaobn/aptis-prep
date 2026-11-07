@@ -13,13 +13,15 @@ import com.aptisprep.exception.ResourceNotFoundException;
 import com.aptisprep.repository.CertificateRepository;
 import com.aptisprep.repository.ScoreBandRepository;
 import com.aptisprep.repository.ScoringSchemeRepository;
-import java.util.List;
-import java.util.Optional;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+
+import java.util.List;
+import java.util.Optional;
 
 @ExtendWith(MockitoExtension.class)
 class CertificateSchemeServiceTests {
@@ -51,6 +53,7 @@ class CertificateSchemeServiceTests {
         when(schemes.findByIdAndCertificateId(2, 1)).thenReturn(Optional.of(scheme));
         ScoreBand band = new ScoreBand();
         band.setSkill("READING");
+        band.setCefrLevel("A1");
         band.setMinScore(java.math.BigDecimal.ZERO);
         band.setMaxScore(java.math.BigDecimal.valueOf(50));
         when(bands.findBySchemeIdAndSkillOrderByMinScoreAsc(2, "READING"))
