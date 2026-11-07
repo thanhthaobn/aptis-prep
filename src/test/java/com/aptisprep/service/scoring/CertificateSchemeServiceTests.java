@@ -51,6 +51,7 @@ class CertificateSchemeServiceTests {
         when(schemes.findByIdAndCertificateId(2, 1)).thenReturn(Optional.of(scheme));
         ScoreBand band = new ScoreBand();
         band.setSkill("READING");
+        band.setCefrLevel("A1");
         band.setMinScore(java.math.BigDecimal.ZERO);
         band.setMaxScore(java.math.BigDecimal.valueOf(50));
         when(bands.findBySchemeIdAndSkillOrderByMinScoreAsc(2, "READING"))

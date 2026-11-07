@@ -28,14 +28,17 @@ public class ScoringSchemeForm {
     private String scopeSkill;
     private boolean configureScores;
     private final ScoringScaleRuleForm scale = new ScoringScaleRuleForm();
+    private final Map<String, ScoringScaleRuleForm> skillScales = new LinkedHashMap<>();
     private final Map<String, ScoreBandForm> ranges = new LinkedHashMap<>();
     private String targetLevel;
     private BigDecimal passingScore;
 
     public ScoringSchemeForm() {
-        for (String skill : com.aptisprep.enums.Skill.codes())
+        for (String skill : com.aptisprep.enums.Skill.codes()) {
+            skillScales.put(skill, new ScoringScaleRuleForm());
             for (String level : com.aptisprep.enums.CefrLevel.codes())
                 ranges.put(skill + "_" + level, new ScoreBandForm());
+        }
     }
 
     public boolean isConfigureScores() {
@@ -48,6 +51,10 @@ public class ScoringSchemeForm {
 
     public ScoringScaleRuleForm getScale() {
         return scale;
+    }
+
+    public Map<String, ScoringScaleRuleForm> getSkillScales() {
+        return skillScales;
     }
 
     public Map<String, ScoreBandForm> getRanges() {

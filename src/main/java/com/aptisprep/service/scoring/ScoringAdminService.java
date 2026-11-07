@@ -157,49 +157,68 @@ public class ScoringAdminService {
     @Transactional
     public Integer saveSchemeWithScores(String email, Integer id, ScoringSchemeForm form) {
         Integer savedId = saveScheme(email, id, form);
-        if (!form.isConfigureScores() || blankToNull(form.getExamType()) == null) return savedId;
+        if (!form.isConfigureScores() || blankToNull(form.getExamType()) == null) {
+            if (requireScheme(savedId).getStatus() == RecordStatus.ACTIVE)
+                requireReady(requireScheme(savedId));
+            return savedId;
+        }
         ScoringScheme scheme = requireSchemeForUpdate(savedId);
         List<String> skills =
                 scheme.getScopeSkill() == null ? Skill.codes() : List.of(scheme.getScopeSkill());
-        var scale = form.getScale();
-        scale.setScaleMin(scale.getRawMin());
-        scale.setScaleMax(scale.getRawMax());
-        if (scale.getRawMin() == null
-                && scale.getRawMax() == null
-                && scheme.getStatus() == RecordStatus.DRAFT
-                && form.getPassingScore() == null
-                && blankToNull(form.getTargetLevel()) == null
-                && form.getRanges().values().stream()
-                        .allMatch(band -> band.getMinScore() == null && band.getMaxScore() == null))
-            return savedId;
         if (scheme.getStatus() == RecordStatus.INACTIVE) return savedId;
         for (String skill : skills) {
+            ScoringScaleRuleForm scale = form.getSkillScales().get(skill);
+            if (!hasScale(scale)) {
+                scale = new ScoringScaleRuleForm();
+                scale.setRawMin(form.getScale().getRawMin());
+                scale.setRawMax(form.getScale().getRawMax());
+                scale.setScaleMin(form.getScale().getScaleMin());
+                scale.setScaleMax(form.getScale().getScaleMax());
+            }
+            boolean hasBands =
+                    CefrLevel.codes().stream()
+                            .map(level -> form.getRanges().get(skill + "_" + level))
+                            .anyMatch(
+                                    band ->
+                                            band != null
+                                                    && (band.getMinScore() != null
+                                                            || band.getMaxScore() != null));
+            boolean targetOnly =
+                    "CHECKPOINT".equals(scheme.getExamType())
+                            && (blankToNull(form.getTargetLevel()) != null
+                                    || form.getPassingScore() != null);
+            if (targetOnly && hasBands)
+                throw new BusinessRuleException(
+                        "Chọn ngưỡng đạt hoặc bảng CEFR đầy đủ, không dùng đồng thời");
+            if (!hasScale(scale) && !hasBands && !targetOnly) continue;
+            if (scale.getRawMin() == null || scale.getRawMax() == null)
+                throw new BusinessRuleException("Nhập đầy đủ thang điểm cho " + skill);
+            // Legacy raw-only submissions use identity mapping only for a new rule.
+            var existing =
+                    scoringScaleRuleRepository.findBySchemeIdAndSkillIgnoreCase(savedId, skill);
+            if (scale.getScaleMin() == null)
+                scale.setScaleMin(
+                        existing.map(ScoringScaleRule::getScaleMin).orElse(scale.getRawMin()));
+            if (scale.getScaleMax() == null)
+                scale.setScaleMax(
+                        existing.map(ScoringScaleRule::getScaleMax).orElse(scale.getRawMax()));
             var previousBands =
                     scoreBandRepository.findBySchemeIdAndSkillOrderByMinScoreAsc(savedId, skill);
-            if (scheme.getScopeSkill() != null
-                    && !previousBands.isEmpty()
-                    && blankToNull(form.getTargetLevel()) == null)
-                throw new BusinessRuleException(
-                        "Chọn trình độ cần đạt trước khi thay khoảng điểm cũ");
             scoreBandRepository.deleteAll(previousBands);
             scoreBandRepository.flush();
             saveScaleRule(email, savedId, skill, scale);
-            if (scheme.getScopeSkill() != null) {
-                if (blankToNull(form.getTargetLevel()) != null
-                        || form.getPassingScore() != null
-                        || scheme.getStatus() == RecordStatus.ACTIVE) {
-                    saveConfiguredBand(
-                            email,
-                            savedId,
-                            skill,
-                            form.getTargetLevel(),
-                            form.getPassingScore(),
-                            scale.getScaleMax());
-                }
+            if (targetOnly) {
+                saveConfiguredBand(
+                        email,
+                        savedId,
+                        skill,
+                        form.getTargetLevel(),
+                        form.getPassingScore(),
+                        scale.getScaleMax());
             } else {
                 for (String level : CefrLevel.codes()) {
                     ScoreBandForm band = form.getRanges().get(skill + "_" + level);
-                    if (band.getMinScore() != null || band.getMaxScore() != null)
+                    if (band != null && (band.getMinScore() != null || band.getMaxScore() != null))
                         saveConfiguredBand(
                                 email,
                                 savedId,
@@ -208,16 +227,87 @@ public class ScoringAdminService {
                                 band.getMinScore(),
                                 band.getMaxScore());
                 }
-                if (scheme.getStatus() == RecordStatus.ACTIVE)
-                    ScoreBandCoverage.requireComplete(
-                            scoringScaleRuleRepository
-                                    .findBySchemeIdAndSkillIgnoreCase(savedId, skill)
-                                    .orElseThrow(),
-                            scoreBandRepository.findBySchemeIdAndSkillOrderByMinScoreAsc(
-                                    savedId, skill));
             }
         }
+        if (scheme.getStatus() == RecordStatus.ACTIVE) requireReady(scheme);
         return savedId;
+    }
+
+    private boolean hasScale(ScoringScaleRuleForm scale) {
+        return scale != null
+                && (scale.getRawMin() != null
+                        || scale.getRawMax() != null
+                        || scale.getScaleMin() != null
+                        || scale.getScaleMax() != null);
+    }
+
+    @Transactional
+    public void activateScheme(String email, Integer id) {
+        requireAdmin(email);
+        ScoringScheme scheme = requireSchemeForUpdate(id);
+        requireReady(scheme);
+        scheme.setStatus(RecordStatus.ACTIVE);
+    }
+
+    @Transactional
+    public void activateCertificate(String email, Integer id) {
+        requireAdmin(email);
+        Certificate certificate =
+                certificateRepository
+                        .findById(id)
+                        .orElseThrow(
+                                () -> new ResourceNotFoundException("Không tìm thấy chứng chỉ"));
+        certificate.setStatus(RecordStatus.ACTIVE);
+    }
+
+    private void requireReady(ScoringScheme scheme) {
+        if (scheme.getCertificate().getStatus() != RecordStatus.ACTIVE)
+            throw new BusinessRuleException("Kích hoạt chứng chỉ trước khi dùng bộ chấm điểm");
+        List<String> skills;
+        if (scheme.getScopeSkill() != null) {
+            skills = List.of(scheme.getScopeSkill());
+        } else if (scheme.getExamType() == null) {
+            skills =
+                    scoringScaleRuleRepository.findBySchemeId(scheme.getId()).stream()
+                            .map(ScoringScaleRule::getSkill)
+                            .distinct()
+                            .toList();
+            if (skills.isEmpty()) throw new BusinessRuleException("Chưa cấu hình thang điểm");
+        } else {
+            skills = Skill.codes();
+        }
+        for (String skill : skills) {
+            ScoringScaleRule rule =
+                    scoringScaleRuleRepository
+                            .findBySchemeIdAndSkillIgnoreCase(scheme.getId(), skill)
+                            .orElseThrow(
+                                    () ->
+                                            new BusinessRuleException(
+                                                    "Chưa có thang điểm cho " + skill));
+            if (rule.getRawMin().compareTo(rule.getRawMax()) >= 0
+                    || rule.getScaleMin().compareTo(rule.getScaleMax()) >= 0)
+                throw new BusinessRuleException("Thang điểm không hợp lệ cho " + skill);
+            if (Set.of("WRITING", "SPEAKING").contains(skill)
+                    && (rule.getRawMin().signum() != 0
+                            || rule.getRawMax().compareTo(BigDecimal.valueOf(50)) != 0))
+                throw new BusinessRuleException("Writing và Speaking cần thang điểm thô 0–50");
+            if (scheme.getScopeSkill() == null
+                    && scheme.getExamType() != null
+                    && (rule.getScaleMin().signum() != 0
+                            || rule.getScaleMax().compareTo(BigDecimal.valueOf(50)) != 0))
+                throw new BusinessRuleException(
+                        "Đề tổng hợp cần điểm quy đổi 0–50 cho từng kỹ năng");
+            var bands =
+                    scoreBandRepository.findBySchemeIdAndSkillOrderByMinScoreAsc(
+                            scheme.getId(), skill);
+            if ("CHECKPOINT".equals(scheme.getExamType()) && bands.size() == 1) {
+                if (bands.getFirst().getMinScore().compareTo(rule.getScaleMin()) < 0
+                        || bands.getFirst().getMaxScore().compareTo(rule.getScaleMax()) != 0)
+                    throw new BusinessRuleException("Ngưỡng đạt nằm ngoài thang điểm");
+            } else {
+                ScoreBandCoverage.requireComplete(rule, bands);
+            }
+        }
     }
 
     private void saveConfiguredBand(
@@ -235,19 +325,14 @@ public class ScoringAdminService {
     @Transactional(readOnly = true)
     public void populateScoreConfiguration(Integer id, ScoringSchemeForm form) {
         if (form.getExamType() == null) return;
-        scoringScaleRuleRepository.findBySchemeId(id).stream()
-                .filter(
-                        rule ->
-                                form.getScopeSkill() == null
-                                        || form.getScopeSkill().equals(rule.getSkill()))
-                .min(Comparator.comparing(ScoringScaleRule::getSkill))
-                .ifPresent(
-                        rule -> {
-                            form.getScale().setRawMin(rule.getRawMin());
-                            form.getScale().setRawMax(rule.getRawMax());
-                            form.getScale().setScaleMin(rule.getScaleMin());
-                            form.getScale().setScaleMax(rule.getScaleMax());
-                        });
+        for (ScoringScaleRule rule : scoringScaleRuleRepository.findBySchemeId(id)) {
+            var scale = form.getSkillScales().get(rule.getSkill());
+            if (scale == null) continue;
+            scale.setRawMin(rule.getRawMin());
+            scale.setRawMax(rule.getRawMax());
+            scale.setScaleMin(rule.getScaleMin());
+            scale.setScaleMax(rule.getScaleMax());
+        }
         var bands = scoreBandRepository.findBySchemeIdOrderBySkillAscMinScoreAsc(id);
         for (ScoreBand band : bands) {
             ScoreBandForm field = form.getRanges().get(band.getSkill() + "_" + band.getCefrLevel());
@@ -256,7 +341,7 @@ public class ScoringAdminService {
                 field.setMaxScore(band.getMaxScore());
             }
         }
-        if (form.getScopeSkill() != null) {
+        if ("CHECKPOINT".equals(form.getExamType()) && form.getScopeSkill() != null) {
             var scoped =
                     bands.stream()
                             .filter(band -> band.getSkill().equals(form.getScopeSkill()))
@@ -264,6 +349,11 @@ public class ScoringAdminService {
             if (scoped.size() == 1) {
                 form.setTargetLevel(scoped.getFirst().getCefrLevel());
                 form.setPassingScore(scoped.getFirst().getMinScore());
+                var field =
+                        form.getRanges()
+                                .get(form.getScopeSkill() + "_" + scoped.getFirst().getCefrLevel());
+                field.setMinScore(null);
+                field.setMaxScore(null);
             }
         }
     }

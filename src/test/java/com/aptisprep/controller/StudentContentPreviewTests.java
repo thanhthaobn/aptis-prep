@@ -11,9 +11,12 @@ import com.aptisprep.dto.view.StudentCatalogView.Entry;
 import com.aptisprep.entity.MockExamEntity;
 import com.aptisprep.entity.MockExamQuestionEntity;
 import com.aptisprep.entity.QuestionEntity;
+import com.aptisprep.entity.QuestionMediaEntity;
 import com.aptisprep.entity.ScoringScheme;
 import com.aptisprep.enums.RecordStatus;
+import com.aptisprep.service.storage.StorageService;
 import com.aptisprep.service.student.StudentExamCatalogService.Category;
+import com.aptisprep.support.TestAudio;
 import java.util.HashSet;
 import java.util.List;
 import org.junit.jupiter.api.Test;
@@ -33,9 +36,11 @@ class StudentContentPreviewTests {
     @Autowired com.aptisprep.repository.MockExamQuestionRepository examQuestions;
     @Autowired com.aptisprep.repository.MockExamSectionRepository sections;
     @Autowired com.aptisprep.repository.QuestionRepository questions;
+    @Autowired com.aptisprep.repository.QuestionMediaRepository media;
     @Autowired com.aptisprep.repository.CertificateRepository certificates;
     @Autowired com.aptisprep.repository.ScoringSchemeRepository schemes;
     @Autowired com.aptisprep.repository.ScoringScaleRuleRepository rules;
+    @Autowired StorageService storage;
     @Autowired com.aptisprep.repository.ScoreBandRepository bands;
     private final java.util.List<Integer> examIds = new java.util.ArrayList<>();
 
@@ -414,9 +419,20 @@ class StudentContentPreviewTests {
             question.setSkill(skill);
             question.setCefrLevel("A1");
             question.setStatus("PUBLISHED");
+            question = questions.saveAndFlush(question);
+            if ("LISTENING".equals(skill)) {
+                var audio = new QuestionMediaEntity();
+                audio.setQuestionId(question.getId());
+                audio.setMediaType("AUDIO");
+                audio.setMediaUrl(TestAudio.store(storage));
+                audio.setOriginalFilename("test.wav");
+                audio.setContentType("audio/wav");
+                audio.setPosition(1);
+                media.saveAndFlush(audio);
+            }
             var link = new MockExamQuestionEntity();
             link.setMockExamId(exam.getId());
-            link.setQuestionId(questions.saveAndFlush(question).getId());
+            link.setQuestionId(question.getId());
             link.setPosition(++position);
             if (fullMock) {
                 var section = new com.aptisprep.entity.MockExamSectionEntity();

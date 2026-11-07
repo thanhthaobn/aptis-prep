@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+  <body>
+    <section
+      th:fragment="configuration"
+      id="scheme-score-configuration"
+      class="catalog-form-section"
+      th:attr="data-read-only=${readOnly}"
+    >
+      <h2>Thang điểm theo kỹ năng</h2>
+      <p>
+        Luyện tập: chọn một kỹ năng và cấu hình khoảng CEFR A1–C2. Bản nháp có thể lưu trước khi
+        hoàn thiện các khoảng điểm.
+      </p>
+      <p id="scheme-combined-help" class="muted">
+        Đề tổng hợp: mỗi kỹ năng có ngưỡng CEFR riêng, quy đổi về 0–50. Tổng Reading, Listening,
+        Writing và Speaking là /200; CEFR tổng hợp tính từ bốn CEFR kỹ năng. Grammar &amp;
+        Vocabulary có điểm riêng, hỗ trợ xét sát ngưỡng, không cộng vào tổng.
+      </p>
+      <p class="muted">
+        Writing và Speaking dùng điểm thô 0–50. Các khoảng CEFR dùng điểm quy đổi, cần liền nhau và
+        không chồng lấn khi kích hoạt. Ngưỡng do quản trị cấu hình là ước lượng phục vụ luyện tập.
+      </p>
+      <p class="muted" id="scheme-borderline-help">
+        Quy tắc sát ngưỡng nội bộ: trong phạm vi 1 điểm dưới ngưỡng tiếp theo trên thang 0–50, có
+        thể nâng một mức nếu G&amp;V đạt mức hỗ trợ tương ứng. Quy tắc này không thay thế cách chấm
+        Aptis chính thức.
+      </p>
+      <fieldset id="scheme-target-score" th:disabled="${readOnly}" class="catalog-form-section">
+        <legend>Ngưỡng đạt cho kiểm tra cuối chặng (tùy chọn)</legend>
+        <p class="muted">
+          Nhập ngưỡng đạt nếu chỉ xác nhận một trình độ; để trống bảng CEFR bên dưới. Hoặc dùng bảng
+          CEFR đầy đủ để đánh giá nhiều trình độ.
+        </p>
+        <div class="catalog-form-grid">
+          <div class="field">
+            <label for="schemeTargetLevel">Trình độ cần đạt</label>
+            <select id="schemeTargetLevel" th:field="*{targetLevel}">
+              <option value="">Dùng bảng CEFR</option>
+              <option
+                th:each="level : ${display.scoringLevels()}"
+                th:value="${level}"
+                th:text="${level}"
+              ></option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="schemePassingScore">Điểm quy đổi tối thiểu để đạt</label>
+            <input
+              id="schemePassingScore"
+              type="number"
+              min="0"
+              max="999.99"
+              step="0.01"
+              th:field="*{passingScore}"
+            />
+          </div>
+        </div>
+      </fieldset>
+      <div id="scheme-combined-ranges">
+        <fieldset
+          class="catalog-form-section"
+          th:each="skill : ${display.skillCodes()}"
+          th:disabled="${readOnly}"
+          th:attr="data-scoring-skill=${skill}"
+          th:with="scale=${schemeForm.skillScales.get(skill)}"
+        >
+          <legend th:text="${display.catalogSkill(skill)}"></legend>
+          <p class="muted" th:if="${skill == 'GRAMMAR_VOCABULARY'}">
+            Với đề tổng hợp, bảng CEFR này chỉ hỗ trợ xét kỹ năng sát ngưỡng theo quy tắc nội bộ;
+            kết quả G&amp;V chỉ hiển thị điểm.
+          </p>
+          <div class="catalog-form-grid">
+            <div class="field">
+              <label th:for="|${skill}-raw-min|">Điểm thô thấp nhất</label>
+              <input
+                th:id="|${skill}-raw-min|"
+                type="number"
+                min="0"
+                max="9999.99"
+                step="0.01"
+                th:name="|skillScales[${skill}].rawMin|"
+                th:value="${scale.rawMin}"
+              />
+            </div>
+            <div class="field">
+              <label th:for="|${skill}-raw-max|">Điểm thô cao nhất</label>
+              <input
+                th:id="|${skill}-raw-max|"
+                type="number"
+                min="0.01"
+                max="9999.99"
+                step="0.01"
+                th:name="|skillScales[${skill}].rawMax|"
+                th:value="${scale.rawMax}"
+              />
+            </div>
+            <div class="field">
+              <label th:for="|${skill}-scale-min|">Điểm quy đổi thấp nhất</label>
+              <input
+                th:id="|${skill}-scale-min|"
+                type="number"
+                min="0"
+                max="999.99"
+                step="0.01"
+                th:name="|skillScales[${skill}].scaleMin|"
+                th:value="${scale.scaleMin}"
+              />
+            </div>
+            <div class="field">
+              <label th:for="|${skill}-scale-max|">Điểm quy đổi cao nhất</label>
+              <input
+                th:id="|${skill}-scale-max|"
+                type="number"
+                min="0.01"
+                max="999.99"
+                step="0.01"
+                th:name="|skillScales[${skill}].scaleMax|"
+                th:value="${scale.scaleMax}"
+              />
+            </div>
+          </div>
+          <div class="table-wrap">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th scope="col">CEFR</th>
+                  <th scope="col">Từ điểm quy đổi</th>
+                  <th scope="col">Đến điểm quy đổi</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr
+                  th:each="level : ${display.scoringLevels()}"
+                  th:with="key=${skill + '_' + level}"
+                >
+                  <th scope="row" th:text="${level}"></th>
+                  <td>
+                    <input
+                      type="number"
+                      min="0"
+                      max="999.99"
+                      step="0.01"
+                      th:name="|ranges[${key}].minScore|"
+                      th:value="${schemeForm.ranges.get(key).minScore}"
+                      th:attr="aria-label=${display.catalogSkill(skill) + ' ' + level + ' từ điểm'}"
+                    />
+                  </td>
+                  <td>
+                    <input
+                      type="number"
+                      min="0"
+                      max="999.99"
+                      step="0.01"
+                      th:name="|ranges[${key}].maxScore|"
+                      th:value="${schemeForm.ranges.get(key).maxScore}"
+                      th:attr="aria-label=${display.catalogSkill(skill) + ' ' + level + ' đến điểm'}"
+                    />
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </fieldset>
+      </div>
+    </section>
+  </body>
+</html>

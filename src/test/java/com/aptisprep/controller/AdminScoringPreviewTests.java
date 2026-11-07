@@ -37,6 +37,7 @@ class AdminScoringPreviewTests {
     @Autowired ScoringSchemeRepository schemes;
     @Autowired UserRepository users;
     @Autowired ScoreBandRepository bands;
+    @Autowired com.aptisprep.repository.ScoringScaleRuleRepository scaleRules;
     private Certificate certificate;
     private ScoringScheme scheme;
 
@@ -180,7 +181,8 @@ class AdminScoringPreviewTests {
 
     @Test
     @Transactional
-    void savesCombinedSchemeWithSharedScaleAndIndividualRangesInOneRequest() throws Exception {
+    void savesCombinedSchemeWithSkillSpecificScalesAndIndividualRangesInOneRequest()
+            throws Exception {
         var admin = user("admin@aptis.local").roles("ADMIN");
         mvc.perform(get("/admin/scoring-schemes/create").with(admin))
                 .andExpect(status().isOk())
@@ -196,8 +198,14 @@ class AdminScoringPreviewTests {
                                         .param("version", "combined-editor")
                                         .param("examType", "FULL_MOCK")
                                         .param("configureScores", "true")
-                                        .param("scale.rawMin", "0")
-                                        .param("scale.rawMax", "50")
+                                        .param("skillScales[READING].rawMin", "0")
+                                        .param("skillScales[READING].rawMax", "40")
+                                        .param("skillScales[READING].scaleMin", "0")
+                                        .param("skillScales[READING].scaleMax", "50")
+                                        .param("skillScales[LISTENING].rawMin", "0")
+                                        .param("skillScales[LISTENING].rawMax", "50")
+                                        .param("skillScales[LISTENING].scaleMin", "0")
+                                        .param("skillScales[LISTENING].scaleMax", "50")
                                         .param("ranges[READING_A1].minScore", "0")
                                         .param("ranges[READING_A1].maxScore", "17.99")
                                         .param("ranges[LISTENING_A1].minScore", "0")
@@ -214,11 +222,122 @@ class AdminScoringPreviewTests {
                 2, bands.findBySchemeIdOrderBySkillAscMinScoreAsc(created.getId()).size());
         var raw = new java.math.BigDecimal("33.25");
         org.junit.jupiter.api.Assertions.assertEquals(
-                raw, scoringPolicy.scale(created.getId(), "READING", raw));
+                new java.math.BigDecimal("41.56"),
+                scoringPolicy.scale(created.getId(), "READING", raw));
+        org.junit.jupiter.api.Assertions.assertEquals(
+                raw, scoringPolicy.scale(created.getId(), "LISTENING", raw));
         mvc.perform(get(response.getRedirectedUrl()).with(admin))
                 .andExpect(status().isOk())
                 .andExpect(content().string(containsString("17.99")))
                 .andExpect(content().string(containsString("12.99")));
+    }
+
+    @Test
+    @Transactional
+    void practicePreservesCustomScaleOnEditAndActivatesOnlyAfterSavingADraft() throws Exception {
+        var admin = user("admin@aptis.local").roles("ADMIN");
+        var request =
+                post("/admin/scoring-schemes")
+                        .with(admin)
+                        .with(csrf())
+                        .param("certificateId", certificate.getId().toString())
+                        .param("name", "Practice CEFR A1-C2")
+                        .param("version", "practice-six-levels")
+                        .param("examType", "PRACTICE")
+                        .param("scopeSkill", "READING")
+                        .param("status", "ACTIVE")
+                        .param("configureScores", "true")
+                        .param("skillScales[READING].rawMin", "0")
+                        .param("skillScales[READING].rawMax", "40")
+                        .param("skillScales[READING].scaleMin", "0")
+                        .param("skillScales[READING].scaleMax", "60");
+        String[] levels = {"A1", "A2", "B1", "B2", "C1", "C2"};
+        for (int i = 0; i < levels.length; i++) {
+            request.param("ranges[READING_" + levels[i] + "].minScore", String.valueOf(i * 10))
+                    .param(
+                            "ranges[READING_" + levels[i] + "].maxScore",
+                            i == 5
+                                    ? "60"
+                                    : java.math.BigDecimal.valueOf((i + 1) * 10)
+                                            .subtract(new java.math.BigDecimal("0.01"))
+                                            .toPlainString());
+        }
+        mvc.perform(request).andExpect(status().is3xxRedirection());
+        var created =
+                schemes.findByCertificateIdOrderByVersionDesc(certificate.getId()).stream()
+                        .filter(value -> "practice-six-levels".equals(value.getVersion()))
+                        .findFirst()
+                        .orElseThrow();
+        org.junit.jupiter.api.Assertions.assertEquals(RecordStatus.DRAFT, created.getStatus());
+        org.junit.jupiter.api.Assertions.assertEquals(
+                6, bands.findBySchemeIdOrderBySkillAscMinScoreAsc(created.getId()).size());
+
+        // Reuse every submitted value while editing; the scale must stay 0–60, not become 0–40.
+        var edit = post("/admin/scoring-schemes/" + created.getId()).with(admin).with(csrf());
+        request.buildRequest(new org.springframework.mock.web.MockServletContext())
+                .getParameterMap()
+                .forEach(
+                        (name, values) -> {
+                            if (!"status".equals(name)) edit.param(name, values);
+                        });
+        edit.param("status", "DRAFT");
+        mvc.perform(edit).andExpect(status().is3xxRedirection());
+        var rule =
+                scaleRules
+                        .findBySchemeIdAndSkillIgnoreCase(created.getId(), "READING")
+                        .orElseThrow();
+        org.junit.jupiter.api.Assertions.assertEquals(
+                new java.math.BigDecimal("40.00"), rule.getRawMax());
+        org.junit.jupiter.api.Assertions.assertEquals(
+                new java.math.BigDecimal("60.00"), rule.getScaleMax());
+        mvc.perform(
+                        post("/admin/scoring-schemes/{id}/activate", created.getId())
+                                .with(admin)
+                                .with(csrf()))
+                .andExpect(status().is3xxRedirection());
+        org.junit.jupiter.api.Assertions.assertEquals(
+                RecordStatus.ACTIVE, schemes.findById(created.getId()).orElseThrow().getStatus());
+    }
+
+    @Test
+    @Transactional
+    void incompleteDraftCannotBeActivated() throws Exception {
+        var draft = new ScoringScheme();
+        draft.setCertificate(certificate);
+        draft.setName("Incomplete draft");
+        draft.setVersion("incomplete-draft");
+        draft.setExamType("FULL_MOCK");
+        draft.setStatus(RecordStatus.DRAFT);
+        draft = schemes.saveAndFlush(draft);
+        mvc.perform(
+                        post("/admin/scoring-schemes/{id}/activate", draft.getId())
+                                .with(user("admin@aptis.local").roles("ADMIN"))
+                                .with(csrf()))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(flash().attribute("error", containsString("Chưa có thang điểm")));
+        org.junit.jupiter.api.Assertions.assertEquals(RecordStatus.DRAFT, draft.getStatus());
+    }
+
+    @Test
+    @Transactional
+    void certificateCreationAlwaysSavesADraftBeforeExplicitActivation() throws Exception {
+        var admin = user("admin@aptis.local").roles("ADMIN");
+        mvc.perform(
+                        post("/admin/certificates")
+                                .with(admin)
+                                .with(csrf())
+                                .param("name", "Draft certificate")
+                                .param("code", "DRAFT_CREATE_TEST")
+                                .param("status", "ACTIVE"))
+                .andExpect(status().is3xxRedirection());
+        var draft = certificates.findByCodeIgnoreCase("DRAFT_CREATE_TEST").orElseThrow();
+        org.junit.jupiter.api.Assertions.assertEquals(RecordStatus.DRAFT, draft.getStatus());
+        mvc.perform(
+                        post("/admin/certificates/{id}/activate", draft.getId())
+                                .with(admin)
+                                .with(csrf()))
+                .andExpect(status().is3xxRedirection());
+        org.junit.jupiter.api.Assertions.assertEquals(RecordStatus.ACTIVE, draft.getStatus());
     }
 
     @Test

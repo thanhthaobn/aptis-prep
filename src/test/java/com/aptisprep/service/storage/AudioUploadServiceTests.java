@@ -55,6 +55,20 @@ class AudioUploadServiceTests {
     }
 
     @Test
+    void closesValidationStreamEvenWhenAudioIsRejected() throws Exception {
+        var input = org.mockito.Mockito.spy(new java.io.ByteArrayInputStream(new byte[] {1, 2, 3}));
+        var file = mock(org.springframework.web.multipart.MultipartFile.class);
+        org.mockito.Mockito.when(file.getSize()).thenReturn(3L);
+        org.mockito.Mockito.when(file.getOriginalFilename()).thenReturn("answer.wav");
+        org.mockito.Mockito.when(file.getContentType()).thenReturn("audio/wav");
+        org.mockito.Mockito.when(file.getInputStream()).thenReturn(input);
+
+        assertThrows(BusinessRuleException.class, () -> service.store(file, 10));
+        verify(input).close();
+        verifyNoInteractions(storage);
+    }
+
+    @Test
     void acceptsAudioWithValidContainerSignatureAndStoresInAttemptScope() {
         byte[] bytes = new byte[16];
         bytes[0] = 'R';

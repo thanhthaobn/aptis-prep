@@ -597,6 +597,14 @@ class ExamAttemptConcurrencyTests {
         second.setSkill("LISTENING");
         second.setStatus("PUBLISHED");
         int secondId = questions.saveAndFlush(second).getId();
+        QuestionMediaEntity secondAudio = new QuestionMediaEntity();
+        secondAudio.setQuestionId(secondId);
+        secondAudio.setMediaType("AUDIO");
+        secondAudio.setMediaUrl(TestAudio.store(storage));
+        secondAudio.setOriginalFilename("second.wav");
+        secondAudio.setContentType("audio/wav");
+        secondAudio.setPosition(1);
+        media.saveAndFlush(secondAudio);
         var firstLink = examQuestions.findByMockExamIdOrderByPosition(examId).getFirst();
         var secondLink = new MockExamQuestionEntity();
         secondLink.setMockExamId(examId);

@@ -63,7 +63,12 @@ public class ScoringGuideService {
         String snapshotSkill = snapshot.map(s -> s.getSkill()).orElse(null);
         if (skills.isEmpty() && snapshotSkill != null)
             return guides(scheme, snapshotSkill, levels, "FULL_MOCK".equals(snapshotSkill));
-        return guides(scheme, null, levels, result.hasFullMockTotal()).stream()
+        return guides(
+                        scheme,
+                        null,
+                        levels,
+                        "FULL_MOCK".equals(snapshotSkill) || result.isCombined())
+                .stream()
                 .filter(g -> skills.contains(g.skill()))
                 .toList();
     }

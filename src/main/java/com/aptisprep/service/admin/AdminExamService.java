@@ -9,6 +9,7 @@ import com.aptisprep.enums.RecordStatus;
 import com.aptisprep.exception.BusinessRuleException;
 import com.aptisprep.exception.ResourceNotFoundException;
 import com.aptisprep.repository.*;
+import com.aptisprep.service.exam.ExamStartValidator;
 import java.util.*;
 import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
@@ -23,6 +24,7 @@ public class AdminExamService {
     private final CertificateRepository certificateRepository;
     private final ExamAttemptRepository examAttemptRepository;
     private final ExamDefinitionValidator examValidator;
+    private final ExamStartValidator readiness;
 
     public AdminExamService(
             MockExamRepository mockExamRepository,
@@ -30,13 +32,15 @@ public class AdminExamService {
             MockExamQuestionRepository mockExamQuestionRepository,
             CertificateRepository certificateRepository,
             ExamAttemptRepository examAttemptRepository,
-            ExamDefinitionValidator examValidator) {
+            ExamDefinitionValidator examValidator,
+            ExamStartValidator readiness) {
         this.mockExamRepository = mockExamRepository;
         this.mockExamSectionRepository = mockExamSectionRepository;
         this.mockExamQuestionRepository = mockExamQuestionRepository;
         this.certificateRepository = certificateRepository;
         this.examAttemptRepository = examAttemptRepository;
         this.examValidator = examValidator;
+        this.readiness = readiness;
     }
 
     public ExamForm examForm(Integer id) {
@@ -154,6 +158,8 @@ public class AdminExamService {
         }
         if (all.isEmpty()) throw new BusinessRuleException("Không thể công bố đề trống");
         exam.setDurationMinutes(form.getDurationMinutes());
+        readiness.validateForPublication(
+                exam, mockExamQuestionRepository.findByMockExamIdOrderByPosition(id));
         exam.setStatus("PUBLISHED");
         mockExamRepository.save(exam);
     }
