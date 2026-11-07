@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import com.aptisprep.entity.Certificate;
 import com.aptisprep.entity.MockExamEntity;
 import com.aptisprep.entity.MockExamQuestionEntity;
+import com.aptisprep.entity.MockExamSectionEntity;
 import com.aptisprep.entity.QuestionEntity;
 import com.aptisprep.entity.QuestionItemEntity;
 import com.aptisprep.entity.QuestionMediaEntity;
@@ -26,6 +27,7 @@ import com.aptisprep.repository.ExamAttemptRepository;
 import com.aptisprep.repository.ExamAttemptSnapshotRepository;
 import com.aptisprep.repository.MockExamQuestionRepository;
 import com.aptisprep.repository.MockExamRepository;
+import com.aptisprep.repository.MockExamSectionRepository;
 import com.aptisprep.repository.QuestionItemRepository;
 import com.aptisprep.repository.QuestionMediaRepository;
 import com.aptisprep.repository.QuestionOptionRepository;
@@ -55,6 +57,8 @@ class ExamAttemptConcurrencyTests {
     @Autowired ScoringSchemeRepository schemes;
     @Autowired MockExamRepository exams;
     @Autowired MockExamQuestionRepository examQuestions;
+    @Autowired MockExamSectionRepository examSections;
+    @Autowired com.aptisprep.service.admin.AdminExamService adminExams;
     @Autowired QuestionRepository questions;
     @Autowired QuestionItemRepository items;
     @Autowired QuestionOptionRepository options;
@@ -576,6 +580,65 @@ class ExamAttemptConcurrencyTests {
                 attempts.startCheckpoint(
                                 f.user().getId(), f.exam().getId(), pathId, "verified-idempotency")
                         .attemptId());
+    }
+
+    @Test
+    void sectionWindowsRejectEarlyAndLateAnswersAndUnpublishedAttemptCanStillSubmit() {
+        Fixture fixture = fixture("section-windows");
+        int examId = fixture.exam().getId();
+        int userId = fixture.user().getId();
+        var second = new QuestionEntity();
+        second.setContent("Second section question");
+        second.setQuestionType("SINGLE_CHOICE");
+        second.setSkill("LISTENING");
+        second.setStatus("PUBLISHED");
+        int secondId = questions.saveAndFlush(second).getId();
+        var firstLink = examQuestions.findByMockExamIdOrderByPosition(examId).getFirst();
+        var secondLink = new MockExamQuestionEntity();
+        secondLink.setMockExamId(examId);
+        secondLink.setQuestionId(secondId);
+        secondLink.setPosition(2);
+        for (var link : List.of(firstLink, secondLink)) {
+            var section = new MockExamSectionEntity();
+            section.setMockExamId(examId);
+            section.setSkill("LISTENING");
+            section.setDisplayOrder(link.getPosition());
+            section.setDurationMinutes(2);
+            section.setStatus("ACTIVE");
+            link.setMockExamSectionId(examSections.saveAndFlush(section).getId());
+            examQuestions.saveAndFlush(link);
+        }
+        int attemptId = attempts.start(userId, examId, "timed-section").attemptId();
+        assertTrue(attempts.page(userId, attemptId).nextSection());
+        assertEquals(
+                fixture.question().getId(),
+                attempts.page(userId, attemptId).questions().getFirst().questionId());
+        assertThrows(
+                BusinessRuleException.class,
+                () -> attempts.saveAnswer(userId, attemptId, secondId, null, null, null, null));
+        var attempt = attemptRepository.findById(attemptId).orElseThrow();
+        attempt.setStartedAt(LocalDateTime.now().minusMinutes(3));
+        attemptRepository.saveAndFlush(attempt);
+        assertEquals(
+                secondId, attempts.page(userId, attemptId).questions().getFirst().questionId());
+        assertThrows(
+                BusinessRuleException.class,
+                () ->
+                        attempts.saveAnswer(
+                                userId,
+                                attemptId,
+                                fixture.question().getId(),
+                                fixture.item().getId(),
+                                fixture.option().getId(),
+                                null,
+                                null));
+        adminExams.unpublishExam(examId);
+        assertEquals("ARCHIVED", exams.findById(examId).orElseThrow().getStatus());
+        assertThrows(
+                com.aptisprep.exception.ResourceNotFoundException.class,
+                () -> attempts.start(userId, examId, "new-after-unpublish"));
+        attempts.submit(userId, attemptId, "submit-after-unpublish");
+        assertEquals("COMPLETED", attemptRepository.findById(attemptId).orElseThrow().getStatus());
     }
 
     private Integer readyPath(Fixture fixture) {

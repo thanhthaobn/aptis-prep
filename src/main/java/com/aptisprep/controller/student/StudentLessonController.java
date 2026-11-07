@@ -1,6 +1,5 @@
 package com.aptisprep.controller.student;
 
-import com.aptisprep.controller.ListPagination;
 import com.aptisprep.entity.Lesson;
 import com.aptisprep.entity.LessonMaterial;
 import com.aptisprep.exception.BusinessRuleException;
@@ -40,7 +39,6 @@ public class StudentLessonController {
             @RequestParam(defaultValue = "") String q,
             @RequestParam(defaultValue = "") String skill,
             @RequestParam(defaultValue = "") String level,
-            @RequestParam(defaultValue = "0") int page,
             Principal principal,
             Model m) {
         if (q.length() > 255 || skill.length() > 80 || level.length() > 40)
@@ -60,9 +58,6 @@ public class StudentLessonController {
                         .filter(l -> skill.isBlank() || l.getSkill().equals(skill))
                         .filter(l -> level.isBlank() || l.getCefrLevel().equals(level))
                         .toList();
-        var lessonPage = ListPagination.slice(items, page);
-        items = lessonPage.getContent();
-        m.addAttribute("lessonPage", lessonPage);
         m.addAttribute("lessonTree", tree(items));
         m.addAttribute(
                 "lessonStatuses",

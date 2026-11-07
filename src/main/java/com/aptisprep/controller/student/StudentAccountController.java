@@ -110,10 +110,12 @@ public class StudentAccountController {
 
     @GetMapping("/student/placement")
     public String placement(
-            @RequestParam(defaultValue = "READING") String skill,
+            @RequestParam(required = false) String skill,
             @RequestParam(defaultValue = "0") int page,
             Principal principal,
             Model model) {
+        if (skill == null || skill.isBlank())
+            skill = placement.available("FULL_MOCK").isEmpty() ? "READING" : "FULL_MOCK";
         if (!placementSkills().contains(skill))
             throw new BusinessRuleException("Kỹ năng Placement không hợp lệ");
         model.addAttribute("skill", skill);
@@ -148,6 +150,7 @@ public class StudentAccountController {
     }
 
     private List<String> placementSkills() {
-        return List.of("GRAMMAR_VOCABULARY", "READING", "LISTENING", "WRITING", "SPEAKING");
+        return List.of(
+                "FULL_MOCK", "GRAMMAR_VOCABULARY", "READING", "LISTENING", "WRITING", "SPEAKING");
     }
 }

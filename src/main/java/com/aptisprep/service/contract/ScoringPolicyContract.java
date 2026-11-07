@@ -11,6 +11,8 @@ public interface ScoringPolicyContract {
 
     String estimatedLevel(Integer schemeId, String skill, BigDecimal scaleScore);
 
+    boolean belowConfiguredTarget(Integer schemeId, String skill, BigDecimal scaleScore);
+
     String policyVersion(Integer schemeId);
 
     void validatePolicy(Integer schemeId, String skill);

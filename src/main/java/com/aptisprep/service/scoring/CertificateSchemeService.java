@@ -88,10 +88,15 @@ public class CertificateSchemeService implements CertificateSchemeContract {
                                         new BusinessRuleException(
                                                 "Bộ chấm điểm chưa cấu hình quy đổi raw-to-scale"
                                                         + " cho kỹ năng này"));
-        ScoreBandCoverage.requireComplete(
-                rule,
+        var bands =
                 scoreBandRepository.findBySchemeIdAndSkillOrderByMinScoreAsc(
-                        scheme.getId(), normalizedSkill));
+                        scheme.getId(), normalizedSkill);
+        if (!normalizedSkill.equals(scheme.getScopeSkill()) || bands.size() != 1) {
+            ScoreBandCoverage.requireComplete(rule, bands);
+        } else if (bands.getFirst().getMinScore().compareTo(rule.getScaleMin()) < 0
+                || bands.getFirst().getMaxScore().compareTo(rule.getScaleMax()) != 0) {
+            throw new BusinessRuleException("Ngưỡng đạt nằm ngoài thang điểm");
+        }
         return option(scheme);
     }
 

@@ -121,7 +121,10 @@ public class AttemptFinalizationService {
                         .toList();
         BigDecimal total = null;
         String overall = null;
-        if (schemeId != null && "FULL_MOCK".equals(exam.getExamType())) {
+        if (schemeId != null
+                && ("FULL_MOCK".equals(exam.getExamType())
+                        || ("PLACEMENT".equals(exam.getExamType())
+                                && "FULL_MOCK".equals(exam.getSkill())))) {
             var summary = scoring.fullMockScore(schemeId, scores);
             total = summary.total();
             overall = summary.cefrLevel();
@@ -357,7 +360,12 @@ public class AttemptFinalizationService {
                         exam(attempt).getTargetLevel(),
                         scoring.estimatedLevel(
                                 schemeId, question.getSkill(), result.getScaleScore())));
-        if (result.getCefrLevel() == null) {
+        if (result.getCefrLevel() == null
+                && scoring.belowConfiguredTarget(
+                        schemeId, question.getSkill(), result.getScaleScore())) {
+            result.setGradingMethod("BELOW_TARGET");
+            result.setGradingStatus("COMPLETED");
+        } else if (result.getCefrLevel() == null) {
             result.setGradingMethod("POLICY_ERROR");
             result.setGradingStatus("ERROR");
         } else {
@@ -600,7 +608,8 @@ public class AttemptFinalizationService {
             return result.getRawScore() != null && "COMPLETED".equals(result.getGradingStatus());
         return result.getRawScore() != null
                 && result.getScaleScore() != null
-                && result.getCefrLevel() != null
+                && (result.getCefrLevel() != null
+                        || "BELOW_TARGET".equals(result.getGradingMethod()))
                 && (result.getGradingStatus() == null
                         || "COMPLETED".equals(result.getGradingStatus()));
     }
@@ -611,7 +620,8 @@ public class AttemptFinalizationService {
                 || ("COMPLETED".equals(result.getGradingStatus())
                         && (result.getRawScore() == null
                                 || result.getScaleScore() == null
-                                || result.getCefrLevel() == null));
+                                || (result.getCefrLevel() == null
+                                        && !"BELOW_TARGET".equals(result.getGradingMethod()))));
     }
 
     private MockExamEntity exam(ExamAttemptEntity attempt) {

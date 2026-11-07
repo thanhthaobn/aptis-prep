@@ -43,6 +43,12 @@ body :is(.data-table, .catalog-table, .student-table, .skill-overview-table) {
   font-size: var(--text-small);
 }
 
+body :is(.sidebar-label, .eyebrow, .learn-unit-banner p, .panel-kicker, .badge) {
+  font-family: var(--font-ui);
+  font-weight: 700;
+  letter-spacing: normal;
+}
+
 @media (max-width: 480px) {
   body {
     --heading-large: 1.5rem;

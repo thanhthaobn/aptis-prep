@@ -1,6 +1,5 @@
 package com.aptisprep.controller.student;
 
-import com.aptisprep.controller.ListPagination;
 import com.aptisprep.dto.form.FlashcardSetForm;
 import com.aptisprep.dto.view.FlashcardViews;
 import com.aptisprep.dto.view.FlashcardViews.SetView;
@@ -36,7 +35,6 @@ public class StudentFlashcardController {
             @RequestParam(defaultValue = "") String skill,
             @RequestParam(defaultValue = "") String level,
             @RequestParam(defaultValue = "learning") String sort,
-            @RequestParam(defaultValue = "0") int page,
             Principal p,
             Model m) {
         if (!List.of("all", "mine", "lesson").contains(source))
@@ -84,12 +82,6 @@ public class StudentFlashcardController {
                                                         .contains(query))
                         .sorted(order)
                         .toList();
-        var flashcardPage = ListPagination.slice(visible, page);
-        m.addAttribute(
-                "matchingMineCount",
-                visible.stream().filter(FlashcardViews.SetView::personal).count());
-        visible = flashcardPage.getContent();
-        m.addAttribute("flashcardPage", flashcardPage);
         m.addAttribute("sets", visible);
         m.addAttribute("q", q);
         m.addAttribute("selectedSkill", skill);

@@ -149,6 +149,8 @@
 .admin-theme .admin-scoring-settings .catalog-table-actions a { width: min(100%, 8.5rem); }
 
 #cefr-bands, #band-editor { scroll-margin-top: 6rem; }
+#scheme-target-score[hidden] { display: none; }
+#scheme-combined-ranges input { width: 100%; max-width: 10rem; min-width: 0; }
 .scoring-band-action-heading { text-align: right; }
 .scoring-band-actions {
     display: flex;

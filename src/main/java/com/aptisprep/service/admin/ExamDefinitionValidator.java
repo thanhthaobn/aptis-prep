@@ -2,6 +2,7 @@ package com.aptisprep.service.admin;
 
 import com.aptisprep.dto.form.ExamForm;
 import com.aptisprep.entity.QuestionEntity;
+import com.aptisprep.entity.ScoringScheme;
 import com.aptisprep.enums.CefrLevel;
 import com.aptisprep.enums.Skill;
 import com.aptisprep.exception.BusinessRuleException;
@@ -49,36 +50,59 @@ final class ExamDefinitionValidator {
             throw new BusinessRuleException("Đề phải có ít nhất một section");
         if (f.getSections().stream().anyMatch(section -> !SKILLS.contains(section.getSkill())))
             throw new BusinessRuleException("Kỹ năng section không hợp lệ");
-        if ("FULL_MOCK".equals(f.getExamType())
+        ScoringScheme scheme =
+                f.getScoringSchemeId() == null
+                        ? null
+                        : scoringSchemeRepository
+                                .findById(f.getScoringSchemeId())
+                                .orElseThrow(
+                                        () ->
+                                                new BusinessRuleException(
+                                                        "Bộ chấm điểm không hợp lệ"));
+        boolean combined =
+                "FULL_MOCK".equals(f.getExamType())
+                        || ("PLACEMENT".equals(f.getExamType())
+                                && (f.getSections().stream()
+                                                        .map(ExamForm.SectionForm::getSkill)
+                                                        .distinct()
+                                                        .count()
+                                                > 1
+                                        || (scheme != null
+                                                && "PLACEMENT".equals(scheme.getExamType()))));
+        if (combined
                 && !f.getSections().stream()
                         .map(ExamForm.SectionForm::getSkill)
                         .collect(Collectors.toSet())
                         .containsAll(SKILLS))
-            throw new BusinessRuleException("Full Mock phải có đủ 5 kỹ năng");
-        if (!"FULL_MOCK".equals(f.getExamType())
+            throw new BusinessRuleException("Đề tổng hợp cần đủ 4 kỹ năng và Grammar & Vocabulary");
+        if (!combined
                 && f.getSections().stream().map(ExamForm.SectionForm::getSkill).distinct().count()
                         != 1)
             throw new BusinessRuleException("Đề theo kỹ năng chỉ được chứa một kỹ năng");
-        if (f.getDurationMinutes() == null
-                || f.getDurationMinutes() <= 0
-                || f.getSectionDurationMinutes() == null
-                || f.getSectionDurationMinutes() <= 0)
-            throw new BusinessRuleException("Thời lượng phải lớn hơn 0");
         if (f.getSections().stream()
                 .anyMatch(
                         section ->
                                 section.getDurationMinutes() == null
                                         || section.getDurationMinutes() <= 0))
             throw new BusinessRuleException("Thời lượng section phải lớn hơn 0");
+        long duration =
+                f.getSections().stream().mapToLong(section -> section.getDurationMinutes()).sum();
+        if (duration > Integer.MAX_VALUE)
+            throw new BusinessRuleException("Tổng thời gian vượt giới hạn");
+        f.setDurationMinutes((int) duration);
         if (f.getCertificateId() == null || !certificateRepository.existsById(f.getCertificateId()))
             throw new BusinessRuleException("Chứng chỉ không hợp lệ");
         if (Set.of("CHECKPOINT", "PLACEMENT").contains(f.getExamType())
                 && f.getScoringSchemeId() == null)
             throw new BusinessRuleException(
                     "Placement và Checkpoint cần bộ chấm điểm để xác nhận CEFR");
-        if (f.getScoringSchemeId() != null
-                && !scoringSchemeRepository.existsById(f.getScoringSchemeId()))
-            throw new BusinessRuleException("Bộ chấm điểm không hợp lệ");
+        if (scheme != null
+                && scheme.getExamType() != null
+                && (!scheme.getExamType().equals(f.getExamType())
+                        || (scheme.getScopeSkill() != null
+                                && !scheme.getScopeSkill()
+                                        .equals(f.getSections().getFirst().getSkill()))))
+            throw new BusinessRuleException("Bộ chấm điểm không phù hợp với loại đề hoặc kỹ năng");
         if (f.getScoringSchemeId() != null)
             for (ExamForm.SectionForm section : f.getSections())
                 certificateSchemes.requireAvailableScheme(

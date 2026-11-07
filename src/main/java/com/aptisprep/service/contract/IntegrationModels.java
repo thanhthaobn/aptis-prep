@@ -181,7 +181,7 @@ public final class IntegrationModels {
             String overallCefr,
             Instant submittedAt) {
         public boolean hasFullMockTotal() {
-            return "FULL_MOCK".equals(examType)
+            return ("FULL_MOCK".equals(examType) || "PLACEMENT".equals(examType))
                     && finalScaleScore != null
                     && skills.stream()
                             .anyMatch(

@@ -39,14 +39,20 @@
 
         <!-- Overall Score Card -->
         <div class="result-overall-box">
-          <div class="overall-cefr-badge" aria-label="Khung CEFR ước lượng">
+          <div
+            class="overall-cefr-badge"
+            th:attr="aria-label=${res.hasFullMockTotal() ? 'CEFR tổng hợp' : 'Trình độ ước lượng'}"
+          >
             <span class="cefr-title">CEFR</span>
             <span class="cefr-level" th:text="${res.overallCefr == null ? '—' : res.overallCefr}">
               —
             </span>
           </div>
           <div class="overall-score-details">
-            <h3>Trình độ ước lượng</h3>
+            <h3 th:text="${res.hasFullMockTotal() ? 'CEFR tổng hợp' : 'Trình độ ước lượng'}"></h3>
+            <p class="muted" th:if="${res.hasFullMockTotal()}">
+              Tính từ CEFR của bốn kỹ năng trong bài luyện tập.
+            </p>
             <strong
               th:if="${res.overallScaleScore != null}"
               th:text="${res.hasFullMockTotal() ? 'Tổng bốn kỹ năng: ' + res.overallScaleScore + '/200' : 'Điểm quy đổi: ' + res.overallScaleScore}"
@@ -144,7 +150,7 @@
                 class="badge"
                 th:unless="${res.hasFullMockTotal() and skill.skill == 'GRAMMAR_VOCABULARY'}"
                 th:classappend="${skill.estimatedLevel != null ? 'badge-cefr-' + (skill.estimatedLevel == null ? null : skill.estimatedLevel.toLowerCase()) : 'badge-secondary'}"
-                th:text="${skill.estimatedLevel != null ? skill.estimatedLevel : (skill.gradingState == 'ERROR' ? 'Chấm lỗi' : (skill.gradingState == 'PENDING' or skill.gradingState == 'WAITING' ? 'Đang chấm' : 'Chưa đánh giá'))}"
+                th:text="${skill.estimatedLevel != null ? skill.estimatedLevel : (skill.gradingState == 'ERROR' ? 'Chấm lỗi' : (skill.gradingState == 'PENDING' or skill.gradingState == 'WAITING' ? 'Đang chấm' : (skill.gradingState == 'COMPLETED' and skill.scaleScore != null and (res.examType == 'CHECKPOINT' or res.examType == 'PRACTICE') ? 'Chưa đạt' : 'Chưa đánh giá')))}"
               ></span>
             </div>
 

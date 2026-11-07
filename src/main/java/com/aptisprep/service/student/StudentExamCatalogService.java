@@ -200,7 +200,7 @@ public class StudentExamCatalogService {
         String code = normalizeSkill(skill);
         if ("FULL_MOCK".equals(code) && "FULL_MOCK".equals(exam.getExamType())) return true;
         if (code.equals(normalizeSkill(exam.getSkill()))) return true;
-        return "FULL_MOCK".equals(exam.getExamType())
+        return "FULL_MOCK".equals(exam.getSkill())
                 && mockExamSectionRepository.findByMockExamIdOrderById(exam.getId()).stream()
                         .anyMatch(section -> code.equals(normalizeSkill(section.getSkill())));
     }

@@ -117,8 +117,12 @@ public class StudentContentController {
     }
 
     @GetMapping("/student/exams/{id}")
-    public String detail(@PathVariable int id, Model model) {
+    public String detail(
+            @PathVariable int id,
+            @RequestParam(defaultValue = "false") boolean fromPlacement,
+            Model model) {
         examModel(model);
+        model.addAttribute("fromPlacement", fromPlacement);
         model.addAttribute("entry", catalog.entry("exams", id));
         model.addAttribute("scoreGuides", scoringGuides.forExam(id));
         return "student/content/detail";

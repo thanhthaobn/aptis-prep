@@ -75,9 +75,6 @@
             </details>
           </details>
         </section>
-        <div
-          th:replace="~{fragments/student-pagination :: studentPagination(${lessonPage.number}, ${lessonPage.totalPages}, ${lessonPage.totalElements}, @{/admin/lessons})}"
-        ></div>
       </main>
     </div>
     <div th:replace="~{fragments/footer :: footer}"></div>

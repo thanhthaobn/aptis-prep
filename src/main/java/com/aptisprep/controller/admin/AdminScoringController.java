@@ -75,10 +75,13 @@ public class AdminScoringController {
                                         examType.isBlank()
                                                 || ("UNASSIGNED".equals(examType)
                                                         ? !examTypes.containsKey(scheme.id())
-                                                        : examTypes.containsKey(scheme.id())
-                                                                && examTypes
-                                                                        .get(scheme.id())
-                                                                        .contains(examType)))
+                                                        : examType.equals(scheme.examType())
+                                                                || examTypes.containsKey(
+                                                                                scheme.id())
+                                                                        && examTypes
+                                                                                .get(scheme.id())
+                                                                                .contains(
+                                                                                        examType)))
                         .toList();
         model.addAttribute("schemePage", ListPagination.slice(schemes, schemePage));
         model.addAttribute("schemeExamTypes", examTypes);
@@ -211,6 +214,8 @@ public class AdminScoringController {
             BindingResult result,
             Model model,
             RedirectAttributes redirect) {
+        if (form.getExamType() == null || form.getExamType().isBlank())
+            result.rejectValue("examType", "scheme.examType", "Chọn loại đề thi");
         if (result.hasErrors()) {
             schemeOptions(model);
             model.addAttribute("editing", false);
@@ -219,7 +224,7 @@ public class AdminScoringController {
             return "admin/settings/scheme";
         }
         try {
-            Integer id = scoring.saveScheme(principal.getName(), null, form);
+            Integer id = scoring.saveSchemeWithScores(principal.getName(), null, form);
             redirect.addFlashAttribute("successMessage", "Đã tạo bộ chấm điểm.");
             return "redirect:/admin/scoring-schemes/" + id;
         } catch (BusinessRuleException exception) {
@@ -244,7 +249,7 @@ public class AdminScoringController {
             return loadScheme(id, "Reading", null, false, model);
         }
         try {
-            Integer nextId = scoring.saveScheme(principal.getName(), id, form);
+            Integer nextId = scoring.saveSchemeWithScores(principal.getName(), id, form);
             redirect.addFlashAttribute(
                     "successMessage",
                     nextId.equals(id)
@@ -310,10 +315,15 @@ public class AdminScoringController {
                     default -> throw new BusinessRuleException("Kỹ năng không hợp lệ");
                 };
         ScoringViews.SchemeView value = scoring.scheme(id);
+        if (value.scopeSkill() != null) skill = display.catalogSkill(value.scopeSkill());
         schemeOptions(model);
+        if (value.scopeSkill() != null) model.addAttribute("skills", List.of(skill));
         model.addAttribute("scheme", value);
-        if (!model.containsAttribute("schemeForm"))
-            model.addAttribute("schemeForm", schemeForm(value));
+        if (!model.containsAttribute("schemeForm")) {
+            ScoringSchemeForm form = schemeForm(value);
+            scoring.populateScoreConfiguration(id, form);
+            model.addAttribute("schemeForm", form);
+        }
         model.addAttribute("editing", true);
         model.addAttribute("readOnly", readOnly);
         model.addAttribute("selectedSkill", skill);
@@ -374,6 +384,8 @@ public class AdminScoringController {
 
     private ScoringSchemeForm schemeForm(ScoringViews.SchemeView value) {
         ScoringSchemeForm form = new ScoringSchemeForm();
+        form.setExamType(value.examType());
+        form.setScopeSkill(value.scopeSkill());
         form.setCertificateId(value.certificateId());
         form.setName(value.name());
         form.setVersion(value.version());

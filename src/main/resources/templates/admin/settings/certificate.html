@@ -47,6 +47,7 @@
             <div class="field">
               <label for="certificateStatus">Trạng thái</label>
               <select id="certificateStatus" th:field="*{status}">
+                <option value="DRAFT">Bản nháp</option>
                 <option value="ACTIVE">Đang sử dụng</option>
                 <option value="INACTIVE">Ngừng sử dụng</option>
               </select>

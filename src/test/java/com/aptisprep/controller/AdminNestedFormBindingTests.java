@@ -170,13 +170,21 @@ class AdminNestedFormBindingTests {
         }
         assertUniqueIds(html);
         assertInput(html, "title", "Five sections", false);
-        assertInput(html, "durationMinutes", "150", false);
+        assertFalse(html.contains("name=\"durationMinutes\""));
         assertTextarea(html, "description", "Preserved exam description <&>");
         assertSelected(html, "examType", "FULL_MOCK");
         assertSelected(html, "certificateId", certificate.getId().toString());
         assertInput(html, "demoOnly", "true", true);
         String location = saved.getResponse().getRedirectedUrl();
         int examId = Integer.parseInt(location.substring(location.lastIndexOf('/') + 1));
+        assertEquals(60, exams.findById(examId).orElseThrow().getDurationMinutes());
+        mvc.perform(get(location).with(user(ADMIN).roles("ADMIN")))
+                .andExpect(status().isOk())
+                .andExpect(
+                        content()
+                                .string(
+                                        org.hamcrest.Matchers.containsString(
+                                                "Question for READING")));
         assertTrue(exams.findById(examId).orElseThrow().isDemoOnly());
         var update =
                 post(location + "/edit")

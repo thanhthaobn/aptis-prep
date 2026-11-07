@@ -496,6 +496,8 @@ CREATE TABLE [dbo].[scoring_schemes](
 	[certificate_id] [int] NOT NULL,
 	[name] [nvarchar](255) NOT NULL,
 	[version] [varchar](30) NOT NULL,
+	[exam_type] [varchar](30) NULL,
+	[scope_skill] [varchar](30) NULL,
 	[status] [varchar](30) NOT NULL,
 	[effective_from] [datetime2](7) NULL,
 	[created_at] [datetime2](7) NOT NULL,

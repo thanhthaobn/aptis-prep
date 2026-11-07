@@ -244,6 +244,11 @@ public class ExamAttemptService implements ExamAttemptContract {
                                 attemptId, lockedMedia.path("questionId").asInt())
                         .isPresent()) throw new AccessDeniedException("Media không thuộc lượt thi");
         ensureMediaWindow(attempt);
+        ExamSnapshotService.requireOpenSection(
+                attempt,
+                examSnapshots
+                        .lockedQuestions(attemptId)
+                        .get(lockedMedia.path("questionId").asInt()));
         startValidator.validateAudio(lockedMedia.path("mediaUrl").asText());
         int limit = Math.min(2, lockedMedia.path("maxPlayCount").asInt(2));
         UserMediaActivityEntity activity =
@@ -284,6 +289,11 @@ public class ExamAttemptService implements ExamAttemptContract {
                                 attemptId, lockedMedia.path("questionId").asInt())
                         .isPresent()) throw new AccessDeniedException("Media không thuộc lượt thi");
         ensureMediaWindow(attempt);
+        ExamSnapshotService.requireOpenSection(
+                attempt,
+                examSnapshots
+                        .lockedQuestions(attemptId)
+                        .get(lockedMedia.path("questionId").asInt()));
         if ("AUDIO".equals(lockedMedia.path("type").asText())) {
             UserMediaActivityEntity activity =
                     userMediaActivityRepository
@@ -368,13 +378,10 @@ public class ExamAttemptService implements ExamAttemptContract {
                 && !("EXPIRED".equals(attempt.getStatus()) && attempt.getSubmittedAt() == null)) {
             throw new BusinessRuleException("Lượt thi không thể nộp ở trạng thái hiện tại");
         }
-        MockExamEntity exam = publishedExam(attempt.getMockExamId());
+        MockExamEntity exam = examFor(attempt);
         LocalDateTime now = LocalDateTime.now();
-        boolean expired =
-                exam.getDurationMinutes() != null
-                        && attempt.getStartedAt()
-                                .plusMinutes(exam.getDurationMinutes())
-                                .isBefore(now);
+        LocalDateTime end = examDeadline(attempt, exam);
+        boolean expired = end != null && end.isBefore(now);
         refreshSnapshotAnswerVersion(attempt);
         attempt.setScoringSchemeId(
                 attempt.getScoringSchemeId() == null
@@ -539,20 +546,34 @@ public class ExamAttemptService implements ExamAttemptContract {
         MockExamEntity exam = examFor(attempt);
         expireIfNeeded(attempt, exam);
         List<QuestionPage> questionPages = new ArrayList<>();
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime examEnd = examDeadline(attempt, exam);
+        Instant deadline = instant(examEnd);
+        boolean nextSection = false;
+        String sectionSkill = null;
         for (JsonNode question : examSnapshots.lockedQuestionList(attemptId)) {
+            var window = ExamSnapshotService.SectionWindow.of(question);
+            if (window != null) {
+                if (!window.contains(attempt.getStartedAt(), now)) continue;
+                deadline = instant(attempt.getStartedAt().plusMinutes(window.end()));
+                nextSection = attempt.getStartedAt().plusMinutes(window.end()).isBefore(examEnd);
+                sectionSkill = question.path("skill").asText();
+            }
             questionPages.add(toQuestionPage(attemptId, question));
         }
-        Instant deadline =
-                exam.getDurationMinutes() == null || attempt.getStartedAt() == null
-                        ? null
-                        : instant(attempt.getStartedAt().plusMinutes(exam.getDurationMinutes()));
         return new AttemptPage(
                 attempt.getId(),
                 exam.getTitle(),
                 exam.getExamType(),
-                remainingSeconds(attempt, exam),
+                deadline == null
+                        ? null
+                        : Math.max(
+                                0,
+                                (Duration.between(instant(now), deadline).toMillis() + 999) / 1000),
                 List.copyOf(questionPages),
-                deadline);
+                deadline,
+                nextSection,
+                sectionSkill);
     }
 
     public record AttemptPage(
@@ -561,7 +582,19 @@ public class ExamAttemptService implements ExamAttemptContract {
             String examType,
             Long remainingSeconds,
             List<QuestionPage> questions,
-            Instant deadline) {
+            Instant deadline,
+            boolean nextSection,
+            String sectionSkill) {
+        public AttemptPage(
+                Integer attemptId,
+                String title,
+                String examType,
+                Long remainingSeconds,
+                List<QuestionPage> questions,
+                Instant deadline) {
+            this(attemptId, title, examType, remainingSeconds, questions, deadline, false, null);
+        }
+
         public AttemptPage(
                 Integer attemptId,
                 String title,
@@ -680,12 +713,9 @@ public class ExamAttemptService implements ExamAttemptContract {
     }
 
     private boolean expireIfNeeded(ExamAttemptEntity attempt, MockExamEntity exam) {
-        if (!"IN_PROGRESS".equals(attempt.getStatus())
-                || exam.getDurationMinutes() == null
-                || attempt.getStartedAt() == null) return false;
-        if (!attempt.getStartedAt()
-                .plusMinutes(exam.getDurationMinutes())
-                .isBefore(LocalDateTime.now())) return false;
+        if (!"IN_PROGRESS".equals(attempt.getStatus())) return false;
+        LocalDateTime end = examDeadline(attempt, exam);
+        if (end == null || !end.isBefore(LocalDateTime.now())) return false;
         attempt.setStatus("EXPIRED");
         attempt.setGradingStatus("EXPIRED");
         examAttemptRepository.save(attempt);
@@ -732,21 +762,15 @@ public class ExamAttemptService implements ExamAttemptContract {
                 attempt.getId(),
                 attempt.getStatus(),
                 instant(
-                        attempt.getStartedAt()
-                                .plusMinutes(
-                                        exam.getDurationMinutes() == null
-                                                ? 0
-                                                : exam.getDurationMinutes())));
+                        Objects.requireNonNullElseGet(
+                                examDeadline(attempt, exam), attempt::getStartedAt)));
     }
 
-    private Long remainingSeconds(ExamAttemptEntity attempt, MockExamEntity exam) {
-        if (exam.getDurationMinutes() == null || attempt.getStartedAt() == null) return null;
-        return Math.max(
-                0L,
-                Duration.between(
-                                LocalDateTime.now(),
-                                attempt.getStartedAt().plusMinutes(exam.getDurationMinutes()))
-                        .getSeconds());
+    private LocalDateTime examDeadline(ExamAttemptEntity attempt, MockExamEntity exam) {
+        Integer minutes = examSnapshots.durationMinutes(attempt.getId(), exam.getDurationMinutes());
+        return minutes == null || attempt.getStartedAt() == null
+                ? null
+                : attempt.getStartedAt().plusMinutes(minutes);
     }
 
     private Instant instant(LocalDateTime value) {

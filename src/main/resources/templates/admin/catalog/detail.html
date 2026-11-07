@@ -310,25 +310,21 @@
         </section>
 
         <section class="dashboard-section" th:if="${catalog.key == 'exams'}">
-          <div class="section-title-row"><h2>Cấu trúc đề thi</h2></div>
-          <div class="table-wrap">
-            <table class="data-table catalog-table">
-              <thead>
-                <tr>
-                  <th scope="col">Phần thi</th>
-                  <th scope="col">Nội dung</th>
-                  <th scope="col">Thời gian / Ghi chú</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr th:each="row : ${entry.rows}">
-                  <td data-label="Phần thi" th:text="${row.title}"></td>
-                  <td data-label="Nội dung" th:text="${row.description}"></td>
-                  <td data-label="Thời gian / Ghi chú" th:text="${row.value}"></td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
+          <div class="section-title-row"><h2>Xem trước cấu trúc đề</h2></div>
+          <details class="dashboard-panel" th:each="section, order : ${examPreview}" open>
+            <summary
+              th:text="${'Phần ' + (order.index + 1) + ' · ' + display.catalogSkill(section.skill) + ' · ' + section.minutes + ' phút'}"
+            ></summary>
+            <p class="muted" th:if="${section.questions.isEmpty()}">Chưa chọn câu hỏi.</p>
+            <ol>
+              <li th:each="question : ${section.questions}">
+                <a
+                  th:href="@{/admin/questions/{id}(id=${question.id})}"
+                  th:text="${question.content}"
+                ></a>
+              </li>
+            </ol>
+          </details>
         </section>
 
         <section class="dashboard-section" th:if="${catalog.key == 'results'}">
@@ -376,12 +372,20 @@
           </div>
           <div class="page-actions">
             <form
-              th:if="${entry.status == 'DRAFT' and (catalog.key == 'questions' or catalog.key == 'exams')}"
+              th:if="${(entry.status == 'DRAFT' and catalog.key == 'questions') or (entry.status != 'PUBLISHED' and catalog.key == 'exams')}"
               method="post"
               th:action="${'/admin/' + catalog.key + '/' + entry.id + '/publish'}"
             >
               <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
               <button class="button" type="submit">Công bố</button>
+            </form>
+            <form
+              th:if="${catalog.key == 'exams' and entry.status == 'PUBLISHED'}"
+              method="post"
+              th:action="@{/admin/exams/{id}/unpublish(id=${entry.id})}"
+            >
+              <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+              <button class="button button-secondary" type="submit">Ngừng công bố</button>
             </form>
             <form
               th:if="${catalog.key == 'questions' and entry.status != 'ARCHIVED'}"

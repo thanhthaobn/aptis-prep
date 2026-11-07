@@ -55,7 +55,11 @@ public class StudentExamController {
         String exitUrl = "/student/exams";
         if ("PLACEMENT".equals(page.examType())) {
             String skill =
-                    page.questions().isEmpty() ? "READING" : page.questions().getFirst().skill();
+                    page.sectionSkill() != null
+                            ? "FULL_MOCK"
+                            : page.questions().isEmpty()
+                                    ? "READING"
+                                    : page.questions().getFirst().skill();
             exitUrl = "/student/placement?skill=" + skill;
         }
         model.addAttribute("attemptExitUrl", exitUrl);

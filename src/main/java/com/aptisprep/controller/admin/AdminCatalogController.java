@@ -10,6 +10,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -80,6 +81,8 @@ public class AdminCatalogController {
     private String detail(String module, int id, Model model) {
         addModule(module, model);
         model.addAttribute("entry", catalogService.entry(module, id));
+        if ("exams".equals(module))
+            model.addAttribute("examPreview", catalogService.examPreview(id));
         if ("questions".equals(module)) {
             model.addAttribute("mediaItems", catalogService.mediaItems(id));
         }
@@ -219,19 +222,45 @@ public class AdminCatalogController {
     }
 
     @PostMapping("/admin/exams")
-    public String saveExam(@ModelAttribute ExamForm form) {
-        return "redirect:/admin/exams/" + catalogService.saveExam(null, form);
+    public String saveExam(@ModelAttribute ExamForm form, BindingResult binding, Model model) {
+        return saveExamForm(null, form, binding, model);
     }
 
     @PostMapping("/admin/exams/{id}/edit")
-    public String updateExam(@PathVariable int id, @ModelAttribute ExamForm form) {
-        catalogService.saveExam(id, form);
-        return "redirect:/admin/exams/" + id;
+    public String updateExam(
+            @PathVariable int id,
+            @ModelAttribute ExamForm form,
+            BindingResult binding,
+            Model model) {
+        return saveExamForm(id, form, binding, model);
+    }
+
+    private String saveExamForm(Integer id, ExamForm form, BindingResult binding, Model model) {
+        String error = "Kiểm tra lại giá trị đã nhập trong đề thi.";
+        if (!binding.hasErrors()) {
+            try {
+                return "redirect:/admin/exams/" + catalogService.saveExam(id, form);
+            } catch (BusinessRuleException exception) {
+                error = exception.getMessage();
+            }
+        }
+        addModule("exams", model);
+        model.addAttribute("editing", id != null);
+        if (id != null) model.addAttribute("entry", catalogService.entry("exams", id));
+        model.addAttribute("examError", error);
+        prepareExamForm(model, form);
+        return "admin/catalog/form";
     }
 
     @PostMapping("/admin/exams/{id}/publish")
     public String publishExam(@PathVariable int id) {
         catalogService.publishExam(id);
+        return "redirect:/admin/exams/" + id;
+    }
+
+    @PostMapping("/admin/exams/{id}/unpublish")
+    public String unpublishExam(@PathVariable int id) {
+        catalogService.unpublishExam(id);
         return "redirect:/admin/exams/" + id;
     }
 

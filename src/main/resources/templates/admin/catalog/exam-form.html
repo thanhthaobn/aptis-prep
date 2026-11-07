@@ -10,6 +10,12 @@
       th:action="${editing ? '/admin/exams/' + entry.id + '/edit' : '/admin/exams'}"
     >
       <h2>Thông tin đề thi</h2>
+      <p
+        class="alert alert-danger"
+        role="alert"
+        th:if="${examError != null}"
+        th:text="${examError}"
+      ></p>
       <div class="field">
         <label>
           <input type="hidden" name="_demoOnly" value="on" />
@@ -90,20 +96,15 @@
               th:value="${item.id}"
               th:text="${item.name + ' — v' + item.version}"
               th:selected="${examForm.scoringSchemeId == item.id}"
+              th:attr="data-exam-type=${item.examType},data-skill=${item.scopeSkill},data-certificate=${item.certificate.id}"
             ></option>
           </select>
         </div>
-        <div class="field">
-          <label for="durationMinutes">Tổng thời gian (phút)</label>
-          <input
-            id="durationMinutes"
-            type="number"
-            min="1"
-            name="durationMinutes"
-            th:value="${examForm.durationMinutes}"
-            required
-          />
-        </div>
+        <p class="muted">
+          Tổng thời gian:
+          <output id="exam-total-minutes">—</output>
+          phút
+        </p>
       </div>
       <section class="catalog-form-section">
         <div class="section-title-row"><h2>Sections và câu hỏi</h2></div>
@@ -145,6 +146,7 @@
                 </label>
                 <input
                   type="number"
+                  class="section-duration"
                   min="1"
                   required
                   th:id="${'sections-' + (sectionStat.index) + '-durationMinutes'}"

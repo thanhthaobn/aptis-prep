@@ -21,7 +21,6 @@ public class AdminExamService {
     private final MockExamSectionRepository mockExamSectionRepository;
     private final MockExamQuestionRepository mockExamQuestionRepository;
     private final CertificateRepository certificateRepository;
-    private final ScoringSchemeRepository scoringSchemeRepository;
     private final ExamAttemptRepository examAttemptRepository;
     private final ExamDefinitionValidator examValidator;
 
@@ -30,14 +29,12 @@ public class AdminExamService {
             MockExamSectionRepository mockExamSectionRepository,
             MockExamQuestionRepository mockExamQuestionRepository,
             CertificateRepository certificateRepository,
-            ScoringSchemeRepository scoringSchemeRepository,
             ExamAttemptRepository examAttemptRepository,
             ExamDefinitionValidator examValidator) {
         this.mockExamRepository = mockExamRepository;
         this.mockExamSectionRepository = mockExamSectionRepository;
         this.mockExamQuestionRepository = mockExamQuestionRepository;
         this.certificateRepository = certificateRepository;
-        this.scoringSchemeRepository = scoringSchemeRepository;
         this.examAttemptRepository = examAttemptRepository;
         this.examValidator = examValidator;
     }
@@ -47,13 +44,6 @@ public class AdminExamService {
         certificateRepository.findByStatusOrderByName(RecordStatus.ACTIVE).stream()
                 .findFirst()
                 .ifPresent(x -> form.setCertificateId(x.getId()));
-        if (form.getCertificateId() != null)
-            scoringSchemeRepository
-                    .findByCertificateIdAndStatusOrderByVersionDesc(
-                            form.getCertificateId(), RecordStatus.ACTIVE)
-                    .stream()
-                    .findFirst()
-                    .ifPresent(x -> form.setScoringSchemeId(x.getId()));
         if (id == null) {
             ExamForm.SectionForm section = new ExamForm.SectionForm();
             section.setSkill(form.getSectionSkill());
@@ -101,6 +91,8 @@ public class AdminExamService {
             form.setSections(sectionForms);
             form.setSectionSkill(sectionForms.get(0).getSkill());
             form.setSectionDurationMinutes(sectionForms.get(0).getDurationMinutes());
+        } else if (exam.getDurationMinutes() != null) {
+            form.setSectionDurationMinutes(exam.getDurationMinutes());
         }
         return form;
     }
@@ -109,6 +101,15 @@ public class AdminExamService {
     public Integer saveExam(Integer id, ExamForm form) {
         boolean explicitSections = form.getSections() != null && !form.getSections().isEmpty();
         normalizeSections(form);
+        if (id == null
+                && "PLACEMENT".equals(form.getExamType())
+                && form.getSections().stream()
+                                .map(ExamForm.SectionForm::getSkill)
+                                .distinct()
+                                .count()
+                        != 5)
+            throw new BusinessRuleException(
+                    "Đề đầu vào mới cần đủ 4 kỹ năng và Grammar & Vocabulary");
         examValidator.validateBasics(form);
         MockExamEntity exam =
                 id == null
@@ -123,8 +124,8 @@ public class AdminExamService {
             throw new BusinessRuleException(
                     "Đề thi đã có lịch sử làm bài. Hãy tạo phiên bản đề mới");
         }
-        if ("PUBLISHED".equals(exam.getStatus()) && !"PUBLISHED".equals(form.getStatus())) {
-            throw new BusinessRuleException("Đề đã công bố không thể quay về bản nháp");
+        if ("PUBLISHED".equals(exam.getStatus())) {
+            throw new BusinessRuleException("Hãy ngừng công bố trước khi chỉnh sửa đề");
         }
         applyExamFields(exam, form);
         exam = mockExamRepository.save(exam);
@@ -141,6 +142,8 @@ public class AdminExamService {
         ExamForm form = examForm(id);
         normalizeSections(form);
         examValidator.validateBasics(form);
+        if ("FULL_MOCK".equals(form.getExamType()) && form.getScoringSchemeId() == null)
+            throw new BusinessRuleException("Đề tổng hợp cần bộ chấm điểm trước khi công bố");
         Set<Integer> all = new HashSet<>();
         for (ExamForm.SectionForm section : form.getSections()) {
             List<Integer> ids = parseIds(section.getQuestionIds());
@@ -150,11 +153,21 @@ public class AdminExamService {
                 throw new BusinessRuleException("Một câu hỏi không được lặp giữa các section");
         }
         if (all.isEmpty()) throw new BusinessRuleException("Không thể công bố đề trống");
+        exam.setDurationMinutes(form.getDurationMinutes());
         exam.setStatus("PUBLISHED");
         mockExamRepository.save(exam);
     }
 
-    private void normalizeSections(ExamForm form) {
+    @Transactional
+    public void unpublishExam(Integer id) {
+        MockExamEntity exam =
+                mockExamRepository
+                        .findById(id)
+                        .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy đề thi"));
+        if ("PUBLISHED".equals(exam.getStatus())) exam.setStatus("ARCHIVED");
+    }
+
+    void normalizeSections(ExamForm form) {
         if (form.getSections() != null && !form.getSections().isEmpty()) return;
         ExamForm.SectionForm section = new ExamForm.SectionForm();
         section.setSkill(form.getSectionSkill());
@@ -200,7 +213,7 @@ public class AdminExamService {
     private String statusLabel(String status) {
         return switch (status) {
             case "PUBLISHED" -> "Đã công bố";
-            case "ARCHIVED" -> "Đã lưu trữ";
+            case "ARCHIVED" -> "Đã ngừng công bố";
             default -> "Bản nháp";
         };
     }
@@ -217,6 +230,12 @@ public class AdminExamService {
         exam.setTargetLevel(blankToNull(form.getTargetLevel()));
         exam.setSkill(
                 "FULL_MOCK".equals(form.getExamType())
+                                || ("PLACEMENT".equals(form.getExamType())
+                                        && form.getSections().stream()
+                                                        .map(ExamForm.SectionForm::getSkill)
+                                                        .distinct()
+                                                        .count()
+                                                > 1)
                         ? "FULL_MOCK"
                         : form.getSections().getFirst().getSkill());
         exam.setDurationMinutes(form.getDurationMinutes());

@@ -28,7 +28,7 @@ public class PlacementExamCatalogService {
 
     public List<PlacementExam> findPublished(String skill) {
         String normalized = skill == null ? "" : skill.trim().toUpperCase(Locale.ROOT);
-        if (!Skill.codes().contains(normalized))
+        if (!"FULL_MOCK".equals(normalized) && !Skill.codes().contains(normalized))
             throw new BusinessRuleException("Kỹ năng Placement không hợp lệ");
         return mockExamRepository
                 .findBySkillAndStatusOrderByUpdatedAtDesc(normalized, "PUBLISHED")

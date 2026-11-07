@@ -1,6 +1,5 @@
 package com.aptisprep.controller.admin;
 
-import com.aptisprep.controller.ListPagination;
 import com.aptisprep.dto.form.LessonForm;
 import com.aptisprep.entity.Lesson;
 import com.aptisprep.exception.BusinessRuleException;
@@ -27,10 +26,8 @@ public class AdminLessonController {
     }
 
     @GetMapping("/admin/lessons")
-    public String list(@RequestParam(defaultValue = "0") int page, Model m) {
-        var lessonPage = ListPagination.slice(service.adminLessons(), page);
-        m.addAttribute("lessonPage", lessonPage);
-        m.addAttribute("tree", service.adminTree(lessonPage.getContent()));
+    public String list(Model m) {
+        m.addAttribute("tree", service.adminTree(service.adminLessons()));
         return "admin/lesson/list";
     }
 

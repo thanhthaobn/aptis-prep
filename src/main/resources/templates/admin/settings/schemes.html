@@ -10,7 +10,7 @@
         <header class="page-header"><h1>Bộ chấm điểm</h1></header>
         <form class="toolbar" method="get" th:action="@{/admin/scoring-schemes}">
           <div>
-            <label for="schemeExamType">Loại đề đang dùng</label>
+            <label for="schemeExamType">Loại đề</label>
             <select id="schemeExamType" name="examType">
               <option value="">Tất cả loại đề</option>
               <option
@@ -65,8 +65,16 @@
                     data-label="Loại đề đang dùng"
                     th:with="types=${schemeExamTypes.get(scheme.id)}"
                   >
-                    <span th:if="${types == null}">Chưa gán</span>
-                    <div th:each="type : ${types}" th:text="${display.historyExamType(type)}"></div>
+                    <span
+                      th:if="${scheme.examType != null}"
+                      th:text="${display.historyExamType(scheme.examType) + (scheme.scopeSkill == null ? '' : ' · ' + display.catalogSkill(scheme.scopeSkill))}"
+                    ></span>
+                    <span th:if="${scheme.examType == null and types == null}">Chưa phân loại</span>
+                    <div
+                      th:if="${scheme.examType == null}"
+                      th:each="type : ${types}"
+                      th:text="${display.historyExamType(type)}"
+                    ></div>
                   </td>
                   <td data-label="Trạng thái">
                     <span

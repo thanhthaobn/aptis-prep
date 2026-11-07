@@ -12,7 +12,7 @@
         th:attr="data-skill=${entry.skill},data-kind=${entry.kind}"
       >
         <div
-          th:replace="~{fragments/back-link :: backLink(${entry.examType == 'PLACEMENT'} ? @{/student/placement(skill=${entry.skillCode})} : @{/student/exams(examType=${entry.examType})})}"
+          th:replace="~{fragments/back-link :: backLink(${fromPlacement and entry.examType == 'PLACEMENT'} ? @{/student/placement(skill=${entry.skillCode})} : @{/student/exams(examType=${entry.examType})})}"
         ></div>
         <div
           th:replace="~{fragments/breadcrumb :: breadcrumb(${title}, @{/student/exams(examType=${entry.examType})}, 'Chi tiết')}"

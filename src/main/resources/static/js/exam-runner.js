@@ -214,7 +214,9 @@
   const timer = document.getElementById('exam-timer');
   const display = document.getElementById('timer-display');
   if (timer && display) {
-    const deadline = Date.parse(timer.dataset.deadline);
+    const deadline = timer.dataset.sectionSeconds
+      ? Date.now() + Number(timer.dataset.sectionSeconds) * 1000
+      : Date.parse(timer.dataset.deadline);
     let interval;
     const tick = () => {
       const seconds = Math.max(0, Math.ceil((deadline - Date.now()) / 1000));
@@ -224,7 +226,11 @@
         String(seconds % 60).padStart(2, '0');
       if (!seconds) {
         if (interval) clearInterval(interval);
-        submit(true);
+        if (timer.dataset.nextSection === 'true') {
+          window.location.reload();
+        } else {
+          submit(true);
+        }
       }
     };
     tick();

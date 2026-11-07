@@ -33,6 +33,7 @@ class AdminScoringPreviewTests {
     @Autowired MockMvc mvc;
     @Autowired CertificateRepository certificates;
     @Autowired MockExamRepository exams;
+    @Autowired com.aptisprep.service.contract.ScoringPolicyContract scoringPolicy;
     @Autowired ScoringSchemeRepository schemes;
     @Autowired UserRepository users;
     @Autowired ScoreBandRepository bands;
@@ -130,6 +131,128 @@ class AdminScoringPreviewTests {
                 .andExpect(content().string(containsString("Pagination scheme")))
                 .andExpect(content().string(containsString("schemePage=1")))
                 .andExpect(content().string(not(containsString(scheme.getName()))));
+    }
+
+    @Test
+    @Transactional
+    void aNewSchemeIsFilteredByItsScopeBeforeAnyExamUsesIt() throws Exception {
+        mvc.perform(
+                        post("/admin/scoring-schemes")
+                                .param("certificateId", certificate.getId().toString())
+                                .param("name", "Reading practice scope")
+                                .param("version", "scope-test")
+                                .param("examType", "PRACTICE")
+                                .param("scopeSkill", "READING")
+                                .with(user("admin@aptis.local").roles("ADMIN"))
+                                .with(csrf()))
+                .andExpect(status().is3xxRedirection());
+        var created =
+                schemes.findByCertificateIdOrderByVersionDesc(certificate.getId()).stream()
+                        .filter(value -> "scope-test".equals(value.getVersion()))
+                        .findFirst()
+                        .orElseThrow();
+        org.junit.jupiter.api.Assertions.assertEquals("READING", created.getScopeSkill());
+        mvc.perform(
+                        post("/admin/exams")
+                                .param("title", "Mismatched practice")
+                                .param("examType", "PRACTICE")
+                                .param("certificateId", certificate.getId().toString())
+                                .param("scoringSchemeId", created.getId().toString())
+                                .param("sections[0].skill", "LISTENING")
+                                .param("sections[0].durationMinutes", "20")
+                                .with(user("admin@aptis.local").roles("ADMIN"))
+                                .with(csrf()))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("Bộ chấm điểm không phù hợp")));
+        mvc.perform(
+                        get("/admin/scoring-schemes")
+                                .param("examType", "PRACTICE")
+                                .with(user("admin@aptis.local").roles("ADMIN")))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("Reading practice scope")));
+        mvc.perform(
+                        get("/admin/scoring-schemes")
+                                .param("examType", "FULL_MOCK")
+                                .with(user("admin@aptis.local").roles("ADMIN")))
+                .andExpect(status().isOk())
+                .andExpect(content().string(not(containsString("Reading practice scope"))));
+    }
+
+    @Test
+    @Transactional
+    void savesCombinedSchemeWithSharedScaleAndIndividualRangesInOneRequest() throws Exception {
+        var admin = user("admin@aptis.local").roles("ADMIN");
+        mvc.perform(get("/admin/scoring-schemes/create").with(admin))
+                .andExpect(status().isOk())
+                .andExpect(
+                        content().string(containsString("ranges[GRAMMAR_VOCABULARY_C2].maxScore")));
+        var response =
+                mvc.perform(
+                                post("/admin/scoring-schemes")
+                                        .with(admin)
+                                        .with(csrf())
+                                        .param("certificateId", certificate.getId().toString())
+                                        .param("name", "Combined scoring editor")
+                                        .param("version", "combined-editor")
+                                        .param("examType", "FULL_MOCK")
+                                        .param("configureScores", "true")
+                                        .param("scale.rawMin", "0")
+                                        .param("scale.rawMax", "50")
+                                        .param("ranges[READING_A1].minScore", "0")
+                                        .param("ranges[READING_A1].maxScore", "17.99")
+                                        .param("ranges[LISTENING_A1].minScore", "0")
+                                        .param("ranges[LISTENING_A1].maxScore", "12.99"))
+                        .andExpect(status().is3xxRedirection())
+                        .andReturn()
+                        .getResponse();
+        var created =
+                schemes.findByCertificateIdOrderByVersionDesc(certificate.getId()).stream()
+                        .filter(value -> "combined-editor".equals(value.getVersion()))
+                        .findFirst()
+                        .orElseThrow();
+        org.junit.jupiter.api.Assertions.assertEquals(
+                2, bands.findBySchemeIdOrderBySkillAscMinScoreAsc(created.getId()).size());
+        var raw = new java.math.BigDecimal("33.25");
+        org.junit.jupiter.api.Assertions.assertEquals(
+                raw, scoringPolicy.scale(created.getId(), "READING", raw));
+        mvc.perform(get(response.getRedirectedUrl()).with(admin))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("17.99")))
+                .andExpect(content().string(containsString("12.99")));
+    }
+
+    @Test
+    @Transactional
+    void singleSkillSchemeUsesOneLevelWithAnExplicitPassingScore() throws Exception {
+        mvc.perform(
+                        post("/admin/scoring-schemes")
+                                .with(user("admin@aptis.local").roles("ADMIN"))
+                                .with(csrf())
+                                .param("certificateId", certificate.getId().toString())
+                                .param("name", "Reading checkpoint target")
+                                .param("version", "checkpoint-editor")
+                                .param("examType", "CHECKPOINT")
+                                .param("scopeSkill", "READING")
+                                .param("configureScores", "true")
+                                .param("status", "ACTIVE")
+                                .param("scale.rawMin", "0")
+                                .param("scale.rawMax", "50")
+                                .param("targetLevel", "B1")
+                                .param("passingScore", "25"))
+                .andExpect(status().is3xxRedirection());
+        var created =
+                schemes.findByCertificateIdOrderByVersionDesc(certificate.getId()).stream()
+                        .filter(value -> "checkpoint-editor".equals(value.getVersion()))
+                        .findFirst()
+                        .orElseThrow();
+        var below = new java.math.BigDecimal("24.99");
+        var threshold = new java.math.BigDecimal("25.00");
+        org.junit.jupiter.api.Assertions.assertTrue(
+                scoringPolicy.belowConfiguredTarget(created.getId(), "READING", below));
+        org.junit.jupiter.api.Assertions.assertNull(
+                scoringPolicy.estimatedLevel(created.getId(), "READING", below));
+        org.junit.jupiter.api.Assertions.assertEquals(
+                "B1", scoringPolicy.estimatedLevel(created.getId(), "READING", threshold));
     }
 
     @Test
