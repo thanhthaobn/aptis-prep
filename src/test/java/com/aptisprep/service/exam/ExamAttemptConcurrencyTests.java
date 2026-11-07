@@ -3,6 +3,9 @@ package com.aptisprep.service.exam;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.aptisprep.entity.Certificate;
 import com.aptisprep.entity.MockExamEntity;
@@ -583,7 +586,8 @@ class ExamAttemptConcurrencyTests {
     }
 
     @Test
-    void sectionWindowsRejectEarlyAndLateAnswersAndUnpublishedAttemptCanStillSubmit() {
+    void sectionWindowsRejectEarlyAndLateAnswersAndUnpublishedAttemptCanStillSubmit()
+            throws Exception {
         Fixture fixture = fixture("section-windows");
         int examId = fixture.exam().getId();
         int userId = fixture.user().getId();
@@ -609,16 +613,36 @@ class ExamAttemptConcurrencyTests {
             examQuestions.saveAndFlush(link);
         }
         int attemptId = attempts.start(userId, examId, "timed-section").attemptId();
-        assertTrue(attempts.page(userId, attemptId).nextSection());
-        assertEquals(
-                fixture.question().getId(),
-                attempts.page(userId, attemptId).questions().getFirst().questionId());
+        var firstPage = attempts.page(userId, attemptId);
+        assertTrue(firstPage.nextSection());
+        assertEquals(2, firstPage.sections().size());
+        assertEquals(2, firstPage.allQuestions().size());
+        assertEquals(1, firstPage.questions().size());
+        assertEquals(0, firstPage.currentSectionIndex());
+        assertEquals("OPEN", firstPage.sections().get(0).state());
+        assertEquals("UPCOMING", firstPage.sections().get(1).state());
+        String firstHtml =
+                mvc.perform(
+                                get("/student/attempts/" + attemptId)
+                                        .with(user(fixture.user().getEmail()).roles("STUDENT")))
+                        .andExpect(status().isOk())
+                        .andReturn()
+                        .getResponse()
+                        .getContentAsString();
+        assertTrue(firstHtml.contains("exam-section-navigation"));
+        assertTrue(firstHtml.contains("Phần 1"));
+        assertTrue(firstHtml.contains("Phần 2"));
+        assertEquals(fixture.question().getId(), firstPage.questions().getFirst().questionId());
         assertThrows(
                 BusinessRuleException.class,
                 () -> attempts.saveAnswer(userId, attemptId, secondId, null, null, null, null));
         var attempt = attemptRepository.findById(attemptId).orElseThrow();
         attempt.setStartedAt(LocalDateTime.now().minusMinutes(3));
         attemptRepository.saveAndFlush(attempt);
+        var secondPage = attempts.page(userId, attemptId);
+        assertEquals(1, secondPage.currentSectionIndex());
+        assertEquals("COMPLETED", secondPage.sections().get(0).state());
+        assertEquals("OPEN", secondPage.sections().get(1).state());
         assertEquals(
                 secondId, attempts.page(userId, attemptId).questions().getFirst().questionId());
         assertThrows(

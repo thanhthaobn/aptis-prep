@@ -28,6 +28,8 @@ class AdminNestedFormBindingTests {
     @Autowired MockMvc mvc;
     @Autowired UserRepository users;
     @Autowired QuestionRepository questions;
+    @Autowired QuestionItemRepository questionItems;
+    @Autowired QuestionOptionRepository questionOptions;
     @Autowired MockExamRepository exams;
     @Autowired CertificateRepository certificates;
 
@@ -123,7 +125,6 @@ class AdminNestedFormBindingTests {
                         .with(csrf())
                         .param("title", "Five sections")
                         .param("examType", "FULL_MOCK")
-                        .param("durationMinutes", "150")
                         .param("certificateId", certificate.getId().toString())
                         .param("description", "Preserved exam description <&>")
                         .param("demoOnly", "true")
@@ -141,6 +142,21 @@ class AdminNestedFormBindingTests {
                             : skill.equals("SPEAKING") ? "SPEAKING_AUDIO" : "SINGLE_CHOICE");
             question.setStatus("PUBLISHED");
             int questionId = questions.saveAndFlush(question).getId();
+            var item = new QuestionItemEntity();
+            item.setQuestionId(questionId);
+            item.setContent("Preview item for " + skill);
+            item.setPosition(1);
+            item.setResponseSeconds(skill.equals("SPEAKING") ? 30 : null);
+            item = questionItems.saveAndFlush(item);
+            if (!Set.of("WRITING", "SPEAKING").contains(skill)) {
+                var option = new QuestionOptionEntity();
+                option.setQuestionItemId(item.getId());
+                option.setContent("Visible option for " + skill);
+                option.setOptionCode("A");
+                option.setCorrect(true);
+                option.setPosition(1);
+                questionOptions.saveAndFlush(option);
+            }
             questionIds.add(questionId);
             request.param("sections[" + index + "].skill", skill)
                     .param("sections[" + index + "].durationMinutes", String.valueOf(10 + index))
@@ -178,13 +194,23 @@ class AdminNestedFormBindingTests {
         String location = saved.getResponse().getRedirectedUrl();
         int examId = Integer.parseInt(location.substring(location.lastIndexOf('/') + 1));
         assertEquals(60, exams.findById(examId).orElseThrow().getDurationMinutes());
-        mvc.perform(get(location).with(user(ADMIN).roles("ADMIN")))
-                .andExpect(status().isOk())
-                .andExpect(
-                        content()
-                                .string(
-                                        org.hamcrest.Matchers.containsString(
-                                                "Question for READING")));
+        var detail = mvc.perform(get(location).with(user(ADMIN).roles("ADMIN")));
+        for (String skill : skillCodes) {
+            detail.andExpect(
+                    content()
+                            .string(org.hamcrest.Matchers.containsString("Question for " + skill)));
+            detail.andExpect(
+                    content()
+                            .string(
+                                    org.hamcrest.Matchers.containsString(
+                                            "Preview item for " + skill)));
+        }
+        detail.andExpect(status().isOk());
+        detail.andExpect(
+                content()
+                        .string(
+                                org.hamcrest.Matchers.containsString(
+                                        "Visible option for READING")));
         assertTrue(exams.findById(examId).orElseThrow().isDemoOnly());
         var update =
                 post(location + "/edit")
@@ -192,7 +218,6 @@ class AdminNestedFormBindingTests {
                         .with(csrf())
                         .param("title", "Five sections")
                         .param("examType", "FULL_MOCK")
-                        .param("durationMinutes", "150")
                         .param("certificateId", certificate.getId().toString())
                         .param("status", "DRAFT")
                         .param("_demoOnly", "on");

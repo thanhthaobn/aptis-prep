@@ -310,20 +310,145 @@
         </section>
 
         <section class="dashboard-section" th:if="${catalog.key == 'exams'}">
-          <div class="section-title-row"><h2>Xem trước cấu trúc đề</h2></div>
-          <details class="dashboard-panel" th:each="section, order : ${examPreview}" open>
-            <summary
-              th:text="${'Phần ' + (order.index + 1) + ' · ' + display.catalogSkill(section.skill) + ' · ' + section.minutes + ' phút'}"
-            ></summary>
-            <p class="muted" th:if="${section.questions.isEmpty()}">Chưa chọn câu hỏi.</p>
-            <ol>
-              <li th:each="question : ${section.questions}">
-                <a
-                  th:href="@{/admin/questions/{id}(id=${question.id})}"
-                  th:text="${question.content}"
-                ></a>
-              </li>
-            </ol>
+          <div class="section-title-row">
+            <div>
+              <h2>Xem trước cấu trúc đề</h2>
+              <p class="muted">Bản xem trước mô phỏng nội dung học viên sẽ nhìn thấy khi làm đề.</p>
+            </div>
+          </div>
+          <details
+            class="dashboard-panel exam-preview-section"
+            th:each="section, order : ${examPreview}"
+            open
+          >
+            <summary class="exam-preview-section-summary">
+              <span
+                th:text="${'Phần ' + (order.index + 1) + ' · ' + display.catalogSkill(section.skill) + ' · ' + section.minutes + ' phút'}"
+              ></span>
+              <span class="badge" th:text="${section.questions.size() + ' câu'}"></span>
+            </summary>
+            <p class="muted" th:if="${section.questions.isEmpty()}">
+              Chưa chọn câu hỏi cho phần này.
+            </p>
+            <div class="exam-preview-questions" th:if="${!section.questions.isEmpty()}">
+              <article
+                class="exam-preview-question"
+                th:each="question, questionOrder : ${section.questions}"
+              >
+                <header class="exam-preview-question-header">
+                  <div>
+                    <p
+                      class="eyebrow"
+                      th:text="${'Câu ' + (questionOrder.index + 1) + ' · ' + display.catalogSkill(question.skill)}"
+                    ></p>
+                    <h3 th:text="${question.content}"></h3>
+                  </div>
+                  <div class="exam-preview-question-meta">
+                    <span class="badge" th:text="${question.typeLabel}"></span>
+                    <a class="text-link" th:href="@{/admin/questions/{id}(id=${question.id})}">
+                      Mở câu hỏi
+                    </a>
+                  </div>
+                </header>
+
+                <p
+                  class="question-instruction"
+                  th:if="${question.instruction != null and !question.instruction.isBlank()}"
+                  th:text="${question.instruction}"
+                ></p>
+                <article
+                  class="admin-reading-passage"
+                  th:if="${question.readingPassage != null and !question.readingPassage.isBlank()}"
+                >
+                  <h4>Đoạn văn</h4>
+                  <div
+                    class="admin-reading-passage-text"
+                    th:text="${question.readingPassage}"
+                  ></div>
+                </article>
+
+                <div
+                  class="exam-preview-media-list"
+                  th:if="${question.media != null and !question.media.isEmpty()}"
+                >
+                  <div class="exam-preview-media" th:each="media : ${question.media}">
+                    <img
+                      th:if="${media.type == 'IMAGE'}"
+                      loading="lazy"
+                      th:src="@{/admin/questions/{id}/media/{mediaId}/content(id=${question.id},mediaId=${media.id})}"
+                      th:alt="${(media.altText != null and !media.altText.isBlank()) ? media.altText : media.filename}"
+                    />
+                    <div
+                      class="exam-preview-audio"
+                      th:if="${media.type == 'AUDIO' and media.browserSpeech}"
+                    >
+                      <strong>Audio giọng đọc trình duyệt</strong>
+                      <span class="muted" th:text="${media.filename}"></span>
+                    </div>
+                    <audio
+                      th:if="${media.type == 'AUDIO' and !media.browserSpeech}"
+                      controls
+                      preload="none"
+                      th:aria-label="${media.filename}"
+                    >
+                      <source
+                        th:src="@{/admin/questions/{id}/media/{mediaId}/content(id=${question.id},mediaId=${media.id})}"
+                        th:type="${media.contentType}"
+                      />
+                    </audio>
+                  </div>
+                </div>
+
+                <div
+                  class="exam-preview-items"
+                  th:if="${question.items != null and !question.items.isEmpty()}"
+                >
+                  <div class="exam-preview-item" th:each="item : ${question.items}">
+                    <div class="exam-preview-item-heading">
+                      <span class="question-item-number" th:text="${item.position}"></span>
+                      <p th:text="${item.content}"></p>
+                    </div>
+                    <div
+                      class="exam-preview-options"
+                      th:if="${item.options != null and !item.options.isEmpty()}"
+                    >
+                      <div class="exam-preview-option" th:each="option : ${item.options}">
+                        <span class="exam-preview-option-control" aria-hidden="true"></span>
+                        <span
+                          th:text="${option.code != null and !option.code.isBlank() ? option.code + ' · ' + option.content : option.content}"
+                        ></span>
+                      </div>
+                    </div>
+                    <div class="exam-preview-response" th:if="${question.type == 'ORDERING'}">
+                      <span class="exam-preview-response-box">1</span>
+                      <span>
+                        Nhập vị trí từ 1 đến
+                        <span th:text="${question.items.size()}"></span>
+                      </span>
+                    </div>
+                    <div class="exam-preview-response" th:if="${question.type == 'WRITING_TEXT'}">
+                      <div class="exam-preview-textarea">Ô trả lời của học viên</div>
+                      <span
+                        class="muted"
+                        th:if="${item.minWordCount != null or item.maxWordCount != null}"
+                        th:text="${'Giới hạn từ: ' + (item.minWordCount == null ? 'không giới hạn' : item.minWordCount) + ' – ' + (item.maxWordCount == null ? 'không giới hạn' : item.maxWordCount)}"
+                      ></span>
+                    </div>
+                    <div class="exam-preview-response" th:if="${question.type == 'SPEAKING_AUDIO'}">
+                      <span class="exam-preview-recording">Bản ghi âm của học viên</span>
+                      <span
+                        class="muted"
+                        th:if="${item.responseSeconds != null}"
+                        th:text="${'Thời gian trả lời: ' + item.responseSeconds + ' giây'}"
+                      ></span>
+                    </div>
+                  </div>
+                </div>
+                <p class="muted" th:if="${question.items == null or question.items.isEmpty()}">
+                  Câu hỏi này chưa có nội dung item.
+                </p>
+              </article>
+            </div>
           </details>
         </section>
 
