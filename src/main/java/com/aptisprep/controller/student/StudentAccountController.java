@@ -8,6 +8,7 @@ import com.aptisprep.service.account.AccountProfileService;
 import com.aptisprep.service.account.LearningActivityService;
 import com.aptisprep.service.contract.IntegrationModels.AttemptHandle;
 import com.aptisprep.service.placement.PlacementService;
+import com.aptisprep.service.scoring.ScoringGuideService;
 import jakarta.validation.Valid;
 import java.security.Principal;
 import java.util.List;
@@ -19,6 +20,8 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 @Controller
 public class StudentAccountController {
+    private final ScoringGuideService scoringGuides;
+
     private final PlacementService placement;
     private final AccountProfileService accounts;
     private final LearningActivityService activity;
@@ -26,9 +29,11 @@ public class StudentAccountController {
     public StudentAccountController(
             PlacementService placement,
             AccountProfileService accounts,
-            LearningActivityService activity) {
+            LearningActivityService activity,
+            ScoringGuideService scoringGuides) {
         this.placement = placement;
         this.accounts = accounts;
+        this.scoringGuides = scoringGuides;
         this.activity = activity;
     }
 
@@ -103,11 +108,14 @@ public class StudentAccountController {
     }
 
     @GetMapping("/student/placement")
-    public String placement(@RequestParam(defaultValue = "READING") String skill, Model model) {
+    public String placement(
+            @RequestParam(defaultValue = "READING") String skill,
+            Principal principal,
+            Model model) {
         if (!placementSkills().contains(skill))
             throw new BusinessRuleException("Kỹ năng Placement không hợp lệ");
         model.addAttribute("skill", skill);
-        model.addAttribute("placementExams", placement.available(skill));
+        model.addAttribute("placementExams", placement.available(principal.getName(), skill));
         return "student/account/placement";
     }
 
@@ -128,7 +136,9 @@ public class StudentAccountController {
 
     @GetMapping("/student/placement/result")
     public String result(@RequestParam Integer attemptId, Principal principal, Model model) {
-        model.addAttribute("placementResult", placement.result(principal.getName(), attemptId));
+        var result = placement.result(principal.getName(), attemptId);
+        model.addAttribute("placementResult", result);
+        model.addAttribute("scoreGuides", scoringGuides.forResult(result));
         return "student/account/placement-result";
     }
 

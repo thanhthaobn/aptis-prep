@@ -35,6 +35,8 @@ class StudentContentPreviewTests {
     @Autowired com.aptisprep.repository.QuestionRepository questions;
     @Autowired com.aptisprep.repository.CertificateRepository certificates;
     @Autowired com.aptisprep.repository.ScoringSchemeRepository schemes;
+    @Autowired com.aptisprep.repository.ScoringScaleRuleRepository rules;
+    @Autowired com.aptisprep.repository.ScoreBandRepository bands;
     private final java.util.List<Integer> examIds = new java.util.ArrayList<>();
 
     @org.junit.jupiter.api.BeforeEach
@@ -57,15 +59,7 @@ class StudentContentPreviewTests {
             exam.setStatus("PUBLISHED");
             exam = exams.saveAndFlush(exam);
             examIds.add(exam.getId());
-            if (i == 0) {
-                var section = new com.aptisprep.entity.MockExamSectionEntity();
-                section.setMockExamId(exam.getId());
-                section.setSkill("LISTENING");
-                section.setDisplayOrder(1);
-                section.setDurationMinutes(20);
-                section.setStatus("ACTIVE");
-                sections.saveAndFlush(section);
-            }
+            addExamQuestions(exam);
         }
     }
 
@@ -121,14 +115,8 @@ class StudentContentPreviewTests {
 
     @Test
     void examPagesKeepEncodedFiltersAndDoNotRepeatEntries() throws Exception {
-        for (int id : examIds) {
-            var exam = exams.findById(id).orElseThrow();
-            exam.setTitle("Phân trang & đề " + id);
-            exam.setSkill("READING");
-            exam.setTargetLevel("B1");
-            exam.setExamType("PRACTICE");
-            exams.saveAndFlush(exam);
-        }
+        for (int i = 0; i < 3; i++)
+            catalogExam("Phân trang & đề " + i, "PRACTICE", "READING", "B1", 20);
         var seen = new HashSet<Integer>();
         for (int page = 0; page < 3; page++) {
             var response =
@@ -322,60 +310,23 @@ class StudentContentPreviewTests {
         scheme.setStatus(RecordStatus.ACTIVE);
         scheme = schemes.saveAndFlush(scheme);
 
-        var question = new QuestionEntity();
-        question.setContent("Choose the correct answer.");
-        question.setQuestionType("SINGLE_CHOICE");
-        question.setSkill("READING");
-        question.setCefrLevel("B1");
-        question.setStatus("PUBLISHED");
-        question = questions.saveAndFlush(question);
-
         var exam = catalogExam("Incomplete policy exam", "PRACTICE", "READING", "B1", 35);
         exam.setScoringSchemeId(scheme.getId());
         exams.saveAndFlush(exam);
-
-        var link = new MockExamQuestionEntity();
-        link.setMockExamId(exam.getId());
-        link.setQuestionId(question.getId());
-        link.setPosition(1);
-        examQuestions.saveAndFlush(link);
 
         mvc.perform(
                         get("/student/exams")
                                 .param("q", "Incomplete policy exam")
                                 .with(user("student").roles("STUDENT")))
                 .andExpect(status().isOk())
-                .andExpect(content().string(containsString("Incomplete policy exam")));
+                .andExpect(content().string(containsString("0 kết quả")));
         mvc.perform(get("/student/exams/" + exam.getId()).with(user("student").roles("STUDENT")))
-                .andExpect(status().isOk())
-                .andExpect(content().string(containsString("raw-to-scale")))
-                .andExpect(
-                        content()
-                                .string(
-                                        not(
-                                                containsString(
-                                                        "/student/exams/"
-                                                                + exam.getId()
-                                                                + "/start"))));
+                .andExpect(status().isNotFound());
     }
 
     @Test
     void startablePracticeExamExposesStartActionInCatalog() throws Exception {
-        var question = new QuestionEntity();
-        question.setContent("Choose the correct answer.");
-        question.setQuestionType("SINGLE_CHOICE");
-        question.setSkill("READING");
-        question.setCefrLevel("B1");
-        question.setStatus("PUBLISHED");
-        question = questions.saveAndFlush(question);
-
         var exam = catalogExam("Startable practice exam", "PRACTICE", "READING", "B1", 35);
-        var link = new MockExamQuestionEntity();
-        link.setMockExamId(exam.getId());
-        link.setQuestionId(question.getId());
-        link.setPosition(1);
-        examQuestions.saveAndFlush(link);
-
         mvc.perform(
                         get("/student/exams")
                                 .param("q", "Startable practice exam")
@@ -399,7 +350,61 @@ class StudentContentPreviewTests {
         exam.setTargetLevel(level);
         exam.setDurationMinutes(minutes);
         exam.setStatus("PUBLISHED");
-        return exams.saveAndFlush(exam);
+        if (List.of("PLACEMENT", "CHECKPOINT").contains(type)) {
+            var scheme = new ScoringScheme();
+            scheme.setCertificate(certificates.findById(exam.getCertificateId()).orElseThrow());
+            scheme.setName("Test policy");
+            scheme.setVersion("TEST-" + System.nanoTime());
+            scheme.setStatus(RecordStatus.ACTIVE);
+            scheme = schemes.saveAndFlush(scheme);
+            var rule = new com.aptisprep.entity.ScoringScaleRule();
+            rule.setScheme(scheme);
+            rule.setSkill(skill);
+            rule.setRawMin(java.math.BigDecimal.ZERO);
+            rule.setRawMax(java.math.BigDecimal.TEN);
+            rule.setScaleMin(java.math.BigDecimal.ZERO);
+            rule.setScaleMax(java.math.BigDecimal.TEN);
+            rules.saveAndFlush(rule);
+            var band = new com.aptisprep.entity.ScoreBand();
+            band.setScheme(scheme);
+            band.setSkill(skill);
+            band.setCefrLevel("A1");
+            band.setMinScore(java.math.BigDecimal.ZERO);
+            band.setMaxScore(java.math.BigDecimal.TEN);
+            bands.saveAndFlush(band);
+            exam.setScoringSchemeId(scheme.getId());
+        }
+        var saved = exams.saveAndFlush(exam);
+        addExamQuestions(saved);
+        return saved;
+    }
+
+    private void addExamQuestions(MockExamEntity exam) {
+        boolean fullMock = "FULL_MOCK".equals(exam.getExamType());
+        var skills = fullMock ? com.aptisprep.enums.Skill.codes() : List.of(exam.getSkill());
+        int position = 0;
+        for (String skill : skills) {
+            var question = new QuestionEntity();
+            question.setContent("Test question");
+            question.setQuestionType("SINGLE_CHOICE");
+            question.setSkill(skill);
+            question.setCefrLevel("A1");
+            question.setStatus("PUBLISHED");
+            var link = new MockExamQuestionEntity();
+            link.setMockExamId(exam.getId());
+            link.setQuestionId(questions.saveAndFlush(question).getId());
+            link.setPosition(++position);
+            if (fullMock) {
+                var section = new com.aptisprep.entity.MockExamSectionEntity();
+                section.setMockExamId(exam.getId());
+                section.setSkill(skill);
+                section.setDisplayOrder(position);
+                section.setDurationMinutes(5);
+                section.setStatus("ACTIVE");
+                link.setMockExamSectionId(sections.saveAndFlush(section).getId());
+            }
+            examQuestions.saveAndFlush(link);
+        }
     }
 
     @Test

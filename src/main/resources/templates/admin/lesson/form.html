@@ -10,10 +10,10 @@
     <div class="container ap-container app-shell">
       <div th:replace="~{fragments/admin-sidebar :: adminSidebar('lessons')}"></div>
       <main class="app-main lesson-author" id="main-content" tabindex="-1">
-        <a class="lesson-back" th:href="${editing ? '/admin/lessons/'+lessonId : '/admin/lessons'}">
-          ← Quay lại
-          <span th:text="${editing?'chi tiết bài học':'cây bài học'}"></span>
-        </a>
+        <div
+          th:replace="~{fragments/back-link :: backLink(${editing ? '/admin/lessons/'+lessonId : '/admin/lessons'})}"
+        ></div>
+
         <header class="page-header">
           <h1 th:text="${editing ? 'Chỉnh sửa bài học' : 'Tạo bài học'}"></h1>
         </header>
@@ -559,12 +559,9 @@
           </template>
           <div class="editor-actions">
             <button class="button" type="submit">Lưu bài học</button>
-            <a
-              class="button button-secondary"
-              th:href="${editing ? '/admin/lessons/'+lessonId : '/admin/lessons'}"
-            >
-              Quay lại
-            </a>
+            <div
+              th:replace="~{fragments/back-link :: backLink(${editing ? '/admin/lessons/'+lessonId : '/admin/lessons'})}"
+            ></div>
           </div>
         </form>
       </main>

@@ -13,6 +13,31 @@ import org.springframework.beans.factory.ObjectProvider;
 class PlacementServiceTests {
     @Test
     @SuppressWarnings("unchecked")
+    void availableExamsUseAnUnambiguousActionForTheCurrentAttemptState() {
+        var catalog = mock(PlacementExamCatalogService.class);
+        var published = mock(ExamCatalogContract.class);
+        var engine = mock(ExamAttemptContract.class);
+        var accounts = mock(AccountAccessContract.class);
+        ObjectProvider<ExamAttemptContract> engines = mock(ObjectProvider.class);
+        ObjectProvider<AccountAccessContract> access = mock(ObjectProvider.class);
+        when(engines.getIfAvailable()).thenReturn(engine);
+        when(access.getIfAvailable()).thenReturn(accounts);
+        when(accounts.requireActiveStudent("learner@test.local")).thenReturn(9);
+        when(catalog.findPublished("LISTENING"))
+                .thenReturn(
+                        List.of(
+                                new PlacementExamCatalogService.PlacementExam(
+                                        10, "Listening placement", "")));
+        var service = new PlacementService(catalog, published, engines, access);
+
+        assertFalse(service.available("learner@test.local", "LISTENING").getFirst().resumable());
+
+        when(engine.hasInProgressPlacement(9, "LISTENING")).thenReturn(true);
+        assertTrue(service.available("learner@test.local", "LISTENING").getFirst().resumable());
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
     void selectionUsesIntegerValuesBeyondTheJvmCacheAndRejectsOtherIds() {
         var catalog = mock(PlacementExamCatalogService.class);
         var published = mock(ExamCatalogContract.class);

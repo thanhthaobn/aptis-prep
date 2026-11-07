@@ -50,7 +50,15 @@ public class StudentExamController {
     @GetMapping("/student/attempts/{id}")
     public String attempt(@PathVariable Integer id, Principal principal, Model model) {
         Integer userId = accounts.requireActiveStudent(principal.getName());
-        model.addAttribute("attempt", attempts.page(userId, id));
+        ExamAttemptService.AttemptPage page = attempts.page(userId, id);
+        model.addAttribute("attempt", page);
+        String exitUrl = "/student/exams";
+        if ("PLACEMENT".equals(page.examType())) {
+            String skill =
+                    page.questions().isEmpty() ? "READING" : page.questions().getFirst().skill();
+            exitUrl = "/student/placement?skill=" + skill;
+        }
+        model.addAttribute("attemptExitUrl", exitUrl);
         return "student/attempt";
     }
 
@@ -112,6 +120,30 @@ public class StudentExamController {
             redirect.addFlashAttribute("error", exception.getMessage());
         }
         return "redirect:/student/attempts/" + id;
+    }
+
+    @PostMapping(
+            value = "/student/attempts/{id}/answers/audio/autosave",
+            consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> audioAutosave(
+            @PathVariable Integer id,
+            @RequestParam Integer questionId,
+            @RequestParam(required = false) Integer itemId,
+            @RequestParam("audioFile") MultipartFile audioFile,
+            Principal principal) {
+        try {
+            attempts.saveSpeakingAudio(
+                    accounts.requireActiveStudent(principal.getName()),
+                    id,
+                    questionId,
+                    itemId,
+                    audioFile);
+            return ResponseEntity.ok(Map.of("saved", true));
+        } catch (BusinessRuleException exception) {
+            return ResponseEntity.badRequest()
+                    .body(Map.of("saved", false, "message", exception.getMessage()));
+        }
     }
 
     @PostMapping("/student/attempts/{id}/media/{mediaId}/play")

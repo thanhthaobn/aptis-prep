@@ -11,9 +11,38 @@
   const submitForm = document.getElementById('submit-attempt-form');
   const submitButton = document.getElementById('submit-attempt');
   const submitError = document.getElementById('attempt-submit-error');
+  const questionSections = [...document.querySelectorAll('.full-mock-question')];
+  const questionLinks = [...document.querySelectorAll('.exam-question-link')];
+  const examProgressCount = document.getElementById('exam-progress-count');
   let submitting = false,
     confirming = false,
     deadlineReached = false;
+  const itemIsAnswered = (item) =>
+    item.dataset.saved === 'true' ||
+    !!item.querySelector('input[type="radio"]:checked') ||
+    [...item.querySelectorAll('input[type="number"], textarea')].some(
+      (input) => input.value.trim() !== '',
+    );
+  const currentQuestion = document.getElementById('exam-current-question');
+  const markCurrentQuestion = (index) => {
+    if (currentQuestion) currentQuestion.textContent = 'Câu ' + (index + 1);
+    questionLinks.forEach((link, i) => {
+      link.classList.toggle('is-current', i === index);
+      link.setAttribute('aria-current', i === index ? 'step' : 'false');
+    });
+  };
+  const updateExamNavigation = () => {
+    let answeredQuestions = 0;
+    questionSections.forEach((section, index) => {
+      const items = [...section.querySelectorAll('.question-item')];
+      const answered = items.filter(itemIsAnswered).length;
+      const questionAnswered = items.length > 0 && answered === items.length;
+      if (questionAnswered) answeredQuestions++;
+      questionLinks[index]?.classList.toggle('is-answered', questionAnswered);
+    });
+    if (examProgressCount)
+      examProgressCount.innerHTML = `<strong>${answeredQuestions}</strong>/${questionSections.length} câu đã làm`;
+  };
   const save = (form) => {
     const status = form.querySelector('.autosave-status');
     if (!csrf || !status) return Promise.resolve(true);
@@ -59,19 +88,75 @@
     );
   };
   forms.forEach((form) => {
-    form.addEventListener('input', () => schedule(form));
-    form.addEventListener('change', () => schedule(form));
+    form.addEventListener('input', () => {
+      schedule(form);
+      updateExamNavigation();
+    });
+    form.addEventListener('change', () => {
+      schedule(form);
+      updateExamNavigation();
+    });
     form.addEventListener('submit', (event) => {
       event.preventDefault();
       save(form).catch(() => {});
     });
   });
+  updateExamNavigation();
+  document.getElementById('exit-attempt')?.addEventListener('click', async (event) => {
+    event.preventDefault();
+    const exitUrl = event.currentTarget.href;
+    const confirmed = await window.AppDialog.confirm({
+      title: 'Thoát bài thi?',
+      message:
+        'Các câu trả lời đã lưu vẫn được giữ lại. Bạn có chắc muốn rời bài thi và tiếp tục sau không?',
+      confirmText: 'Thoát bài thi',
+      cancelText: 'Ở lại làm bài',
+    });
+    if (confirmed) window.location.assign(exitUrl);
+  });
+  if (!document.body.classList.contains('full-mock-exam')) {
+    questionLinks.forEach((link, index) => {
+      link.addEventListener('click', () => {
+        questionLinks.forEach((item) => item.classList.remove('is-current'));
+        link.classList.add('is-current');
+        markCurrentQuestion(index);
+        questionSections[index]?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      });
+    });
+    markCurrentQuestion(0);
+    if (typeof IntersectionObserver === 'function') {
+      const observer = new IntersectionObserver(
+        (entries) => {
+          const visible = entries
+            .filter((entry) => entry.isIntersecting)
+            .sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top);
+          if (visible.length) markCurrentQuestion(questionSections.indexOf(visible[0].target));
+        },
+        { rootMargin: '-90px 0px -50% 0px', threshold: 0 },
+      );
+      questionSections.forEach((section) => observer.observe(section));
+    }
+  }
   const submit = async (automatic) => {
     if (automatic) {
       deadlineReached = true;
       window.AppDialog.dismiss();
     }
     if (submitting || (!automatic && confirming)) return;
+    if (
+      !automatic &&
+      [...document.querySelectorAll('.speaking-recorder')].some(
+        (box) => box.dataset.dirty === 'true',
+      )
+    ) {
+      if (submitError) {
+        submitError.textContent =
+          'Có bản ghi Speaking chưa lưu hoặc đang ghi. Hãy dừng và lưu bản ghi trước khi nộp.';
+        submitError.hidden = false;
+        submitError.focus();
+      }
+      return;
+    }
     if (!automatic) {
       confirming = true;
       const confirmed = await window.AppDialog.confirm({
@@ -181,9 +266,13 @@
         page.classList.toggle('is-active', active);
         page.setAttribute('aria-hidden', String(!active));
       });
+      markCurrentQuestion(currentPage);
       if (pageInfo) pageInfo.textContent = `Câu ${currentPage + 1} / ${pages.length}`;
       if (previous) previous.disabled = currentPage === 0;
       if (next) next.disabled = currentPage === pages.length - 1;
+      questionLinks.forEach((link, linkIndex) =>
+        link.classList.toggle('is-current', linkIndex === currentPage),
+      );
       updateProgress();
       pages[currentPage].querySelector('h2')?.focus({ preventScroll: true });
       window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -191,19 +280,24 @@
     document.body.classList.add('pagination-ready');
     previous?.addEventListener('click', () => showPage(currentPage - 1));
     next?.addEventListener('click', () => showPage(currentPage + 1));
+    questionLinks.forEach((link, index) => link.addEventListener('click', () => showPage(index)));
     document.querySelectorAll('.answer-form').forEach((form) => {
       form.addEventListener('input', updateProgress);
       form.addEventListener('change', updateProgress);
+      form.closest('.question-item')?.addEventListener('recording-saved', updateProgress);
     });
     showPage(0);
   }
   const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.content || 'X-CSRF-TOKEN';
   document.querySelectorAll('.media-audio').forEach((player) => {
-    const status = player.parentElement.querySelector('.media-status');
-    const playButton = player.parentElement.querySelector('.media-play-button');
+    const container = player.closest('.media-player');
+    const status = container.querySelector('.media-status');
+    const playTrigger = container.querySelector('.media-play-trigger');
     let tokenReady = false;
     let loading = false;
     let exhausted = false;
+    let playbackPosition = 0;
+    let restoringPosition = false;
     const requestPlayback = async () => {
       if (tokenReady || loading) return;
       if (exhausted) {
@@ -229,8 +323,9 @@
         if (!result.contentToken) throw new Error('Máy chủ chưa cấp quyền phát audio');
         player.src = player.dataset.content + '?token=' + encodeURIComponent(result.contentToken);
         player.load();
+        playbackPosition = 0;
         tokenReady = true;
-        playButton.disabled = false;
+        playTrigger.hidden = true;
         status.textContent = `Đã dùng ${result.playCount}/${result.maxPlayCount} lượt nghe`;
         try {
           await player.play();
@@ -243,27 +338,35 @@
         player.dataset.maxPlayCount = result.maxPlayCount;
       } catch (error) {
         tokenReady = false;
+        playTrigger.hidden = false;
         status.textContent = error.message || 'Không thể phát audio';
       } finally {
         loading = false;
       }
     };
-    playButton?.addEventListener('click', requestPlayback);
-    player.addEventListener('click', (event) => {
-      if (!tokenReady) {
-        event.preventDefault();
-        requestPlayback();
-      }
-    });
+    playTrigger.addEventListener('click', requestPlayback);
     player.addEventListener('play', () => {
       if (!tokenReady) {
         player.pause();
         requestPlayback();
       }
     });
+    player.addEventListener('timeupdate', () => {
+      if (!player.seeking && !restoringPosition) playbackPosition = player.currentTime;
+    });
+    player.addEventListener('seeking', () => {
+      if (restoringPosition || Math.abs(player.currentTime - playbackPosition) < 0.25) return;
+      restoringPosition = true;
+      player.currentTime = playbackPosition;
+      status.textContent = 'Bài nghe không cho phép tua. Audio sẽ tiếp tục từ vị trí hiện tại.';
+      window.setTimeout(() => {
+        restoringPosition = false;
+      }, 0);
+    });
     player.addEventListener('error', () => {
       if (loading) return;
       tokenReady = false;
+      playTrigger.hidden = false;
       status.textContent = 'Không tải được audio. Hãy bấm phát lại.';
     });
     player.addEventListener('ended', () => {
@@ -271,10 +374,11 @@
       const playCount = Number(player.dataset.playCount || 0);
       const maxPlayCount = Number(player.dataset.maxPlayCount || 0);
       exhausted = maxPlayCount > 0 && playCount >= maxPlayCount;
+      playTrigger.hidden = false;
+      playTrigger.disabled = exhausted;
       if (exhausted) status.textContent = `Đã dùng hết ${maxPlayCount} lượt nghe.`;
       else status.textContent = `Bạn còn ${Math.max(0, maxPlayCount - playCount)} lượt nghe.`;
     });
-    if (playButton) playButton.disabled = false;
   });
   document.querySelectorAll('.speaking-recorder').forEach((box) => {
     const start = box.querySelector('.recording-start');
@@ -317,7 +421,7 @@
       ).padStart(2, '0')}`;
     };
     const updateTimer = () => {
-      if (!recordingStartedAt) return;
+      if (recordingStartedAt == null) return;
       elapsedSeconds = Math.min(maxSeconds, (performance.now() - recordingStartedAt) / 1000);
       progress.value = elapsedSeconds;
       timeLabel.textContent = `${formatTime(elapsedSeconds)} / ${formatTime(maxSeconds)}`;
@@ -326,7 +430,8 @@
       }
     };
     const startTimer = () => {
-      meter.hidden = false;
+      box.dataset.state = 'recording';
+      box.dataset.dirty = 'true';
       progress.max = maxSeconds;
       progress.value = 0;
       elapsedSeconds = 0;
@@ -336,7 +441,6 @@
       timerId = setInterval(updateTimer, 200);
     };
     const stopTimer = () => {
-      updateTimer();
       clearInterval(timerId);
       timerId = null;
       recordingStartedAt = null;
@@ -352,7 +456,8 @@
       if (previewUrl) URL.revokeObjectURL(previewUrl);
       previewUrl = null;
       preview.removeAttribute('src');
-      preview.hidden = true;
+      preview.classList.add('is-empty');
+      preview.setAttribute('aria-hidden', 'true');
     };
     start.addEventListener('click', async () => {
       if (!navigator.mediaDevices?.getUserMedia || !window.MediaRecorder) {
@@ -365,6 +470,8 @@
       setStatus('Đang chờ quyền microphone…');
       try {
         stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        clearPreview();
+        recordingBlob = null;
         chunks = [];
         recorder = supportedMime
           ? new MediaRecorder(stream, { mimeType: supportedMime })
@@ -377,12 +484,14 @@
           clearPreview();
           previewUrl = URL.createObjectURL(recordingBlob);
           preview.src = previewUrl;
-          preview.hidden = false;
+          preview.classList.remove('is-empty');
+          preview.setAttribute('aria-hidden', 'false');
+          box.dataset.state = 'preview';
           reset.disabled = false;
           saveRecording.disabled = false;
           stream?.getTracks().forEach((track) => track.stop());
           stream = null;
-          setStatus('Đã ghi xong. Hãy nghe lại trước khi lưu.');
+          setStatus('Đã ghi xong. Nghe lại và lưu.');
         };
         recorder.onerror = () => {
           stopTimer();
@@ -400,6 +509,8 @@
         stream?.getTracks().forEach((track) => track.stop());
         stream = null;
         start.disabled = false;
+        reset.disabled = !recordingBlob;
+        saveRecording.disabled = !recordingBlob;
         setStatus('Không thể dùng microphone. Hãy kiểm tra quyền của trình duyệt.');
       }
     });
@@ -410,35 +521,55 @@
       recordingBlob = null;
       clearPreview();
       stopTimer();
-      meter.hidden = true;
+      box.dataset.state = 'idle';
+      box.dataset.dirty = 'false';
       progress.value = 0;
       timeLabel.textContent = `00:00 / ${formatTime(maxSeconds)}`;
       reset.disabled = true;
       saveRecording.disabled = true;
       start.disabled = false;
-      setStatus('Bản ghi đã được xóa. Bạn có thể ghi lại.');
+      setStatus('Đang bắt đầu bản ghi mới…');
+      start.click();
     });
     saveRecording.addEventListener('click', async () => {
       if (!recordingBlob) return;
       saveRecording.disabled = true;
       reset.disabled = true;
+      start.disabled = true;
       setStatus('Đang lưu bản ghi…');
       const data = new FormData();
       data.append('questionId', box.dataset.questionId);
       data.append('itemId', box.dataset.itemId);
       data.append('audioFile', recordingBlob, `speaking-${box.dataset.itemId}.${extension()}`);
+      let upload;
       try {
-        const response = await fetch(box.dataset.audioAction, {
+        upload = fetch(box.dataset.audioAction, {
           method: 'POST',
           headers: { 'X-CSRF-TOKEN': csrf },
           body: data,
         });
-        if (!response.ok) throw new Error();
-        window.location.href = response.url;
+        inFlight.add(upload);
+        const response = await upload;
+        const result = await response.json();
+        if (!response.ok || !result.saved)
+          throw new Error(result.message || 'Chưa lưu được bản ghi');
+        box.dataset.dirty = 'false';
+        box.dataset.state = 'saved';
+        const item = box.closest('.question-item');
+        item.dataset.saved = 'true';
+        item.dispatchEvent(new Event('recording-saved'));
+        box.querySelector('.recording-saved').textContent = 'Đã lưu bản ghi.';
+        setStatus('Đã lưu bản ghi.');
+        start.disabled = false;
+        reset.disabled = false;
+        updateExamNavigation();
       } catch (error) {
         saveRecording.disabled = false;
         reset.disabled = false;
-        setStatus('Chưa thể lưu bản ghi. Vui lòng thử lại.');
+        start.disabled = false;
+        setStatus(error.message || 'Chưa thể lưu bản ghi. Vui lòng thử lại.');
+      } finally {
+        inFlight.delete(upload);
       }
     });
   });

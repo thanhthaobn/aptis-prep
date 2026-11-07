@@ -21,7 +21,10 @@ class StudentResultRetryTests {
         var attempts = mock(ExamAttemptContract.class);
         var controller =
                 new StudentContentController(
-                        mock(StudentExamCatalogService.class), accounts, attempts);
+                        mock(StudentExamCatalogService.class),
+                        accounts,
+                        attempts,
+                        mock(com.aptisprep.service.scoring.ScoringGuideService.class));
         when(accounts.requireActiveStudent("learner@test.local")).thenReturn(12);
         when(attempts.result(12, 99))
                 .thenReturn(

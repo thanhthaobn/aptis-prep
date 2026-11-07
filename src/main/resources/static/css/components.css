@@ -413,3 +413,15 @@
 @media (max-width: 1000px) { .admin-stat-grid,.quick-grid { grid-template-columns: repeat(2,1fr); } }
 @media (max-width: 760px) { .dashboard-grid,.lower-grid,.admin-main-grid { grid-template-columns: 1fr; } .demo-notice { align-items: flex-start; flex-direction: column; } }
 @media (max-width: 520px) { .admin-stat-grid,.quick-grid { grid-template-columns: 1fr; } .section-title-row { align-items: flex-start; flex-direction: column; } }
+
+/* One back control across page types; previous-item and exam-exit controls stay distinct. */
+.back-link { display: inline-flex; align-items: center; justify-content: center; gap: 6px; width: fit-content; min-height: 38px; margin: 0 0 16px; padding: 7px 12px 7px 9px; border: 1px solid var(--color-border); border-radius: 9px; background: #fff; color: var(--color-muted); font-size: .85rem; font-weight: 650; line-height: 1.4; text-decoration: none; box-shadow: none; }
+.back-link svg { width: 16px; height: 16px; flex: 0 0 16px; }
+.back-link:hover { color: var(--color-primary-dark); border-color: var(--color-primary); background: var(--color-primary-soft); }
+.back-link:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 3px; }
+.page-title-with-icon { display: flex; align-items: center; gap: 12px; }
+.page-title-sticker { display: grid; place-items: center; flex: 0 0 44px; width: 44px; height: 44px; border-radius: 13px; color: #087a69; background: #e4f4ed; box-shadow: 0 3px 0 #b8dfd0; }
+.page-title-sticker svg { width: 25px; height: 25px; }
+.placement-skip { display: inline-block; margin-bottom: 16px; font-size: .85rem; }
+
+.actions > .back-link { margin-bottom: 0; align-self: center; }

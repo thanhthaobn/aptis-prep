@@ -115,6 +115,14 @@ public class ExamAttemptService implements ExamAttemptContract {
     }
 
     @Override
+    @Transactional(readOnly = true)
+    public boolean hasInProgressPlacement(Integer userId, String skill) {
+        return examAttemptRepository
+                .findActivePlacement(userId, skill, Set.of("IN_PROGRESS"))
+                .isPresent();
+    }
+
+    @Override
     @Transactional
     public AttemptHandle startCheckpoint(
             Integer userId, Integer examId, Integer pathId, String requestKey) {

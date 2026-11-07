@@ -521,8 +521,9 @@ class ExamAttemptConcurrencyTests {
         assertThrows(
                 BusinessRuleException.class,
                 () -> attempts.start(f.user().getId(), f.exam().getId(), "speech-only"));
-        org.junit.jupiter.api.Assertions.assertFalse(
-                studentCatalog.entry("exams", f.exam().getId()).startable());
+        org.junit.jupiter.api.Assertions.assertThrows(
+                com.aptisprep.exception.ResourceNotFoundException.class,
+                () -> studentCatalog.entry("exams", f.exam().getId()));
         f.media().setMediaUrl("questions/missing-audio.wav");
         media.saveAndFlush(f.media());
         assertThrows(

@@ -11,7 +11,8 @@
         class="app-main lesson-classroom"
         th:attr="data-skill=${lesson.skill}"
       >
-        <a class="lesson-back" th:href="@{/admin/lessons}">← Quay lại cây bài học</a>
+        <div th:replace="~{fragments/back-link :: backLink(@{/admin/lessons})}"></div>
+
         <p class="alert alert-success" th:if="${message}" th:text="${message}"></p>
         <header class="page-header">
           <div>
@@ -165,7 +166,7 @@
           >
             <button class="button button-secondary" type="submit">Lưu trữ bài học</button>
           </form>
-          <a class="button button-secondary" th:href="@{/admin/lessons}">Quay lại cây bài học</a>
+          <div th:replace="~{fragments/back-link :: backLink(@{/admin/lessons})}"></div>
         </div>
       </main>
     </div>

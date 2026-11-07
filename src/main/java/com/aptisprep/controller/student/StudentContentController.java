@@ -7,6 +7,7 @@ import com.aptisprep.service.contract.ExamAttemptContract;
 import com.aptisprep.service.contract.IntegrationModels.AttemptResult;
 import com.aptisprep.service.contract.IntegrationModels.HistoryFilter;
 import com.aptisprep.service.contract.IntegrationModels.HistoryPage;
+import com.aptisprep.service.scoring.ScoringGuideService;
 import com.aptisprep.service.student.StudentExamCatalogService;
 import com.aptisprep.service.student.StudentExamCatalogService.Catalog;
 import java.security.Principal;
@@ -24,6 +25,8 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 /** Published exams from the database; results use the ownership-checked attempt contract. */
 @Controller
 public class StudentContentController {
+    private final ScoringGuideService scoringGuides;
+
     private final StudentExamCatalogService catalog;
     private final AccountAccessService accounts;
     private final ExamAttemptContract attempts;
@@ -31,9 +34,11 @@ public class StudentContentController {
     public StudentContentController(
             StudentExamCatalogService catalog,
             AccountAccessService accounts,
-            ExamAttemptContract attempts) {
+            ExamAttemptContract attempts,
+            ScoringGuideService scoringGuides) {
         this.catalog = catalog;
         this.accounts = accounts;
+        this.scoringGuides = scoringGuides;
         this.attempts = attempts;
     }
 
@@ -115,13 +120,16 @@ public class StudentContentController {
     public String detail(@PathVariable int id, Model model) {
         examModel(model);
         model.addAttribute("entry", catalog.entry("exams", id));
+        model.addAttribute("scoreGuides", scoringGuides.forExam(id));
         return "student/content/detail";
     }
 
     @GetMapping("/student/attempts/{id}/result")
     public String result(@PathVariable int id, Principal principal, Model model) {
         Integer userId = accounts.requireActiveStudent(principal.getName());
-        model.addAttribute("attemptResult", attempts.result(userId, id));
+        AttemptResult result = attempts.result(userId, id);
+        model.addAttribute("attemptResult", result);
+        model.addAttribute("scoreGuides", scoringGuides.forResult(result));
         model.addAttribute("canRegradeEmpty", attempts.canRegradeEmpty(userId, id));
         return "student/attempt-result";
     }

@@ -17,9 +17,10 @@
         th:insert="~{fragments/admin-sidebar :: adminSidebar('flashcards')}"
       ></div>
       <main class="app-main flashcard-editor" id="main-content" tabindex="-1">
-        <a class="lesson-back" th:href="${personal?'/student/flashcards':'/admin/flashcards'}">
-          ← Quay lại bộ thẻ
-        </a>
+        <div
+          th:replace="~{fragments/back-link :: backLink(${personal?'/student/flashcards':'/admin/flashcards'})}"
+        ></div>
+
         <header class="page-header">
           <div>
             <p class="eyebrow" th:text="${personal?'BỘ THẺ RIÊNG TƯ':'THƯ VIỆN CHUNG'}"></p>
@@ -155,13 +156,9 @@
             </button>
             <button type="button" id="add-card" class="button button-secondary">+ Thêm thẻ</button>
             <button type="submit" class="button">Lưu bộ thẻ</button>
-            <a
-              id="leave-editor"
-              class="button button-secondary"
-              th:href="${personal?'/student/flashcards':'/admin/flashcards'}"
-            >
-              Quay lại
-            </a>
+            <div
+              th:replace="~{fragments/back-link :: backLink(${personal?'/student/flashcards':'/admin/flashcards'})}"
+            ></div>
           </div>
         </form>
       </main>

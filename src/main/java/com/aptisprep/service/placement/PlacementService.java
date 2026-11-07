@@ -34,6 +34,23 @@ public class PlacementService {
         return catalog.findPublished(skill);
     }
 
+    public List<PlacementOption> available(String email, String skill) {
+        List<PlacementExamCatalogService.PlacementExam> exams = available(skill);
+        AccountAccessContract account = accounts.getIfAvailable();
+        ExamAttemptContract attempt = attempts.getIfAvailable();
+        boolean resumable =
+                account != null
+                        && attempt != null
+                        && attempt.hasInProgressPlacement(
+                                account.requireActiveStudent(email), skill);
+        return exams.stream()
+                .map(
+                        exam ->
+                                new PlacementOption(
+                                        exam.id(), exam.title(), exam.subtitle(), resumable))
+                .toList();
+    }
+
     public AttemptHandle start(String email, String skill) {
         return start(email, skill, null);
     }
@@ -70,4 +87,6 @@ public class PlacementService {
             throw new BusinessRuleException("Luồng kết quả Placement chưa sẵn sàng");
         return attempt.result(account.requireActiveStudent(email), attemptId);
     }
+
+    public record PlacementOption(Integer id, String title, String subtitle, boolean resumable) {}
 }

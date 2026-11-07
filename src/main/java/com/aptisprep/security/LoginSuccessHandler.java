@@ -11,10 +11,24 @@ import org.springframework.stereotype.Component;
 @Component
 public class LoginSuccessHandler implements AuthenticationSuccessHandler {
 
+    private final com.aptisprep.repository.UserRepository users;
+
+    public LoginSuccessHandler(com.aptisprep.repository.UserRepository users) {
+        this.users = users;
+    }
+
     @Override
     public void onAuthenticationSuccess(
             HttpServletRequest request, HttpServletResponse response, Authentication authentication)
             throws IOException, ServletException {
+
+        users.findByEmailIgnoreCase(authentication.getName())
+                .ifPresent(
+                        user ->
+                                request.getSession()
+                                        .setAttribute(
+                                                CredentialVersion.SESSION_KEY,
+                                                CredentialVersion.of(user.getPasswordHash())));
 
         boolean admin =
                 authentication.getAuthorities().stream()

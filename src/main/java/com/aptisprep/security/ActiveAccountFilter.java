@@ -37,13 +37,28 @@ public class ActiveAccountFilter extends OncePerRequestFilter {
                     .findByEmailIgnoreCase(authentication.getName())
                     .ifPresent(
                             user -> {
-                                if (user.getStatus() != UserStatus.ACTIVE) {
+                                HttpSession currentSession = request.getSession(false);
+                                String version = CredentialVersion.of(user.getPasswordHash());
+                                Object previous =
+                                        currentSession == null
+                                                ? null
+                                                : currentSession.getAttribute(
+                                                        CredentialVersion.SESSION_KEY);
+                                boolean passwordChanged =
+                                        previous != null && !version.equals(previous);
+                                if (currentSession != null && previous == null)
+                                    currentSession.setAttribute(
+                                            CredentialVersion.SESSION_KEY, version);
+                                if (user.getStatus() != UserStatus.ACTIVE || passwordChanged) {
                                     SecurityContextHolder.clearContext();
                                     HttpSession session = request.getSession(false);
                                     if (session != null) session.invalidate();
                                     try {
                                         response.sendRedirect(
-                                                request.getContextPath() + "/login?locked");
+                                                request.getContextPath()
+                                                        + (passwordChanged
+                                                                ? "/login?passwordChanged"
+                                                                : "/login?locked"));
                                     } catch (IOException exception) {
                                         throw new RuntimeException(exception);
                                     }

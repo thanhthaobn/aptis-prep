@@ -105,6 +105,13 @@ public class DisplayFormatting {
         return admin ? List.of("admin") : List.of("mine", "lesson");
     }
 
+    public boolean fieldInvalid(String formName, String field) {
+        if (!(RequestContextHolder.getRequestAttributes()
+                instanceof ServletRequestAttributes attributes)) return false;
+        Errors errors = new RequestContext(attributes.getRequest()).getErrors(formName, false);
+        return errors != null && errors.hasFieldErrors(field);
+    }
+
     public List<String> globalErrors(String formName) {
         return formErrors(formName, true);
     }

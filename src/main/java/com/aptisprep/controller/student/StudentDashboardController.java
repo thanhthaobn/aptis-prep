@@ -76,12 +76,13 @@ public class StudentDashboardController {
                             .orElse("—");
             String goal =
                     account.goal() == null
-                            ? "Chưa đặt mục tiêu"
-                            : account.goal().targets().getOrDefault(code, "Chưa đặt mục tiêu");
+                            ? "chưa đặt"
+                            : account.goal().targets().getOrDefault(code, "chưa đặt");
             skillOverview.add(new SkillOverview(label, current, goal));
         }
         model.addAttribute("skillOverview", skillOverview);
-        model.addAttribute("activity", activity.activity(principal.getName()));
+        var activityView = activity.activity(principal.getName());
+        model.addAttribute("activity", activityView);
         ExamAttemptContract attemptService = attempts.getIfAvailable();
         AttemptResult latestResult =
                 attemptService == null
@@ -93,8 +94,57 @@ public class StudentDashboardController {
                                 .findFirst()
                                 .orElse(null);
         model.addAttribute("latestResult", latestResult);
+        boolean newcomer =
+                activityView.totalActivities() == 0
+                        && account.goal() == null
+                        && account.profiles().isEmpty()
+                        && latestResult == null;
+        model.addAttribute("newLearner", newcomer);
+        NextAction nextAction = null;
+        if (latestResult != null && "IN_PROGRESS".equals(latestResult.state()))
+            nextAction =
+                    new NextAction(
+                            "Bài thi đang làm",
+                            "/student/attempts/" + latestResult.attemptId(),
+                            "Tiếp tục làm bài");
+        else if (latestResult != null
+                && ("WAITING_GRADING".equals(latestResult.state())
+                        || "SUBMITTED".equals(latestResult.state())))
+            nextAction =
+                    new NextAction(
+                            "Bài đã nộp đang được chấm",
+                            "/student/attempts/" + latestResult.attemptId() + "/result",
+                            "Xem trạng thái chấm");
+        if (nextAction == null) {
+            var checkpoint =
+                    paths.stream()
+                            .filter(
+                                    p ->
+                                            p.totalRequiredLessons() > 0
+                                                    && p.completedRequiredLessons()
+                                                            == p.totalRequiredLessons()
+                                                    && !"COMPLETED".equals(p.pathStatus())
+                                                    && !"not_configured"
+                                                            .equals(p.checkpointState()))
+                            .findFirst();
+            if (checkpoint.isPresent())
+                nextAction =
+                        new NextAction(
+                                "Kiểm tra cuối chặng · " + checkpoint.get().skill(),
+                                "/student/learning-path/" + checkpoint.get().skill(),
+                                "Xem kiểm tra cuối chặng");
+            else if (!newcomer && recommendation != null)
+                nextAction =
+                        new NextAction(
+                                recommendation.title(),
+                                "/student/lessons/" + recommendation.lessonId(),
+                                "Học tiếp ngay");
+        }
+        model.addAttribute("nextAction", nextAction);
         return "student/dashboard";
     }
+
+    public record NextAction(String title, String url, String label) {}
 
     public record SkillOverview(String label, String current, String goal) {}
 

@@ -120,7 +120,7 @@ class StudentResultFlowTests {
         mvc.perform(get("/student/results").with(user(learner.getEmail()).roles("STUDENT")))
                 .andExpect(status().isOk())
                 .andExpect(view().name("student/results/list"))
-                .andExpect(content().string(containsString("Bạn chưa có kết quả nào")))
+                .andExpect(content().string(containsString("Bạn chưa làm bài thi nào")))
                 .andExpect(
                         content()
                                 .string(

@@ -6,6 +6,7 @@
     <div class="container ap-container app-shell">
       <div th:replace="~{fragments/admin-sidebar :: adminSidebar(${catalog.key})}"></div>
       <main id="main-content" tabindex="-1" class="app-main admin-catalog">
+        <div th:replace="~{fragments/back-link :: backLink(@{${catalog.baseUrl()}})}"></div>
         <div
           th:replace="~{fragments/breadcrumb :: breadcrumb(${catalog.title}, @{${catalog.baseUrl()}}, 'Chi tiết')}"
         ></div>
@@ -23,7 +24,6 @@
             >
               Chỉnh sửa
             </a>
-            <a class="button button-secondary" th:href="@{${catalog.baseUrl()}}">Về danh sách</a>
           </div>
         </header>
         <section class="dashboard-panel">

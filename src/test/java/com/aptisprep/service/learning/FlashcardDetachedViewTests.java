@@ -75,7 +75,7 @@ class FlashcardDetachedViewTests {
                                     .with(user(learner.getEmail()).roles("STUDENT")))
                     .andExpect(status().isOk())
                     .andExpect(view().name("flashcard/study"))
-                    .andExpect(content().string(containsString("Quay lại bộ thẻ")));
+                    .andExpect(content().string(containsString("class=\"back-link\"")));
         } finally {
             for (Integer setId : new Integer[] {libraryId, personalId}) {
                 if (setId != null) {

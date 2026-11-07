@@ -231,7 +231,7 @@ class StructuredLessonTests {
     }
 
     @Test
-    void pathsShowStageScaleOncePerSkillWithoutDuplicatedCatalog() throws Exception {
+    void pathOverviewShowsCompactFactsAndSkillPageKeepsTheStageScale() throws Exception {
         var u = learner("stage-scale@test.local");
         create("Reading");
         String overview =
@@ -241,7 +241,8 @@ class StructuredLessonTests {
                         .getResponse()
                         .getContentAsString(java.nio.charset.StandardCharsets.UTF_8);
         assertThat(overview)
-                .contains("Chặng A1", "aria-current=\"step\"", "Thang chặng CEFR")
+                .contains("Hiện tại", "Đích chặng", "Mục tiêu")
+                .contains("class=\"stage-scale\"", "Thang chặng CEFR")
                 .doesNotContain("Xem chặng học");
         String detail =
                 mvc.perform(
@@ -252,7 +253,7 @@ class StructuredLessonTests {
                         .getResponse()
                         .getContentAsString(java.nio.charset.StandardCharsets.UTF_8);
         assertThat(detail)
-                .contains("Bài học được giao trong chặng", "Reading lesson")
+                .contains("Bài học được giao trong chặng", "Reading lesson", "Thang chặng CEFR")
                 .doesNotContain(
                         "Các bài A1 giúp bạn làm quen", "Thang cấp độ không phải điểm đã đạt")
                 .doesNotContain(

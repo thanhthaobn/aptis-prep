@@ -46,7 +46,7 @@ class FoundationPreviewTests {
                 .andExpect(content().string(not(containsString("Giao diện minh họa"))));
         mvc.perform(get("/student/placement").with(user("new@example.com").roles("STUDENT")))
                 .andExpect(status().isOk())
-                .andExpect(content().string(containsString("Bỏ qua và khám phá")));
+                .andExpect(content().string(containsString("Học trước, kiểm tra sau")));
         mvc.perform(get("/admin/certificates").with(user("admin").roles("ADMIN")))
                 .andExpect(status().isOk())
                 .andExpect(content().string(not(containsString("api-key"))))
