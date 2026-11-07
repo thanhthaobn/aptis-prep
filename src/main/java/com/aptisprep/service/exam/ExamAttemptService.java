@@ -622,10 +622,11 @@ public class ExamAttemptService implements ExamAttemptContract {
     }
 
     private String sectionState(
-            ExamSnapshotService.SectionWindow window, ExamAttemptEntity attempt, LocalDateTime now) {
+            ExamSnapshotService.SectionWindow window,
+            ExamAttemptEntity attempt,
+            LocalDateTime now) {
         if (!"IN_PROGRESS".equals(attempt.getStatus())) return "COMPLETED";
-        if (window == null)
-            return "OPEN";
+        if (window == null) return "OPEN";
         if (window.contains(attempt.getStartedAt(), now)) return "OPEN";
         return now.isBefore(attempt.getStartedAt().plusMinutes(window.start()))
                 ? "UPCOMING"

@@ -622,7 +622,9 @@ class ExamAttemptConcurrencyTests {
         assertEquals("OPEN", firstPage.sections().get(0).state());
         assertEquals("UPCOMING", firstPage.sections().get(1).state());
         String firstHtml =
-                mvc.perform(get("/student/attempts/" + attemptId).with(user(fixture.user().getEmail()).roles("STUDENT")))
+                mvc.perform(
+                                get("/student/attempts/" + attemptId)
+                                        .with(user(fixture.user().getEmail()).roles("STUDENT")))
                         .andExpect(status().isOk())
                         .andReturn()
                         .getResponse()
@@ -630,9 +632,7 @@ class ExamAttemptConcurrencyTests {
         assertTrue(firstHtml.contains("exam-section-navigation"));
         assertTrue(firstHtml.contains("Phần 1"));
         assertTrue(firstHtml.contains("Phần 2"));
-        assertEquals(
-                fixture.question().getId(),
-                firstPage.questions().getFirst().questionId());
+        assertEquals(fixture.question().getId(), firstPage.questions().getFirst().questionId());
         assertThrows(
                 BusinessRuleException.class,
                 () -> attempts.saveAnswer(userId, attemptId, secondId, null, null, null, null));

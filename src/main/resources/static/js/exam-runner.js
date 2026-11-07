@@ -19,6 +19,7 @@
     confirming = false,
     deadlineReached = false;
   const isEditableForm = (form) =>
+    typeof form.closest !== 'function' ||
     form.closest('[data-section-open]')?.dataset.sectionOpen !== 'false';
   const itemIsAnswered = (item) =>
     item.dataset.saved === 'true' ||
