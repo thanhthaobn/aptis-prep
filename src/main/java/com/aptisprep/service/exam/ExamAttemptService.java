@@ -546,63 +546,21 @@ public class ExamAttemptService implements ExamAttemptContract {
         MockExamEntity exam = examFor(attempt);
         expireIfNeeded(attempt, exam);
         List<QuestionPage> questionPages = new ArrayList<>();
-        List<QuestionPage> allQuestionPages = new ArrayList<>();
-        List<SectionPage> sectionPages = new ArrayList<>();
         LocalDateTime now = LocalDateTime.now();
         LocalDateTime examEnd = examDeadline(attempt, exam);
         Instant deadline = instant(examEnd);
-        Map<SectionKey, List<JsonNode>> groupedQuestions = new LinkedHashMap<>();
+        boolean nextSection = false;
+        String sectionSkill = null;
         for (JsonNode question : examSnapshots.lockedQuestionList(attemptId)) {
             var window = ExamSnapshotService.SectionWindow.of(question);
-            SectionKey key =
-                    window == null
-                            ? new SectionKey(question.path("skill").asText(), -1, -1)
-                            : new SectionKey(
-                                    question.path("skill").asText(), window.start(), window.end());
-            groupedQuestions.computeIfAbsent(key, ignored -> new ArrayList<>()).add(question);
-        }
-
-        int currentSectionIndex = -1;
-        String sectionSkill = null;
-        List<Map.Entry<SectionKey, List<JsonNode>>> groupedEntries =
-                new ArrayList<>(groupedQuestions.entrySet());
-        groupedEntries.sort(
-                Comparator.comparingInt(
-                        entry -> entry.getKey().start() < 0 ? 0 : entry.getKey().start()));
-        for (Map.Entry<SectionKey, List<JsonNode>> entry : groupedEntries) {
-            SectionKey key = entry.getKey();
-            var window = key.window();
-            String state = sectionState(window, attempt, now);
-            boolean open = "OPEN".equals(state);
-            int sectionIndex = sectionPages.size();
-            Integer minutes =
-                    window == null
-                            ? Objects.requireNonNullElse(exam.getDurationMinutes(), 0)
-                            : window.end() - window.start();
-            sectionPages.add(
-                    new SectionPage(
-                            sectionIndex,
-                            key.skill(),
-                            minutes,
-                            entry.getValue().size(),
-                            state,
-                            open));
-
-            if (open) {
-                currentSectionIndex = sectionIndex;
-                sectionSkill = key.skill();
-                if (window != null) {
-                    deadline = instant(attempt.getStartedAt().plusMinutes(window.end()));
-                }
+            if (window != null) {
+                if (!window.contains(attempt.getStartedAt(), now)) continue;
+                deadline = instant(attempt.getStartedAt().plusMinutes(window.end()));
+                nextSection = attempt.getStartedAt().plusMinutes(window.end()).isBefore(examEnd);
+                sectionSkill = question.path("skill").asText();
             }
-            for (JsonNode question : entry.getValue()) {
-                QuestionPage page = toQuestionPage(attemptId, question, sectionIndex, open);
-                allQuestionPages.add(page);
-                if (open) questionPages.add(page);
-            }
+            questionPages.add(toQuestionPage(attemptId, question));
         }
-        boolean nextSection =
-                currentSectionIndex >= 0 && currentSectionIndex < sectionPages.size() - 1;
         return new AttemptPage(
                 attempt.getId(),
                 exam.getTitle(),
@@ -613,39 +571,10 @@ public class ExamAttemptService implements ExamAttemptContract {
                                 0,
                                 (Duration.between(instant(now), deadline).toMillis() + 999) / 1000),
                 List.copyOf(questionPages),
-                List.copyOf(allQuestionPages),
-                List.copyOf(sectionPages),
-                currentSectionIndex,
                 deadline,
                 nextSection,
                 sectionSkill);
     }
-
-    private String sectionState(
-            ExamSnapshotService.SectionWindow window,
-            ExamAttemptEntity attempt,
-            LocalDateTime now) {
-        if (!"IN_PROGRESS".equals(attempt.getStatus())) return "COMPLETED";
-        if (window == null) return "OPEN";
-        if (window.contains(attempt.getStartedAt(), now)) return "OPEN";
-        return now.isBefore(attempt.getStartedAt().plusMinutes(window.start()))
-                ? "UPCOMING"
-                : "COMPLETED";
-    }
-
-    private record SectionKey(String skill, int start, int end) {
-        private ExamSnapshotService.SectionWindow window() {
-            return start < 0 ? null : new ExamSnapshotService.SectionWindow(start, end);
-        }
-    }
-
-    public record SectionPage(
-            int index,
-            String skill,
-            Integer durationMinutes,
-            int questionCount,
-            String state,
-            boolean open) {}
 
     public record AttemptPage(
             Integer attemptId,
@@ -653,9 +582,6 @@ public class ExamAttemptService implements ExamAttemptContract {
             String examType,
             Long remainingSeconds,
             List<QuestionPage> questions,
-            List<QuestionPage> allQuestions,
-            List<SectionPage> sections,
-            int currentSectionIndex,
             Instant deadline,
             boolean nextSection,
             String sectionSkill) {
@@ -666,18 +592,7 @@ public class ExamAttemptService implements ExamAttemptContract {
                 Long remainingSeconds,
                 List<QuestionPage> questions,
                 Instant deadline) {
-            this(
-                    attemptId,
-                    title,
-                    examType,
-                    remainingSeconds,
-                    questions,
-                    questions,
-                    List.of(),
-                    0,
-                    deadline,
-                    false,
-                    null);
+            this(attemptId, title, examType, remainingSeconds, questions, deadline, false, null);
         }
 
         public AttemptPage(
@@ -697,15 +612,10 @@ public class ExamAttemptService implements ExamAttemptContract {
             this(attemptId, title, null, remainingSeconds, questions, null);
         }
 
-        private List<QuestionPage> progressQuestions() {
-            return allQuestions == null || allQuestions.isEmpty() ? questions : allQuestions;
-        }
-
         public int totalItems() {
-            List<QuestionPage> source = progressQuestions();
-            return source == null
+            return questions == null
                     ? 0
-                    : source.stream()
+                    : questions.stream()
                             .mapToInt(
                                     question ->
                                             question.items() == null ? 0 : question.items().size())
@@ -713,10 +623,9 @@ public class ExamAttemptService implements ExamAttemptContract {
         }
 
         public int answeredItems() {
-            List<QuestionPage> source = progressQuestions();
-            return source == null
+            return questions == null
                     ? 0
-                    : source.stream()
+                    : questions.stream()
                             .flatMap(
                                     question ->
                                             question.items() == null
@@ -744,9 +653,7 @@ public class ExamAttemptService implements ExamAttemptContract {
             String type,
             int position,
             List<ItemPage> items,
-            List<MediaPage> media,
-            int sectionIndex,
-            boolean sectionOpen) {}
+            List<MediaPage> media) {}
 
     public record ItemPage(
             Integer itemId,
@@ -895,8 +802,7 @@ public class ExamAttemptService implements ExamAttemptContract {
         }
     }
 
-    private QuestionPage toQuestionPage(
-            Integer attemptId, JsonNode question, int sectionIndex, boolean sectionOpen) {
+    private QuestionPage toQuestionPage(Integer attemptId, JsonNode question) {
         Integer questionId = question.path("id").asInt();
         UserAnswerEntity answer =
                 userAnswerRepository
@@ -930,9 +836,7 @@ public class ExamAttemptService implements ExamAttemptContract {
                 question.path("type").asText(),
                 question.path("position").asInt(),
                 itemPages,
-                mediaPages,
-                sectionIndex,
-                sectionOpen);
+                mediaPages);
     }
 
     private ItemPage toItemPage(JsonNode item, UserAnswerDetailEntity answer) {

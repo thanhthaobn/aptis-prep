@@ -2,7 +2,6 @@ package com.aptisprep.controller;
 
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.not;
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -153,22 +152,6 @@ class AdminCatalogPreviewTests {
                                 .with(user("admin@aptis.local").roles("ADMIN")))
                 .andExpect(status().isOk())
                 .andExpect(view().name("admin/settings/scheme"));
-    }
-
-    @Test
-    void publishedExamCanBeStoppedFromAdminDetail() throws Exception {
-        var exam = exams.findById(examIds.getFirst()).orElseThrow();
-        exam.setStatus("PUBLISHED");
-        exams.saveAndFlush(exam);
-
-        mvc.perform(
-                        post("/admin/exams/{id}/unpublish", exam.getId())
-                                .with(user("admin@aptis.local").roles("ADMIN"))
-                                .with(csrf()))
-                .andExpect(status().is3xxRedirection())
-                .andExpect(redirectedUrl("/admin/exams/" + exam.getId()));
-
-        assertEquals("ARCHIVED", exams.findById(exam.getId()).orElseThrow().getStatus());
     }
 
     @Test

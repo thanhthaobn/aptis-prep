@@ -17,7 +17,7 @@
         th:text="${examError}"
       ></p>
       <div class="field">
-        <label class="inline-checkbox">
+        <label>
           <input type="hidden" name="_demoOnly" value="on" />
           <input
             type="checkbox"
@@ -100,19 +100,11 @@
             ></option>
           </select>
         </div>
-        <div class="exam-total-summary">
-          <span>Tổng thời gian tự động</span>
-          <strong>
-            <output
-              id="exam-total-minutes"
-              th:text="${examForm.totalDurationMinutes == null ? '—' : examForm.totalDurationMinutes}"
-            >
-              —
-            </output>
-            phút
-          </strong>
-          <small>Được tính bằng tổng thời lượng của tất cả section.</small>
-        </div>
+        <p class="muted">
+          Tổng thời gian:
+          <output id="exam-total-minutes">—</output>
+          phút
+        </p>
       </div>
       <section class="catalog-form-section">
         <div class="section-title-row"><h2>Sections và câu hỏi</h2></div>

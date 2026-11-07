@@ -4,7 +4,6 @@
   <body
     class="student-theme exam-page"
     th:classappend="${(attempt.examType == 'FULL_MOCK' or (attempt.examType == 'PLACEMENT' and attempt.sectionSkill != null))} ? ' full-mock-exam'"
-    th:attr="data-current-section-index=${attempt.currentSectionIndex}"
   >
     <!-- Non-JS Fallback: hiển thị tất cả các câu hỏi. -->
     <noscript>
@@ -336,42 +335,10 @@
           Còn
           <strong id="timer-display">--:--</strong>
         </div>
-        <nav
-          class="exam-section-navigation"
-          th:if="${attempt.sections != null and attempt.sections.size() > 1}"
-          aria-label="Các phần thi"
-        >
-          <h2>Các phần thi</h2>
-          <ol class="exam-section-list">
-            <li
-              th:each="section : ${attempt.sections}"
-              th:classappend="${section.open ? ' is-current' : (section.state == 'COMPLETED' ? ' is-completed' : ' is-upcoming')}"
-            >
-              <button
-                class="exam-section-link"
-                type="button"
-                th:attr="data-section-index=${section.index},aria-label=${'Mở phần ' + (section.index + 1) + ' ' + display.catalogSkill(section.skill)}"
-              >
-                <span>
-                  <strong
-                    th:text="${'Phần ' + (section.index + 1) + ' · ' + display.catalogSkill(section.skill)}"
-                  ></strong>
-                  <small
-                    th:text="${section.questionCount + ' câu · ' + section.durationMinutes + ' phút'}"
-                  ></small>
-                </span>
-                <em
-                  th:text="${section.state == 'OPEN' ? 'Đang làm' : (section.state == 'COMPLETED' ? 'Đã hết giờ' : 'Chưa mở')}"
-                ></em>
-              </button>
-            </li>
-          </ol>
-          <p class="exam-section-note">Chỉ phần đang mở mới cho phép nhập và lưu đáp án.</p>
-        </nav>
         <dl class="exam-stats">
           <div>
             <dt>Tổng số câu</dt>
-            <dd th:text="${attempt.allQuestions.size()}"></dd>
+            <dd th:text="${attempt.questions.size()}"></dd>
           </div>
           <div>
             <dt>Đang làm</dt>
@@ -382,15 +349,15 @@
           <span class="exam-progress-label" id="exam-progress-count">
             <strong>0</strong>
             /
-            <span th:text="${attempt.allQuestions.size()}">0</span>
+            <span th:text="${attempt.questions.size()}">0</span>
             câu đã làm
           </span>
           <button
-            th:each="question, questionStat : ${attempt.allQuestions}"
+            th:each="question, questionStat : ${attempt.questions}"
             class="exam-question-link"
             type="button"
             th:text="${question.position}"
-            th:attr="data-question-index=${questionStat.index},data-section-index=${question.sectionIndex},aria-label=${'Đi đến câu ' + question.position}"
+            th:attr="data-question-index=${questionStat.index},aria-label=${'Đi đến câu ' + question.position}"
           ></button>
         </nav>
         <div class="exam-control-actions">
@@ -458,18 +425,12 @@
         <div class="alert alert-error" th:if="${error}" th:text="${error}"></div>
         <section
           class="dashboard-panel dashboard-section full-mock-question"
-          th:each="question, questionStat : ${attempt.allQuestions}"
-          th:classappend="${!question.sectionOpen ? ' is-section-locked' : ''}"
-          th:attr="data-question-page=${questionStat.index},data-section-index=${question.sectionIndex},data-section-open=${question.sectionOpen}"
+          th:each="question, questionStat : ${attempt.questions}"
+          th:attr="data-question-page=${questionStat.index}"
         >
           <p
             class="eyebrow"
             th:text="${'Câu ' + (question.position) + ' · ' + (question.skill)}"
-          ></p>
-          <p
-            class="section-lock-notice"
-            th:if="${!question.sectionOpen}"
-            th:text="${question.sectionIndex < attempt.currentSectionIndex ? 'Phần thi này đã hết thời gian. Bạn chỉ có thể xem lại đáp án đã lưu.' : 'Phần thi này chưa mở. Hãy hoàn thành phần đang làm trước.'}"
           ></p>
           <h2 th:text="${question.content}"></h2>
           <p
@@ -496,7 +457,6 @@
                   class="media-play-trigger"
                   type="button"
                   aria-label="Phát bài nghe"
-                  th:disabled="${!question.sectionOpen}"
                 ></button>
                 <audio
                   class="media-audio"
@@ -544,7 +504,6 @@
                   name="userPosition"
                   th:id="${'position-' + (item.itemId)}"
                   th:value="${item.userPosition}"
-                  th:disabled="${!question.sectionOpen}"
                 />
               </div>
               <div
@@ -557,7 +516,6 @@
                     name="selectedOptionId"
                     th:value="${option.id}"
                     th:checked="${item.selectedOptionId == option.id}"
-                    th:disabled="${!question.sectionOpen}"
                   />
                   <span th:text="${option.code + ' · ' + option.content}"></span>
                 </label>
@@ -569,7 +527,6 @@
                   name="textAnswer"
                   rows="6"
                   th:text="${item.textAnswer}"
-                  th:disabled="${!question.sectionOpen}"
                 ></textarea>
               </div>
               <span class="autosave-status muted" aria-live="polite"></span>
@@ -583,37 +540,16 @@
             >
               <span class="speaking-recorder-label">Câu trả lời của bạn</span>
               <div class="speaking-recorder-actions">
-                <button
-                  class="button button-secondary recording-start"
-                  type="button"
-                  th:disabled="${!question.sectionOpen}"
-                >
+                <button class="button button-secondary recording-start" type="button">
                   Bắt đầu ghi
                 </button>
-                <button
-                  class="button button-secondary recording-stop"
-                  type="button"
-                  disabled
-                  th:disabled="${!question.sectionOpen}"
-                >
+                <button class="button button-secondary recording-stop" type="button" disabled>
                   Dừng ghi
                 </button>
-                <button
-                  class="button button-secondary recording-reset"
-                  type="button"
-                  disabled
-                  th:disabled="${!question.sectionOpen}"
-                >
+                <button class="button button-secondary recording-reset" type="button" disabled>
                   Ghi lại
                 </button>
-                <button
-                  class="button recording-save"
-                  type="button"
-                  disabled
-                  th:disabled="${!question.sectionOpen}"
-                >
-                  Lưu bản ghi
-                </button>
+                <button class="button recording-save" type="button" disabled>Lưu bản ghi</button>
               </div>
               <span class="recording-status muted" aria-live="polite">Sẵn sàng ghi âm.</span>
               <div class="recording-meter">

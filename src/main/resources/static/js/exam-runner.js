@@ -13,14 +13,10 @@
   const submitError = document.getElementById('attempt-submit-error');
   const questionSections = [...document.querySelectorAll('.full-mock-question')];
   const questionLinks = [...document.querySelectorAll('.exam-question-link')];
-  const sectionLinks = [...document.querySelectorAll('.exam-section-link')];
   const examProgressCount = document.getElementById('exam-progress-count');
   let submitting = false,
     confirming = false,
     deadlineReached = false;
-  const isEditableForm = (form) =>
-    typeof form.closest !== 'function' ||
-    form.closest('[data-section-open]')?.dataset.sectionOpen !== 'false';
   const itemIsAnswered = (item) =>
     item.dataset.saved === 'true' ||
     !!item.querySelector('input[type="radio"]:checked') ||
@@ -48,7 +44,6 @@
       examProgressCount.innerHTML = `<strong>${answeredQuestions}</strong>/${questionSections.length} câu đã làm`;
   };
   const save = (form) => {
-    if (!isEditableForm(form)) return Promise.resolve(true);
     const status = form.querySelector('.autosave-status');
     if (!csrf || !status) return Promise.resolve(true);
     status.textContent = 'Đang lưu…';
@@ -292,38 +287,18 @@
     previous?.addEventListener('click', () => showPage(currentPage - 1));
     next?.addEventListener('click', () => showPage(currentPage + 1));
     questionLinks.forEach((link, index) => link.addEventListener('click', () => showPage(index)));
-    sectionLinks.forEach((link) => {
-      link.addEventListener('click', () => {
-        const sectionIndex = Number(link.dataset.sectionIndex);
-        const pageIndex = pages.findIndex(
-          (page) => Number(page.dataset.sectionIndex) === sectionIndex,
-        );
-        if (pageIndex >= 0) showPage(pageIndex);
-      });
-    });
     document.querySelectorAll('.answer-form').forEach((form) => {
       form.addEventListener('input', updateProgress);
       form.addEventListener('change', updateProgress);
       form.closest('.question-item')?.addEventListener('recording-saved', updateProgress);
     });
-    const activeSectionIndex = Number(document.body.dataset.currentSectionIndex);
-    const activePage = pages.findIndex(
-      (page) => Number(page.dataset.sectionIndex) === activeSectionIndex,
-    );
-    showPage(activePage >= 0 ? activePage : 0);
+    showPage(0);
   }
   const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.content || 'X-CSRF-TOKEN';
   document.querySelectorAll('.media-audio').forEach((player) => {
     const container = player.closest('.media-player');
     const status = container.querySelector('.media-status');
     const playTrigger = container.querySelector('.media-play-trigger');
-    const sectionOpen = player.closest('[data-section-open]')?.dataset.sectionOpen !== 'false';
-    if (!sectionOpen) {
-      player.controls = false;
-      playTrigger.disabled = true;
-      status.textContent = 'Audio chỉ mở trong thời gian của section.';
-      return;
-    }
     let tokenReady = false;
     let loading = false;
     let exhausted = false;
