@@ -8,11 +8,11 @@
   <body class="admin-theme">
     <div th:replace="~{fragments/navbar :: navbar}"></div>
     <div class="container ap-container app-shell">
-      <div th:replace="~{fragments/admin-sidebar :: adminSidebar('settings')}"></div>
+      <div th:replace="~{fragments/admin-sidebar :: adminSidebar('scoring')}"></div>
       <main id="main-content" tabindex="-1" class="app-main admin-catalog">
-        <div th:replace="~{fragments/back-link :: backLink(@{/admin/certificates#schemes})}"></div>
+        <div th:replace="~{fragments/back-link :: backLink(@{/admin/scoring-schemes})}"></div>
         <div
-          th:replace="~{fragments/breadcrumb :: breadcrumb('Chứng chỉ & Chấm điểm', @{/admin/certificates}, 'Bộ chấm điểm')}"
+          th:replace="~{fragments/breadcrumb :: breadcrumb('Chấm điểm', @{/admin/scoring-schemes}, 'Bộ chấm điểm')}"
         ></div>
         <div th:replace="~{fragments/messages :: messages}"></div>
         <header class="page-header">
@@ -88,15 +88,12 @@
             </a>
           </div>
         </form>
-        <form
-          th:if="${editing and !readOnly and scheme.status == 'ACTIVE'}"
-          th:action="@{/admin/scoring-schemes/{id}/disable(id=${scheme.id})}"
-          method="post"
+        <section
+          id="cefr-bands"
+          class="dashboard-panel dashboard-section"
+          th:if="${editing}"
+          th:with="bandEditorOpen=${!readOnly and (addBand == true or bandForm.id != null or !display.allErrors('bandForm').isEmpty())}"
         >
-          <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
-          <button class="button button-secondary" type="submit">Ngừng sử dụng</button>
-        </form>
-        <section class="dashboard-panel dashboard-section" th:if="${editing}">
           <h2>Khoảng điểm CEFR</h2>
           <p class="muted">
             Thang điểm nội bộ để ước lượng, không phải ngưỡng Aptis chính thức. Grammar &amp;
@@ -105,11 +102,11 @@
           <form
             class="toolbar"
             method="get"
-            th:action="@{${readOnly ? '/admin/scoring-schemes/' + scheme.id : '/admin/scoring-schemes/' + scheme.id + '/edit'}}"
+            th:action="@{${'/admin/scoring-schemes/' + scheme.id + (readOnly ? '' : '/edit') + '#cefr-bands'}}"
           >
             <div>
               <label for="bandSkill">Kỹ năng</label>
-              <select id="bandSkill" name="skill">
+              <select id="bandSkill" name="skill" onchange="this.form.requestSubmit()">
                 <option
                   th:each="skill : ${skills}"
                   th:text="${skill}"
@@ -118,8 +115,15 @@
                 ></option>
               </select>
             </div>
-            <button class="button button-secondary" type="submit">Xem khoảng điểm</button>
           </form>
+          <div class="section-title-row" th:if="${!readOnly and !bandEditorOpen}">
+            <a
+              class="button button-small"
+              th:href="@{/admin/scoring-schemes/{id}/edit#band-editor(id=${scheme.id},skill=${selectedSkill},addBand=true)}"
+            >
+              Thêm khoảng điểm
+            </a>
+          </div>
           <div class="table-wrap" th:if="${bands != null and !bands.isEmpty()}">
             <table class="data-table admin-responsive-table">
               <thead>
@@ -127,7 +131,9 @@
                   <th scope="col">CEFR</th>
                   <th scope="col">Từ điểm</th>
                   <th scope="col">Đến điểm</th>
-                  <th scope="col">Thao tác</th>
+                  <th scope="col" class="scoring-band-action-heading" th:unless="${readOnly}">
+                    Thao tác
+                  </th>
                 </tr>
               </thead>
               <tbody>
@@ -135,28 +141,28 @@
                   <td data-label="CEFR" th:text="${band.cefrLevel}"></td>
                   <td data-label="Từ điểm" th:text="${band.minScore}"></td>
                   <td data-label="Đến điểm" th:text="${band.maxScore}"></td>
-                  <td data-label="Thao tác">
-                    <a
-                      th:if="${!readOnly}"
-                      class="button button-secondary button-small"
-                      th:href="@{/admin/scoring-schemes/{id}/edit(id=${scheme.id},skill=${selectedSkill},bandId=${band.id})}"
-                    >
-                      Sửa
-                    </a>
-                    <form
-                      th:if="${!readOnly}"
-                      th:action="@{/admin/scoring-schemes/{schemeId}/bands/{bandId}/delete(schemeId=${scheme.id},bandId=${band.id},skill=${selectedSkill})}"
-                      method="post"
-                    >
-                      <input
-                        type="hidden"
-                        th:name="${_csrf.parameterName}"
-                        th:value="${_csrf.token}"
-                      />
-                      <button class="button button-secondary button-small" type="submit">
-                        Xóa
-                      </button>
-                    </form>
+                  <td data-label="Thao tác" th:unless="${readOnly}">
+                    <div class="scoring-band-actions">
+                      <a
+                        class="button button-small"
+                        th:href="@{/admin/scoring-schemes/{id}/edit#band-editor(id=${scheme.id},skill=${selectedSkill},bandId=${band.id})}"
+                      >
+                        Sửa
+                      </a>
+                      <form
+                        th:action="@{/admin/scoring-schemes/{schemeId}/bands/{bandId}/delete(schemeId=${scheme.id},bandId=${band.id},skill=${selectedSkill})}"
+                        method="post"
+                      >
+                        <input
+                          type="hidden"
+                          th:name="${_csrf.parameterName}"
+                          th:value="${_csrf.token}"
+                        />
+                        <button class="button button-small scoring-band-delete" type="submit">
+                          Xóa
+                        </button>
+                      </form>
+                    </div>
                   </td>
                 </tr>
               </tbody>
@@ -209,7 +215,7 @@
                     th:field="*{scaleMin}"
                     type="number"
                     min="0"
-                    max="50"
+                    max="999.99"
                     step="0.01"
                     required
                   />
@@ -221,7 +227,7 @@
                     th:field="*{scaleMax}"
                     type="number"
                     min="0.01"
-                    max="50"
+                    max="999.99"
                     step="0.01"
                     required
                   />
@@ -240,16 +246,15 @@
             <button class="button" type="submit" th:unless="${readOnly}">Lưu quy đổi điểm</button>
           </form>
           <form
+            id="band-editor"
             class="catalog-form-section"
-            th:if="${!readOnly}"
+            th:if="${bandEditorOpen}"
             th:object="${bandForm}"
             th:action="@{/admin/scoring-schemes/{id}/bands(id=${scheme.id})}"
             method="post"
           >
-            <h3
-              th:text="${bandForm.id == null ? 'Thiết lập khoảng điểm' : 'Chỉnh sửa khoảng điểm'}"
-            >
-              Thiết lập khoảng điểm
+            <h3 th:text="${bandForm.id == null ? 'Thêm khoảng điểm' : 'Chỉnh sửa khoảng điểm'}">
+              Thêm khoảng điểm
             </h3>
             <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
             <input type="hidden" th:field="*{id}" />
@@ -273,7 +278,7 @@
                   type="number"
                   step="0.01"
                   min="0"
-                  max="50"
+                  max="999.99"
                 />
               </div>
               <div class="field">
@@ -284,17 +289,25 @@
                   type="number"
                   step="0.01"
                   min="0"
-                  max="50"
+                  max="999.99"
                 />
               </div>
             </div>
-            <div class="alert alert-danger" th:if="${!display.globalErrors('bandForm').isEmpty()}">
-              <span th:each="message, status : ${display.globalErrors('bandForm')}">
+            <div class="alert alert-danger" th:if="${!display.allErrors('bandForm').isEmpty()}">
+              <span th:each="message, status : ${display.allErrors('bandForm')}">
                 <br th:if="${!status.first}" />
                 <span th:text="${message}"></span>
               </span>
             </div>
-            <div class="actions"><button class="button" type="submit">Lưu khoảng điểm</button></div>
+            <div class="actions">
+              <button class="button" type="submit">Lưu khoảng điểm</button>
+              <a
+                class="button button-secondary"
+                th:href="@{/admin/scoring-schemes/{id}/edit#cefr-bands(id=${scheme.id},skill=${selectedSkill})}"
+              >
+                Hủy
+              </a>
+            </div>
           </form>
         </section>
       </main>

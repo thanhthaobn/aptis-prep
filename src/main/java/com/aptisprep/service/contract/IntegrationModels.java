@@ -180,6 +180,17 @@ public final class IntegrationModels {
             BigDecimal finalScaleScore,
             String overallCefr,
             Instant submittedAt) {
+        public boolean hasFullMockTotal() {
+            return "FULL_MOCK".equals(examType)
+                    && finalScaleScore != null
+                    && skills.stream()
+                            .anyMatch(
+                                    skill ->
+                                            "GRAMMAR_VOCABULARY".equals(skill.skill())
+                                                    && skill.scaleScore() != null
+                                                    && skill.estimatedLevel() == null);
+        }
+
         public AttemptResult(
                 Integer attemptId,
                 Integer userId,

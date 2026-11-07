@@ -8,11 +8,13 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 import com.aptisprep.entity.Certificate;
+import com.aptisprep.entity.MockExamEntity;
 import com.aptisprep.entity.ScoreBand;
 import com.aptisprep.entity.ScoringScheme;
 import com.aptisprep.entity.User;
 import com.aptisprep.enums.RecordStatus;
 import com.aptisprep.repository.CertificateRepository;
+import com.aptisprep.repository.MockExamRepository;
 import com.aptisprep.repository.ScoreBandRepository;
 import com.aptisprep.repository.ScoringSchemeRepository;
 import com.aptisprep.repository.UserRepository;
@@ -23,12 +25,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.transaction.annotation.Transactional;
 
 @SpringBootTest
 @AutoConfigureMockMvc
 class AdminScoringPreviewTests {
     @Autowired MockMvc mvc;
     @Autowired CertificateRepository certificates;
+    @Autowired MockExamRepository exams;
     @Autowired ScoringSchemeRepository schemes;
     @Autowired UserRepository users;
     @Autowired ScoreBandRepository bands;
@@ -74,6 +78,58 @@ class AdminScoringPreviewTests {
                                     value.setEffectiveFrom(LocalDateTime.now());
                                     return schemes.save(value);
                                 });
+    }
+
+    @Test
+    @Transactional
+    void separateListsPaginateAndSchemesFilterByAssignedExamType() throws Exception {
+        for (int index = 1; index <= 13; index++) {
+            Certificate extra = new Certificate();
+            extra.setCode("PAGING_" + index);
+            extra.setName("Pagination certificate " + index);
+            extra.setStatus(RecordStatus.ACTIVE);
+            extra.setCreatedBy(certificate.getCreatedBy());
+            certificates.save(extra);
+
+            ScoringScheme extraScheme = new ScoringScheme();
+            extraScheme.setCertificate(certificate);
+            extraScheme.setName("Pagination scheme " + index);
+            extraScheme.setVersion("paging-" + index);
+            extraScheme.setStatus(RecordStatus.ACTIVE);
+            extraScheme.setEffectiveFrom(LocalDateTime.now());
+            schemes.save(extraScheme);
+        }
+
+        mvc.perform(
+                        get("/admin/certificates")
+                                .param("certificatePage", "1")
+                                .with(user("admin@aptis.local").roles("ADMIN")))
+                .andExpect(status().isOk())
+                .andExpect(
+                        content().string(containsString("/admin/certificates?certificatePage=0")))
+                .andExpect(content().string(not(containsString("Pagination scheme"))));
+        var exam = new MockExamEntity();
+        exam.setTitle("Assigned full mock");
+        exam.setCertificateId(certificate.getId());
+        exam.setExamType("FULL_MOCK");
+        exam.setScoringSchemeId(scheme.getId());
+        exams.save(exam);
+        mvc.perform(
+                        get("/admin/scoring-schemes")
+                                .param("examType", "FULL_MOCK")
+                                .with(user("admin@aptis.local").roles("ADMIN")))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString(scheme.getName())))
+                .andExpect(content().string(not(containsString("Pagination scheme"))));
+        mvc.perform(
+                        get("/admin/scoring-schemes")
+                                .param("examType", "UNASSIGNED")
+                                .param("certificateId", certificate.getId().toString())
+                                .with(user("admin@aptis.local").roles("ADMIN")))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("Pagination scheme")))
+                .andExpect(content().string(containsString("schemePage=1")))
+                .andExpect(content().string(not(containsString(scheme.getName()))));
     }
 
     @Test
@@ -182,6 +238,27 @@ class AdminScoringPreviewTests {
                 .andExpect(status().is3xxRedirection());
         ScoreBand band =
                 bands.findBySchemeIdAndSkillOrderByMinScoreAsc(scheme.getId(), "READING").get(0);
+        String editUrl = "/admin/scoring-schemes/" + scheme.getId() + "/edit";
+        var admin = user("admin@aptis.local").roles("ADMIN");
+        mvc.perform(get(editUrl).with(admin))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("addBand=true#band-editor")))
+                .andExpect(content().string(not(containsString("id=\"band-editor\""))));
+        mvc.perform(get(editUrl).param("addBand", "true").with(admin))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("id=\"band-editor\"")));
+        mvc.perform(get(editUrl).param("bandId", band.getId().toString()).with(admin))
+                .andExpect(status().isOk())
+                .andExpect(
+                        content()
+                                .string(
+                                        matchesPattern(
+                                                "(?s).*id=\"bandMin\"[^>]*value=\"0\\.00\".*")))
+                .andExpect(
+                        content()
+                                .string(
+                                        matchesPattern(
+                                                "(?s).*id=\"bandMax\"[^>]*value=\"9\\.99\".*")));
 
         mvc.perform(
                         post("/admin/scoring-schemes/" + scheme.getId() + "/bands")

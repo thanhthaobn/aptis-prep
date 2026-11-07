@@ -37,7 +37,13 @@ public class ScoringGuideService {
 
     public List<Guide> forExam(Integer examId) {
         return exams.findById(examId)
-                .map(e -> guides(e.getScoringSchemeId(), e.getSkill(), Map.of()))
+                .map(
+                        e ->
+                                guides(
+                                        e.getScoringSchemeId(),
+                                        e.getSkill(),
+                                        Map.of(),
+                                        "FULL_MOCK".equals(e.getExamType())))
                 .orElse(List.of());
     }
 
@@ -45,22 +51,25 @@ public class ScoringGuideService {
     public List<Guide> forResult(AttemptResult result) {
         var snapshot = snapshots.findByAttemptId(result.attemptId());
         Integer scheme = snapshot.map(s -> s.getScoringSchemeId()).orElse(result.scoringSchemeId());
-        Map<String, BigDecimal> scores = new HashMap<>();
+        Map<String, String> levels = new HashMap<>();
         result.skills()
                 .forEach(
                         s -> {
-                            if (s.scaleScore() != null) scores.put(s.skill(), s.scaleScore());
+                            if (s.estimatedLevel() != null)
+                                levels.put(s.skill(), s.estimatedLevel());
                         });
         Set<String> skills = new HashSet<>();
         result.skills().forEach(s -> skills.add(s.skill()));
         String snapshotSkill = snapshot.map(s -> s.getSkill()).orElse(null);
-        if (skills.isEmpty() && snapshotSkill != null) return guides(scheme, snapshotSkill, scores);
-        return guides(scheme, null, scores).stream()
+        if (skills.isEmpty() && snapshotSkill != null)
+            return guides(scheme, snapshotSkill, levels, "FULL_MOCK".equals(result.examType()));
+        return guides(scheme, null, levels, result.hasFullMockTotal()).stream()
                 .filter(g -> skills.contains(g.skill()))
                 .toList();
     }
 
-    private List<Guide> guides(Integer schemeId, String skill, Map<String, BigDecimal> scores) {
+    private List<Guide> guides(
+            Integer schemeId, String skill, Map<String, String> levels, boolean fullMock) {
         if (schemeId == null) return List.of();
         var scheme = schemes.findById(schemeId);
         if (scheme.isEmpty()) return List.of();
@@ -78,34 +87,25 @@ public class ScoringGuideService {
                                         scheme.get().getVersion(),
                                         r.getScaleMin(),
                                         r.getScaleMax(),
-                                        bands
-                                                .findBySchemeIdAndSkillOrderByMinScoreAsc(
-                                                        schemeId, r.getSkill())
-                                                .stream()
-                                                .map(
-                                                        b ->
-                                                                new Band(
-                                                                        b.getMinScore(),
-                                                                        b.getMaxScore(),
-                                                                        b.getCefrLevel(),
-                                                                        scores.containsKey(
-                                                                                        r
-                                                                                                .getSkill())
-                                                                                && scores.get(
-                                                                                                        r
-                                                                                                                .getSkill())
-                                                                                                .compareTo(
-                                                                                                        b
-                                                                                                                .getMinScore())
-                                                                                        >= 0
-                                                                                && scores.get(
-                                                                                                        r
-                                                                                                                .getSkill())
-                                                                                                .compareTo(
-                                                                                                        b
-                                                                                                                .getMaxScore())
-                                                                                        <= 0))
-                                                .toList()))
+                                        fullMock && "GRAMMAR_VOCABULARY".equals(r.getSkill())
+                                                ? List.of()
+                                                : bands
+                                                        .findBySchemeIdAndSkillOrderByMinScoreAsc(
+                                                                schemeId, r.getSkill())
+                                                        .stream()
+                                                        .map(
+                                                                b ->
+                                                                        new Band(
+                                                                                b.getMinScore(),
+                                                                                b.getMaxScore(),
+                                                                                b.getCefrLevel(),
+                                                                                b.getCefrLevel()
+                                                                                        .equals(
+                                                                                                levels
+                                                                                                        .get(
+                                                                                                                r
+                                                                                                                        .getSkill()))))
+                                                        .toList()))
                 .toList();
     }
 }

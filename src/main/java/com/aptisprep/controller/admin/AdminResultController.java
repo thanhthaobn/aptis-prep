@@ -40,13 +40,14 @@ public class AdminResultController {
         Instant fromValue = parseDate(from, false), toValue = parseDate(to, true);
         if (fromValue != null && toValue != null && !fromValue.isBefore(toValue))
             throw new BusinessRuleException("Ngày bắt đầu phải không sau ngày kết thúc");
-        model.addAttribute(
-                "history",
+        var history =
                 attempts.adminHistory(
                         principal.getName(),
                         page,
                         size,
-                        new AdminHistoryFilter(q, skill, examType, state, fromValue, toValue)));
+                        new AdminHistoryFilter(q, skill, examType, state, fromValue, toValue));
+        model.addAttribute("history", history);
+        model.addAttribute("totalPages", (history.totalItems() + size - 1) / size);
         model.addAttribute("q", q);
         model.addAttribute("selectedSkill", skill);
         model.addAttribute("selectedExamType", examType);

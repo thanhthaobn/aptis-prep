@@ -1,13 +1,18 @@
 package com.aptisprep.controller.admin;
 
+import com.aptisprep.controller.DisplayFormatting;
+import com.aptisprep.controller.ListPagination;
 import com.aptisprep.dto.form.*;
 import com.aptisprep.exception.BusinessRuleException;
+import com.aptisprep.repository.MockExamRepository;
 import com.aptisprep.service.scoring.ScoringAdminService;
 import com.aptisprep.service.scoring.ScoringViews;
 import jakarta.validation.Valid;
 import java.security.Principal;
 import java.util.List;
 import java.util.Locale;
+import java.util.TreeSet;
+import java.util.stream.Collectors;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -17,9 +22,14 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 @Controller
 public class AdminScoringController {
     private final ScoringAdminService scoring;
+    private final MockExamRepository exams;
+    private final DisplayFormatting display;
 
-    public AdminScoringController(ScoringAdminService scoring) {
+    public AdminScoringController(
+            ScoringAdminService scoring, MockExamRepository exams, DisplayFormatting display) {
         this.scoring = scoring;
+        this.exams = exams;
+        this.display = display;
     }
 
     @GetMapping("/admin/settings")
@@ -28,19 +38,54 @@ public class AdminScoringController {
     }
 
     @GetMapping("/admin/certificates")
-    public String showCertificates(Model model) {
-        return renderScoringIndex(model);
+    public String showCertificates(
+            @RequestParam(defaultValue = "0") int certificatePage, Model model) {
+        model.addAttribute(
+                "certificatePage",
+                ListPagination.slice(scoring.certificateViews(), certificatePage));
+        return "admin/settings/certificates";
     }
 
     @GetMapping("/admin/scoring-schemes")
-    public String showScoringSchemes(Model model) {
-        return renderScoringIndex(model);
-    }
-
-    private String renderScoringIndex(Model model) {
+    public String showScoringSchemes(
+            @RequestParam(defaultValue = "0") int schemePage,
+            @RequestParam(defaultValue = "") String examType,
+            @RequestParam(required = false) Integer certificateId,
+            Model model) {
+        if (!examType.isBlank()
+                && !"UNASSIGNED".equals(examType)
+                && !display.examTypes().contains(examType))
+            throw new BusinessRuleException("Loại đề không hợp lệ");
+        var examTypes =
+                exams.findScoringSchemeExamTypes().stream()
+                        .collect(
+                                Collectors.groupingBy(
+                                        MockExamRepository.SchemeExamType::getSchemeId,
+                                        Collectors.mapping(
+                                                MockExamRepository.SchemeExamType::getExamType,
+                                                Collectors.toCollection(TreeSet::new))));
+        var schemes =
+                scoring.schemeViews().stream()
+                        .filter(
+                                scheme ->
+                                        certificateId == null
+                                                || certificateId.equals(scheme.certificateId()))
+                        .filter(
+                                scheme ->
+                                        examType.isBlank()
+                                                || ("UNASSIGNED".equals(examType)
+                                                        ? !examTypes.containsKey(scheme.id())
+                                                        : examTypes.containsKey(scheme.id())
+                                                                && examTypes
+                                                                        .get(scheme.id())
+                                                                        .contains(examType)))
+                        .toList();
+        model.addAttribute("schemePage", ListPagination.slice(schemes, schemePage));
+        model.addAttribute("schemeExamTypes", examTypes);
+        model.addAttribute("examType", examType);
+        model.addAttribute("certificateId", certificateId);
         model.addAttribute("certificates", scoring.certificateViews());
-        model.addAttribute("schemes", scoring.schemeViews());
-        return "admin/settings/index";
+        return "admin/settings/schemes";
     }
 
     @GetMapping("/admin/certificates/create")
@@ -153,7 +198,9 @@ public class AdminScoringController {
             @PathVariable int id,
             @RequestParam(defaultValue = "Reading") String skill,
             @RequestParam(required = false) Integer bandId,
+            @RequestParam(defaultValue = "false") boolean addBand,
             Model model) {
+        model.addAttribute("addBand", addBand);
         return loadScheme(id, skill, bandId, false, model);
     }
 

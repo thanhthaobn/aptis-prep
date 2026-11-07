@@ -94,7 +94,8 @@ public class AttemptFinalizationService {
 
     @Transactional
     public boolean finalizeIfReady(ExamAttemptEntity attempt, MockExamEntity exam) {
-        if ("COMPLETED".equals(attempt.getStatus())) return false;
+        if ("COMPLETED".equals(attempt.getStatus())
+                || "COMPLETED".equals(attempt.getGradingStatus())) return false;
         List<ExamSkillResultEntity> results =
                 examSkillResultRepository.findByAttemptIdOrderBySkillAsc(attempt.getId());
         if (results.isEmpty()) return false;
@@ -118,9 +119,20 @@ public class AttemptFinalizationService {
                                                 value.getScaleScore(),
                                                 value.getCefrLevel()))
                         .toList();
-        BigDecimal average = schemeId == null ? null : scoring.overallScale(schemeId, scores);
-        String overall = schemeId == null ? null : scoring.overallLevel(schemeId, scores);
-        attempt.setFinalScaleScore(average);
+        BigDecimal total = null;
+        String overall = null;
+        if (schemeId != null && "FULL_MOCK".equals(exam.getExamType())) {
+            var summary = scoring.fullMockScore(schemeId, scores);
+            total = summary.total();
+            overall = summary.cefrLevel();
+            for (int i = 0; i < results.size(); i++) {
+                results.get(i).setCefrLevel(summary.skills().get(i).cefrLevel());
+            }
+        } else if (schemeId != null) {
+            total = scoring.overallScale(schemeId, scores);
+            overall = scoring.overallLevel(schemeId, scores);
+        }
+        attempt.setFinalScaleScore(total);
         attempt.setEstimatedOverallCefr(overall);
         attempt.setCompletedAt(LocalDateTime.now());
         attempt.setGradingStatus("COMPLETED");

@@ -1302,7 +1302,7 @@ ALTER TABLE [dbo].[flashcards]  WITH CHECK ADD  CONSTRAINT [ck_flashcards_order]
 ALTER TABLE [dbo].[flashcards] CHECK CONSTRAINT [ck_flashcards_order]
 ALTER TABLE [dbo].[scoring_scale_rules]  WITH CHECK ADD  CONSTRAINT [ck_scoring_scale_rules_range] CHECK  (([raw_min]<[raw_max] AND [scale_min]<=[scale_max]))
 ALTER TABLE [dbo].[scoring_scale_rules] CHECK CONSTRAINT [ck_scoring_scale_rules_range]
-ALTER TABLE [dbo].[score_bands]  WITH CHECK ADD  CONSTRAINT [ck_score_bands_range] CHECK  (([min_score]<=[max_score] AND [min_score]>=(0) AND [max_score]<=(50)))
+ALTER TABLE [dbo].[score_bands]  WITH CHECK ADD  CONSTRAINT [ck_score_bands_range] CHECK  (([min_score]<=[max_score] AND [min_score]>=(0) AND [max_score]<=(999.99)))
 ALTER TABLE [dbo].[score_bands] CHECK CONSTRAINT [ck_score_bands_range]
 ALTER TABLE [dbo].[user_goal_skills]  WITH CHECK ADD  CONSTRAINT [ck_goal_skills_score] CHECK  (([target_score] IS NULL OR [target_score]>=(0) AND [target_score]<=(50)))
 ALTER TABLE [dbo].[user_goal_skills] CHECK CONSTRAINT [ck_goal_skills_score]
@@ -1318,7 +1318,7 @@ ALTER TABLE [dbo].[mock_exams]  WITH CHECK ADD  CONSTRAINT [ck_mock_exams_durati
 ALTER TABLE [dbo].[mock_exams] CHECK CONSTRAINT [ck_mock_exams_duration]
 ALTER TABLE [dbo].[mock_exams]  WITH CHECK ADD  CONSTRAINT [ck_mock_exams_type] CHECK  (([exam_type]='FULL_MOCK' OR [exam_type]='CHECKPOINT' OR [exam_type]='PRACTICE' OR [exam_type]='PLACEMENT'))
 ALTER TABLE [dbo].[mock_exams] CHECK CONSTRAINT [ck_mock_exams_type]
-ALTER TABLE [dbo].[exam_attempts]  WITH CHECK ADD  CONSTRAINT [ck_exam_attempts_score] CHECK  (([final_scale_score] IS NULL OR [final_scale_score]>=(0) AND [final_scale_score]<=(200)))
+ALTER TABLE [dbo].[exam_attempts]  WITH CHECK ADD  CONSTRAINT [ck_exam_attempts_score] CHECK  (([final_scale_score] IS NULL OR [final_scale_score]>=(0) AND [final_scale_score]<=(999.99)))
 ALTER TABLE [dbo].[exam_attempts] CHECK CONSTRAINT [ck_exam_attempts_score]
 ALTER TABLE [dbo].[mock_exam_sections]  WITH CHECK ADD  CONSTRAINT [ck_exam_sections_duration] CHECK  (([duration_minutes]>(0)))
 ALTER TABLE [dbo].[mock_exam_sections] CHECK CONSTRAINT [ck_exam_sections_duration]
@@ -1326,7 +1326,7 @@ ALTER TABLE [dbo].[user_media_activities]  WITH CHECK ADD  CONSTRAINT [ck_media_
 ALTER TABLE [dbo].[user_media_activities] CHECK CONSTRAINT [ck_media_activities_count]
 ALTER TABLE [dbo].[exam_skill_results]  WITH CHECK ADD  CONSTRAINT [ck_skill_results_counts] CHECK  ((([correct_count] IS NULL OR [correct_count]>=(0)) AND ([total_items] IS NULL OR [total_items]>=(0))))
 ALTER TABLE [dbo].[exam_skill_results] CHECK CONSTRAINT [ck_skill_results_counts]
-ALTER TABLE [dbo].[exam_skill_results]  WITH CHECK ADD  CONSTRAINT [ck_skill_results_scale] CHECK  (([scale_score] IS NULL OR [scale_score]>=(0) AND [scale_score]<=(50)))
+ALTER TABLE [dbo].[exam_skill_results]  WITH CHECK ADD  CONSTRAINT [ck_skill_results_scale] CHECK  (([scale_score] IS NULL OR [scale_score]>=(0) AND [scale_score]<=(999.99)))
 ALTER TABLE [dbo].[exam_skill_results] CHECK CONSTRAINT [ck_skill_results_scale]
 ALTER TABLE [dbo].[user_answers]  WITH CHECK ADD  CONSTRAINT [ck_v2_answer_ai_score] CHECK  (([ai_score] IS NULL OR [ai_score]>=(0) AND [ai_score]<=(50)))
 ALTER TABLE [dbo].[user_answers] CHECK CONSTRAINT [ck_v2_answer_ai_score]

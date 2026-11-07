@@ -66,8 +66,7 @@ public class LessonService {
 
     public record SkillBranch(String skill, List<LevelBranch> levels, int count) {}
 
-    public List<SkillBranch> adminTree() {
-        List<Lesson> all = adminLessons();
+    public List<SkillBranch> adminTree(List<Lesson> all) {
         return SKILLS.stream()
                 .map(
                         skill ->

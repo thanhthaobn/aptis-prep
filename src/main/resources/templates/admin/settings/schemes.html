@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+  <head th:replace="~{fragments/head :: head('Bộ chấm điểm')}"></head>
+  <body class="admin-theme">
+    <div th:replace="~{fragments/navbar :: navbar}"></div>
+    <div class="container ap-container app-shell">
+      <div th:replace="~{fragments/admin-sidebar :: adminSidebar('scoring')}"></div>
+      <main id="main-content" tabindex="-1" class="app-main admin-catalog admin-scoring-settings">
+        <div th:replace="~{fragments/messages :: messages}"></div>
+        <header class="page-header"><h1>Bộ chấm điểm</h1></header>
+        <form class="toolbar" method="get" th:action="@{/admin/scoring-schemes}">
+          <div>
+            <label for="schemeExamType">Loại đề đang dùng</label>
+            <select id="schemeExamType" name="examType">
+              <option value="">Tất cả loại đề</option>
+              <option
+                th:each="type : ${display.examTypes()}"
+                th:value="${type}"
+                th:text="${display.historyExamType(type)}"
+                th:selected="${type == examType}"
+              ></option>
+              <option value="UNASSIGNED" th:selected="${examType == 'UNASSIGNED'}">
+                Chưa gán cho đề
+              </option>
+            </select>
+          </div>
+          <div>
+            <label for="filterCertificate">Chứng chỉ</label>
+            <select id="filterCertificate" name="certificateId">
+              <option value="">Tất cả chứng chỉ</option>
+              <option
+                th:each="certificate : ${certificates}"
+                th:value="${certificate.id}"
+                th:text="${certificate.name}"
+                th:selected="${certificate.id == certificateId}"
+              ></option>
+            </select>
+          </div>
+          <button class="button" type="submit">Lọc</button>
+          <a class="button button-secondary" th:href="@{/admin/scoring-schemes}">Xóa bộ lọc</a>
+        </form>
+        <section id="schemes">
+          <div class="section-title-row">
+            <h2>Bộ chấm điểm</h2>
+            <a class="button" th:href="@{/admin/scoring-schemes/create}">Thêm bộ chấm điểm</a>
+          </div>
+          <div class="table-wrap" th:if="${schemePage.hasContent()}">
+            <table class="data-table admin-responsive-table">
+              <thead>
+                <tr>
+                  <th scope="col">Tên bộ chấm điểm</th>
+                  <th scope="col">Chứng chỉ</th>
+                  <th scope="col">Phiên bản</th>
+                  <th scope="col">Loại đề đang dùng</th>
+                  <th scope="col">Trạng thái</th>
+                  <th scope="col">Thao tác</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr th:each="scheme : ${schemePage.content}">
+                  <td data-label="Tên bộ chấm điểm" th:text="${scheme.name}"></td>
+                  <td data-label="Chứng chỉ" th:text="${scheme.certificateName}"></td>
+                  <td data-label="Phiên bản" th:text="${scheme.version}"></td>
+                  <td
+                    data-label="Loại đề đang dùng"
+                    th:with="types=${schemeExamTypes.get(scheme.id)}"
+                  >
+                    <span th:if="${types == null}">Chưa gán</span>
+                    <div th:each="type : ${types}" th:text="${display.historyExamType(type)}"></div>
+                  </td>
+                  <td data-label="Trạng thái">
+                    <span
+                      class="scoring-status"
+                      th:classappend="${scheme.status == 'ACTIVE'} ? 'is-active'"
+                      th:text="${scheme.statusLabel}"
+                    ></span>
+                  </td>
+                  <td data-label="Thao tác">
+                    <div class="catalog-table-actions">
+                      <a th:href="@{/admin/scoring-schemes/{id}(id=${scheme.id})}">
+                        Khoảng điểm CEFR
+                      </a>
+                      <a th:href="@{/admin/scoring-schemes/{id}/edit(id=${scheme.id})}">
+                        Chỉnh sửa
+                      </a>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div
+            th:replace="~{fragments/student-pagination :: listPagination(${schemePage.number}, ${schemePage.totalPages}, ${schemePage.totalElements}, @{/admin/scoring-schemes(examType=${examType},certificateId=${certificateId})}, 'schemePage')}"
+          ></div>
+          <div class="empty-box" th:unless="${schemePage.hasContent()}">
+            <div
+              th:replace="~{fragments/navi :: navi('empty', 'Navi đang chờ bộ chấm điểm đầu tiên')}"
+            ></div>
+            <p>Không có bộ chấm điểm phù hợp.</p>
+          </div>
+        </section>
+        <details class="dashboard-panel dashboard-section study-instructions">
+          <summary>Cách hiểu điểm và CEFR</summary>
+          <p>
+            Chứng chỉ là chương trình thi. Mỗi bộ chấm điểm có phiên bản riêng, dùng quy tắc theo kỹ
+            năng để quy đổi điểm và xác định CEFR.
+          </p>
+          <p>Kết quả phục vụ luyện tập, không phải điểm hoặc chứng chỉ Aptis chính thức.</p>
+          <p>
+            Đề tổng hợp có ngưỡng CEFR riêng cho từng kỹ năng. Tổng điểm cộng bốn kỹ năng sau khi
+            đưa về thang 0–50. Grammar &amp; Vocabulary có điểm riêng và hỗ trợ xét CEFR trong phạm
+            vi 1 điểm dưới ngưỡng kế tiếp, nếu khoảng CEFR nội bộ của phần này đạt mức kế tiếp trở
+            lên.
+          </p>
+        </details>
+      </main>
+    </div>
+    <div th:replace="~{fragments/footer :: footer}"></div>
+  </body>
+</html>

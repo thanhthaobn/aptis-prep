@@ -3,6 +3,7 @@ package com.aptisprep.service.scoring;
 import com.aptisprep.entity.ScoreBand;
 import com.aptisprep.entity.ScoringScaleRule;
 import com.aptisprep.entity.ScoringScheme;
+import com.aptisprep.enums.CefrLevel;
 import com.aptisprep.enums.RecordStatus;
 import com.aptisprep.enums.Skill;
 import com.aptisprep.exception.BusinessRuleException;
@@ -14,10 +15,12 @@ import com.aptisprep.service.contract.ScoringPolicyContract;
 import com.aptisprep.service.contract.ScoringPolicyContract.SkillScore;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
+import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -138,6 +141,76 @@ public class ScoringPolicyService implements ScoringPolicyContract {
                 .filter(Objects::nonNull)
                 .min(Comparator.comparingInt(this::levelOrder))
                 .orElse(null);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public FullMockScore fullMockScore(Integer schemeId, List<SkillScore> skillScores) {
+        requireHistoricalScheme(schemeId);
+        if (skillScores.size() != Skill.values().length
+                || !skillScores.stream()
+                        .map(SkillScore::skill)
+                        .collect(Collectors.toSet())
+                        .containsAll(Skill.codes())
+                || skillScores.stream()
+                        .anyMatch(
+                                score ->
+                                        score.scaleScore() == null
+                                                || CefrLevel.parse(score.cefrLevel()) == null)) {
+            return new FullMockScore(null, null, skillScores);
+        }
+        CefrLevel coreLevel =
+                skillScores.stream()
+                        .filter(score -> Skill.GRAMMAR_VOCABULARY.name().equals(score.skill()))
+                        .map(score -> CefrLevel.parse(score.cefrLevel()))
+                        .findFirst()
+                        .orElseThrow();
+        List<SkillScore> adjusted = new ArrayList<>();
+        BigDecimal total = BigDecimal.ZERO;
+        int levels = 0;
+        for (SkillScore score : skillScores) {
+            if (Skill.GRAMMAR_VOCABULARY.name().equals(score.skill())) {
+                adjusted.add(new SkillScore(score.skill(), score.scaleScore(), null));
+                continue;
+            }
+            ScoringScaleRule rule = requireRule(schemeId, score.skill());
+            BigDecimal range = rule.getScaleMax().subtract(rule.getScaleMin());
+            total =
+                    total.add(
+                            score.scaleScore()
+                                    .subtract(rule.getScaleMin())
+                                    .multiply(BigDecimal.valueOf(50))
+                                    .divide(range, 8, RoundingMode.HALF_UP));
+            CefrLevel level = borderlineLevel(schemeId, score, coreLevel, range);
+            levels += level.ordinal();
+            adjusted.add(new SkillScore(score.skill(), score.scaleScore(), level.name()));
+        }
+        int average = (levels + 2) / 4;
+        return new FullMockScore(
+                total.setScale(2, RoundingMode.HALF_UP),
+                CefrLevel.values()[average].name(),
+                List.copyOf(adjusted));
+    }
+
+    private CefrLevel borderlineLevel(
+            Integer schemeId, SkillScore score, CefrLevel coreLevel, BigDecimal range) {
+        CefrLevel level = CefrLevel.parse(score.cefrLevel());
+        // The local policy uses a one-point window on a 0–50 equivalent scale.
+        for (ScoreBand band :
+                scoreBandRepository.findBySchemeIdAndSkillOrderByMinScoreAsc(
+                        schemeId, score.skill())) {
+            CefrLevel next = CefrLevel.parse(band.getCefrLevel());
+            BigDecimal gap = band.getMinScore().subtract(score.scaleScore());
+            if (gap.signum() <= 0) continue;
+            if (next != null
+                    && next.ordinal() == level.ordinal() + 1
+                    && coreLevel.atLeast(next)
+                    && gap.multiply(BigDecimal.valueOf(50)).compareTo(range) <= 0) {
+                return next;
+            }
+            break;
+        }
+        return level;
     }
 
     private ScoringScheme requireActiveScheme(Integer id) {

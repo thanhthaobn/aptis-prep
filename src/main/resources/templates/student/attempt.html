@@ -25,7 +25,7 @@
       .question-instruction {
         margin: 0 0 1.35rem;
         color: #58708f;
-        font-size: 1rem;
+        font-size: var(--text-base);
         line-height: 1.7;
         letter-spacing: normal;
       }
@@ -34,13 +34,13 @@
         padding: 1.25rem 1.4rem;
         border: 1px solid #c8dce5;
         border-left: 5px solid #087a9d;
-        border-radius: 14px;
+        border-radius: var(--radius);
         background: #f2fbfd;
       }
       .reading-passage h3 {
         margin: 0 0 0.7rem;
         color: #075c78;
-        font-size: 1.05rem;
+        font-size: var(--text-base);
         line-height: 1.45;
       }
       .reading-passage-text {
@@ -55,7 +55,7 @@
         margin: 1.25rem 0 1.5rem;
         padding: 1rem 1.1rem;
         border: 1px solid #c8dce5;
-        border-radius: 14px;
+        border-radius: var(--radius);
         background: #f2fbfd;
       }
       .media-audio {
@@ -83,7 +83,7 @@
       }
       .media-status {
         min-height: 1.1rem;
-        font-size: 0.8rem;
+        font-size: var(--text-small);
       }
       .attempt-media > img {
         display: block;
@@ -92,7 +92,7 @@
         margin: 1.25rem 0 1.5rem;
         object-fit: contain;
         border: 1px solid #c8dce5;
-        border-radius: 16px;
+        border-radius: var(--radius);
         background: #f7fbfc;
         box-shadow: 0 8px 20px rgba(34, 73, 96, 0.08);
       }
@@ -100,7 +100,7 @@
         margin-top: 1.25rem;
         padding: 1.45rem 1.5rem 1.55rem;
         border: 1px solid #dbe7ee;
-        border-radius: 17px;
+        border-radius: var(--radius);
         background: linear-gradient(145deg, #ffffff, #f8fbfd);
         box-shadow: 0 8px 22px rgba(34, 73, 96, 0.06);
       }
@@ -124,13 +124,13 @@
         background: linear-gradient(135deg, #087a9d, #0f8a78);
         border-radius: 10px;
         box-shadow: 0 5px 12px rgba(8, 122, 157, 0.2);
-        font-size: 0.95rem;
+        font-size: var(--text-base);
         font-weight: 800;
       }
       .question-item-prompt {
         margin: 0.25rem 0 0;
         color: #20364d;
-        font-size: 1.02rem;
+        font-size: var(--text-base);
         font-weight: 700;
         line-height: 1.7;
         letter-spacing: normal;
@@ -142,7 +142,7 @@
       .question-item .field label {
         margin-bottom: 0.45rem;
         color: #50657b;
-        font-size: 0.82rem;
+        font-size: var(--text-small);
         font-weight: 800;
         letter-spacing: 0.02em;
       }
@@ -166,21 +166,21 @@
       .question-item .autosave-status {
         display: inline-block;
         margin-left: 0.65rem;
-        font-size: 0.8rem;
+        font-size: var(--text-small);
       }
       .speaking-recorder {
         display: block;
         margin: 0;
         padding: 1rem;
         border: 1px solid #dbe7ee;
-        border-radius: 13px;
+        border-radius: var(--radius);
         background: rgba(255, 255, 255, 0.78);
       }
       .speaking-recorder-label {
         display: block;
         margin-bottom: 0.65rem;
         color: #50657b;
-        font-size: 0.82rem;
+        font-size: var(--text-small);
         font-weight: 800;
         letter-spacing: 0.02em;
       }
@@ -196,8 +196,8 @@
         min-width: 84px;
         min-height: 36px;
         padding: 0.4rem 0.6rem;
-        font-size: 0.8rem;
-        border-radius: 8px;
+        font-size: var(--text-small);
+        border-radius: var(--radius);
         white-space: nowrap;
       }
       .speaking-recorder .recording-status {
@@ -206,7 +206,7 @@
         height: 3em;
         overflow: auto;
         margin: 0.15rem 0 0;
-        font-size: 0.82rem;
+        font-size: var(--text-small);
       }
       .recording-meter {
         grid-column: 1 / -1;
@@ -216,7 +216,7 @@
         margin-top: 0.35rem;
         padding: 0.75rem 0.85rem;
         border: 1px solid #c8dce5;
-        border-radius: 12px;
+        border-radius: var(--radius);
         background: #f2fbfd;
       }
       .recording-meter-heading {
@@ -224,7 +224,7 @@
         justify-content: space-between;
         gap: 1rem;
         color: #075c78;
-        font-size: 0.8rem;
+        font-size: var(--text-small);
         font-weight: 800;
       }
       .recording-meter progress {
@@ -251,7 +251,7 @@
         margin: 0 0 1.25rem;
         padding: 1rem 1.15rem;
         border: 1px solid #c8dce5;
-        border-radius: 14px;
+        border-radius: var(--radius);
         background: #f2fbfd;
       }
       .full-mock-progress-heading {
@@ -260,7 +260,7 @@
         gap: 1rem;
         align-items: center;
         color: #075c78;
-        font-size: 0.9rem;
+        font-size: var(--text-small);
       }
       .full-mock-progress-heading strong {
         font-variant-numeric: tabular-nums;
@@ -281,7 +281,7 @@
       .full-mock-progress-note {
         margin: 0;
         color: #58708f;
-        font-size: 0.82rem;
+        font-size: var(--text-small);
       }
       .full-mock-exam.pagination-ready .full-mock-question:not(.is-active) {
         display: none;
@@ -299,7 +299,7 @@
       }
       .full-mock-pagination-info {
         color: #58708f;
-        font-size: 0.9rem;
+        font-size: var(--text-small);
         font-weight: 700;
         text-align: center;
       }
@@ -308,7 +308,7 @@
           padding: 1rem;
         }
         .question-item-prompt {
-          font-size: 0.96rem;
+          font-size: var(--text-base);
         }
         .question-item .autosave-status {
           display: block;
