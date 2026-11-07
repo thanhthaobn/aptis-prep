@@ -11,16 +11,14 @@ import com.aptisprep.service.contract.IntegrationModels.PathProgress;
 import com.aptisprep.service.learning.LearningPathService;
 import com.aptisprep.service.learning.LessonRecommendationService;
 import com.aptisprep.service.learning.LessonRecommendationService.Recommendation;
-
-import org.springframework.beans.factory.ObjectProvider;
-import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.GetMapping;
-
 import java.security.Principal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.GetMapping;
 
 @Controller
 public class StudentDashboardController {

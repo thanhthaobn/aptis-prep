@@ -6,13 +6,11 @@ import com.aptisprep.service.contract.ExamAttemptContract;
 import com.aptisprep.service.contract.ExamCatalogContract;
 import com.aptisprep.service.contract.IntegrationModels.AttemptHandle;
 import com.aptisprep.service.contract.IntegrationModels.AttemptResult;
-
-import org.springframework.beans.factory.ObjectProvider;
-import org.springframework.stereotype.Service;
-
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
+import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.stereotype.Service;
 
 @Service
 public class PlacementService {

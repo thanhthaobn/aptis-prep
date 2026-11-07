@@ -9,17 +9,14 @@ import com.aptisprep.service.account.LearningActivityService;
 import com.aptisprep.service.contract.IntegrationModels.AttemptHandle;
 import com.aptisprep.service.placement.PlacementService;
 import com.aptisprep.service.scoring.ScoringGuideService;
-
 import jakarta.validation.Valid;
-
+import java.security.Principal;
+import java.util.List;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
-
-import java.security.Principal;
-import java.util.List;
 
 @Controller
 public class StudentAccountController {

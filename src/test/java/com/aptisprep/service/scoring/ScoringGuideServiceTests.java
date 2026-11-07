@@ -6,11 +6,9 @@ import static org.mockito.Mockito.*;
 import com.aptisprep.entity.*;
 import com.aptisprep.repository.*;
 import com.aptisprep.service.contract.IntegrationModels.*;
-
-import org.junit.jupiter.api.Test;
-
 import java.math.BigDecimal;
 import java.util.*;
+import org.junit.jupiter.api.Test;
 
 class ScoringGuideServiceTests {
     @Test

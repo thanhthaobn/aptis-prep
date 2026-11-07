@@ -10,11 +10,9 @@ import com.aptisprep.exception.ResourceNotFoundException;
 import com.aptisprep.repository.*;
 import com.aptisprep.service.exam.ExamStartValidator;
 import com.aptisprep.service.student.StudentExamCatalogService;
-
+import java.util.*;
 import org.junit.jupiter.api.Test;
 import org.springframework.data.domain.PageRequest;
-
-import java.util.*;
 
 class UnavailableExamCatalogTests {
     @Test

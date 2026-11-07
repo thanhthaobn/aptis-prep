@@ -10,11 +10,9 @@ import com.aptisprep.service.account.AccountAccessService;
 import com.aptisprep.service.contract.ExamAttemptContract;
 import com.aptisprep.service.contract.IntegrationModels.*;
 import com.aptisprep.service.student.StudentExamCatalogService;
-
+import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.springframework.web.servlet.mvc.support.RedirectAttributesModelMap;
-
-import java.util.List;
 
 class StudentResultRetryTests {
     @Test

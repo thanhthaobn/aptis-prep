@@ -4,7 +4,10 @@ import com.aptisprep.exception.BusinessRuleException;
 import com.aptisprep.service.account.AccountAccessService;
 import com.aptisprep.service.exam.ExamAttemptService;
 import com.aptisprep.service.exam.ExamAttemptService.MediaResource;
-
+import java.io.IOException;
+import java.security.Principal;
+import java.util.Map;
+import java.util.UUID;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -16,11 +19,6 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
-
-import java.io.IOException;
-import java.security.Principal;
-import java.util.Map;
-import java.util.UUID;
 
 @Controller
 public class StudentExamController {

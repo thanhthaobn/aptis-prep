@@ -16,16 +16,14 @@ import com.aptisprep.service.contract.ScoringSchemeUsageContract;
 import com.aptisprep.service.exam.ExamAttemptService;
 import com.aptisprep.service.learning.FlashcardSetService;
 import com.aptisprep.service.scoring.*;
-
+import java.math.BigDecimal;
+import java.util.*;
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.math.BigDecimal;
-import java.util.*;
 
 @SpringBootTest
 @AutoConfigureMockMvc

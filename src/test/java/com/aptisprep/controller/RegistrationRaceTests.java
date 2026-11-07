@@ -6,7 +6,6 @@ import static org.mockito.Mockito.*;
 import com.aptisprep.controller.auth.AuthController;
 import com.aptisprep.dto.form.RegisterForm;
 import com.aptisprep.service.auth.UserService;
-
 import org.junit.jupiter.api.Test;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.validation.BeanPropertyBindingResult;

@@ -14,7 +14,8 @@ import com.aptisprep.entity.QuestionEntity;
 import com.aptisprep.entity.ScoringScheme;
 import com.aptisprep.enums.RecordStatus;
 import com.aptisprep.service.student.StudentExamCatalogService.Category;
-
+import java.util.HashSet;
+import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -22,9 +23,6 @@ import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.data.domain.Page;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.web.servlet.MockMvc;
-
-import java.util.HashSet;
-import java.util.List;
 
 @SpringBootTest
 @AutoConfigureMockMvc

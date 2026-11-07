@@ -10,19 +10,17 @@ import com.aptisprep.service.contract.IntegrationModels.HistoryPage;
 import com.aptisprep.service.scoring.ScoringGuideService;
 import com.aptisprep.service.student.StudentExamCatalogService;
 import com.aptisprep.service.student.StudentExamCatalogService.Catalog;
-
+import java.security.Principal;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.UUID;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
-
-import java.security.Principal;
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.UUID;
 
 /** Published exams from the database; results use the ownership-checked attempt contract. */
 @Controller

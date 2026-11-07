@@ -6,15 +6,12 @@ import com.aptisprep.exception.*;
 import com.aptisprep.repository.*;
 import com.aptisprep.service.contract.*;
 import com.aptisprep.service.contract.IntegrationModels.*;
-
 import jakarta.persistence.*;
-
+import java.time.LocalDateTime;
+import java.util.*;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.*;
-
-import java.time.LocalDateTime;
-import java.util.*;
 
 /** Owns path/progress only; Profile and attempt state are delegated to the team contracts. */
 @Service

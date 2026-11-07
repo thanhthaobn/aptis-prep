@@ -1,7 +1,6 @@
 package com.aptisprep.dto.form;
 
 import com.aptisprep.validation.AccountInput;
-
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;

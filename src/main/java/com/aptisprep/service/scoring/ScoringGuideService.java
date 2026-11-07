@@ -2,12 +2,10 @@ package com.aptisprep.service.scoring;
 
 import com.aptisprep.repository.*;
 import com.aptisprep.service.contract.IntegrationModels.AttemptResult;
-
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
 import java.math.BigDecimal;
 import java.util.*;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 /** Public score ranges only; never exposes answer keys or grading context. */
 @Service

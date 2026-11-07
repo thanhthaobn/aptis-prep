@@ -4,20 +4,17 @@ import com.aptisprep.dto.form.PasswordForm;
 import com.aptisprep.exception.BusinessRuleException;
 import com.aptisprep.service.auth.PasswordService;
 import com.aptisprep.validation.AccountInput;
-
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.*;
-
+import java.security.Principal;
+import java.util.Objects;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
-
-import java.security.Principal;
-import java.util.Objects;
 
 @Controller
 public class PasswordController {

@@ -1,7 +1,6 @@
 package com.aptisprep.dto.form;
 
 import com.aptisprep.validation.StrongPassword;
-
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 

@@ -6,11 +6,9 @@ import static org.mockito.Mockito.*;
 import com.aptisprep.exception.BusinessRuleException;
 import com.aptisprep.service.contract.*;
 import com.aptisprep.service.contract.IntegrationModels.AttemptHandle;
-
+import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.ObjectProvider;
-
-import java.util.List;
 
 class PlacementServiceTests {
     @Test

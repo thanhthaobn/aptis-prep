@@ -2,7 +2,6 @@ package com.aptisprep.config;
 
 import com.aptisprep.security.ActiveAccountFilter;
 import com.aptisprep.security.LoginSuccessHandler;
-
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;

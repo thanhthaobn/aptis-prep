@@ -6,15 +6,13 @@ import static org.mockito.Mockito.*;
 import com.aptisprep.entity.User;
 import com.aptisprep.enums.UserStatus;
 import com.aptisprep.repository.UserRepository;
-
+import java.util.Optional;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-
-import java.util.Optional;
 
 class PasswordServiceTests {
     @Test
