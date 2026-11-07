@@ -3,13 +3,11 @@ package com.aptisprep.dto.form;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
-
-import org.springframework.format.annotation.DateTimeFormat;
-
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import org.springframework.format.annotation.DateTimeFormat;
 
 public class ScoringSchemeForm {
     @NotNull(message = "Phải chọn chứng chỉ")

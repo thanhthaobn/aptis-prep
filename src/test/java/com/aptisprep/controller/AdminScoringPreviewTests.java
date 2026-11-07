@@ -18,7 +18,7 @@ import com.aptisprep.repository.MockExamRepository;
 import com.aptisprep.repository.ScoreBandRepository;
 import com.aptisprep.repository.ScoringSchemeRepository;
 import com.aptisprep.repository.UserRepository;
-
+import java.time.LocalDateTime;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,8 +26,6 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.time.LocalDateTime;
 
 @SpringBootTest
 @AutoConfigureMockMvc

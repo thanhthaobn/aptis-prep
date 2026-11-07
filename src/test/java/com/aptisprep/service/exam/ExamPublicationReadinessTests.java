@@ -8,12 +8,10 @@ import com.aptisprep.exception.BusinessRuleException;
 import com.aptisprep.repository.*;
 import com.aptisprep.service.contract.CertificateSchemeContract;
 import com.aptisprep.service.storage.StorageService;
-
-import org.junit.jupiter.api.Test;
-import org.springframework.test.util.ReflectionTestUtils;
-
 import java.util.List;
 import java.util.Optional;
+import org.junit.jupiter.api.Test;
+import org.springframework.test.util.ReflectionTestUtils;
 
 class ExamPublicationReadinessTests {
     @Test

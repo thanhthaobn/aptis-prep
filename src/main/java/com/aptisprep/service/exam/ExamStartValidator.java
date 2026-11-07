@@ -7,11 +7,9 @@ import com.aptisprep.exception.ResourceNotFoundException;
 import com.aptisprep.repository.*;
 import com.aptisprep.service.contract.CertificateSchemeContract;
 import com.aptisprep.service.storage.StorageService;
-
+import java.util.*;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Component;
-
-import java.util.*;
 
 /** Shared readiness checks for the catalog and the actual start transaction. */
 @Component

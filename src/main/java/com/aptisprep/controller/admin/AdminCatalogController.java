@@ -5,7 +5,6 @@ import com.aptisprep.dto.form.QuestionForm;
 import com.aptisprep.dto.view.AdminCatalogView.CatalogPage;
 import com.aptisprep.exception.BusinessRuleException;
 import com.aptisprep.service.admin.CatalogService;
-
 import org.springframework.core.io.Resource;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;

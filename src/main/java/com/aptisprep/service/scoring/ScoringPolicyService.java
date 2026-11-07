@@ -13,10 +13,6 @@ import com.aptisprep.repository.ScoringScaleRuleRepository;
 import com.aptisprep.repository.ScoringSchemeRepository;
 import com.aptisprep.service.contract.ScoringPolicyContract;
 import com.aptisprep.service.contract.ScoringPolicyContract.SkillScore;
-
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.ArrayList;
@@ -25,6 +21,8 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
 import java.util.stream.Collectors;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
  * Estimated internal policy. Raw and scale ranges come from the skill/version rule; no official
