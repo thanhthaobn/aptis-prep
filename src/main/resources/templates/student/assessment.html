@@ -6,6 +6,9 @@
     <div class="container ap-container app-shell">
       <div th:replace="~{fragments/student-sidebar :: studentSidebar('results')}"></div>
       <main id="main-content" tabindex="-1" class="app-main student-content">
+        <div
+          th:replace="~{fragments/back-link :: backLink(${assessmentBasePath.startsWith('/admin/')} ? @{/admin/results} : @{/student/results})}"
+        ></div>
         <header class="page-header">
           <div>
             <p class="eyebrow">PHẢN HỒI TỰ LUẬN</p>

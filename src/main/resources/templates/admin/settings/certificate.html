@@ -8,6 +8,7 @@
     <div class="container ap-container app-shell">
       <div th:replace="~{fragments/admin-sidebar :: adminSidebar('settings')}"></div>
       <main id="main-content" tabindex="-1" class="app-main admin-catalog">
+        <div th:replace="~{fragments/back-link :: backLink(@{/admin/certificates})}"></div>
         <div
           th:replace="~{fragments/breadcrumb :: breadcrumb('Chứng chỉ & Chấm điểm', @{/admin/certificates}, 'Chứng chỉ')}"
         ></div>
@@ -16,7 +17,6 @@
           <h1
             th:text="${readOnly ? certificate.name : (editing ? 'Chỉnh sửa chứng chỉ' : 'Thêm chứng chỉ')}"
           ></h1>
-          <a class="button button-secondary" th:href="@{/admin/certificates}">Về danh sách</a>
         </header>
         <form
           class="dashboard-panel"
@@ -70,7 +70,7 @@
               Chỉnh sửa
             </a>
             <button th:unless="${readOnly}" class="button" type="submit">Lưu chứng chỉ</button>
-            <a class="button button-secondary" th:href="@{/admin/certificates}">Quay lại</a>
+            <div th:replace="~{fragments/back-link :: backLink(@{/admin/certificates})}"></div>
           </div>
         </form>
         <form

@@ -6,11 +6,13 @@ import com.aptisprep.service.contract.ExamAttemptContract;
 import com.aptisprep.service.contract.ExamCatalogContract;
 import com.aptisprep.service.contract.IntegrationModels.AttemptHandle;
 import com.aptisprep.service.contract.IntegrationModels.AttemptResult;
+
+import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.stereotype.Service;
+
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
-import org.springframework.beans.factory.ObjectProvider;
-import org.springframework.stereotype.Service;
 
 @Service
 public class PlacementService {
@@ -32,6 +34,23 @@ public class PlacementService {
 
     public List<PlacementExamCatalogService.PlacementExam> available(String skill) {
         return catalog.findPublished(skill);
+    }
+
+    public List<PlacementOption> available(String email, String skill) {
+        List<PlacementExamCatalogService.PlacementExam> exams = available(skill);
+        AccountAccessContract account = accounts.getIfAvailable();
+        ExamAttemptContract attempt = attempts.getIfAvailable();
+        boolean resumable =
+                account != null
+                        && attempt != null
+                        && attempt.hasInProgressPlacement(
+                                account.requireActiveStudent(email), skill);
+        return exams.stream()
+                .map(
+                        exam ->
+                                new PlacementOption(
+                                        exam.id(), exam.title(), exam.subtitle(), resumable))
+                .toList();
     }
 
     public AttemptHandle start(String email, String skill) {
@@ -70,4 +89,6 @@ public class PlacementService {
             throw new BusinessRuleException("Luồng kết quả Placement chưa sẵn sàng");
         return attempt.result(account.requireActiveStudent(email), attemptId);
     }
+
+    public record PlacementOption(Integer id, String title, String subtitle, boolean resumable) {}
 }

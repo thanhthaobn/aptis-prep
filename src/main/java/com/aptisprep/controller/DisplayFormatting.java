@@ -4,18 +4,20 @@ import com.aptisprep.enums.CefrLevel;
 import com.aptisprep.enums.Skill;
 import com.aptisprep.service.contract.IntegrationModels.SkillResult;
 import com.aptisprep.service.learning.LessonService;
-import java.time.ZoneId;
-import java.time.format.DateTimeFormatter;
-import java.time.temporal.TemporalAccessor;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Locale;
+
 import org.springframework.stereotype.Component;
 import org.springframework.validation.Errors;
 import org.springframework.validation.ObjectError;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 import org.springframework.web.servlet.support.RequestContext;
+
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
+import java.time.temporal.TemporalAccessor;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
 
 /** Presentation formatting shared by HTML pages; does not query or modify business data. */
 @Component
@@ -103,6 +105,13 @@ public class DisplayFormatting {
 
     public List<String> flashcardGroups(boolean admin) {
         return admin ? List.of("admin") : List.of("mine", "lesson");
+    }
+
+    public boolean fieldInvalid(String formName, String field) {
+        if (!(RequestContextHolder.getRequestAttributes()
+                instanceof ServletRequestAttributes attributes)) return false;
+        Errors errors = new RequestContext(attributes.getRequest()).getErrors(formName, false);
+        return errors != null && errors.hasFieldErrors(field);
     }
 
     public List<String> globalErrors(String formName) {

@@ -8,24 +8,33 @@
       <main class="app-main student-content" id="main-content" tabindex="-1">
         <header class="page-header">
           <div>
-            <h1>Kiểm tra đầu vào</h1>
+            <h1 class="page-title-with-icon">
+              <span class="page-title-sticker">
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  aria-hidden="true"
+                >
+                  <rect x="5" y="4" width="14" height="17" rx="2" />
+                  <path d="M9 4V2h6v2M8 12l3 3 5-6" />
+                </svg>
+              </span>
+              Kiểm tra đầu vào
+            </h1>
+            <p>Kiểm tra đầu vào để chọn chặng học phù hợp.</p>
           </div>
         </header>
-
-        <section class="learn-choice">
-          <div>
-            <h2>Bạn có thể học trước</h2>
-            <p>Chưa sẵn sàng kiểm tra? Khám phá ngay các kỹ năng theo lộ trình.</p>
-            <a class="button" th:href="@{/student/learning-path}">Bỏ qua và khám phá lộ trình</a>
-          </div>
-          <div th:replace="~{fragments/navi :: navi('welcome', 'Navi đồng hành cùng bạn')}"></div>
-        </section>
 
         <!-- Thông báo alert chuẩn -->
         <div th:replace="~{fragments/messages :: messages}"></div>
 
         <section class="dashboard-panel dashboard-section">
           <h2>Chọn kỹ năng</h2>
+          <a class="placement-skip" th:href="@{/student/learning-path}">
+            Học trước, kiểm tra sau →
+          </a>
           <form method="get" th:action="@{/student/placement}">
             <div class="field">
               <label for="entranceSkill">Kỹ năng muốn đánh giá</label>
@@ -44,7 +53,7 @@
         </section>
 
         <section class="dashboard-panel dashboard-section">
-          <h2>Đề kiểm tra đầu vào khả dụng</h2>
+          <h2>Bài kiểm tra khả dụng</h2>
           <div th:if="${placementExams == null or placementExams.isEmpty()}" class="empty-box">
             <div th:replace="~{fragments/navi :: navi('empty', 'Navi đang chờ đề kiểm tra')}"></div>
             <p>Hiện chưa có đề kiểm tra đầu vào đã công bố cho kỹ năng này.</p>
@@ -52,18 +61,29 @@
           <div
             th:unless="${placementExams == null or placementExams.isEmpty()}"
             th:each="exam : ${placementExams}"
-            class="catalog-answer"
+            class="catalog-answer placement-exam-row"
           >
             <div>
               <strong th:text="${exam.title}"></strong>
               <p class="muted" th:text="${exam.subtitle}"></p>
             </div>
-            <form method="post" th:action="@{/student/placement/start}">
-              <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
-              <input type="hidden" name="skill" th:value="${skill}" />
-              <input type="hidden" name="examId" th:value="${exam.id}" />
-              <button class="button" type="submit">Bắt đầu / tiếp tục</button>
-            </form>
+            <div class="placement-exam-actions">
+              <a class="button button-secondary" th:href="@{/student/exams/{id}(id=${exam.id})}">
+                Thang điểm
+              </a>
+              <form method="post" th:action="@{/student/placement/start}">
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+                <input type="hidden" name="skill" th:value="${skill}" />
+                <input type="hidden" name="examId" th:value="${exam.id}" />
+                <button
+                  class="button"
+                  type="submit"
+                  th:text="${exam.resumable ? 'Tiếp tục' : 'Bắt đầu'}"
+                >
+                  Bắt đầu
+                </button>
+              </form>
+            </div>
           </div>
         </section>
 

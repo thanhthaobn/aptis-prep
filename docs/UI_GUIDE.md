@@ -1,5 +1,11 @@
 # Quy chuẩn giao diện AptisPrep
 
+## Thanh cấp độ và nút quay lại
+
+- Thẻ lộ trình giữ ba thông tin ngắn: Hiện tại, Đích chặng, Mục tiêu; bên dưới luôn có thanh A1–C1. Dùng chung `path-stage :: stageScale(stage)` cho tổng quan và trang kỹ năng. Phần tô biểu thị trình độ đã đạt, ô viền biểu thị đích chặng, ngôi sao biểu thị mục tiêu cá nhân.
+- Menu và tiêu đề trang Placement dùng nhãn **Kiểm tra đầu vào**, giữ biểu tượng clipboard. Không lặp hướng dẫn dài trên trang.
+- Nút quay lại dùng `back-link :: backLink(url)` với nhãn **Quay lại**, biểu tượng chevron và kiểu dáng chung. Chỉ đặt ở trang chi tiết hoặc biểu mẫu; các trang chính trong menu không có nút về Tổng quan. Giữ đường dẫn về trang cha phù hợp; chi tiết đề Placement quay về trang đánh giá đúng kỹ năng. Các nút chuyển câu/thẻ và thoát bài thi vẫn có hành vi riêng.
+
 ## Cách viết dễ đọc cập nhật 27/10/2026
 
 Template không dùng các helper bắt đầu bằng `#strings`, `#lists`, `#fields`,

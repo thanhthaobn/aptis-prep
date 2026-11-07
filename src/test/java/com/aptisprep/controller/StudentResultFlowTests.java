@@ -17,9 +17,7 @@ import com.aptisprep.repository.ExamSkillResultRepository;
 import com.aptisprep.repository.MockExamRepository;
 import com.aptisprep.repository.UserRepository;
 import com.aptisprep.service.contract.IntegrationModels.HistoryPage;
-import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.HashSet;
+
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
@@ -31,6 +29,10 @@ import org.springframework.test.context.support.DependencyInjectionTestExecution
 import org.springframework.test.context.transaction.TransactionalTestExecutionListener;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.HashSet;
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -120,7 +122,7 @@ class StudentResultFlowTests {
         mvc.perform(get("/student/results").with(user(learner.getEmail()).roles("STUDENT")))
                 .andExpect(status().isOk())
                 .andExpect(view().name("student/results/list"))
-                .andExpect(content().string(containsString("Bạn chưa có kết quả nào")))
+                .andExpect(content().string(containsString("Bạn chưa làm bài thi nào")))
                 .andExpect(
                         content()
                                 .string(

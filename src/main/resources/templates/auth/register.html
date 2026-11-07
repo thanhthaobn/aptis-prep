@@ -3,7 +3,7 @@
 <!--/*@thymesVar id="registerForm" type="com.aptisprep.dto.form.RegisterForm"*/-->
 <html lang="vi" xmlns:th="http://www.thymeleaf.org">
   <head th:replace="~{fragments/head :: head('Đăng ký')}"></head>
-  <body class="landing-theme">
+  <body class="landing-theme account-page">
     <div th:replace="~{fragments/navbar :: navbar}"></div>
     <main id="main-content" tabindex="-1" class="auth-page">
       <div class="container ap-container auth-layout">
@@ -24,8 +24,13 @@
             </svg>
           </span>
           <h1>Tạo tài khoản</h1>
-          <p class="form-intro">Tạo tài khoản để bắt đầu học.</p>
-          <form th:action="@{/register}" th:object="${registerForm}" method="post">
+
+          <form
+            th:action="@{/register}"
+            th:object="${registerForm}"
+            method="post"
+            data-account-form
+          >
             <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
             <div
               class="alert alert-danger"
@@ -41,18 +46,24 @@
               <label for="fullName">Họ và tên</label>
               <input
                 id="fullName"
+                aria-describedby="fullName-error"
+                th:attr="aria-invalid=${display.fieldInvalid('registerForm', 'fullName')}"
                 th:field="*{fullName}"
                 autocomplete="name"
                 placeholder="Nguyễn Văn An"
                 maxlength="255"
                 required
               />
-              <span class="field-error" th:errors="*{fullName}"></span>
+              <span id="fullName-error" class="field-error" aria-live="polite">
+                <span th:errors="*{fullName}"></span>
+              </span>
             </div>
             <div class="field">
               <label for="email">Email</label>
               <input
                 id="email"
+                aria-describedby="email-error"
+                th:attr="aria-invalid=${display.fieldInvalid('registerForm', 'email')}"
                 th:field="*{email}"
                 type="email"
                 autocomplete="email"
@@ -60,33 +71,71 @@
                 maxlength="255"
                 required
               />
-              <span class="field-error" th:errors="*{email}"></span>
+              <span id="email-error" class="field-error" aria-live="polite">
+                <span th:errors="*{email}"></span>
+              </span>
             </div>
             <div class="field">
               <label for="password">Mật khẩu</label>
-              <input
-                id="password"
-                th:field="*{password}"
-                type="password"
-                autocomplete="new-password"
-                placeholder="Tối thiểu 8 ký tự"
-                minlength="8"
-                maxlength="72"
-                required
-              />
-              <span class="field-error" th:errors="*{password}"></span>
+              <small id="password-hint">Từ 8 ký tự, tránh mật khẩu dễ đoán.</small>
+              <div class="password-input">
+                <input
+                  id="password"
+                  aria-describedby="password-hint password-error"
+                  th:attr="aria-invalid=${display.fieldInvalid('registerForm', 'password')}"
+                  th:field="*{password}"
+                  type="password"
+                  autocomplete="new-password"
+                  data-password-policy
+                  placeholder="Tối thiểu 8 ký tự"
+                  minlength="8"
+                  maxlength="72"
+                  required
+                />
+                <button
+                  class="password-toggle"
+                  type="button"
+                  data-toggle-password="password"
+                  aria-controls="password"
+                  aria-pressed="false"
+                  aria-label="Hiện mật khẩu"
+                >
+                  Hiện
+                </button>
+              </div>
+              <span id="password-error" class="field-error" aria-live="polite">
+                <span th:errors="*{password}"></span>
+              </span>
             </div>
             <div class="field">
               <label for="confirmPassword">Xác nhận mật khẩu</label>
-              <input
-                id="confirmPassword"
-                th:field="*{confirmPassword}"
-                type="password"
-                autocomplete="new-password"
-                placeholder="Nhập lại mật khẩu"
-                required
-              />
-              <span class="field-error" th:errors="*{confirmPassword}"></span>
+              <div class="password-input">
+                <input
+                  id="confirmPassword"
+                  aria-describedby="confirmPassword-error"
+                  th:attr="aria-invalid=${display.fieldInvalid('registerForm', 'confirmPassword')}"
+                  th:field="*{confirmPassword}"
+                  type="password"
+                  autocomplete="new-password"
+                  data-password-confirm
+                  maxlength="72"
+                  placeholder="Nhập lại mật khẩu"
+                  required
+                />
+                <button
+                  class="password-toggle"
+                  type="button"
+                  data-toggle-password="confirmPassword"
+                  aria-controls="confirmPassword"
+                  aria-pressed="false"
+                  aria-label="Hiện mật khẩu"
+                >
+                  Hiện
+                </button>
+              </div>
+              <span id="confirmPassword-error" class="field-error" aria-live="polite">
+                <span th:errors="*{confirmPassword}"></span>
+              </span>
             </div>
             <button class="button button-block" type="submit">Đăng ký</button>
           </form>
@@ -97,6 +146,7 @@
         </div>
       </div>
     </main>
+    <script th:src="@{/js/account-forms.js}" defer></script>
     <div th:replace="~{fragments/footer :: footer}"></div>
   </body>
 </html>

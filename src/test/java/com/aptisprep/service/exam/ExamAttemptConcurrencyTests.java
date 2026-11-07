@@ -36,15 +36,17 @@ import com.aptisprep.repository.ScoringSchemeRepository;
 import com.aptisprep.repository.UserRepository;
 import com.aptisprep.service.storage.StorageService;
 import com.aptisprep.support.TestAudio;
+
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
 
 @SpringBootTest
 @org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc
@@ -521,8 +523,9 @@ class ExamAttemptConcurrencyTests {
         assertThrows(
                 BusinessRuleException.class,
                 () -> attempts.start(f.user().getId(), f.exam().getId(), "speech-only"));
-        org.junit.jupiter.api.Assertions.assertFalse(
-                studentCatalog.entry("exams", f.exam().getId()).startable());
+        org.junit.jupiter.api.Assertions.assertThrows(
+                com.aptisprep.exception.ResourceNotFoundException.class,
+                () -> studentCatalog.entry("exams", f.exam().getId()));
         f.media().setMediaUrl("questions/missing-audio.wav");
         media.saveAndFlush(f.media());
         assertThrows(

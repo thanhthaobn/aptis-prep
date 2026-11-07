@@ -18,11 +18,10 @@
                  hasMethod=${lesson.material != null and ((lesson.material.strategy != null and !lesson.material.strategy.isBlank()) or hasMethodReview)},
                  hasVideo=${videoId != null or lesson.videoPath != null}"
       >
-        <a
-          class="lesson-back"
-          th:href="@{/student/learning-path/{skill}(skill=${lesson.skill})}"
-          th:text="${'← Quay lại lộ trình ' + (lesson.skill)}"
-        ></a>
+        <div
+          th:replace="~{fragments/back-link :: backLink(@{/student/learning-path/{skill}(skill=${lesson.skill})})}"
+        ></div>
+
         <header class="page-header lesson-header">
           <div>
             <p class="eyebrow" th:text="${'' + (lesson.skill) + ' · ' + (lesson.cefrLevel)}"></p>
@@ -452,12 +451,9 @@
             >
               Bài tiếp theo →
             </a>
-            <a
-              class="lesson-path-link"
-              th:href="@{/student/learning-path/{skill}(skill=${lesson.skill})}"
-            >
-              Quay lại lộ trình
-            </a>
+            <div
+              th:replace="~{fragments/back-link :: backLink(@{/student/learning-path/{skill}(skill=${lesson.skill})})}"
+            ></div>
           </div>
         </footer>
       </main>

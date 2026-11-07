@@ -4,6 +4,10 @@ import com.aptisprep.service.contract.IntegrationModels.*;
 
 /** Lifecycle owner: Trâm. All methods recheck ownership/account status; grading is delegated to Thông. */
 public interface ExamAttemptContract {
+    default boolean hasInProgressPlacement(Integer userId, String skill) {
+        return false;
+    }
+
     AttemptHandle start(Integer userId, Integer examId, String requestKey);
 
     AttemptHandle startPlacement(Integer userId, Integer examId, String requestKey);

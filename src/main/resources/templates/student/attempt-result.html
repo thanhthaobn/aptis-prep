@@ -6,6 +6,7 @@
     <div class="container ap-container app-shell">
       <div th:replace="~{fragments/student-sidebar :: studentSidebar('results')}"></div>
       <main class="app-main student-content" id="main-content" tabindex="-1">
+        <div th:replace="~{fragments/back-link :: backLink(@{/student/results})}"></div>
         <div th:replace="~{fragments/messages :: messages}"></div>
         <!-- Thống nhất kết quả hiển thị bài thi -->
         <div

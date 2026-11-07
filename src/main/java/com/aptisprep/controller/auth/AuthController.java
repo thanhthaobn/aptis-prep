@@ -2,9 +2,12 @@ package com.aptisprep.controller.auth;
 
 import com.aptisprep.dto.form.RegisterForm;
 import com.aptisprep.exception.BusinessRuleException;
+import com.aptisprep.exception.DuplicateEmailException;
 import com.aptisprep.service.auth.UserService;
+
 import jakarta.validation.Valid;
-import java.util.Objects;
+
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
@@ -14,6 +17,8 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+
+import java.util.Objects;
 
 @Controller
 public class AuthController {
@@ -59,6 +64,15 @@ public class AuthController {
 
         try {
             userService.registerStudent(form);
+        } catch (DuplicateEmailException exception) {
+            bindingResult.rejectValue("email", "email.duplicate", exception.getMessage());
+            return "auth/register";
+        } catch (DataIntegrityViolationException exception) {
+            bindingResult.rejectValue(
+                    "email",
+                    "email.duplicate",
+                    "Không thể tạo tài khoản với email này. Email có thể vừa được đăng ký; hãy thử đăng nhập.");
+            return "auth/register";
         } catch (BusinessRuleException exception) {
             bindingResult.reject("registration.failed", exception.getMessage());
             return "auth/register";

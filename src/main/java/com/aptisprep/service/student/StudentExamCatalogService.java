@@ -10,8 +10,7 @@ import com.aptisprep.repository.MockExamQuestionRepository;
 import com.aptisprep.repository.MockExamRepository;
 import com.aptisprep.repository.MockExamSectionRepository;
 import com.aptisprep.service.exam.ExamStartValidator;
-import java.text.Normalizer;
-import java.util.*;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -19,6 +18,9 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.text.Normalizer;
+import java.util.*;
 
 /** Published database content only. Missing data never falls back to fabricated exams. */
 @Service
@@ -175,12 +177,24 @@ public class StudentExamCatalogService {
                                         || level.isBlank()
                                         || level.equalsIgnoreCase(exam.getTargetLevel()))
                 .filter(exam -> state == null || state.isBlank() || state.equals(exam.getStatus()))
+                .filter(this::eligibleForCatalog)
                 .sorted(
                         Comparator.comparing(
                                         MockExamEntity::getUpdatedAt,
                                         Comparator.nullsLast(Comparator.reverseOrder()))
                                 .thenComparing(MockExamEntity::getId, Comparator.reverseOrder()))
                 .toList();
+    }
+
+    private boolean eligibleForCatalog(MockExamEntity exam) {
+        if (startValidator == null) return true;
+        try {
+            startValidator.validate(
+                    exam, mockExamQuestionRepository.findByMockExamIdOrderByPosition(exam.getId()));
+            return true;
+        } catch (BusinessRuleException exception) {
+            return false;
+        }
     }
 
     private boolean matchesSkill(MockExamEntity exam, String skill) {
@@ -199,6 +213,7 @@ public class StudentExamCatalogService {
                 mockExamRepository
                         .findById(id)
                         .filter(exam -> "PUBLISHED".equals(exam.getStatus()) && !exam.isDemoOnly())
+                        .filter(this::eligibleForCatalog)
                         .orElseThrow(
                                 () ->
                                         new ResourceNotFoundException(

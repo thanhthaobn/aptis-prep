@@ -46,14 +46,11 @@
             </span>
           </div>
           <div class="overall-score-details">
-            <h3>Trình độ ước lượng tổng quan</h3>
+            <h3>Trình độ ước lượng</h3>
             <strong
               th:if="${res.overallScaleScore != null}"
-              th:text="${'Điểm tổng: ' + (res.overallScaleScore) + '/50'}"
+              th:text="${'Điểm tổng: ' + (res.overallScaleScore) + ' điểm quy đổi'}"
             ></strong>
-            <p th:if="${res.state == 'COMPLETED'}">
-              Kết quả đánh giá theo khung tham chiếu trình độ ngôn ngữ chung Châu Âu (CEFR).
-            </p>
             <p th:if="${res.state == 'WAITING_GRADING' or res.state == 'SUBMITTED'}">
               Bài làm đã được ghi nhận. Đang tiến hành chấm điểm các phần tự luận.
             </p>
@@ -153,7 +150,7 @@
             <div class="skill-score-row">
               <div class="skill-score-main" th:if="${skill.scaleScore != null}">
                 <span class="score-val" th:text="${skill.scaleScore}">0</span>
-                <span class="score-max">/50</span>
+                <span class="score-max">điểm quy đổi</span>
               </div>
               <div class="skill-score-pending" th:unless="${skill.scaleScore != null}">
                 <span
@@ -163,13 +160,7 @@
                 </span>
               </div>
 
-              <!-- Thanh tiến trình điểm 0 - 50 -->
-              <div class="skill-progress-track" aria-hidden="true">
-                <div
-                  class="skill-progress-bar"
-                  th:style="${'width: ' + (skill.scaleScore != null ? (skill.scaleScore * 2) : 0) + '%;'}"
-                ></div>
-              </div>
+              <!-- Score bounds are shown in the versioned scoring guide below. -->
 
               <div class="skill-raw-score" th:if="${skill.rawScore != null}">
                 <small th:text="${'Điểm thô: ' + (skill.rawScore)}"></small>
@@ -188,13 +179,11 @@
         </div>
       </section>
 
+      <div th:replace="~{fragments/scoring-guide :: scoringGuide}"></div>
       <!-- Khuyến nghị học tập & Điều hướng hành động -->
       <section class="recommendations-card">
         <h2>💡 Lộ trình phát triển tiếp theo</h2>
-        <p>
-          Điểm và CEFR ở đây là ước lượng học tập, không phải chứng chỉ. Practice và Full Mock không
-          tự nâng trình độ. Bạn có thể xem mục tiêu và chặng học hiện tại trong lộ trình.
-        </p>
+        <p>CEFR ước lượng cho học tập. Chỉ Placement và Checkpoint cập nhật trình độ.</p>
         <div class="result-actions-bar">
           <a class="button button-primary" th:href="@{/student/learning-path}">
             <span

@@ -18,6 +18,7 @@ function exam() {
     clock = 0,
     submissions = 0,
     dismissed = 0,
+    exitDestination,
     nextTimer = 0;
   const status = { textContent: '' };
   const error = {
@@ -45,12 +46,19 @@ function exam() {
       submissions++;
     },
   };
+  const exit = {
+    href: '/student/exams',
+    addEventListener: (name, handler) => {
+      if (name === 'click') events.exitAttempt = handler;
+    },
+  };
   const ids = {
     'submit-attempt-form': submit,
     'submit-attempt': button,
     'attempt-submit-error': error,
     'exam-timer': { dataset: { deadline: new Date(60000).toISOString() } },
     'timer-display': {},
+    'exit-attempt': exit,
   };
   runInNewContext(source, {
     URLSearchParams,
@@ -81,6 +89,11 @@ function exam() {
       body: { classList: { contains: () => false } },
     },
     window: {
+      location: {
+        assign(url) {
+          exitDestination = url;
+        },
+      },
       AppDialog: {
         confirm: (options) => new Promise((resolve) => confirmations.push({ options, resolve })),
         dismiss() {
@@ -98,6 +111,7 @@ function exam() {
     requests,
     confirmations,
     submit: () => events.submitAttempt({ preventDefault() {} }),
+    exit: () => events.exitAttempt({ preventDefault() {}, currentTarget: exit }),
     input(value) {
       answer.value = value;
       events.input();
@@ -116,8 +130,21 @@ function exam() {
     },
     submissions: () => submissions,
     dismissed: () => dismissed,
+    exitDestination: () => exitDestination,
   };
 }
+
+test('leaving an in-progress exam requires explicit confirmation', async () => {
+  const page = exam();
+  page.exit();
+  assert.match(page.confirmations.at(-1).options.title, /Thoát bài thi/);
+  await page.confirm(false);
+  assert.equal(page.exitDestination(), undefined);
+
+  page.exit();
+  await page.confirm(true);
+  assert.equal(page.exitDestination(), '/student/exams');
+});
 
 test('cancelling the in-page submit confirmation keeps the attempt editable', async () => {
   const page = exam();

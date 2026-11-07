@@ -11,6 +11,7 @@ import com.aptisprep.entity.User;
 import com.aptisprep.enums.Role;
 import com.aptisprep.enums.UserStatus;
 import com.aptisprep.repository.*;
+
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -75,7 +76,7 @@ class FlashcardDetachedViewTests {
                                     .with(user(learner.getEmail()).roles("STUDENT")))
                     .andExpect(status().isOk())
                     .andExpect(view().name("flashcard/study"))
-                    .andExpect(content().string(containsString("Quay lại bộ thẻ")));
+                    .andExpect(content().string(containsString("class=\"back-link\"")));
         } finally {
             for (Integer setId : new Integer[] {libraryId, personalId}) {
                 if (setId != null) {

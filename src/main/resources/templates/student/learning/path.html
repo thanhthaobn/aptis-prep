@@ -31,11 +31,10 @@
                 </span>
                 <h2>Reading</h2>
               </div>
-              <span th:replace="~{fragments/path-stage :: pathLevelRange('Reading')}"></span>
             </div>
-            <div th:replace="~{fragments/path-stage :: pathStage('Reading')}"></div>
+            <div th:replace="~{fragments/path-stage :: pathOverview('Reading')}"></div>
             <a class="button" th:href="@{/student/learning-path/{skill}(skill='Reading')}">
-              Xem bài Reading
+              Học Reading
               <span aria-hidden="true">→</span>
             </a>
           </article>
@@ -51,11 +50,10 @@
                 </span>
                 <h2>Listening</h2>
               </div>
-              <span th:replace="~{fragments/path-stage :: pathLevelRange('Listening')}"></span>
             </div>
-            <div th:replace="~{fragments/path-stage :: pathStage('Listening')}"></div>
+            <div th:replace="~{fragments/path-stage :: pathOverview('Listening')}"></div>
             <a class="button" th:href="@{/student/learning-path/{skill}(skill='Listening')}">
-              Xem bài Listening
+              Học Listening
               <span aria-hidden="true">→</span>
             </a>
           </article>
@@ -71,11 +69,10 @@
                 </span>
                 <h2>Writing</h2>
               </div>
-              <span th:replace="~{fragments/path-stage :: pathLevelRange('Writing')}"></span>
             </div>
-            <div th:replace="~{fragments/path-stage :: pathStage('Writing')}"></div>
+            <div th:replace="~{fragments/path-stage :: pathOverview('Writing')}"></div>
             <a class="button" th:href="@{/student/learning-path/{skill}(skill='Writing')}">
-              Xem bài Writing
+              Học Writing
               <span aria-hidden="true">→</span>
             </a>
           </article>
@@ -91,11 +88,10 @@
                 </span>
                 <h2>Speaking</h2>
               </div>
-              <span th:replace="~{fragments/path-stage :: pathLevelRange('Speaking')}"></span>
             </div>
-            <div th:replace="~{fragments/path-stage :: pathStage('Speaking')}"></div>
+            <div th:replace="~{fragments/path-stage :: pathOverview('Speaking')}"></div>
             <a class="button" th:href="@{/student/learning-path/{skill}(skill='Speaking')}">
-              Xem bài Speaking
+              Học Speaking
               <span aria-hidden="true">→</span>
             </a>
           </article>
@@ -112,25 +108,21 @@
                 </span>
                 <h2>Grammar &amp; Vocabulary</h2>
               </div>
-              <span
-                th:replace="~{fragments/path-stage :: pathLevelRange('Grammar & Vocabulary')}"
-              ></span>
             </div>
-            <div th:replace="~{fragments/path-stage :: pathStage('Grammar & Vocabulary')}"></div>
+            <div th:replace="~{fragments/path-stage :: pathOverview('Grammar & Vocabulary')}"></div>
             <a
               class="button"
               th:href="@{/student/learning-path/{skill}(skill='Grammar & Vocabulary')}"
             >
-              Xem bài ngữ pháp &amp; từ vựng
+              Học ngữ pháp &amp; từ vựng
               <span aria-hidden="true">→</span>
             </a>
           </article>
         </section>
 
         <div class="actions">
-          <a class="button button-secondary" th:href="@{/student/dashboard}">
-            ← Về hành trình tổng quan
-          </a>
+          <a th:href="@{/student/goals}">Thiết lập mục tiêu cá nhân</a>
+
           <a class="button" th:href="@{/student/placement}">Làm bài kiểm tra đầu vào</a>
         </div>
       </main>

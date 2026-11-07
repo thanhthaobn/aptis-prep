@@ -17,19 +17,22 @@ import com.aptisprep.service.contract.ScoringPolicyContract;
 import com.aptisprep.service.grading.AttemptFinalizationService;
 import com.aptisprep.service.grading.ObjectiveGradingService;
 import com.aptisprep.service.storage.StorageService;
-import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-import java.time.*;
-import java.util.*;
-import java.util.stream.Stream;
+
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
+
 import tools.jackson.databind.JsonNode;
+
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.time.*;
+import java.util.*;
+import java.util.stream.Stream;
 
 @Service
 public class ExamAttemptService implements ExamAttemptContract {
@@ -112,6 +115,14 @@ public class ExamAttemptService implements ExamAttemptContract {
     @Transactional
     public AttemptHandle startPlacement(Integer userId, Integer examId, String requestKey) {
         return startInternal(userId, examId, requestKey, null, true);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public boolean hasInProgressPlacement(Integer userId, String skill) {
+        return examAttemptRepository
+                .findActivePlacement(userId, skill, Set.of("IN_PROGRESS"))
+                .isPresent();
     }
 
     @Override

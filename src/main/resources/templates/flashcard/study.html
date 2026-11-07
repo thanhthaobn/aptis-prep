@@ -11,11 +11,10 @@
         class="app-main flashcard-study"
         th:attr="data-set-id=${set.id},data-skill=${set.lesson!=null?set.lesson.skill:null}"
       >
-        <a
-          class="lesson-back"
-          th:href="${set.lesson!=null?'/student/lessons/'+set.lesson.id:'/student/flashcards'}"
-          th:text="${set.lesson!=null?'← Quay lại bài học':'← Quay lại bộ thẻ'}"
-        ></a>
+        <div
+          th:replace="~{fragments/back-link :: backLink(${set.lesson!=null?'/student/lessons/'+set.lesson.id:'/student/flashcards'})}"
+        ></div>
+
         <a
           class="set-lesson-source study-lesson-source"
           th:if="${set.lesson!=null}"
@@ -116,9 +115,7 @@
             <button type="button" class="button button-secondary" id="restart-all">
               Học lại tất cả
             </button>
-            <a class="button button-secondary" th:href="@{/student/flashcards}">
-              Về danh sách bộ thẻ
-            </a>
+            <div th:replace="~{fragments/back-link :: backLink(@{/student/flashcards})}"></div>
           </div>
         </section>
         <form

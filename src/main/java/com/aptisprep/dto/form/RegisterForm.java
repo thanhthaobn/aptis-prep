@@ -1,13 +1,20 @@
 package com.aptisprep.dto.form;
 
+import com.aptisprep.validation.AccountInput;
+import com.aptisprep.validation.StrongPassword;
+
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
 public class RegisterForm {
 
     @NotBlank(message = "Họ tên không được để trống")
     @Size(max = 255, message = "Họ tên không được vượt quá 255 ký tự")
+    @Pattern(
+            regexp = AccountInput.NAME_PATTERN,
+            message = "Họ tên cần có chữ, chỉ dùng chữ, dấu cách, dấu chấm, nháy hoặc gạch nối")
     private String fullName;
 
     @NotBlank(message = "Email không được để trống")
@@ -17,9 +24,11 @@ public class RegisterForm {
 
     @NotBlank(message = "Mật khẩu không được để trống")
     @Size(min = 8, max = 72, message = "Mật khẩu phải có từ 8 đến 72 ký tự")
+    @StrongPassword
     private String password;
 
     @NotBlank(message = "Vui lòng xác nhận mật khẩu")
+    @Size(max = 72, message = "Mật khẩu xác nhận tối đa 72 ký tự")
     private String confirmPassword;
 
     public String getFullName() {
@@ -27,7 +36,7 @@ public class RegisterForm {
     }
 
     public void setFullName(String fullName) {
-        this.fullName = fullName;
+        this.fullName = AccountInput.name(fullName);
     }
 
     public String getEmail() {
@@ -35,7 +44,7 @@ public class RegisterForm {
     }
 
     public void setEmail(String email) {
-        this.email = email;
+        this.email = AccountInput.email(email);
     }
 
     public String getPassword() {

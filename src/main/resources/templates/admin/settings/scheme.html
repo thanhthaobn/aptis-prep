@@ -10,6 +10,7 @@
     <div class="container ap-container app-shell">
       <div th:replace="~{fragments/admin-sidebar :: adminSidebar('settings')}"></div>
       <main id="main-content" tabindex="-1" class="app-main admin-catalog">
+        <div th:replace="~{fragments/back-link :: backLink(@{/admin/certificates#schemes})}"></div>
         <div
           th:replace="~{fragments/breadcrumb :: breadcrumb('Chứng chỉ & Chấm điểm', @{/admin/certificates}, 'Bộ chấm điểm')}"
         ></div>
@@ -18,9 +19,6 @@
           <h1
             th:text="${readOnly ? scheme.name : (editing ? 'Chỉnh sửa bộ chấm điểm' : 'Thêm bộ chấm điểm')}"
           ></h1>
-          <a class="button button-secondary" th:href="@{/admin/certificates#schemes}">
-            Về danh sách
-          </a>
         </header>
         <form
           class="dashboard-panel"

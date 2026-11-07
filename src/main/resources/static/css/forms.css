@@ -108,3 +108,19 @@
     max-width: 100%;
   }
 }
+
+.field > small { display: block; color: var(--color-muted); line-height: 1.5; margin-bottom: .4rem; }
+input[aria-invalid="true"] { border-color: var(--color-danger); }
+
+.password-input { position: relative; }
+.password-input input { padding-right: 4.2rem; }
+.password-toggle { position: absolute; right: .4rem; top: .4rem; min-width: 3rem; min-height: 36px; border: 0; border-radius: 6px; color: var(--color-primary-dark); background: transparent; font-size: .8rem; font-weight: 650; }
+.password-toggle:hover { background: #eaf5f0; }
+.password-toggle:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 1px; }
+.field-error:empty { display: none; }
+@media(max-width:760px) {
+ .account-page .auth-welcome { display: none; }
+ .account-page .auth-page { padding-block: 1.25rem; align-items: start; min-height: calc(100vh - 120px); }
+ .account-page .form-card { width: 100%; padding: 1.4rem; }
+ .account-page .form-logo { display: none; }
+}

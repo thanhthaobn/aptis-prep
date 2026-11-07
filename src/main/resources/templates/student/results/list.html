@@ -6,7 +6,7 @@
     <div th:replace="~{fragments/navbar :: navbar}"></div>
     <div class="container app-shell">
       <div th:replace="~{fragments/student-sidebar :: studentSidebar('results')}"></div>
-      <main class="app-main student-content result-history-page">
+      <main id="main-content" tabindex="-1" class="app-main student-content result-history-page">
         <header class="page-header">
           <div>
             <p class="eyebrow">THEO DÕI TIẾN BỘ</p>
@@ -132,14 +132,20 @@
           </article>
         </section>
 
-        <section class="dashboard-panel empty-result-state" th:if="${history.items.isEmpty()}">
+        <section
+          class="dashboard-panel empty-result-state"
+          th:if="${history.items.isEmpty()}"
+          th:with="filtered=${!q.isBlank() or !selectedSkill.isBlank() or !selectedExamType.isBlank() or !selectedState.isBlank()}"
+        >
           <div class="empty-result-icon" aria-hidden="true">✓</div>
-          <h2>Bạn chưa có kết quả nào</h2>
-          <p>
+          <h2 th:text="${filtered ? 'Không có kết quả phù hợp' : 'Bạn chưa làm bài thi nào'}"></h2>
+          <p th:unless="${filtered}">
             Hãy làm bài kiểm tra đầu vào hoặc một đề luyện tập. Kết quả sẽ xuất hiện tại đây sau khi
             bạn nộp bài.
           </p>
-          <a class="button" th:href="@{/student/exams}">Khám phá đề thi</a>
+          <p th:if="${filtered}">Thử đổi điều kiện tìm kiếm hoặc xóa bộ lọc để xem lại lịch sử.</p>
+          <a class="button" th:if="${filtered}" th:href="@{/student/results}">Xóa bộ lọc</a>
+          <a class="button" th:unless="${filtered}" th:href="@{/student/exams}">Khám phá đề thi</a>
         </section>
 
         <div

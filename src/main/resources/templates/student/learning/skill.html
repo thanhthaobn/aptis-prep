@@ -7,6 +7,7 @@
     <div class="container ap-container app-shell">
       <div th:replace="~{fragments/student-sidebar :: studentSidebar('learning-path')}"></div>
       <main class="app-main student-content" id="main-content" tabindex="-1">
+        <div th:replace="~{fragments/back-link :: backLink(@{/student/learning-path})}"></div>
         <div
           th:replace="~{fragments/breadcrumb :: breadcrumb('Lộ trình của tôi', @{/student/learning-path}, ${selectedSkill})}"
         ></div>
@@ -16,18 +17,15 @@
             <p class="eyebrow">LỘ TRÌNH KỸ NĂNG</p>
             <h1 th:text="${selectedSkill}"></h1>
           </div>
-          <div th:replace="~{fragments/path-stage :: pathLevelRange(${selectedSkill})}"></div>
         </header>
 
         <!-- Thông báo alert chuẩn thống nhất -->
         <div th:replace="~{fragments/messages :: messages}"></div>
 
-        <div class="actions">
-          <a class="button button-secondary" th:href="@{/student/learning-path}">
-            ← Tất cả kỹ năng
-          </a>
-        </div>
-
+        <div
+          th:if="${paths == null or paths.isEmpty()}"
+          th:insert="~{fragments/path-stage :: pathStage(${selectedSkill})}"
+        ></div>
         <section class="curriculum-tree" aria-label="Kỹ năng, cấp độ và bài học">
           <p th:if="${paths == null or paths.isEmpty()}" class="empty-box">
             Chưa có chặng phù hợp hoặc mục tiêu hiện tại đã đạt. Bạn vẫn có thể ôn bài trong thư
