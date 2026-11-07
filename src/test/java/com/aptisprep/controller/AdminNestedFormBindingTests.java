@@ -125,7 +125,6 @@ class AdminNestedFormBindingTests {
                         .with(csrf())
                         .param("title", "Five sections")
                         .param("examType", "FULL_MOCK")
-                        .param("durationMinutes", "150")
                         .param("certificateId", certificate.getId().toString())
                         .param("description", "Preserved exam description <&>")
                         .param("demoOnly", "true")
@@ -219,7 +218,6 @@ class AdminNestedFormBindingTests {
                         .with(csrf())
                         .param("title", "Five sections")
                         .param("examType", "FULL_MOCK")
-                        .param("durationMinutes", "150")
                         .param("certificateId", certificate.getId().toString())
                         .param("status", "DRAFT")
                         .param("_demoOnly", "on");

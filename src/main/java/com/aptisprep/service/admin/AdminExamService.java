@@ -164,7 +164,10 @@ public class AdminExamService {
                 mockExamRepository
                         .findById(id)
                         .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy đề thi"));
-        if ("PUBLISHED".equals(exam.getStatus())) exam.setStatus("ARCHIVED");
+        if ("PUBLISHED".equals(exam.getStatus())) {
+            exam.setStatus("ARCHIVED");
+            mockExamRepository.save(exam);
+        }
     }
 
     void normalizeSections(ExamForm form) {
