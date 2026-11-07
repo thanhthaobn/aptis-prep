@@ -185,7 +185,9 @@ public class ScoringPolicyService implements ScoringPolicyContract {
             levels += level.ordinal();
             adjusted.add(new SkillScore(score.skill(), score.scaleScore(), level.name()));
         }
-        int average = (levels + 2) / 4;
+        // Aptis Scoring System v2.1, section 8: round the mean of the four CEFR levels.
+        // The published examples round a midpoint up to the higher level.
+        int average = Math.round(levels / 4.0f);
         return new FullMockScore(
                 total.setScale(2, RoundingMode.HALF_UP),
                 CefrLevel.values()[average].name(),

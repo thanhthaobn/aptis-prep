@@ -145,6 +145,27 @@ class ScoringPolicyServiceTests {
         assertNull(result.skills().get(4).cefrLevel());
     }
 
+    @Test
+    void fullMockRoundsCefrMidpointUpAsInAptisScoringSystem() {
+        when(schemes.findById(1)).thenReturn(Optional.of(activeScheme()));
+        when(scaleRules.findBySchemeIdAndSkillIgnoreCase(eq(1), anyString()))
+                .thenReturn(Optional.of(rule(50, 50)));
+        ScoringPolicyService service = new ScoringPolicyService(schemes, bands, scaleRules);
+
+        var result =
+                service.fullMockScore(
+                        1,
+                        List.of(
+                                new SkillScore("READING", BigDecimal.valueOf(40), "B2"),
+                                new SkillScore("LISTENING", BigDecimal.valueOf(36), "B2"),
+                                new SkillScore("WRITING", BigDecimal.valueOf(30), "B1"),
+                                new SkillScore("SPEAKING", BigDecimal.valueOf(30), "B1"),
+                                new SkillScore(
+                                        "GRAMMAR_VOCABULARY", BigDecimal.valueOf(30), "B1")));
+
+        assertEquals("B2", result.cefrLevel());
+    }
+
     private ScoringScaleRule rule(int rawMax, int scaleMax) {
         ScoringScaleRule rule = new ScoringScaleRule();
         rule.setRawMin(BigDecimal.ZERO);
