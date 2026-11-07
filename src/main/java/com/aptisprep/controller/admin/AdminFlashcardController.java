@@ -1,5 +1,6 @@
 package com.aptisprep.controller.admin;
 
+import com.aptisprep.controller.ListPagination;
 import com.aptisprep.dto.form.FlashcardSetForm;
 import com.aptisprep.dto.view.FlashcardViews.SetView;
 import com.aptisprep.exception.BusinessRuleException;
@@ -21,8 +22,10 @@ public class AdminFlashcardController {
     }
 
     @GetMapping("/admin/flashcards")
-    public String showFlashcardList(Model model) {
-        List<SetView> sets = flashcardSetService.list(true);
+    public String showFlashcardList(@RequestParam(defaultValue = "0") int page, Model model) {
+        var flashcardPage = ListPagination.slice(flashcardSetService.list(true), page);
+        List<SetView> sets = flashcardPage.getContent();
+        model.addAttribute("flashcardPage", flashcardPage);
         model.addAttribute("sets", sets);
         model.addAttribute("admin", true);
         model.addAttribute("lessonBranches", FlashcardSetService.groupBySkillAndLevel(sets));

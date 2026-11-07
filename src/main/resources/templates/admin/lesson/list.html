@@ -40,6 +40,7 @@
                       ></a>
                       <span
                         class="badge"
+                        th:classappend="${lesson.status == 'PUBLISHED'} ? 'badge-success'"
                         th:text="${lesson.status=='PUBLISHED'?'Đã công bố':(lesson.status=='DRAFT'?'Bản nháp':'Đã lưu trữ')}"
                       ></span>
                     </div>
@@ -74,6 +75,9 @@
             </details>
           </details>
         </section>
+        <div
+          th:replace="~{fragments/student-pagination :: studentPagination(${lessonPage.number}, ${lessonPage.totalPages}, ${lessonPage.totalElements}, @{/admin/lessons})}"
+        ></div>
       </main>
     </div>
     <div th:replace="~{fragments/footer :: footer}"></div>

@@ -19,5 +19,9 @@ public interface ScoringPolicyContract {
 
     String overallLevel(Integer schemeId, List<SkillScore> skillScores);
 
+    FullMockScore fullMockScore(Integer schemeId, List<SkillScore> skillScores);
+
+    record FullMockScore(BigDecimal total, String cefrLevel, List<SkillScore> skills) {}
+
     record SkillScore(String skill, BigDecimal scaleScore, String cefrLevel) {}
 }

@@ -213,8 +213,8 @@ public class ScoringAdminService {
         BigDecimal max = decimal(form.getMaxScore());
         if (min == null || max == null || min.compareTo(max) > 0)
             throw new BusinessRuleException("Khoảng điểm phải có min ≤ max");
-        if (min.signum() < 0 || max.compareTo(BigDecimal.valueOf(50)) > 0)
-            throw new BusinessRuleException("Khoảng điểm CEFR phải nằm trong 0–50");
+        if (min.signum() < 0 || max.compareTo(new BigDecimal("999.99")) > 0)
+            throw new BusinessRuleException("Khoảng điểm CEFR phải nằm trong 0–999.99");
         scoringScaleRuleRepository
                 .findBySchemeIdAndSkillIgnoreCase(schemeId, skill)
                 .ifPresent(
@@ -357,9 +357,9 @@ public class ScoringAdminService {
                 || rawMin.compareTo(rawMax) >= 0
                 || scaleMin.signum() < 0
                 || scaleMin.compareTo(scaleMax) >= 0
-                || scaleMax.compareTo(BigDecimal.valueOf(50)) > 0)
+                || scaleMax.compareTo(new BigDecimal("999.99")) > 0)
             throw new BusinessRuleException(
-                    "Khoảng raw/scale không hợp lệ; scale phải nằm trong 0–50");
+                    "Khoảng raw/scale không hợp lệ; scale phải nằm trong 0–999.99");
         if (scoreBandRepository
                 .findBySchemeIdAndSkillOrderByMinScoreAsc(schemeId, normalized)
                 .stream()

@@ -13,6 +13,7 @@ import com.aptisprep.exception.BusinessRuleException;
 import com.aptisprep.repository.ScoreBandRepository;
 import com.aptisprep.repository.ScoringScaleRuleRepository;
 import com.aptisprep.repository.ScoringSchemeRepository;
+import com.aptisprep.service.contract.ScoringPolicyContract.SkillScore;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
@@ -110,6 +111,38 @@ class ScoringPolicyServiceTests {
 
         assertEquals(new BigDecimal("30.00"), service.raw(1, "READING", 3, 4));
         assertEquals(new BigDecimal("37.50"), service.scale(1, "READING", new BigDecimal("30.00")));
+    }
+
+    @Test
+    void fullMockNormalizesFourScalesAndUsesCoreOnlyAtTheNextBoundary() {
+        when(schemes.findById(1)).thenReturn(Optional.of(activeScheme()));
+        when(scaleRules.findBySchemeIdAndSkillIgnoreCase(eq(1), anyString()))
+                .thenAnswer(
+                        call ->
+                                Optional.of(
+                                        rule(
+                                                50,
+                                                "READING".equals(call.getArgument(1)) ? 100 : 50)));
+        when(bands.findBySchemeIdAndSkillOrderByMinScoreAsc(1, "READING"))
+                .thenReturn(List.of(band("60", "79.99", "B2")));
+        when(bands.findBySchemeIdAndSkillOrderByMinScoreAsc(1, "LISTENING"))
+                .thenReturn(List.of(band("40", "50", "B2")));
+        ScoringPolicyService service = new ScoringPolicyService(schemes, bands, scaleRules);
+        var result =
+                service.fullMockScore(
+                        1,
+                        List.of(
+                                new SkillScore("READING", new BigDecimal("59"), "B1"),
+                                new SkillScore("LISTENING", new BigDecimal("35"), "B1"),
+                                new SkillScore("WRITING", new BigDecimal("30"), "B1"),
+                                new SkillScore("SPEAKING", new BigDecimal("45"), "C1"),
+                                new SkillScore("GRAMMAR_VOCABULARY", new BigDecimal("50"), "C1")));
+
+        assertEquals(new BigDecimal("139.50"), result.total());
+        assertEquals("B2", result.cefrLevel());
+        assertEquals("B2", result.skills().get(0).cefrLevel());
+        assertEquals("B1", result.skills().get(1).cefrLevel());
+        assertNull(result.skills().get(4).cefrLevel());
     }
 
     private ScoringScaleRule rule(int rawMax, int scaleMax) {

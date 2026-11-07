@@ -101,6 +101,14 @@ public class DisplayFormatting {
         return Skill.codes();
     }
 
+    public String catalogSkill(String skill) {
+        if ("FULL_MOCK".equals(skill)) return "Tổng hợp";
+        for (Skill value : Skill.values()) {
+            if (value.name().equalsIgnoreCase(skill)) return value.label();
+        }
+        return skill;
+    }
+
     public List<String> flashcardGroups(boolean admin) {
         return admin ? List.of("admin") : List.of("mine", "lesson");
     }

@@ -49,7 +49,7 @@
             <h3>Trình độ ước lượng</h3>
             <strong
               th:if="${res.overallScaleScore != null}"
-              th:text="${'Điểm tổng: ' + (res.overallScaleScore) + ' điểm quy đổi'}"
+              th:text="${res.hasFullMockTotal() ? 'Tổng bốn kỹ năng: ' + res.overallScaleScore + '/200' : 'Điểm quy đổi: ' + res.overallScaleScore}"
             ></strong>
             <p th:if="${res.state == 'WAITING_GRADING' or res.state == 'SUBMITTED'}">
               Bài làm đã được ghi nhận. Đang tiến hành chấm điểm các phần tự luận.
@@ -142,6 +142,7 @@
               </span>
               <span
                 class="badge"
+                th:unless="${res.hasFullMockTotal() and skill.skill == 'GRAMMAR_VOCABULARY'}"
                 th:classappend="${skill.estimatedLevel != null ? 'badge-cefr-' + (skill.estimatedLevel == null ? null : skill.estimatedLevel.toLowerCase()) : 'badge-secondary'}"
                 th:text="${skill.estimatedLevel != null ? skill.estimatedLevel : (skill.gradingState == 'ERROR' ? 'Chấm lỗi' : (skill.gradingState == 'PENDING' or skill.gradingState == 'WAITING' ? 'Đang chấm' : 'Chưa đánh giá'))}"
               ></span>

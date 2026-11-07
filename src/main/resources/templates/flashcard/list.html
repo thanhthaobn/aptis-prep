@@ -53,7 +53,7 @@
         <th:block th:each="group : ${display.flashcardGroups(admin)}">
           <section
             class="flashcard-function-group"
-            th:if="${admin or group=='mine' or lessonResultCount>0}"
+            th:if="${admin or (group=='mine' ? flashcardPage.totalPages<=1 or mineResultCount>0 or (matchingMineCount==0 and mineCount>0) : lessonResultCount>0)}"
           >
             <header class="flashcard-group-heading" th:unless="${admin}">
               <h2 th:text="${group=='lesson'?'Ôn theo bài học':'Bộ thẻ của tôi'}"></h2>
@@ -63,7 +63,7 @@
             </header>
             <div
               class="flashcard-personal-empty"
-              th:if="${!admin and group=='mine' and mineResultCount==0 and mineCount>0}"
+              th:if="${!admin and group=='mine' and matchingMineCount==0 and mineCount>0}"
             >
               <th:block th:if="${mineCount>0}">
                 <p>Bộ lọc hiện tại đang ẩn các bộ thẻ của bạn.</p>
@@ -214,6 +214,13 @@
           <p th:unless="${admin}">Thử tìm kiếm bằng từ khóa khác.</p>
           <a th:if="${admin}" class="button" th:href="@{/admin/flashcards/create}">Tạo bộ thẻ</a>
         </div>
+        <th:block
+          th:with="paginationUrl=${admin} ? @{/admin/flashcards} : @{/student/flashcards(source=${selectedSource},q=${q},skill=${selectedSkill},level=${selectedLevel},sort=${selectedSort})}"
+        >
+          <div
+            th:replace="~{fragments/student-pagination :: studentPagination(${flashcardPage.number}, ${flashcardPage.totalPages}, ${flashcardPage.totalElements}, ${paginationUrl})}"
+          ></div>
+        </th:block>
       </main>
     </div>
     <div th:replace="~{fragments/footer :: footer}"></div>

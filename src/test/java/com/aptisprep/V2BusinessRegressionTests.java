@@ -419,7 +419,7 @@ class V2BusinessRegressionTests {
                 BusinessRuleException.class,
                 () -> scoring.saveScaleRule(admin.getEmail(), scheme.getId(), "READING", invalid));
         var outOfRange = rule();
-        outOfRange.setScaleMax(BigDecimal.valueOf(51));
+        outOfRange.setScaleMax(BigDecimal.valueOf(1000));
         assertThrows(
                 BusinessRuleException.class,
                 () ->

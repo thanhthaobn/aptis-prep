@@ -130,7 +130,6 @@ public class AccountAccessService implements AccountAccessContract {
                 || level == null
                 || result.scaleScore() == null
                 || result.scaleScore().compareTo(BigDecimal.ZERO) < 0
-                || result.scaleScore().compareTo(BigDecimal.valueOf(50)) > 0
                 || !"COMPLETED".equalsIgnoreCase(result.gradingState())) {
             throw new BusinessRuleException("Kết quả kỹ năng chưa đủ điều kiện cập nhật hồ sơ");
         }

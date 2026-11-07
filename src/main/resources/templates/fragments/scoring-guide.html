@@ -15,9 +15,9 @@
         <h3 th:text="${guide.skill.replace('_', ' & ')}"></h3>
         <p
           class="muted"
-          th:text="${'Thang ' + guide.min + '–' + guide.max + ' · ' + guide.version}"
+          th:text="${'Thang điểm ' + guide.min.stripTrailingZeros().toPlainString() + '–' + guide.max.stripTrailingZeros().toPlainString()}"
         ></p>
-        <div class="table-responsive">
+        <div class="table-responsive" th:unless="${guide.bands.isEmpty()}">
           <table class="table">
             <thead>
               <tr>

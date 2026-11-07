@@ -87,6 +87,10 @@
           </div>
         </section>
 
+        <div
+          th:replace="~{fragments/student-pagination :: studentPagination(${placementPage.number}, ${placementPage.totalPages}, ${placementPage.totalElements}, @{/student/placement(skill=${skill})})}"
+        ></div>
+
         <details class="dashboard-panel dashboard-section study-instructions">
           <summary>Điều cần biết khi kiểm tra đầu vào</summary>
           <ul>

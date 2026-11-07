@@ -95,7 +95,7 @@
         <nav class="sidebar-nav">
           <a
             class="sidebar-link"
-            th:classappend="${activePage == 'settings'} ? 'active'"
+            th:classappend="${activePage == 'certificates'} ? 'active'"
             th:href="@{/admin/certificates}"
           >
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -104,7 +104,23 @@
                 d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1-2.8 2.8-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.6v.2h-4V21a1.7 1.7 0 0 0-1-1.6 1.7 1.7 0 0 0-1.9.3l-.1.1L4.2 17l.1-.1a1.7 1.7 0 0 0 .3-1.9A1.7 1.7 0 0 0 3 14H3v-4h.2a1.7 1.7 0 0 0 1.6-1 1.7 1.7 0 0 0-.3-1.9L4.2 7 7 4.2l.1.1A1.7 1.7 0 0 0 9 4.6 1.7 1.7 0 0 0 10 3V3h4v.2a1.7 1.7 0 0 0 1 1.6 1.7 1.7 0 0 0 1.9-.3l.1-.1L19.8 7l-.1.1a1.7 1.7 0 0 0-.3 1.9 1.7 1.7 0 0 0 1.6 1h.2v4H21a1.7 1.7 0 0 0-1.6 1Z"
               />
             </svg>
-            Chứng chỉ &amp; Chấm điểm
+            Chứng chỉ
+          </a>
+          <a
+            class="sidebar-link"
+            th:classappend="${activePage == 'scoring'} ? 'active'"
+            th:href="@{/admin/scoring-schemes}"
+          >
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              aria-hidden="true"
+            >
+              <path d="M4 19h16M7 16v-5m5 5V5m5 11V8" />
+            </svg>
+            Chấm điểm
           </a>
         </nav>
       </div>

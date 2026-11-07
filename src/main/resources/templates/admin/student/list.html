@@ -119,23 +119,9 @@
           <p>Thử tên, email hoặc trạng thái khác.</p>
           <a class="button button-secondary" th:href="@{/admin/students}">Xem tất cả học viên</a>
         </div>
-        <nav class="pagination" th:if="${pageData.totalPages > 1}" aria-label="Phân trang học viên">
-          <a
-            th:if="${pageData.hasPrevious}"
-            th:href="@{/admin/students(page=${pageData.previousPage},size=${pageData.size},q=${q},status=${selectedStatus})}"
-          >
-            Trang trước
-          </a>
-          <span th:text="${'Trang ' + (pageData.page + 1) + '/' + (pageData.totalPages)}">
-            Trang 1/1
-          </span>
-          <a
-            th:if="${pageData.hasNext}"
-            th:href="@{/admin/students(page=${pageData.nextPage},size=${pageData.size},q=${q},status=${selectedStatus})}"
-          >
-            Trang sau
-          </a>
-        </nav>
+        <div
+          th:replace="~{fragments/student-pagination :: studentPagination(${pageData.page}, ${pageData.totalPages}, ${pageData.totalItems}, @{/admin/students(size=${pageData.size},q=${q},status=${selectedStatus})})}"
+        ></div>
       </main>
     </div>
     <div th:replace="~{fragments/footer :: footer}"></div>

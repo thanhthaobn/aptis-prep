@@ -1,5 +1,6 @@
 package com.aptisprep.controller.student;
 
+import com.aptisprep.controller.ListPagination;
 import com.aptisprep.dto.form.GoalForm;
 import com.aptisprep.dto.form.ProfileForm;
 import com.aptisprep.dto.view.AccountSnapshot;
@@ -110,12 +111,16 @@ public class StudentAccountController {
     @GetMapping("/student/placement")
     public String placement(
             @RequestParam(defaultValue = "READING") String skill,
+            @RequestParam(defaultValue = "0") int page,
             Principal principal,
             Model model) {
         if (!placementSkills().contains(skill))
             throw new BusinessRuleException("Kỹ năng Placement không hợp lệ");
         model.addAttribute("skill", skill);
-        model.addAttribute("placementExams", placement.available(principal.getName(), skill));
+        var placementPage =
+                ListPagination.slice(placement.available(principal.getName(), skill), page);
+        model.addAttribute("placementPage", placementPage);
+        model.addAttribute("placementExams", placementPage.getContent());
         return "student/account/placement";
     }
 

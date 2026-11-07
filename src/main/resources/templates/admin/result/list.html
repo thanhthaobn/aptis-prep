@@ -113,21 +113,9 @@
         <div class="empty-box" th:if="${history.items.isEmpty()}">
           <h2>Không có kết quả phù hợp</h2>
         </div>
-        <nav class="result-pagination" th:if="${history.totalItems>history.size}">
-          <a
-            th:if="${history.page>0}"
-            th:href="@{/admin/results(page=${history.page-1},size=${history.size},q=${q},skill=${selectedSkill},examType=${selectedExamType},state=${selectedState},from=${from},to=${to})}"
-          >
-            Trang trước
-          </a>
-          <span th:text="${'Trang ' + (history.page+1)}"></span>
-          <a
-            th:if="${(history.page+1)*history.size<history.totalItems}"
-            th:href="@{/admin/results(page=${history.page+1},size=${history.size},q=${q},skill=${selectedSkill},examType=${selectedExamType},state=${selectedState},from=${from},to=${to})}"
-          >
-            Trang sau
-          </a>
-        </nav>
+        <div
+          th:replace="~{fragments/student-pagination :: studentPagination(${history.page}, ${totalPages}, ${history.totalItems}, @{/admin/results(size=${history.size},q=${q},skill=${selectedSkill},examType=${selectedExamType},state=${selectedState},from=${from},to=${to})})}"
+        ></div>
       </main>
     </div>
     <div th:replace="~{fragments/footer :: footer}"></div>
