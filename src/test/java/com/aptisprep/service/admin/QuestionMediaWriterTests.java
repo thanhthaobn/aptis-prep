@@ -7,6 +7,7 @@ import com.aptisprep.entity.QuestionMediaEntity;
 import com.aptisprep.exception.BusinessRuleException;
 import com.aptisprep.repository.QuestionMediaRepository;
 import com.aptisprep.service.storage.StorageService;
+
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.mock.web.MockMultipartFile;
@@ -32,6 +33,28 @@ class QuestionMediaWriterTests {
                                 new MockMultipartFile(
                                         "file", "fake.wav", "audio/wav", "not audio".getBytes())));
         verifyNoInteractions(repository, storage);
+    }
+
+    @Test
+    void acceptsWebmAudioFromBrowserRecording() {
+        var repository = mock(QuestionMediaRepository.class);
+        var storage = mock(StorageService.class);
+        var file =
+                new MockMultipartFile(
+                        "file",
+                        "clip.webm",
+                        "audio/webm",
+                        new byte[] {0x1A, 0x45, (byte) 0xDF, (byte) 0xA3, 0, 0, 0, 0});
+        when(storage.store(file, "questions/")).thenReturn("questions/clip.webm");
+        new QuestionMediaWriter(repository, storage).save(7, file);
+        verify(repository)
+                .save(
+                        argThat(
+                                media ->
+                                        "AUDIO".equals(media.getMediaType())
+                                                && "audio/webm".equals(media.getContentType())
+                                                && "questions/clip.webm"
+                                                        .equals(media.getMediaUrl())));
     }
 
     @Test

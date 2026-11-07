@@ -7,9 +7,11 @@ import com.aptisprep.exception.ResourceNotFoundException;
 import com.aptisprep.repository.*;
 import com.aptisprep.service.contract.CertificateSchemeContract;
 import com.aptisprep.service.storage.StorageService;
-import java.util.*;
+
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Component;
+
+import java.util.*;
 
 /** Shared readiness checks for the catalog and the actual start transaction. */
 @Component
@@ -36,6 +38,10 @@ public class ExamStartValidator {
     public void validate(MockExamEntity exam, List<MockExamQuestionEntity> links) {
         if (!"PUBLISHED".equals(exam.getStatus()) || exam.isDemoOnly())
             throw new BusinessRuleException("Đề chưa được công bố hoặc chỉ dành cho demo");
+        validateForPublication(exam, links);
+    }
+
+    public void validateForPublication(MockExamEntity exam, List<MockExamQuestionEntity> links) {
         if (exam.getDurationMinutes() == null || exam.getDurationMinutes() <= 0)
             throw new BusinessRuleException("Thời lượng đề thi phải lớn hơn 0");
         if (links.isEmpty()) throw new BusinessRuleException("Đề thi chưa có câu hỏi");
@@ -76,10 +82,16 @@ public class ExamStartValidator {
             } else if (!sectionById.isEmpty()) {
                 throw new BusinessRuleException("Câu hỏi chưa được gán vào section của đề");
             }
+            boolean hasAudio = false;
             for (QuestionMediaEntity audio :
                     questionMediaRepository.findByQuestionIdOrderByPosition(question.getId())) {
-                if ("AUDIO".equals(audio.getMediaType())) validateAudio(audio.getMediaUrl());
+                if ("AUDIO".equals(audio.getMediaType())) {
+                    hasAudio = true;
+                    validateAudio(audio.getMediaUrl());
+                }
             }
+            if ("LISTENING".equals(skill) && !hasAudio)
+                throw new BusinessRuleException("Câu hỏi Listening chưa có file âm thanh");
         }
         if (usedSections.size() != sectionById.size())
             throw new BusinessRuleException("Đề thi có phần chưa được gán câu hỏi");

@@ -4,10 +4,12 @@ import com.aptisprep.entity.QuestionMediaEntity;
 import com.aptisprep.exception.BusinessRuleException;
 import com.aptisprep.repository.QuestionMediaRepository;
 import com.aptisprep.service.storage.StorageService;
+
+import org.springframework.web.multipart.MultipartFile;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Locale;
-import org.springframework.web.multipart.MultipartFile;
 
 /** Media validation/storage collaborator; the caller owns the catalog transaction. */
 final class QuestionMediaWriter {
@@ -57,6 +59,11 @@ final class QuestionMediaWriter {
                 || bytes.length >= 4 && ascii(bytes, 0, "OggS")
                 || bytes.length >= 3 && ascii(bytes, 0, "ID3")
                 || bytes.length >= 2 && (bytes[0] & 0xFF) == 0xFF && (bytes[1] & 0xE0) == 0xE0
+                || bytes.length >= 4
+                        && (bytes[0] & 0xFF) == 0x1A
+                        && (bytes[1] & 0xFF) == 0x45
+                        && (bytes[2] & 0xFF) == 0xDF
+                        && (bytes[3] & 0xFF) == 0xA3
                 || bytes.length >= 8 && ascii(bytes, 4, "ftyp");
     }
 

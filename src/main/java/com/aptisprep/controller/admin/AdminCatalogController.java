@@ -5,6 +5,7 @@ import com.aptisprep.dto.form.QuestionForm;
 import com.aptisprep.dto.view.AdminCatalogView.CatalogPage;
 import com.aptisprep.exception.BusinessRuleException;
 import com.aptisprep.service.admin.CatalogService;
+
 import org.springframework.core.io.Resource;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -13,6 +14,7 @@ import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 @Controller
 public class AdminCatalogController {
@@ -253,8 +255,13 @@ public class AdminCatalogController {
     }
 
     @PostMapping("/admin/exams/{id}/publish")
-    public String publishExam(@PathVariable int id) {
-        catalogService.publishExam(id);
+    public String publishExam(@PathVariable int id, RedirectAttributes redirect) {
+        try {
+            catalogService.publishExam(id);
+            redirect.addFlashAttribute("successMessage", "Đã công bố đề thi.");
+        } catch (BusinessRuleException exception) {
+            redirect.addFlashAttribute("error", exception.getMessage());
+        }
         return "redirect:/admin/exams/" + id;
     }
 

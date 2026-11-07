@@ -1,11 +1,14 @@
 package com.aptisprep.service.storage;
 
 import com.aptisprep.exception.BusinessRuleException;
-import java.io.IOException;
-import java.util.Locale;
-import java.util.Set;
+
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Locale;
+import java.util.Set;
 
 /** Validates learner audio before it is persisted; clients never choose a filesystem path. */
 @Service
@@ -41,8 +44,8 @@ public class AudioUploadService {
                 || !(contentType.startsWith("audio/") || "video/mp4".equals(contentType))) {
             throw new BusinessRuleException("Chỉ chấp nhận file ghi âm hợp lệ");
         }
-        try {
-            byte[] header = file.getInputStream().readNBytes(16);
+        try (InputStream input = file.getInputStream()) {
+            byte[] header = input.readNBytes(16);
             if (!matchesAudioSignature(header))
                 throw new BusinessRuleException("Nội dung file không phải audio hợp lệ");
         } catch (IOException exception) {
