@@ -3,7 +3,10 @@ package com.aptisprep.dto.form;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import org.springframework.format.annotation.DateTimeFormat;
 
 public class ScoringSchemeForm {
@@ -23,6 +26,49 @@ public class ScoringSchemeForm {
 
     private String examType;
     private String scopeSkill;
+    private boolean configureScores;
+    private final ScoringScaleRuleForm scale = new ScoringScaleRuleForm();
+    private final Map<String, ScoreBandForm> ranges = new LinkedHashMap<>();
+    private String targetLevel;
+    private BigDecimal passingScore;
+
+    public ScoringSchemeForm() {
+        for (String skill : com.aptisprep.enums.Skill.codes())
+            for (String level : com.aptisprep.enums.CefrLevel.codes())
+                ranges.put(skill + "_" + level, new ScoreBandForm());
+    }
+
+    public boolean isConfigureScores() {
+        return configureScores;
+    }
+
+    public void setConfigureScores(boolean value) {
+        configureScores = value;
+    }
+
+    public ScoringScaleRuleForm getScale() {
+        return scale;
+    }
+
+    public Map<String, ScoreBandForm> getRanges() {
+        return ranges;
+    }
+
+    public String getTargetLevel() {
+        return targetLevel;
+    }
+
+    public void setTargetLevel(String value) {
+        targetLevel = value;
+    }
+
+    public BigDecimal getPassingScore() {
+        return passingScore;
+    }
+
+    public void setPassingScore(BigDecimal value) {
+        passingScore = value;
+    }
 
     public String getExamType() {
         return examType;

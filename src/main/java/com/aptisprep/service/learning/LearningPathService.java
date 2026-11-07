@@ -352,13 +352,12 @@ public class LearningPathService implements LearningPathContract {
         if (skill == null
                 || !"COMPLETED".equals(skill.gradingState())
                 || skill.scaleScore() == null
-                || rank(skill.estimatedLevel()) < 0
                 || path.getTargetLevel() == null)
             throw new BusinessRuleException("Kỹ năng checkpoint chưa chấm xong");
         List<LearningPathItem> required = requiredItems(path);
         if (required.isEmpty() || required.stream().anyMatch(item -> !completed(item)))
             throw new BusinessRuleException("Chặng học chưa hoàn thành các bài bắt buộc");
-        accounts.applyAssessment(userId, attemptId);
+        if (skill.estimatedLevel() != null) accounts.applyAssessment(userId, attemptId);
         if (!skill.passed() || rank(skill.estimatedLevel()) < rank(path.getTargetLevel())) return;
         path.setStatus("COMPLETED");
         path.setCompletedAt(LocalDateTime.now());

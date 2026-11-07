@@ -155,6 +155,120 @@ public class ScoringAdminService {
     }
 
     @Transactional
+    public Integer saveSchemeWithScores(String email, Integer id, ScoringSchemeForm form) {
+        Integer savedId = saveScheme(email, id, form);
+        if (!form.isConfigureScores() || blankToNull(form.getExamType()) == null) return savedId;
+        ScoringScheme scheme = requireSchemeForUpdate(savedId);
+        List<String> skills =
+                scheme.getScopeSkill() == null ? Skill.codes() : List.of(scheme.getScopeSkill());
+        var scale = form.getScale();
+        scale.setScaleMin(scale.getRawMin());
+        scale.setScaleMax(scale.getRawMax());
+        if (scale.getRawMin() == null
+                && scale.getRawMax() == null
+                && scheme.getStatus() == RecordStatus.DRAFT
+                && form.getPassingScore() == null
+                && blankToNull(form.getTargetLevel()) == null
+                && form.getRanges().values().stream()
+                        .allMatch(band -> band.getMinScore() == null && band.getMaxScore() == null))
+            return savedId;
+        if (scheme.getStatus() == RecordStatus.INACTIVE) return savedId;
+        for (String skill : skills) {
+            var previousBands =
+                    scoreBandRepository.findBySchemeIdAndSkillOrderByMinScoreAsc(savedId, skill);
+            if (scheme.getScopeSkill() != null
+                    && !previousBands.isEmpty()
+                    && blankToNull(form.getTargetLevel()) == null)
+                throw new BusinessRuleException(
+                        "Chọn trình độ cần đạt trước khi thay khoảng điểm cũ");
+            scoreBandRepository.deleteAll(previousBands);
+            scoreBandRepository.flush();
+            saveScaleRule(email, savedId, skill, scale);
+            if (scheme.getScopeSkill() != null) {
+                if (blankToNull(form.getTargetLevel()) != null
+                        || form.getPassingScore() != null
+                        || scheme.getStatus() == RecordStatus.ACTIVE) {
+                    saveConfiguredBand(
+                            email,
+                            savedId,
+                            skill,
+                            form.getTargetLevel(),
+                            form.getPassingScore(),
+                            scale.getScaleMax());
+                }
+            } else {
+                for (String level : CefrLevel.codes()) {
+                    ScoreBandForm band = form.getRanges().get(skill + "_" + level);
+                    if (band.getMinScore() != null || band.getMaxScore() != null)
+                        saveConfiguredBand(
+                                email,
+                                savedId,
+                                skill,
+                                level,
+                                band.getMinScore(),
+                                band.getMaxScore());
+                }
+                if (scheme.getStatus() == RecordStatus.ACTIVE)
+                    ScoreBandCoverage.requireComplete(
+                            scoringScaleRuleRepository
+                                    .findBySchemeIdAndSkillIgnoreCase(savedId, skill)
+                                    .orElseThrow(),
+                            scoreBandRepository.findBySchemeIdAndSkillOrderByMinScoreAsc(
+                                    savedId, skill));
+            }
+        }
+        return savedId;
+    }
+
+    private void saveConfiguredBand(
+            String email, Integer id, String skill, String level, BigDecimal min, BigDecimal max) {
+        if (blankToNull(level) == null || min == null || max == null)
+            throw new BusinessRuleException("Nhập đầy đủ trình độ và khoảng điểm cho " + skill);
+        ScoreBandForm band = new ScoreBandForm();
+        band.setSkill(skill);
+        band.setCefrLevel(level);
+        band.setMinScore(min);
+        band.setMaxScore(max);
+        saveBand(email, id, null, band);
+    }
+
+    @Transactional(readOnly = true)
+    public void populateScoreConfiguration(Integer id, ScoringSchemeForm form) {
+        if (form.getExamType() == null) return;
+        scoringScaleRuleRepository.findBySchemeId(id).stream()
+                .filter(
+                        rule ->
+                                form.getScopeSkill() == null
+                                        || form.getScopeSkill().equals(rule.getSkill()))
+                .min(Comparator.comparing(ScoringScaleRule::getSkill))
+                .ifPresent(
+                        rule -> {
+                            form.getScale().setRawMin(rule.getRawMin());
+                            form.getScale().setRawMax(rule.getRawMax());
+                            form.getScale().setScaleMin(rule.getScaleMin());
+                            form.getScale().setScaleMax(rule.getScaleMax());
+                        });
+        var bands = scoreBandRepository.findBySchemeIdOrderBySkillAscMinScoreAsc(id);
+        for (ScoreBand band : bands) {
+            ScoreBandForm field = form.getRanges().get(band.getSkill() + "_" + band.getCefrLevel());
+            if (field != null) {
+                field.setMinScore(band.getMinScore());
+                field.setMaxScore(band.getMaxScore());
+            }
+        }
+        if (form.getScopeSkill() != null) {
+            var scoped =
+                    bands.stream()
+                            .filter(band -> band.getSkill().equals(form.getScopeSkill()))
+                            .toList();
+            if (scoped.size() == 1) {
+                form.setTargetLevel(scoped.getFirst().getCefrLevel());
+                form.setPassingScore(scoped.getFirst().getMinScore());
+            }
+        }
+    }
+
+    @Transactional
     public Integer saveScheme(String adminEmail, Integer id, ScoringSchemeForm form) {
         requireAdmin(adminEmail);
         Certificate certificate =

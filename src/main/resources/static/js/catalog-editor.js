@@ -221,11 +221,19 @@
   const type = document.getElementById('schemeExamType');
   const field = document.getElementById('scheme-skill-field');
   const skill = document.getElementById('schemeScopeSkill');
+  const configuration = document.getElementById('scheme-score-configuration');
+  const target = document.getElementById('scheme-target-score');
+  const ranges = document.getElementById('scheme-combined-ranges');
+  const legacy = document.getElementById('cefr-bands');
   if (!type || !field || !skill) return;
   const updateSkill = () => {
     const single = type.value === 'PRACTICE' || type.value === 'CHECKPOINT';
     field.hidden = !single;
     skill.required = single;
+    if (configuration) configuration.hidden = !type.value;
+    if (target) target.hidden = !single;
+    if (ranges) ranges.hidden = !type.value || single;
+    if (legacy) legacy.hidden = Boolean(type.value);
   };
   type.addEventListener('change', updateSkill);
   updateSkill();

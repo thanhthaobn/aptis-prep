@@ -224,9 +224,9 @@ public class AdminScoringController {
             return "admin/settings/scheme";
         }
         try {
-            Integer id = scoring.saveScheme(principal.getName(), null, form);
+            Integer id = scoring.saveSchemeWithScores(principal.getName(), null, form);
             redirect.addFlashAttribute("successMessage", "Đã tạo bộ chấm điểm.");
-            return "redirect:/admin/scoring-schemes/" + id + "/edit#cefr-bands";
+            return "redirect:/admin/scoring-schemes/" + id;
         } catch (BusinessRuleException exception) {
             result.reject("scheme.invalid", exception.getMessage());
             schemeOptions(model);
@@ -249,7 +249,7 @@ public class AdminScoringController {
             return loadScheme(id, "Reading", null, false, model);
         }
         try {
-            Integer nextId = scoring.saveScheme(principal.getName(), id, form);
+            Integer nextId = scoring.saveSchemeWithScores(principal.getName(), id, form);
             redirect.addFlashAttribute(
                     "successMessage",
                     nextId.equals(id)
@@ -319,8 +319,11 @@ public class AdminScoringController {
         schemeOptions(model);
         if (value.scopeSkill() != null) model.addAttribute("skills", List.of(skill));
         model.addAttribute("scheme", value);
-        if (!model.containsAttribute("schemeForm"))
-            model.addAttribute("schemeForm", schemeForm(value));
+        if (!model.containsAttribute("schemeForm")) {
+            ScoringSchemeForm form = schemeForm(value);
+            scoring.populateScoreConfiguration(id, form);
+            model.addAttribute("schemeForm", form);
+        }
         model.addAttribute("editing", true);
         model.addAttribute("readOnly", readOnly);
         model.addAttribute("selectedSkill", skill);

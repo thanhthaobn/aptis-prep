@@ -121,9 +121,15 @@ public class ObjectiveGradingService {
             result.setSubjectiveRawScore(BigDecimal.ZERO);
             applyPolicy(result, schemeId, skill, BigDecimal.ZERO, exam);
             result.setGradingMethod(schemeId == null ? "UNSCALED" : "EMPTY_SUBMISSION");
-            result.setGradingStatus(
-                    schemeId != null && result.getCefrLevel() == null ? "ERROR" : "COMPLETED");
-            if ("ERROR".equals(result.getGradingStatus())) result.setGradingMethod("POLICY_ERROR");
+            result.setGradingStatus("COMPLETED");
+            if (schemeId != null && result.getCefrLevel() == null) {
+                if (scoring.belowConfiguredTarget(schemeId, skill, result.getScaleScore())) {
+                    result.setGradingMethod("BELOW_TARGET");
+                } else {
+                    result.setGradingMethod("POLICY_ERROR");
+                    result.setGradingStatus("ERROR");
+                }
+            }
         } else if (total == 0) {
             result.setCorrectCount(null);
             result.setTotalItems(null);
@@ -156,6 +162,10 @@ public class ObjectiveGradingService {
                 applyPolicy(result, schemeId, skill, raw, exam);
                 if (schemeId == null) {
                     result.setGradingMethod("UNSCALED");
+                    result.setGradingStatus("COMPLETED");
+                } else if (result.getCefrLevel() == null
+                        && scoring.belowConfiguredTarget(schemeId, skill, result.getScaleScore())) {
+                    result.setGradingMethod("BELOW_TARGET");
                     result.setGradingStatus("COMPLETED");
                 } else if (result.getCefrLevel() == null) {
                     result.setGradingMethod("POLICY_ERROR");

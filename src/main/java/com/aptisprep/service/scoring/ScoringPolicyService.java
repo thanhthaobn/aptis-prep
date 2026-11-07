@@ -104,6 +104,18 @@ public class ScoringPolicyService implements ScoringPolicyContract {
 
     @Override
     @Transactional(readOnly = true)
+    public boolean belowConfiguredTarget(Integer schemeId, String skill, BigDecimal scaleScore) {
+        var scheme = requireHistoricalScheme(schemeId);
+        if (scheme.getScopeSkill() == null || !scheme.getScopeSkill().equals(normalizeSkill(skill)))
+            return false;
+        var bands =
+                scoreBandRepository.findBySchemeIdAndSkillOrderByMinScoreAsc(
+                        schemeId, scheme.getScopeSkill());
+        return bands.size() == 1 && scaleScore.compareTo(bands.getFirst().getMinScore()) < 0;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public String policyVersion(Integer schemeId) {
         return requireActiveScheme(schemeId).getVersion();
     }

@@ -150,7 +150,7 @@
                 class="badge"
                 th:unless="${res.hasFullMockTotal() and skill.skill == 'GRAMMAR_VOCABULARY'}"
                 th:classappend="${skill.estimatedLevel != null ? 'badge-cefr-' + (skill.estimatedLevel == null ? null : skill.estimatedLevel.toLowerCase()) : 'badge-secondary'}"
-                th:text="${skill.estimatedLevel != null ? skill.estimatedLevel : (skill.gradingState == 'ERROR' ? 'Chấm lỗi' : (skill.gradingState == 'PENDING' or skill.gradingState == 'WAITING' ? 'Đang chấm' : 'Chưa đánh giá'))}"
+                th:text="${skill.estimatedLevel != null ? skill.estimatedLevel : (skill.gradingState == 'ERROR' ? 'Chấm lỗi' : (skill.gradingState == 'PENDING' or skill.gradingState == 'WAITING' ? 'Đang chấm' : (skill.gradingState == 'COMPLETED' and skill.scaleScore != null and (res.examType == 'CHECKPOINT' or res.examType == 'PRACTICE') ? 'Chưa đạt' : 'Chưa đánh giá')))}"
               ></span>
             </div>
 
