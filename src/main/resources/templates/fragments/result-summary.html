@@ -41,7 +41,7 @@
         <div class="result-overall-box">
           <div
             class="overall-cefr-badge"
-            th:attr="aria-label=${res.hasFullMockTotal() ? 'CEFR tổng hợp' : 'Trình độ ước lượng'}"
+            th:attr="aria-label=${res.isCombined() ? 'CEFR tổng hợp' : 'Trình độ ước lượng'}"
           >
             <span class="cefr-title">CEFR</span>
             <span class="cefr-level" th:text="${res.overallCefr == null ? '—' : res.overallCefr}">
@@ -49,9 +49,11 @@
             </span>
           </div>
           <div class="overall-score-details">
-            <h3 th:text="${res.hasFullMockTotal() ? 'CEFR tổng hợp' : 'Trình độ ước lượng'}"></h3>
-            <p class="muted" th:if="${res.hasFullMockTotal()}">
-              Tính từ CEFR của bốn kỹ năng trong bài luyện tập.
+            <h3 th:text="${res.isCombined() ? 'CEFR tổng hợp' : 'Trình độ ước lượng'}"></h3>
+            <p class="muted" th:if="${res.isCombined()}">
+              Tổng điểm Reading, Listening, Writing và Speaking: /200. CEFR tổng hợp tính từ bốn
+              CEFR kỹ năng sau khi xét sát ngưỡng bằng Grammar &amp; Vocabulary. Điểm Grammar &amp;
+              Vocabulary hiển thị riêng và không cộng vào tổng.
             </p>
             <strong
               th:if="${res.overallScaleScore != null}"
@@ -138,21 +140,26 @@
             <div class="skill-card-top">
               <span class="skill-card-name">
                 <span th:switch="${skill.skill}">
-                  <span th:case="'READING'">📖 Đọc hiểu (Reading)</span>
-                  <span th:case="'LISTENING'">🎧 Nghe hiểu (Listening)</span>
-                  <span th:case="'WRITING'">✍️ Viết (Writing)</span>
-                  <span th:case="'SPEAKING'">🎙️ Nói (Speaking)</span>
-                  <span th:case="'GRAMMAR_VOCABULARY'">🔤 Ngữ pháp & Từ vựng</span>
+                  <span th:case="'READING'">Reading</span>
+                  <span th:case="'LISTENING'">Listening</span>
+                  <span th:case="'WRITING'">Writing</span>
+                  <span th:case="'SPEAKING'">Speaking</span>
+                  <span th:case="'GRAMMAR_VOCABULARY'">Grammar &amp; Vocabulary</span>
                   <span th:case="*" th:text="${skill.skill}"></span>
                 </span>
               </span>
               <span
                 class="badge"
-                th:unless="${res.hasFullMockTotal() and skill.skill == 'GRAMMAR_VOCABULARY'}"
+                th:unless="${res.isCombined() and skill.skill == 'GRAMMAR_VOCABULARY'}"
                 th:classappend="${skill.estimatedLevel != null ? 'badge-cefr-' + (skill.estimatedLevel == null ? null : skill.estimatedLevel.toLowerCase()) : 'badge-secondary'}"
                 th:text="${skill.estimatedLevel != null ? skill.estimatedLevel : (skill.gradingState == 'ERROR' ? 'Chấm lỗi' : (skill.gradingState == 'PENDING' or skill.gradingState == 'WAITING' ? 'Đang chấm' : (skill.gradingState == 'COMPLETED' and skill.scaleScore != null and (res.examType == 'CHECKPOINT' or res.examType == 'PRACTICE') ? 'Chưa đạt' : 'Chưa đánh giá')))}"
               ></span>
             </div>
+
+            <p class="muted" th:if="${res.isCombined() and skill.skill == 'GRAMMAR_VOCABULARY'}">
+              Điểm riêng hỗ trợ xét CEFR kỹ năng sát ngưỡng; không có CEFR độc lập trong đề tổng
+              hợp.
+            </p>
 
             <div class="skill-score-row">
               <div class="skill-score-main" th:if="${skill.scaleScore != null}">

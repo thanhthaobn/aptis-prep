@@ -7,17 +7,20 @@ import com.aptisprep.exception.BusinessRuleException;
 import com.aptisprep.repository.MockExamRepository;
 import com.aptisprep.service.scoring.ScoringAdminService;
 import com.aptisprep.service.scoring.ScoringViews;
+
 import jakarta.validation.Valid;
-import java.security.Principal;
-import java.util.List;
-import java.util.Locale;
-import java.util.TreeSet;
-import java.util.stream.Collectors;
+
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+
+import java.security.Principal;
+import java.util.List;
+import java.util.Locale;
+import java.util.TreeSet;
+import java.util.stream.Collectors;
 
 @Controller
 public class AdminScoringController {
@@ -129,8 +132,10 @@ public class AdminScoringController {
             return "admin/settings/certificate";
         }
         try {
+            form.setStatus("DRAFT");
             scoring.createCertificate(principal.getName(), form);
-            redirect.addFlashAttribute("successMessage", "Đã tạo chứng chỉ.");
+            redirect.addFlashAttribute(
+                    "successMessage", "Đã lưu bản nháp chứng chỉ. Kích hoạt khi sẵn sàng.");
             return "redirect:/admin/certificates";
         } catch (BusinessRuleException exception) {
             result.reject("certificate.invalid", exception.getMessage());
@@ -173,6 +178,14 @@ public class AdminScoringController {
         scoring.disableCertificate(principal.getName(), id);
         redirect.addFlashAttribute("successMessage", "Đã ngừng sử dụng chứng chỉ.");
         return "redirect:/admin/certificates";
+    }
+
+    @PostMapping("/admin/certificates/{id}/activate")
+    public String activateCertificate(
+            @PathVariable int id, Principal principal, RedirectAttributes redirect) {
+        scoring.activateCertificate(principal.getName(), id);
+        redirect.addFlashAttribute("successMessage", "Đã kích hoạt chứng chỉ.");
+        return "redirect:/admin/certificates/" + id;
     }
 
     @GetMapping("/admin/scoring-schemes/create")
@@ -224,8 +237,11 @@ public class AdminScoringController {
             return "admin/settings/scheme";
         }
         try {
+            form.setStatus("DRAFT");
             Integer id = scoring.saveSchemeWithScores(principal.getName(), null, form);
-            redirect.addFlashAttribute("successMessage", "Đã tạo bộ chấm điểm.");
+            redirect.addFlashAttribute(
+                    "successMessage",
+                    "Đã lưu bản nháp bộ chấm điểm. Kích hoạt khi cấu hình đầy đủ.");
             return "redirect:/admin/scoring-schemes/" + id;
         } catch (BusinessRuleException exception) {
             result.reject("scheme.invalid", exception.getMessage());
@@ -267,7 +283,19 @@ public class AdminScoringController {
             @PathVariable int id, Principal principal, RedirectAttributes redirect) {
         scoring.disableScheme(principal.getName(), id);
         redirect.addFlashAttribute("successMessage", "Đã ngừng sử dụng bộ chấm điểm.");
-        return "redirect:/admin/certificates";
+        return "redirect:/admin/scoring-schemes/" + id;
+    }
+
+    @PostMapping("/admin/scoring-schemes/{id}/activate")
+    public String activateScheme(
+            @PathVariable int id, Principal principal, RedirectAttributes redirect) {
+        try {
+            scoring.activateScheme(principal.getName(), id);
+            redirect.addFlashAttribute("successMessage", "Đã kích hoạt bộ chấm điểm.");
+        } catch (BusinessRuleException exception) {
+            redirect.addFlashAttribute("error", exception.getMessage());
+        }
+        return "redirect:/admin/scoring-schemes/" + id;
     }
 
     @PostMapping("/admin/scoring-schemes/{schemeId}/bands")

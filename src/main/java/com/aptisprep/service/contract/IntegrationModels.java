@@ -181,14 +181,17 @@ public final class IntegrationModels {
             String overallCefr,
             Instant submittedAt) {
         public boolean hasFullMockTotal() {
-            return ("FULL_MOCK".equals(examType) || "PLACEMENT".equals(examType))
-                    && finalScaleScore != null
-                    && skills.stream()
-                            .anyMatch(
-                                    skill ->
-                                            "GRAMMAR_VOCABULARY".equals(skill.skill())
-                                                    && skill.scaleScore() != null
-                                                    && skill.estimatedLevel() == null);
+            return isCombined() && finalScaleScore != null;
+        }
+
+        public boolean isCombined() {
+            return "FULL_MOCK".equals(examType)
+                    || ("PLACEMENT".equals(examType)
+                            && skills != null
+                            && skills.stream()
+                                    .map(SkillResult::skill)
+                                    .collect(java.util.stream.Collectors.toSet())
+                                    .containsAll(com.aptisprep.enums.Skill.codes()));
         }
 
         public AttemptResult(

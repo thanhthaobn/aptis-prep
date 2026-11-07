@@ -2,10 +2,12 @@ package com.aptisprep.service.scoring;
 
 import com.aptisprep.repository.*;
 import com.aptisprep.service.contract.IntegrationModels.AttemptResult;
-import java.math.BigDecimal;
-import java.util.*;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.math.BigDecimal;
+import java.util.*;
 
 /** Public score ranges only; never exposes answer keys or grading context. */
 @Service
@@ -63,7 +65,12 @@ public class ScoringGuideService {
         String snapshotSkill = snapshot.map(s -> s.getSkill()).orElse(null);
         if (skills.isEmpty() && snapshotSkill != null)
             return guides(scheme, snapshotSkill, levels, "FULL_MOCK".equals(snapshotSkill));
-        return guides(scheme, null, levels, result.hasFullMockTotal()).stream()
+        return guides(
+                        scheme,
+                        null,
+                        levels,
+                        "FULL_MOCK".equals(snapshotSkill) || result.isCombined())
+                .stream()
                 .filter(g -> skills.contains(g.skill()))
                 .toList();
     }

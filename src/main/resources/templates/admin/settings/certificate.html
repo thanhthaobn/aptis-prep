@@ -48,8 +48,8 @@
               <label for="certificateStatus">Trạng thái</label>
               <select id="certificateStatus" th:field="*{status}">
                 <option value="DRAFT">Bản nháp</option>
-                <option value="ACTIVE">Đang sử dụng</option>
-                <option value="INACTIVE">Ngừng sử dụng</option>
+                <option th:if="${editing}" value="ACTIVE">Đang sử dụng</option>
+                <option th:if="${editing}" value="INACTIVE">Ngừng sử dụng</option>
               </select>
             </div>
           </fieldset>
@@ -70,17 +70,31 @@
             >
               Chỉnh sửa
             </a>
-            <button th:unless="${readOnly}" class="button" type="submit">Lưu chứng chỉ</button>
+            <button
+              th:unless="${readOnly}"
+              class="button"
+              type="submit"
+              th:text="${editing ? 'Lưu chứng chỉ' : 'Lưu bản nháp'}"
+            >
+              Lưu bản nháp
+            </button>
             <div th:replace="~{fragments/back-link :: backLink(@{/admin/certificates})}"></div>
           </div>
         </form>
         <form
-          th:if="${editing and !readOnly and certificate.status == 'ACTIVE'}"
+          th:if="${editing and certificate.status == 'ACTIVE'}"
           th:action="@{/admin/certificates/{id}/disable(id=${certificate.id})}"
           method="post"
         >
           <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
           <button class="button button-secondary" type="submit">Ngừng sử dụng</button>
+        </form>
+        <form
+          th:if="${editing and certificate.status != 'ACTIVE'}"
+          th:action="@{/admin/certificates/{id}/activate(id=${certificate.id})}"
+          method="post"
+        >
+          <button class="button" type="submit">Kích hoạt chứng chỉ</button>
         </form>
       </main>
     </div>

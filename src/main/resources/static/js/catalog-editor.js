@@ -231,10 +231,25 @@
     field.hidden = !single;
     skill.required = single;
     if (configuration) configuration.hidden = !type.value;
-    if (target) target.hidden = !single;
-    if (ranges) ranges.hidden = !type.value || single;
+    if (target) {
+      target.hidden = type.value !== 'CHECKPOINT';
+      target.disabled = configuration?.dataset.readOnly === 'true' || target.hidden;
+    }
+    if (ranges) {
+      ranges.hidden = !type.value;
+      ranges.querySelectorAll('[data-scoring-skill]').forEach((section) => {
+        section.hidden = single && section.dataset.scoringSkill !== skill.value;
+        section.disabled =
+          configuration?.dataset.readOnly === 'true' || section.hidden || !type.value;
+      });
+    }
+    const combinedHelp = document.getElementById('scheme-combined-help');
+    if (combinedHelp) combinedHelp.hidden = single || !type.value;
+    const borderlineHelp = document.getElementById('scheme-borderline-help');
+    if (borderlineHelp) borderlineHelp.hidden = single || !type.value;
     if (legacy) legacy.hidden = Boolean(type.value);
   };
   type.addEventListener('change', updateSkill);
+  skill.addEventListener('change', updateSkill);
   updateSkill();
 })();

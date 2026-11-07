@@ -18,26 +18,35 @@
         </header>
         <section class="dashboard-panel result-overall-panel">
           <div>
-            <span>Điểm tổng</span>
+            <span
+              th:text="${attemptResult.isCombined() ? 'Tổng bốn kỹ năng /200' : 'Điểm quy đổi'}"
+            ></span>
             <strong
               th:text="${attemptResult.finalScaleScore==null?'—':attemptResult.finalScaleScore}"
             ></strong>
           </div>
           <div>
-            <span>CEFR</span>
+            <span th:text="${attemptResult.isCombined() ? 'CEFR tổng hợp' : 'CEFR kỹ năng'}"></span>
             <strong
               th:text="${attemptResult.overallCefr==null?'—':attemptResult.overallCefr}"
             ></strong>
           </div>
         </section>
+        <p th:if="${attemptResult.isCombined()}" class="muted">
+          Tổng Reading, Listening, Writing và Speaking; Grammar &amp; Vocabulary có điểm riêng và
+          chỉ hỗ trợ xét CEFR sát ngưỡng. Kết quả là ước lượng phục vụ luyện tập.
+        </p>
         <section class="result-skill-grid">
           <article
             class="dashboard-panel result-skill-card"
             th:each="skill : ${attemptResult.skills}"
           >
             <div class="result-skill-heading">
-              <h2 th:text="${(skill.skill == null ? null : skill.skill.replace('_', ' '))}"></h2>
-              <strong th:text="${skill.estimatedLevel==null?'—':skill.estimatedLevel}"></strong>
+              <h2 th:text="${display.catalogSkill(skill.skill)}"></h2>
+              <strong
+                th:unless="${attemptResult.isCombined() and skill.skill == 'GRAMMAR_VOCABULARY'}"
+                th:text="${skill.estimatedLevel==null?'—':skill.estimatedLevel}"
+              ></strong>
             </div>
             <dl class="result-score-list">
               <div>
