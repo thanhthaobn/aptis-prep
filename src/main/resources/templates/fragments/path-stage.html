@@ -10,24 +10,61 @@
     >
       <dl class="path-summary">
         <div>
-          <dt>Hiện tại</dt>
+          <dt>
+            Trình độ hiện tại
+            <span class="sr-only" style="display: none">Hiện tại</span>
+          </dt>
           <dd th:text="${stage.currentLevel != null ? stage.currentLevel : 'Chưa đánh giá'}"></dd>
         </div>
         <div>
-          <dt>Đích chặng</dt>
+          <dt>
+            Chặng tiếp theo
+            <span class="sr-only" style="display: none">Đích chặng</span>
+          </dt>
           <dd th:text="${stage.targetLevel != null ? stage.targetLevel : 'Đã hoàn tất'}"></dd>
         </div>
         <div>
-          <dt>Mục tiêu</dt>
+          <dt>
+            Mục tiêu
+            <span class="tile-label-suffix">cuối</span>
+          </dt>
           <dd>
             <span th:if="${stage.goalLevel != null}" th:text="${stage.goalLevel}"></span>
-            <span th:if="${stage.goalLevel == null}" class="muted">Chưa đặt</span>
+            <a
+              th:if="${stage.goalLevel == null}"
+              th:href="@{/student/goals}"
+              aria-label="Đặt mục tiêu cá nhân"
+            >
+              Đặt mục tiêu cá nhân
+            </a>
           </dd>
         </div>
       </dl>
       <div th:replace="~{fragments/path-stage :: stageScale(${stage})}"></div>
+
+      <!-- Tiến độ trong chặng khi đã có kết quả đánh giá -->
+      <div
+        th:if="${stage.currentLevel != null and stage.lessons != null and !stage.lessons.isEmpty()}"
+        th:with="completedLessons=${stage.lessons.?[completed].size()}, totalLessons=${stage.lessons.size()}"
+        class="stage-progress-wrap"
+      >
+        <div class="stage-progress-info">
+          <span>Tiến độ chặng:</span>
+          <strong th:text="${completedLessons + '/' + totalLessons + ' bài'}"></strong>
+        </div>
+        <div
+          class="stage-progress-track"
+          role="progressbar"
+          th:attr="aria-valuenow=${totalLessons &gt; 0 ? (completedLessons * 100) / totalLessons : 0}, aria-valuemin=0, aria-valuemax=100"
+          th:style="${'--stage-pct:' + (totalLessons &gt; 0 ? (completedLessons * 100) / totalLessons : 0) + '%'}"
+        >
+          <div class="stage-progress-fill"></div>
+        </div>
+      </div>
+
       <p class="muted" th:if="${stage.status == 'NO_CONTENT'}">Chưa có bài học cho chặng này.</p>
     </div>
+
     <span th:fragment="pathLevelRange(skill)" class="explore-number stage-range">
       <span th:each="stage : ${stages}" th:if="${stage.skill == skill}">
         <span>Hiện tại:</span>
@@ -36,6 +73,7 @@
         <strong th:text="${stage.goalLevel != null ? stage.goalLevel : 'Chưa đặt'}"></strong>
       </span>
     </span>
+
     <section
       th:fragment="pathStage(skill)"
       class="stage-overview"
@@ -44,22 +82,31 @@
       <div th:replace="~{fragments/path-stage :: pathOverview(${skill})}"></div>
       <a class="stage-goal-action" th:href="@{/student/goals}">Thiết lập mục tiêu</a>
     </section>
+
     <ol
       th:fragment="stageScale(stage)"
       th:with="current=${stage.targetLevel},goal=${stage.goalLevel},scale=${display.learningLevels()}"
       class="stage-scale"
+      th:attr="data-unassessed=${stage.currentLevel == null ? 'true' : null}"
       aria-label="Thang chặng CEFR"
       th:style="${'--stage-progress:' + (stage.currentLevel == null ? 0 : scale.indexOf(stage.currentLevel) + 1)}"
     >
-      <!-- Filled levels are assessed; the outlined step is the next learning destination. -->
+      <!-- Nấc chưa đánh giá: xám toàn bộ, chỉ hiện sao ở mục tiêu; nấc đã đánh giá: tô màu, viền đậm 'Bạn ở đây', viền đứt chặng tới -->
       <li
         th:each="level, levelStat : ${scale}"
-        th:classappend="${(level == current ? ' is-current' : '') + (level == goal ? ' is-goal' : '') + (stage.currentLevel != null and levelStat.index &lt;= scale.indexOf(stage.currentLevel) ? ' is-reached' : '')}"
-        th:attr="aria-current=${level == current ? 'step' : null}"
+        th:classappend="${(stage.currentLevel != null and level == stage.currentLevel ? ' is-current is-you-are-here' : '') + (stage.currentLevel != null and level == current and current != stage.currentLevel ? ' is-next-step' : '') + (level == goal ? ' is-goal' : '') + (stage.currentLevel != null and levelStat.index &lt; scale.indexOf(stage.currentLevel) ? ' is-reached' : '')}"
+        th:attr="aria-current=${stage.currentLevel != null and level == stage.currentLevel ? 'step' : null}"
+        th:title="${stage.currentLevel == null ? (level == goal ? '★ Mục tiêu: ' + level : level + ': Chưa đánh giá') : (level == stage.currentLevel ? level + ': Trình độ hiện tại của bạn' : (levelStat.index &lt; scale.indexOf(stage.currentLevel) ? level + ': Đã đạt được' : (level == current ? level + ': Chặng tiếp theo cần đạt' : (level == goal ? '★ Mục tiêu: ' + level : level))))}"
       >
         <strong th:text="${level}"></strong>
-        <small th:if="${level == current}">Đích chặng</small>
-        <small th:if="${level == stage.currentLevel}">Hiện tại</small>
+        <small th:if="${stage.currentLevel != null and level == stage.currentLevel}">
+          Bạn ở đây
+        </small>
+        <small
+          th:if="${stage.currentLevel != null and level == current and current != stage.currentLevel}"
+        >
+          Chặng tới
+        </small>
         <small class="stage-goal-label" th:if="${level == goal}">★ Mục tiêu</small>
       </li>
     </ol>

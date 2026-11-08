@@ -89,4 +89,35 @@
     if (invalid) invalid.focus();
     else form.querySelector('[data-form-errors]')?.focus();
   });
+
+  const pForm =
+    typeof document !== 'undefined' && document.getElementById
+      ? document.getElementById('profileForm')
+      : null;
+  if (pForm && typeof pForm.querySelector === 'function') {
+    const nameInput = pForm.querySelector('input[name="fullName"]');
+    const submitBtn = pForm.querySelector('button[type="submit"]');
+    const hintDirty = pForm.querySelector('#nameDirtyHint');
+    if (nameInput && submitBtn) {
+      const initialValue = nameInput.value.trim();
+      submitBtn.disabled = true;
+      const checkDirty = () => {
+        const val = nameInput.value.trim();
+        const isDirty = val !== initialValue;
+        const isValid = val.length >= 1;
+        submitBtn.disabled = !isDirty || !isValid;
+        if (hintDirty) {
+          hintDirty.style.display = isDirty ? 'inline-block' : 'none';
+        }
+      };
+      nameInput.addEventListener('input', checkDirty);
+      nameInput.addEventListener('change', checkDirty);
+      pForm.addEventListener('submit', () => {
+        if (!submitBtn.disabled) {
+          submitBtn.disabled = true;
+          submitBtn.textContent = 'Đang lưu...';
+        }
+      });
+    }
+  }
 })();
