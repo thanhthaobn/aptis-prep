@@ -3,118 +3,58 @@
 <html lang="vi" xmlns:th="http://www.thymeleaf.org">
   <body>
     <div th:fragment="resultSummary(res, isPlacement)" class="result-container">
-      <!-- Hero Card Tổng quan kết quả -->
-      <section class="result-hero-card">
-        <div class="result-hero-header">
-          <div class="result-hero-title">
-            <p
-              class="eyebrow"
-              th:text="${isPlacement ? 'KIỂM TRA ĐẦU VÀO · APTIS CEFR' : 'KẾT QUẢ ĐÁNH GIÁ BÀI THI'}"
-            ></p>
-            <h1 th:text="${isPlacement ? 'Đánh giá năng lực đầu vào' : 'Kết quả bài thi Aptis'}">
-              Kết quả bài thi
-            </h1>
-            <div class="result-meta-list">
-              <span class="result-meta-item">
-                <strong>Mã lượt thi:</strong>
-                <span th:text="${'#' + (res.attemptId)}"></span>
-              </span>
-              <span class="result-meta-item" th:if="${res.examType != null}">
-                <strong>Loại đề:</strong>
-                <span
-                  th:text="${res.examType == 'PLACEMENT' ? 'Kiểm tra đầu vào' : (res.examType == 'PRACTICE' ? 'Luyện tập' : (res.examType == 'CHECKPOINT' ? 'Kiểm tra cuối chặng' : 'Thi thử tổng hợp'))}"
-                ></span>
-              </span>
-              <span class="result-meta-item" th:if="${res.submittedAt != null}">
-                <strong>Thời gian nộp:</strong>
-                <span th:text="${display.timeAndDate(res.submittedAt)}"></span>
-              </span>
-            </div>
-          </div>
-
-          <div class="result-hero-status">
-            <span class="badge" th:text="${@resultLabels.state(res.state)}"></span>
-          </div>
+      <header class="result-detail-header">
+        <div>
+          <h1 th:text="${isPlacement ? 'Kết quả kiểm tra đầu vào' : 'Kết quả bài thi'}">
+            Kết quả bài thi
+          </h1>
+          <p th:if="${res.examTitle != null}" th:text="${res.examTitle}"></p>
         </div>
+        <span
+          class="result-status"
+          th:classappend="${display.historyStateClass(res.state)}"
+          th:text="${@resultLabels.state(res.state)}"
+        ></span>
+      </header>
 
-        <!-- Overall Score Card -->
-        <div class="result-overall-box">
-          <div
-            class="overall-cefr-badge"
-            th:attr="aria-label=${res.isCombined() ? 'CEFR tổng hợp' : 'Trình độ ước lượng'}"
-          >
-            <span class="cefr-title">CEFR</span>
-            <span class="cefr-level" th:text="${res.overallCefr == null ? '—' : res.overallCefr}">
-              —
-            </span>
-          </div>
-          <div class="overall-score-details">
-            <h3 th:text="${res.isCombined() ? 'CEFR tổng hợp' : 'Trình độ ước lượng'}"></h3>
-            <p class="muted" th:if="${res.isCombined()}">
-              Tổng điểm Reading, Listening, Writing và Speaking: /200. CEFR tổng hợp tính từ bốn
-              CEFR kỹ năng sau khi xét sát ngưỡng bằng Grammar &amp; Vocabulary. Điểm Grammar &amp;
-              Vocabulary hiển thị riêng và không cộng vào tổng.
-            </p>
-            <strong
-              th:if="${res.overallScaleScore != null}"
-              th:text="${res.hasFullMockTotal() ? 'Tổng bốn kỹ năng: ' + res.overallScaleScore + '/200' : 'Điểm quy đổi: ' + res.overallScaleScore}"
-            ></strong>
-            <p th:if="${res.state == 'WAITING_GRADING' or res.state == 'SUBMITTED'}">
-              Bài làm đã được ghi nhận. Đang tiến hành chấm điểm các phần tự luận.
-            </p>
-            <p th:if="${res.state == 'ERROR'}">
-              Có lỗi trong quá trình chấm. Điểm lỗi không được quy đổi thành 0.
-            </p>
-            <p th:if="${res.state == 'EXPIRED'}">
-              Bài làm đã quá thời gian quy định tại thời điểm nộp bài.
-            </p>
-          </div>
+      <dl class="result-totals" th:if="${res.overallCefr != null or res.overallScaleScore != null}">
+        <div th:if="${res.overallCefr != null}">
+          <dt th:text="${res.hasFullMockTotal() ? 'CEFR tổng hợp' : 'Trình độ ước lượng'}"></dt>
+          <dd th:text="${display.cefrLabel(res.overallCefr)}"></dd>
         </div>
-      </section>
+        <div th:if="${res.overallScaleScore != null}">
+          <dt th:text="${res.hasFullMockTotal() ? 'Tổng điểm bốn kỹ năng' : 'Điểm'}"></dt>
+          <dd
+            th:text="${res.hasFullMockTotal() ? res.overallScaleScore + '/200' : res.overallScaleScore}"
+          ></dd>
+        </div>
+      </dl>
 
-      <div class="result-navi" th:if="${res.state == 'COMPLETED'}">
-        <div
-          th:replace="~{fragments/navi :: navi('celebrate', 'Navi chúc mừng bạn đã hoàn thành')}"
-        ></div>
-      </div>
-
-      <!-- Banner thông báo khi có kỹ năng chờ chấm điểm (WAITING_GRADING / PENDING) -->
-      <div
-        th:if="${res.state == 'WAITING_GRADING' or display.hasPendingGrades(res.skills)}"
-        class="result-pending-banner"
+      <p
+        th:if="${res.state == 'SUBMITTED' or res.state == 'WAITING_GRADING' or display.hasPendingGrades(res.skills)}"
+        class="result-message"
         role="status"
       >
-        <span class="pending-icon" aria-hidden="true">⏳</span>
-        <div>
-          <strong>Đang xử lý chấm điểm phần tự luận</strong>
-          <p>
-            Bài làm đã được lưu. Điểm và CEFR còn thiếu sẽ xuất hiện khi dịch vụ chấm hoàn tất. Tải
-            lại trang để xem trạng thái mới nhất.
-          </p>
-        </div>
-      </div>
-
-      <div th:if="${res.state == 'IN_PROGRESS'}" class="alert alert-info" role="status">
-        <p>Bài thi đang làm, chưa có kết quả cuối cùng.</p>
-        <a class="button" th:href="@{/student/attempts/{id}(id=${res.attemptId})}">
-          Tiếp tục làm bài
-        </a>
+        Bài đã lưu. Điểm sẽ cập nhật khi chấm xong.
+      </p>
+      <p th:if="${res.state == 'EXPIRED'}" class="result-message" role="status">
+        Bài làm đã quá thời gian quy định khi nộp.
+      </p>
+      <div th:if="${res.state == 'IN_PROGRESS'}" class="result-message" role="status">
+        <p>Bài thi đang làm.</p>
+        <a th:href="@{/student/attempts/{id}(id=${res.attemptId})}">Tiếp tục làm bài</a>
       </div>
       <div
         th:if="${res.state == 'ERROR' or display.hasGradingErrors(res.skills)}"
-        class="alert alert-error"
+        class="result-message result-message-error"
         role="alert"
       >
-        <p>
-          Chấm điểm chưa thành công. Bài làm được giữ lại. Lỗi chấm không được tính là điểm 0 hoặc
-          kết quả trượt.
-        </p>
+        <p>Chấm điểm chưa thành công. Bài làm vẫn được lưu.</p>
         <form
           th:if="${canRegradeEmpty == true}"
           method="post"
           th:action="@{/student/attempts/{id}/regrade-empty(id=${res.attemptId})}"
         >
-          <p>Phần tự luận của lượt thi này đang bỏ trống và được ghi lỗi theo quy tắc cũ.</p>
           <button class="button button-secondary" type="submit">
             Tính lại phần bỏ trống: 0 điểm
           </button>
@@ -128,88 +68,86 @@
         </form>
       </div>
 
-      <!-- Lưới thẻ chi tiết từng kỹ năng -->
-      <section class="dashboard-section">
-        <h2 class="result-section-title">Chi tiết năng lực theo kỹ năng</h2>
-        <div class="skills-result-grid">
-          <div
-            class="skill-result-card"
-            th:each="skill : ${res.skills}"
-            th:attr="data-skill=${skill.skill}"
+      <section th:if="${!res.skills.isEmpty()}" aria-labelledby="result-skills-title">
+        <h2 id="result-skills-title">Điểm theo kỹ năng</h2>
+        <div class="table-wrap">
+          <table class="data-table result-skill-table">
+            <thead>
+              <tr>
+                <th scope="col">Kỹ năng</th>
+                <th scope="col">Điểm</th>
+                <th scope="col">Trình độ</th>
+              </tr>
+            </thead>
+            <tbody>
+              <th:block
+                th:each="skill : ${res.skills}"
+                th:with="score=${skill.scaleScore != null ? skill.scaleScore : skill.rawScore}"
+              >
+                <tr>
+                  <th scope="row" th:text="${display.catalogSkill(skill.skill)}"></th>
+                  <td
+                    th:text="${score == null ? '—' : score.stripTrailingZeros().toPlainString()}"
+                  ></td>
+                  <td
+                    th:text="${skill.gradingState == 'ERROR' ? 'Chấm lỗi' : (skill.gradingState == 'PENDING' or skill.gradingState == 'WAITING' ? 'Đang chấm' : (res.isCombined() and skill.skill == 'GRAMMAR_VOCABULARY' ? '—' : (skill.estimatedLevel != null ? display.cefrLabel(skill.estimatedLevel) : (skill.gradingState == 'COMPLETED' and score != null and (res.examType == 'CHECKPOINT' or res.examType == 'PRACTICE') ? 'Chưa đạt' : '—'))))}"
+                  ></td>
+                </tr>
+              </th:block>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="result-guides" aria-labelledby="result-guides-title">
+        <h2 id="result-guides-title">Thang điểm và trình độ</h2>
+        <p class="muted" th:if="${scoreGuides == null or scoreGuides.isEmpty()}">
+          Chưa có thang điểm cho đề này.
+        </p>
+        <div class="result-guide-grid">
+          <article
+            class="result-guide-card"
+            th:each="guide : ${scoreGuides}"
+            th:classappend="${guide.bands.isEmpty()} ? 'result-guide-card-compact'"
           >
-            <div class="skill-card-top">
-              <span class="skill-card-name">
-                <span th:switch="${skill.skill}">
-                  <span th:case="'READING'">Reading</span>
-                  <span th:case="'LISTENING'">Listening</span>
-                  <span th:case="'WRITING'">Writing</span>
-                  <span th:case="'SPEAKING'">Speaking</span>
-                  <span th:case="'GRAMMAR_VOCABULARY'">Grammar &amp; Vocabulary</span>
-                  <span th:case="*" th:text="${skill.skill}"></span>
-                </span>
-              </span>
-              <span
-                class="badge"
-                th:unless="${res.isCombined() and skill.skill == 'GRAMMAR_VOCABULARY'}"
-                th:classappend="${skill.estimatedLevel != null ? 'badge-cefr-' + (skill.estimatedLevel == null ? null : skill.estimatedLevel.toLowerCase()) : 'badge-secondary'}"
-                th:text="${skill.estimatedLevel != null ? skill.estimatedLevel : (skill.gradingState == 'ERROR' ? 'Chấm lỗi' : (skill.gradingState == 'PENDING' or skill.gradingState == 'WAITING' ? 'Đang chấm' : (skill.gradingState == 'COMPLETED' and skill.scaleScore != null and (res.examType == 'CHECKPOINT' or res.examType == 'PRACTICE') ? 'Chưa đạt' : 'Chưa đánh giá')))}"
-              ></span>
-            </div>
-
-            <p class="muted" th:if="${res.isCombined() and skill.skill == 'GRAMMAR_VOCABULARY'}">
-              Điểm riêng hỗ trợ xét CEFR kỹ năng sát ngưỡng; không có CEFR độc lập trong đề tổng
-              hợp.
-            </p>
-
-            <div class="skill-score-row">
-              <div class="skill-score-main" th:if="${skill.scaleScore != null}">
-                <span class="score-val" th:text="${skill.scaleScore}">0</span>
-                <span class="score-max">điểm quy đổi</span>
+            <th:block th:replace="~{fragments/scoring-guide :: skillGuide(${guide})}"></th:block>
+            <th:block th:each="skill : ${res.skills}">
+              <div
+                class="result-skill-feedback"
+                th:if="${skill.skill == guide.skill and skill.feedback != null and !skill.feedback.isBlank()}"
+              >
+                <strong>Nhận xét</strong>
+                <p th:text="${skill.feedback}"></p>
               </div>
-              <div class="skill-score-pending" th:unless="${skill.scaleScore != null}">
-                <span
-                  th:text="${skill.gradingState == 'ERROR' ? 'Chấm chưa thành công' : 'Chưa có điểm'}"
-                >
-                  Chưa có điểm
-                </span>
-              </div>
-
-              <!-- Score bounds are shown in the versioned scoring guide below. -->
-
-              <div class="skill-raw-score" th:if="${skill.rawScore != null}">
-                <small th:text="${'Điểm thô: ' + (skill.rawScore)}"></small>
-              </div>
-            </div>
-
-            <!-- Phản hồi nhận xét từ hệ thống hoặc AI -->
-            <div
-              class="skill-feedback-box"
-              th:if="${skill.feedback != null and (skill.feedback != null and !skill.feedback.isBlank())}"
+            </th:block>
+          </article>
+          <th:block th:with="guidedSkills=${scoreGuides == null ? {} : scoreGuides.![skill]}">
+            <article
+              class="result-guide-card"
+              th:each="skill : ${res.skills}"
+              th:if="${!guidedSkills.contains(skill.skill) and skill.feedback != null and !skill.feedback.isBlank()}"
             >
-              <strong>Nhận xét:</strong>
-              <span th:text="${skill.feedback}"></span>
-            </div>
-          </div>
+              <h3 th:text="${display.catalogSkill(skill.skill)}"></h3>
+              <div class="result-skill-feedback">
+                <strong>Nhận xét</strong>
+                <p th:text="${skill.feedback}"></p>
+              </div>
+            </article>
+          </th:block>
         </div>
       </section>
 
-      <div th:replace="~{fragments/scoring-guide :: scoringGuide}"></div>
-      <!-- Khuyến nghị học tập & Điều hướng hành động -->
-      <section class="recommendations-card">
-        <h2>💡 Lộ trình phát triển tiếp theo</h2>
-        <p>CEFR ước lượng cho học tập. Chỉ Placement và Checkpoint cập nhật trình độ.</p>
-        <div class="result-actions-bar">
-          <a class="button button-primary" th:href="@{/student/learning-path}">
-            <span
-              th:text="${isPlacement ? 'Bắt đầu học theo lộ trình' : 'Tiếp tục lộ trình học tập'}"
-            >
-              Tiếp tục lộ trình học tập
-            </span>
-          </a>
-          <a class="button button-secondary" th:href="@{/student/exams}">Luyện tập thêm đề thi</a>
-          <a class="button button-secondary" th:href="@{/student/results}">Xem tất cả kết quả</a>
-        </div>
-      </section>
+      <div class="result-actions-bar">
+        <a
+          class="button"
+          th:if="${res.submittedAt != null or res.state == 'COMPLETED'}"
+          th:href="@{/student/attempts/{id}/review(id=${res.attemptId})}"
+        >
+          Xem lại bài làm
+        </a>
+        <a class="button button-secondary" th:href="@{/student/learning-path}">Lộ trình học</a>
+        <a class="button button-secondary" th:href="@{/student/exams}">Luyện đề</a>
+      </div>
     </div>
   </body>
 </html>

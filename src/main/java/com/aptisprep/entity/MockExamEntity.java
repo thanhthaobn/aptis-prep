@@ -56,6 +56,19 @@ public class MockExamEntity {
 
     public MockExamEntity() {}
 
+    public static MockExamEntity fromSnapshot(ExamAttemptSnapshotEntity snapshot) {
+        MockExamEntity exam = new MockExamEntity();
+        exam.id = snapshot.getExamId();
+        exam.certificateId = snapshot.getCertificateId();
+        exam.scoringSchemeId = snapshot.getScoringSchemeId();
+        exam.title = snapshot.getTitle();
+        exam.examType = snapshot.getExamType();
+        exam.skill = snapshot.getSkill();
+        exam.targetLevel = snapshot.getTargetLevel();
+        exam.durationMinutes = snapshot.getDurationMinutes();
+        return exam;
+    }
+
     @PrePersist
     void onCreate() {
         createdAt = LocalDateTime.now();

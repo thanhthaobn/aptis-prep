@@ -103,8 +103,16 @@ public class ScoringGuideService {
                                                                         new Band(
                                                                                 b.getMinScore(),
                                                                                 b.getMaxScore(),
-                                                                                b.getCefrLevel(),
-                                                                                b.getCefrLevel()
+                                                                                scheme.get()
+                                                                                        .getCertificate()
+                                                                                        .scoringLevel(
+                                                                                                b
+                                                                                                        .getCefrLevel()),
+                                                                                scheme.get()
+                                                                                        .getCertificate()
+                                                                                        .scoringLevel(
+                                                                                                b
+                                                                                                        .getCefrLevel())
                                                                                         .equals(
                                                                                                 levels
                                                                                                         .get(

@@ -24,6 +24,7 @@ class ScoringGuideServiceTests {
         snapshot.setSkill("READING");
         when(snapshots.findByAttemptId(42)).thenReturn(Optional.of(snapshot));
         var scheme = new ScoringScheme();
+        scheme.setCertificate(new com.aptisprep.entity.Certificate());
         scheme.setVersion("historical-v1");
         when(schemes.findById(7)).thenReturn(Optional.of(scheme));
         var rule = new ScoringScaleRule();

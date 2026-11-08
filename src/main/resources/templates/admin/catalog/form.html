@@ -7,13 +7,9 @@
       <div th:replace="~{fragments/admin-sidebar :: adminSidebar(${catalog.key})}"></div>
       <main id="main-content" tabindex="-1" class="app-main admin-catalog">
         <div th:replace="~{fragments/back-link :: backLink(@{${catalog.baseUrl()}})}"></div>
-        <div
-          th:replace="~{fragments/breadcrumb :: breadcrumb(${catalog.title}, @{${catalog.baseUrl()}}, ${editing ? 'Chỉnh sửa' : catalog.createLabel})}"
-        ></div>
         <header class="page-header">
           <div>
             <h1 th:text="${editing ? 'Chỉnh sửa ' + catalog.singular : catalog.createLabel}"></h1>
-            <p class="muted">Dữ liệu được lưu trực tiếp vào ngân hàng nội dung.</p>
           </div>
         </header>
         <th:block th:if="${catalog.key == 'questions'}">

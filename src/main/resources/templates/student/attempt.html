@@ -4,7 +4,6 @@
   <body
     class="student-theme exam-page"
     th:classappend="${(attempt.examType == 'FULL_MOCK' or (attempt.examType == 'PLACEMENT' and attempt.sectionSkill != null))} ? ' full-mock-exam'"
-    th:attr="data-current-section-index=${attempt.currentSectionIndex}"
   >
     <!-- Non-JS Fallback: hiển thị tất cả các câu hỏi. -->
     <noscript>
@@ -246,44 +245,6 @@
         display: block;
         width: 100%;
       }
-      .full-mock-progress {
-        display: grid;
-        gap: 0.65rem;
-        margin: 0 0 1.25rem;
-        padding: 1rem 1.15rem;
-        border: 1px solid #c8dce5;
-        border-radius: var(--radius);
-        background: #f2fbfd;
-      }
-      .full-mock-progress-heading {
-        display: flex;
-        justify-content: space-between;
-        gap: 1rem;
-        align-items: center;
-        color: #075c78;
-        font-size: var(--text-small);
-      }
-      .full-mock-progress-heading strong {
-        font-variant-numeric: tabular-nums;
-      }
-      .full-mock-progress-track {
-        height: 10px;
-        overflow: hidden;
-        border-radius: 999px;
-        background: #d8e9ee;
-      }
-      .full-mock-progress-bar {
-        width: 0;
-        height: 100%;
-        border-radius: inherit;
-        background: linear-gradient(90deg, #087a9d, #0f8a78);
-        transition: width 0.2s ease;
-      }
-      .full-mock-progress-note {
-        margin: 0;
-        color: #58708f;
-        font-size: var(--text-small);
-      }
       .full-mock-exam.pagination-ready .full-mock-question:not(.is-active) {
         display: none;
       }
@@ -321,12 +282,12 @@
     <div th:replace="~{fragments/navbar :: navbar}"></div>
     <div class="container exam-workspace">
       <aside class="exam-control-panel" aria-label="Thông tin bài thi">
-        <div class="exam-control-heading">BÀI THI</div>
-        <p
-          class="muted"
-          th:if="${attempt.sectionSkill != null}"
-          th:text="${display.catalogSkill(attempt.sectionSkill)}"
-        ></p>
+        <div
+          class="exam-control-heading"
+          th:text="${attempt.sectionSkill == null ? 'Bài thi' : display.catalogSkill(attempt.sectionSkill)}"
+        >
+          Bài thi
+        </div>
         <div
           class="exam-timer-badge"
           id="exam-timer"
@@ -347,11 +308,7 @@
               th:each="section : ${attempt.sections}"
               th:classappend="${section.open ? ' is-current' : (section.state == 'COMPLETED' ? ' is-completed' : ' is-upcoming')}"
             >
-              <button
-                class="exam-section-link"
-                type="button"
-                th:attr="data-section-index=${section.index},aria-label=${'Mở phần ' + (section.index + 1) + ' ' + display.catalogSkill(section.skill)}"
-              >
+              <div class="exam-section-link">
                 <span>
                   <strong
                     th:text="${'Phần ' + (section.index + 1) + ' · ' + display.catalogSkill(section.skill)}"
@@ -363,37 +320,55 @@
                 <em
                   th:text="${section.state == 'OPEN' ? 'Đang làm' : (section.state == 'COMPLETED' ? 'Đã hết giờ' : 'Chưa mở')}"
                 ></em>
-              </button>
+              </div>
             </li>
           </ol>
-          <p class="exam-section-note">Chỉ phần đang mở mới cho phép nhập và lưu đáp án.</p>
         </nav>
         <dl class="exam-stats">
           <div>
             <dt>Tổng số câu</dt>
-            <dd th:text="${attempt.allQuestions.size()}"></dd>
+            <dd th:text="${attempt.totalItems()}"></dd>
           </div>
           <div>
             <dt>Đang làm</dt>
-            <dd id="exam-current-question">Câu 1</dd>
+            <dd id="exam-current-question">—</dd>
           </div>
         </dl>
         <nav class="exam-question-navigation" aria-label="Danh sách câu hỏi">
           <span class="exam-progress-label" id="exam-progress-count">
-            <strong>0</strong>
+            <strong th:text="${attempt.answeredItems()}">0</strong>
             /
-            <span th:text="${attempt.allQuestions.size()}">0</span>
+            <span th:text="${attempt.totalItems()}">0</span>
             câu đã làm
           </span>
-          <button
-            th:each="question, questionStat : ${attempt.allQuestions}"
-            class="exam-question-link"
-            type="button"
-            th:text="${question.position}"
-            th:attr="data-question-index=${questionStat.index},data-section-index=${question.sectionIndex},aria-label=${'Đi đến câu ' + question.position}"
-          ></button>
+          <div class="exam-question-grid">
+            <th:block th:each="question : ${attempt.questions}">
+              <button
+                th:each="item : ${question.items}"
+                class="exam-question-link"
+                type="button"
+                th:text="${item.position}"
+                th:classappend="${item.answered()} ? 'is-answered'"
+                th:attr="data-item-id=${item.itemId},aria-label=${'Câu ' + item.position}"
+              ></button>
+            </th:block>
+          </div>
         </nav>
         <div class="exam-control-actions">
+          <form
+            th:if="${attempt.nextSection()}"
+            id="next-section-form"
+            method="post"
+            th:action="@{/student/attempts/{id}/next-section(id=${attempt.attemptId})}"
+          >
+            <input
+              type="hidden"
+              name="sectionEndMinute"
+              th:value="${attempt.nextSectionAfterMinute}"
+            />
+            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+            <button id="next-section" class="button" type="submit">Sang phần tiếp theo</button>
+          </form>
           <form
             id="submit-attempt-form"
             method="post"
@@ -407,7 +382,14 @@
               hidden
             ></p>
             <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
-            <button id="submit-attempt" class="button" type="submit">Nộp bài</button>
+            <button
+              id="submit-attempt"
+              class="button"
+              th:classappend="${attempt.nextSection()} ? 'button-secondary'"
+              type="submit"
+            >
+              Nộp bài
+            </button>
           </form>
           <a
             id="exit-attempt"
@@ -425,53 +407,17 @@
           </div>
         </header>
 
-        <section
-          class="full-mock-progress"
-          th:if="${(attempt.examType == 'FULL_MOCK' or (attempt.examType == 'PLACEMENT' and attempt.sectionSkill != null))}"
-          aria-label="Tiến độ bài thi"
-        >
-          <div class="full-mock-progress-heading">
-            <span>Tiến độ bài thi</span>
-            <strong
-              id="full-mock-progress-count"
-              th:text="${'' + (attempt.answeredItems) + ' / ' + (attempt.totalItems) + ' câu đã trả lời'}"
-            >
-              0 / 0 câu đã trả lời
-            </strong>
-          </div>
-          <div
-            class="full-mock-progress-track"
-            role="progressbar"
-            aria-valuemin="0"
-            th:attr="aria-valuemax=${attempt.totalItems},aria-valuenow=${attempt.answeredItems}"
-          >
-            <div
-              id="full-mock-progress-bar"
-              class="full-mock-progress-bar"
-              th:style="${'width: ' + (attempt.totalItems == 0 ? 0 : (attempt.answeredItems * 100 / attempt.totalItems)) + '%'}"
-            ></div>
-          </div>
-          <p id="full-mock-progress-note" class="full-mock-progress-note">
-            Hoàn thành từng câu và chuyển sang trang tiếp theo để tiếp tục.
-          </p>
-        </section>
         <div class="alert alert-error" th:if="${error}" th:text="${error}"></div>
         <section
           class="dashboard-panel dashboard-section full-mock-question"
-          th:each="question, questionStat : ${attempt.allQuestions}"
-          th:classappend="${!question.sectionOpen ? ' is-section-locked' : ''}"
-          th:attr="data-question-page=${questionStat.index},data-section-index=${question.sectionIndex},data-section-open=${question.sectionOpen}"
+          th:each="question, questionStat : ${attempt.questions}"
+          th:attr="data-question-page=${questionStat.index}"
         >
           <p
             class="eyebrow"
-            th:text="${'Câu ' + (question.position) + ' · ' + (question.skill)}"
+            th:text="${'Nhóm ' + questionStat.count + ' · ' + display.catalogSkill(question.skill)}"
           ></p>
-          <p
-            class="section-lock-notice"
-            th:if="${!question.sectionOpen}"
-            th:text="${question.sectionIndex < attempt.currentSectionIndex ? 'Phần thi này đã hết thời gian. Bạn chỉ có thể xem lại đáp án đã lưu.' : 'Phần thi này chưa mở. Hãy hoàn thành phần đang làm trước.'}"
-          ></p>
-          <h2 th:text="${question.content}"></h2>
+          <h2 tabindex="-1" th:text="${question.content}"></h2>
           <p
             class="question-instruction"
             th:if="${question.skill == 'READING' and (question.instruction != null and !question.instruction.isBlank())}"
@@ -496,7 +442,6 @@
                   class="media-play-trigger"
                   type="button"
                   aria-label="Phát bài nghe"
-                  th:disabled="${!question.sectionOpen}"
                 ></button>
                 <audio
                   class="media-audio"
@@ -517,7 +462,8 @@
           <div
             th:each="item : ${question.items}"
             class="question-item"
-            th:attr="data-saved=${item.audioSaved}"
+            tabindex="-1"
+            th:attr="data-saved=${item.audioSaved},data-item-id=${item.itemId}"
           >
             <div class="question-item-header">
               <span
@@ -544,7 +490,6 @@
                   name="userPosition"
                   th:id="${'position-' + (item.itemId)}"
                   th:value="${item.userPosition}"
-                  th:disabled="${!question.sectionOpen}"
                 />
               </div>
               <div
@@ -557,7 +502,6 @@
                     name="selectedOptionId"
                     th:value="${option.id}"
                     th:checked="${item.selectedOptionId == option.id}"
-                    th:disabled="${!question.sectionOpen}"
                   />
                   <span th:text="${option.code + ' · ' + option.content}"></span>
                 </label>
@@ -569,7 +513,6 @@
                   name="textAnswer"
                   rows="6"
                   th:text="${item.textAnswer}"
-                  th:disabled="${!question.sectionOpen}"
                 ></textarea>
               </div>
               <span class="autosave-status muted" aria-live="polite"></span>
@@ -583,37 +526,16 @@
             >
               <span class="speaking-recorder-label">Câu trả lời của bạn</span>
               <div class="speaking-recorder-actions">
-                <button
-                  class="button button-secondary recording-start"
-                  type="button"
-                  th:disabled="${!question.sectionOpen}"
-                >
+                <button class="button button-secondary recording-start" type="button">
                   Bắt đầu ghi
                 </button>
-                <button
-                  class="button button-secondary recording-stop"
-                  type="button"
-                  disabled
-                  th:disabled="${!question.sectionOpen}"
-                >
+                <button class="button button-secondary recording-stop" type="button" disabled>
                   Dừng ghi
                 </button>
-                <button
-                  class="button button-secondary recording-reset"
-                  type="button"
-                  disabled
-                  th:disabled="${!question.sectionOpen}"
-                >
+                <button class="button button-secondary recording-reset" type="button" disabled>
                   Ghi lại
                 </button>
-                <button
-                  class="button recording-save"
-                  type="button"
-                  disabled
-                  th:disabled="${!question.sectionOpen}"
-                >
-                  Lưu bản ghi
-                </button>
+                <button class="button recording-save" type="button" disabled>Lưu bản ghi</button>
               </div>
               <span class="recording-status muted" aria-live="polite">Sẵn sàng ghi âm.</span>
               <div class="recording-meter">
@@ -643,10 +565,10 @@
           aria-label="Điều hướng câu hỏi Full Mock"
         >
           <button id="full-mock-prev" class="button button-secondary" type="button">
-            ← Câu trước
+            ← Nhóm trước
           </button>
-          <span id="full-mock-page-info" class="full-mock-pagination-info">Câu 1 / 1</span>
-          <button id="full-mock-next" class="button" type="button">Câu tiếp theo →</button>
+          <span id="full-mock-page-info" class="full-mock-pagination-info">Nhóm 1 / 1</span>
+          <button id="full-mock-next" class="button" type="button">Nhóm tiếp theo →</button>
         </nav>
       </main>
     </div>

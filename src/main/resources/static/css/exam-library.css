@@ -3,15 +3,6 @@
   margin-inline: auto;
 }
 
-.exam-library.app-main {
-  padding-top: 24px;
-}
-
-.exam-library .page-header p:last-child {
-  margin-top: 8px;
-  font-size: 0.86rem;
-}
-
 .exam-category-nav {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));

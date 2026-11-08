@@ -12,6 +12,7 @@ import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.http.MediaTypeFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.ResponseEntity.BodyBuilder;
 import org.springframework.stereotype.Controller;
@@ -44,6 +45,23 @@ public class StudentExamController {
         } catch (BusinessRuleException exception) {
             redirect.addFlashAttribute("error", exception.getMessage());
             return "redirect:/student/exams/" + id;
+        }
+    }
+
+    @GetMapping("/student/attempts/{id}/review")
+    public String review(
+            @PathVariable Integer id,
+            Principal principal,
+            Model model,
+            RedirectAttributes redirect) {
+        Integer userId = accounts.requireActiveStudent(principal.getName());
+        try {
+            model.addAttribute("review", attempts.review(userId, id));
+            model.addAttribute("attemptId", id);
+            return "student/attempt-review";
+        } catch (BusinessRuleException exception) {
+            redirect.addFlashAttribute("error", exception.getMessage());
+            return "redirect:/student/attempts/" + id + "/result";
         }
     }
 
@@ -168,9 +186,41 @@ public class StudentExamController {
         MediaResource media =
                 attempts.mediaContent(
                         accounts.requireActiveStudent(principal.getName()), id, mediaId, token);
+        return inlineMedia(media);
+    }
+
+    @GetMapping("/student/attempts/{id}/review/media/{mediaId}")
+    public ResponseEntity<Resource> reviewMedia(
+            @PathVariable Integer id, @PathVariable Integer mediaId, Principal principal) {
+        return inlineMedia(
+                attempts.reviewMedia(
+                        accounts.requireActiveStudent(principal.getName()), id, mediaId));
+    }
+
+    @GetMapping("/student/attempts/{id}/review/recording/{questionId}/{itemId}")
+    public ResponseEntity<Resource> reviewRecording(
+            @PathVariable Integer id,
+            @PathVariable Integer questionId,
+            @PathVariable Integer itemId,
+            Principal principal) {
+        return inlineMedia(
+                attempts.reviewRecording(
+                        accounts.requireActiveStudent(principal.getName()),
+                        id,
+                        questionId,
+                        itemId));
+    }
+
+    private ResponseEntity<Resource> inlineMedia(MediaResource media) {
+        MediaType contentType = resolveType(media.contentType());
+        if (!contentType.isConcrete()) {
+            contentType =
+                    MediaTypeFactory.getMediaType(media.resource())
+                            .orElse(MediaType.APPLICATION_OCTET_STREAM);
+        }
         BodyBuilder response =
                 ResponseEntity.ok()
-                        .contentType(resolveType(media.contentType()))
+                        .contentType(contentType)
                         .header(HttpHeaders.CONTENT_DISPOSITION, "inline")
                         .header(HttpHeaders.CACHE_CONTROL, "private, no-store")
                         .header(HttpHeaders.ACCEPT_RANGES, "bytes");
@@ -192,6 +242,21 @@ public class StudentExamController {
         return ResponseEntity.ok()
                 .contentType(resolveType(media.contentType()))
                 .body(media.resource());
+    }
+
+    @PostMapping("/student/attempts/{id}/next-section")
+    public String nextSection(
+            @PathVariable Integer id,
+            @RequestParam int sectionEndMinute,
+            Principal principal,
+            RedirectAttributes redirect) {
+        Integer userId = accounts.requireActiveStudent(principal.getName());
+        try {
+            attempts.advanceSection(userId, id, sectionEndMinute);
+        } catch (BusinessRuleException exception) {
+            redirect.addFlashAttribute("error", exception.getMessage());
+        }
+        return "redirect:/student/attempts/" + id;
     }
 
     @PostMapping("/student/attempts/{id}/submit")

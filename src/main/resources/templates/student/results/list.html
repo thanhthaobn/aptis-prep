@@ -9,7 +9,6 @@
       <main id="main-content" tabindex="-1" class="app-main student-content result-history-page">
         <header class="page-header">
           <div>
-            <p class="eyebrow">THEO DÕI TIẾN BỘ</p>
             <h1>Kết quả học tập</h1>
           </div>
         </header>
@@ -106,13 +105,13 @@
               <div class="result-levels" th:if="${!attempt.skills.isEmpty()}">
                 <span
                   th:each="skill : ${attempt.skills}"
-                  th:text="${'' + ((skill.skill == null ? null : skill.skill.replace('_', ' '))) + ': ' + (skill.estimatedLevel == null ? 'Chờ chấm' : skill.estimatedLevel)}"
+                  th:text="${display.catalogSkill(skill.skill) + ': ' + (skill.estimatedLevel == null ? 'Chờ chấm' : display.cefrLabel(skill.estimatedLevel))}"
                 ></span>
               </div>
               <p
                 class="result-overall"
                 th:if="${attempt.finalScaleScore != null or attempt.overallCefr != null}"
-                th:text="${'Tổng quan: ' + (attempt.finalScaleScore == null ? '—' : attempt.finalScaleScore) + ' điểm · ' + (attempt.overallCefr == null ? 'Chưa có CEFR' : attempt.overallCefr)}"
+                th:text="${'Tổng quan: ' + (attempt.finalScaleScore == null ? '—' : attempt.finalScaleScore) + ' điểm · ' + (attempt.overallCefr == null ? 'Chưa có CEFR' : display.cefrLabel(attempt.overallCefr))}"
               ></p>
               <a
                 class="button button-secondary"
@@ -137,7 +136,6 @@
           th:if="${history.items.isEmpty()}"
           th:with="filtered=${!q.isBlank() or !selectedSkill.isBlank() or !selectedExamType.isBlank() or !selectedState.isBlank()}"
         >
-          <div class="empty-result-icon" aria-hidden="true">✓</div>
           <h2 th:text="${filtered ? 'Không có kết quả phù hợp' : 'Bạn chưa làm bài thi nào'}"></h2>
           <p th:unless="${filtered}">
             Hãy làm bài kiểm tra đầu vào hoặc một đề luyện tập. Kết quả sẽ xuất hiện tại đây sau khi

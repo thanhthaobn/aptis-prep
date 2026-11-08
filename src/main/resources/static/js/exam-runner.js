@@ -10,17 +10,21 @@
   const failedForms = new Set();
   const submitForm = document.getElementById('submit-attempt-form');
   const submitButton = document.getElementById('submit-attempt');
+  const nextSectionForm = document.getElementById('next-section-form');
+  const nextSectionButton = document.getElementById('next-section');
   const submitError = document.getElementById('attempt-submit-error');
   const questionSections = [...document.querySelectorAll('.full-mock-question')];
   const questionLinks = [...document.querySelectorAll('.exam-question-link')];
-  const sectionLinks = [...document.querySelectorAll('.exam-section-link')];
+  const answerItems = new Map();
+  questionSections.forEach((section, index) => {
+    section.querySelectorAll('.question-item').forEach((item) => {
+      answerItems.set(item.dataset.itemId, { item, index });
+    });
+  });
   const examProgressCount = document.getElementById('exam-progress-count');
   let submitting = false,
     confirming = false,
     deadlineReached = false;
-  const isEditableForm = (form) =>
-    typeof form.closest !== 'function' ||
-    form.closest('[data-section-open]')?.dataset.sectionOpen !== 'false';
   const itemIsAnswered = (item) =>
     item.dataset.saved === 'true' ||
     !!item.querySelector('input[type="radio"]:checked') ||
@@ -28,27 +32,26 @@
       (input) => input.value.trim() !== '',
     );
   const currentQuestion = document.getElementById('exam-current-question');
-  const markCurrentQuestion = (index) => {
-    if (currentQuestion) currentQuestion.textContent = 'Câu ' + (index + 1);
-    questionLinks.forEach((link, i) => {
-      link.classList.toggle('is-current', i === index);
-      link.setAttribute('aria-current', i === index ? 'step' : 'false');
+  const markCurrentQuestion = (item) => {
+    if (!item) return;
+    questionLinks.forEach((link) => {
+      const active = link.dataset.itemId === item.dataset.itemId;
+      link.classList.toggle('is-current', active);
+      link.setAttribute('aria-current', active ? 'step' : 'false');
+      if (active && currentQuestion) currentQuestion.textContent = 'Câu ' + link.textContent.trim();
     });
   };
   const updateExamNavigation = () => {
-    let answeredQuestions = 0;
-    questionSections.forEach((section, index) => {
-      const items = [...section.querySelectorAll('.question-item')];
-      const answered = items.filter(itemIsAnswered).length;
-      const questionAnswered = items.length > 0 && answered === items.length;
-      if (questionAnswered) answeredQuestions++;
-      questionLinks[index]?.classList.toggle('is-answered', questionAnswered);
+    let answeredItems = 0;
+    questionLinks.forEach((link) => {
+      const target = answerItems.get(link.dataset.itemId);
+      if (target) link.classList.toggle('is-answered', itemIsAnswered(target.item));
+      if (link.classList.contains('is-answered')) answeredItems++;
     });
     if (examProgressCount)
-      examProgressCount.innerHTML = `<strong>${answeredQuestions}</strong>/${questionSections.length} câu đã làm`;
+      examProgressCount.innerHTML = `<strong>${answeredItems}</strong>/${questionLinks.length} câu đã làm`;
   };
   const save = (form) => {
-    if (!isEditableForm(form)) return Promise.resolve(true);
     const status = form.querySelector('.autosave-status');
     if (!csrf || !status) return Promise.resolve(true);
     status.textContent = 'Đang lưu…';
@@ -107,6 +110,15 @@
     });
   });
   updateExamNavigation();
+  answerItems.forEach(({ item }) => {
+    item.addEventListener('focusin', () => markCurrentQuestion(item));
+    item.addEventListener('recording-saved', updateExamNavigation);
+  });
+  const goToItem = (item) => {
+    markCurrentQuestion(item);
+    item.focus({ preventScroll: true });
+    item.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
   document.getElementById('exit-attempt')?.addEventListener('click', async (event) => {
     event.preventDefault();
     const exitUrl = event.currentTarget.href;
@@ -120,29 +132,18 @@
     if (confirmed) window.location.assign(exitUrl);
   });
   if (!document.body.classList.contains('full-mock-exam')) {
-    questionLinks.forEach((link, index) => {
+    questionLinks.forEach((link) => {
       link.addEventListener('click', () => {
-        questionLinks.forEach((item) => item.classList.remove('is-current'));
-        link.classList.add('is-current');
-        markCurrentQuestion(index);
-        questionSections[index]?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        const target = answerItems.get(link.dataset.itemId);
+        if (target) goToItem(target.item);
       });
     });
-    markCurrentQuestion(0);
-    if (typeof IntersectionObserver === 'function') {
-      const observer = new IntersectionObserver(
-        (entries) => {
-          const visible = entries
-            .filter((entry) => entry.isIntersecting)
-            .sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top);
-          if (visible.length) markCurrentQuestion(questionSections.indexOf(visible[0].target));
-        },
-        { rootMargin: '-90px 0px -50% 0px', threshold: 0 },
-      );
-      questionSections.forEach((section) => observer.observe(section));
-    }
+    markCurrentQuestion(answerItems.values().next().value?.item);
   }
-  const submit = async (automatic) => {
+  const submit = async (automatic, nextSection = false) => {
+    const formToSubmit = nextSection ? nextSectionForm : submitForm;
+    const button = nextSection ? nextSectionButton : submitButton;
+    const buttonLabel = nextSection ? 'Sang phần tiếp theo' : 'Nộp bài';
     if (automatic) {
       deadlineReached = true;
       window.AppDialog.dismiss();
@@ -155,8 +156,7 @@
       )
     ) {
       if (submitError) {
-        submitError.textContent =
-          'Có bản ghi Speaking chưa lưu hoặc đang ghi. Hãy dừng và lưu bản ghi trước khi nộp.';
+        submitError.textContent = 'Hãy dừng ghi và lưu bản ghi Speaking trước khi tiếp tục.';
         submitError.hidden = false;
         submitError.focus();
       }
@@ -165,22 +165,23 @@
     if (!automatic) {
       confirming = true;
       const confirmed = await window.AppDialog.confirm({
-        title: 'Nộp bài thi?',
-        message:
-          'Hệ thống sẽ lưu các câu trả lời cuối cùng trước khi nộp. Sau khi nộp, bạn không thể chỉnh sửa bài làm.',
-        confirmText: 'Nộp bài',
+        title: nextSection ? 'Sang phần tiếp theo?' : 'Nộp bài thi?',
+        message: nextSection
+          ? 'Bạn sẽ không thể quay lại phần này. Phần tiếp theo có thời gian riêng.'
+          : 'Hệ thống sẽ lưu các câu trả lời cuối cùng trước khi nộp. Sau khi nộp, bạn không thể chỉnh sửa bài làm.',
+        confirmText: buttonLabel,
         cancelText: 'Tiếp tục làm bài',
       });
       confirming = false;
       if (!confirmed || submitting || deadlineReached) return;
     }
     submitting = true;
-    if (submitButton) {
-      submitButton.disabled = true;
-      submitButton.textContent = 'Đang nộp bài…';
+    if (button) {
+      button.disabled = true;
+      button.textContent = nextSection ? 'Đang chuyển phần…' : 'Đang nộp bài…';
     }
     if (submitError) submitError.hidden = true;
-    submitForm?.setAttribute('aria-busy', 'true');
+    formToSubmit?.setAttribute('aria-busy', 'true');
     forms.forEach((form) => {
       form.inert = true;
     });
@@ -194,27 +195,32 @@
     if (!automatic && !deadlineReached) await Promise.allSettled([...failedForms].map(save));
     if (!automatic && !deadlineReached && failedForms.size) {
       submitting = false;
-      if (submitButton) {
-        submitButton.disabled = false;
-        submitButton.textContent = 'Nộp bài';
+      if (button) {
+        button.disabled = false;
+        button.textContent = buttonLabel;
       }
       forms.forEach((form) => {
         form.inert = false;
       });
-      submitForm?.removeAttribute('aria-busy');
+      formToSubmit?.removeAttribute('aria-busy');
       if (submitError) {
-        submitError.textContent =
-          'Chưa thể lưu đầy đủ đáp án. Bài chưa được nộp. Vui lòng kiểm tra kết nối và thử lại.';
+        submitError.textContent = nextSection
+          ? 'Chưa lưu được tất cả câu trả lời. Hãy kiểm tra kết nối và thử lại.'
+          : 'Chưa thể lưu đầy đủ đáp án. Bài chưa được nộp. Vui lòng kiểm tra kết nối và thử lại.';
         submitError.hidden = false;
         submitError.focus();
       }
       return;
     }
-    submitForm?.submit();
+    formToSubmit?.submit();
   };
   submitForm?.addEventListener('submit', (event) => {
     event.preventDefault();
     submit(false);
+  });
+  nextSectionForm?.addEventListener('submit', (event) => {
+    event.preventDefault();
+    submit(false, true);
   });
   const timer = document.getElementById('exam-timer');
   const display = document.getElementById('timer-display');
@@ -247,29 +253,8 @@
     const pageInfo = document.getElementById('full-mock-page-info');
     const previous = document.getElementById('full-mock-prev');
     const next = document.getElementById('full-mock-next');
-    const progressCount = document.getElementById('full-mock-progress-count');
-    const progressBar = document.getElementById('full-mock-progress-bar');
-    const progressTrack = progressBar?.parentElement;
     let currentPage = 0;
-    const isAnswered = (item) =>
-      item.dataset.saved === 'true' ||
-      !!item.querySelector('input[type="radio"]:checked') ||
-      [...item.querySelectorAll('input[type="number"], textarea')].some(
-        (input) => input.value.trim() !== '',
-      );
-    const updateProgress = () => {
-      const items = pages.flatMap((page) => [...page.querySelectorAll('.question-item')]);
-      const answered = items.filter(isAnswered).length;
-      const total = items.length;
-      const percent = total ? Math.round((answered * 100) / total) : 0;
-      if (progressCount) progressCount.textContent = `${answered} / ${total} câu đã trả lời`;
-      if (progressBar) progressBar.style.width = `${percent}%`;
-      if (progressTrack) {
-        progressTrack.setAttribute('aria-valuemax', total);
-        progressTrack.setAttribute('aria-valuenow', answered);
-      }
-    };
-    const showPage = (index) => {
+    const showPage = (index, item) => {
       if (!pages.length) return;
       currentPage = Math.max(0, Math.min(index, pages.length - 1));
       pages.forEach((page, pageIndex) => {
@@ -277,53 +262,33 @@
         page.classList.toggle('is-active', active);
         page.setAttribute('aria-hidden', String(!active));
       });
-      markCurrentQuestion(currentPage);
-      if (pageInfo) pageInfo.textContent = `Câu ${currentPage + 1} / ${pages.length}`;
+      markCurrentQuestion(item || pages[currentPage].querySelector('.question-item'));
+      if (pageInfo) pageInfo.textContent = `Nhóm ${currentPage + 1} / ${pages.length}`;
       if (previous) previous.disabled = currentPage === 0;
       if (next) next.disabled = currentPage === pages.length - 1;
-      questionLinks.forEach((link, linkIndex) =>
-        link.classList.toggle('is-current', linkIndex === currentPage),
-      );
-      updateProgress();
-      pages[currentPage].querySelector('h2')?.focus({ preventScroll: true });
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+      if (item) {
+        goToItem(item);
+      } else {
+        pages[currentPage].querySelector('h2')?.focus({ preventScroll: true });
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
     };
     document.body.classList.add('pagination-ready');
     previous?.addEventListener('click', () => showPage(currentPage - 1));
     next?.addEventListener('click', () => showPage(currentPage + 1));
-    questionLinks.forEach((link, index) => link.addEventListener('click', () => showPage(index)));
-    sectionLinks.forEach((link) => {
+    questionLinks.forEach((link) =>
       link.addEventListener('click', () => {
-        const sectionIndex = Number(link.dataset.sectionIndex);
-        const pageIndex = pages.findIndex(
-          (page) => Number(page.dataset.sectionIndex) === sectionIndex,
-        );
-        if (pageIndex >= 0) showPage(pageIndex);
-      });
-    });
-    document.querySelectorAll('.answer-form').forEach((form) => {
-      form.addEventListener('input', updateProgress);
-      form.addEventListener('change', updateProgress);
-      form.closest('.question-item')?.addEventListener('recording-saved', updateProgress);
-    });
-    const activeSectionIndex = Number(document.body.dataset.currentSectionIndex);
-    const activePage = pages.findIndex(
-      (page) => Number(page.dataset.sectionIndex) === activeSectionIndex,
+        const target = answerItems.get(link.dataset.itemId);
+        if (target) showPage(target.index, target.item);
+      }),
     );
-    showPage(activePage >= 0 ? activePage : 0);
+    showPage(0);
   }
   const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.content || 'X-CSRF-TOKEN';
   document.querySelectorAll('.media-audio').forEach((player) => {
     const container = player.closest('.media-player');
     const status = container.querySelector('.media-status');
     const playTrigger = container.querySelector('.media-play-trigger');
-    const sectionOpen = player.closest('[data-section-open]')?.dataset.sectionOpen !== 'false';
-    if (!sectionOpen) {
-      player.controls = false;
-      playTrigger.disabled = true;
-      status.textContent = 'Audio chỉ mở trong thời gian của section.';
-      return;
-    }
     let tokenReady = false;
     let loading = false;
     let exhausted = false;

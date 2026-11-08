@@ -17,6 +17,7 @@ function exam() {
   let interval,
     clock = 0,
     submissions = 0,
+    sectionAdvances = 0,
     dismissed = 0,
     exitDestination,
     nextTimer = 0;
@@ -52,6 +53,15 @@ function exam() {
       if (name === 'click') events.exitAttempt = handler;
     },
   };
+  const advance = {
+    ...submit,
+    addEventListener: (name, handler) => {
+      events.advanceSection = handler;
+    },
+    submit() {
+      sectionAdvances++;
+    },
+  };
   const ids = {
     'submit-attempt-form': submit,
     'submit-attempt': button,
@@ -59,6 +69,7 @@ function exam() {
     'exam-timer': { dataset: { deadline: new Date(60000).toISOString() } },
     'timer-display': {},
     'exit-attempt': exit,
+    'next-section-form': advance,
   };
   runInNewContext(source, {
     URLSearchParams,
@@ -111,6 +122,7 @@ function exam() {
     requests,
     confirmations,
     submit: () => events.submitAttempt({ preventDefault() {} }),
+    advance: () => events.advanceSection({ preventDefault() {} }),
     exit: () => events.exitAttempt({ preventDefault() {}, currentTarget: exit }),
     input(value) {
       answer.value = value;
@@ -129,10 +141,23 @@ function exam() {
       await tick();
     },
     submissions: () => submissions,
+    sectionAdvances: () => sectionAdvances,
     dismissed: () => dismissed,
     exitDestination: () => exitDestination,
   };
 }
+
+test('advancing to the next section waits for pending answers without submitting the exam', async () => {
+  const page = exam();
+  page.input('last answer in section');
+  page.advance();
+  await page.confirm(true);
+  assert.equal(page.sectionAdvances(), 0);
+  assert.equal(page.requests.at(-1).body.get('textAnswer'), 'last answer in section');
+  await page.respond(true);
+  assert.equal(page.sectionAdvances(), 1);
+  assert.equal(page.submissions(), 0);
+});
 
 test('leaving an in-progress exam requires explicit confirmation', async () => {
   const page = exam();

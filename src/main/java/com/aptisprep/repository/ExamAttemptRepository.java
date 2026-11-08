@@ -27,17 +27,18 @@ public interface ExamAttemptRepository extends JpaRepository<ExamAttemptEntity, 
     @Query(
             value =
                     "select a from ExamAttemptEntity a join MockExamEntity e on e.id = a.mockExamId"
-                            + " where a.userId = :userId and (:pattern = '' or lower(e.title) like"
-                            + " :pattern) and (:examType = '' or e.examType = :examType) and (:state ="
-                            + " '' or a.status = :state) and (:skill = '' or e.skill = :skill or exists"
+                            + " left join ExamAttemptSnapshotEntity s on s.attemptId = a.id"
+                            + " where a.userId = :userId and (:pattern = '' or lower(coalesce(s.title, e.title)) like"
+                            + " :pattern) and (:examType = '' or coalesce(s.examType, e.examType) = :examType) and (:state ="
+                            + " '' or a.status = :state) and (:skill = '' or coalesce(s.skill, e.skill) = :skill or exists"
                             + " (select r.id from ExamSkillResultEntity r where r.attemptId = a.id and"
                             + " r.skill = :skill)) order by a.createdAt desc, a.id desc",
             countQuery =
                     "select count(a) from ExamAttemptEntity a join MockExamEntity e on e.id ="
-                            + " a.mockExamId where a.userId = :userId and (:pattern = '' or"
-                            + " lower(e.title) like :pattern) and (:examType = '' or e.examType ="
+                            + " a.mockExamId left join ExamAttemptSnapshotEntity s on s.attemptId = a.id where a.userId = :userId and (:pattern = '' or"
+                            + " lower(coalesce(s.title, e.title)) like :pattern) and (:examType = '' or coalesce(s.examType, e.examType) ="
                             + " :examType) and (:state = '' or a.status = :state) and (:skill = '' or"
-                            + " e.skill = :skill or exists (select r.id from ExamSkillResultEntity r"
+                            + " coalesce(s.skill, e.skill) = :skill or exists (select r.id from ExamSkillResultEntity r"
                             + " where r.attemptId = a.id and r.skill = :skill))")
     Page<ExamAttemptEntity> searchHistory(
             @Param("userId") Integer userId,
@@ -50,21 +51,22 @@ public interface ExamAttemptRepository extends JpaRepository<ExamAttemptEntity, 
     @Query(
             value =
                     "select a from ExamAttemptEntity a join MockExamEntity e on e.id = a.mockExamId"
-                            + " join User u on u.id = a.userId where (:pattern = '' or lower(e.title)"
+                            + " left join ExamAttemptSnapshotEntity s on s.attemptId = a.id"
+                            + " join User u on u.id = a.userId where (:pattern = '' or lower(coalesce(s.title, e.title))"
                             + " like :pattern or lower(u.fullName) like :pattern or lower(u.email) like"
-                            + " :pattern) and (:examType = '' or e.examType = :examType) and (:state ="
-                            + " '' or a.status = :state) and (:skill = '' or e.skill = :skill or exists"
+                            + " :pattern) and (:examType = '' or coalesce(s.examType, e.examType) = :examType) and (:state ="
+                            + " '' or a.status = :state) and (:skill = '' or coalesce(s.skill, e.skill) = :skill or exists"
                             + " (select r.id from ExamSkillResultEntity r where r.attemptId = a.id and"
                             + " r.skill = :skill)) and (:submittedFrom is null or a.submittedAt >="
                             + " :submittedFrom) and (:submittedTo is null or a.submittedAt <"
                             + " :submittedTo) order by a.createdAt desc",
             countQuery =
                     "select count(a) from ExamAttemptEntity a join MockExamEntity e on e.id ="
-                            + " a.mockExamId join User u on u.id = a.userId where (:pattern = '' or"
-                            + " lower(e.title) like :pattern or lower(u.fullName) like :pattern or"
-                            + " lower(u.email) like :pattern) and (:examType = '' or e.examType ="
+                            + " a.mockExamId left join ExamAttemptSnapshotEntity s on s.attemptId = a.id join User u on u.id = a.userId where (:pattern = '' or"
+                            + " lower(coalesce(s.title, e.title)) like :pattern or lower(u.fullName) like :pattern or"
+                            + " lower(u.email) like :pattern) and (:examType = '' or coalesce(s.examType, e.examType) ="
                             + " :examType) and (:state = '' or a.status = :state) and (:skill = '' or"
-                            + " e.skill = :skill or exists (select r.id from ExamSkillResultEntity r"
+                            + " coalesce(s.skill, e.skill) = :skill or exists (select r.id from ExamSkillResultEntity r"
                             + " where r.attemptId = a.id and r.skill = :skill)) and (:submittedFrom is"
                             + " null or a.submittedAt >= :submittedFrom) and (:submittedTo is null or"
                             + " a.submittedAt < :submittedTo)")
@@ -79,7 +81,12 @@ public interface ExamAttemptRepository extends JpaRepository<ExamAttemptEntity, 
 
     long countByUserId(Integer userId);
 
-    boolean existsByMockExamId(Integer mockExamId);
+    @Query(
+            """
+            select a from ExamAttemptEntity a where a.mockExamId = :examId
+            and not exists (select s.id from ExamAttemptSnapshotEntity s where s.attemptId = a.id)
+            """)
+    List<ExamAttemptEntity> findWithoutSnapshot(Integer examId);
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("select a from ExamAttemptEntity a where a.id = :id and a.userId = :userId")

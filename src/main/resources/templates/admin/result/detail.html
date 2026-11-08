@@ -28,7 +28,7 @@
           <div>
             <span th:text="${attemptResult.isCombined() ? 'CEFR tổng hợp' : 'CEFR kỹ năng'}"></span>
             <strong
-              th:text="${attemptResult.overallCefr==null?'—':attemptResult.overallCefr}"
+              th:text="${attemptResult.overallCefr==null?'—':display.cefrLabel(attemptResult.overallCefr)}"
             ></strong>
           </div>
         </section>
@@ -45,17 +45,15 @@
               <h2 th:text="${display.catalogSkill(skill.skill)}"></h2>
               <strong
                 th:unless="${attemptResult.isCombined() and skill.skill == 'GRAMMAR_VOCABULARY'}"
-                th:text="${skill.estimatedLevel==null?'—':skill.estimatedLevel}"
+                th:text="${skill.estimatedLevel==null?'—':display.cefrLabel(skill.estimatedLevel)}"
               ></strong>
             </div>
             <dl class="result-score-list">
-              <div>
-                <dt>Điểm thô</dt>
-                <dd th:text="${skill.rawScore==null?'Chưa có':skill.rawScore}"></dd>
-              </div>
-              <div>
-                <dt>Điểm quy đổi</dt>
-                <dd th:text="${skill.scaleScore==null?'Chưa có':skill.scaleScore}"></dd>
+              <div th:with="score=${skill.scaleScore != null ? skill.scaleScore : skill.rawScore}">
+                <dt>Điểm</dt>
+                <dd
+                  th:text="${score == null ? 'Chưa có' : score.stripTrailingZeros().toPlainString()}"
+                ></dd>
               </div>
             </dl>
             <div class="result-feedback" th:if="${skill.feedback!=null}">

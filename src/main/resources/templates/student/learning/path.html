@@ -6,13 +6,13 @@
     <div class="container ap-container app-shell">
       <div th:replace="~{fragments/student-sidebar :: studentSidebar('learning-path')}"></div>
       <main class="app-main orientation-page" id="main-content" tabindex="-1">
-        <div
-          th:replace="~{fragments/breadcrumb :: breadcrumb('Học tập', @{/student/dashboard}, 'Lộ trình của tôi')}"
-        ></div>
-
         <header class="page-header" id="start">
           <div>
             <h1>Lộ trình của tôi</h1>
+          </div>
+          <div class="page-actions">
+            <a class="button button-secondary" th:href="@{/student/goals}">Đặt mục tiêu cá nhân</a>
+            <a class="button button-secondary" th:href="@{/student/placement}">Kiểm tra đầu vào</a>
           </div>
         </header>
 
@@ -119,12 +119,6 @@
             </a>
           </article>
         </section>
-
-        <div class="actions">
-          <a th:href="@{/student/goals}">Thiết lập mục tiêu cá nhân</a>
-
-          <a class="button" th:href="@{/student/placement}">Làm bài kiểm tra đầu vào</a>
-        </div>
       </main>
     </div>
     <div th:replace="~{fragments/footer :: footer}"></div>

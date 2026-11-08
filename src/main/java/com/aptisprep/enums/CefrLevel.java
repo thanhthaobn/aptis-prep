@@ -3,6 +3,7 @@ package com.aptisprep.enums;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
+import java.util.stream.Stream;
 
 public enum CefrLevel {
     A1,
@@ -11,6 +12,12 @@ public enum CefrLevel {
     B2,
     C1,
     C2;
+
+    public static final String BELOW_A1 = "A0";
+
+    public static List<String> scoringCodes() {
+        return Stream.concat(Stream.of(BELOW_A1), codes().stream()).toList();
+    }
 
     public static List<String> codes() {
         return Arrays.stream(values()).map(Enum::name).toList();

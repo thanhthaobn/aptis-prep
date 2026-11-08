@@ -8,9 +8,20 @@
       th:attr="data-read-only=${readOnly}"
     >
       <h2>Thang điểm theo kỹ năng</h2>
+      <div class="field" id="scheme-skill-field">
+        <label for="schemeScopeSkill">Kỹ năng</label>
+        <select id="schemeScopeSkill" th:field="*{scopeSkill}" th:disabled="${readOnly}">
+          <option value="">Chọn kỹ năng</option>
+          <option
+            th:each="skill : ${display.skillCodes()}"
+            th:value="${skill}"
+            th:text="${display.catalogSkill(skill)}"
+          ></option>
+        </select>
+      </div>
       <p>
-        Luyện tập: chọn một kỹ năng và cấu hình khoảng CEFR A1–C2. Bản nháp có thể lưu trước khi
-        hoàn thiện các khoảng điểm.
+        Luyện tập: chọn một kỹ năng và cấu hình khoảng CEFR. Bản nháp có thể lưu trước khi hoàn
+        thiện các khoảng điểm.
       </p>
       <p id="scheme-combined-help" class="muted">
         Đề tổng hợp: mỗi kỹ năng có ngưỡng CEFR riêng, quy đổi về 0–50. Tổng Reading, Listening,
@@ -27,7 +38,7 @@
         Aptis chính thức.
       </p>
       <fieldset id="scheme-target-score" th:disabled="${readOnly}" class="catalog-form-section">
-        <legend>Ngưỡng đạt cho kiểm tra cuối chặng (tùy chọn)</legend>
+        <legend>Ngưỡng đạt (tùy chọn)</legend>
         <p class="muted">
           Nhập ngưỡng đạt nếu chỉ xác nhận một trình độ; để trống bảng CEFR bên dưới. Hoặc dùng bảng
           CEFR đầy đủ để đánh giá nhiều trình độ.
@@ -39,6 +50,7 @@
               <option value="">Dùng bảng CEFR</option>
               <option
                 th:each="level : ${display.scoringLevels()}"
+                th:attr="data-c2=${level == 'C2' ? 'true' : null}"
                 th:value="${level}"
                 th:text="${level}"
               ></option>
@@ -131,10 +143,12 @@
               </thead>
               <tbody>
                 <tr
-                  th:each="level : ${display.scoringLevels()}"
+                  th:each="level : ${skill == 'GRAMMAR_VOCABULARY' ? display.scoringLevels() : display.fullMockScoringLevels()}"
+                  th:classappend="${level == 'A0'} ? 'below-a1-row'"
+                  th:attr="data-c2=${level == 'C2' ? 'true' : null}"
                   th:with="key=${skill + '_' + level}"
                 >
-                  <th scope="row" th:text="${level}"></th>
+                  <th scope="row" th:text="${display.cefrLabel(level)}"></th>
                   <td>
                     <input
                       type="number"
