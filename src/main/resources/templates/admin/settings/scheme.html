@@ -72,124 +72,14 @@
                 <label for="schemeStatus">Trạng thái</label>
                 <select id="schemeStatus" th:field="*{status}">
                   <option value="DRAFT">Bản nháp</option>
-                  <option value="ACTIVE">Đang sử dụng</option>
-                  <option value="INACTIVE">Ngừng sử dụng</option>
+                  <option th:if="${editing}" value="ACTIVE">Đang sử dụng</option>
+                  <option th:if="${editing}" value="INACTIVE">Ngừng sử dụng</option>
                 </select>
               </div>
             </div>
           </fieldset>
           <input type="hidden" name="configureScores" value="true" />
-          <fieldset
-            id="scheme-score-configuration"
-            class="catalog-form-section"
-            th:disabled="${readOnly}"
-          >
-            <legend>Thang điểm</legend>
-            <p class="muted">Speaking và Writing dùng thang điểm 0–50.</p>
-            <div class="catalog-form-grid">
-              <div class="field">
-                <label for="schemeRawMin">Điểm thấp nhất</label>
-                <input
-                  id="schemeRawMin"
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  th:field="*{scale.rawMin}"
-                />
-              </div>
-              <div class="field">
-                <label for="schemeRawMax">Điểm cao nhất</label>
-                <input
-                  id="schemeRawMax"
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  th:field="*{scale.rawMax}"
-                />
-              </div>
-            </div>
-            <div id="scheme-target-score" class="catalog-form-grid">
-              <div class="field" id="scheme-skill-field">
-                <label for="schemeScopeSkill">Kỹ năng</label>
-                <select id="schemeScopeSkill" th:field="*{scopeSkill}">
-                  <option value="">Chọn kỹ năng</option>
-                  <option
-                    th:each="skill : ${display.skillCodes()}"
-                    th:value="${skill}"
-                    th:text="${display.catalogSkill(skill)}"
-                  ></option>
-                </select>
-              </div>
-              <div class="field">
-                <label for="schemeTargetLevel">Trình độ cần đạt</label>
-                <select id="schemeTargetLevel" th:field="*{targetLevel}">
-                  <option value="">Chọn trình độ</option>
-                  <option
-                    th:each="level : ${display.scoringLevels()}"
-                    th:value="${level}"
-                    th:text="${level}"
-                    th:attr="data-c2=${level == 'C2' ? 'true' : null}"
-                  ></option>
-                </select>
-              </div>
-              <div class="field">
-                <label for="schemePassingScore">Điểm tối thiểu để đạt</label>
-                <input
-                  id="schemePassingScore"
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  th:field="*{passingScore}"
-                />
-              </div>
-            </div>
-            <div id="scheme-combined-ranges">
-              <section class="catalog-form-section" th:each="skill : ${display.skillCodes()}">
-                <h3 th:text="${display.catalogSkill(skill)}"></h3>
-                <div class="table-wrap">
-                  <table class="data-table">
-                    <thead>
-                      <tr>
-                        <th scope="col">CEFR</th>
-                        <th scope="col">Từ điểm</th>
-                        <th scope="col">Đến điểm</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <tr
-                        th:each="level : ${skill == 'GRAMMAR_VOCABULARY' ? display.scoringLevels() : display.fullMockScoringLevels()}"
-                        th:classappend="${level == 'A0'} ? 'below-a1-row'"
-                        th:with="key=${skill + '_' + level}"
-                        th:attr="data-c2=${level == 'C2' ? 'true' : null}"
-                      >
-                        <th scope="row" th:text="${display.cefrLabel(level)}"></th>
-                        <td>
-                          <input
-                            type="number"
-                            min="0"
-                            step="0.01"
-                            th:name="|ranges[${key}].minScore|"
-                            th:value="${schemeForm.ranges.get(key).minScore}"
-                            th:attr="aria-label=${display.catalogSkill(skill) + ' ' + level + ' từ điểm'}"
-                          />
-                        </td>
-                        <td>
-                          <input
-                            type="number"
-                            min="0"
-                            step="0.01"
-                            th:name="|ranges[${key}].maxScore|"
-                            th:value="${schemeForm.ranges.get(key).maxScore}"
-                            th:attr="aria-label=${display.catalogSkill(skill) + ' ' + level + ' đến điểm'}"
-                          />
-                        </td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
-              </section>
-            </div>
-          </fieldset>
+          <div th:replace="~{fragments/scoring-configuration :: configuration}"></div>
           <div class="alert alert-danger" th:if="${!display.allErrors('schemeForm').isEmpty()}">
             <span th:each="message, status : ${display.allErrors('schemeForm')}">
               <br th:if="${!status.first}" />
@@ -197,7 +87,14 @@
             </span>
           </div>
           <div class="actions">
-            <button th:unless="${readOnly}" class="button" type="submit">Lưu bộ chấm điểm</button>
+            <button
+              th:unless="${readOnly}"
+              class="button"
+              type="submit"
+              th:text="${editing ? 'Lưu bộ chấm điểm' : 'Lưu bản nháp'}"
+            >
+              Lưu bản nháp
+            </button>
             <a
               th:if="${readOnly}"
               class="button"
@@ -206,6 +103,20 @@
               Chỉnh sửa
             </a>
           </div>
+        </form>
+        <form
+          th:if="${editing and scheme.status != 'ACTIVE'}"
+          th:action="@{/admin/scoring-schemes/{id}/activate(id=${scheme.id})}"
+          method="post"
+        >
+          <button class="button" type="submit">Kiểm tra và kích hoạt</button>
+        </form>
+        <form
+          th:if="${editing and scheme.status == 'ACTIVE'}"
+          th:action="@{/admin/scoring-schemes/{id}/disable(id=${scheme.id})}"
+          method="post"
+        >
+          <button class="button button-secondary" type="submit">Ngừng sử dụng</button>
         </form>
         <section
           id="cefr-bands"

@@ -297,6 +297,33 @@
           Còn
           <strong id="timer-display">--:--</strong>
         </div>
+        <nav
+          class="exam-section-navigation"
+          th:if="${attempt.sections != null and attempt.sections.size() > 1}"
+          aria-label="Các phần thi"
+        >
+          <h2>Các phần thi</h2>
+          <ol class="exam-section-list">
+            <li
+              th:each="section : ${attempt.sections}"
+              th:classappend="${section.open ? ' is-current' : (section.state == 'COMPLETED' ? ' is-completed' : ' is-upcoming')}"
+            >
+              <div class="exam-section-link">
+                <span>
+                  <strong
+                    th:text="${'Phần ' + (section.index + 1) + ' · ' + display.catalogSkill(section.skill)}"
+                  ></strong>
+                  <small
+                    th:text="${section.questionCount + ' câu · ' + section.durationMinutes + ' phút'}"
+                  ></small>
+                </span>
+                <em
+                  th:text="${section.state == 'OPEN' ? 'Đang làm' : (section.state == 'COMPLETED' ? 'Đã hết giờ' : 'Chưa mở')}"
+                ></em>
+              </div>
+            </li>
+          </ol>
+        </nav>
         <dl class="exam-stats">
           <div>
             <dt>Tổng số câu</dt>

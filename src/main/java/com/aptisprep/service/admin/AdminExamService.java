@@ -10,6 +10,7 @@ import com.aptisprep.exception.BusinessRuleException;
 import com.aptisprep.exception.ResourceNotFoundException;
 import com.aptisprep.repository.*;
 import com.aptisprep.service.exam.ExamSnapshotService;
+import com.aptisprep.service.exam.ExamStartValidator;
 import java.util.*;
 import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
@@ -25,6 +26,7 @@ public class AdminExamService {
     private final ExamAttemptRepository examAttemptRepository;
     private final ExamDefinitionValidator examValidator;
     private final ExamSnapshotService examSnapshots;
+    private final ExamStartValidator readiness;
 
     public AdminExamService(
             MockExamRepository mockExamRepository,
@@ -33,7 +35,8 @@ public class AdminExamService {
             CertificateRepository certificateRepository,
             ExamAttemptRepository examAttemptRepository,
             ExamDefinitionValidator examValidator,
-            ExamSnapshotService examSnapshots) {
+            ExamSnapshotService examSnapshots,
+            ExamStartValidator readiness) {
         this.mockExamRepository = mockExamRepository;
         this.mockExamSectionRepository = mockExamSectionRepository;
         this.mockExamQuestionRepository = mockExamQuestionRepository;
@@ -41,6 +44,7 @@ public class AdminExamService {
         this.examAttemptRepository = examAttemptRepository;
         this.examValidator = examValidator;
         this.examSnapshots = examSnapshots;
+        this.readiness = readiness;
     }
 
     public ExamForm examForm(Integer id) {
@@ -163,6 +167,8 @@ public class AdminExamService {
         }
         if (all.isEmpty()) throw new BusinessRuleException("Không thể công bố đề trống");
         exam.setDurationMinutes(form.getDurationMinutes());
+        readiness.validateForPublication(
+                exam, mockExamQuestionRepository.findByMockExamIdOrderByPosition(id));
         exam.setStatus("PUBLISHED");
         mockExamRepository.save(exam);
     }
@@ -173,7 +179,10 @@ public class AdminExamService {
                 mockExamRepository
                         .findByIdForUpdate(id)
                         .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy đề thi"));
-        if ("PUBLISHED".equals(exam.getStatus())) exam.setStatus("ARCHIVED");
+        if ("PUBLISHED".equals(exam.getStatus())) {
+            exam.setStatus("ARCHIVED");
+            mockExamRepository.save(exam);
+        }
     }
 
     void normalizeSections(ExamForm form) {

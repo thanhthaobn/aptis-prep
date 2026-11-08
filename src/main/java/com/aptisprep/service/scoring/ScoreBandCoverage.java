@@ -2,6 +2,7 @@ package com.aptisprep.service.scoring;
 
 import com.aptisprep.entity.ScoreBand;
 import com.aptisprep.entity.ScoringScaleRule;
+import com.aptisprep.enums.CefrLevel;
 import com.aptisprep.exception.BusinessRuleException;
 import java.math.BigDecimal;
 import java.util.List;
@@ -24,6 +25,7 @@ final class ScoreBandCoverage {
         ScoreBand previous = null;
         for (ScoreBand band : bands) {
             if (band == null
+                    || CefrLevel.parse(band.getCefrLevel()) == null
                     || band.getMinScore() == null
                     || band.getMaxScore() == null
                     || band.getMinScore().compareTo(band.getMaxScore()) > 0
@@ -35,6 +37,11 @@ final class ScoreBandCoverage {
                 throw new BusinessRuleException(
                         "Các khoảng CEFR bị thiếu hoặc chồng lấn trong miền điểm scale");
             }
+            if (previous != null
+                    && !CefrLevel.parse(band.getCefrLevel())
+                            .higherThan(CefrLevel.parse(previous.getCefrLevel())))
+                throw new BusinessRuleException(
+                        "CEFR phải tăng dần theo điểm: A1, A2, B1, B2, C1, C2");
             expected = band.getMaxScore().add(SCORE_STEP);
             previous = band;
         }

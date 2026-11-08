@@ -166,7 +166,8 @@ public class ScoringPolicyService implements ScoringPolicyContract {
     @Transactional(readOnly = true)
     public FullMockScore fullMockScore(Integer schemeId, List<SkillScore> skillScores) {
         var certificate = requireHistoricalScheme(schemeId).getCertificate();
-        if (skillScores.size() != Skill.values().length
+        if (skillScores == null
+                || skillScores.size() != Skill.values().length
                 || !skillScores.stream()
                         .map(SkillScore::skill)
                         .collect(Collectors.toSet())
@@ -176,7 +177,7 @@ public class ScoringPolicyService implements ScoringPolicyContract {
                                 score ->
                                         score.scaleScore() == null
                                                 || !FULL_MOCK_LEVELS.contains(score.cefrLevel()))) {
-            return new FullMockScore(null, null, skillScores);
+            return new FullMockScore(null, null, skillScores == null ? List.of() : skillScores);
         }
         int coreLevel =
                 skillScores.stream()

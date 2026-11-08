@@ -267,17 +267,117 @@ public class CatalogService {
                                 new ExamPreviewSection(
                                         section.getSkill(),
                                         section.getDurationMinutes(),
-                                        Arrays.stream(section.getQuestionIds().split(","))
-                                                .filter(value -> !value.isBlank())
-                                                .map(Integer::valueOf)
+                                        parseQuestionIds(section.getQuestionIds()).stream()
                                                 .map(questionRepository::findById)
                                                 .flatMap(Optional::stream)
+                                                .map(this::examPreviewQuestion)
                                                 .toList()))
                 .toList();
     }
 
+    private List<Integer> parseQuestionIds(String value) {
+        if (value == null || value.isBlank()) return List.of();
+        return Arrays.stream(value.split(","))
+                .map(String::trim)
+                .filter(token -> !token.isBlank())
+                .map(Integer::valueOf)
+                .toList();
+    }
+
+    private ExamPreviewQuestion examPreviewQuestion(QuestionEntity question) {
+        List<ExamPreviewItem> items =
+                questionItemRepository.findByQuestionIdOrderByPosition(question.getId()).stream()
+                        .map(
+                                item ->
+                                        new ExamPreviewItem(
+                                                item.getPosition(),
+                                                item.getContent(),
+                                                item.getResponseSeconds(),
+                                                item.getMinWordCount(),
+                                                item.getMaxWordCount(),
+                                                questionOptionRepository
+                                                        .findByQuestionItemIdOrderByPosition(
+                                                                item.getId())
+                                                        .stream()
+                                                        .map(
+                                                                option ->
+                                                                        new ExamPreviewOption(
+                                                                                option
+                                                                                        .getOptionCode(),
+                                                                                option
+                                                                                        .getContent()))
+                                                        .toList()))
+                        .toList();
+        List<ExamPreviewMedia> media =
+                questionMediaRepository.findByQuestionIdOrderByPosition(question.getId()).stream()
+                        .map(
+                                item ->
+                                        new ExamPreviewMedia(
+                                                item.getId(),
+                                                item.getMediaType(),
+                                                item.getOriginalFilename(),
+                                                item.getContentType(),
+                                                item.getAltText(),
+                                                item.getTranscript(),
+                                                item.getMediaUrl() != null
+                                                        && item.getMediaUrl()
+                                                                .startsWith("speech://")))
+                        .toList();
+        return new ExamPreviewQuestion(
+                question.getId(),
+                question.getSkill(),
+                question.getQuestionType(),
+                questionTypeLabel(question.getQuestionType()),
+                question.getContent(),
+                question.getInstruction(),
+                question.getReadingPassage(),
+                items,
+                media);
+    }
+
+    private String questionTypeLabel(String type) {
+        return switch (type) {
+            case "SINGLE_CHOICE" -> "Chọn một đáp án";
+            case "MATCHING" -> "Nối đáp án";
+            case "ORDERING" -> "Sắp xếp thứ tự";
+            case "WRITING_TEXT" -> "Trả lời bằng văn bản";
+            case "SPEAKING_AUDIO" -> "Trả lời bằng ghi âm";
+            default -> type;
+        };
+    }
+
     public record ExamPreviewSection(
-            String skill, Integer minutes, List<QuestionEntity> questions) {}
+            String skill, Integer minutes, List<ExamPreviewQuestion> questions) {}
+
+    public record ExamPreviewQuestion(
+            Integer id,
+            String skill,
+            String type,
+            String typeLabel,
+            String content,
+            String instruction,
+            String readingPassage,
+            List<ExamPreviewItem> items,
+            List<ExamPreviewMedia> media) {}
+
+    public record ExamPreviewItem(
+            int position,
+            String content,
+            Integer responseSeconds,
+            Integer minWordCount,
+            Integer maxWordCount,
+            List<ExamPreviewOption> options) {}
+
+    public record ExamPreviewOption(String code, String content) {}
+
+    public record ExamPreviewMedia(
+            Integer id,
+            String type,
+            String filename,
+            String contentType,
+            String altText,
+            String transcript,
+            boolean browserSpeech) {}
 
     @Transactional
     public void addMedia(Integer questionId, MultipartFile[] uploads) {

@@ -102,9 +102,9 @@ class StudentResultFlowTests {
                     content()
                             .string(
                                     complete
-                                            ? containsString("<td>35</td>")
+                                            ? containsString(">35</td>")
                                             : org.hamcrest.Matchers.not(
-                                                    containsString("<td>35</td>"))));
+                                                    containsString(">35</td>"))));
         }
         mvc.perform(
                         org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post(

@@ -637,6 +637,7 @@ public class ExamAttemptService implements ExamAttemptContract {
         MockExamEntity exam = examFor(attempt);
         expireIfNeeded(attempt, exam);
         List<QuestionPage> questionPages = new ArrayList<>();
+        List<SectionPage> sections = new ArrayList<>();
         int nextItemNumber = 1;
         LocalDateTime now = LocalDateTime.now();
         LocalDateTime examEnd = examDeadline(attempt, exam);
@@ -644,7 +645,37 @@ public class ExamAttemptService implements ExamAttemptContract {
         Integer nextSectionAfterMinute = null;
         String sectionSkill = null;
         LocalDateTime clockStart = examSnapshots.sectionClockStart(attempt);
-        for (JsonNode question : examSnapshots.lockedQuestionList(attemptId)) {
+        var lockedQuestions = examSnapshots.lockedQuestionList(attemptId);
+        Map<ExamSnapshotService.SectionWindow, List<JsonNode>> timedSections =
+                new TreeMap<>(Comparator.comparingInt(ExamSnapshotService.SectionWindow::start));
+        for (JsonNode question : lockedQuestions) {
+            var section = ExamSnapshotService.SectionWindow.of(question);
+            if (section != null)
+                timedSections.computeIfAbsent(section, ignored -> new ArrayList<>()).add(question);
+        }
+        for (var entry : timedSections.entrySet()) {
+            var window = entry.getKey();
+            var questions = entry.getValue();
+            boolean open =
+                    "IN_PROGRESS".equals(attempt.getStatus()) && window.contains(clockStart, now);
+            String state =
+                    open
+                            ? "OPEN"
+                            : (now.isBefore(clockStart.plusMinutes(window.start()))
+                                    ? "UPCOMING"
+                                    : "COMPLETED");
+            int items =
+                    questions.stream().mapToInt(question -> question.path("items").size()).sum();
+            sections.add(
+                    new SectionPage(
+                            sections.size(),
+                            questions.getFirst().path("skill").asText(),
+                            window.end() - window.start(),
+                            items,
+                            state,
+                            open));
+        }
+        for (JsonNode question : lockedQuestions) {
             var window = ExamSnapshotService.SectionWindow.of(question);
             if (window != null) {
                 if (!window.contains(clockStart, now)) continue;
@@ -670,8 +701,17 @@ public class ExamAttemptService implements ExamAttemptContract {
                 List.copyOf(questionPages),
                 deadline,
                 nextSectionAfterMinute,
-                sectionSkill);
+                sectionSkill,
+                List.copyOf(sections));
     }
+
+    public record SectionPage(
+            int index,
+            String skill,
+            int durationMinutes,
+            int questionCount,
+            String state,
+            boolean open) {}
 
     public record AttemptPage(
             Integer attemptId,
@@ -681,7 +721,8 @@ public class ExamAttemptService implements ExamAttemptContract {
             List<QuestionPage> questions,
             Instant deadline,
             Integer nextSectionAfterMinute,
-            String sectionSkill) {
+            String sectionSkill,
+            List<SectionPage> sections) {
         public boolean nextSection() {
             return nextSectionAfterMinute != null;
         }
@@ -693,7 +734,16 @@ public class ExamAttemptService implements ExamAttemptContract {
                 Long remainingSeconds,
                 List<QuestionPage> questions,
                 Instant deadline) {
-            this(attemptId, title, examType, remainingSeconds, questions, deadline, null, null);
+            this(
+                    attemptId,
+                    title,
+                    examType,
+                    remainingSeconds,
+                    questions,
+                    deadline,
+                    null,
+                    null,
+                    List.of());
         }
 
         public AttemptPage(

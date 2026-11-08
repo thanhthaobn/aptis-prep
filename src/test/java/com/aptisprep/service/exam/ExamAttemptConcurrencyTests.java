@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 
 import com.aptisprep.entity.Certificate;
 import com.aptisprep.entity.MockExamEntity;
@@ -656,7 +657,8 @@ class ExamAttemptConcurrencyTests {
     }
 
     @Test
-    void sectionWindowsRejectEarlyAndLateAnswersAndUnpublishedAttemptCanStillSubmit() {
+    void sectionWindowsRejectEarlyAndLateAnswersAndUnpublishedAttemptCanStillSubmit()
+            throws Exception {
         Fixture fixture = fixture("section-windows");
         int examId = fixture.exam().getId();
         int userId = fixture.user().getId();
@@ -676,6 +678,14 @@ class ExamAttemptConcurrencyTests {
         secondSectionItem.setContent("First item of the next section");
         secondSectionItem.setPosition(1);
         items.saveAndFlush(secondSectionItem);
+        QuestionMediaEntity secondAudio = new QuestionMediaEntity();
+        secondAudio.setQuestionId(secondId);
+        secondAudio.setMediaType("AUDIO");
+        secondAudio.setMediaUrl(TestAudio.store(storage));
+        secondAudio.setOriginalFilename("second.wav");
+        secondAudio.setContentType("audio/wav");
+        secondAudio.setPosition(1);
+        media.saveAndFlush(secondAudio);
         var firstLink = examQuestions.findByMockExamIdOrderByPosition(examId).getFirst();
         var secondLink = new MockExamQuestionEntity();
         secondLink.setMockExamId(examId);
@@ -699,6 +709,9 @@ class ExamAttemptConcurrencyTests {
                         .map(ExamAttemptService.ItemPage::position)
                         .toList());
         assertEquals(2, firstPage.totalItems());
+        assertEquals(2, firstPage.sections().size());
+        assertEquals("OPEN", firstPage.sections().getFirst().state());
+        assertEquals("UPCOMING", firstPage.sections().getLast().state());
         attempts.saveAnswer(
                 userId,
                 attemptId,
@@ -721,6 +734,8 @@ class ExamAttemptConcurrencyTests {
                 attempts.page(userId, attemptId).questions().getFirst().questionId());
         attempts.advanceSection(userId, attemptId, 2);
         var next = attempts.page(userId, attemptId);
+        assertEquals("COMPLETED", next.sections().getFirst().state());
+        assertEquals("OPEN", next.sections().getLast().state());
         assertEquals(1, next.totalItems());
         assertEquals(0, next.answeredItems());
         assertEquals(

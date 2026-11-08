@@ -82,7 +82,7 @@
             <tbody>
               <th:block
                 th:each="skill : ${res.skills}"
-                th:with="score=${skill.rawScore != null ? skill.rawScore : skill.scaleScore}"
+                th:with="score=${skill.scaleScore != null ? skill.scaleScore : skill.rawScore}"
               >
                 <tr>
                   <th scope="row" th:text="${display.catalogSkill(skill.skill)}"></th>
@@ -90,7 +90,7 @@
                     th:text="${score == null ? '—' : score.stripTrailingZeros().toPlainString()}"
                   ></td>
                   <td
-                    th:text="${skill.gradingState == 'ERROR' ? 'Chấm lỗi' : (skill.gradingState == 'PENDING' or skill.gradingState == 'WAITING' ? 'Đang chấm' : (res.hasFullMockTotal() and skill.skill == 'GRAMMAR_VOCABULARY' ? '—' : (skill.estimatedLevel != null ? display.cefrLabel(skill.estimatedLevel) : (skill.gradingState == 'COMPLETED' and score != null and (res.examType == 'CHECKPOINT' or res.examType == 'PRACTICE') ? 'Chưa đạt' : '—'))))}"
+                    th:text="${skill.gradingState == 'ERROR' ? 'Chấm lỗi' : (skill.gradingState == 'PENDING' or skill.gradingState == 'WAITING' ? 'Đang chấm' : (res.isCombined() and skill.skill == 'GRAMMAR_VOCABULARY' ? '—' : (skill.estimatedLevel != null ? display.cefrLabel(skill.estimatedLevel) : (skill.gradingState == 'COMPLETED' and score != null and (res.examType == 'CHECKPOINT' or res.examType == 'PRACTICE') ? 'Chưa đạt' : '—'))))}"
                   ></td>
                 </tr>
               </th:block>
