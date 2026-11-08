@@ -18,7 +18,13 @@
         <dt>Mục tiêu<span class="tile-label-suffix"> cuối</span></dt>
         <dd>
           <span th:if="${stage.goalLevel != null}" th:text="${stage.goalLevel}"></span>
-          <span th:if="${stage.goalLevel == null}" class="muted">Chưa đặt</span>
+          <a
+            th:if="${stage.goalLevel == null}"
+            th:href="@{/student/goals}"
+            aria-label="Đặt mục tiêu cá nhân"
+          >
+            Đặt mục tiêu cá nhân
+          </a>
         </dd>
       </div>
     </dl>
