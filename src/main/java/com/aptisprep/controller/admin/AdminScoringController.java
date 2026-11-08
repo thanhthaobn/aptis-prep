@@ -415,7 +415,6 @@ public class AdminScoringController {
         form.setName(value.name());
         form.setVersion(value.version());
         form.setStatus(value.status());
-        form.setEffectiveFrom(value.effectiveFrom());
         return form;
     }
 }

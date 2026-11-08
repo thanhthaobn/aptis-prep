@@ -90,8 +90,13 @@ final class ExamDefinitionValidator {
         if (duration > Integer.MAX_VALUE)
             throw new BusinessRuleException("Tổng thời gian vượt giới hạn");
         f.setDurationMinutes((int) duration);
-        if (f.getCertificateId() == null || !certificateRepository.existsById(f.getCertificateId()))
-            throw new BusinessRuleException("Chứng chỉ không hợp lệ");
+        var certificate =
+                f.getCertificateId() == null
+                        ? null
+                        : certificateRepository.findById(f.getCertificateId()).orElse(null);
+        if (certificate == null) throw new BusinessRuleException("Chứng chỉ không hợp lệ");
+        if (certificate.isAptisGeneral() && CefrLevel.C2.name().equals(f.getTargetLevel()))
+            throw new BusinessRuleException("Aptis ESOL General chỉ có mức tối đa C1");
         if (Set.of("CHECKPOINT", "PLACEMENT").contains(f.getExamType())
                 && f.getScoringSchemeId() == null)
             throw new BusinessRuleException(

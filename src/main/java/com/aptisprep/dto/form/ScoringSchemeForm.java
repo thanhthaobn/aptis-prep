@@ -4,10 +4,8 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import org.springframework.format.annotation.DateTimeFormat;
 
 public class ScoringSchemeForm {
     @NotNull(message = "Phải chọn chứng chỉ")
@@ -36,7 +34,7 @@ public class ScoringSchemeForm {
     public ScoringSchemeForm() {
         for (String skill : com.aptisprep.enums.Skill.codes()) {
             skillScales.put(skill, new ScoringScaleRuleForm());
-            for (String level : com.aptisprep.enums.CefrLevel.codes())
+            for (String level : com.aptisprep.enums.CefrLevel.scoringCodes())
                 ranges.put(skill + "_" + level, new ScoreBandForm());
         }
     }
@@ -93,9 +91,6 @@ public class ScoringSchemeForm {
         scopeSkill = value;
     }
 
-    @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
-    private LocalDateTime effectiveFrom;
-
     public Integer getCertificateId() {
         return certificateId;
     }
@@ -112,10 +107,6 @@ public class ScoringSchemeForm {
         return status;
     }
 
-    public LocalDateTime getEffectiveFrom() {
-        return effectiveFrom;
-    }
-
     public void setCertificateId(Integer value) {
         certificateId = value;
     }
@@ -130,9 +121,5 @@ public class ScoringSchemeForm {
 
     public void setStatus(String value) {
         status = value;
-    }
-
-    public void setEffectiveFrom(LocalDateTime value) {
-        effectiveFrom = value;
     }
 }

@@ -88,17 +88,23 @@ class StudentResultFlowTests {
             var result =
                     mvc.perform(get(path).with(user(learner.getEmail()).roles("STUDENT")))
                             .andExpect(status().isOk())
-                            .andExpect(content().string(containsString("Mã lượt thi")));
+                            .andExpect(content().string(containsString(exam.getTitle())))
+                            .andExpect(
+                                    content()
+                                            .string(
+                                                    org.hamcrest.Matchers.not(
+                                                            containsString("Mã lượt thi"))));
             if (state.equals("ERROR"))
                 result.andExpect(content().string(containsString("Chấm lại phần lỗi")));
             if (state.equals("IN_PROGRESS"))
                 result.andExpect(content().string(containsString("Tiếp tục làm bài")));
-            if (!complete)
-                result.andExpect(
-                        content()
-                                .string(
-                                        org.hamcrest.Matchers.not(
-                                                containsString("class=\"score-val\""))));
+            result.andExpect(
+                    content()
+                            .string(
+                                    complete
+                                            ? containsString(">35</td>")
+                                            : org.hamcrest.Matchers.not(
+                                                    containsString(">35</td>"))));
         }
         mvc.perform(
                         org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post(

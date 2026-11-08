@@ -30,6 +30,7 @@ import org.springframework.transaction.annotation.Transactional;
  */
 @Service
 public class ScoringPolicyService implements ScoringPolicyContract {
+    private static final List<String> FULL_MOCK_LEVELS = CefrLevel.scoringCodes();
     private final ScoringSchemeRepository scoringSchemeRepository;
     private final ScoreBandRepository scoreBandRepository;
     private final ScoringScaleRuleRepository scoringScaleRuleRepository;
@@ -99,6 +100,11 @@ public class ScoringPolicyService implements ScoringPolicyContract {
                                         && scaleScore.compareTo(band.getMaxScore()) <= 0)
                 .map(ScoreBand::getCefrLevel)
                 .findFirst()
+                .map(
+                        level ->
+                                requireHistoricalScheme(schemeId)
+                                        .getCertificate()
+                                        .scoringLevel(level))
                 .orElse(null);
     }
 
@@ -146,11 +152,12 @@ public class ScoringPolicyService implements ScoringPolicyContract {
     @Override
     @Transactional(readOnly = true)
     public String overallLevel(Integer schemeId, List<SkillScore> skillScores) {
-        requireHistoricalScheme(schemeId);
+        var certificate = requireHistoricalScheme(schemeId).getCertificate();
         if (skillScores == null || skillScores.isEmpty()) return null;
         return skillScores.stream()
                 .map(SkillScore::cefrLevel)
                 .filter(Objects::nonNull)
+                .map(certificate::scoringLevel)
                 .min(Comparator.comparingInt(this::levelOrder))
                 .orElse(null);
     }
@@ -158,7 +165,7 @@ public class ScoringPolicyService implements ScoringPolicyContract {
     @Override
     @Transactional(readOnly = true)
     public FullMockScore fullMockScore(Integer schemeId, List<SkillScore> skillScores) {
-        requireHistoricalScheme(schemeId);
+        var certificate = requireHistoricalScheme(schemeId).getCertificate();
         if (skillScores == null
                 || skillScores.size() != Skill.values().length
                 || !skillScores.stream()
@@ -169,13 +176,13 @@ public class ScoringPolicyService implements ScoringPolicyContract {
                         .anyMatch(
                                 score ->
                                         score.scaleScore() == null
-                                                || CefrLevel.parse(score.cefrLevel()) == null)) {
+                                                || !FULL_MOCK_LEVELS.contains(score.cefrLevel()))) {
             return new FullMockScore(null, null, skillScores == null ? List.of() : skillScores);
         }
-        CefrLevel coreLevel =
+        int coreLevel =
                 skillScores.stream()
                         .filter(score -> Skill.GRAMMAR_VOCABULARY.name().equals(score.skill()))
-                        .map(score -> CefrLevel.parse(score.cefrLevel()))
+                        .mapToInt(score -> FULL_MOCK_LEVELS.indexOf(score.cefrLevel()))
                         .findFirst()
                         .orElseThrow();
         List<SkillScore> adjusted = new ArrayList<>();
@@ -194,32 +201,34 @@ public class ScoringPolicyService implements ScoringPolicyContract {
                                     .subtract(rule.getScaleMin())
                                     .multiply(BigDecimal.valueOf(50))
                                     .divide(range, 8, RoundingMode.HALF_UP));
-            CefrLevel level = borderlineLevel(schemeId, score, coreLevel, range);
-            levels += level.ordinal();
-            adjusted.add(new SkillScore(score.skill(), score.scaleScore(), level.name()));
+            int level = borderlineLevel(schemeId, score, coreLevel, range);
+            String reportedLevel = certificate.scoringLevel(FULL_MOCK_LEVELS.get(level));
+            level = FULL_MOCK_LEVELS.indexOf(reportedLevel);
+            levels += level;
+            adjusted.add(new SkillScore(score.skill(), score.scaleScore(), reportedLevel));
         }
         // Aptis Scoring System v2.1, section 8: round the mean of the four CEFR levels.
         // The published examples round a midpoint up to the higher level.
         int average = Math.round(levels / 4.0f);
         return new FullMockScore(
                 total.setScale(2, RoundingMode.HALF_UP),
-                CefrLevel.values()[average].name(),
+                FULL_MOCK_LEVELS.get(average),
                 List.copyOf(adjusted));
     }
 
-    private CefrLevel borderlineLevel(
-            Integer schemeId, SkillScore score, CefrLevel coreLevel, BigDecimal range) {
-        CefrLevel level = CefrLevel.parse(score.cefrLevel());
+    private int borderlineLevel(
+            Integer schemeId, SkillScore score, int coreLevel, BigDecimal range) {
+        int level = FULL_MOCK_LEVELS.indexOf(score.cefrLevel());
+        if (CefrLevel.BELOW_A1.equals(score.cefrLevel())) return level;
         // The local policy uses a one-point window on a 0–50 equivalent scale.
         for (ScoreBand band :
                 scoreBandRepository.findBySchemeIdAndSkillOrderByMinScoreAsc(
                         schemeId, score.skill())) {
-            CefrLevel next = CefrLevel.parse(band.getCefrLevel());
+            int next = FULL_MOCK_LEVELS.indexOf(band.getCefrLevel());
             BigDecimal gap = band.getMinScore().subtract(score.scaleScore());
             if (gap.signum() <= 0) continue;
-            if (next != null
-                    && next.ordinal() == level.ordinal() + 1
-                    && coreLevel.atLeast(next)
+            if (next == level + 1
+                    && coreLevel >= next
                     && gap.multiply(BigDecimal.valueOf(50)).compareTo(range) <= 0) {
                 return next;
             }

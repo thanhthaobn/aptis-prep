@@ -11,9 +11,6 @@
       <div th:replace="~{fragments/admin-sidebar :: adminSidebar('scoring')}"></div>
       <main id="main-content" tabindex="-1" class="app-main admin-catalog">
         <div th:replace="~{fragments/back-link :: backLink(@{/admin/scoring-schemes})}"></div>
-        <div
-          th:replace="~{fragments/breadcrumb :: breadcrumb('Chấm điểm', @{/admin/scoring-schemes}, 'Bộ chấm điểm')}"
-        ></div>
         <div th:replace="~{fragments/messages :: messages}"></div>
         <header class="page-header">
           <h1
@@ -37,6 +34,7 @@
                     th:each="certificate : ${certificates}"
                     th:value="${certificate.id}"
                     th:text="${certificate.name}"
+                    th:attr="data-certificate-code=${certificate.code}"
                     th:selected="${editing and scheme.certificateId == certificate.id}"
                   ></option>
                 </select>
@@ -53,17 +51,6 @@
                   ></option>
                 </select>
                 <p class="field-error" th:errors="*{examType}"></p>
-              </div>
-              <div class="field" id="scheme-skill-field">
-                <label for="schemeScopeSkill">Kỹ năng của đề một kỹ năng</label>
-                <select id="schemeScopeSkill" th:field="*{scopeSkill}">
-                  <option value="">Chọn kỹ năng</option>
-                  <option
-                    th:each="skill : ${display.skillCodes()}"
-                    th:value="${skill}"
-                    th:text="${display.catalogSkill(skill)}"
-                  ></option>
-                </select>
               </div>
               <div class="field">
                 <label for="schemeName">Tên bộ chấm điểm</label>
@@ -88,10 +75,6 @@
                   <option th:if="${editing}" value="ACTIVE">Đang sử dụng</option>
                   <option th:if="${editing}" value="INACTIVE">Ngừng sử dụng</option>
                 </select>
-              </div>
-              <div class="field">
-                <label for="schemeDate">Ngày hiệu lực</label>
-                <input id="schemeDate" type="datetime-local" th:field="*{effectiveFrom}" />
               </div>
             </div>
           </fieldset>
@@ -232,7 +215,7 @@
             <fieldset th:disabled="${readOnly}">
               <div class="catalog-form-grid">
                 <div class="field">
-                  <label for="rawMin">Raw thấp nhất</label>
+                  <label for="rawMin">Điểm đầu vào thấp nhất</label>
                   <input
                     id="rawMin"
                     th:field="*{rawMin}"
@@ -244,7 +227,7 @@
                   />
                 </div>
                 <div class="field">
-                  <label for="rawMax">Raw cao nhất</label>
+                  <label for="rawMax">Điểm đầu vào cao nhất</label>
                   <input
                     id="rawMax"
                     th:field="*{rawMax}"
@@ -314,6 +297,7 @@
                     th:each="level : ${display.scoringLevels()}"
                     th:value="${level}"
                     th:text="${level}"
+                    th:attr="data-c2=${level == 'C2' ? 'true' : null}"
                   ></option>
                 </select>
               </div>

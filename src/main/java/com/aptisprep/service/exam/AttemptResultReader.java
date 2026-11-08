@@ -23,6 +23,7 @@ public class AttemptResultReader {
     private final UserAnswerRepository userAnswerRepository;
     private final QuestionRepository questionRepository;
     private final ExamSkillResultRepository examSkillResultRepository;
+    private final ExamSnapshotService examSnapshots;
 
     public AttemptResultReader(
             ExamAttemptRepository examAttemptRepository,
@@ -30,13 +31,15 @@ public class AttemptResultReader {
             UserRepository userRepository,
             UserAnswerRepository userAnswerRepository,
             QuestionRepository questionRepository,
-            ExamSkillResultRepository examSkillResultRepository) {
+            ExamSkillResultRepository examSkillResultRepository,
+            ExamSnapshotService examSnapshots) {
         this.examAttemptRepository = examAttemptRepository;
         this.mockExamRepository = mockExamRepository;
         this.userRepository = userRepository;
         this.userAnswerRepository = userAnswerRepository;
         this.questionRepository = questionRepository;
         this.examSkillResultRepository = examSkillResultRepository;
+        this.examSnapshots = examSnapshots;
     }
 
     @Transactional(readOnly = true)
@@ -217,9 +220,16 @@ public class AttemptResultReader {
     }
 
     private MockExamEntity examFor(ExamAttemptEntity attempt) {
-        return mockExamRepository
-                .findById(attempt.getMockExamId())
-                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy đề thi"));
+        return examSnapshots
+                .frozenExam(attempt.getId())
+                .orElseGet(
+                        () ->
+                                mockExamRepository
+                                        .findById(attempt.getMockExamId())
+                                        .orElseThrow(
+                                                () ->
+                                                        new ResourceNotFoundException(
+                                                                "Không tìm thấy đề thi")));
     }
 
     private Instant instant(LocalDateTime value) {

@@ -2,7 +2,6 @@
 .lesson-classroom.app-main {
   max-width: 1120px;
   margin-inline: auto;
-  padding-top: 24px;
 }
 
 .lesson-classroom .lesson-back {
@@ -24,12 +23,6 @@
   border: 1px solid var(--skill-border, var(--color-border));
   border-radius: var(--radius);
   background: var(--skill-tint, var(--color-primary-soft));
-}
-
-.lesson-classroom .lesson-header h1 {
-  margin: 6px 0;
-  font-size: clamp(1.35rem, 2.4vw, 1.9rem);
-  line-height: 1.4;
 }
 
 .lesson-classroom .lesson-header p {

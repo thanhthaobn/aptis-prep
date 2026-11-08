@@ -166,6 +166,27 @@ class ScoringPolicyServiceTests {
         assertEquals("B2", result.cefrLevel());
     }
 
+    @Test
+    void fullMockRetainsBelowA1AndIncludesItInOverallLevel() {
+        when(schemes.findById(1)).thenReturn(Optional.of(activeScheme()));
+        when(scaleRules.findBySchemeIdAndSkillIgnoreCase(eq(1), anyString()))
+                .thenReturn(Optional.of(rule(50, 50)));
+        var service = new ScoringPolicyService(schemes, bands, scaleRules);
+        var result =
+                service.fullMockScore(
+                        1,
+                        List.of(
+                                new SkillScore("READING", new BigDecimal("7.99"), "A0"),
+                                new SkillScore("LISTENING", new BigDecimal("7.99"), "A0"),
+                                new SkillScore("WRITING", new BigDecimal("5.99"), "A0"),
+                                new SkillScore("SPEAKING", new BigDecimal("3.99"), "A0"),
+                                new SkillScore(
+                                        "GRAMMAR_VOCABULARY", BigDecimal.valueOf(50), "C1")));
+        assertEquals("A0", result.cefrLevel());
+        assertEquals("A0", result.skills().getFirst().cefrLevel());
+        assertEquals(new BigDecimal("25.96"), result.total());
+    }
+
     private ScoringScaleRule rule(int rawMax, int scaleMax) {
         ScoringScaleRule rule = new ScoringScaleRule();
         rule.setRawMin(BigDecimal.ZERO);

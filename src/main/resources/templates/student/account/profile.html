@@ -201,12 +201,12 @@
                   >
                     <span
                       class="compare-skill-name"
-                      th:text="${code == 'GRAMMAR_VOCABULARY' ? 'Grammar & Vocabulary' : (code == 'READING' ? 'Reading' : (code == 'LISTENING' ? 'Listening' : (code == 'WRITING' ? 'Writing' : 'Speaking')))}"
+                      th:text="${display.catalogSkill(code)}"
                     ></span>
                     <span
                       class="cefr-chip"
                       th:classappend="${targetLvl != null ? 'cefr-' + targetLvl.toLowerCase() : 'cefr-none'}"
-                      th:text="${targetLvl != null ? targetLvl : '—'}"
+                      th:text="${targetLvl != null ? display.cefrLabel(targetLvl) : '—'}"
                     ></span>
                   </li>
                 </ul>
@@ -257,7 +257,7 @@
                   >
                     <span
                       class="compare-skill-name"
-                      th:text="${code == 'GRAMMAR_VOCABULARY' ? 'Grammar & Vocabulary' : (code == 'READING' ? 'Reading' : (code == 'LISTENING' ? 'Listening' : (code == 'WRITING' ? 'Writing' : 'Speaking')))}"
+                      th:text="${display.catalogSkill(code)}"
                     ></span>
                     <div class="compare-cols-right">
                       <!-- Trình độ hiện tại -->
@@ -276,7 +276,7 @@
                             th:if="${p.skill == code or (code == 'GRAMMAR_VOCABULARY' and (p.skill == 'Grammar & Vocabulary' or p.skill == 'GRAMMAR_VOCABULARY'))}"
                             class="cefr-chip"
                             th:classappend="${p.currentLevel != null ? 'cefr-' + p.currentLevel.toLowerCase() : 'cefr-none'}"
-                            th:text="${p.currentLevel != null ? p.currentLevel : '—'}"
+                            th:text="${p.currentLevel != null ? display.cefrLabel(p.currentLevel) : '—'}"
                           ></span>
                         </th:block>
                       </span>
@@ -284,7 +284,7 @@
                       <span
                         class="cefr-chip cefr-target-compare"
                         th:classappend="${targetLvl != null ? 'cefr-' + targetLvl.toLowerCase() : 'cefr-none'}"
-                        th:text="${targetLvl != null ? targetLvl : '—'}"
+                        th:text="${targetLvl != null ? display.cefrLabel(targetLvl) : '—'}"
                       ></span>
                     </div>
                   </li>

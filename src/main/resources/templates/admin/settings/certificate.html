@@ -9,9 +9,6 @@
       <div th:replace="~{fragments/admin-sidebar :: adminSidebar('certificates')}"></div>
       <main id="main-content" tabindex="-1" class="app-main admin-catalog">
         <div th:replace="~{fragments/back-link :: backLink(@{/admin/certificates})}"></div>
-        <div
-          th:replace="~{fragments/breadcrumb :: breadcrumb('Chứng chỉ', @{/admin/certificates}, 'Chứng chỉ')}"
-        ></div>
         <div th:replace="~{fragments/messages :: messages}"></div>
         <header class="page-header">
           <h1

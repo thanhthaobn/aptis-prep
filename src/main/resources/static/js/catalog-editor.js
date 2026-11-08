@@ -225,6 +225,22 @@
   const target = document.getElementById('scheme-target-score');
   const ranges = document.getElementById('scheme-combined-ranges');
   const legacy = document.getElementById('cefr-bands');
+  const certificate = document.getElementById('schemeCertificate');
+  const updateCefrLevels = () => {
+    const general =
+      certificate?.selectedOptions[0]?.dataset.certificateCode?.toUpperCase() === 'APTIS_GENERAL';
+    document.querySelectorAll('[data-c2]').forEach((control) => {
+      control.hidden = general;
+      if (control.tagName === 'OPTION') {
+        control.disabled = general;
+        if (general && control.selected) control.parentElement.value = '';
+      } else {
+        control.querySelectorAll('input').forEach((input) => {
+          input.disabled = general;
+        });
+      }
+    });
+  };
   if (!type || !field || !skill) return;
   const updateSkill = () => {
     const single = type.value === 'PRACTICE' || type.value === 'CHECKPOINT';
@@ -232,7 +248,7 @@
     skill.required = single;
     if (configuration) configuration.hidden = !type.value;
     if (target) {
-      target.hidden = type.value !== 'CHECKPOINT';
+      target.hidden = !single;
       target.disabled = configuration?.dataset.readOnly === 'true' || target.hidden;
     }
     if (ranges) {
@@ -247,9 +263,14 @@
     if (combinedHelp) combinedHelp.hidden = single || !type.value;
     const borderlineHelp = document.getElementById('scheme-borderline-help');
     if (borderlineHelp) borderlineHelp.hidden = single || !type.value;
+    ranges?.querySelectorAll('.below-a1-row').forEach((row) => {
+      row.hidden = type.value !== 'FULL_MOCK';
+    });
     if (legacy) legacy.hidden = Boolean(type.value);
   };
   type.addEventListener('change', updateSkill);
   skill.addEventListener('change', updateSkill);
+  certificate?.addEventListener('change', updateCefrLevels);
   updateSkill();
+  updateCefrLevels();
 })();

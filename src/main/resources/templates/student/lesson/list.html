@@ -6,12 +6,8 @@
     <div class="container ap-container app-shell">
       <div th:replace="~{fragments/student-sidebar :: studentSidebar('lessons')}"></div>
       <main id="main-content" tabindex="-1" class="app-main student-content lesson-library-page">
-        <div
-          th:replace="~{fragments/breadcrumb :: breadcrumb('Tổng quan', @{/student/dashboard}, 'Bài học')}"
-        ></div>
         <header class="page-header">
           <div>
-            <p class="eyebrow">THƯ VIỆN HỌC TẬP</p>
             <h1>Bài học theo kỹ năng</h1>
           </div>
         </header>

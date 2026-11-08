@@ -244,7 +244,7 @@ public class ExamAttemptService implements ExamAttemptContract {
                                 attemptId, lockedMedia.path("questionId").asInt())
                         .isPresent()) throw new AccessDeniedException("Media không thuộc lượt thi");
         ensureMediaWindow(attempt);
-        ExamSnapshotService.requireOpenSection(
+        examSnapshots.requireOpenSection(
                 attempt,
                 examSnapshots
                         .lockedQuestions(attemptId)
@@ -289,7 +289,7 @@ public class ExamAttemptService implements ExamAttemptContract {
                                 attemptId, lockedMedia.path("questionId").asInt())
                         .isPresent()) throw new AccessDeniedException("Media không thuộc lượt thi");
         ensureMediaWindow(attempt);
-        ExamSnapshotService.requireOpenSection(
+        examSnapshots.requireOpenSection(
                 attempt,
                 examSnapshots
                         .lockedQuestions(attemptId)
@@ -314,6 +314,10 @@ public class ExamAttemptService implements ExamAttemptContract {
             // once while building the native player, so invalidating it after
             // the first request leaves the player stuck at 0:00 / 0:00.
         }
+        return loadLockedMedia(lockedMedia);
+    }
+
+    private MediaResource loadLockedMedia(JsonNode lockedMedia) {
         String mediaUrl = lockedMedia.path("mediaUrl").asText();
         String contentType = lockedMedia.path("contentType").asText("application/octet-stream");
         Resource resource;
@@ -534,6 +538,93 @@ public class ExamAttemptService implements ExamAttemptContract {
     }
 
     @Transactional
+    public void advanceSection(Integer userId, Integer attemptId, int sectionEndMinute) {
+        activeUser(userId);
+        ExamAttemptEntity attempt = editableAttempt(userId, attemptId);
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime clockStart = examSnapshots.sectionClockStart(attempt);
+        LocalDateTime sectionEnd = clockStart.plusMinutes(sectionEndMinute);
+        List<ExamSnapshotService.SectionWindow> windows =
+                examSnapshots.lockedQuestionList(attemptId).stream()
+                        .map(ExamSnapshotService.SectionWindow::of)
+                        .filter(Objects::nonNull)
+                        .toList();
+        boolean current =
+                windows.stream()
+                        .anyMatch(
+                                window ->
+                                        window.end() == sectionEndMinute
+                                                && window.contains(clockStart, now));
+        boolean hasNext = windows.stream().anyMatch(window -> window.start() == sectionEndMinute);
+        if (current && hasNext) {
+            examSnapshots.advanceSectionClock(attemptId, Duration.between(now, sectionEnd));
+        }
+    }
+
+    @Transactional
+    public AttemptReview review(Integer userId, Integer attemptId) {
+        ExamAttemptEntity attempt = reviewableAttempt(userId, attemptId);
+        if (examSnapshots.frozenExam(attemptId).isEmpty()) {
+            MockExamEntity current =
+                    mockExamRepository
+                            .findByIdForUpdate(attempt.getMockExamId())
+                            .orElseThrow(
+                                    () -> new ResourceNotFoundException("Không tìm thấy đề thi"));
+            if (examSnapshots.frozenExam(attemptId).isEmpty()) {
+                examSnapshots.preserveLegacyAttempt(
+                        attempt,
+                        current,
+                        mockExamQuestionRepository.findByMockExamIdOrderByPosition(
+                                current.getId()));
+            }
+        }
+        List<QuestionPage> questions = new ArrayList<>();
+        int number = 1;
+        for (JsonNode question : examSnapshots.lockedQuestionList(attemptId)) {
+            var details = answerDetails(attemptId, question.path("id").asInt());
+            var page = toQuestionPage(question, details, number);
+            questions.add(page);
+            number += page.items().size();
+        }
+        return new AttemptReview(
+                examSnapshots.require(attemptId).getTitle(), List.copyOf(questions));
+    }
+
+    public record AttemptReview(String title, List<QuestionPage> questions) {}
+
+    @Transactional(readOnly = true)
+    public MediaResource reviewMedia(Integer userId, Integer attemptId, Integer mediaId) {
+        reviewableAttempt(userId, attemptId);
+        JsonNode media = examSnapshots.lockedMedia(attemptId, mediaId);
+        if (media == null) throw new ResourceNotFoundException("Không tìm thấy tệp của câu hỏi");
+        return loadLockedMedia(media);
+    }
+
+    @Transactional(readOnly = true)
+    public MediaResource reviewRecording(
+            Integer userId, Integer attemptId, Integer questionId, Integer itemId) {
+        reviewableAttempt(userId, attemptId);
+        var detail = answerDetails(attemptId, questionId).get(itemId);
+        if (detail == null || detail.getAudioPath() == null)
+            throw new ResourceNotFoundException("Chưa có file ghi âm");
+        return new MediaResource(storage.load(detail.getAudioPath()), "audio/*");
+    }
+
+    private ExamAttemptEntity reviewableAttempt(Integer userId, Integer attemptId) {
+        activeUser(userId);
+        ExamAttemptEntity attempt =
+                examAttemptRepository
+                        .findByIdAndUserId(attemptId, userId)
+                        .orElseThrow(
+                                () ->
+                                        new AccessDeniedException(
+                                                "Bạn không có quyền với lượt thi này"));
+        if (attempt.getSubmittedAt() == null && !"COMPLETED".equals(attempt.getStatus()))
+            throw new BusinessRuleException("Chỉ có thể xem lại sau khi nộp bài");
+        return attempt;
+    }
+
+    @Transactional
     public AttemptPage page(Integer userId, Integer attemptId) {
         activeUser(userId);
         ExamAttemptEntity attempt =
@@ -546,63 +637,58 @@ public class ExamAttemptService implements ExamAttemptContract {
         MockExamEntity exam = examFor(attempt);
         expireIfNeeded(attempt, exam);
         List<QuestionPage> questionPages = new ArrayList<>();
-        List<QuestionPage> allQuestionPages = new ArrayList<>();
-        List<SectionPage> sectionPages = new ArrayList<>();
+        List<SectionPage> sections = new ArrayList<>();
+        int nextItemNumber = 1;
         LocalDateTime now = LocalDateTime.now();
         LocalDateTime examEnd = examDeadline(attempt, exam);
         Instant deadline = instant(examEnd);
-        Map<SectionKey, List<JsonNode>> groupedQuestions = new LinkedHashMap<>();
-        for (JsonNode question : examSnapshots.lockedQuestionList(attemptId)) {
-            var window = ExamSnapshotService.SectionWindow.of(question);
-            SectionKey key =
-                    window == null
-                            ? new SectionKey(question.path("skill").asText(), -1, -1)
-                            : new SectionKey(
-                                    question.path("skill").asText(), window.start(), window.end());
-            groupedQuestions.computeIfAbsent(key, ignored -> new ArrayList<>()).add(question);
-        }
-
-        int currentSectionIndex = -1;
+        Integer nextSectionAfterMinute = null;
         String sectionSkill = null;
-        List<Map.Entry<SectionKey, List<JsonNode>>> groupedEntries =
-                new ArrayList<>(groupedQuestions.entrySet());
-        groupedEntries.sort(
-                Comparator.comparingInt(
-                        entry -> entry.getKey().start() < 0 ? 0 : entry.getKey().start()));
-        for (Map.Entry<SectionKey, List<JsonNode>> entry : groupedEntries) {
-            SectionKey key = entry.getKey();
-            var window = key.window();
-            String state = sectionState(window, attempt, now);
-            boolean open = "OPEN".equals(state);
-            int sectionIndex = sectionPages.size();
-            Integer minutes =
-                    window == null
-                            ? Objects.requireNonNullElse(exam.getDurationMinutes(), 0)
-                            : window.end() - window.start();
-            sectionPages.add(
+        LocalDateTime clockStart = examSnapshots.sectionClockStart(attempt);
+        var lockedQuestions = examSnapshots.lockedQuestionList(attemptId);
+        Map<ExamSnapshotService.SectionWindow, List<JsonNode>> timedSections =
+                new TreeMap<>(Comparator.comparingInt(ExamSnapshotService.SectionWindow::start));
+        for (JsonNode question : lockedQuestions) {
+            var section = ExamSnapshotService.SectionWindow.of(question);
+            if (section != null)
+                timedSections.computeIfAbsent(section, ignored -> new ArrayList<>()).add(question);
+        }
+        for (var entry : timedSections.entrySet()) {
+            var window = entry.getKey();
+            var questions = entry.getValue();
+            boolean open =
+                    "IN_PROGRESS".equals(attempt.getStatus()) && window.contains(clockStart, now);
+            String state =
+                    open
+                            ? "OPEN"
+                            : (now.isBefore(clockStart.plusMinutes(window.start()))
+                                    ? "UPCOMING"
+                                    : "COMPLETED");
+            int items =
+                    questions.stream().mapToInt(question -> question.path("items").size()).sum();
+            sections.add(
                     new SectionPage(
-                            sectionIndex,
-                            key.skill(),
-                            minutes,
-                            entry.getValue().size(),
+                            sections.size(),
+                            questions.getFirst().path("skill").asText(),
+                            window.end() - window.start(),
+                            items,
                             state,
                             open));
-
-            if (open) {
-                currentSectionIndex = sectionIndex;
-                sectionSkill = key.skill();
-                if (window != null) {
-                    deadline = instant(attempt.getStartedAt().plusMinutes(window.end()));
-                }
-            }
-            for (JsonNode question : entry.getValue()) {
-                QuestionPage page = toQuestionPage(attemptId, question, sectionIndex, open);
-                allQuestionPages.add(page);
-                if (open) questionPages.add(page);
-            }
         }
-        boolean nextSection =
-                currentSectionIndex >= 0 && currentSectionIndex < sectionPages.size() - 1;
+        for (JsonNode question : lockedQuestions) {
+            var window = ExamSnapshotService.SectionWindow.of(question);
+            if (window != null) {
+                if (!window.contains(clockStart, now)) continue;
+                LocalDateTime sectionEnd = clockStart.plusMinutes(window.end());
+                deadline = instant(sectionEnd);
+                if (sectionEnd.isBefore(examEnd)) nextSectionAfterMinute = window.end();
+                sectionSkill = question.path("skill").asText();
+            }
+            var details = answerDetails(attemptId, question.path("id").asInt());
+            QuestionPage questionPage = toQuestionPage(question, details, nextItemNumber);
+            questionPages.add(questionPage);
+            nextItemNumber += questionPage.items().size();
+        }
         return new AttemptPage(
                 attempt.getId(),
                 exam.getTitle(),
@@ -613,36 +699,16 @@ public class ExamAttemptService implements ExamAttemptContract {
                                 0,
                                 (Duration.between(instant(now), deadline).toMillis() + 999) / 1000),
                 List.copyOf(questionPages),
-                List.copyOf(allQuestionPages),
-                List.copyOf(sectionPages),
-                currentSectionIndex,
                 deadline,
-                nextSection,
-                sectionSkill);
-    }
-
-    private String sectionState(
-            ExamSnapshotService.SectionWindow window,
-            ExamAttemptEntity attempt,
-            LocalDateTime now) {
-        if (!"IN_PROGRESS".equals(attempt.getStatus())) return "COMPLETED";
-        if (window == null) return "OPEN";
-        if (window.contains(attempt.getStartedAt(), now)) return "OPEN";
-        return now.isBefore(attempt.getStartedAt().plusMinutes(window.start()))
-                ? "UPCOMING"
-                : "COMPLETED";
-    }
-
-    private record SectionKey(String skill, int start, int end) {
-        private ExamSnapshotService.SectionWindow window() {
-            return start < 0 ? null : new ExamSnapshotService.SectionWindow(start, end);
-        }
+                nextSectionAfterMinute,
+                sectionSkill,
+                List.copyOf(sections));
     }
 
     public record SectionPage(
             int index,
             String skill,
-            Integer durationMinutes,
+            int durationMinutes,
             int questionCount,
             String state,
             boolean open) {}
@@ -653,12 +719,14 @@ public class ExamAttemptService implements ExamAttemptContract {
             String examType,
             Long remainingSeconds,
             List<QuestionPage> questions,
-            List<QuestionPage> allQuestions,
-            List<SectionPage> sections,
-            int currentSectionIndex,
             Instant deadline,
-            boolean nextSection,
-            String sectionSkill) {
+            Integer nextSectionAfterMinute,
+            String sectionSkill,
+            List<SectionPage> sections) {
+        public boolean nextSection() {
+            return nextSectionAfterMinute != null;
+        }
+
         public AttemptPage(
                 Integer attemptId,
                 String title,
@@ -672,12 +740,10 @@ public class ExamAttemptService implements ExamAttemptContract {
                     examType,
                     remainingSeconds,
                     questions,
-                    questions,
-                    List.of(),
-                    0,
                     deadline,
-                    false,
-                    null);
+                    null,
+                    null,
+                    List.of());
         }
 
         public AttemptPage(
@@ -697,15 +763,10 @@ public class ExamAttemptService implements ExamAttemptContract {
             this(attemptId, title, null, remainingSeconds, questions, null);
         }
 
-        private List<QuestionPage> progressQuestions() {
-            return allQuestions == null || allQuestions.isEmpty() ? questions : allQuestions;
-        }
-
         public int totalItems() {
-            List<QuestionPage> source = progressQuestions();
-            return source == null
+            return questions == null
                     ? 0
-                    : source.stream()
+                    : questions.stream()
                             .mapToInt(
                                     question ->
                                             question.items() == null ? 0 : question.items().size())
@@ -713,24 +774,16 @@ public class ExamAttemptService implements ExamAttemptContract {
         }
 
         public int answeredItems() {
-            List<QuestionPage> source = progressQuestions();
-            return source == null
+            return questions == null
                     ? 0
-                    : source.stream()
+                    : questions.stream()
                             .flatMap(
                                     question ->
                                             question.items() == null
                                                     ? Stream.empty()
                                                     : question.items().stream())
-                            .mapToInt(
-                                    item ->
-                                            item.selectedOptionId() != null
-                                                            || item.userPosition() != null
-                                                            || (item.textAnswer() != null
-                                                                    && !item.textAnswer().isBlank())
-                                                            || item.audioSaved()
-                                                    ? 1
-                                                    : 0)
+                            .filter(ItemPage::answered)
+                            .mapToInt(item -> 1)
                             .sum();
         }
     }
@@ -744,9 +797,7 @@ public class ExamAttemptService implements ExamAttemptContract {
             String type,
             int position,
             List<ItemPage> items,
-            List<MediaPage> media,
-            int sectionIndex,
-            boolean sectionOpen) {}
+            List<MediaPage> media) {}
 
     public record ItemPage(
             Integer itemId,
@@ -757,7 +808,14 @@ public class ExamAttemptService implements ExamAttemptContract {
             Integer selectedOptionId,
             Integer userPosition,
             String textAnswer,
-            boolean audioSaved) {}
+            boolean audioSaved) {
+        public boolean answered() {
+            return selectedOptionId != null
+                    || userPosition != null
+                    || (textAnswer != null && !textAnswer.isBlank())
+                    || audioSaved;
+        }
+    }
 
     public record OptionPage(Integer id, String code, String content) {}
 
@@ -817,15 +875,22 @@ public class ExamAttemptService implements ExamAttemptContract {
 
     private MockExamEntity publishedExam(Integer id) {
         return mockExamRepository
-                .findById(id)
+                .findByIdForUpdate(id)
                 .filter(x -> "PUBLISHED".equals(x.getStatus()))
                 .orElseThrow(() -> new ResourceNotFoundException("Đề thi chưa được công bố"));
     }
 
     private MockExamEntity examFor(ExamAttemptEntity attempt) {
-        return mockExamRepository
-                .findById(attempt.getMockExamId())
-                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy đề thi"));
+        return examSnapshots
+                .frozenExam(attempt.getId())
+                .orElseGet(
+                        () ->
+                                mockExamRepository
+                                        .findById(attempt.getMockExamId())
+                                        .orElseThrow(
+                                                () ->
+                                                        new ResourceNotFoundException(
+                                                                "Không tìm thấy đề thi")));
     }
 
     private User activeUser(Integer id) {
@@ -863,7 +928,7 @@ public class ExamAttemptService implements ExamAttemptContract {
         Integer minutes = examSnapshots.durationMinutes(attempt.getId(), exam.getDurationMinutes());
         return minutes == null || attempt.getStartedAt() == null
                 ? null
-                : attempt.getStartedAt().plusMinutes(minutes);
+                : examSnapshots.sectionClockStart(attempt).plusMinutes(minutes);
     }
 
     private Instant instant(LocalDateTime value) {
@@ -895,22 +960,31 @@ public class ExamAttemptService implements ExamAttemptContract {
         }
     }
 
-    private QuestionPage toQuestionPage(
-            Integer attemptId, JsonNode question, int sectionIndex, boolean sectionOpen) {
-        Integer questionId = question.path("id").asInt();
+    private Map<Integer, UserAnswerDetailEntity> answerDetails(
+            Integer attemptId, Integer questionId) {
         UserAnswerEntity answer =
                 userAnswerRepository
                         .findByAttemptIdAndQuestionId(attemptId, questionId)
-                        .orElseThrow();
+                        .orElse(null);
+        if (answer == null) return Map.of();
         Map<Integer, UserAnswerDetailEntity> detailByItem = new HashMap<>();
         for (UserAnswerDetailEntity detail :
                 userAnswerDetailRepository.findByUserAnswerIdOrderByQuestionItemIdAsc(
                         answer.getId())) {
             detailByItem.put(detail.getQuestionItemId(), detail);
         }
+        return detailByItem;
+    }
+
+    private QuestionPage toQuestionPage(
+            JsonNode question, Map<Integer, UserAnswerDetailEntity> detailByItem, int firstNumber) {
         List<ItemPage> itemPages = new ArrayList<>();
         for (JsonNode item : question.path("items")) {
-            itemPages.add(toItemPage(item, detailByItem.get(item.path("id").asInt())));
+            itemPages.add(
+                    toItemPage(
+                            item,
+                            detailByItem.get(item.path("id").asInt()),
+                            firstNumber + itemPages.size()));
         }
         List<MediaPage> mediaPages = new ArrayList<>();
         for (JsonNode media : question.path("media")) {
@@ -922,7 +996,7 @@ public class ExamAttemptService implements ExamAttemptContract {
                             media.path("contentType").asText()));
         }
         return new QuestionPage(
-                questionId,
+                question.path("id").asInt(),
                 question.path("content").asText(),
                 question.path("instruction").asText(),
                 question.path("readingPassage").asText(null),
@@ -930,12 +1004,10 @@ public class ExamAttemptService implements ExamAttemptContract {
                 question.path("type").asText(),
                 question.path("position").asInt(),
                 itemPages,
-                mediaPages,
-                sectionIndex,
-                sectionOpen);
+                mediaPages);
     }
 
-    private ItemPage toItemPage(JsonNode item, UserAnswerDetailEntity answer) {
+    private ItemPage toItemPage(JsonNode item, UserAnswerDetailEntity answer, int number) {
         List<OptionPage> options = new ArrayList<>();
         for (JsonNode option : item.path("options")) {
             options.add(
@@ -948,7 +1020,7 @@ public class ExamAttemptService implements ExamAttemptContract {
                 item.path("responseSeconds").isNull() ? null : item.path("responseSeconds").asInt();
         return new ItemPage(
                 item.path("id").asInt(),
-                item.path("position").asInt(),
+                number,
                 item.path("content").asText(),
                 responseSeconds,
                 options,

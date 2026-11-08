@@ -625,8 +625,16 @@ public class AttemptFinalizationService {
     }
 
     private MockExamEntity exam(ExamAttemptEntity attempt) {
-        return mockExamRepository
-                .findById(attempt.getMockExamId())
-                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy đề thi"));
+        return examAttemptSnapshotRepository
+                .findByAttemptId(attempt.getId())
+                .map(MockExamEntity::fromSnapshot)
+                .orElseGet(
+                        () ->
+                                mockExamRepository
+                                        .findById(attempt.getMockExamId())
+                                        .orElseThrow(
+                                                () ->
+                                                        new ResourceNotFoundException(
+                                                                "Không tìm thấy đề thi")));
     }
 }

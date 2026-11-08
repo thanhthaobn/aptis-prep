@@ -17,7 +17,6 @@
         <header class="page-header flashcard-library-header">
           <div>
             <h1 th:text="${admin?'Quản lý bộ thẻ':'Flashcard'}"></h1>
-            <p th:if="${admin}">Biên soạn thư viện chung cho học viên.</p>
           </div>
           <a
             th:class="${admin?'button':'button button-secondary'}"

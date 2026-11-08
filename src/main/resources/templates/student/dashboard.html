@@ -6,8 +6,8 @@
     <div class="container ap-container app-shell">
       <div th:replace="~{fragments/student-sidebar :: studentSidebar('dashboard')}"></div>
       <main class="app-main learn-dashboard" id="main-content" tabindex="-1">
-        <header class="learn-topbar">
-          <span class="learn-topbar-title">HÀNH TRÌNH HỌC TẬP</span>
+        <header class="page-header">
+          <h1>Hành trình học tập</h1>
           <span class="learn-account" th:text="${email}"></span>
         </header>
 
@@ -18,7 +18,7 @@
               <span class="learn-unit-icon" aria-hidden="true">✦</span>
               <div>
                 <p class="eyebrow">LỘ TRÌNH CÁ NHÂN HÓA</p>
-                <h1>Mỗi ngày một bước nhỏ hướng tới mục tiêu Aptis.</h1>
+                <h2>Mỗi ngày một bước nhỏ hướng tới mục tiêu Aptis.</h2>
                 <span th:if="${!hasLearningContent}">
                   Chưa có bài học được công bố cho lộ trình.
                 </span>
@@ -38,10 +38,6 @@
               <div>
                 <span class="learn-tag">KHÔNG BẮT BUỘC ĐÁNH GIÁ</span>
                 <h2>Bắt đầu theo cách của bạn</h2>
-                <p>
-                  Khám phá kho bài giảng theo từng kỹ năng hoặc làm bài kiểm tra đầu vào để nhận lộ
-                  trình cá nhân hóa.
-                </p>
                 <div class="actions">
                   <a class="button" th:href="@{/student/goals}">Đặt mục tiêu</a>
                   <a th:href="@{/student/learning-path}">Khám phá bài học trước</a>

@@ -56,7 +56,7 @@
                 <span
                   class="cefr-badge-pill"
                   th:if="${firstCompleted != null and firstCompleted.overallCefr != null}"
-                  th:text="${firstCompleted.overallCefr}"
+                  th:text="${display.cefrLabel(firstCompleted.overallCefr)}"
                 ></span>
                 <span
                   class="summary-unit muted"
@@ -248,13 +248,13 @@
                     <p
                       class="result-overall-score"
                       th:if="${attempt.finalScaleScore != null or attempt.overallCefr != null}"
-                      th:text="${(attempt.finalScaleScore == null ? '—' : attempt.finalScaleScore) + ' điểm' + (attempt.overallCefr != null ? ' · ' + attempt.overallCefr : '')}"
+                      th:text="${(attempt.finalScaleScore == null ? '—' : attempt.finalScaleScore) + ' điểm' + (attempt.overallCefr != null ? ' · ' + display.cefrLabel(attempt.overallCefr) : '')}"
                     ></p>
                     <div class="result-levels-mini" th:if="${!attempt.skills.isEmpty()}">
                       <span
                         th:each="skill : ${attempt.skills}"
                         class="skill-mini-pill"
-                        th:text="${(skill.skill == null ? null : skill.skill.replace('_', ' ')) + ': ' + (skill.estimatedLevel == null ? 'Chờ chấm' : skill.estimatedLevel)}"
+                        th:text="${display.catalogSkill(skill.skill) + ': ' + (skill.estimatedLevel == null ? 'Chờ chấm' : display.cefrLabel(skill.estimatedLevel))}"
                       ></span>
                     </div>
                     <span
