@@ -3,25 +3,77 @@
   <head th:replace="~{fragments/head :: head('Lộ trình của tôi')}"></head>
   <body class="student-theme">
     <div th:replace="~{fragments/navbar :: navbar}"></div>
-    <div class="container ap-container app-shell">
+    <div
+      class="container ap-container app-shell"
+      th:with="hasAssessment=${stages != null and !stages.?[currentLevel != null].isEmpty()}"
+    >
       <div th:replace="~{fragments/student-sidebar :: studentSidebar('learning-path')}"></div>
       <main class="app-main orientation-page" id="main-content" tabindex="-1">
         <div
           th:replace="~{fragments/breadcrumb :: breadcrumb('Học tập', @{/student/dashboard}, 'Lộ trình của tôi')}"
         ></div>
 
+        <!-- Page Header -->
         <header class="page-header" id="start">
           <div>
             <h1>Lộ trình của tôi</h1>
+            <p class="page-subtitle">
+              Lộ trình học tập chuẩn hóa CEFR tối ưu theo năng lực cá nhân
+            </p>
+          </div>
+          <div class="page-header-actions">
+            <a class="secondary-link" th:if="${hasAssessment}" th:href="@{/student/placement}">
+              Kiểm tra lại đầu vào
+            </a>
+            <a class="button button-secondary" th:href="@{/student/goals}">
+              <span>🎯</span>
+              Thiết lập mục tiêu
+            </a>
           </div>
         </header>
 
         <!-- Thông báo từ flash attributes hoặc model -->
         <div th:replace="~{fragments/messages :: messages}"></div>
 
+        <!-- Entry-test banner: Chỉ hiển thị khi học viên chưa có kết quả đánh giá -->
+        <section
+          class="entry-test-banner"
+          th:if="${!hasAssessment}"
+          aria-labelledby="entry-banner-title"
+        >
+          <div class="entry-banner-badge">
+            <span class="badge-dot"></span>
+            <span>Bước quan trọng đầu tiên</span>
+          </div>
+          <h2 id="entry-banner-title">Làm bài kiểm tra đầu vào để mở khóa lộ trình cá nhân hóa</h2>
+          <p>
+            Đánh giá chính xác năng lực hiện tại của bạn qua 4 kỹ năng (Reading, Listening, Writing,
+            Speaking) trong khoảng 30 phút. Hệ thống sẽ tự động đề xuất các bài học chuẩn xác nhất
+            theo trình độ của bạn.
+          </p>
+          <div class="entry-banner-meta">
+            <span>⏱ Thời lượng: ~30 phút</span>
+            <span>✓ Đầy đủ 4 kỹ năng</span>
+            <span>★ Chuẩn khung CEFR</span>
+          </div>
+          <div class="entry-banner-cta">
+            <a class="button button-primary entry-start-btn" th:href="@{/student/placement}">
+              Bắt đầu kiểm tra đầu vào
+              <span aria-hidden="true">→</span>
+            </a>
+            <a class="entry-goal-link" th:href="@{/student/goals}">Thiết lập mục tiêu điểm số →</a>
+          </div>
+        </section>
+
+        <!-- Khám phá từng kỹ năng -->
         <section class="explore-grid" aria-label="Khám phá từng kỹ năng">
           <!-- Reading -->
-          <article class="explore-card explore-reading" id="reading">
+          <article
+            class="explore-card explore-reading"
+            id="reading"
+            th:each="stage : ${stages}"
+            th:if="${stage.skill == 'Reading'}"
+          >
             <div class="explore-card-top">
               <div class="path-skill-heading">
                 <span class="explore-icon" aria-hidden="true">
@@ -31,16 +83,42 @@
                 </span>
                 <h2>Reading</h2>
               </div>
+              <span
+                class="badge"
+                th:classappend="${stage.currentLevel != null ? 'badge-success' : ''}"
+                th:text="${stage.currentLevel != null ? 'Đã đánh giá' : 'Chưa đánh giá'}"
+              ></span>
             </div>
             <div th:replace="~{fragments/path-stage :: pathOverview('Reading')}"></div>
-            <a class="button" th:href="@{/student/learning-path/{skill}(skill='Reading')}">
-              Học Reading
-              <span aria-hidden="true">→</span>
-            </a>
+            <div class="explore-card-action">
+              <a
+                th:if="${stage.currentLevel != null}"
+                class="button"
+                th:href="@{/student/learning-path/{skill}(skill='Reading')}"
+              >
+                Học Reading
+                <span aria-hidden="true">→</span>
+              </a>
+              <div th:if="${stage.currentLevel == null}" class="unassessed-action-wrap">
+                <a
+                  class="button button-secondary"
+                  th:href="@{/student/learning-path/{skill}(skill='Reading')}"
+                >
+                  Học Reading
+                  <span aria-hidden="true">→</span>
+                </a>
+                <p class="unassessed-hint">💡 Nên làm kiểm tra đầu vào trước</p>
+              </div>
+            </div>
           </article>
 
           <!-- Listening -->
-          <article class="explore-card explore-listening" id="listening">
+          <article
+            class="explore-card explore-listening"
+            id="listening"
+            th:each="stage : ${stages}"
+            th:if="${stage.skill == 'Listening'}"
+          >
             <div class="explore-card-top">
               <div class="path-skill-heading">
                 <span class="explore-icon" aria-hidden="true">
@@ -50,16 +128,42 @@
                 </span>
                 <h2>Listening</h2>
               </div>
+              <span
+                class="badge"
+                th:classappend="${stage.currentLevel != null ? 'badge-success' : ''}"
+                th:text="${stage.currentLevel != null ? 'Đã đánh giá' : 'Chưa đánh giá'}"
+              ></span>
             </div>
             <div th:replace="~{fragments/path-stage :: pathOverview('Listening')}"></div>
-            <a class="button" th:href="@{/student/learning-path/{skill}(skill='Listening')}">
-              Học Listening
-              <span aria-hidden="true">→</span>
-            </a>
+            <div class="explore-card-action">
+              <a
+                th:if="${stage.currentLevel != null}"
+                class="button"
+                th:href="@{/student/learning-path/{skill}(skill='Listening')}"
+              >
+                Học Listening
+                <span aria-hidden="true">→</span>
+              </a>
+              <div th:if="${stage.currentLevel == null}" class="unassessed-action-wrap">
+                <a
+                  class="button button-secondary"
+                  th:href="@{/student/learning-path/{skill}(skill='Listening')}"
+                >
+                  Học Listening
+                  <span aria-hidden="true">→</span>
+                </a>
+                <p class="unassessed-hint">💡 Nên làm kiểm tra đầu vào trước</p>
+              </div>
+            </div>
           </article>
 
-          <!-- Writing & Speaking -->
-          <article class="explore-card explore-writing">
+          <!-- Writing -->
+          <article
+            class="explore-card explore-writing"
+            id="writing"
+            th:each="stage : ${stages}"
+            th:if="${stage.skill == 'Writing'}"
+          >
             <div class="explore-card-top">
               <div class="path-skill-heading">
                 <span class="explore-icon" aria-hidden="true">
@@ -69,15 +173,42 @@
                 </span>
                 <h2>Writing</h2>
               </div>
+              <span
+                class="badge"
+                th:classappend="${stage.currentLevel != null ? 'badge-success' : ''}"
+                th:text="${stage.currentLevel != null ? 'Đã đánh giá' : 'Chưa đánh giá'}"
+              ></span>
             </div>
             <div th:replace="~{fragments/path-stage :: pathOverview('Writing')}"></div>
-            <a class="button" th:href="@{/student/learning-path/{skill}(skill='Writing')}">
-              Học Writing
-              <span aria-hidden="true">→</span>
-            </a>
+            <div class="explore-card-action">
+              <a
+                th:if="${stage.currentLevel != null}"
+                class="button"
+                th:href="@{/student/learning-path/{skill}(skill='Writing')}"
+              >
+                Học Writing
+                <span aria-hidden="true">→</span>
+              </a>
+              <div th:if="${stage.currentLevel == null}" class="unassessed-action-wrap">
+                <a
+                  class="button button-secondary"
+                  th:href="@{/student/learning-path/{skill}(skill='Writing')}"
+                >
+                  Học Writing
+                  <span aria-hidden="true">→</span>
+                </a>
+                <p class="unassessed-hint">💡 Nên làm kiểm tra đầu vào trước</p>
+              </div>
+            </div>
           </article>
 
-          <article class="explore-card explore-speaking">
+          <!-- Speaking -->
+          <article
+            class="explore-card explore-speaking"
+            id="speaking"
+            th:each="stage : ${stages}"
+            th:if="${stage.skill == 'Speaking'}"
+          >
             <div class="explore-card-top">
               <div class="path-skill-heading">
                 <span class="explore-icon" aria-hidden="true">
@@ -88,16 +219,42 @@
                 </span>
                 <h2>Speaking</h2>
               </div>
+              <span
+                class="badge"
+                th:classappend="${stage.currentLevel != null ? 'badge-success' : ''}"
+                th:text="${stage.currentLevel != null ? 'Đã đánh giá' : 'Chưa đánh giá'}"
+              ></span>
             </div>
             <div th:replace="~{fragments/path-stage :: pathOverview('Speaking')}"></div>
-            <a class="button" th:href="@{/student/learning-path/{skill}(skill='Speaking')}">
-              Học Speaking
-              <span aria-hidden="true">→</span>
-            </a>
+            <div class="explore-card-action">
+              <a
+                th:if="${stage.currentLevel != null}"
+                class="button"
+                th:href="@{/student/learning-path/{skill}(skill='Speaking')}"
+              >
+                Học Speaking
+                <span aria-hidden="true">→</span>
+              </a>
+              <div th:if="${stage.currentLevel == null}" class="unassessed-action-wrap">
+                <a
+                  class="button button-secondary"
+                  th:href="@{/student/learning-path/{skill}(skill='Speaking')}"
+                >
+                  Học Speaking
+                  <span aria-hidden="true">→</span>
+                </a>
+                <p class="unassessed-hint">💡 Nên làm kiểm tra đầu vào trước</p>
+              </div>
+            </div>
           </article>
 
           <!-- Grammar & Vocabulary -->
-          <article class="explore-card explore-vocabulary" id="vocabulary">
+          <article
+            class="explore-card explore-vocabulary"
+            id="vocabulary"
+            th:each="stage : ${stages}"
+            th:if="${stage.skill == 'Grammar & Vocabulary'}"
+          >
             <div class="explore-card-top">
               <div class="path-skill-heading">
                 <span class="explore-icon" aria-hidden="true">
@@ -108,23 +265,35 @@
                 </span>
                 <h2>Grammar &amp; Vocabulary</h2>
               </div>
+              <span
+                class="badge"
+                th:classappend="${stage.currentLevel != null ? 'badge-success' : ''}"
+                th:text="${stage.currentLevel != null ? 'Đã đánh giá' : 'Chưa đánh giá'}"
+              ></span>
             </div>
             <div th:replace="~{fragments/path-stage :: pathOverview('Grammar & Vocabulary')}"></div>
-            <a
-              class="button"
-              th:href="@{/student/learning-path/{skill}(skill='Grammar & Vocabulary')}"
-            >
-              Học ngữ pháp &amp; từ vựng
-              <span aria-hidden="true">→</span>
-            </a>
+            <div class="explore-card-action">
+              <a
+                th:if="${stage.currentLevel != null}"
+                class="button"
+                th:href="@{/student/learning-path/{skill}(skill='Grammar & Vocabulary')}"
+              >
+                Học ngữ pháp &amp; từ vựng
+                <span aria-hidden="true">→</span>
+              </a>
+              <div th:if="${stage.currentLevel == null}" class="unassessed-action-wrap">
+                <a
+                  class="button button-secondary"
+                  th:href="@{/student/learning-path/{skill}(skill='Grammar & Vocabulary')}"
+                >
+                  Học ngữ pháp &amp; từ vựng
+                  <span aria-hidden="true">→</span>
+                </a>
+                <p class="unassessed-hint">💡 Nên làm kiểm tra đầu vào trước</p>
+              </div>
+            </div>
           </article>
         </section>
-
-        <div class="actions">
-          <a th:href="@{/student/goals}">Thiết lập mục tiêu cá nhân</a>
-
-          <a class="button" th:href="@{/student/placement}">Làm bài kiểm tra đầu vào</a>
-        </div>
       </main>
     </div>
     <div th:replace="~{fragments/footer :: footer}"></div>

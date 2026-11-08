@@ -7,70 +7,323 @@
     <div class="container app-shell">
       <div th:replace="~{fragments/student-sidebar :: studentSidebar('profile')}"></div>
       <main class="app-main student-content" id="main-content" tabindex="-1">
-        <header class="page-header"><h1>Hồ sơ của bạn</h1></header>
+        <header class="page-header">
+          <div>
+            <h1>Hồ sơ của bạn</h1>
+            <p class="page-subtitle">
+              Quản lý thông tin định danh, bảo mật và đối chiếu mục tiêu với năng lực thực tế
+            </p>
+          </div>
+          <div class="page-header-actions">
+            <a class="button button-secondary" th:href="@{/student/learning-path}">
+              <span>🗺️</span>
+              Khám phá lộ trình
+            </a>
+          </div>
+        </header>
+
         <div th:replace="~{fragments/messages :: messages}"></div>
 
-        <form
-          class="dashboard-panel dashboard-section"
-          th:action="@{/student/profile/edit}"
-          th:object="${profileForm}"
-          method="post"
-        >
-          <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
-          <h2>Thông tin tài khoản</h2>
-          <p>
-            Email đăng nhập:
-            <strong th:text="${account.email}"></strong>
-          </p>
-          <div class="field">
-            <label for="profileName">Họ và tên</label>
-            <input id="profileName" th:field="*{fullName}" autocomplete="name" maxlength="255" />
-            <p class="field-error" th:errors="*{fullName}"></p>
-          </div>
-          <button class="button" type="submit">Lưu thay đổi</button>
-        </form>
-        <section class="dashboard-panel dashboard-section">
-          <h2>Bảo mật tài khoản</h2>
-          <a class="button button-secondary" th:href="@{/student/password}">Đổi mật khẩu</a>
-        </section>
-        <section class="dashboard-section study-card-grid">
-          <article class="dashboard-panel">
-            <h2>Mục tiêu</h2>
-            <p th:if="${account.goal == null}">Chưa đặt mục tiêu.</p>
-            <div th:if="${account.goal != null}">
-              <p
-                th:text="${account.goal.certificateName != null ? account.goal.certificateName : 'Chưa chọn chứng chỉ'}"
-              ></p>
-              <p
-                th:text="${account.goal.targetDate != null ? 'Ngày mục tiêu: ' + display.date(account.goal.targetDate) : 'Chưa đặt ngày mục tiêu'}"
-              ></p>
-            </div>
-            <a class="button button-secondary" th:href="@{/student/goals}">Thiết lập mục tiêu</a>
-          </article>
-          <article class="dashboard-panel">
-            <h2>Trình độ</h2>
-            <div th:if="${account.profiles == null or account.profiles.isEmpty()}">
-              <p>Chưa đánh giá.</p>
-            </div>
-            <div
-              th:unless="${account.profiles == null or account.profiles.isEmpty()}"
-              class="skill-list"
-            >
-              <div th:each="profile : ${account.profiles}">
-                <span class="skill-name" th:text="${profile.skill}"></span>
-                <span class="badge skill-level" th:text="${profile.currentLevel}"></span>
+        <!-- Hàng 1: (a) Thông tin cá nhân & (b) Bảo mật -->
+        <div class="profile-cards-grid">
+          <!-- Card (a): Thông tin cá nhân -->
+          <article class="dashboard-panel profile-panel">
+            <div class="panel-heading-row">
+              <div class="panel-heading-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                  <circle cx="12" cy="7" r="4" />
+                </svg>
+              </div>
+              <div>
+                <h2>Thông tin cá nhân</h2>
+                <p class="panel-desc">Thông tin định danh hiển thị trên chứng chỉ & kết quả</p>
               </div>
             </div>
-            <a class="button button-secondary" th:href="@{/student/placement}">
-              <span
-                th:text="${account.profiles.isEmpty() ? 'Kiểm tra đầu vào' : 'Đánh giá lại trình độ'}"
-              ></span>
-            </a>
+
+            <form
+              id="profileForm"
+              class="profile-form-body"
+              th:action="@{/student/profile/edit}"
+              th:object="${profileForm}"
+              method="post"
+              data-account-form
+              data-profile-form
+            >
+              <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+
+              <div class="field">
+                <label for="profileEmail">Email đăng nhập</label>
+                <div class="readonly-input-wrap">
+                  <input
+                    id="profileEmail"
+                    type="email"
+                    name="email"
+                    th:value="${account.email}"
+                    readonly
+                    disabled
+                  />
+                  <span class="readonly-badge">Cố định</span>
+                </div>
+              </div>
+
+              <div class="field">
+                <div class="field-label-row">
+                  <label for="profileName">
+                    Họ và tên
+                    <span class="required-star">*</span>
+                  </label>
+                  <span id="nameDirtyHint" class="field-hint-dirty" style="display: none">
+                    Chưa lưu thay đổi
+                  </span>
+                </div>
+                <input
+                  id="profileName"
+                  th:field="*{fullName}"
+                  autocomplete="name"
+                  maxlength="255"
+                  required
+                />
+                <p class="field-error" id="profileName-error" th:errors="*{fullName}"></p>
+              </div>
+
+              <div class="profile-form-footer">
+                <span class="field-note">Sửa họ tên để kích hoạt nút lưu</span>
+                <button id="btnSaveProfile" class="button" type="submit" disabled>
+                  Lưu thay đổi
+                </button>
+              </div>
+            </form>
           </article>
-        </section>
+
+          <!-- Card (b): Bảo mật -->
+          <article class="dashboard-panel profile-panel profile-security-panel">
+            <div>
+              <div class="panel-heading-row">
+                <div class="panel-heading-icon">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                    <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                  </svg>
+                </div>
+                <div>
+                  <h2>Bảo mật tài khoản</h2>
+                  <p class="panel-desc">Quản lý mật khẩu và an toàn đăng nhập</p>
+                </div>
+              </div>
+
+              <div class="security-info-box">
+                <span class="security-badge-icon">🛡️</span>
+                <div>
+                  <strong>Bảo mật tài khoản AptisPrep</strong>
+                  <p>
+                    Mật khẩu được mã hóa an toàn. Khuyến nghị cập nhật định kỳ 90 ngày để đảm bảo an
+                    toàn.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div class="security-action-footer">
+              <span class="field-note">Phiên đăng nhập an toàn</span>
+              <a class="button button-secondary" th:href="@{/student/password}">Đổi mật khẩu</a>
+            </div>
+          </article>
+        </div>
+
+        <!-- Hàng 2: (c) Mục tiêu học tập & (d) Trình độ hiện tại (Equal Height) -->
+        <div class="profile-cards-grid study-card-grid-equal">
+          <!-- Card (c): Mục tiêu học tập -->
+          <article class="dashboard-panel profile-panel compare-card">
+            <div>
+              <div class="panel-heading-row panel-heading-between">
+                <div class="panel-heading-group">
+                  <div class="panel-heading-icon icon-goal">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <circle cx="12" cy="12" r="10" />
+                      <circle cx="12" cy="12" r="6" />
+                      <circle cx="12" cy="12" r="2" />
+                    </svg>
+                  </div>
+                  <div>
+                    <h2>Mục tiêu học tập</h2>
+                    <p class="panel-desc">Chứng chỉ &amp; ngưỡng điểm mong muốn</p>
+                  </div>
+                </div>
+                <a class="button button-secondary button-small" th:href="@{/student/goals}">
+                  Chỉnh sửa mục tiêu ↗
+                </a>
+              </div>
+
+              <div class="goal-summary-banner" th:if="${account.goal != null}">
+                <div class="goal-cert-info">
+                  <span class="goal-eyebrow">CHỨNG CHỈ HƯỚNG TỚI</span>
+                  <strong
+                    th:text="${account.goal.certificateName != null ? account.goal.certificateName : 'Aptis ESOL General'}"
+                  ></strong>
+                </div>
+                <div class="goal-target-date">
+                  <span
+                    class="goal-eyebrow"
+                    th:text="${account.goal.targetDate != null ? 'HẠN THI: ' + display.date(account.goal.targetDate) : 'CHƯA ĐẶT NGÀY'}"
+                  ></span>
+                  <span
+                    th:if="${account.goal.targetDate != null}"
+                    th:with="daysRemaining=${T(java.time.temporal.ChronoUnit).DAYS.between(T(java.time.LocalDate).now(), account.goal.targetDate)}"
+                    class="badge"
+                    th:classappend="${daysRemaining &lt; 0 ? 'badge-danger' : (daysRemaining &lt;= 30 ? 'badge-warning' : 'badge-success')}"
+                  >
+                    <span
+                      th:if="${daysRemaining &gt;= 0}"
+                      th:text="${'Còn ' + daysRemaining + ' ngày'}"
+                    ></span>
+                    <span
+                      th:if="${daysRemaining &lt; 0}"
+                      th:text="${'Đã quá hạn ' + (-daysRemaining) + ' ngày'}"
+                    ></span>
+                  </span>
+                </div>
+              </div>
+
+              <p class="muted" th:if="${account.goal == null}">Chưa đặt mục tiêu học tập.</p>
+
+              <!-- 5 Kỹ năng mục tiêu dạng chips -->
+              <div class="skill-compare-table" th:if="${account.goal != null}">
+                <div class="compare-table-head">
+                  <span>Kỹ năng</span>
+                  <span>Mục tiêu</span>
+                </div>
+                <ul class="compare-list">
+                  <li
+                    th:each="code : ${display.skillCodes()}"
+                    class="compare-item"
+                    th:with="targetLvl=${account.goal.targets != null ? account.goal.targets.get(code) : null}"
+                  >
+                    <span
+                      class="compare-skill-name"
+                      th:text="${code == 'GRAMMAR_VOCABULARY' ? 'Grammar & Vocabulary' : (code == 'READING' ? 'Reading' : (code == 'LISTENING' ? 'Listening' : (code == 'WRITING' ? 'Writing' : 'Speaking')))}"
+                    ></span>
+                    <span
+                      class="cefr-chip"
+                      th:classappend="${targetLvl != null ? 'cefr-' + targetLvl.toLowerCase() : 'cefr-none'}"
+                      th:text="${targetLvl != null ? targetLvl : '—'}"
+                    ></span>
+                  </li>
+                </ul>
+              </div>
+            </div>
+
+            <div class="panel-bottom-note">
+              <span>💡 Mục tiêu điểm số quyết định các bài tập được đề xuất trong Lộ trình.</span>
+            </div>
+          </article>
+
+          <!-- Card (d): Trình độ hiện tại -->
+          <article class="dashboard-panel profile-panel compare-card">
+            <div>
+              <div class="panel-heading-row panel-heading-between">
+                <div class="panel-heading-group">
+                  <div class="panel-heading-icon icon-level">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M18 20V10M12 20V4M6 20v-6" />
+                    </svg>
+                  </div>
+                  <div>
+                    <h2>Trình độ hiện tại</h2>
+                    <p class="panel-desc">Dựa trên kết quả bài kiểm tra đầu vào</p>
+                  </div>
+                </div>
+                <a
+                  class="button button-secondary button-small"
+                  th:href="@{/student/placement}"
+                  th:text="${account.profiles != null and !account.profiles.isEmpty() ? 'Kiểm tra lại' : 'Kiểm tra đầu vào'}"
+                ></a>
+              </div>
+
+              <!-- Bảng đối chiếu 5 kỹ năng -->
+              <div class="skill-compare-table">
+                <div class="compare-table-head">
+                  <span>Kỹ năng</span>
+                  <div class="compare-cols-right">
+                    <span>Hiện tại</span>
+                    <span>Mục tiêu</span>
+                  </div>
+                </div>
+                <ul class="compare-list">
+                  <li
+                    th:each="code : ${display.skillCodes()}"
+                    class="compare-item"
+                    th:with="targetLvl=${account.goal != null and account.goal.targets != null ? account.goal.targets.get(code) : null}"
+                  >
+                    <span
+                      class="compare-skill-name"
+                      th:text="${code == 'GRAMMAR_VOCABULARY' ? 'Grammar & Vocabulary' : (code == 'READING' ? 'Reading' : (code == 'LISTENING' ? 'Listening' : (code == 'WRITING' ? 'Writing' : 'Speaking')))}"
+                    ></span>
+                    <div class="compare-cols-right">
+                      <!-- Trình độ hiện tại -->
+                      <span class="current-level-slot">
+                        <span
+                          th:if="${account.profiles == null or account.profiles.isEmpty()}"
+                          class="cefr-chip cefr-none"
+                        >
+                          —
+                        </span>
+                        <th:block
+                          th:unless="${account.profiles == null or account.profiles.isEmpty()}"
+                        >
+                          <span
+                            th:each="p : ${account.profiles}"
+                            th:if="${p.skill == code or (code == 'GRAMMAR_VOCABULARY' and (p.skill == 'Grammar & Vocabulary' or p.skill == 'GRAMMAR_VOCABULARY'))}"
+                            class="cefr-chip"
+                            th:classappend="${p.currentLevel != null ? 'cefr-' + p.currentLevel.toLowerCase() : 'cefr-none'}"
+                            th:text="${p.currentLevel != null ? p.currentLevel : '—'}"
+                          ></span>
+                        </th:block>
+                      </span>
+                      <!-- Mục tiêu để đối chiếu -->
+                      <span
+                        class="cefr-chip cefr-target-compare"
+                        th:classappend="${targetLvl != null ? 'cefr-' + targetLvl.toLowerCase() : 'cefr-none'}"
+                        th:text="${targetLvl != null ? targetLvl : '—'}"
+                      ></span>
+                    </div>
+                  </li>
+                </ul>
+              </div>
+
+              <!-- EmptyState khi chưa đánh giá: lấp đầy không gian thẻ, không để trống -->
+              <div
+                class="profile-empty-level"
+                th:if="${account.profiles == null or account.profiles.isEmpty()}"
+              >
+                <div class="empty-level-icon">📋</div>
+                <h3>Chưa có dữ liệu đánh giá năng lực</h3>
+                <p>
+                  Hãy làm bài kiểm tra đầu vào (~30 phút) để hệ thống nhận diện điểm mạnh và lỗ hổng
+                  kiến thức của bạn.
+                </p>
+                <a class="button button-primary" th:href="@{/student/placement}">
+                  Làm bài kiểm tra đầu vào →
+                </a>
+              </div>
+            </div>
+
+            <div class="panel-bottom-note">
+              <span th:if="${account.profiles != null and !account.profiles.isEmpty()}">
+                ✓ Đã đồng bộ kết quả mới nhất vào hệ thống học tập.
+              </span>
+              <span th:if="${account.profiles == null or account.profiles.isEmpty()}">
+                💡 Kết quả đánh giá sẽ tự động cập nhật vào các ô trên sau khi hoàn thành.
+              </span>
+            </div>
+          </article>
+        </div>
+
         <div class="actions">
           <a class="button" th:href="@{/student/learning-path}">Khám phá lộ trình</a>
         </div>
+
+        <!-- Section Nhịp độ học tập (Streak) -->
         <section
           class="dashboard-panel dashboard-section learning-activity"
           aria-labelledby="activity-title"
@@ -141,6 +394,7 @@
       </main>
     </div>
     <div th:replace="~{fragments/footer :: footer}"></div>
+    <script th:src="@{/js/account-forms.js}" defer></script>
     <script th:src="@{/js/profile-activity.js}" defer></script>
   </body>
 </html>

@@ -6,42 +6,165 @@
     <div th:replace="~{fragments/navbar :: navbar}"></div>
     <div class="container app-shell">
       <div th:replace="~{fragments/student-sidebar :: studentSidebar('results')}"></div>
-      <main id="main-content" tabindex="-1" class="app-main student-content result-history-page">
+      <main
+        id="main-content"
+        tabindex="-1"
+        class="app-main student-content result-history-page"
+        th:with="filtered=${!q.isBlank() or !selectedSkill.isBlank() or !selectedExamType.isBlank() or !selectedState.isBlank()}"
+      >
         <header class="page-header">
           <div>
-            <p class="eyebrow">THEO DÕI TIẾN BỘ</p>
             <h1>Kết quả học tập</h1>
+            <p class="page-subtitle">
+              Theo dõi lịch sử làm bài, điểm số CEFR và tiếp tục các bài thi đang làm dở
+            </p>
+          </div>
+          <div class="page-header-actions">
+            <a class="button button-secondary" th:href="@{/student/exams}">
+              <span>✍️</span>
+              Luyện đề mới
+            </a>
           </div>
         </header>
 
-        <form class="toolbar result-filters" method="get" th:action="@{/student/results}">
+        <!-- Thông báo từ flash attributes hoặc model -->
+        <div th:replace="~{fragments/messages :: messages}"></div>
+
+        <!-- Summary strip (top): 4 stats, ẩn nếu chưa có bài nào -->
+        <section
+          class="results-summary-strip"
+          th:if="${!history.items.isEmpty() or filtered}"
+          aria-label="Thống kê tổng quan kết quả"
+        >
+          <div class="summary-card">
+            <span class="summary-label">Tổng lượt nộp</span>
+            <div class="summary-value-row">
+              <strong class="summary-number" th:text="${history.totalItems}">0</strong>
+              <span class="summary-unit">lượt</span>
+            </div>
+          </div>
+
+          <div class="summary-card">
+            <span class="summary-label">Kết quả gần nhất</span>
+            <div class="summary-value-row">
+              <th:block th:with="firstCompleted=${history.items.^[state == 'COMPLETED']}">
+                <strong
+                  class="summary-number"
+                  th:if="${firstCompleted != null and firstCompleted.finalScaleScore != null}"
+                  th:text="${firstCompleted.finalScaleScore + ' điểm'}"
+                ></strong>
+                <span
+                  class="cefr-badge-pill"
+                  th:if="${firstCompleted != null and firstCompleted.overallCefr != null}"
+                  th:text="${firstCompleted.overallCefr}"
+                ></span>
+                <span
+                  class="summary-unit muted"
+                  th:if="${firstCompleted == null or firstCompleted.finalScaleScore == null}"
+                >
+                  Chưa có điểm
+                </span>
+              </th:block>
+            </div>
+          </div>
+
+          <div class="summary-card">
+            <span class="summary-label">Đang làm dở</span>
+            <div class="summary-value-row">
+              <strong
+                class="summary-number text-blue"
+                th:text="${history.items.?[state == 'IN_PROGRESS'].size()}"
+              >
+                0
+              </strong>
+              <span class="summary-unit">bài</span>
+            </div>
+          </div>
+
+          <div class="summary-card">
+            <span class="summary-label">Nhịp độ ôn luyện</span>
+            <div class="summary-value-row">
+              <strong class="summary-number text-amber">Đang duy trì</strong>
+              <span class="summary-unit">🔥</span>
+            </div>
+          </div>
+        </section>
+
+        <!-- Tabs: Đang làm dở | Đã hoàn thành | Tất cả -->
+        <nav
+          role="tablist"
+          aria-label="Phân loại trạng thái bài làm"
+          class="results-tab-nav"
+          th:with="inProgCount=${history.items.?[state == 'IN_PROGRESS'].size()}, compCount=${history.items.?[state == 'COMPLETED'].size()}"
+        >
+          <a
+            role="tab"
+            class="tab-link"
+            th:classappend="${selectedState == 'IN_PROGRESS' or (selectedState.isBlank() and inProgCount &gt; 0 and compCount == 0) ? ' is-active' : ''}"
+            th:href="@{/student/results(state='IN_PROGRESS',q=${q},skill=${selectedSkill},examType=${selectedExamType})}"
+          >
+            <span>Đang làm dở</span>
+            <span class="tab-count-badge" th:text="${inProgCount}">0</span>
+          </a>
+          <a
+            role="tab"
+            class="tab-link"
+            th:classappend="${selectedState == 'COMPLETED' ? ' is-active' : ''}"
+            th:href="@{/student/results(state='COMPLETED',q=${q},skill=${selectedSkill},examType=${selectedExamType})}"
+          >
+            <span>Đã hoàn thành</span>
+            <span class="tab-count-badge" th:text="${compCount}">0</span>
+          </a>
+          <a
+            role="tab"
+            class="tab-link"
+            th:classappend="${selectedState.isBlank() and (inProgCount == 0 or compCount &gt; 0) ? ' is-active' : ''}"
+            th:href="@{/student/results(state='',q=${q},skill=${selectedSkill},examType=${selectedExamType})}"
+          >
+            <span>Tất cả</span>
+            <span class="tab-count-badge" th:text="${history.totalItems}">0</span>
+          </a>
+        </nav>
+
+        <!-- Filter bar (single compact row with auto-debounce) -->
+        <form
+          id="resultsFilterForm"
+          class="toolbar result-filters compact-filter-bar"
+          method="get"
+          th:action="@{/student/results}"
+        >
           <input type="hidden" name="size" th:value="${history.size}" />
-          <div class="field">
-            <label for="result-q">Tên đề</label>
+          <input type="hidden" name="state" th:value="${selectedState}" />
+
+          <div class="field field-search">
+            <label for="result-q" class="sr-only">Tên đề</label>
             <input
               id="result-q"
               name="q"
               maxlength="255"
               th:value="${q}"
-              placeholder="Ví dụ: Reading Part 1"
+              placeholder="🔍 Tìm theo tên đề thi..."
+              data-auto-filter
             />
           </div>
-          <div class="field">
-            <label for="result-skill">Kỹ năng</label>
-            <select id="result-skill" name="skill">
-              <option value="">Tất cả</option>
+
+          <div class="field field-select">
+            <label for="result-skill" class="sr-only">Kỹ năng</label>
+            <select id="result-skill" name="skill" data-auto-filter>
+              <option value="">Tất cả kỹ năng</option>
               <option
                 th:each="value : ${display.skillCodes()}"
                 th:value="${value}"
-                th:text="${(value == null ? null : value.replace('_', ' & '))}"
+                th:text="${(value == null ? null : value.replace('_', ' &amp; '))}"
                 th:selected="${selectedSkill == value}"
               ></option>
             </select>
           </div>
-          <div class="field">
-            <label for="result-type">Loại bài</label>
-            <select id="result-type" name="examType">
-              <option value="">Tất cả</option>
+
+          <div class="field field-select">
+            <label for="result-type" class="sr-only">Loại bài</label>
+            <select id="result-type" name="examType" data-auto-filter>
+              <option value="">Tất cả loại bài</option>
               <option value="PLACEMENT" th:selected="${selectedExamType == 'PLACEMENT'}">
                 Kiểm tra đầu vào
               </option>
@@ -56,87 +179,119 @@
               </option>
             </select>
           </div>
-          <div class="field">
-            <label for="result-state">Trạng thái</label>
-            <select id="result-state" name="state">
-              <option value="">Tất cả</option>
-              <option value="IN_PROGRESS" th:selected="${selectedState == 'IN_PROGRESS'}">
-                Đang làm
-              </option>
-              <option value="WAITING_GRADING" th:selected="${selectedState == 'WAITING_GRADING'}">
-                Đang chấm
-              </option>
-              <option value="COMPLETED" th:selected="${selectedState == 'COMPLETED'}">
-                Hoàn thành
-              </option>
-              <option value="ERROR" th:selected="${selectedState == 'ERROR'}">Chấm lỗi</option>
-              <option value="EXPIRED" th:selected="${selectedState == 'EXPIRED'}">
-                Hết thời gian
-              </option>
-            </select>
-          </div>
-          <div class="actions">
-            <button class="button" type="submit">Lọc kết quả</button>
-            <a class="button button-secondary" th:href="@{/student/results}">Xóa bộ lọc</a>
+
+          <div class="filter-actions-right">
+            <!-- Xóa bộ lọc chỉ hiện khi có bộ lọc hoạt động -->
+            <a
+              class="clear-filter-link"
+              th:if="${filtered or !q.isBlank() or !selectedSkill.isBlank() or !selectedExamType.isBlank()}"
+              th:href="@{/student/results}"
+            >
+              ✕ Xóa bộ lọc
+            </a>
           </div>
         </form>
 
-        <section class="result-history-list" th:if="${!history.items.isEmpty()}">
-          <article class="dashboard-panel result-history-card" th:each="attempt : ${history.items}">
-            <div class="result-card-main">
-              <span
-                class="result-type"
-                th:text="${display.historyExamType(attempt.examType)}"
-              ></span>
-              <h2
-                th:text="${attempt.examTitle == null ? 'Bài thi #' + attempt.examId : attempt.examTitle}"
-              ></h2>
-              <p
-                th:if="${attempt.submittedAt != null}"
-                th:text="${'Đã nộp ' + (display.dateTime(attempt.submittedAt))}"
-              ></p>
-              <p th:unless="${attempt.submittedAt != null}">Chưa nộp bài</p>
-            </div>
-            <div class="result-card-summary">
-              <span
-                class="result-status"
-                th:classappend="${display.historyStateClass(attempt.state)}"
-                th:text="${display.historyState(attempt.state)}"
-              ></span>
-              <div class="result-levels" th:if="${!attempt.skills.isEmpty()}">
-                <span
-                  th:each="skill : ${attempt.skills}"
-                  th:text="${'' + ((skill.skill == null ? null : skill.skill.replace('_', ' '))) + ': ' + (skill.estimatedLevel == null ? 'Chờ chấm' : skill.estimatedLevel)}"
-                ></span>
-              </div>
-              <p
-                class="result-overall"
-                th:if="${attempt.finalScaleScore != null or attempt.overallCefr != null}"
-                th:text="${'Tổng quan: ' + (attempt.finalScaleScore == null ? '—' : attempt.finalScaleScore) + ' điểm · ' + (attempt.overallCefr == null ? 'Chưa có CEFR' : attempt.overallCefr)}"
-              ></p>
-              <a
-                class="button button-secondary"
-                th:if="${attempt.state == 'IN_PROGRESS'}"
-                th:href="@{/student/attempts/{id}(id=${attempt.attemptId})}"
-              >
-                Tiếp tục làm bài
-              </a>
-              <a
-                class="button button-secondary"
-                th:unless="${attempt.state == 'IN_PROGRESS'}"
-                th:href="@{/student/attempts/{id}/result(id=${attempt.attemptId})}"
-              >
-                Xem kết quả
-              </a>
-            </div>
-          </article>
+        <!-- Danh sách kết quả: Table trên desktop, Cards trên mobile -->
+        <section class="results-table-container" th:if="${!history.items.isEmpty()}">
+          <table class="data-table result-compact-table" aria-label="Lịch sử làm bài thi">
+            <thead>
+              <tr>
+                <th scope="col">Loại &amp; Tên bài thi</th>
+                <th scope="col">Thời gian</th>
+                <th scope="col">Trạng thái</th>
+                <th scope="col">Điểm số / Đánh giá</th>
+                <th scope="col" class="text-right">Thao tác</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr th:each="attempt : ${history.items}">
+                <!-- Cột 1: Loại bài & Tên bài -->
+                <td>
+                  <span
+                    class="result-type-chip"
+                    th:text="${display.historyExamType(attempt.examType)}"
+                  ></span>
+                  <strong
+                    class="result-title-text"
+                    th:text="${attempt.examTitle == null ? 'Bài thi #' + attempt.examId : attempt.examTitle}"
+                  ></strong>
+                </td>
+
+                <!-- Cột 2: Thời gian bắt đầu / nộp bài -->
+                <td>
+                  <span
+                    class="time-meta-text"
+                    th:if="${attempt.submittedAt != null}"
+                    th:text="${'Đã nộp ' + display.dateTime(attempt.submittedAt)}"
+                  ></span>
+                  <span
+                    class="time-meta-text in-progress-time"
+                    th:unless="${attempt.submittedAt != null}"
+                  >
+                    Đang làm dở
+                  </span>
+                </td>
+
+                <!-- Cột 3: Trạng thái -->
+                <td>
+                  <span
+                    class="badge"
+                    th:classappend="${display.historyStateClass(attempt.state)}"
+                    th:text="${display.historyState(attempt.state)}"
+                  ></span>
+                </td>
+
+                <!-- Cột 4: Điểm số / Kỹ năng chi tiết -->
+                <td>
+                  <div class="result-score-cell">
+                    <p
+                      class="result-overall-score"
+                      th:if="${attempt.finalScaleScore != null or attempt.overallCefr != null}"
+                      th:text="${(attempt.finalScaleScore == null ? '—' : attempt.finalScaleScore) + ' điểm' + (attempt.overallCefr != null ? ' · ' + attempt.overallCefr : '')}"
+                    ></p>
+                    <div class="result-levels-mini" th:if="${!attempt.skills.isEmpty()}">
+                      <span
+                        th:each="skill : ${attempt.skills}"
+                        class="skill-mini-pill"
+                        th:text="${(skill.skill == null ? null : skill.skill.replace('_', ' ')) + ': ' + (skill.estimatedLevel == null ? 'Chờ chấm' : skill.estimatedLevel)}"
+                      ></span>
+                    </div>
+                    <span
+                      class="muted"
+                      th:if="${attempt.finalScaleScore == null and attempt.overallCefr == null and attempt.skills.isEmpty()}"
+                    >
+                      —
+                    </span>
+                  </div>
+                </td>
+
+                <!-- Cột 5: Thao tác -->
+                <td class="text-right">
+                  <div class="table-row-actions">
+                    <a
+                      class="button button-small"
+                      th:if="${attempt.state == 'IN_PROGRESS'}"
+                      th:href="@{/student/attempts/{id}(id=${attempt.attemptId})}"
+                    >
+                      Tiếp tục làm bài →
+                    </a>
+                    <a
+                      class="button button-secondary button-small"
+                      th:unless="${attempt.state == 'IN_PROGRESS'}"
+                      th:href="@{/student/attempts/{id}/result(id=${attempt.attemptId})}"
+                    >
+                      Xem kết quả
+                    </a>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
         </section>
 
-        <section
-          class="dashboard-panel empty-result-state"
-          th:if="${history.items.isEmpty()}"
-          th:with="filtered=${!q.isBlank() or !selectedSkill.isBlank() or !selectedExamType.isBlank() or !selectedState.isBlank()}"
-        >
+        <!-- Trạng thái trống (Empty State) -->
+        <section class="dashboard-panel empty-result-state" th:if="${history.items.isEmpty()}">
           <div class="empty-result-icon" aria-hidden="true">✓</div>
           <h2 th:text="${filtered ? 'Không có kết quả phù hợp' : 'Bạn chưa làm bài thi nào'}"></h2>
           <p th:unless="${filtered}">
@@ -148,11 +303,32 @@
           <a class="button" th:unless="${filtered}" th:href="@{/student/exams}">Khám phá đề thi</a>
         </section>
 
+        <!-- Phân trang -->
         <div
           th:replace="~{fragments/student-pagination :: studentPagination(${history.page}, ${totalPages}, ${history.totalItems}, @{/student/results(size=${history.size},q=${q},skill=${selectedSkill},examType=${selectedExamType},state=${selectedState})})}"
         ></div>
       </main>
     </div>
     <div th:replace="~{fragments/footer :: footer}"></div>
+
+    <!-- Script tự động submit sau 300ms debounce khi lọc -->
+    <script>
+      (() => {
+        const filterForm = document.getElementById('resultsFilterForm');
+        if (!filterForm) return;
+        let debounceTimer;
+        filterForm.querySelectorAll('[data-auto-filter]').forEach((elem) => {
+          elem.addEventListener(elem.tagName === 'SELECT' ? 'change' : 'input', () => {
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(
+              () => {
+                filterForm.submit();
+              },
+              elem.tagName === 'SELECT' ? 50 : 350,
+            );
+          });
+        });
+      })();
+    </script>
   </body>
 </html>
