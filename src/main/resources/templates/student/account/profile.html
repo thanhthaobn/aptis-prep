@@ -199,10 +199,7 @@
                     class="compare-item"
                     th:with="targetLvl=${account.goal.targets != null ? account.goal.targets.get(code) : null}"
                   >
-                    <span
-                      class="compare-skill-name"
-                      th:text="${display.catalogSkill(code)}"
-                    ></span>
+                    <span class="compare-skill-name" th:text="${display.catalogSkill(code)}"></span>
                     <span
                       class="cefr-chip"
                       th:classappend="${targetLvl != null ? 'cefr-' + targetLvl.toLowerCase() : 'cefr-none'}"
@@ -255,10 +252,7 @@
                     class="compare-item"
                     th:with="targetLvl=${account.goal != null and account.goal.targets != null ? account.goal.targets.get(code) : null}"
                   >
-                    <span
-                      class="compare-skill-name"
-                      th:text="${display.catalogSkill(code)}"
-                    ></span>
+                    <span class="compare-skill-name" th:text="${display.catalogSkill(code)}"></span>
                     <div class="compare-cols-right">
                       <!-- Trình độ hiện tại -->
                       <span class="current-level-slot">
