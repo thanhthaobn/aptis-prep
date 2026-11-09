@@ -367,8 +367,8 @@
               </select>
             </div>
           </div>
-          <div class="alert alert-danger" th:if="${!display.globalErrors('goalForm').isEmpty()}">
-            <span th:each="message, status : ${display.globalErrors('goalForm')}">
+          <div class="alert alert-danger" th:if="${!#fields.globalErrors().isEmpty()}">
+            <span th:each="message, status : ${#fields.globalErrors()}">
               <br th:if="${!status.first}" />
               <span th:text="${message}"></span>
             </span>

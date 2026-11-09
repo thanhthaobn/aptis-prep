@@ -538,8 +538,8 @@
               </fieldset>
             </div>
           </section>
-          <div class="alert alert-danger" th:if="${!display.allErrors('schemeForm').isEmpty()}">
-            <span th:each="message, status : ${display.allErrors('schemeForm')}">
+          <div class="alert alert-danger" th:if="${!#fields.allErrors().isEmpty()}">
+            <span th:each="message, status : ${#fields.allErrors()}">
               <br th:if="${!status.first}" />
               <span th:text="${message}"></span>
             </span>
@@ -716,11 +716,8 @@
                 </div>
               </div>
             </fieldset>
-            <div
-              class="alert alert-danger"
-              th:if="${!display.allErrors('scaleRuleForm').isEmpty()}"
-            >
-              <span th:each="message, status : ${display.allErrors('scaleRuleForm')}">
+            <div class="alert alert-danger" th:if="${!#fields.allErrors().isEmpty()}">
+              <span th:each="message, status : ${#fields.allErrors()}">
                 <br th:if="${!status.first}" />
                 <span th:text="${message}"></span>
               </span>
@@ -775,8 +772,8 @@
                 />
               </div>
             </div>
-            <div class="alert alert-danger" th:if="${!display.allErrors('bandForm').isEmpty()}">
-              <span th:each="message, status : ${display.allErrors('bandForm')}">
+            <div class="alert alert-danger" th:if="${!#fields.allErrors().isEmpty()}">
+              <span th:each="message, status : ${#fields.allErrors()}">
                 <br th:if="${!status.first}" />
                 <span th:text="${message}"></span>
               </span>

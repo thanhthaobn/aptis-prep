@@ -272,9 +272,9 @@
           <section class="dashboard-panel">
             <div
               class="alert alert-danger ap-alert ap-alert-danger"
-              th:if="${!display.allErrors('form').isEmpty()}"
+              th:if="${!#fields.allErrors().isEmpty()}"
             >
-              <span th:each="message, status : ${display.allErrors('form')}">
+              <span th:each="message, status : ${#fields.allErrors()}">
                 <br th:if="${!status.first}" />
                 <span th:text="${message}"></span>
               </span>

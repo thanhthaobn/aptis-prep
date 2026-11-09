@@ -171,10 +171,10 @@
           >
             <div
               class="alert alert-danger"
-              th:if="${!display.globalErrors('registerForm').isEmpty()}"
+              th:if="${!#fields.globalErrors().isEmpty()}"
               role="alert"
             >
-              <span th:each="message, status : ${display.globalErrors('registerForm')}">
+              <span th:each="message, status : ${#fields.globalErrors()}">
                 <br th:if="${!status.first}" />
                 <span th:text="${message}"></span>
               </span>
@@ -184,7 +184,7 @@
               <input
                 id="fullName"
                 aria-describedby="fullName-error"
-                th:attr="aria-invalid=${display.fieldInvalid('registerForm', 'fullName')}"
+                th:attr="aria-invalid=${#fields.hasErrors('fullName')}"
                 th:field="*{fullName}"
                 autocomplete="name"
                 placeholder="Nguyễn Văn An"
@@ -200,7 +200,7 @@
               <input
                 id="email"
                 aria-describedby="email-error"
-                th:attr="aria-invalid=${display.fieldInvalid('registerForm', 'email')}"
+                th:attr="aria-invalid=${#fields.hasErrors('email')}"
                 th:field="*{email}"
                 type="email"
                 autocomplete="email"
@@ -221,7 +221,7 @@
                 <input
                   id="password"
                   aria-describedby="password-hint password-error"
-                  th:attr="aria-invalid=${display.fieldInvalid('registerForm', 'password')}"
+                  th:attr="aria-invalid=${#fields.hasErrors('password')}"
                   th:field="*{password}"
                   type="password"
                   autocomplete="new-password"
@@ -252,7 +252,7 @@
                 <input
                   id="confirmPassword"
                   aria-describedby="confirmPassword-error"
-                  th:attr="aria-invalid=${display.fieldInvalid('registerForm', 'confirmPassword')}"
+                  th:attr="aria-invalid=${#fields.hasErrors('confirmPassword')}"
                   th:field="*{confirmPassword}"
                   type="password"
                   autocomplete="new-password"
