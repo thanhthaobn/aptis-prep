@@ -158,6 +158,8 @@ public class StudentAccountController {
     @GetMapping("/student/placement/result")
     public String result(@RequestParam Integer attemptId, Principal principal, Model model) {
         var result = placement.result(principal.getName(), attemptId);
+        if ("IN_PROGRESS".equals(result.state()))
+            return "redirect:/student/attempts/" + attemptId;
         model.addAttribute("attemptResult", result);
         model.addAttribute("fromPlacement", true);
         Integer userId = access.requireActiveStudent(principal.getName());

@@ -360,7 +360,10 @@
               </div>
             </section>
 
-            <details class="dashboard-panel result-review-panel" th:if="${review != null}">
+            <details
+              class="dashboard-panel result-review-panel"
+              th:if="${review != null and !review.questions.isEmpty()}"
+            >
               <summary>Xem câu hỏi và đáp án</summary>
               <section class="result-review-question" th:each="question : ${review.questions}">
                 <p

@@ -88,6 +88,12 @@ class StudentResultFlowTests {
                     "/student/attempts/" + attempt.getId() + "/result",
                     "/student/placement/result?attemptId=" + attempt.getId()
                 }) {
+            if (state.equals("IN_PROGRESS")) {
+                mvc.perform(get(path).with(user(learner.getEmail()).roles("STUDENT")))
+                        .andExpect(status().is3xxRedirection())
+                        .andExpect(redirectedUrl("/student/attempts/" + attempt.getId()));
+                continue;
+            }
             var result =
                     mvc.perform(get(path).with(user(learner.getEmail()).roles("STUDENT")))
                             .andExpect(status().isOk())
@@ -99,8 +105,6 @@ class StudentResultFlowTests {
                                                             containsString("Mã lượt thi"))));
             if (state.equals("ERROR"))
                 result.andExpect(content().string(containsString("Chấm lại phần lỗi")));
-            if (state.equals("IN_PROGRESS"))
-                result.andExpect(content().string(containsString("Tiếp tục làm bài")));
             result.andExpect(
                     content()
                             .string(
