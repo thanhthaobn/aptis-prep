@@ -202,6 +202,43 @@ public final class IntegrationModels {
                                     .containsAll(com.aptisprep.enums.Skill.codes()));
         }
 
+        public String stateLabel() {
+            return switch (state == null ? "" : state) {
+                case "COMPLETED" -> "Đã hoàn thành";
+                case "ERROR" -> "Chấm điểm gặp lỗi";
+                case "EXPIRED" -> "Đã hết thời gian";
+                case "IN_PROGRESS" -> "Đang làm bài";
+                default -> "Đang chấm điểm";
+            };
+        }
+
+        public String examTypeLabel() {
+            return switch (examType == null ? "" : examType) {
+                case "PLACEMENT" -> "Kiểm tra đầu vào";
+                case "CHECKPOINT" -> "Kiểm tra cuối chặng";
+                case "FULL_MOCK" -> "Thi thử tổng hợp";
+                default -> "Bài luyện tập";
+            };
+        }
+
+        public String stateBadgeClass() {
+            return switch (state == null ? "" : state) {
+                case "COMPLETED" -> "badge-success";
+                case "ERROR" -> "badge-danger";
+                case "EXPIRED" -> "badge-history-expired";
+                case "IN_PROGRESS" -> "badge-info";
+                default -> "badge-warning";
+            };
+        }
+
+        public String stateClass() {
+            return switch (state == null ? "" : state) {
+                case "COMPLETED" -> " is-complete";
+                case "ERROR" -> " is-error";
+                default -> " is-pending";
+            };
+        }
+
         public AttemptResult(
                 Integer attemptId,
                 Integer userId,

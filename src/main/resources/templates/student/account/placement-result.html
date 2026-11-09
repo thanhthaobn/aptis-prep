@@ -288,7 +288,7 @@
               </div>
               <span
                 class="result-status"
-                th:classappend="${display.historyStateClass(res.state)}"
+                th:classappend="${res.stateClass}"
                 th:text="${@resultLabels.state(res.state)}"
               ></span>
             </header>
