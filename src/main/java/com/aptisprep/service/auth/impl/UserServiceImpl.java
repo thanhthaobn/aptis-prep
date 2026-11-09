@@ -1,4 +1,4 @@
-package com.aptisprep.service.auth;
+package com.aptisprep.service.auth.impl;
 
 import com.aptisprep.dto.form.RegisterForm;
 import com.aptisprep.entity.User;
@@ -7,6 +7,8 @@ import com.aptisprep.enums.UserStatus;
 import com.aptisprep.exception.BusinessRuleException;
 import com.aptisprep.exception.DuplicateEmailException;
 import com.aptisprep.repository.UserRepository;
+import com.aptisprep.service.auth.PasswordHasher;
+import com.aptisprep.service.auth.UserService;
 import java.nio.charset.StandardCharsets;
 import java.util.Locale;
 import java.util.Optional;
@@ -49,12 +51,10 @@ public class UserServiceImpl implements UserService {
         if (!form.getPassword().equals(form.getConfirmPassword())) {
             throw new BusinessRuleException("Mật khẩu xác nhận không khớp");
         }
-
         String normalizedEmail = form.getEmail().trim().toLowerCase(Locale.ROOT);
         if (userRepository.existsByEmailIgnoreCase(normalizedEmail)) {
             throw new DuplicateEmailException();
         }
-
         User user = new User();
         user.setFullName(form.getFullName().trim());
         user.setEmail(normalizedEmail);
