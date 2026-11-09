@@ -44,15 +44,6 @@ public class DisplayFormatting {
         return false;
     }
 
-    public String checkpointAction(String state) {
-        return switch (state == null ? "" : state) {
-            case "in_progress" -> "Tiếp tục bài đang làm";
-            case "grading" -> "Xem trạng thái chấm";
-            case "failed" -> "Làm lại kiểm tra cuối chặng";
-            default -> "Bắt đầu bài kiểm tra cuối chặng";
-        };
-    }
-
     public String cefrLabel(String level) {
         return CefrLevel.BELOW_A1.equals(level) ? "Dưới A1" : level;
     }

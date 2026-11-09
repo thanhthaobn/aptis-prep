@@ -32,10 +32,10 @@ public class AdminCatalogController {
 
     @GetMapping("/admin/questions")
     public String questions(
-            @RequestParam(defaultValue = "") String q,
-            @RequestParam(defaultValue = "") String skill,
-            @RequestParam(defaultValue = "") String status,
-            @RequestParam(defaultValue = "") String kind,
+              @RequestParam(name = "q", required = false) String q,
+              @RequestParam(name = "skill", required = false) String skill,
+              @RequestParam(name = "status", required = false) String status,
+              @RequestParam(name = "kind", required = false) String kind,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             Model model) {
@@ -44,10 +44,10 @@ public class AdminCatalogController {
 
     @GetMapping("/admin/exams")
     public String exams(
-            @RequestParam(defaultValue = "") String q,
-            @RequestParam(defaultValue = "") String skill,
-            @RequestParam(defaultValue = "") String status,
-            @RequestParam(defaultValue = "") String kind,
+              @RequestParam(name = "q", required = false) String q,
+              @RequestParam(name = "skill", required = false) String skill,
+              @RequestParam(name = "status", required = false) String status,
+              @RequestParam(name = "kind", required = false) String kind,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             Model model) {

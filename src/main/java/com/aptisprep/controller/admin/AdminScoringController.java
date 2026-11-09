@@ -67,7 +67,7 @@ public class AdminScoringController {
     @GetMapping("/admin/scoring-schemes")
     public String showScoringSchemes(
             @RequestParam(defaultValue = "0") int schemePage,
-            @RequestParam(defaultValue = "") String examType,
+             @RequestParam(name = "examType", required = false) String examType,
             @RequestParam(required = false) Integer certificateId,
             Model model) {
         if (!examType.isBlank()

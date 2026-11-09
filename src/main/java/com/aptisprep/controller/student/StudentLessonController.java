@@ -36,9 +36,9 @@ public class StudentLessonController {
 
     @GetMapping("/student/lessons")
     public String list(
-            @RequestParam(defaultValue = "") String q,
-            @RequestParam(defaultValue = "") String skill,
-            @RequestParam(defaultValue = "") String level,
+             @RequestParam(name = "q", defaultValue = "") String q,
+             @RequestParam(name = "skill", defaultValue = "") String skill,
+             @RequestParam(name = "level", defaultValue = "") String level,
             Principal principal,
             Model m) {
         if (q.length() > 255 || skill.length() > 80 || level.length() > 40)

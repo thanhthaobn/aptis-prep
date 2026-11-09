@@ -48,10 +48,10 @@ public class StudentContentController {
     public String list(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "9") int size,
-            @RequestParam(defaultValue = "") String q,
-            @RequestParam(defaultValue = "") String skill,
-            @RequestParam(defaultValue = "") String level,
-            @RequestParam(defaultValue = "") String state,
+              @RequestParam(name = "q", required = false) String q,
+              @RequestParam(name = "skill", required = false) String skill,
+              @RequestParam(name = "level", required = false) String level,
+              @RequestParam(name = "state", required = false) String state,
             @RequestParam(defaultValue = "PRACTICE") String examType,
             @RequestParam(defaultValue = "level") String sort,
             Model model) {
@@ -95,10 +95,10 @@ public class StudentContentController {
     public String results(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
-            @RequestParam(defaultValue = "") String q,
-            @RequestParam(defaultValue = "") String skill,
-            @RequestParam(defaultValue = "") String examType,
-            @RequestParam(defaultValue = "") String state,
+              @RequestParam(name = "q", required = false) String q,
+              @RequestParam(name = "skill", required = false) String skill,
+              @RequestParam(name = "examType", required = false) String examType,
+              @RequestParam(name = "state", required = false) String state,
             Principal principal,
             Model model) {
         if (page < 0 || size < 1 || size > 50)

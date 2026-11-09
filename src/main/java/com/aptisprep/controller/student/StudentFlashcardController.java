@@ -31,9 +31,9 @@ public class StudentFlashcardController {
     @GetMapping("/student/flashcards")
     public String list(
             @RequestParam(defaultValue = "all") String source,
-            @RequestParam(defaultValue = "") String q,
-            @RequestParam(defaultValue = "") String skill,
-            @RequestParam(defaultValue = "") String level,
+              @RequestParam(name = "q", required = false) String q,
+              @RequestParam(name = "skill", required = false) String skill,
+              @RequestParam(name = "level", required = false) String level,
             @RequestParam(defaultValue = "learning") String sort,
             Principal p,
             Model m) {
