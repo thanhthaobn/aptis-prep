@@ -58,7 +58,7 @@ Bảng này ghi các thao tác thay đổi dữ liệu và điều hướng chí
 - [student/account/profile.html](#html-10) · Hồ sơ học viên · `/student/profile`
 - [student/account/goals.html](#html-11) · Mục tiêu học tập · `/student/goals`
 - [student/account/placement.html](#html-12) · Kiểm tra đầu vào · `/student/placement`
-- [student/account/placement-result.html](#html-13) · Kết quả đầu vào chuyên biệt · `/student/placement/result?attemptId={id}`
+- [student/attempt-result.html](#html-13) · Kết quả bài thi và đầu vào · `/student/attempts/{id}/result`, `/student/placement/result?attemptId={id}`
 - [student/learning/path.html](#html-14) · Lộ trình của tôi · `/student/learning-path`
 - [student/learning/skill.html](#html-15) · Chi tiết lộ trình một kỹ năng · `/student/learning-path/{skill}`
 - [student/lesson/list.html](#html-16) · Thư viện bài học · `/student/lessons`
@@ -384,14 +384,14 @@ Fragment còn lại được DisplayFormattingTests render trực tiếp để k
 
 <a id="html-13"></a>
 
-### Kết quả đầu vào chuyên biệt · `student/account/placement-result.html`
+### Kết quả bài thi và kiểm tra đầu vào · `student/attempt-result.html`
 
-- **Template** [student/account/placement-result.html](../src/main/resources/templates/student/account/placement-result.html)
-- **Đường dẫn** `/student/placement/result?attemptId={id}`.
-- **Phương thức render** [StudentAccountController.result](../src/main/java/com/aptisprep/controller/student/StudentAccountController.java#L143).
+- **Template** [student/attempt-result.html](../src/main/resources/templates/student/attempt-result.html)
+- **Đường dẫn** `/student/attempts/{id}/result` và `/student/placement/result?attemptId={id}`.
+- **Phương thức render** [StudentContentController.result](../src/main/java/com/aptisprep/controller/student/StudentContentController.java#L147), [StudentAccountController.result](../src/main/java/com/aptisprep/controller/student/StudentAccountController.java#L143).
 - **Lớp liên quan** [PlacementService](../src/main/java/com/aptisprep/service/placement/PlacementService.java), [ScoringGuideService](../src/main/java/com/aptisprep/service/scoring/ScoringGuideService.java), [IntegrationModels.AttemptResult](../src/main/java/com/aptisprep/service/contract/IntegrationModels.java#L171).
 - **Chức năng** Đọc kết quả đầu vào theo mã lượt thi. Lượt nộp qua engine cũng có trang kết quả chung.
-- **Biến đọc trong template từ controller hoặc luồng redirect** `feedbackWithoutGuide`, `placementResult`, `scoreGuides`.
+- **Biến đọc trong template từ controller hoặc luồng redirect** `attemptResult`, `fromPlacement`, `canRegradeEmpty`, `feedbackWithoutGuide`, `scoreGuides`.
 - **Biến dùng chung** `display`, `error`, `errorMessage`, `info`, `infoMessage`, `isAdmin`, `isStudent`, `message`, `navSection`, `resultLabels`, `signedIn`, `successMessage`, `warning`, `warningMessage`.
 - **Biến cục bộ hoặc tham số fragment** `activePage`, `band`, `guide`, `isPlacement`, `res`, `score`, `skill`.
 - **JavaScript nạp trực tiếp** [js/app-dialog.js](../src/main/resources/static/js/app-dialog.js), [js/navigation.js](../src/main/resources/static/js/navigation.js).

@@ -213,7 +213,7 @@
         </div>
       </aside>
       <main class="app-main student-content" id="main-content" tabindex="-1">
-        <a class="back-link" th:href="@{/student/results}">
+        <a class="back-link" th:href="${fromPlacement == true} ? @{/student/placement} : @{/student/results}">
           <svg
             viewBox="0 0 24 24"
             fill="none"
@@ -251,7 +251,7 @@
             th:text="${infoMessage != null ? infoMessage : info}"
           ></div>
         </div>
-        <th:block th:with="res=${attemptResult}, isPlacement=false">
+        <th:block th:with="res=${attemptResult}, isPlacement=${fromPlacement == true}">
           <div class="result-container">
             <header class="result-detail-header">
               <div>

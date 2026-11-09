@@ -149,11 +149,12 @@ public class StudentAccountController {
     @GetMapping("/student/placement/result")
     public String result(@RequestParam Integer attemptId, Principal principal, Model model) {
         var result = placement.result(principal.getName(), attemptId);
-        model.addAttribute("placementResult", result);
+        model.addAttribute("attemptResult", result);
+        model.addAttribute("fromPlacement", true);
         var scoreGuideView = scoringGuides.forResultView(result);
         model.addAttribute("scoreGuides", scoreGuideView.guides());
         model.addAttribute("feedbackWithoutGuide", scoreGuideView.feedbackWithoutGuide());
-        return "student/account/placement-result";
+        return "student/attempt-result";
     }
 
     private List<String> placementSkills() {
