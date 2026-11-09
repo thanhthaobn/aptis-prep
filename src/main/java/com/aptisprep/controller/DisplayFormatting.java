@@ -44,34 +44,6 @@ public class DisplayFormatting {
         return false;
     }
 
-    public String historyStateClass(String state) {
-        return switch (state == null ? "" : state) {
-            case "COMPLETED" -> " is-complete";
-            case "ERROR" -> " is-error";
-            default -> " is-pending";
-        };
-    }
-
-    public String historyState(String state) {
-        return switch (state == null ? "" : state) {
-            case "COMPLETED" -> "Đã hoàn thành";
-            case "ERROR" -> "Chấm điểm gặp lỗi";
-            case "EXPIRED" -> "Đã hết thời gian";
-            case "IN_PROGRESS" -> "Đang làm bài";
-            default -> "Đang chấm điểm";
-        };
-    }
-
-    public String historyStateBadgeClass(String state) {
-        return switch (state == null ? "" : state) {
-            case "COMPLETED" -> "badge-success";
-            case "ERROR" -> "badge-danger";
-            case "EXPIRED" -> "badge-history-expired";
-            case "IN_PROGRESS" -> "badge-info";
-            default -> "badge-warning";
-        };
-    }
-
     public String checkpointAction(String state) {
         return switch (state == null ? "" : state) {
             case "in_progress" -> "Tiếp tục bài đang làm";
