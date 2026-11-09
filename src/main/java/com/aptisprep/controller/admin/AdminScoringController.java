@@ -3,6 +3,7 @@ package com.aptisprep.controller.admin;
 import com.aptisprep.controller.DisplayFormatting;
 import com.aptisprep.controller.ListPagination;
 import com.aptisprep.dto.form.*;
+import com.aptisprep.enums.CefrLevel;
 import com.aptisprep.exception.BusinessRuleException;
 import com.aptisprep.repository.MockExamRepository;
 import com.aptisprep.service.scoring.ScoringAdminService;
@@ -397,6 +398,8 @@ public class AdminScoringController {
     private void schemeOptions(Model model) {
         model.addAttribute("certificates", scoring.certificateViews());
         model.addAttribute("examTypes", EXAM_TYPES);
+        model.addAttribute("scoringLevels", CefrLevel.codes());
+        model.addAttribute("fullMockScoringLevels", CefrLevel.scoringCodes());
         model.addAttribute(
                 "skills",
                 List.of("Grammar & Vocabulary", "Reading", "Listening", "Writing", "Speaking"));

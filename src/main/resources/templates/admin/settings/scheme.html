@@ -407,7 +407,7 @@
                   <select id="schemeTargetLevel" th:field="*{targetLevel}">
                     <option value="">Dùng bảng CEFR</option>
                     <option
-                      th:each="level : ${display.scoringLevels()}"
+                      th:each="level : ${scoringLevels}"
                       th:attr="data-c2=${level == 'C2' ? 'true' : null}"
                       th:value="${level}"
                       th:text="${level}"
@@ -501,7 +501,7 @@
                     </thead>
                     <tbody>
                       <tr
-                        th:each="level : ${skill == 'GRAMMAR_VOCABULARY' ? display.scoringLevels() : display.fullMockScoringLevels()}"
+                        th:each="level : ${skill == 'GRAMMAR_VOCABULARY' ? scoringLevels : fullMockScoringLevels}"
                         th:classappend="${level == 'A0'} ? 'below-a1-row'"
                         th:attr="data-c2=${level == 'C2' ? 'true' : null}"
                         th:with="key=${skill + '_' + level}"
@@ -743,7 +743,7 @@
                 <label for="bandLevel">CEFR</label>
                 <select id="bandLevel" th:field="*{cefrLevel}">
                   <option
-                    th:each="level : ${display.scoringLevels()}"
+                    th:each="level : ${scoringLevels}"
                     th:value="${level}"
                     th:text="${level}"
                     th:attr="data-c2=${level == 'C2' ? 'true' : null}"

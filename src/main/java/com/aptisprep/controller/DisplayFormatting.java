@@ -95,14 +95,6 @@ public class DisplayFormatting {
         return LessonService.LEVELS;
     }
 
-    public List<String> scoringLevels() {
-        return CefrLevel.codes();
-    }
-
-    public List<String> fullMockScoringLevels() {
-        return CefrLevel.scoringCodes();
-    }
-
     public String cefrLabel(String level) {
         return CefrLevel.BELOW_A1.equals(level) ? "Dưới A1" : level;
     }
