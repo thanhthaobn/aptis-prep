@@ -404,7 +404,7 @@
                       <span
                         th:each="skill : ${attempt.skills}"
                         class="skill-mini-pill"
-                        th:text="${(skill.skill == 'GRAMMAR_VOCABULARY' ? 'Grammar & Vocabulary' : skill.skill) + ': ' + (skill.estimatedLevel == null ? 'Chờ chấm' : (skill.estimatedLevel == 'A0' ? 'Dưới A1' : skill.estimatedLevel))}"
+                        th:text="${(skill.skill == 'GRAMMAR_VOCABULARY' ? 'Grammar & Vocabulary' : skill.skill) + ': ' + (skill.estimatedLevel == null ? (skill.gradingState == 'COMPLETED' ? 'Đã chấm' : 'Chờ chấm') : (skill.estimatedLevel == 'A0' ? 'Dưới A1' : skill.estimatedLevel))}"
                       ></span>
                     </div>
                     <span
@@ -436,9 +436,7 @@
                       th:if="${attempt.canDiscard()}"
                       th:action="@{/student/attempts/{id}/discard(id=${attempt.attemptId})}"
                       method="post"
-                      data-confirm-title="Xóa lượt chưa nộp?"
-                      data-confirm-message="Lượt này sẽ biến mất khỏi lịch sử và bạn sẽ không thể làm tiếp các câu đã lưu."
-                      data-confirm-button="Xóa lượt chưa nộp"
+                      th:attr="data-confirm-title=${attempt.state == 'COMPLETED' ? 'Xóa kết quả?' : 'Xóa lượt thi?'},data-confirm-message=${attempt.state == 'COMPLETED' ? 'Kết quả này sẽ bị ẩn khỏi lịch sử kết quả.' : 'Lượt thi này sẽ bị ẩn khỏi lịch sử.'},data-confirm-button=${attempt.state == 'COMPLETED' ? 'Xóa kết quả' : 'Xóa lượt thi'}"
                     >
                       <button
                         class="button button-danger button-small result-discard-button"

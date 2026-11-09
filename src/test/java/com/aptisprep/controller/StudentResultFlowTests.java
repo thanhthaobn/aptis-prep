@@ -376,13 +376,13 @@ class StudentResultFlowTests {
                                                         "/student/attempts/"
                                                                 + scoredDraft.getId()
                                                                 + "/discard"))))
-                .andExpect(content().string(not(containsString(completedUrl + "/discard"))));
+                .andExpect(content().string(containsString(completedUrl + "/discard")));
         mvc.perform(post(discardUrl).with(owner)).andExpect(status().isForbidden());
         mvc.perform(post(discardUrl).with(user(other.getEmail()).roles("STUDENT")).with(csrf()))
                 .andExpect(status().isForbidden());
         mvc.perform(post(completedUrl + "/discard").with(owner).with(csrf()))
                 .andExpect(redirectedUrl("/student/results"))
-                .andExpect(flash().attributeExists("error"));
+                .andExpect(flash().attributeExists("successMessage"));
         mvc.perform(post(expiredDiscardUrl).with(owner).with(csrf()))
                 .andExpect(redirectedUrl("/student/results"))
                 .andExpect(flash().attributeExists("successMessage"));
@@ -402,7 +402,7 @@ class StudentResultFlowTests {
                 .andExpect(status().isOk())
                 .andExpect(content().string(not(containsString(discardUrl))))
                 .andExpect(content().string(not(containsString(draftUrl + "/result"))))
-                .andExpect(content().string(containsString(completedUrl + "/result")));
+                .andExpect(content().string(not(containsString(completedUrl + "/result"))));
         mvc.perform(get("/student/attempts/{id}", draft.getId()).with(owner))
                 .andExpect(status().isNotFound());
         assertThat(attempts.findByUserIdAndRequestKey(learner.getId(), "discard-draft")).isEmpty();

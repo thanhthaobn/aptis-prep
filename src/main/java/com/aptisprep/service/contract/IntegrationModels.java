@@ -190,7 +190,7 @@ public final class IntegrationModels {
             String overallCefr,
             Instant submittedAt) {
         public boolean canDiscard() {
-            return "EXPIRED".equals(state)
+            return "EXPIRED".equals(state) || "COMPLETED".equals(state)
                     || ("IN_PROGRESS".equals(state)
                             && submittedAt == null
                             && finalScaleScore == null

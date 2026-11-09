@@ -129,7 +129,11 @@ public class AttemptFinalizationService {
             total = summary.total();
             overall = summary.cefrLevel();
             for (int i = 0; i < results.size(); i++) {
-                results.get(i).setCefrLevel(summary.skills().get(i).cefrLevel());
+                // Grammar & Vocabulary is the core skill used to calculate the
+                // combined level, but its own objective CEFR must remain visible
+                // on the detailed result page.
+                if (!"GRAMMAR_VOCABULARY".equals(results.get(i).getSkill()))
+                    results.get(i).setCefrLevel(summary.skills().get(i).cefrLevel());
             }
         } else if (schemeId != null) {
             total = scoring.overallScale(schemeId, scores);
