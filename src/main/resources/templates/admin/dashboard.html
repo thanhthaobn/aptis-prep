@@ -355,7 +355,7 @@
                   <strong th:text="${item.title}"></strong>
                   <small
                     th:if="${item.updatedAt != null}"
-                    th:text="${display.dateTime(item.updatedAt)}"
+                    th:text="${#temporals.format(item.updatedAt, 'dd/MM/yyyy HH:mm')}"
                   ></small>
                 </a>
               </li>

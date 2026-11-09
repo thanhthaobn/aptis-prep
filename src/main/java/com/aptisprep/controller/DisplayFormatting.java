@@ -1,11 +1,7 @@
 package com.aptisprep.controller;
 
-import java.time.ZoneId;
-import java.time.format.DateTimeFormatter;
-import java.time.temporal.TemporalAccessor;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 import org.springframework.stereotype.Component;
 import org.springframework.validation.Errors;
 import org.springframework.validation.ObjectError;
@@ -45,26 +41,6 @@ public class DisplayFormatting {
             messages.add(context.getMessage(error, false));
         }
         return messages;
-    }
-
-    public String date(TemporalAccessor value) {
-        return format(value, "dd/MM/yyyy");
-    }
-
-    public String dateTime(TemporalAccessor value) {
-        return format(value, "dd/MM/yyyy HH:mm");
-    }
-
-    public String dateTimeWithSeconds(TemporalAccessor value) {
-        return format(value, "dd/MM/yyyy HH:mm:ss");
-    }
-
-    private String format(TemporalAccessor value, String pattern) {
-        if (value == null) return null;
-        DateTimeFormatter formatter =
-                DateTimeFormatter.ofPattern(pattern, Locale.getDefault())
-                        .withZone(ZoneId.systemDefault());
-        return formatter.format(value);
     }
 
 }

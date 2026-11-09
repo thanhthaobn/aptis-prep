@@ -349,7 +349,7 @@
               <div class="goal-target-date">
                 <span
                   class="goal-eyebrow"
-                  th:text="${account.goal.targetDate != null ? 'HẠN THI: ' + display.date(account.goal.targetDate) : 'CHƯA ĐẶT NGÀY'}"
+                  th:text="${account.goal.targetDate != null ? 'HẠN THI: ' + #temporals.format(account.goal.targetDate, 'dd/MM/yyyy') : 'CHƯA ĐẶT NGÀY'}"
                 ></span>
                 <span
                   th:if="${account.goal.targetDate != null}"

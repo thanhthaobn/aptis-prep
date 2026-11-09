@@ -343,7 +343,7 @@
                 ></td>
                 <td
                   data-label="Nộp bài"
-                  th:text="${item.result.submittedAt==null?'Chưa nộp':display.dateTime(item.result.submittedAt)}"
+                  th:text="${item.result.submittedAt==null?'Chưa nộp':#temporals.format(item.result.submittedAt, 'dd/MM/yyyy HH:mm')}"
                 ></td>
                 <td data-label="Thao tác">
                   <a th:href="@{/admin/results/{id}(id=${item.result.attemptId})}">Xem chi tiết</a>

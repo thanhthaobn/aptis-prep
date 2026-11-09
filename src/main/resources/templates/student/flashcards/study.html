@@ -418,7 +418,7 @@
               <dd
                 class="muted"
                 th:if="${card.nextReviewAt != null}"
-                th:text="${'Ôn tiếp: ' + (display.dateTime(card.nextReviewAt))}"
+                th:text="${'Ôn tiếp: ' + (#temporals.format(card.nextReviewAt, 'dd/MM/yyyy HH:mm'))}"
               ></dd>
             </div>
           </dl>

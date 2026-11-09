@@ -401,7 +401,7 @@
                   <span
                     class="time-meta-text"
                     th:if="${attempt.submittedAt != null}"
-                    th:text="${'Đã nộp ' + display.dateTime(attempt.submittedAt)}"
+                    th:text="${'Đã nộp ' + #temporals.format(attempt.submittedAt, 'dd/MM/yyyy HH:mm')}"
                   ></span>
                   <span
                     class="time-meta-text in-progress-time"

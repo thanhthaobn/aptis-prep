@@ -353,7 +353,7 @@
               <dd th:if="${student.goal == null or student.goal.targetDate == null}">Chưa đặt</dd>
               <dd
                 th:unless="${student.goal == null or student.goal.targetDate == null}"
-                th:text="${display.date(student.goal.targetDate)}"
+                th:text="${#temporals.format(student.goal.targetDate, 'dd/MM/yyyy')}"
               ></dd>
             </div>
           </dl>

@@ -446,7 +446,7 @@
                       ></summary>
                       <details class="lesson-work-history" th:each="attempt : ${attempts}">
                         <summary
-                          th:text="${'' + (display.dateTimeWithSeconds(attempt.submittedAt())) + ' — ' + (attempt.score()) + '/' + (attempt.total()) + ' câu đúng'}"
+                          th:text="${'' + (#temporals.format(attempt.submittedAt(), 'dd/MM/yyyy HH:mm:ss')) + ' — ' + (attempt.score()) + '/' + (attempt.total()) + ' câu đúng'}"
                         ></summary>
                         <th:block
                           th:with="context=${attempt.context}, mediaPrefix=${'/student/lessons/'+lesson.id+'/history/attempts/'+attempt.id+'/media'}"
@@ -684,7 +684,7 @@
                   <summary th:text="${'Lịch sử làm bài (' + (attempts.size()) + ' lần)'}"></summary>
                   <details class="lesson-work-history" th:each="attempt : ${attempts}">
                     <summary
-                      th:text="${'' + (display.dateTimeWithSeconds(attempt.submittedAt())) + ' — ' + (attempt.score()) + '/' + (attempt.total()) + ' câu đúng'}"
+                      th:text="${'' + (#temporals.format(attempt.submittedAt(), 'dd/MM/yyyy HH:mm:ss')) + ' — ' + (attempt.score()) + '/' + (attempt.total()) + ' câu đúng'}"
                     ></summary>
                     <th:block
                       th:with="context=${attempt.context}, mediaPrefix=${'/student/lessons/'+lesson.id+'/history/attempts/'+attempt.id+'/media'}"
@@ -886,7 +886,7 @@
                 />
                 <span class="ai-submission-choice-body">
                   <strong
-                    th:text="${'Bài lưu lúc ' + (display.dateTimeWithSeconds(submission.submittedAt))}"
+                    th:text="${'Bài lưu lúc ' + (#temporals.format(submission.submittedAt, 'dd/MM/yyyy HH:mm:ss'))}"
                   ></strong>
                   <small th:if="${lesson.skill=='Speaking'}">Có transcript và bản ghi âm</small>
                   <span class="ai-submission-excerpt" th:text="${submission.text}"></span>
@@ -941,7 +941,7 @@
           </summary>
           <details class="lesson-work-history" th:each="submission : ${submissions}">
             <summary
-              th:text="${'' + (display.dateTimeWithSeconds(submission.submittedAt)) + ' · ' + (submission.skill=='Writing'?'Bài viết':'Bản ghi / transcript')}"
+              th:text="${'' + (#temporals.format(submission.submittedAt, 'dd/MM/yyyy HH:mm:ss')) + ' · ' + (submission.skill=='Writing'?'Bài viết':'Bản ghi / transcript')}"
             ></summary>
             <p
               class="lesson-prose"
