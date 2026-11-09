@@ -1,6 +1,5 @@
 package com.aptisprep.controller;
 
-import com.aptisprep.enums.Skill;
 import com.aptisprep.service.contract.IntegrationModels.SkillResult;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
@@ -41,14 +40,6 @@ public class DisplayFormatting {
             if (skill.retryable()) return true;
         }
         return false;
-    }
-
-    public String catalogSkill(String skill) {
-        if ("FULL_MOCK".equals(skill)) return "Tổng hợp";
-        for (Skill value : Skill.values()) {
-            if (value.name().equalsIgnoreCase(skill)) return value.label();
-        }
-        return skill;
     }
 
     public boolean fieldInvalid(String formName, String field) {

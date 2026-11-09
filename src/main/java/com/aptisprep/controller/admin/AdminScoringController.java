@@ -360,7 +360,7 @@ public class AdminScoringController {
                     default -> throw new BusinessRuleException("Kỹ năng không hợp lệ");
                 };
         ScoringViews.SchemeView value = scoring.scheme(id);
-        if (value.scopeSkill() != null) skill = display.catalogSkill(value.scopeSkill());
+        if (value.scopeSkill() != null) skill = SKILL_LABELS.getOrDefault(value.scopeSkill(), value.scopeSkill());
         schemeOptions(model);
         if (value.scopeSkill() != null) model.addAttribute("skills", List.of(skill));
         model.addAttribute("scheme", value);
