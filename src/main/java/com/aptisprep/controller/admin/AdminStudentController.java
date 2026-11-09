@@ -22,7 +22,7 @@ public class AdminStudentController {
             @RequestParam(name = "q", defaultValue = "") String q,
             @RequestParam(name = "status", defaultValue = "") String status,
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(defaultValue = "10") int size,
             Model model) {
         UserStatus filter = parseStatus(status);
         model.addAttribute("pageData", students.list(q, filter, page, size));
@@ -38,7 +38,7 @@ public class AdminStudentController {
     public String detail(
             @PathVariable int id,
             @RequestParam(defaultValue = "0") int attemptPage,
-            @RequestParam(defaultValue = "10") int attemptSize,
+            @RequestParam(defaultValue = "5") int attemptSize,
             Model model) {
         model.addAttribute("student", students.detail(id, attemptPage, attemptSize));
         return "admin/student/detail";
