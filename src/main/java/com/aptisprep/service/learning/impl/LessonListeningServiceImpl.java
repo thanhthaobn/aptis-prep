@@ -55,7 +55,7 @@ public class LessonListeningServiceImpl implements LessonListeningService {
                 json);
     }
 
-    LessonListeningServiceImpl(
+    public LessonListeningServiceImpl(
             UserRepository userRepository,
             LessonRepository lessonRepository,
             LessonEngagementRepository lessonEngagementRepository,

@@ -197,7 +197,7 @@ class GrammarScoringRepairSqlServerTests {
             when(bands.findBySchemeIdAndSkillOrderByMinScoreAsc(schemeId, skill))
                     .thenReturn(values);
         }
-        var service = new ScoringPolicyService(schemes, bands, rules);
+          var service = new com.aptisprep.service.scoring.impl.ScoringPolicyServiceImpl(schemes, bands, rules);
         for (String skill : SKILLS) service.validatePolicy(schemeId, skill);
         for (String[] boundary :
                 new String[][] {

@@ -33,7 +33,7 @@ class UnavailableExamCatalogTests {
         doThrow(new BusinessRuleException("Missing questions"))
                 .when(validator)
                 .validate(eq(old), anyList());
-        var catalog = new StudentExamCatalogService(exams, sections, questions, validator);
+          var catalog = new com.aptisprep.service.student.impl.StudentExamCatalogServiceImpl(exams, sections, questions, validator);
         var result = catalog.browse("", "", "", "", "PRACTICE", "level", PageRequest.of(0, 9));
         assertThat(result.page().getTotalElements()).isZero();
         assertThat(result.categories()).allMatch(category -> category.count() == 0);

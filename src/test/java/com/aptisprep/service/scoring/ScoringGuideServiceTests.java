@@ -18,7 +18,7 @@ class ScoringGuideServiceTests {
         var bands = mock(ScoreBandRepository.class);
         var snapshots = mock(ExamAttemptSnapshotRepository.class);
         var exams = mock(MockExamRepository.class);
-        var service = new ScoringGuideService(schemes, rules, bands, exams, snapshots);
+          var service = new com.aptisprep.service.scoring.impl.ScoringGuideServiceImpl(schemes, rules, bands, exams, snapshots);
         var snapshot = new ExamAttemptSnapshotEntity();
         snapshot.setScoringSchemeId(7);
         snapshot.setSkill("READING");

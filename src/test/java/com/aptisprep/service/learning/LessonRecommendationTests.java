@@ -37,7 +37,7 @@ class LessonRecommendationTests {
                     throw new UnsupportedOperationException();
                 }
             };
-    final LessonRecommendationService service = new LessonRecommendationService(progress, accounts);
+      final LessonRecommendationService service = new com.aptisprep.service.learning.impl.LessonRecommendationServiceImpl(progress, accounts);
 
     PathProgress path(int id, String skill, int done) {
         return new PathProgress(
