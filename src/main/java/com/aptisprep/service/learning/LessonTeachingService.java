@@ -19,7 +19,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
-import tools.jackson.databind.json.JsonMapper;
 
 @Service
 @Transactional
@@ -36,7 +35,6 @@ public class LessonTeachingService {
     @PersistenceContext private EntityManager em;
 
     private final AiProperties aiProperties;
-    private final JsonMapper json;
 
     public record ReleaseState(
             boolean transcript, boolean sample, String transcriptHint, String sampleHint) {}
@@ -163,8 +161,7 @@ public class LessonTeachingService {
             StorageService s,
             LessonProgressRepository lessonProgressRepository,
             AiAssessmentContract ai,
-            AiProperties aiProperties,
-            JsonMapper json) {
+            AiProperties aiProperties) {
         checkService = c;
         this.lessonRepository = lessonRepository;
         this.userRepository = userRepository;
@@ -175,7 +172,6 @@ public class LessonTeachingService {
         this.lessonProgressRepository = lessonProgressRepository;
         assessments = ai;
         this.aiProperties = aiProperties;
-        this.json = json;
     }
 
     public LessonResponse savedWork(Integer lessonId, String email) {
@@ -266,11 +262,28 @@ public class LessonTeachingService {
                                         a.getScore(),
                                         a.getTotal(),
                                         a.getSubmittedAt(),
-                                        has(a.getReviewJson())
-                                                ? List.of(
-                                                        json.readValue(
-                                                                a.getReviewJson(),
-                                                                AnswerFeedback[].class))
+                                        !a.getFeedback().isEmpty()
+                                                ? a.getFeedback().stream()
+                                                        .map(
+                                                                value ->
+                                                                        new AnswerFeedback(
+                                                                                value.getPrompt(),
+                                                                                value.getSelected(),
+                                                                                value.getCorrect(),
+                                                                                value
+                                                                                        .isRightAnswer(),
+                                                                                value
+                                                                                        .getExplanation(),
+                                                                                value
+                                                                                                        .getOptionsText()
+                                                                                                == null
+                                                                                        ? List.of()
+                                                                                        : Arrays
+                                                                                                .asList(
+                                                                                                        value.getOptionsText()
+                                                                                                                .split(
+                                                                                                                        "\\u001f"))))
+                                                        .toList()
                                                 : List.of(),
                                         a.getContext()))
                 .toList();

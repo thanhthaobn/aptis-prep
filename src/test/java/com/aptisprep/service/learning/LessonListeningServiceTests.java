@@ -45,12 +45,7 @@ class LessonListeningServiceTests {
         when(engagements.findByUserIdAndLessonId(1, 2)).thenReturn(Optional.of(progress));
         service =
                 new com.aptisprep.service.learning.impl.LessonListeningServiceImpl(
-                        users,
-                        lessons,
-                        engagements,
-                        durations,
-                        clock,
-                        tools.jackson.databind.json.JsonMapper.builder().build());
+                        users, lessons, engagements, durations, clock);
         token = service.start(2, "a@test.local", 0).token();
     }
 
@@ -111,7 +106,7 @@ class LessonListeningServiceTests {
     void pausedTimeDoesNotCountAsPlayback() {
         ping(0, 1, false, false);
         ping(10, 10, true, false);
-        assertEquals("[]", progress.getPlaybackRangesJson());
+        assertTrue(progress.getPlaybackRanges().isEmpty());
     }
 
     @Test

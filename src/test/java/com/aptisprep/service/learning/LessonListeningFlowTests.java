@@ -43,12 +43,7 @@ class LessonListeningFlowTests {
                 AudioDurationService durations,
                 LessonListeningServiceTests.MutableClock clock) {
             return new com.aptisprep.service.learning.impl.LessonListeningServiceImpl(
-                    users,
-                    lessons,
-                    engagements,
-                    durations,
-                    clock,
-                    tools.jackson.databind.json.JsonMapper.builder().build());
+                    users, lessons, engagements, durations, clock);
         }
     }
 

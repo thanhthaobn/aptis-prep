@@ -2,6 +2,8 @@ package com.aptisprep.entity;
 
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(
@@ -48,11 +50,12 @@ public class ExamAttemptSnapshotEntity {
     @Column(name = "policy_version", nullable = false, length = 100)
     private String policyVersion;
 
-    @Column(name = "grading_context", nullable = false, columnDefinition = "nvarchar(max)")
-    private String gradingContext;
+    @Column(name = "section_advance_millis", nullable = false)
+    private Long sectionAdvanceMillis = 0L;
 
-    @Column(name = "locked_question_snapshot", nullable = false, columnDefinition = "nvarchar(max)")
-    private String lockedQuestionSnapshot;
+    @OneToMany(mappedBy = "snapshot", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OrderBy("position ASC")
+    private List<ExamQuestionSnapshotEntity> questions = new ArrayList<>();
 
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
@@ -110,16 +113,16 @@ public class ExamAttemptSnapshotEntity {
         return policyVersion;
     }
 
-    public String getGradingContext() {
-        return gradingContext;
-    }
-
-    public String getLockedQuestionSnapshot() {
-        return lockedQuestionSnapshot;
-    }
-
     public LocalDateTime getCreatedAt() {
         return createdAt;
+    }
+
+    public Long getSectionAdvanceMillis() {
+        return sectionAdvanceMillis;
+    }
+
+    public List<ExamQuestionSnapshotEntity> getQuestions() {
+        return questions;
     }
 
     public void setAttemptId(Integer value) {
@@ -166,11 +169,12 @@ public class ExamAttemptSnapshotEntity {
         policyVersion = value;
     }
 
-    public void setGradingContext(String value) {
-        gradingContext = value;
+    public void setSectionAdvanceMillis(Long value) {
+        sectionAdvanceMillis = value == null ? 0L : value;
     }
 
-    public void setLockedQuestionSnapshot(String value) {
-        lockedQuestionSnapshot = value;
+    public void addQuestion(ExamQuestionSnapshotEntity question) {
+        questions.add(question);
+        question.setSnapshot(this);
     }
 }

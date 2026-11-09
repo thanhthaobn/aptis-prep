@@ -29,12 +29,14 @@ public interface UserRepository extends JpaRepository<User, Integer> {
     @Query(
             value =
                     "select u.* from users u where u.role = 'STUDENT' "
+                            + "and (:status is not null or u.status <> 'INACTIVE') "
                             + "and (:status is null or u.status = :status) "
                             + "and (:pattern = '%' or lower(u.full_name) like :pattern escape '\\' "
                             + "or lower(u.email) like :pattern escape '\\') "
                             + "order by u.created_at desc, u.id desc",
             countQuery =
                     "select count(*) from users u where u.role = 'STUDENT' "
+                            + "and (:status is not null or u.status <> 'INACTIVE') "
                             + "and (:status is null or u.status = :status) "
                             + "and (:pattern = '%' or lower(u.full_name) like :pattern escape '\\' "
                             + "or lower(u.email) like :pattern escape '\\')",

@@ -63,10 +63,7 @@ public class AuthController {
     }
 
     @GetMapping("/register")
-    public String registerForm(Model model, Principal principal) {
-        if (principal != null) {
-            return "redirect:/";
-        }
+    public String registerForm(Model model) {
         if (!model.containsAttribute("registerForm")) {
             model.addAttribute("registerForm", new RegisterForm());
         }

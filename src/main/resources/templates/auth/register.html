@@ -136,12 +136,7 @@
           </span>
           <h1>Tạo tài khoản</h1>
 
-          <form
-            th:action="@{/register}"
-            th:object="${registerForm}"
-            method="post"
-            data-account-form
-          >
+          <form th:action="@{/register}" th:object="${registerForm}" method="post">
             <div
               class="alert alert-danger"
               th:if="${!#fields.globalErrors().isEmpty()}"
@@ -161,8 +156,6 @@
                 th:field="*{fullName}"
                 autocomplete="name"
                 placeholder="Nguyễn Văn An"
-                maxlength="255"
-                required
               />
               <span id="fullName-error" class="field-error" aria-live="polite">
                 <span th:errors="*{fullName}"></span>
@@ -175,11 +168,9 @@
                 aria-describedby="email-error"
                 th:attr="aria-invalid=${#fields.hasErrors('email')}"
                 th:field="*{email}"
-                type="email"
+                type="text"
                 autocomplete="email"
                 placeholder="name@example.com"
-                maxlength="255"
-                required
               />
               <span id="email-error" class="field-error" aria-live="polite">
                 <span th:errors="*{email}"></span>
@@ -198,11 +189,7 @@
                   th:field="*{password}"
                   type="password"
                   autocomplete="new-password"
-                  data-password-policy
                   placeholder="Tối thiểu 8 ký tự"
-                  minlength="8"
-                  maxlength="72"
-                  required
                 />
                 <button
                   class="password-toggle"
@@ -229,10 +216,7 @@
                   th:field="*{confirmPassword}"
                   type="password"
                   autocomplete="new-password"
-                  data-password-confirm
-                  maxlength="72"
                   placeholder="Nhập lại mật khẩu"
-                  required
                 />
                 <button
                   class="password-toggle"

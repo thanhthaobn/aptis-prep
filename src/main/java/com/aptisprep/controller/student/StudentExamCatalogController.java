@@ -8,6 +8,7 @@ import com.aptisprep.service.contract.ExamAttemptContract;
 import com.aptisprep.service.contract.IntegrationModels.AttemptResult;
 import com.aptisprep.service.contract.IntegrationModels.HistoryFilter;
 import com.aptisprep.service.contract.IntegrationModels.HistoryPage;
+import com.aptisprep.service.exam.ExamAttemptService;
 import com.aptisprep.service.learning.LessonService;
 import com.aptisprep.service.scoring.ScoringGuideService;
 import com.aptisprep.service.student.StudentExamCatalogService;
@@ -24,16 +25,16 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
-/** Published exams from the database; results use the ownership-checked attempt contract. */
+/** Student exam catalog pages and ownership-checked result history. */
 @Controller
-public class StudentContentController {
+public class StudentExamCatalogController {
     private final ScoringGuideService scoringGuides;
 
     private final StudentExamCatalogService catalog;
     private final AccountAccessService accounts;
     private final ExamAttemptContract attempts;
 
-    public StudentContentController(
+    public StudentExamCatalogController(
             StudentExamCatalogService catalog,
             AccountAccessService accounts,
             ExamAttemptContract attempts,
@@ -88,7 +89,7 @@ public class StudentContentController {
         model.addAttribute("selectedState", state);
         model.addAttribute("skillCodes", Skill.codes());
         model.addAttribute("learningLevels", LessonService.LEVELS);
-        return "student/content/list";
+        return "student/exams/exam-list";
     }
 
     @GetMapping("/student/results")
@@ -145,18 +146,24 @@ public class StudentContentController {
                 model.addAttribute("resumableAttemptId", resumableAttemptId);
         }
         model.addAttribute("scoreGuides", scoringGuides.forExam(id));
-        return "student/content/detail";
+        return "student/exams/exam-detail";
     }
 
     @GetMapping("/student/attempts/{id}/result")
     public String result(@PathVariable int id, Principal principal, Model model) {
         Integer userId = accounts.requireActiveStudent(principal.getName());
         AttemptResult result = attempts.result(userId, id);
+        if ("IN_PROGRESS".equals(result.state())) return "redirect:/student/attempts/" + id;
+        if ("EXPIRED".equals(result.state()) && result.submittedAt() == null)
+            return "redirect:/student/results";
         model.addAttribute("attemptResult", result);
         var scoreGuideView = scoringGuides.forResultView(result);
         model.addAttribute("scoreGuides", scoreGuideView.guides());
         model.addAttribute("feedbackWithoutGuide", scoreGuideView.feedbackWithoutGuide());
         model.addAttribute("canRegradeEmpty", attempts.canRegradeEmpty(userId, id));
+        if (!"IN_PROGRESS".equals(result.state())
+                && attempts instanceof ExamAttemptService reviewService)
+            model.addAttribute("review", reviewService.review(userId, id));
         return "student/attempt-result";
     }
 

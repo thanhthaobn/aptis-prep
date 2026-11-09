@@ -4,7 +4,7 @@ import static org.assertj.core.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
-import com.aptisprep.controller.student.StudentContentController;
+import com.aptisprep.controller.student.StudentExamCatalogController;
 import com.aptisprep.exception.BusinessRuleException;
 import com.aptisprep.service.account.AccountAccessService;
 import com.aptisprep.service.contract.ExamAttemptContract;
@@ -20,7 +20,7 @@ class StudentResultRetryTests {
         var accounts = mock(AccountAccessService.class);
         var attempts = mock(ExamAttemptContract.class);
         var controller =
-                new StudentContentController(
+                new StudentExamCatalogController(
                         mock(StudentExamCatalogService.class),
                         accounts,
                         attempts,

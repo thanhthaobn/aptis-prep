@@ -124,6 +124,30 @@ public class StudentManagementServiceImpl implements StudentManagementService {
         changeStatus(adminEmail, id, UserStatus.LOCKED, UserStatus.ACTIVE, "mở khóa");
     }
 
+    @Override
+    @Transactional
+    public void remove(String adminEmail, Integer id) {
+        User admin =
+                userRepository
+                        .findByEmailIgnoreCase(adminEmail)
+                        .orElseThrow(
+                                () ->
+                                        new AccessDeniedException(
+                                                "Không có quyền thực hiện thao tác"));
+        if (admin.getRole() != Role.ADMIN)
+            throw new AccessDeniedException("Chỉ quản trị viên mới được quản lý học viên");
+        User target =
+                userRepository
+                        .findByIdForUpdate(id)
+                        .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy học viên"));
+        if (target.getRole() != Role.STUDENT)
+            throw new ResourceNotFoundException("Không tìm thấy học viên");
+        if (target.getStatus() != UserStatus.LOCKED)
+            throw new BusinessRuleException("Chỉ có thể xóa tài khoản đã khóa");
+        // Keep historical attempts and answers; hide the account by archiving it.
+        target.setStatus(UserStatus.INACTIVE);
+    }
+
     public long totalStudents() {
         return userRepository.countByRole(Role.STUDENT);
     }

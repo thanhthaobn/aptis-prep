@@ -279,14 +279,19 @@
               <span>Tạo bộ thẻ riêng</span>
             </a>
           </header>
-          <div class="flashcard-personal-empty" th:if="${mineResultCount==0 and mineCount>0}">
-            <th:block th:if="${mineCount>0}">
-              <p>Bộ lọc hiện tại đang ẩn các bộ thẻ của bạn.</p>
-              <a th:href="@{/student/flashcards(source='mine')}">Xem tất cả bộ thẻ của tôi →</a>
-            </th:block>
-          </div>
 
-          <section class="flashcard-set-grid" aria-label="Danh sách bộ flashcard">
+          <details class="flashcard-personal-dropdown" open>
+            <summary>
+              <strong>Bộ thẻ cá nhân</strong>
+            </summary>
+            <div class="flashcard-personal-empty" th:if="${mineResultCount==0 and mineCount>0}">
+              <th:block th:if="${mineCount>0}">
+                <p>Bộ lọc hiện tại đang ẩn các bộ thẻ của bạn.</p>
+                <a th:href="@{/student/flashcards(source='mine')}">Xem tất cả bộ thẻ của tôi →</a>
+              </th:block>
+            </div>
+
+            <section class="flashcard-set-grid" aria-label="Danh sách bộ flashcard">
             <article
               class="flashcard-set-card flashcard-row"
               th:each="set : ${sets}"
@@ -321,27 +326,25 @@
               </div>
               <div class="flashcard-set-actions">
                 <a class="button" th:href="${'/student/flashcards/'+set.id()}">Ôn bộ thẻ</a>
-                <details class="flashcard-manage">
-                  <summary>Quản lý</summary>
-                  <a
-                    class="button button-secondary"
-                    th:href="@{/student/flashcards/{id}/edit(id=${set.id()})}"
-                  >
-                    Chỉnh sửa
-                  </a>
-                  <form
-                    method="post"
-                    th:action="@{/student/flashcards/{id}/archive(id=${set.id()})}"
-                    data-confirm-title="Lưu trữ bộ thẻ?"
-                    data-confirm-message="Tiến độ đã ghi nhận vẫn được giữ lại. Bộ thẻ sẽ được chuyển sang trạng thái lưu trữ."
-                    data-confirm-button="Lưu trữ"
-                  >
-                    <button class="button button-quiet" type="submit">Lưu trữ</button>
-                  </form>
-                </details>
+                <a
+                  class="button button-secondary"
+                  th:href="@{/student/flashcards/{id}/edit(id=${set.id()})}"
+                >
+                  Chỉnh sửa
+                </a>
+                <form
+                  method="post"
+                  th:action="@{/student/flashcards/{id}/archive(id=${set.id()})}"
+                  data-confirm-title="Xóa bộ thẻ?"
+                  data-confirm-message="Bộ thẻ sẽ được ẩn khỏi danh sách của bạn. Tiến độ ôn tập vẫn được giữ lại."
+                  data-confirm-button="Xóa bộ thẻ"
+                >
+                  <button class="button button-quiet" type="submit">Xóa thẻ</button>
+                </form>
               </div>
             </article>
-          </section>
+            </section>
+          </details>
         </section>
 
         <section class="flashcard-function-group" th:if="${lessonResultCount>0}">

@@ -7,6 +7,10 @@ import java.time.LocalDateTime;
 @Entity
 @Table(name = "lesson_work_submissions")
 public class LessonWorkSubmission {
+    @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true)
+    @JoinColumn(name = "context_snapshot_id")
+    private LessonContextSnapshotEntity contextSnapshotEntity;
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
@@ -26,11 +30,8 @@ public class LessonWorkSubmission {
     @Column(name = "response_text", columnDefinition = "nvarchar(max)")
     private String text;
 
-    @Column(name = "content_snapshot", columnDefinition = "nvarchar(max)")
-    private String contentSnapshot;
-
     public LessonContextSnapshot getContext() {
-        return LessonContextSnapshot.read(contentSnapshot);
+        return contextSnapshotEntity == null ? null : contextSnapshotEntity.toRecord();
     }
 
     @Column(name = "audio_path", length = 500)
@@ -49,7 +50,7 @@ public class LessonWorkSubmission {
                 lesson.getMaterial() == null
                         ? lesson.getTitle()
                         : lesson.getMaterial().getPracticePrompt();
-        contentSnapshot = LessonContextSnapshot.serialize(lesson);
+        contextSnapshotEntity = LessonContextSnapshotEntity.capture(lesson);
         text = work.getText();
         audioPath = work.getAudioPath();
         submittedAt = LocalDateTime.now();

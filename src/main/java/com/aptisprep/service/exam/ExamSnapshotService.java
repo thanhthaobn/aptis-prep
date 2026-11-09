@@ -7,14 +7,10 @@ import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.*;
 import org.springframework.stereotype.Service;
-import tools.jackson.databind.JsonNode;
-import tools.jackson.databind.json.JsonMapper;
-import tools.jackson.databind.node.ObjectNode;
 
 /** Owns locked exam content and per-attempt metadata within the caller's transaction. */
 @Service
 public final class ExamSnapshotService {
-    private static final String SECTION_ADVANCE_MILLIS = "sectionAdvanceMillis";
     private final QuestionRepository questionRepository;
     private final QuestionItemRepository questionItemRepository;
     private final QuestionOptionRepository questionOptionRepository;
@@ -22,7 +18,6 @@ public final class ExamSnapshotService {
     private final ExamAttemptSnapshotRepository examAttemptSnapshotRepository;
     private final MockExamSectionRepository sections;
     private final UserAnswerRepository answers;
-    private final JsonMapper json;
 
     ExamSnapshotService(
             QuestionRepository questionRepository,
@@ -31,8 +26,7 @@ public final class ExamSnapshotService {
             QuestionMediaRepository questionMediaRepository,
             ExamAttemptSnapshotRepository examAttemptSnapshotRepository,
             MockExamSectionRepository sections,
-            UserAnswerRepository answers,
-            JsonMapper json) {
+            UserAnswerRepository answers) {
         this.questionRepository = questionRepository;
         this.questionItemRepository = questionItemRepository;
         this.questionOptionRepository = questionOptionRepository;
@@ -40,7 +34,6 @@ public final class ExamSnapshotService {
         this.examAttemptSnapshotRepository = examAttemptSnapshotRepository;
         this.sections = sections;
         this.answers = answers;
-        this.json = json;
     }
 
     ExamAttemptSnapshotEntity require(Integer attemptId) {
@@ -131,6 +124,14 @@ public final class ExamSnapshotService {
         for (MockExamQuestionEntity link : links) {
             QuestionEntity question =
                     questionRepository.findById(link.getQuestionId()).orElseThrow();
+            ExamQuestionSnapshotEntity questionSnapshot = new ExamQuestionSnapshotEntity();
+            questionSnapshot.setSourceQuestionId(question.getId());
+            questionSnapshot.setPosition(link.getPosition());
+            questionSnapshot.setContent(question.getContent());
+            questionSnapshot.setInstruction(question.getInstruction());
+            questionSnapshot.setReadingPassage(question.getReadingPassage());
+            questionSnapshot.setQuestionType(question.getQuestionType());
+            questionSnapshot.setSkill(question.getSkill());
             Map<String, Object> q = new LinkedHashMap<>();
             q.put("id", question.getId());
             q.put("position", link.getPosition());
@@ -143,10 +144,20 @@ public final class ExamSnapshotService {
             if (window != null) {
                 q.put("sectionStartMinute", window.start());
                 q.put("sectionEndMinute", window.end());
+                questionSnapshot.setSectionStartMinute(window.start());
+                questionSnapshot.setSectionEndMinute(window.end());
             }
             List<Map<String, Object>> lockedItems = new ArrayList<>();
             for (QuestionItemEntity item :
                     questionItemRepository.findByQuestionIdOrderByPosition(question.getId())) {
+                ExamItemSnapshotEntity itemSnapshot = new ExamItemSnapshotEntity();
+                itemSnapshot.setSourceItemId(item.getId());
+                itemSnapshot.setPosition(item.getPosition());
+                itemSnapshot.setContent(item.getContent());
+                itemSnapshot.setCorrectPosition(item.getCorrectPosition());
+                itemSnapshot.setMinWordCount(item.getMinWordCount());
+                itemSnapshot.setMaxWordCount(item.getMaxWordCount());
+                itemSnapshot.setResponseSeconds(item.getResponseSeconds());
                 Map<String, Object> i = new LinkedHashMap<>();
                 i.put("id", item.getId());
                 i.put("position", item.getPosition());
@@ -160,6 +171,14 @@ public final class ExamSnapshotService {
                         .findByQuestionItemIdOrderByPosition(item.getId())
                         .forEach(
                                 option -> {
+                                    ExamOptionSnapshotEntity optionSnapshot =
+                                            new ExamOptionSnapshotEntity();
+                                    optionSnapshot.setSourceOptionId(option.getId());
+                                    optionSnapshot.setOptionCode(option.getOptionCode());
+                                    optionSnapshot.setPosition(option.getPosition());
+                                    optionSnapshot.setContent(option.getContent());
+                                    optionSnapshot.setCorrect(option.getCorrect());
+                                    itemSnapshot.addOption(optionSnapshot);
                                     Map<String, Object> o = new LinkedHashMap<>();
                                     o.put("id", option.getId());
                                     o.put("code", option.getOptionCode());
@@ -170,10 +189,22 @@ public final class ExamSnapshotService {
                                 });
                 i.put("options", lockedOptions);
                 lockedItems.add(i);
+                questionSnapshot.addItem(itemSnapshot);
             }
             List<Map<String, Object>> lockedMedia = new ArrayList<>();
             for (QuestionMediaEntity media :
                     questionMediaRepository.findByQuestionIdOrderByPosition(question.getId())) {
+                ExamMediaSnapshotEntity mediaSnapshot = new ExamMediaSnapshotEntity();
+                mediaSnapshot.setSourceMediaId(media.getId());
+                mediaSnapshot.setPosition(media.getPosition());
+                mediaSnapshot.setMediaType(media.getMediaType());
+                mediaSnapshot.setMediaUrl(media.getMediaUrl());
+                mediaSnapshot.setOriginalFilename(media.getOriginalFilename());
+                mediaSnapshot.setContentType(media.getContentType());
+                mediaSnapshot.setTranscript(media.getTranscript());
+                mediaSnapshot.setMaxPlayCount(
+                        media.getMaxPlayCount() == null ? 2 : media.getMaxPlayCount());
+                questionSnapshot.addMedia(mediaSnapshot);
                 Map<String, Object> m = new LinkedHashMap<>();
                 m.put("id", media.getId());
                 m.put("questionId", question.getId());
@@ -190,25 +221,14 @@ public final class ExamSnapshotService {
             q.put("items", lockedItems);
             q.put("media", lockedMedia);
             lockedQuestions.add(q);
+            snapshot.addQuestion(questionSnapshot);
         }
-        try {
-            snapshot.setGradingContext(json.writeValueAsString(grading));
-            snapshot.setLockedQuestionSnapshot(json.writeValueAsString(lockedQuestions));
-        } catch (RuntimeException exception) {
-            throw new BusinessRuleException("Không thể khóa nội dung đề thi cho lượt làm bài");
-        }
+        // Snapshot content is stored in the relational child tables above.
+        // Keep only a stable policy marker for compatibility with old grading events.
         examAttemptSnapshotRepository.save(snapshot);
     }
 
     record SectionWindow(int start, int end) {
-        static SectionWindow of(JsonNode question) {
-            return question.has("sectionEndMinute")
-                    ? new SectionWindow(
-                            question.path("sectionStartMinute").asInt(),
-                            question.path("sectionEndMinute").asInt())
-                    : null;
-        }
-
         boolean contains(LocalDateTime started, LocalDateTime now) {
             return !now.isBefore(started.plusMinutes(start))
                     && now.isBefore(started.plusMinutes(end));
@@ -219,61 +239,47 @@ public final class ExamSnapshotService {
         long advanceMillis =
                 examAttemptSnapshotRepository
                         .findByAttemptId(attempt.getId())
-                        .map(
-                                snapshot ->
-                                        json.readTree(snapshot.getGradingContext())
-                                                .path(SECTION_ADVANCE_MILLIS)
-                                                .asLong())
+                        .map(ExamAttemptSnapshotEntity::getSectionAdvanceMillis)
+                        .map(value -> value == null ? 0L : value)
                         .orElse(0L);
         return attempt.getStartedAt().minus(Duration.ofMillis(advanceMillis));
     }
 
     void advanceSectionClock(Integer attemptId, Duration remaining) {
         ExamAttemptSnapshotEntity snapshot = require(attemptId);
-        ObjectNode context = (ObjectNode) json.readTree(snapshot.getGradingContext());
         // Skip unused time without changing the durations stored in the locked section windows.
         long millis = (remaining.toNanos() + 999_999) / 1_000_000;
-        context.put(SECTION_ADVANCE_MILLIS, context.path(SECTION_ADVANCE_MILLIS).asLong() + millis);
-        snapshot.setGradingContext(json.writeValueAsString(context));
+        snapshot.setSectionAdvanceMillis(snapshot.getSectionAdvanceMillis() + millis);
         examAttemptSnapshotRepository.save(snapshot);
     }
 
-    void requireOpenSection(ExamAttemptEntity attempt, JsonNode question) {
-        if (question == null) return;
-        SectionWindow window = SectionWindow.of(question);
-        if (window != null && !window.contains(sectionClockStart(attempt), LocalDateTime.now()))
-            throw new BusinessRuleException("Câu hỏi không thuộc phần thi đang mở");
-    }
-
-    Map<Integer, JsonNode> lockedQuestions(Integer attemptId) {
-        ExamAttemptSnapshotEntity snapshot =
-                examAttemptSnapshotRepository
-                        .findByAttemptId(attemptId)
-                        .orElseThrow(
-                                () ->
-                                        new BusinessRuleException(
-                                                "Không tìm thấy snapshot của lượt thi"));
-        try {
-            Map<Integer, JsonNode> result = new LinkedHashMap<>();
-            for (JsonNode question : json.readTree(snapshot.getLockedQuestionSnapshot()))
-                result.put(question.path("id").asInt(), question);
-            return result;
-        } catch (RuntimeException exception) {
-            throw new BusinessRuleException("Snapshot lượt thi không hợp lệ");
-        }
-    }
-
-    List<JsonNode> lockedQuestionList(Integer attemptId) {
-        return lockedQuestions(attemptId).values().stream()
-                .sorted(Comparator.comparingInt(value -> value.path("position").asInt()))
+    List<ExamQuestionSnapshotEntity> lockedQuestionEntities(Integer attemptId) {
+        ExamAttemptSnapshotEntity snapshot = require(attemptId);
+        return snapshot.getQuestions().stream()
+                .sorted(Comparator.comparingInt(ExamQuestionSnapshotEntity::getPosition))
                 .toList();
     }
 
-    JsonNode lockedMedia(Integer attemptId, Integer mediaId) {
-        for (JsonNode question : lockedQuestionList(attemptId)) {
-            for (JsonNode media : question.path("media"))
-                if (media.path("id").asInt() == mediaId) return media;
-        }
-        return null;
+    ExamQuestionSnapshotEntity lockedQuestionEntity(Integer attemptId, Integer questionId) {
+        return lockedQuestionEntities(attemptId).stream()
+                .filter(question -> question.getSourceQuestionId().equals(questionId))
+                .findFirst()
+                .orElse(null);
+    }
+
+    ExamMediaSnapshotEntity lockedMediaEntity(Integer attemptId, Integer mediaId) {
+        return lockedQuestionEntities(attemptId).stream()
+                .flatMap(question -> question.getMedia().stream())
+                .filter(media -> media.getSourceMediaId().equals(mediaId))
+                .findFirst()
+                .orElse(null);
+    }
+
+    void requireOpenSection(ExamAttemptEntity attempt, ExamQuestionSnapshotEntity question) {
+        if (question == null || question.getSectionEndMinute() == null) return;
+        SectionWindow window =
+                new SectionWindow(question.getSectionStartMinute(), question.getSectionEndMinute());
+        if (!window.contains(sectionClockStart(attempt), LocalDateTime.now()))
+            throw new BusinessRuleException("Câu hỏi không thuộc phần thi đang mở");
     }
 }

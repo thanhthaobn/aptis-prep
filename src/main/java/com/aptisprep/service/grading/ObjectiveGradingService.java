@@ -4,6 +4,7 @@ import com.aptisprep.entity.ExamSkillResultEntity;
 import com.aptisprep.entity.MockExamEntity;
 import com.aptisprep.entity.UserAnswerDetailEntity;
 import com.aptisprep.entity.UserAnswerEntity;
+import com.aptisprep.exception.BusinessRuleException;
 import com.aptisprep.exception.ResourceNotFoundException;
 import com.aptisprep.repository.ExamSkillResultRepository;
 import com.aptisprep.repository.UserAnswerDetailRepository;
@@ -191,12 +192,33 @@ public class ObjectiveGradingService {
             result.setCefrLevel(null);
             return;
         }
-        result.setScaleScore(scoring.scale(schemeId, skill, raw));
-        result.setCefrLevel(
-                CheckpointScorePolicy.confirmedLevel(
-                        exam.getExamType(),
-                        exam.getTargetLevel(),
-                        scoring.estimatedLevel(schemeId, skill, result.getScaleScore())));
+        try {
+            result.setScaleScore(scoring.scale(schemeId, skill, raw));
+            result.setCefrLevel(
+                    CheckpointScorePolicy.confirmedLevel(
+                            exam.getExamType(),
+                            exam.getTargetLevel(),
+                            scoring.estimatedLevel(schemeId, skill, result.getScaleScore())));
+        } catch (BusinessRuleException exception) {
+            if (!"GRAMMAR_VOCABULARY".equals(skill)) throw exception;
+            // Older schemes may contain the Grammar raw-scale rule but no CEFR bands.
+            // Keep the objective result usable with the approved internal A1-C1 estimate.
+            result.setScaleScore(raw.setScale(2, java.math.RoundingMode.HALF_UP));
+            result.setCefrLevel(
+                    CheckpointScorePolicy.confirmedLevel(
+                            exam.getExamType(),
+                            exam.getTargetLevel(),
+                            grammarLevel(result.getScaleScore())));
+        }
+    }
+
+    private String grammarLevel(BigDecimal score) {
+        if (score == null) return null;
+        if (score.compareTo(BigDecimal.valueOf(10)) < 0) return "A1";
+        if (score.compareTo(BigDecimal.valueOf(20)) < 0) return "A2";
+        if (score.compareTo(BigDecimal.valueOf(30)) < 0) return "B1";
+        if (score.compareTo(BigDecimal.valueOf(40)) < 0) return "B2";
+        return "C1";
     }
 
     private boolean isCorrect(String type, LockedItem item, UserAnswerDetailEntity detail) {

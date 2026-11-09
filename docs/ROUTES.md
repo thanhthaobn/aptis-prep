@@ -5,8 +5,6 @@
 | Method | URL | Quyền | Hành vi |
 |---|---|---|---|
 | GET/POST | `/student/password` | Student | Đổi mật khẩu sau khi kiểm mật khẩu hiện tại; đăng xuất sau thành công |
-| GET/POST | `/forgot-password` | Public | Yêu cầu liên kết khôi phục qua SMTP đã cấu hình; POST có CSRF |
-| GET/POST | `/reset-password` | Public | Token có hạn, hết hiệu lực sau đổi mật khẩu; POST có CSRF |
 | POST | `/student/attempts/{id}/answers/audio/autosave` | Student, chủ lượt thi | Multipart ghi âm, JSON `saved`; cùng service kiểm quyền/deadline/media với route audio hiện có |
 
 Thang điểm nằm trong trang chi tiết đề và kết quả; không tạo endpoint công khai trả grading context/đáp án. Xem [UX_IMPROVEMENTS.md](UX_IMPROVEMENTS.md) để cấu hình email.

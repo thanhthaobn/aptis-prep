@@ -38,7 +38,7 @@ handler trong cùng controller. Spring cũng khởi tạo toàn bộ mapping th�
 
 - Admin: `AdminCatalogController`, `AdminDashboardController`, `AdminFlashcardController`,
   `AdminLessonController`, `AdminResultController`, `AdminScoringController`, `AdminStudentController`.
-- Student: `StudentAccountController`, `StudentContentController`, `StudentDashboardController`,
+- Student: `StudentAccountController`, `StudentExamCatalogController`, `StudentDashboardController`,
   `StudentExamController`, `StudentFlashcardController`, `StudentLearningPathController`, `StudentLessonController`.
 - Chung và xác thực: `HomeController`, `AuthController`, `AiAssessmentController`, `LessonAudioController`.
 

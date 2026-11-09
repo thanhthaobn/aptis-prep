@@ -260,12 +260,13 @@
               <li th:each="option : ${item.options}">
                 <span th:text="${option.content}"></span>
                 <strong th:if="${item.selectedOptionId == option.id}">· Đã chọn</strong>
+                <strong th:if="${option.correct}">· Đáp án đúng</strong>
               </li>
             </ul>
             <p th:if="${!item.answered()}" class="muted">Chưa trả lời</p>
             <p
               th:if="${item.userPosition != null}"
-              th:text="${'Vị trí đã chọn: ' + item.userPosition}"
+              th:text="${'Vị trí đã chọn: ' + item.userPosition + (item.correctPosition == null ? '' : ' · Đáp án đúng: ' + item.correctPosition)}"
             ></p>
             <p th:if="${item.textAnswer != null}" th:text="${item.textAnswer}"></p>
             <audio

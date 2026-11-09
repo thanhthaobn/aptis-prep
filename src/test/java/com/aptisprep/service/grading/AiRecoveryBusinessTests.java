@@ -18,6 +18,8 @@ import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.ApplicationEventPublisher;
@@ -25,6 +27,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.transaction.PlatformTransactionManager;
+import tools.jackson.databind.json.JsonMapper;
 
 @SpringBootTest(
         properties = {
@@ -56,6 +59,7 @@ class AiRecoveryBusinessTests {
     @Autowired JdbcTemplate jdbc;
     @Autowired PlatformTransactionManager transactionManager;
     @Autowired ApplicationEventPublisher events;
+    @Autowired JsonMapper json;
     @Autowired com.aptisprep.config.AiProperties properties;
 
     @BeforeEach
@@ -393,12 +397,14 @@ class AiRecoveryBusinessTests {
         verifyNoInteractions(provider);
     }
 
-    @Test
-    void processingOutboxAfterRestartIsReplayedWithoutDuplicateProfile() {
+    @ParameterizedTest
+    @ValueSource(booleans = {false, true})
+    void processingOutboxAfterRestartIsReplayedWithoutDuplicateProfile(boolean legacyJson) {
         var f = exam(1);
         var job = examJob(f, 0, AiJobState.COMPLETED, 30);
         delivery.ensureAiAssessmentCompleted(event(job));
         var row = outbox.findByEventKey(callbackKey(job, "COMPLETED")).orElseThrow();
+        if (legacyJson) row.setPayload(json.writeValueAsString(event(job)));
         row.setStatus("PROCESSING");
         row.setNextAttemptAt(LocalDateTime.now().minusSeconds(1));
         outbox.saveAndFlush(row);

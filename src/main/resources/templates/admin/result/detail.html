@@ -242,7 +242,6 @@
           <div>
             <p class="eyebrow" th:text="${@resultLabels.examType(attemptResult.examType)}"></p>
             <h1 th:text="${attemptResult.examTitle}"></h1>
-            <p th:text="${'Mã lượt thi: ' + (attemptResult.attemptId)}"></p>
           </div>
           <span class="result-status" th:text="${@resultLabels.state(attemptResult.state)}"></span>
         </header>
@@ -262,10 +261,6 @@
             ></strong>
           </div>
         </section>
-        <p th:if="${attemptResult.isCombined()}" class="muted">
-          Tổng Reading, Listening, Writing và Speaking; Grammar &amp; Vocabulary có điểm riêng và
-          chỉ hỗ trợ xét CEFR sát ngưỡng. Kết quả là ước lượng phục vụ luyện tập.
-        </p>
         <section class="result-skill-grid">
           <article
             class="dashboard-panel result-skill-card"
@@ -293,6 +288,37 @@
               <p th:text="${skill.feedback}"></p>
             </div>
           </article>
+        </section>
+        <section class="admin-result-review dashboard-panel" th:if="${review != null and !review.questions.isEmpty()}">
+          <div class="panel-heading">
+            <div>
+              <span class="panel-kicker">ĐỐI CHIẾU BÀI LÀM</span>
+              <h2>Câu hỏi và đáp án</h2>
+            </div>
+            <span class="muted" th:text="${review.questions.size() + ' câu hỏi'}"></span>
+          </div>
+          <details class="admin-review-question" th:each="question : ${review.questions}">
+            <summary>
+              <span class="review-skill-badge" th:text="${question.skill == 'GRAMMAR_VOCABULARY' ? 'Grammar & Vocabulary' : question.skill}"></span>
+              <strong th:text="${'Câu ' + question.position + ' · ' + question.content}"></strong>
+            </summary>
+            <p class="review-instruction" th:if="${question.instruction != null}" th:text="${question.instruction}"></p>
+            <p class="reading-passage-text" th:if="${question.readingPassage != null}" th:text="${question.readingPassage}"></p>
+            <div class="admin-review-item" th:each="item : ${question.items}">
+              <h3 th:text="${item.position + '. ' + item.content}"></h3>
+              <ul class="review-options" th:if="${!item.options.isEmpty()}">
+                <li th:each="option : ${item.options}" th:classappend="${(item.selectedOptionId == option.id ? ' is-selected' : '') + (option.correct ? ' is-correct' : '')}">
+                  <span class="review-option-code" th:text="${option.code}"></span>
+                  <span class="review-option-content" th:text="${option.content}"></span>
+                  <span class="review-option-status" th:if="${item.selectedOptionId == option.id}">Đã chọn</span>
+                  <span class="review-option-status correct" th:if="${option.correct}">Đáp án đúng</span>
+                </li>
+              </ul>
+              <p class="admin-answer-line" th:if="${item.userPosition != null}" th:text="${'Vị trí đã chọn: ' + item.userPosition + (item.correctPosition == null ? '' : ' · Đáp án đúng: ' + item.correctPosition)}"></p>
+              <p class="admin-answer-line" th:if="${item.textAnswer != null and !item.textAnswer.isBlank()}" th:text="${'Câu trả lời: ' + item.textAnswer}"></p>
+              <p class="admin-answer-empty" th:if="${!item.answered()}">Chưa trả lời</p>
+            </div>
+          </details>
         </section>
       </main>
     </div>

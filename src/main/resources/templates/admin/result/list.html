@@ -313,14 +313,30 @@
                 ></td>
                 <td
                   data-label="Trạng thái"
-                  th:text="${@resultLabels.state(item.result.state)}"
-                ></td>
+                >
+                  <span
+                    class="badge"
+                    th:classappend="${item.result.state == 'COMPLETED' ? 'badge-success' : (item.result.state == 'ERROR' or item.result.state == 'GRADING_FAILED' ? 'badge-danger' : 'badge-warning')}"
+                    th:text="${@resultLabels.state(item.result.state)}"
+                  ></span>
+                </td>
                 <td
                   data-label="Nộp bài"
                   th:text="${item.result.submittedAt==null?'Chưa nộp':#temporals.format(item.result.submittedAt, 'dd/MM/yyyy HH:mm')}"
                 ></td>
                 <td data-label="Thao tác">
-                  <a th:href="@{/admin/results/{id}(id=${item.result.attemptId})}">Xem chi tiết</a>
+                  <div class="catalog-table-actions">
+                    <a th:href="@{/admin/results/{id}(id=${item.result.attemptId})}">Xem chi tiết</a>
+                    <form
+                      method="post"
+                      th:action="@{/admin/results/{id}/delete(id=${item.result.attemptId})}"
+                      data-confirm-title="Loại bỏ lượt thi?"
+                      data-confirm-message="Lượt thi sẽ được ẩn khỏi danh sách quản trị; dữ liệu lịch sử vẫn được giữ lại."
+                      data-confirm-button="Loại bỏ"
+                    >
+                      <button class="button button-danger button-small" type="submit">Loại bỏ</button>
+                    </form>
+                  </div>
                 </td>
               </tr>
             </tbody>

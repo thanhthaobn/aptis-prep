@@ -3,12 +3,14 @@ package com.aptisprep.controller.admin;
 import com.aptisprep.exception.BusinessRuleException;
 import com.aptisprep.service.contract.ExamAttemptContract;
 import com.aptisprep.service.contract.IntegrationModels.AdminHistoryFilter;
+import com.aptisprep.service.exam.ExamAttemptService;
 import java.security.Principal;
 import java.time.*;
 import java.util.List;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 @Controller
 public class AdminResultController {
@@ -17,9 +19,11 @@ public class AdminResultController {
     private static final List<String> RESULT_STATES =
             List.of("IN_PROGRESS", "WAITING_GRADING", "COMPLETED", "ERROR", "EXPIRED");
     private final ExamAttemptContract attempts;
+    private final ExamAttemptService attemptDetails;
 
-    public AdminResultController(ExamAttemptContract attempts) {
+    public AdminResultController(ExamAttemptContract attempts, ExamAttemptService attemptDetails) {
         this.attempts = attempts;
+        this.attemptDetails = attemptDetails;
     }
 
     @GetMapping("/admin/results")
@@ -69,7 +73,16 @@ public class AdminResultController {
     @GetMapping("/admin/results/{id}")
     public String detail(@PathVariable Integer id, Principal principal, Model model) {
         model.addAttribute("attemptResult", attempts.adminResult(principal.getName(), id));
+        model.addAttribute("review", attemptDetails.adminReview(principal.getName(), id));
         return "admin/result/detail";
+    }
+
+    @PostMapping("/admin/results/{id}/delete")
+    public String delete(
+            @PathVariable Integer id, Principal principal, RedirectAttributes redirectAttributes) {
+        attemptDetails.adminDiscard(principal.getName(), id);
+        redirectAttributes.addFlashAttribute("successMessage", "Đã loại bỏ lượt thi khỏi danh sách.");
+        return "redirect:/admin/results";
     }
 
     private Instant parseDate(String value, boolean nextDay) {

@@ -22,15 +22,12 @@ public class AdminStudentController {
             @RequestParam(name = "q", defaultValue = "") String q,
             @RequestParam(name = "status", defaultValue = "") String status,
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(defaultValue = "5") int size,
             Model model) {
         UserStatus filter = parseStatus(status);
         model.addAttribute("pageData", students.list(q, filter, page, size));
         model.addAttribute("q", q == null ? "" : q.trim());
         model.addAttribute("selectedStatus", status == null ? "" : status);
-        model.addAttribute("totalStudents", students.totalStudents());
-        model.addAttribute("activeStudents", students.activeStudents());
-        model.addAttribute("lockedStudents", students.lockedStudents());
         return "admin/student/list";
     }
 
@@ -38,7 +35,7 @@ public class AdminStudentController {
     public String detail(
             @PathVariable int id,
             @RequestParam(defaultValue = "0") int attemptPage,
-            @RequestParam(defaultValue = "10") int attemptSize,
+            @RequestParam(defaultValue = "5") int attemptSize,
             Model model) {
         model.addAttribute("student", students.detail(id, attemptPage, attemptSize));
         return "admin/student/detail";
@@ -69,6 +66,19 @@ public class AdminStudentController {
             redirectAttributes.addFlashAttribute("errorMessage", exception.getMessage());
         }
         return "redirect:/admin/students/" + id;
+    }
+
+    @PostMapping("/admin/students/{id}/delete")
+    public String delete(
+            @PathVariable int id, Principal principal, RedirectAttributes redirectAttributes) {
+        try {
+            students.remove(principal.getName(), id);
+            redirectAttributes.addFlashAttribute(
+                    "successMessage", "Đã xóa tài khoản khỏi danh sách học viên.");
+        } catch (BusinessRuleException exception) {
+            redirectAttributes.addFlashAttribute("errorMessage", exception.getMessage());
+        }
+        return "redirect:/admin/students";
     }
 
     private UserStatus parseStatus(String value) {

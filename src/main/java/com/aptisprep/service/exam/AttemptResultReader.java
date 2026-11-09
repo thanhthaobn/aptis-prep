@@ -149,8 +149,19 @@ public class AttemptResultReader {
                                                 value.getScaleScore() == null
                                                         ? "PENDING"
                                                         : "COMPLETED";
-                                    else if ("WAITING".equals(state)) state = "PENDING";
-                                    else if ("ERROR".equals(state)) state = "ERROR";
+                                    else if ("WAITING".equals(state)) {
+                                        // A stale WAITING flag must not hide an already persisted
+                                        // score.
+                                        // This can happen when the objective part finished before
+                                        // an
+                                        // asynchronous grading callback updated the attempt
+                                        // aggregate.
+                                        state =
+                                                value.getRawScore() != null
+                                                                && value.getScaleScore() != null
+                                                        ? "COMPLETED"
+                                                        : "PENDING";
+                                    } else if ("ERROR".equals(state)) state = "ERROR";
                                     boolean passed =
                                             "COMPLETED".equals(state)
                                                     && CheckpointScorePolicy.passed(
@@ -158,13 +169,19 @@ public class AttemptResultReader {
                                                             exam.getTargetLevel(),
                                                             confirmedLevel,
                                                             value.getScaleScore());
+                                    String feedback =
+                                            feedbackFor(attempt.getId(), value.getSkill());
+                                    if ("ERROR".equals(state)
+                                            && "AI_ERROR".equals(value.getGradingMethod())
+                                            && "SPEAKING".equals(value.getSkill()))
+                                        feedback = "Không nhận được bản chép lời từ file ghi âm.";
                                     return new SkillResult(
                                             value.getSkill(),
                                             value.getRawScore(),
                                             value.getScaleScore(),
                                             confirmedLevel,
                                             state,
-                                            feedbackFor(attempt.getId(), value.getSkill()),
+                                            feedback,
                                             passed,
                                             "ERROR".equals(state)
                                                     && ("AI_ERROR".equals(value.getGradingMethod())
@@ -199,10 +216,25 @@ public class AttemptResultReader {
             if (answer.getAiFeedback() == null || answer.getAiFeedback().isBlank()) continue;
             QuestionEntity question =
                     questionRepository.findById(answer.getQuestionId()).orElse(null);
-            if (question != null && Objects.equals(question.getSkill(), skill))
-                feedback.add(answer.getAiFeedback().trim());
+            if (question == null || !Objects.equals(question.getSkill(), skill)) continue;
+            int questionNumber = questionNumber(attemptId, question.getId());
+            String label = questionNumber > 0 ? "Câu hỏi " + questionNumber : "Câu hỏi";
+            feedback.add(label + ":\n" + answer.getAiFeedback().trim());
         }
         return feedback.length() == 0 ? null : feedback.toString();
+    }
+
+    private int questionNumber(Integer attemptId, Integer sourceQuestionId) {
+        try {
+            return examSnapshots.lockedQuestionEntities(attemptId).stream()
+                    .filter(value -> Objects.equals(value.getSourceQuestionId(), sourceQuestionId))
+                    .map(ExamQuestionSnapshotEntity::getPosition)
+                    .filter(Objects::nonNull)
+                    .findFirst()
+                    .orElse(0);
+        } catch (BusinessRuleException legacyAttempt) {
+            return 0;
+        }
     }
 
     private User requireAdmin(String email) {

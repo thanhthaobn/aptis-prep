@@ -64,6 +64,11 @@ h1,h2,h3 { letter-spacing: -.015em; font-weight: 700; line-height: 1.3; }
 .sidebar-link.active { border-color: #a3d9cb; background: var(--color-primary-soft); color: var(--color-primary-dark); }
 .admin-theme .sidebar-link.active { border-color: var(--color-accent); background: var(--color-accent-soft); color: var(--color-primary-dark); }
 .sidebar-link.disabled { color: #a0a9a0; }
+.admin-theme .sidebar-link[href$="/admin/certificates"] { display: none; }
+.student-row-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.student-row-actions form { margin: 0; }
+.button-danger { color: #fff; background: #b42318; border-color: #b42318; }
+.button-danger:hover { color: #fff; background: #8f1d14; border-color: #8f1d14; }
 .sidebar-label { padding-block: 1rem .5rem; font-size: .7rem; }
 .landing-theme .hero-shell { background: #fff; }.landing-theme .hero-shell::before { display: none; }
 .landing-theme .hero { min-height: 610px; gap: 5rem; }
@@ -769,7 +774,7 @@ body.flashcard-page > :last-child { flex-shrink:0; }
 .result-status-large { padding:9px 14px; font-size:.9rem; }
 .result-notice { display:flex; flex-direction:column; gap:3px; margin:0 0 18px; padding:15px 18px; border-radius:12px; background:#fff7df; color:#694f0d; }
 .result-notice.is-error { background:#fff0f0; color:#853535; }
-.result-skill-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:16px; }
+.result-skill-grid { display:grid; grid-template-columns:1fr; gap:16px; }
 .result-skill-card { margin:0; padding:20px; }
 .result-skill-heading { display:flex; align-items:flex-start; justify-content:space-between; gap:14px; }
 .result-skill-heading h2 { margin:4px 0 16px; font-size:1.2rem; }
