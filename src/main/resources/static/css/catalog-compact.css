@@ -214,20 +214,21 @@
 .flashcard-function-group { margin-top: 28px; }
 .flashcard-personal-dropdown {
   display: block;
-  padding: 0 14px 14px;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius);
-  background: #fff;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
 }
 .flashcard-personal-dropdown > summary {
   display: flex;
   align-items: center;
   gap: 10px;
-  margin: 0 -14px;
+  margin: 0;
   padding: 14px 10px;
   cursor: pointer;
   list-style: none;
   border-radius: 8px;
+  border-bottom: 1px solid var(--color-border);
 }
 .flashcard-personal-dropdown > summary::-webkit-details-marker { display: none; }
 .flashcard-personal-dropdown > summary::before {
@@ -244,7 +245,6 @@
 .flashcard-personal-dropdown[open] > summary::before { transform: rotate(90deg); }
 .flashcard-personal-dropdown > summary:hover { background: #eef4f1; }
 .flashcard-personal-dropdown > summary > strong { color: var(--color-primary-dark); font-size: .95rem; }
-.flashcard-personal-dropdown > summary > span { margin-left: auto; color: var(--color-muted); font-size: .75rem; }
 .flashcard-personal-dropdown > summary:focus-visible { outline: 2px solid var(--color-primary); outline-offset: -2px; }
 .flashcard-personal-empty { padding: 10px 0 18px; border-bottom: 1px solid var(--color-border); font-size: .85rem; }
 .flashcard-personal-empty p { margin: 0 0 8px; color: var(--color-muted); }
