@@ -655,12 +655,9 @@ public class ExamAttemptService implements ExamAttemptContract {
             questions.add(page);
             number += page.items().size();
         }
-        return new AttemptReview(
-                examSnapshots
-                        .frozenExam(attemptId)
-                        .map(MockExamEntity::getTitle)
-                        .orElseGet(current::getTitle),
-                List.copyOf(questions));
+        String title =
+                current == null ? examSnapshots.require(attemptId).getTitle() : current.getTitle();
+        return new AttemptReview(title, List.copyOf(questions));
     }
 
     public record AttemptReview(String title, List<QuestionPage> questions) {}
