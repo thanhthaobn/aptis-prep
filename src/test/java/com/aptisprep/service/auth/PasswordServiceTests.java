@@ -35,7 +35,7 @@ class PasswordServiceTests {
         when(provider.getIfAvailable()).thenReturn(sender);
         when(provider.getObject()).thenReturn(sender);
         var service =
-                  new com.aptisprep.service.auth.impl.PasswordServiceImpl(
+                new com.aptisprep.service.auth.impl.PasswordServiceImpl(
                         users,
                         encoder,
                         provider,

@@ -6,9 +6,14 @@ import com.aptisprep.entity.MockExamEntity;
 
 public interface AdminExamService {
     ExamForm examForm(Integer id);
+
     Integer saveExam(Integer id, ExamForm form);
+
     void publishExam(Integer id);
+
     void unpublishExam(Integer id);
+
     void normalizeSections(ExamForm form);
+
     Entry entry(MockExamEntity exam);
 }

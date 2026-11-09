@@ -28,7 +28,9 @@ class PlacementServiceTests {
                         List.of(
                                 new PlacementExamCatalogService.PlacementExam(
                                         10, "Listening placement", "", 15, List.of())));
-          var service = new com.aptisprep.service.placement.impl.PlacementServiceImpl(catalog, published, engines, access);
+        var service =
+                new com.aptisprep.service.placement.impl.PlacementServiceImpl(
+                        catalog, published, engines, access);
 
         assertFalse(service.available("learner@test.local", "LISTENING").getFirst().resumable());
 
@@ -55,7 +57,9 @@ class PlacementServiceTests {
                                         Integer.valueOf("1000"), "Placement", "", 15, List.of())));
         when(engine.startPlacement(eq(9), eq(1000), anyString()))
                 .thenReturn(new AttemptHandle(17, "IN_PROGRESS", null));
-          var service = new com.aptisprep.service.placement.impl.PlacementServiceImpl(catalog, published, engines, access);
+        var service =
+                new com.aptisprep.service.placement.impl.PlacementServiceImpl(
+                        catalog, published, engines, access);
         assertEquals(
                 17,
                 service.start("learner@test.local", "READING", Integer.valueOf("1000"))

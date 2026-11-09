@@ -1,7 +1,5 @@
 package com.aptisprep.service.admin.impl;
 
-import com.aptisprep.service.admin.StudentManagementService;
-
 import com.aptisprep.dto.view.AccountSnapshot;
 import com.aptisprep.dto.view.AdminStudentView;
 import com.aptisprep.entity.*;
@@ -11,6 +9,7 @@ import com.aptisprep.exception.AccessDeniedException;
 import com.aptisprep.exception.BusinessRuleException;
 import com.aptisprep.exception.ResourceNotFoundException;
 import com.aptisprep.repository.*;
+import com.aptisprep.service.admin.StudentManagementService;
 import com.aptisprep.service.contract.ExamAttemptContract;
 import com.aptisprep.service.contract.IntegrationModels.*;
 import com.aptisprep.service.contract.LearningPathContract;
@@ -313,5 +312,3 @@ public class StudentManagementServiceImpl implements StudentManagementService {
         return value == null || value.isBlank() ? "Chưa đánh giá" : value;
     }
 }
-
-

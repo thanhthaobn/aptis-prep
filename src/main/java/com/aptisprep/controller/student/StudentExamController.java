@@ -88,9 +88,7 @@ public class StudentExamController {
 
     @PostMapping("/student/attempts/{id}/exit")
     public String exitAttempt(
-            @PathVariable Integer id,
-            Principal principal,
-            RedirectAttributes redirectAttributes) {
+            @PathVariable Integer id, Principal principal, RedirectAttributes redirectAttributes) {
         Integer userId = accounts.requireActiveStudent(principal.getName());
         ExamAttemptService.AttemptPage page = attempts.page(userId, id);
         if ("PLACEMENT".equals(page.examType())) {

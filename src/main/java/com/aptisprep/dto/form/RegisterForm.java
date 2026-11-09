@@ -9,7 +9,10 @@ public class RegisterForm {
 
     @NotBlank(message = "Họ tên không được để trống")
     @Size(max = 255, message = "Họ tên không được vượt quá 255 ký tự")
-    @Pattern(regexp = "\\p{Lu}\\p{M}*(?: *\\p{L}\\p{M}*)*", message = "Họ tên phải bắt đầu bằng chữ in hoa và chỉ được chứa chữ cái, dấu tiếng Việt và khoảng trắng.")
+    @Pattern(
+            regexp = "\\p{Lu}\\p{M}*(?: *\\p{L}\\p{M}*)*",
+            message =
+                    "Họ tên phải bắt đầu bằng chữ in hoa và chỉ được chứa chữ cái, dấu tiếng Việt và khoảng trắng.")
     private String fullName;
 
     @NotBlank(message = "Email không được để trống")

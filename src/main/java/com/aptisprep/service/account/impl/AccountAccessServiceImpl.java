@@ -1,14 +1,12 @@
 package com.aptisprep.service.account.impl;
 
-import com.aptisprep.service.account.AccountAccessService;
-
 import com.aptisprep.entity.*;
 import com.aptisprep.enums.*;
 import com.aptisprep.exception.AccessDeniedException;
 import com.aptisprep.exception.BusinessRuleException;
 import com.aptisprep.exception.ResourceNotFoundException;
 import com.aptisprep.repository.*;
-import com.aptisprep.service.contract.AccountAccessContract;
+import com.aptisprep.service.account.AccountAccessService;
 import com.aptisprep.service.contract.ExamAttemptContract;
 import com.aptisprep.service.contract.IntegrationModels.*;
 import java.math.BigDecimal;
@@ -271,5 +269,3 @@ public class AccountAccessServiceImpl implements AccountAccessService {
                         : null;
     }
 }
-
-

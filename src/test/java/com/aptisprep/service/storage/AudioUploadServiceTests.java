@@ -13,7 +13,8 @@ import org.springframework.mock.web.MockMultipartFile;
 
 class AudioUploadServiceTests {
     private final StorageService storage = mock(StorageService.class);
-      private final AudioUploadService service = new com.aptisprep.service.storage.impl.AudioUploadServiceImpl(storage);
+    private final AudioUploadService service =
+            new com.aptisprep.service.storage.impl.AudioUploadServiceImpl(storage);
 
     @Test
     void rejectsTextDisguisedAsAudio() {

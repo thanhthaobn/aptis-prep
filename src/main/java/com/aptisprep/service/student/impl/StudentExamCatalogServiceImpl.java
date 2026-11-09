@@ -1,7 +1,5 @@
 package com.aptisprep.service.student.impl;
 
-import com.aptisprep.service.student.StudentExamCatalogService;
-
 import com.aptisprep.dto.view.StudentCatalogView.*;
 import com.aptisprep.entity.MockExamEntity;
 import com.aptisprep.entity.MockExamQuestionEntity;
@@ -12,10 +10,10 @@ import com.aptisprep.repository.MockExamQuestionRepository;
 import com.aptisprep.repository.MockExamRepository;
 import com.aptisprep.repository.MockExamSectionRepository;
 import com.aptisprep.service.exam.ExamStartValidator;
+import com.aptisprep.service.student.StudentExamCatalogService;
 import java.text.Normalizer;
 import java.util.*;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -27,7 +25,13 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional(readOnly = true)
 public class StudentExamCatalogServiceImpl implements StudentExamCatalogService {
     private static final List<String> SKILL_ORDER =
-            List.of("GRAMMAR_VOCABULARY", "READING", "LISTENING", "WRITING", "SPEAKING", "FULL_MOCK");
+            List.of(
+                    "GRAMMAR_VOCABULARY",
+                    "READING",
+                    "LISTENING",
+                    "WRITING",
+                    "SPEAKING",
+                    "FULL_MOCK");
     private static final List<String> LEVEL_ORDER = List.of("A1", "A2", "B1", "B2", "C1");
 
     private final MockExamRepository mockExamRepository;
@@ -327,5 +331,3 @@ public class StudentExamCatalogServiceImpl implements StudentExamCatalogService 
         };
     }
 }
-
-

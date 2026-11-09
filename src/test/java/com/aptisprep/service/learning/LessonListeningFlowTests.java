@@ -42,7 +42,7 @@ class LessonListeningFlowTests {
                 LessonEngagementRepository engagements,
                 AudioDurationService durations,
                 LessonListeningServiceTests.MutableClock clock) {
-              return new com.aptisprep.service.learning.impl.LessonListeningServiceImpl(
+            return new com.aptisprep.service.learning.impl.LessonListeningServiceImpl(
                     users,
                     lessons,
                     engagements,

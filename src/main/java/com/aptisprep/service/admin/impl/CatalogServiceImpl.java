@@ -1,11 +1,5 @@
 package com.aptisprep.service.admin.impl;
 
-import com.aptisprep.service.admin.CatalogService;
-import com.aptisprep.service.admin.AdminExamService;
-import com.aptisprep.service.admin.ExamDefinitionValidator;
-import com.aptisprep.service.admin.QuestionDefinitionValidator;
-import com.aptisprep.service.admin.QuestionMediaWriter;
-
 import com.aptisprep.dto.form.ExamForm;
 import com.aptisprep.dto.form.QuestionForm;
 import com.aptisprep.dto.view.AdminCatalogView.CatalogPage;
@@ -22,10 +16,14 @@ import com.aptisprep.exception.BusinessRuleException;
 import com.aptisprep.exception.ResourceNotFoundException;
 import com.aptisprep.repository.*;
 import com.aptisprep.repository.UserAnswerRepository;
+import com.aptisprep.service.admin.AdminExamService;
+import com.aptisprep.service.admin.CatalogService;
+import com.aptisprep.service.admin.ExamDefinitionValidator;
+import com.aptisprep.service.admin.QuestionDefinitionValidator;
+import com.aptisprep.service.admin.QuestionMediaWriter;
 import com.aptisprep.service.storage.StorageService;
 import java.util.*;
 import java.util.stream.Collectors;
-import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -694,4 +692,3 @@ public class CatalogServiceImpl implements CatalogService {
         }
     }
 }
-

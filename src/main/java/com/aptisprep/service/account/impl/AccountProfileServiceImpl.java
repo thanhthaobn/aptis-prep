@@ -1,8 +1,5 @@
 package com.aptisprep.service.account.impl;
 
-import com.aptisprep.service.account.AccountProfileService;
-import com.aptisprep.service.account.AccountAccessService;
-
 import com.aptisprep.dto.form.GoalForm;
 import com.aptisprep.dto.form.ProfileForm;
 import com.aptisprep.dto.view.AccountSnapshot;
@@ -15,6 +12,8 @@ import com.aptisprep.event.GoalChangedEvent;
 import com.aptisprep.exception.BusinessRuleException;
 import com.aptisprep.exception.ResourceNotFoundException;
 import com.aptisprep.repository.*;
+import com.aptisprep.service.account.AccountAccessService;
+import com.aptisprep.service.account.AccountProfileService;
 import java.math.BigDecimal;
 import java.util.*;
 import org.springframework.context.ApplicationEventPublisher;
@@ -205,5 +204,3 @@ public class AccountProfileServiceImpl implements AccountProfileService {
         return value == null || value.isBlank() ? "Chưa đánh giá" : value;
     }
 }
-
-

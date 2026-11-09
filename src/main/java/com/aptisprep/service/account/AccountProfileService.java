@@ -8,8 +8,12 @@ import java.util.List;
 
 public interface AccountProfileService {
     AccountSnapshot snapshot(String principalEmail);
+
     void updateProfile(String principalEmail, ProfileForm form);
+
     void saveGoal(String principalEmail, GoalForm form);
+
     GoalForm formFrom(AccountSnapshot snapshot);
+
     List<Certificate> activeCertificates();
 }

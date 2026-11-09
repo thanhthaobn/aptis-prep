@@ -123,7 +123,8 @@ public class ExamAttemptService implements ExamAttemptContract {
                             return deadline == null || !deadline.isBefore(now);
                         })
                 .map(ExamAttemptEntity::getId)
-                .findFirst().orElse(null);
+                .findFirst()
+                .orElse(null);
     }
 
     @Override

@@ -10,10 +10,20 @@ public interface StudentExamCatalogService {
     List<String> SORT_OPTIONS = List.of("level", "newest", "duration");
 
     record Category(String code, String label, long count) {}
+
     record Catalog(Page<Entry> page, List<Category> categories) {}
 
     List<Entry> find(String module, String query, String skill, String level, String state);
-    Catalog browse(String query, String skill, String level, String state, String examType, String sort, Pageable pageable);
+
+    Catalog browse(
+            String query,
+            String skill,
+            String level,
+            String state,
+            String examType,
+            String sort,
+            Pageable pageable);
+
     Entry entry(String module, int id);
 
     static String categoryLabel(String type) {

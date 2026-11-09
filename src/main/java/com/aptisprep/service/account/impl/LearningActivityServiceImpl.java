@@ -1,12 +1,11 @@
 package com.aptisprep.service.account.impl;
 
+import com.aptisprep.repository.*;
+import com.aptisprep.service.account.AccountAccessService;
 import com.aptisprep.service.account.LearningActivityService;
 import com.aptisprep.service.account.LearningActivityService.ActivityView;
 import com.aptisprep.service.account.LearningActivityService.Day;
 import com.aptisprep.service.account.LearningActivityService.Week;
-import com.aptisprep.service.account.AccountAccessService;
-
-import com.aptisprep.repository.*;
 import java.time.*;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.TemporalAdjusters;
@@ -158,5 +157,3 @@ public class LearningActivityServiceImpl implements LearningActivityService {
         return left != null && right != null && left.toLocalDate().equals(right.toLocalDate());
     }
 }
-
-

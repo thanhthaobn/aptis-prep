@@ -1,8 +1,5 @@
 package com.aptisprep.service.learning.impl;
 
-import com.aptisprep.service.learning.FlashcardSetService;
-import com.aptisprep.service.learning.LessonService;
-
 import com.aptisprep.dto.form.FlashcardSetForm;
 import com.aptisprep.dto.form.FlashcardSetForm.Row;
 import com.aptisprep.dto.view.FlashcardViews.*;
@@ -10,6 +7,8 @@ import com.aptisprep.entity.*;
 import com.aptisprep.enums.*;
 import com.aptisprep.exception.*;
 import com.aptisprep.repository.*;
+import com.aptisprep.service.learning.FlashcardSetService;
+import com.aptisprep.service.learning.LessonService;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 import java.util.*;
@@ -337,12 +336,14 @@ public class FlashcardSetServiceImpl implements FlashcardSetService {
     }
 
     public FlashcardSet publishedForLesson(Integer lessonId) {
-        return flashcardSetRepository.findFirstByLessonIdAndOwnerIsNullAndStatusOrderByIdDesc(
-                lessonId, "PUBLISHED").orElse(null);
+        return flashcardSetRepository
+                .findFirstByLessonIdAndOwnerIsNullAndStatusOrderByIdDesc(lessonId, "PUBLISHED")
+                .orElse(null);
     }
 
     public FlashcardSet forLesson(Integer lessonId) {
-        return flashcardSetRepository.findFirstByLessonIdAndOwnerIsNullOrderByIdDesc(lessonId)
+        return flashcardSetRepository
+                .findFirstByLessonIdAndOwnerIsNullOrderByIdDesc(lessonId)
                 .orElse(null);
     }
 
@@ -431,5 +432,3 @@ public class FlashcardSetServiceImpl implements FlashcardSetService {
         return List.copyOf(result);
     }
 }
-
-

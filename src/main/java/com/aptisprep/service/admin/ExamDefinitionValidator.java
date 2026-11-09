@@ -17,7 +17,8 @@ import org.springframework.stereotype.Component;
 /** Read-only validation of exam policy, sections and question selection. */
 @Component
 public final class ExamDefinitionValidator {
-    public static final List<String> TYPES = List.of("PLACEMENT", "PRACTICE", "CHECKPOINT", "FULL_MOCK");
+    public static final List<String> TYPES =
+            List.of("PLACEMENT", "PRACTICE", "CHECKPOINT", "FULL_MOCK");
     private static final List<String> SKILLS = Skill.codes();
     private static final List<String> LEVELS = CefrLevel.codes();
     private final CertificateRepository certificateRepository;

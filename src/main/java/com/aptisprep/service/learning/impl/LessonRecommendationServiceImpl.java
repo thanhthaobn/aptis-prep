@@ -1,14 +1,13 @@
 package com.aptisprep.service.learning.impl;
 
-import com.aptisprep.service.learning.LessonRecommendationService;
-import com.aptisprep.service.learning.LessonRecommendationService.Recommendation;
-
 import com.aptisprep.entity.Lesson;
 import com.aptisprep.entity.LessonProgress;
 import com.aptisprep.enums.CefrLevel;
 import com.aptisprep.repository.LessonProgressRepository;
 import com.aptisprep.service.contract.AccountAccessContract;
 import com.aptisprep.service.contract.IntegrationModels.*;
+import com.aptisprep.service.learning.LessonRecommendationService;
+import com.aptisprep.service.learning.LessonRecommendationService.Recommendation;
 import java.time.LocalDateTime;
 import java.util.*;
 import org.springframework.stereotype.Service;
@@ -139,5 +138,3 @@ public class LessonRecommendationServiceImpl implements LessonRecommendationServ
         return value == null ? "" : value.toUpperCase(Locale.ROOT).replaceAll("[^A-Z0-9]", "");
     }
 }
-
-

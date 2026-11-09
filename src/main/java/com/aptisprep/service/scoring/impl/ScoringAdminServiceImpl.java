@@ -1,9 +1,5 @@
 package com.aptisprep.service.scoring.impl;
 
-import com.aptisprep.service.scoring.ScoringAdminService;
-import com.aptisprep.service.scoring.ScoringViews;
-import com.aptisprep.service.scoring.ScoreBandCoverage;
-
 import com.aptisprep.dto.form.*;
 import com.aptisprep.entity.*;
 import com.aptisprep.enums.*;
@@ -14,6 +10,9 @@ import com.aptisprep.exception.BusinessRuleException;
 import com.aptisprep.exception.ResourceNotFoundException;
 import com.aptisprep.repository.*;
 import com.aptisprep.service.contract.ScoringSchemeUsageContract;
+import com.aptisprep.service.scoring.ScoreBandCoverage;
+import com.aptisprep.service.scoring.ScoringAdminService;
+import com.aptisprep.service.scoring.ScoringViews;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDateTime;
@@ -743,5 +742,3 @@ public class ScoringAdminServiceImpl implements ScoringAdminService {
         }
     }
 }
-
-

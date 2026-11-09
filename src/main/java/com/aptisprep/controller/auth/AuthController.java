@@ -40,8 +40,8 @@ public class AuthController {
 
     @PostMapping("/login")
     public String login(
-               @RequestParam(name = "email", defaultValue = "") String email,
-               @RequestParam(name = "password", defaultValue = "") String password,
+            @RequestParam(name = "email", defaultValue = "") String email,
+            @RequestParam(name = "password", defaultValue = "") String password,
             HttpServletRequest request,
             RedirectAttributes redirectAttributes) {
         User user = userService.getUserByEmailAndPassword(email, password);

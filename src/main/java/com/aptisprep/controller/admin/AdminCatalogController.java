@@ -5,6 +5,7 @@ import com.aptisprep.dto.form.QuestionForm;
 import com.aptisprep.dto.view.AdminCatalogView.CatalogPage;
 import com.aptisprep.exception.BusinessRuleException;
 import com.aptisprep.service.admin.CatalogService;
+import java.util.Map;
 import org.springframework.core.io.Resource;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -14,7 +15,6 @@ import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
-import java.util.Map;
 
 @Controller
 public class AdminCatalogController {
@@ -32,10 +32,10 @@ public class AdminCatalogController {
 
     @GetMapping("/admin/questions")
     public String questions(
-               @RequestParam(name = "q", defaultValue = "") String q,
-               @RequestParam(name = "skill", defaultValue = "") String skill,
-               @RequestParam(name = "status", defaultValue = "") String status,
-               @RequestParam(name = "kind", defaultValue = "") String kind,
+            @RequestParam(name = "q", defaultValue = "") String q,
+            @RequestParam(name = "skill", defaultValue = "") String skill,
+            @RequestParam(name = "status", defaultValue = "") String status,
+            @RequestParam(name = "kind", defaultValue = "") String kind,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             Model model) {
@@ -44,10 +44,10 @@ public class AdminCatalogController {
 
     @GetMapping("/admin/exams")
     public String exams(
-               @RequestParam(name = "q", defaultValue = "") String q,
-               @RequestParam(name = "skill", defaultValue = "") String skill,
-               @RequestParam(name = "status", defaultValue = "") String status,
-               @RequestParam(name = "kind", defaultValue = "") String kind,
+            @RequestParam(name = "q", defaultValue = "") String q,
+            @RequestParam(name = "skill", defaultValue = "") String skill,
+            @RequestParam(name = "status", defaultValue = "") String status,
+            @RequestParam(name = "kind", defaultValue = "") String kind,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             Model model) {

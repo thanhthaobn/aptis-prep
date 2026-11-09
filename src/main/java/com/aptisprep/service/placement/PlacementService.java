@@ -6,9 +6,13 @@ import java.util.List;
 
 public interface PlacementService {
     List<PlacementExamCatalogService.PlacementExam> available(String skill);
+
     List<PlacementOption> available(String email, String skill);
+
     AttemptHandle start(String email, String skill);
+
     AttemptHandle start(String email, String skill, Integer examId);
+
     AttemptResult result(String email, Integer attemptId);
 
     record PlacementOption(

@@ -40,6 +40,7 @@ public class AdminScoringController {
                     "SPEAKING", "Speaking");
     private final ScoringAdminService scoring;
     private final MockExamRepository exams;
+
     public AdminScoringController(ScoringAdminService scoring, MockExamRepository exams) {
         this.scoring = scoring;
         this.exams = exams;
@@ -62,7 +63,7 @@ public class AdminScoringController {
     @GetMapping("/admin/scoring-schemes")
     public String showScoringSchemes(
             @RequestParam(defaultValue = "0") int schemePage,
-              @RequestParam(name = "examType", defaultValue = "") String examType,
+            @RequestParam(name = "examType", defaultValue = "") String examType,
             @RequestParam(required = false) Integer certificateId,
             Model model) {
         String normalizedExamType = examType == null ? "" : examType;
@@ -89,12 +90,13 @@ public class AdminScoringController {
                                         normalizedExamType.isBlank()
                                                 || ("UNASSIGNED".equals(normalizedExamType)
                                                         ? !examTypes.containsKey(scheme.id())
-                                                        : normalizedExamType.equals(scheme.examType())
+                                                        : normalizedExamType.equals(
+                                                                        scheme.examType())
                                                                 || examTypes.containsKey(
                                                                                 scheme.id())
                                                                         && examTypes
                                                                                 .get(scheme.id())
-                                                                        .contains(
+                                                                                .contains(
                                                                                         normalizedExamType)))
                         .toList();
         model.addAttribute("schemePage", ListPagination.slice(schemes, schemePage));
@@ -357,7 +359,8 @@ public class AdminScoringController {
                     default -> throw new BusinessRuleException("Kỹ năng không hợp lệ");
                 };
         ScoringViews.SchemeView value = scoring.scheme(id);
-        if (value.scopeSkill() != null) skill = SKILL_LABELS.getOrDefault(value.scopeSkill(), value.scopeSkill());
+        if (value.scopeSkill() != null)
+            skill = SKILL_LABELS.getOrDefault(value.scopeSkill(), value.scopeSkill());
         schemeOptions(model);
         if (value.scopeSkill() != null) model.addAttribute("skills", List.of(skill));
         model.addAttribute("scheme", value);
@@ -372,7 +375,8 @@ public class AdminScoringController {
         model.addAttribute("bands", scoring.bandViews(id, skill));
         Object bandErrors = model.getAttribute(BindingResult.MODEL_KEY_PREFIX + "bandForm");
         model.addAttribute(
-                "bandFormHasErrors", bandErrors instanceof BindingResult result && result.hasErrors());
+                "bandFormHasErrors",
+                bandErrors instanceof BindingResult result && result.hasErrors());
         if (!model.containsAttribute("scaleRuleForm"))
             model.addAttribute("scaleRuleForm", scoring.scaleRule(id, skill));
         if (!model.containsAttribute("bandForm")) {

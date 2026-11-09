@@ -8,9 +8,6 @@ import java.util.Set;
 import org.junit.jupiter.api.Test;
 import org.thymeleaf.TemplateSpec;
 import org.thymeleaf.context.Context;
-import org.thymeleaf.expression.Numbers;
-import org.thymeleaf.expression.Strings;
-import org.thymeleaf.expression.Temporals;
 import org.thymeleaf.spring6.SpringTemplateEngine;
 import org.thymeleaf.templateresolver.ClassLoaderTemplateResolver;
 

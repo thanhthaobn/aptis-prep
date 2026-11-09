@@ -1,8 +1,5 @@
 package com.aptisprep.service.scoring.impl;
 
-import com.aptisprep.service.scoring.ScoringPolicyService;
-import com.aptisprep.service.scoring.ScoreBandCoverage;
-
 import com.aptisprep.entity.ScoreBand;
 import com.aptisprep.entity.ScoringScaleRule;
 import com.aptisprep.entity.ScoringScheme;
@@ -14,8 +11,9 @@ import com.aptisprep.exception.ResourceNotFoundException;
 import com.aptisprep.repository.ScoreBandRepository;
 import com.aptisprep.repository.ScoringScaleRuleRepository;
 import com.aptisprep.repository.ScoringSchemeRepository;
-import com.aptisprep.service.contract.ScoringPolicyContract;
 import com.aptisprep.service.contract.ScoringPolicyContract.SkillScore;
+import com.aptisprep.service.scoring.ScoreBandCoverage;
+import com.aptisprep.service.scoring.ScoringPolicyService;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.ArrayList;
@@ -295,5 +293,3 @@ public class ScoringPolicyServiceImpl implements ScoringPolicyService {
         };
     }
 }
-
-

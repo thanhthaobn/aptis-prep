@@ -1,10 +1,8 @@
 package com.aptisprep.service.storage.impl;
 
-import com.aptisprep.service.storage.LocalStorageService;
-import com.aptisprep.service.storage.StorageService;
-
 import com.aptisprep.config.StorageProperties;
 import com.aptisprep.exception.BusinessRuleException;
+import com.aptisprep.service.storage.LocalStorageService;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.MalformedURLException;
@@ -101,5 +99,3 @@ public class LocalStorageServiceImpl implements LocalStorageService {
         return resolved;
     }
 }
-
-

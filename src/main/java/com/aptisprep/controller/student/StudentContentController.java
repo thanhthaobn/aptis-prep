@@ -1,17 +1,17 @@
 package com.aptisprep.controller.student;
 
 import com.aptisprep.dto.view.StudentCatalogView.Entry;
+import com.aptisprep.enums.Skill;
 import com.aptisprep.exception.BusinessRuleException;
 import com.aptisprep.service.account.AccountAccessService;
 import com.aptisprep.service.contract.ExamAttemptContract;
 import com.aptisprep.service.contract.IntegrationModels.AttemptResult;
 import com.aptisprep.service.contract.IntegrationModels.HistoryFilter;
 import com.aptisprep.service.contract.IntegrationModels.HistoryPage;
+import com.aptisprep.service.learning.LessonService;
 import com.aptisprep.service.scoring.ScoringGuideService;
 import com.aptisprep.service.student.StudentExamCatalogService;
-import com.aptisprep.enums.Skill;
 import com.aptisprep.service.student.StudentExamCatalogService.Catalog;
-import com.aptisprep.service.learning.LessonService;
 import java.security.Principal;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -48,10 +48,10 @@ public class StudentContentController {
     public String list(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "9") int size,
-               @RequestParam(name = "q", defaultValue = "") String q,
-               @RequestParam(name = "skill", defaultValue = "") String skill,
-               @RequestParam(name = "level", defaultValue = "") String level,
-               @RequestParam(name = "state", defaultValue = "") String state,
+            @RequestParam(name = "q", defaultValue = "") String q,
+            @RequestParam(name = "skill", defaultValue = "") String skill,
+            @RequestParam(name = "level", defaultValue = "") String level,
+            @RequestParam(name = "state", defaultValue = "") String state,
             @RequestParam(defaultValue = "PRACTICE") String examType,
             @RequestParam(defaultValue = "level") String sort,
             Model model) {
@@ -95,10 +95,10 @@ public class StudentContentController {
     public String results(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
-               @RequestParam(name = "q", defaultValue = "") String q,
-               @RequestParam(name = "skill", defaultValue = "") String skill,
-               @RequestParam(name = "examType", defaultValue = "") String examType,
-               @RequestParam(name = "state", defaultValue = "") String state,
+            @RequestParam(name = "q", defaultValue = "") String q,
+            @RequestParam(name = "skill", defaultValue = "") String skill,
+            @RequestParam(name = "examType", defaultValue = "") String examType,
+            @RequestParam(name = "state", defaultValue = "") String state,
             Principal principal,
             Model model) {
         if (page < 0 || size < 1 || size > 50)

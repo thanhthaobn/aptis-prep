@@ -14,7 +14,8 @@ public final class QuestionMediaWriter {
     private final QuestionMediaRepository questionMediaRepository;
     private final StorageService storage;
 
-    public QuestionMediaWriter(QuestionMediaRepository questionMediaRepository, StorageService storage) {
+    public QuestionMediaWriter(
+            QuestionMediaRepository questionMediaRepository, StorageService storage) {
         this.questionMediaRepository = questionMediaRepository;
         this.storage = storage;
     }

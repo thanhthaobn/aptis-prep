@@ -1,15 +1,14 @@
 package com.aptisprep.service.placement.impl;
 
-import com.aptisprep.service.placement.PlacementService;
-import com.aptisprep.service.placement.PlacementService.PlacementOption;
-import com.aptisprep.service.placement.PlacementExamCatalogService;
-
 import com.aptisprep.exception.BusinessRuleException;
 import com.aptisprep.service.contract.AccountAccessContract;
 import com.aptisprep.service.contract.ExamAttemptContract;
 import com.aptisprep.service.contract.ExamCatalogContract;
 import com.aptisprep.service.contract.IntegrationModels.AttemptHandle;
 import com.aptisprep.service.contract.IntegrationModels.AttemptResult;
+import com.aptisprep.service.placement.PlacementExamCatalogService;
+import com.aptisprep.service.placement.PlacementService;
+import com.aptisprep.service.placement.PlacementService.PlacementOption;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
@@ -96,7 +95,4 @@ public class PlacementServiceImpl implements PlacementService {
             throw new BusinessRuleException("Luồng kết quả Placement chưa sẵn sàng");
         return attempt.result(account.requireActiveStudent(email), attemptId);
     }
-
 }
-
-

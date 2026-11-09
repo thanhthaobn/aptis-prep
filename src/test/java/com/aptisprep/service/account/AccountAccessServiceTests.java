@@ -46,7 +46,7 @@ class AccountAccessServiceTests {
         profile.setUser(student);
         profile.setSkill("READING");
         service =
-                  new com.aptisprep.service.account.impl.AccountAccessServiceImpl(
+                new com.aptisprep.service.account.impl.AccountAccessServiceImpl(
                         users, goals, goalSkills, profiles, applications, attemptProvider);
         lenient().when(users.findById(1)).thenReturn(Optional.of(student));
         when(users.findByIdForUpdate(1)).thenReturn(Optional.of(student));

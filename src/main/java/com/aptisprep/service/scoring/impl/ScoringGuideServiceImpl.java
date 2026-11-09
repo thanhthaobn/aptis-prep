@@ -1,11 +1,9 @@
 package com.aptisprep.service.scoring.impl;
 
-import com.aptisprep.service.scoring.ScoringGuideService;
-
 import com.aptisprep.repository.*;
 import com.aptisprep.service.contract.IntegrationModels.AttemptResult;
 import com.aptisprep.service.contract.IntegrationModels.SkillResult;
-import java.math.BigDecimal;
+import com.aptisprep.service.scoring.ScoringGuideService;
 import java.util.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -32,7 +30,6 @@ public class ScoringGuideServiceImpl implements ScoringGuideService {
         this.exams = exams;
         this.snapshots = snapshots;
     }
-
 
     public ResultGuideView forResultView(AttemptResult result) {
         List<Guide> scoreGuides = forResult(result);
@@ -133,5 +130,3 @@ public class ScoringGuideServiceImpl implements ScoringGuideService {
                 .toList();
     }
 }
-
-

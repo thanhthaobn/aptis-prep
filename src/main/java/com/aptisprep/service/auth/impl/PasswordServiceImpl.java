@@ -1,12 +1,11 @@
 package com.aptisprep.service.auth.impl;
 
-import com.aptisprep.service.auth.PasswordHasher;
-import com.aptisprep.service.auth.PasswordService;
-
 import com.aptisprep.entity.User;
 import com.aptisprep.enums.UserStatus;
 import com.aptisprep.exception.BusinessRuleException;
 import com.aptisprep.repository.UserRepository;
+import com.aptisprep.service.auth.PasswordHasher;
+import com.aptisprep.service.auth.PasswordService;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.time.Instant;
@@ -124,10 +123,11 @@ public class PasswordServiceImpl implements PasswordService {
                 || password.length() > 72
                 || password.codePoints().noneMatch(Character::isUpperCase)
                 || password.codePoints().noneMatch(Character::isDigit)
-                || password.codePoints().noneMatch(
-                        c -> !Character.isLetterOrDigit(c) && !Character.isWhitespace(c))
+                || password.codePoints()
+                        .noneMatch(c -> !Character.isLetterOrDigit(c) && !Character.isWhitespace(c))
                 || password.codePoints().anyMatch(Character::isWhitespace))
-            throw new BusinessRuleException("Mật khẩu phải có từ 8 đến 72 ký tự và không chứa khoảng trắng");
+            throw new BusinessRuleException(
+                    "Mật khẩu phải có từ 8 đến 72 ký tự và không chứa khoảng trắng");
         if (encoder.matches(password, user.getPasswordHash()))
             throw new BusinessRuleException("Mật khẩu mới cần khác mật khẩu hiện tại");
         user.setPasswordHash(encoder.encode(password));
@@ -152,5 +152,3 @@ public class PasswordServiceImpl implements PasswordService {
         }
     }
 }
-
-

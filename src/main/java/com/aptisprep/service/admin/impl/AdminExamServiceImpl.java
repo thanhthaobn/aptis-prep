@@ -1,8 +1,5 @@
 package com.aptisprep.service.admin.impl;
 
-import com.aptisprep.service.admin.AdminExamService;
-import com.aptisprep.service.admin.ExamDefinitionValidator;
-
 import com.aptisprep.dto.form.ExamForm;
 import com.aptisprep.dto.view.AdminCatalogView.Entry;
 import com.aptisprep.dto.view.AdminCatalogView.Field;
@@ -12,6 +9,8 @@ import com.aptisprep.enums.RecordStatus;
 import com.aptisprep.exception.BusinessRuleException;
 import com.aptisprep.exception.ResourceNotFoundException;
 import com.aptisprep.repository.*;
+import com.aptisprep.service.admin.AdminExamService;
+import com.aptisprep.service.admin.ExamDefinitionValidator;
 import com.aptisprep.service.exam.ExamSnapshotService;
 import com.aptisprep.service.exam.ExamStartValidator;
 import java.util.*;
@@ -300,5 +299,3 @@ public class AdminExamServiceImpl implements AdminExamService {
         }
     }
 }
-
-

@@ -1,8 +1,5 @@
 package com.aptisprep.service.learning.impl;
 
-import com.aptisprep.service.learning.LessonListeningService;
-import com.aptisprep.service.learning.LessonListeningService.Playback;
-
 import com.aptisprep.entity.Lesson;
 import com.aptisprep.entity.LessonEngagement;
 import com.aptisprep.entity.User;
@@ -14,6 +11,8 @@ import com.aptisprep.exception.ResourceNotFoundException;
 import com.aptisprep.repository.LessonEngagementRepository;
 import com.aptisprep.repository.LessonRepository;
 import com.aptisprep.repository.UserRepository;
+import com.aptisprep.service.learning.LessonListeningService;
+import com.aptisprep.service.learning.LessonListeningService.Playback;
 import com.aptisprep.service.storage.AudioDurationService;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
@@ -248,5 +247,3 @@ public class LessonListeningServiceImpl implements LessonListeningService {
         }
     }
 }
-
-
