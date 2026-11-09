@@ -24,16 +24,16 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
-/** Published exams from the database; results use the ownership-checked attempt contract. */
+/** Student exam catalog pages and ownership-checked result history. */
 @Controller
-public class StudentContentController {
+public class StudentExamCatalogController {
     private final ScoringGuideService scoringGuides;
 
     private final StudentExamCatalogService catalog;
     private final AccountAccessService accounts;
     private final ExamAttemptContract attempts;
 
-    public StudentContentController(
+    public StudentExamCatalogController(
             StudentExamCatalogService catalog,
             AccountAccessService accounts,
             ExamAttemptContract attempts,
@@ -88,7 +88,7 @@ public class StudentContentController {
         model.addAttribute("selectedState", state);
         model.addAttribute("skillCodes", Skill.codes());
         model.addAttribute("learningLevels", LessonService.LEVELS);
-        return "student/content/list";
+        return "student/exams/exam-list";
     }
 
     @GetMapping("/student/results")
@@ -145,7 +145,7 @@ public class StudentContentController {
                 model.addAttribute("resumableAttemptId", resumableAttemptId);
         }
         model.addAttribute("scoreGuides", scoringGuides.forExam(id));
-        return "student/content/detail";
+        return "student/exams/exam-detail";
     }
 
     @GetMapping("/student/attempts/{id}/result")
