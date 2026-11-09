@@ -1,14 +1,17 @@
 package com.aptisprep.dto.form;
 
-import com.aptisprep.validation.StrongPassword;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
+import jakarta.validation.constraints.Pattern;
 
 public class PasswordForm {
     private String currentPassword;
 
     @NotBlank(message = "Vui lòng nhập mật khẩu mới")
-    @StrongPassword
+    @Size(min = 8, max = 72, message = "Mật khẩu phải có từ 8 đến 72 ký tự")
+    @Pattern(
+            regexp = "^(?=.*\\p{Lu})(?=.*\\d)(?=.*[^\\p{L}\\p{N}\\s])\\S+$",
+            message = "Mật khẩu phải có chữ hoa, chữ số, ký tự đặc biệt và không chứa khoảng trắng")
     private String password;
 
     @NotBlank(message = "Vui lòng xác nhận mật khẩu")

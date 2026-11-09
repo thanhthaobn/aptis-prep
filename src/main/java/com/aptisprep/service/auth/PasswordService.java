@@ -4,7 +4,6 @@ import com.aptisprep.entity.User;
 import com.aptisprep.enums.UserStatus;
 import com.aptisprep.exception.BusinessRuleException;
 import com.aptisprep.repository.UserRepository;
-import com.aptisprep.validation.AccountInput;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.time.Instant;
@@ -52,7 +51,8 @@ public class PasswordService {
         if (!recoveryAvailable())
             throw new BusinessRuleException(
                     "Khôi phục qua email chưa được cấu hình. Vui lòng liên hệ quản trị viên.");
-        var found = users.findByEmailIgnoreCase(AccountInput.email(email));
+        String normalizedEmail = email == null ? "" : email.strip().toLowerCase(Locale.ROOT);
+        var found = users.findByEmailIgnoreCase(normalizedEmail);
         if (found.isEmpty() || found.get().getStatus() != UserStatus.ACTIVE) return;
         User user = found.get();
         Instant now = Instant.now();
@@ -115,8 +115,16 @@ public class PasswordService {
     }
 
     private void savePassword(User user, String password) {
-        if (password == null || password.isBlank() || !AccountInput.strongPassword(password))
-            throw new BusinessRuleException(AccountInput.PASSWORD_HINT);
+        if (password == null
+                || password.isBlank()
+                || password.length() < 8
+                || password.length() > 72
+                || password.codePoints().noneMatch(Character::isUpperCase)
+                || password.codePoints().noneMatch(Character::isDigit)
+                || password.codePoints().noneMatch(
+                        c -> !Character.isLetterOrDigit(c) && !Character.isWhitespace(c))
+                || password.codePoints().anyMatch(Character::isWhitespace))
+            throw new BusinessRuleException("Mật khẩu phải có từ 8 đến 72 ký tự và không chứa khoảng trắng");
         if (encoder.matches(password, user.getPasswordHash()))
             throw new BusinessRuleException("Mật khẩu mới cần khác mật khẩu hiện tại");
         user.setPasswordHash(encoder.encode(password));

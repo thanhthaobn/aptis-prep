@@ -7,7 +7,6 @@ import com.aptisprep.enums.UserStatus;
 import com.aptisprep.exception.BusinessRuleException;
 import com.aptisprep.exception.DuplicateEmailException;
 import com.aptisprep.repository.UserRepository;
-import com.aptisprep.validation.AccountInput;
 import java.nio.charset.StandardCharsets;
 import java.util.Locale;
 import java.util.Optional;
@@ -29,9 +28,10 @@ public class UserService {
 
     @Transactional(readOnly = true)
     public Optional<User> authenticate(String email, String password) {
-        String normalizedEmail = AccountInput.email(email);
+        String normalizedEmail = email == null ? "" : email.strip().toLowerCase(Locale.ROOT);
         if (normalizedEmail.isBlank()
                 || normalizedEmail.length() > 255
+                || password == null
                 || password.isEmpty()
                 || password.getBytes(StandardCharsets.UTF_8).length > 72) {
             return Optional.empty();

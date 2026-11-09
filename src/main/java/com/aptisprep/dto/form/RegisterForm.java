@@ -1,7 +1,5 @@
 package com.aptisprep.dto.form;
 
-import com.aptisprep.validation.AccountInput;
-import com.aptisprep.validation.StrongPassword;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
@@ -11,7 +9,7 @@ public class RegisterForm {
 
     @NotBlank(message = "Họ tên không được để trống")
     @Size(max = 255, message = "Họ tên không được vượt quá 255 ký tự")
-    @Pattern(regexp = AccountInput.NAME_PATTERN, message = AccountInput.NAME_HINT)
+    @Pattern(regexp = "\\p{Lu}\\p{M}*(?: *\\p{L}\\p{M}*)*", message = "Họ tên phải bắt đầu bằng chữ in hoa và chỉ được chứa chữ cái, dấu tiếng Việt và khoảng trắng.")
     private String fullName;
 
     @NotBlank(message = "Email không được để trống")
@@ -21,7 +19,9 @@ public class RegisterForm {
 
     @NotBlank(message = "Mật khẩu không được để trống")
     @Size(min = 8, max = 72, message = "Mật khẩu phải có từ 8 đến 72 ký tự")
-    @StrongPassword
+    @Pattern(
+            regexp = "^(?=.*\\p{Lu})(?=.*\\d)(?=.*[^\\p{L}\\p{N}\\s])\\S+$",
+            message = "Mật khẩu phải có chữ hoa, chữ số, ký tự đặc biệt và không chứa khoảng trắng")
     private String password;
 
     @NotBlank(message = "Vui lòng xác nhận mật khẩu")
@@ -33,7 +33,7 @@ public class RegisterForm {
     }
 
     public void setFullName(String fullName) {
-        this.fullName = AccountInput.name(fullName);
+        this.fullName = fullName == null ? null : fullName.strip();
     }
 
     public String getEmail() {
@@ -41,7 +41,7 @@ public class RegisterForm {
     }
 
     public void setEmail(String email) {
-        this.email = AccountInput.email(email);
+        this.email = email == null ? null : email.strip().toLowerCase(java.util.Locale.ROOT);
     }
 
     public String getPassword() {
