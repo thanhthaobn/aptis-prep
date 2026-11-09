@@ -107,11 +107,11 @@ public class StudentExamController {
     @PostMapping("/student/attempts/{id}/answers")
     public String answer(
             @PathVariable Integer id,
-            @RequestParam Integer questionId,
-            @RequestParam(required = false) Integer itemId,
-            @RequestParam(required = false) Integer selectedOptionId,
-            @RequestParam(required = false) Integer userPosition,
-            @RequestParam(required = false) String textAnswer,
+            @RequestParam(name = "questionId") Integer questionId,
+            @RequestParam(name = "itemId", required = false) Integer itemId,
+            @RequestParam(name = "selectedOptionId", required = false) Integer selectedOptionId,
+            @RequestParam(name = "userPosition", required = false) Integer userPosition,
+            @RequestParam(name = "textAnswer", required = false) String textAnswer,
             Principal principal,
             RedirectAttributes redirect) {
         try {
@@ -128,11 +128,11 @@ public class StudentExamController {
     @ResponseBody
     public ResponseEntity<Map<String, Object>> autosave(
             @PathVariable Integer id,
-            @RequestParam Integer questionId,
-            @RequestParam(required = false) Integer itemId,
-            @RequestParam(required = false) Integer selectedOptionId,
-            @RequestParam(required = false) Integer userPosition,
-            @RequestParam(required = false) String textAnswer,
+            @RequestParam(name = "questionId") Integer questionId,
+            @RequestParam(name = "itemId", required = false) Integer itemId,
+            @RequestParam(name = "selectedOptionId", required = false) Integer selectedOptionId,
+            @RequestParam(name = "userPosition", required = false) Integer userPosition,
+            @RequestParam(name = "textAnswer", required = false) String textAnswer,
             Principal principal) {
         try {
             Integer userId = accounts.requireActiveStudent(principal.getName());
@@ -150,8 +150,8 @@ public class StudentExamController {
             consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public String audio(
             @PathVariable Integer id,
-            @RequestParam Integer questionId,
-            @RequestParam(required = false) Integer itemId,
+            @RequestParam(name = "questionId") Integer questionId,
+            @RequestParam(name = "itemId", required = false) Integer itemId,
             @RequestParam("audioFile") MultipartFile audioFile,
             Principal principal,
             RedirectAttributes redirect) {
@@ -170,8 +170,8 @@ public class StudentExamController {
     @ResponseBody
     public ResponseEntity<Map<String, Object>> audioAutosave(
             @PathVariable Integer id,
-            @RequestParam Integer questionId,
-            @RequestParam(required = false) Integer itemId,
+            @RequestParam(name = "questionId") Integer questionId,
+            @RequestParam(name = "itemId", required = false) Integer itemId,
             @RequestParam("audioFile") MultipartFile audioFile,
             Principal principal) {
         try {
@@ -201,7 +201,7 @@ public class StudentExamController {
     public ResponseEntity<Resource> mediaContent(
             @PathVariable Integer id,
             @PathVariable Integer mediaId,
-            @RequestParam(required = false) String token,
+            @RequestParam(name = "token", required = false) String token,
             Principal principal) {
         MediaResource media =
                 attempts.mediaContent(
@@ -267,7 +267,7 @@ public class StudentExamController {
     @PostMapping("/student/attempts/{id}/next-section")
     public String nextSection(
             @PathVariable Integer id,
-            @RequestParam int sectionEndMinute,
+            @RequestParam(name = "sectionEndMinute") int sectionEndMinute,
             Principal principal,
             RedirectAttributes redirect) {
         Integer userId = accounts.requireActiveStudent(principal.getName());

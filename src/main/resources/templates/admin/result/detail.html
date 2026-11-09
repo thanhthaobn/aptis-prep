@@ -242,7 +242,6 @@
           <div>
             <p class="eyebrow" th:text="${@resultLabels.examType(attemptResult.examType)}"></p>
             <h1 th:text="${attemptResult.examTitle}"></h1>
-            <p th:text="${'Mã lượt thi: ' + (attemptResult.attemptId)}"></p>
           </div>
           <span class="result-status" th:text="${@resultLabels.state(attemptResult.state)}"></span>
         </header>
@@ -262,10 +261,6 @@
             ></strong>
           </div>
         </section>
-        <p th:if="${attemptResult.isCombined()}" class="muted">
-          Tổng Reading, Listening, Writing và Speaking; Grammar &amp; Vocabulary có điểm riêng và
-          chỉ hỗ trợ xét CEFR sát ngưỡng. Kết quả là ước lượng phục vụ luyện tập.
-        </p>
         <section class="result-skill-grid">
           <article
             class="dashboard-panel result-skill-card"

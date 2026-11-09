@@ -13,7 +13,6 @@ import java.util.*;
 import java.util.stream.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import tools.jackson.databind.json.JsonMapper;
 
 /** Knowledge-check authoring, validation and scoring; no media/AI submission responsibility. */
 @Service
@@ -23,19 +22,16 @@ public class LessonCheckService {
     private final LessonRepository lessonRepository;
     private final UserRepository userRepository;
     private final LessonCheckAttemptRepository lessonCheckAttemptRepository;
-    private final JsonMapper json;
 
     public LessonCheckService(
             LessonCheckRepository lessonCheckRepository,
             LessonRepository lessonRepository,
             UserRepository userRepository,
-            LessonCheckAttemptRepository lessonCheckAttemptRepository,
-            JsonMapper json) {
+            LessonCheckAttemptRepository lessonCheckAttemptRepository) {
         this.lessonCheckRepository = lessonCheckRepository;
         this.lessonRepository = lessonRepository;
         this.userRepository = userRepository;
         this.lessonCheckAttemptRepository = lessonCheckAttemptRepository;
-        this.json = json;
     }
 
     public boolean hasChecks(Integer lessonId) {
@@ -166,13 +162,23 @@ public class LessonCheckService {
         attempt.setLessonId(id);
         attempt.setScore(score);
         attempt.setTotal(all.size());
-        attempt.setAnswersJson(
-                answers.entrySet().stream()
-                        .filter(e -> e.getKey().matches("q\\d+") && e.getValue().matches("[0-5]"))
-                        .sorted(Map.Entry.comparingByKey())
-                        .map(e -> e.getKey() + "=" + e.getValue())
-                        .collect(Collectors.joining("&")));
-        attempt.setReviewJson(json.writeValueAsString(feedback));
+        for (LessonCheck q : all) {
+            String selected = answers.get("q" + q.getId());
+            LessonCheckAnswerEntity answer = new LessonCheckAnswerEntity();
+            answer.setQuestionId(q.getId());
+            answer.setSelectedOption(Integer.valueOf(selected));
+            attempt.addAnswer(answer);
+        }
+        for (AnswerFeedback value : feedback) {
+            LessonCheckFeedbackEntity review = new LessonCheckFeedbackEntity();
+            review.setPrompt(value.prompt());
+            review.setSelected(value.selected());
+            review.setCorrect(value.correct());
+            review.setRightAnswer(value.right());
+            review.setExplanation(value.explanation());
+            review.setOptionsText(String.join("\u001f", value.options()));
+            attempt.addFeedback(review);
+        }
         attempt.snapshot(lessonRepository.findById(id).orElseThrow());
         lessonCheckAttemptRepository.save(attempt);
         return new Feedback(score, all.size(), feedback);

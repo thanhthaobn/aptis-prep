@@ -230,12 +230,7 @@ class V2SqlServerPreservationTests {
                     var teaching =
                             new LessonTeachingService(
                                     new com.aptisprep.service.learning.LessonCheckService(
-                                            checks,
-                                            lessons,
-                                            users,
-                                            attempts,
-                                            tools.jackson.databind.json.JsonMapper.builder()
-                                                    .build()),
+                                            checks, lessons, users, attempts),
                                     lessons,
                                     users,
                                     repositories.getRepository(LessonResponseRepository.class),
@@ -244,8 +239,7 @@ class V2SqlServerPreservationTests {
                                     null,
                                     repositories.getRepository(LessonProgressRepository.class),
                                     null,
-                                    new com.aptisprep.config.AiProperties(),
-                                    tools.jackson.databind.json.JsonMapper.builder().build());
+                                    new com.aptisprep.config.AiProperties());
                     // Storage and AI are intentionally unused by Knowledge Check operations.
                     var lesson = new com.aptisprep.entity.Lesson();
                     lesson.setTitle("SQL Server Knowledge Check regression");

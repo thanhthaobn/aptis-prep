@@ -1,7 +1,5 @@
 package com.aptisprep.entity;
 
-import tools.jackson.databind.json.JsonMapper;
-
 /** Immutable stimulus snapshot. Deliberately excludes transcripts, models and answer keys. */
 public record LessonContextSnapshot(
         String title,
@@ -20,7 +18,6 @@ public record LessonContextSnapshot(
         Integer maxWords) {
     // Pure entity snapshot codec: strings/integers only, independent of web JSON configuration.
     // Reuse one immutable mapper rather than allocating one for every entity getter.
-    private static final JsonMapper JSON = JsonMapper.builder().build();
 
     public static LessonContextSnapshot capture(Lesson l) {
         LessonMaterial m = l.getMaterial();
@@ -39,16 +36,5 @@ public record LessonContextSnapshot(
                 m == null ? null : m.getVideoUrl(),
                 l.getMinWordCount(),
                 l.getMaxWordCount());
-    }
-
-    public static String serialize(Lesson l) {
-        return JSON.writeValueAsString(capture(l));
-    }
-
-    public static LessonContextSnapshot read(String json) {
-        // V027 compatibility: an old block array is not a snapshot of this simple form.
-        return json == null || json.isBlank() || !json.stripLeading().startsWith("{")
-                ? null
-                : JSON.readValue(json, LessonContextSnapshot.class);
     }
 }

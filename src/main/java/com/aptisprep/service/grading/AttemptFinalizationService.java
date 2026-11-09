@@ -457,7 +457,7 @@ public class AttemptFinalizationService {
                 examAttemptSnapshotRepository.findByAttemptId(attempt.getId()).orElse(null);
         if (lockedSnapshot == null
                 || !Objects.equals(
-                        lockedSnapshot.getGradingContext(), event.lockedAttempt().gradingContext())
+                        lockedSnapshot.getPolicyVersion(), event.lockedAttempt().gradingContext())
                 || !Objects.equals(
                         lockedSnapshot.getAnswerVersion(), event.lockedAttempt().answerVersion())
                 || !Objects.equals(

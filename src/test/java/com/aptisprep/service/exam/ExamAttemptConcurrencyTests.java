@@ -563,18 +563,13 @@ class ExamAttemptConcurrencyTests {
                                         org.hamcrest.Matchers.not(
                                                 org.hamcrest.Matchers.containsString(
                                                         "data-speech"))));
-        assertTrue(
-                snapshots
-                        .findByAttemptId(id)
-                        .orElseThrow()
-                        .getLockedQuestionSnapshot()
-                        .contains(secret));
+        var locked = snapshots.findByAttemptId(id).orElseThrow().getQuestions();
+        assertTrue(locked.stream().anyMatch(question -> question.getContent().contains(secret)));
         org.junit.jupiter.api.Assertions.assertFalse(
-                snapshots
-                        .findByAttemptId(id)
-                        .orElseThrow()
-                        .getLockedQuestionSnapshot()
-                        .contains("CHANGED LIVE TRANSCRIPT"));
+                locked.stream()
+                        .anyMatch(
+                                question ->
+                                        question.getContent().contains("CHANGED LIVE TRANSCRIPT")));
         assertEquals(1, attempts.playMedia(f.user().getId(), id, f.media().getId()).playCount());
         assertEquals(2, attempts.playMedia(f.user().getId(), id, f.media().getId()).playCount());
         assertThrows(

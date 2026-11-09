@@ -6,6 +6,8 @@ import static org.mockito.Mockito.*;
 import com.aptisprep.entity.AttemptOutboxEntity;
 import com.aptisprep.event.AttemptCompletedEvent;
 import com.aptisprep.repository.AttemptOutboxRepository;
+import com.aptisprep.repository.ExamAttemptRepository;
+import com.aptisprep.repository.MockExamRepository;
 import java.time.LocalDateTime;
 import java.util.List;
 import org.junit.jupiter.api.Test;
@@ -37,7 +39,9 @@ class AttemptOutboxLeaseTests {
         new AttemptOutboxService(
                         repository,
                         publisher,
-                        tools.jackson.databind.json.JsonMapper.builder().build())
+                        mock(ExamAttemptRepository.class),
+                        mock(MockExamRepository.class),
+                        null)
                 .recoverPending();
         assertEquals("PROCESSING", row.getStatus());
         assertEquals(1, row.getAttempts());

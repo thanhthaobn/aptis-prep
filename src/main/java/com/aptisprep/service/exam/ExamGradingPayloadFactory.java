@@ -12,8 +12,6 @@ import java.time.*;
 import java.util.*;
 import java.util.stream.Collectors;
 import org.springframework.stereotype.Component;
-import tools.jackson.databind.JsonNode;
-import tools.jackson.databind.json.JsonMapper;
 
 /** Builds grading DTOs from locked content and persisted answers. Never writes attempt state. */
 @Component
@@ -21,33 +19,40 @@ final class ExamGradingPayloadFactory {
     private final ExamSnapshotService examSnapshots;
     private final UserAnswerRepository userAnswerRepository;
     private final UserAnswerDetailRepository userAnswerDetailRepository;
-    private final JsonMapper json;
 
     ExamGradingPayloadFactory(
             ExamSnapshotService examSnapshots,
             UserAnswerRepository userAnswerRepository,
-            UserAnswerDetailRepository userAnswerDetailRepository,
-            JsonMapper json) {
+            UserAnswerDetailRepository userAnswerDetailRepository) {
         this.examSnapshots = examSnapshots;
         this.userAnswerRepository = userAnswerRepository;
         this.userAnswerDetailRepository = userAnswerDetailRepository;
-        this.json = json;
     }
 
     LockedAttempt build(ExamAttemptEntity attempt, MockExamEntity exam) {
         ExamAttemptSnapshotEntity snapshot = examSnapshots.require(attempt.getId());
-        Map<Integer, JsonNode> lockedByQuestion = examSnapshots.lockedQuestions(attempt.getId());
+        Map<Integer, ExamQuestionSnapshotEntity> lockedByQuestion =
+                examSnapshots.lockedQuestionEntities(attempt.getId()).stream()
+                        .collect(
+                                Collectors.toMap(
+                                        ExamQuestionSnapshotEntity::getSourceQuestionId,
+                                        value -> value,
+                                        (left, right) -> left,
+                                        LinkedHashMap::new));
         List<LockedAnswer> lockedAnswers =
                 userAnswerRepository.findByAttemptIdOrderByQuestionIdAsc(attempt.getId()).stream()
                         .map(
                                 answer -> {
-                                    JsonNode question =
+                                    ExamQuestionSnapshotEntity question =
                                             lockedByQuestion.get(answer.getQuestionId());
                                     if (question == null)
                                         throw new BusinessRuleException(
                                                 "Snapshot không chứa câu hỏi của lượt thi");
-                                    String instruction = question.path("instruction").asText("");
-                                    String content = question.path("content").asText("");
+                                    String instruction =
+                                            Objects.requireNonNullElse(
+                                                    question.getInstruction(), "");
+                                    String content =
+                                            Objects.requireNonNullElse(question.getContent(), "");
                                     String task =
                                             instruction.isBlank()
                                                     ? content
@@ -61,12 +66,14 @@ final class ExamGradingPayloadFactory {
                                                     answer.getTextAnswer(),
                                                     answer.getAudioUrl(),
                                                     answer.getTranscript());
-                                    if ("SPEAKING_AUDIO".equals(question.path("type").asText())
+                                    if ("SPEAKING_AUDIO".equals(question.getQuestionType())
                                             && answer.getAudioManifest() != null) {
-                                        List<String> paths = new ArrayList<>();
-                                        for (JsonNode entry :
-                                                json.readTree(answer.getAudioManifest()))
-                                            paths.add(entry.path("path").asText());
+                                        List<String> paths =
+                                                Arrays.stream(
+                                                                answer.getAudioManifest()
+                                                                        .split("\\R"))
+                                                        .filter(value -> !value.isBlank())
+                                                        .toList();
                                         legacyLockedContent =
                                                 String.join("\n--- ITEM ---\n", paths);
                                     }
@@ -90,12 +97,12 @@ final class ExamGradingPayloadFactory {
                                                                 Collectors.joining(
                                                                         "\n--- ITEM ---\n"));
                                     List<LockedItem> lockedItems = new ArrayList<>();
-                                    for (JsonNode item : question.path("items")) {
+                                    for (ExamItemSnapshotEntity item : question.getItems()) {
                                         UserAnswerDetailEntity detail =
                                                 userAnswerDetailRepository
                                                         .findByUserAnswerIdAndQuestionItemId(
                                                                 answer.getId(),
-                                                                item.path("id").asInt())
+                                                                item.getSourceItemId())
                                                         .orElse(null);
                                         String itemContent =
                                                 detail == null
@@ -105,23 +112,20 @@ final class ExamGradingPayloadFactory {
                                                                 detail.getAudioPath(),
                                                                 detail.getTranscript());
                                         Integer correctOption = null;
-                                        for (JsonNode option : item.path("options")) {
-                                            if (option.path("correct").asBoolean(false)) {
-                                                correctOption = option.path("id").asInt();
+                                        for (ExamOptionSnapshotEntity option : item.getOptions()) {
+                                            if (Boolean.TRUE.equals(option.getCorrect())) {
+                                                correctOption = option.getSourceOptionId();
                                                 break;
                                             }
                                         }
                                         lockedItems.add(
                                                 new LockedItem(
-                                                        item.path("id").asInt(),
-                                                        item.path("position").asInt(),
+                                                        item.getSourceItemId(),
+                                                        item.getPosition(),
                                                         itemPrompt(item),
                                                         itemContent,
                                                         correctOption,
-                                                        item.path("correctPosition").isNull()
-                                                                ? null
-                                                                : item.path("correctPosition")
-                                                                        .asInt()));
+                                                        item.getCorrectPosition()));
                                     }
                                     String lockedContent =
                                             lockedItems.stream()
@@ -135,8 +139,8 @@ final class ExamGradingPayloadFactory {
                                     return new LockedAnswer(
                                             answer.getId(),
                                             answer.getQuestionId(),
-                                            question.path("skill").asText(),
-                                            question.path("type").asText(),
+                                            question.getSkill(),
+                                            question.getQuestionType(),
                                             task,
                                             lockedContent,
                                             answer.getTranscript(),
@@ -157,7 +161,7 @@ final class ExamGradingPayloadFactory {
                 attempt.getRubricVersion() == null
                         ? DEFAULT_RUBRIC_VERSION
                         : attempt.getRubricVersion(),
-                snapshot.getGradingContext(),
+                snapshot.getPolicyVersion(),
                 attempt.getGradingRequestKey(),
                 lockedAnswers);
     }
@@ -198,19 +202,19 @@ final class ExamGradingPayloadFactory {
         }
     }
 
-    private String itemPrompt(JsonNode item) {
-        StringBuilder prompt = new StringBuilder(item.path("content").asText(""));
-        if (item.path("minWordCount").isNumber() || item.path("maxWordCount").isNumber()) {
+    private String itemPrompt(ExamItemSnapshotEntity item) {
+        StringBuilder prompt = new StringBuilder(Objects.requireNonNullElse(item.getContent(), ""));
+        if (item.getMinWordCount() != null || item.getMaxWordCount() != null) {
             prompt.append("\nGiới hạn từ: ");
-            if (item.path("minWordCount").isNumber())
-                prompt.append("tối thiểu ").append(item.path("minWordCount").asInt()).append(" ");
-            if (item.path("maxWordCount").isNumber())
-                prompt.append("tối đa ").append(item.path("maxWordCount").asInt()).append(" ");
+            if (item.getMinWordCount() != null)
+                prompt.append("tối thiểu ").append(item.getMinWordCount()).append(" ");
+            if (item.getMaxWordCount() != null)
+                prompt.append("tối đa ").append(item.getMaxWordCount()).append(" ");
             prompt.append("từ.");
         }
-        if (item.path("responseSeconds").isNumber())
+        if (item.getResponseSeconds() != null)
             prompt.append("\nThời gian trả lời: ")
-                    .append(item.path("responseSeconds").asInt())
+                    .append(item.getResponseSeconds())
                     .append(" giây.");
         return prompt.toString();
     }
