@@ -114,7 +114,6 @@
 (() => {
   const sections = document.getElementById('exam-sections');
   const add = document.getElementById('add-exam-section');
-  const total = document.getElementById('exam-total-minutes');
   const examType = document.getElementById('examType');
   const certificate = document.getElementById('certificateId');
   const scheme = document.getElementById('scoringSchemeId');
@@ -136,15 +135,6 @@
     );
     scheme.replaceChildren(...allowed);
     scheme.value = allowed.some((option) => option.value === selected) ? selected : '';
-  };
-  const updateTotal = () => {
-    if (!sections || !total) return;
-    total.textContent = String(
-      [...sections.querySelectorAll('.section-duration')].reduce(
-        (sum, input) => sum + Math.max(0, Number(input.value) || 0),
-        0,
-      ),
-    );
   };
   const renumberSections = () =>
     sections?.querySelectorAll('.exam-section-editor').forEach((section, index) => {
@@ -173,13 +163,9 @@
     });
   };
   sections?.querySelectorAll('.exam-section-editor').forEach(updateQuestionVisibility);
-  updateTotal();
   updateSchemes();
   examType?.addEventListener('change', updateSchemes);
   certificate?.addEventListener('change', updateSchemes);
-  sections?.addEventListener('input', (event) => {
-    if (event.target.matches('.section-duration')) updateTotal();
-  });
   sections?.addEventListener('change', (event) => {
     const section = event.target.closest('.exam-section-editor');
     if (section && event.target.matches('.section-skill')) {
@@ -213,7 +199,6 @@
     sections.appendChild(clone);
     renumberSections();
     updateQuestionVisibility(clone);
-    updateTotal();
   });
 })();
 

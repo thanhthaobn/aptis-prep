@@ -221,9 +221,11 @@ class AiRecoveryBusinessTests {
                         users,
                         provider,
                         provider,
+                        mock(com.aptisprep.service.storage.StorageService.class),
                         transactionManager,
                         events,
-                        delivery);
+                        delivery,
+                        null);
         interrupted.recoverAiJobs();
         var pending = jobs.findById(job.getId()).orElseThrow();
         assertEquals(AiJobState.PENDING, pending.getState());
@@ -506,6 +508,7 @@ class AiRecoveryBusinessTests {
                 users,
                 provider,
                 provider,
+                mock(com.aptisprep.service.storage.StorageService.class),
                 transactionManager,
                 events,
                 delivery,

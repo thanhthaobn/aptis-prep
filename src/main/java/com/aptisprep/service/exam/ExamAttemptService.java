@@ -109,6 +109,24 @@ public class ExamAttemptService implements ExamAttemptContract {
     }
 
     @Override
+    @Transactional(readOnly = true)
+    public Optional<Integer> latestResumableAttemptId(Integer userId, Integer examId) {
+        activeUser(userId);
+        LocalDateTime now = LocalDateTime.now();
+        return examAttemptRepository
+                .findByUserIdAndMockExamIdAndStatusAndSubmittedAtIsNullOrderByIdDesc(
+                        userId, examId, "IN_PROGRESS")
+                .stream()
+                .filter(
+                        attempt -> {
+                            LocalDateTime deadline = examDeadline(attempt, examFor(attempt));
+                            return deadline == null || !deadline.isBefore(now);
+                        })
+                .map(ExamAttemptEntity::getId)
+                .findFirst();
+    }
+
+    @Override
     @Transactional
     public AttemptHandle startPlacement(Integer userId, Integer examId, String requestKey) {
         return startInternal(userId, examId, requestKey, null, true);
@@ -171,6 +189,15 @@ public class ExamAttemptService implements ExamAttemptContract {
                 MockExamEntity activeExam = examFor(active.get());
                 if (!expireIfNeeded(active.get(), activeExam))
                     return handle(active.get(), activeExam);
+            }
+            for (ExamAttemptEntity overlap :
+                    examAttemptRepository.findOverlappingPlacements(
+                            userId, exam.getSkill(), ACTIVE_STATES)) {
+                if (!expireIfNeeded(overlap, examFor(overlap))) {
+                    throw new BusinessRuleException(
+                            "Bạn còn một bài kiểm tra đầu vào trùng kỹ năng. "
+                                    + "Hãy hoàn tất bài đó trước khi bắt đầu bài mới.");
+                }
             }
         }
         ExamAttemptEntity attempt = new ExamAttemptEntity();
@@ -333,9 +360,15 @@ public class ExamAttemptService implements ExamAttemptContract {
 
     @Transactional(readOnly = true)
     public MediaResource speakingAudio(Integer userId, Integer attemptId, Integer answerId) {
-        examAttemptRepository
-                .findByIdAndUserId(attemptId, userId)
-                .orElseThrow(() -> new AccessDeniedException("Bạn không có quyền xem audio này"));
+        ExamAttemptEntity attempt =
+                examAttemptRepository
+                        .findByIdAndUserId(attemptId, userId)
+                        .orElseThrow(
+                                () ->
+                                        new AccessDeniedException(
+                                                "Bạn không có quyền xem audio này"));
+        if ("CANCELLED".equals(attempt.getStatus()))
+            throw new ResourceNotFoundException("Lượt làm dở đã được xóa.");
         UserAnswerEntity answer =
                 userAnswerRepository
                         .findByIdAndAttemptId(answerId, attemptId)
@@ -430,17 +463,43 @@ public class ExamAttemptService implements ExamAttemptContract {
         }
     }
 
+    @Transactional
+    public void discard(Integer userId, Integer attemptId) {
+        activeUserForUpdate(userId);
+        ExamAttemptEntity attempt =
+                examAttemptRepository
+                        .findByIdAndUserIdForUpdate(attemptId, userId)
+                        .orElseThrow(
+                                () ->
+                                        new AccessDeniedException(
+                                                "Bạn không có quyền với lượt thi này"));
+        if ("CANCELLED".equals(attempt.getStatus())) return;
+        if (!("IN_PROGRESS".equals(attempt.getStatus()) || "EXPIRED".equals(attempt.getStatus()))
+                || attempt.getSubmittedAt() != null
+                || attempt.getFinalScaleScore() != null
+                || attempt.getEstimatedOverallCefr() != null
+                || examSkillResultRepository.existsByAttemptId(attemptId))
+            throw new BusinessRuleException(
+                    "Chỉ có thể loại bỏ lượt thi chưa nộp và chưa có kết quả.");
+        attempt.setStatus("CANCELLED");
+        attempt.setGradingStatus("CANCELLED");
+        // A new checkpoint may reuse the start key of the discarded attempt.
+        attempt.setRequestKey("discarded-attempt:" + attemptId);
+    }
+
     @Override
     @Transactional
     public AttemptResult result(Integer userId, Integer attemptId) {
         activeUser(userId);
         ExamAttemptEntity attempt =
                 examAttemptRepository
-                        .findByIdAndUserId(attemptId, userId)
+                        .findByIdAndUserIdForUpdate(attemptId, userId)
                         .orElseThrow(
                                 () ->
                                         new AccessDeniedException(
                                                 "Bạn không có quyền xem kết quả này"));
+        if ("CANCELLED".equals(attempt.getStatus()))
+            throw new ResourceNotFoundException("Lượt làm dở đã được xóa.");
         MockExamEntity exam = examFor(attempt);
         expireIfNeeded(attempt, exam);
         return resultReader.view(attempt, exam);
@@ -629,11 +688,13 @@ public class ExamAttemptService implements ExamAttemptContract {
         activeUser(userId);
         ExamAttemptEntity attempt =
                 examAttemptRepository
-                        .findByIdAndUserId(attemptId, userId)
+                        .findByIdAndUserIdForUpdate(attemptId, userId)
                         .orElseThrow(
                                 () ->
                                         new AccessDeniedException(
                                                 "Bạn không có quyền với lượt thi này"));
+        if ("CANCELLED".equals(attempt.getStatus()))
+            throw new ResourceNotFoundException("Lượt làm dở đã được xóa.");
         MockExamEntity exam = examFor(attempt);
         expireIfNeeded(attempt, exam);
         List<QuestionPage> questionPages = new ArrayList<>();

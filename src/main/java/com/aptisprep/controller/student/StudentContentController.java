@@ -57,7 +57,6 @@ public class StudentContentController {
             throw new BusinessRuleException("Phân trang không hợp lệ");
         if (q.length() > 255 || skill.length() > 80 || level.length() > 40 || state.length() > 40)
             throw new BusinessRuleException("Bộ lọc không hợp lệ");
-        examModel(model);
         if (!StudentExamCatalogService.EXAM_TYPES.contains(examType)
                 || !StudentExamCatalogService.SORT_OPTIONS.contains(sort))
             throw new BusinessRuleException("Phân loại hoặc sắp xếp đề thi không hợp lệ");
@@ -73,6 +72,9 @@ public class StudentContentController {
         model.addAttribute("entries", entries.getContent());
         model.addAttribute("examGroups", groups);
         model.addAttribute("examCategories", content.categories());
+        model.addAttribute(
+                "skills",
+                List.of("Grammar & Vocabulary", "Reading", "Listening", "Writing", "Speaking"));
         model.addAttribute("selectedExamType", examType);
         model.addAttribute("selectedSort", sort);
         model.addAttribute("categoryTitle", StudentExamCatalogService.categoryLabel(examType));
@@ -107,8 +109,14 @@ public class StudentContentController {
         model.addAttribute("history", history);
         model.addAttribute(
                 "totalPages", (history.totalItems() + history.size() - 1) / history.size());
-        model.addAttribute("page", history.page());
-        model.addAttribute("size", size);
+        model.addAttribute(
+                "inProgressCount",
+                history.items().stream()
+                        .filter(item -> "IN_PROGRESS".equals(item.state()))
+                        .count());
+        model.addAttribute(
+                "completedCount",
+                history.items().stream().filter(item -> "COMPLETED".equals(item.state())).count());
         model.addAttribute("q", q);
         model.addAttribute("selectedSkill", skill);
         model.addAttribute("selectedExamType", examType);
@@ -120,10 +128,17 @@ public class StudentContentController {
     public String detail(
             @PathVariable int id,
             @RequestParam(defaultValue = "false") boolean fromPlacement,
+            Principal principal,
             Model model) {
-        examModel(model);
+        model.addAttribute("module", "exams");
+        Entry entry = catalog.entry("exams", id);
         model.addAttribute("fromPlacement", fromPlacement);
-        model.addAttribute("entry", catalog.entry("exams", id));
+        model.addAttribute("entry", entry);
+        if (!"CHECKPOINT".equals(entry.examType()) && !"PLACEMENT".equals(entry.examType())) {
+            Integer userId = accounts.requireActiveStudent(principal.getName());
+            attempts.latestResumableAttemptId(userId, id)
+                    .ifPresent(attemptId -> model.addAttribute("resumableAttemptId", attemptId));
+        }
         model.addAttribute("scoreGuides", scoringGuides.forExam(id));
         return "student/content/detail";
     }
@@ -133,7 +148,9 @@ public class StudentContentController {
         Integer userId = accounts.requireActiveStudent(principal.getName());
         AttemptResult result = attempts.result(userId, id);
         model.addAttribute("attemptResult", result);
-        model.addAttribute("scoreGuides", scoringGuides.forResult(result));
+        var scoreGuideView = scoringGuides.forResultView(result);
+        model.addAttribute("scoreGuides", scoreGuideView.guides());
+        model.addAttribute("feedbackWithoutGuide", scoreGuideView.feedbackWithoutGuide());
         model.addAttribute("canRegradeEmpty", attempts.canRegradeEmpty(userId, id));
         return "student/attempt-result";
     }
@@ -168,13 +185,5 @@ public class StudentContentController {
             redirect.addFlashAttribute("error", exception.getMessage());
         }
         return "redirect:/student/attempts/" + id + "/result";
-    }
-
-    private void examModel(Model model) {
-        model.addAttribute("module", "exams");
-        model.addAttribute("title", "Đề thi");
-        model.addAttribute(
-                "skills",
-                List.of("Grammar & Vocabulary", "Reading", "Listening", "Writing", "Speaking"));
     }
 }

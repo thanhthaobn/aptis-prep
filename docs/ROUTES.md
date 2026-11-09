@@ -46,9 +46,10 @@ Chứng chỉ & Chấm điểm đã có GET danh sách/tạo/xem/sửa tại `/a
 |---|---|---|---|---|
 | GET | `/` | Public | HomeController | `index` |
 | GET | `/login` | Public | AuthController | `auth/login` |
+| POST | `/login` | Public | AuthController | Tạo session mới, chuyển đến dashboard theo vai trò |
 | GET | `/register` | Public | AuthController | `auth/register` |
 | POST | `/register` | Public | AuthController | Redirect `/login` |
-| POST | `/logout` | Authenticated | Spring Security | Redirect `/login` |
+| POST | `/logout` | Authenticated | AuthController | Hủy session, chuyển về `/login?logout` |
 | GET | `/student/dashboard` | Student | StudentDashboardController | `student/dashboard` |
 | GET | `/student/orientation` | Student | StudentDashboardController, chỉ đọc minh họa | `student/learning/orientation` |
 | GET | `/student/profile` | Student | StudentAccountPreviewController, chưa lưu | `student/account/profile` |

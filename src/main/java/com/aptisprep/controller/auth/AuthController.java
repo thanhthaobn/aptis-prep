@@ -1,20 +1,24 @@
 package com.aptisprep.controller.auth;
 
 import com.aptisprep.dto.form.RegisterForm;
+import com.aptisprep.entity.User;
+import com.aptisprep.enums.Role;
 import com.aptisprep.exception.BusinessRuleException;
 import com.aptisprep.exception.DuplicateEmailException;
+import com.aptisprep.security.LoginSession;
 import com.aptisprep.service.auth.UserService;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
+import java.security.Principal;
 import java.util.Objects;
 import org.springframework.dao.DataIntegrityViolationException;
-import org.springframework.security.authentication.AnonymousAuthenticationToken;
-import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 @Controller
@@ -27,16 +31,35 @@ public class AuthController {
     }
 
     @GetMapping("/login")
-    public String login(Authentication authentication) {
-        if (isAuthenticated(authentication)) {
+    public String login(Principal principal) {
+        if (principal != null) {
             return "redirect:/";
         }
         return "auth/login";
     }
 
+    @PostMapping("/login")
+    public String login(
+            @RequestParam(defaultValue = "") String email,
+            @RequestParam(defaultValue = "") String password,
+            HttpServletRequest request) {
+        User user = userService.authenticate(email, password).orElse(null);
+        if (user == null) return "redirect:/login?error";
+        LoginSession.start(request, user);
+        return user.getRole() == Role.ADMIN
+                ? "redirect:/admin/dashboard"
+                : "redirect:/student/dashboard";
+    }
+
+    @PostMapping("/logout")
+    public String logout(HttpServletRequest request) {
+        LoginSession.end(request);
+        return "redirect:/login?logout";
+    }
+
     @GetMapping("/register")
-    public String registerForm(Model model, Authentication authentication) {
-        if (isAuthenticated(authentication)) {
+    public String registerForm(Model model, Principal principal) {
+        if (principal != null) {
             return "redirect:/";
         }
         if (!model.containsAttribute("registerForm")) {
@@ -78,11 +101,5 @@ public class AuthController {
         redirectAttributes.addFlashAttribute(
                 "successMessage", "Đăng ký thành công. Vui lòng đăng nhập.");
         return "redirect:/login";
-    }
-
-    private boolean isAuthenticated(Authentication authentication) {
-        return authentication != null
-                && authentication.isAuthenticated()
-                && !(authentication instanceof AnonymousAuthenticationToken);
     }
 }

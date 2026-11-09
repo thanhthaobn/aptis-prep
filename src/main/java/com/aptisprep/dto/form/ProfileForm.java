@@ -8,9 +8,7 @@ import jakarta.validation.constraints.Size;
 public class ProfileForm {
     @NotBlank(message = "Họ và tên không được để trống")
     @Size(max = 255, message = "Họ và tên tối đa 255 ký tự")
-    @Pattern(
-            regexp = AccountInput.NAME_PATTERN,
-            message = "Họ tên cần có chữ, chỉ dùng chữ, dấu cách, dấu chấm, nháy hoặc gạch nối")
+    @Pattern(regexp = AccountInput.NAME_PATTERN, message = AccountInput.NAME_HINT)
     private String fullName;
 
     public String getFullName() {

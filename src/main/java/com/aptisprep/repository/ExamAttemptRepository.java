@@ -20,6 +20,9 @@ public interface ExamAttemptRepository extends JpaRepository<ExamAttemptEntity, 
 
     Optional<ExamAttemptEntity> findByUserIdAndRequestKey(Integer userId, String requestKey);
 
+    List<ExamAttemptEntity> findByUserIdAndMockExamIdAndStatusAndSubmittedAtIsNullOrderByIdDesc(
+            Integer userId, Integer mockExamId, String status);
+
     Page<ExamAttemptEntity> findByUserIdOrderByCreatedAtDesc(Integer userId, Pageable pageable);
 
     List<ExamAttemptEntity> findByUserId(Integer userId);
@@ -28,14 +31,16 @@ public interface ExamAttemptRepository extends JpaRepository<ExamAttemptEntity, 
             value =
                     "select a from ExamAttemptEntity a join MockExamEntity e on e.id = a.mockExamId"
                             + " left join ExamAttemptSnapshotEntity s on s.attemptId = a.id"
-                            + " where a.userId = :userId and (:pattern = '' or lower(coalesce(s.title, e.title)) like"
+                            + " where a.userId = :userId and a.status <> 'CANCELLED' and (:pattern = ''"
+                            + " or lower(coalesce(s.title, e.title)) like"
                             + " :pattern) and (:examType = '' or coalesce(s.examType, e.examType) = :examType) and (:state ="
                             + " '' or a.status = :state) and (:skill = '' or coalesce(s.skill, e.skill) = :skill or exists"
                             + " (select r.id from ExamSkillResultEntity r where r.attemptId = a.id and"
                             + " r.skill = :skill)) order by a.createdAt desc, a.id desc",
             countQuery =
                     "select count(a) from ExamAttemptEntity a join MockExamEntity e on e.id ="
-                            + " a.mockExamId left join ExamAttemptSnapshotEntity s on s.attemptId = a.id where a.userId = :userId and (:pattern = '' or"
+                            + " a.mockExamId left join ExamAttemptSnapshotEntity s on s.attemptId = a.id"
+                            + " where a.userId = :userId and a.status <> 'CANCELLED' and (:pattern = '' or"
                             + " lower(coalesce(s.title, e.title)) like :pattern) and (:examType = '' or coalesce(s.examType, e.examType) ="
                             + " :examType) and (:state = '' or a.status = :state) and (:skill = '' or"
                             + " coalesce(s.skill, e.skill) = :skill or exists (select r.id from ExamSkillResultEntity r"
@@ -99,6 +104,19 @@ public interface ExamAttemptRepository extends JpaRepository<ExamAttemptEntity, 
                     + " a.userId = :userId and e.examType = 'PLACEMENT' and e.demoOnly = false and"
                     + " e.skill = :skill and a.status in :states")
     Optional<ExamAttemptEntity> findActivePlacement(
+            @Param("userId") Integer userId,
+            @Param("skill") String skill,
+            @Param("states") Collection<String> states);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query(
+            """
+            select a from ExamAttemptEntity a join MockExamEntity e on e.id = a.mockExamId
+            where a.userId = :userId and e.examType = 'PLACEMENT' and e.demoOnly = false
+            and e.skill <> :skill and (e.skill = 'FULL_MOCK' or :skill = 'FULL_MOCK')
+            and a.status in :states
+            """)
+    List<ExamAttemptEntity> findOverlappingPlacements(
             @Param("userId") Integer userId,
             @Param("skill") String skill,
             @Param("states") Collection<String> states);

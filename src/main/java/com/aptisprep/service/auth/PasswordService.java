@@ -16,21 +16,20 @@ import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class PasswordService {
     private final UserRepository users;
-    private final PasswordEncoder encoder;
+    private final PasswordHasher encoder;
     private final ObjectProvider<JavaMailSender> mail;
     private final String secret, baseUrl, from;
     private final Map<Integer, Instant> sent = new ConcurrentHashMap<>();
 
     public PasswordService(
             UserRepository users,
-            PasswordEncoder encoder,
+            PasswordHasher encoder,
             ObjectProvider<JavaMailSender> mail,
             @Value("${app.password-reset.secret:${PASSWORD_RESET_SECRET:}}") String secret,
             @Value(

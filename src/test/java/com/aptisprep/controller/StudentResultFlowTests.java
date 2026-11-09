@@ -1,9 +1,12 @@
 package com.aptisprep.controller;
 
+import static com.aptisprep.security.SessionMvcRequests.csrf;
+import static com.aptisprep.security.SessionMvcRequests.user;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.containsString;
-import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
+import static org.hamcrest.Matchers.not;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 import com.aptisprep.entity.ExamAttemptEntity;
@@ -314,6 +317,91 @@ class StudentResultFlowTests {
                         get("/admin/results/" + attempt.getId())
                                 .with(user(owner.getEmail()).roles("STUDENT")))
                 .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void onlyTheOwnerCanDiscardAnUnsubmittedAttemptFromHistory() throws Exception {
+        var learner = learner("discard-owner@test.local");
+        var other = learner("discard-other@test.local");
+        var exam = new MockExamEntity();
+        exam.setCertificateId(1);
+        exam.setTitle("Đề có lượt làm dở");
+        exam.setExamType("PRACTICE");
+        exam.setSkill("READING");
+        exam.setStatus("PUBLISHED");
+        exams.saveAndFlush(exam);
+        var draft = new ExamAttemptEntity();
+        draft.setUserId(learner.getId());
+        draft.setMockExamId(exam.getId());
+        draft.setStatus("IN_PROGRESS");
+        draft.setRequestKey("discard-draft");
+        attempts.saveAndFlush(draft);
+        var completed = new ExamAttemptEntity();
+        completed.setUserId(learner.getId());
+        completed.setMockExamId(exam.getId());
+        completed.setStatus("COMPLETED");
+        attempts.saveAndFlush(completed);
+        var scoredDraft = new ExamAttemptEntity();
+        scoredDraft.setUserId(learner.getId());
+        scoredDraft.setMockExamId(exam.getId());
+        scoredDraft.setStatus("IN_PROGRESS");
+        scoredDraft.setRequestKey("discard-scored-draft");
+        scoredDraft.setFinalScaleScore(java.math.BigDecimal.TEN);
+        attempts.saveAndFlush(scoredDraft);
+        var expired = new ExamAttemptEntity();
+        expired.setUserId(learner.getId());
+        expired.setMockExamId(exam.getId());
+        expired.setStatus("EXPIRED");
+        expired.setRequestKey("discard-expired-draft");
+        attempts.saveAndFlush(expired);
+
+        var owner = user(learner.getEmail()).roles("STUDENT");
+        String draftUrl = "/student/attempts/" + draft.getId();
+        String discardUrl = draftUrl + "/discard";
+        String completedUrl = "/student/attempts/" + completed.getId();
+        String expiredDiscardUrl = "/student/attempts/" + expired.getId() + "/discard";
+        mvc.perform(get("/student/results").with(owner))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString(discardUrl)))
+                .andExpect(content().string(containsString(expiredDiscardUrl)))
+                .andExpect(
+                        content()
+                                .string(
+                                        not(
+                                                containsString(
+                                                        "/student/attempts/"
+                                                                + scoredDraft.getId()
+                                                                + "/discard"))))
+                .andExpect(content().string(not(containsString(completedUrl + "/discard"))));
+        mvc.perform(post(discardUrl).with(owner)).andExpect(status().isForbidden());
+        mvc.perform(post(discardUrl).with(user(other.getEmail()).roles("STUDENT")).with(csrf()))
+                .andExpect(status().isForbidden());
+        mvc.perform(post(completedUrl + "/discard").with(owner).with(csrf()))
+                .andExpect(redirectedUrl("/student/results"))
+                .andExpect(flash().attributeExists("error"));
+        mvc.perform(post(expiredDiscardUrl).with(owner).with(csrf()))
+                .andExpect(redirectedUrl("/student/results"))
+                .andExpect(flash().attributeExists("successMessage"));
+        mvc.perform(
+                        post("/student/attempts/{id}/discard", scoredDraft.getId())
+                                .with(owner)
+                                .with(csrf()))
+                .andExpect(redirectedUrl("/student/results"))
+                .andExpect(flash().attributeExists("error"));
+
+        for (int i = 0; i < 2; i++) {
+            mvc.perform(post(discardUrl).with(owner).with(csrf()))
+                    .andExpect(redirectedUrl("/student/results"))
+                    .andExpect(flash().attributeExists("successMessage"));
+        }
+        mvc.perform(get("/student/results").with(owner))
+                .andExpect(status().isOk())
+                .andExpect(content().string(not(containsString(discardUrl))))
+                .andExpect(content().string(not(containsString(draftUrl + "/result"))))
+                .andExpect(content().string(containsString(completedUrl + "/result")));
+        mvc.perform(get("/student/attempts/{id}", draft.getId()).with(owner))
+                .andExpect(status().isNotFound());
+        assertThat(attempts.findByUserIdAndRequestKey(learner.getId(), "discard-draft")).isEmpty();
     }
 
     private User learner(String email) {

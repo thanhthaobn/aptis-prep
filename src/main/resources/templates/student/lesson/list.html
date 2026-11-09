@@ -1,10 +1,243 @@
 <!doctype html>
 <html lang="vi" xmlns:th="http://www.thymeleaf.org">
-  <head th:replace="~{fragments/head :: head('Bài học')}"></head>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="description"
+      content="AptisPrep - Nền tảng luyện thi Aptis chuẩn CEFR (Reading, Listening, Writing, Speaking) với lộ trình cá nhân hóa và chấm điểm thông minh."
+    />
+    <title>Bài học | AptisPrep</title>
+    <link
+      rel="icon"
+      type="image/svg+xml"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%230F6E56'/%3E%3Cpath d='M16 6 L24 25 L19.5 25 L17.5 20 L14.5 20 L12.5 25 L8 25 Z M16 12 L15.2 17 L16.8 17 Z' fill='%23ffffff'/%3E%3C/svg%3E"
+    />
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+      integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB"
+      crossorigin="anonymous"
+    />
+    <link rel="stylesheet" th:href="@{/css/variables.css}" />
+    <link rel="stylesheet" th:href="@{/css/base.css}" />
+    <link rel="stylesheet" th:href="@{/css/layout.css}" />
+    <link rel="stylesheet" th:href="@{/css/components.css}" />
+    <link rel="stylesheet" th:href="@{/css/forms.css}" />
+    <link rel="stylesheet" th:href="@{/css/learning-theme.css}" />
+    <link rel="stylesheet" th:href="@{/css/navi.css}" />
+    <link rel="stylesheet" th:href="@{/css/exam.css}" />
+    <link rel="stylesheet" th:href="@{/css/result.css}" />
+    <link rel="stylesheet" th:href="@{/css/catalog-compact.css}" />
+    <link rel="stylesheet" th:href="@{/css/admin-overview.css}" />
+    <link rel="stylesheet" th:href="@{/css/typography.css}" />
+    <script th:src="@{/js/app-dialog.js}" defer></script>
+    <script
+      src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"
+      integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI"
+      crossorigin="anonymous"
+      defer
+    ></script>
+  </head>
   <body class="student-theme">
-    <div th:replace="~{fragments/navbar :: navbar}"></div>
+    <header class="site-header">
+      <a href="#main-content" class="ap-skip-link">Bỏ qua điều hướng</a>
+
+      <div class="container ap-container nav-wrap">
+        <a class="brand" th:href="@{/}">
+          <span class="brand-mark" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+              <path d="M5 19V7.5L12 4l7 3.5V19" />
+              <path d="M8.5 10.5 12 12l3.5-1.5M12 12v8" />
+            </svg>
+          </span>
+          <span>AptisPrep</span>
+        </a>
+
+        <button
+          class="nav-toggle"
+          id="navToggle"
+          type="button"
+          aria-label="Mở menu điều hướng"
+          aria-expanded="false"
+          aria-controls="primaryNav"
+        >
+          <svg
+            class="hamburger-icon"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            aria-hidden="true"
+          >
+            <line x1="3" y1="6" x2="21" y2="6" />
+            <line x1="3" y1="12" x2="21" y2="12" />
+            <line x1="3" y1="18" x2="21" y2="18" />
+          </svg>
+        </button>
+
+        <nav class="nav-links" id="primaryNav" aria-label="Điều hướng chính">
+          <a
+            th:href="@{/}"
+            th:classappend="${navSection == 'home'} ? 'active'"
+            th:attr="aria-current=${navSection == 'home' ? 'page' : null}"
+          >
+            Trang chủ
+          </a>
+          <a
+            th:if="${isStudent}"
+            th:href="@{/student/dashboard}"
+            th:classappend="${navSection == 'student'} ? 'active'"
+            th:attr="aria-current=${navSection == 'student' ? 'page' : null}"
+          >
+            Học tập
+          </a>
+          <a
+            th:if="${isAdmin}"
+            th:href="@{/admin/dashboard}"
+            th:classappend="${navSection == 'admin'} ? 'active'"
+            th:attr="aria-current=${navSection == 'admin' ? 'page' : null}"
+          >
+            Quản trị
+          </a>
+          <a
+            th:if="${signedIn != true}"
+            th:href="@{/login}"
+            th:classappend="${navSection == 'login'} ? 'active'"
+            th:attr="aria-current=${navSection == 'login' ? 'page' : null}"
+          >
+            Đăng nhập
+          </a>
+          <a
+            th:if="${signedIn != true}"
+            class="button button-small"
+            th:href="@{/register}"
+            th:classappend="${navSection == 'register'} ? 'active'"
+            th:attr="aria-current=${navSection == 'register' ? 'page' : null}"
+          >
+            Đăng ký
+          </a>
+          <form th:if="${signedIn}" th:action="@{/logout}" method="post">
+            <button class="button button-secondary button-small" type="submit">Đăng xuất</button>
+          </form>
+        </nav>
+      </div>
+
+      <script th:src="@{/js/navigation.js}" defer></script>
+    </header>
     <div class="container ap-container app-shell">
-      <div th:replace="~{fragments/student-sidebar :: studentSidebar('lessons')}"></div>
+      <aside th:with="activePage='lessons'" class="app-sidebar">
+        <button
+          class="sidebar-toggle collapsed"
+          type="button"
+          data-bs-toggle="collapse"
+          data-bs-target="#student-sidebar-content"
+          aria-expanded="false"
+          aria-controls="student-sidebar-content"
+        >
+          <span>Menu học tập</span>
+          <span class="sidebar-toggle-icon" aria-hidden="true">⌄</span>
+        </button>
+        <div class="sidebar-content collapse d-lg-block" id="student-sidebar-content">
+          <span class="sidebar-label">HỌC TẬP</span>
+          <nav class="sidebar-nav" aria-label="Điều hướng học tập">
+            <a
+              class="sidebar-link"
+              th:classappend="${activePage == 'dashboard'} ? 'active'"
+              th:href="@{/student/dashboard}"
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M4 4h6v6H4zm10 0h6v6h-6zM4 14h6v6H4zm10 0h6v6h-6z" />
+              </svg>
+              Tổng quan
+            </a>
+
+            <a
+              class="sidebar-link"
+              th:classappend="${activePage == 'learning-path'} ? 'active'"
+              th:href="@{/student/learning-path}"
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M5 5h4v4H5zM15 15h4v4h-4zM9 7h3a5 5 0 0 1 5 5v3" />
+              </svg>
+              Lộ trình của tôi
+            </a>
+            <a
+              class="sidebar-link"
+              th:classappend="${activePage == 'lessons'} ? 'active'"
+              th:href="@{/student/lessons}"
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20V4H6.5A2.5 2.5 0 0 0 4 6.5z" />
+              </svg>
+              Bài học
+            </a>
+            <a
+              class="sidebar-link"
+              th:classappend="${activePage == 'exams'} ? 'active'"
+              th:href="@{/student/exams}"
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M7 3h10v4H7zM5 7h14v14H5z" />
+              </svg>
+              Đề thi
+            </a>
+            <a
+              class="sidebar-link"
+              th:classappend="${activePage == 'results'} ? 'active'"
+              th:href="@{/student/results}"
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M4 19V5m0 14h16M8 16v-4m4 4V7m4 9v-6" />
+              </svg>
+              Kết quả
+            </a>
+            <a
+              class="sidebar-link"
+              th:classappend="${activePage == 'flashcards'} ? 'active'"
+              th:href="@{/student/flashcards}"
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="6" y="6" width="15" height="15" rx="3" />
+                <path d="M17 6V3H3v14h3" />
+              </svg>
+              Flashcard
+            </a>
+          </nav>
+          <div class="sidebar-divider"></div>
+          <span class="sidebar-label">TÀI KHOẢN</span>
+          <nav class="sidebar-nav">
+            <a
+              class="sidebar-link"
+              th:classappend="${activePage == 'placement'} ? 'active'"
+              th:href="@{/student/placement}"
+            >
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                aria-hidden="true"
+              >
+                <rect x="5" y="4" width="14" height="17" rx="2" />
+                <path d="M9 4V2h6v2M8 12l3 3 5-6" />
+              </svg>
+              Kiểm tra đầu vào
+            </a>
+            <a
+              class="sidebar-link"
+              th:classappend="${activePage == 'profile'} ? 'active'"
+              th:href="@{/student/profile}"
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="8" r="4" />
+                <path d="M4 21a8 8 0 0 1 16 0" />
+              </svg>
+              Hồ sơ
+            </a>
+          </nav>
+        </div>
+      </aside>
       <main id="main-content" tabindex="-1" class="app-main student-content lesson-library-page">
         <header class="page-header">
           <div>
@@ -139,12 +372,35 @@
           </details>
         </section>
         <div class="empty-box" th:if="${lessons == null or lessons.isEmpty()}">
-          <div th:replace="~{fragments/navi :: navi('empty', 'Navi đang chờ bài học mới')}"></div>
+          <figure class="navi navi-empty">
+            <svg viewBox="0 0 160 130" role="img" aria-label="Navi đang chờ bài học mới">
+              <path
+                class="navi-shadow"
+                d="M36 118c0-8 21-14 46-14s46 6 46 14-21 10-46 10-46-2-46-10Z"
+              ></path>
+              <path
+                class="navi-body"
+                d="M43 68c0-29 17-48 40-48s42 19 42 48c0 32-13 48-42 48S43 100 43 68Z"
+              ></path>
+              <path class="navi-antenna" d="M82 21V9m0 0 9-5"></path>
+              <circle class="navi-eye" cx="67" cy="63" r="5"></circle>
+              <circle class="navi-eye" cx="99" cy="63" r="5"></circle>
+              <path class="navi-mouth" d="M72 79c6 6 15 6 22 0"></path>
+              <path class="navi-arm navi-arm-left" d="M46 73 25 61"></path>
+              <path class="navi-arm navi-arm-right" d="m122 73 19-17"></path>
+            </svg>
+            <figcaption>Navi đang chờ bài học mới</figcaption>
+          </figure>
           <h2>Không tìm thấy bài học phù hợp</h2>
           <p>Thử bộ lọc khác hoặc quay lại sau khi có nội dung mới.</p>
         </div>
       </main>
     </div>
-    <div th:replace="~{fragments/footer :: footer}"></div>
+    <footer class="site-footer">
+      <div class="container footer-wrap">
+        <span>© 2026 AptisPrep. Học đúng lộ trình, tiến bộ mỗi ngày.</span>
+        <span>Nền tảng học tập và luyện thi Aptis</span>
+      </div>
+    </footer>
   </body>
 </html>

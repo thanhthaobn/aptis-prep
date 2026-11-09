@@ -180,6 +180,14 @@ public final class IntegrationModels {
             BigDecimal finalScaleScore,
             String overallCefr,
             Instant submittedAt) {
+        public boolean canDiscard() {
+            return ("IN_PROGRESS".equals(state) || "EXPIRED".equals(state))
+                    && submittedAt == null
+                    && finalScaleScore == null
+                    && overallCefr == null
+                    && (skills == null || skills.isEmpty());
+        }
+
         public boolean hasFullMockTotal() {
             return isCombined() && finalScaleScore != null;
         }

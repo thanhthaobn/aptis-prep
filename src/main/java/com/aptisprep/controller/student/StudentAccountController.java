@@ -74,11 +74,10 @@ public class StudentAccountController {
 
     @GetMapping("/student/goals")
     public String goals(Principal principal, Model model) {
-        AccountSnapshot snapshot = accounts.snapshot(principal.getName());
-        model.addAttribute("account", snapshot);
         model.addAttribute("certificates", accounts.activeCertificates());
         if (!model.containsAttribute("goalForm"))
-            model.addAttribute("goalForm", accounts.formFrom(snapshot));
+            model.addAttribute(
+                    "goalForm", accounts.formFrom(accounts.snapshot(principal.getName())));
         return "student/account/goals";
     }
 
@@ -90,7 +89,6 @@ public class StudentAccountController {
             Model model,
             RedirectAttributes redirectAttributes) {
         if (bindingResult.hasErrors()) {
-            model.addAttribute("account", accounts.snapshot(principal.getName()));
             model.addAttribute("certificates", accounts.activeCertificates());
             return "student/account/goals";
         }
@@ -98,7 +96,6 @@ public class StudentAccountController {
             accounts.saveGoal(principal.getName(), goalForm);
         } catch (BusinessRuleException exception) {
             bindingResult.reject("goal.invalid", exception.getMessage());
-            model.addAttribute("account", accounts.snapshot(principal.getName()));
             model.addAttribute("certificates", accounts.activeCertificates());
             return "student/account/goals";
         }
@@ -114,8 +111,7 @@ public class StudentAccountController {
             @RequestParam(defaultValue = "0") int page,
             Principal principal,
             Model model) {
-        if (skill == null || skill.isBlank())
-            skill = placement.available("FULL_MOCK").isEmpty() ? "READING" : "FULL_MOCK";
+        if (skill == null || skill.isBlank()) skill = "FULL_MOCK";
         if (!placementSkills().contains(skill))
             throw new BusinessRuleException("Kỹ năng Placement không hợp lệ");
         model.addAttribute("skill", skill);
@@ -134,7 +130,9 @@ public class StudentAccountController {
             RedirectAttributes redirect) {
         try {
             AttemptHandle handle = placement.start(principal.getName(), skill, examId);
-            return "redirect:/student/attempts/" + handle.attemptId();
+            return "redirect:/student/attempts/"
+                    + handle.attemptId()
+                    + ("IN_PROGRESS".equals(handle.state()) ? "" : "/result");
         } catch (BusinessRuleException e) {
             redirect.addFlashAttribute("error", e.getMessage());
             return "redirect:/student/placement?skill=" + skill;
@@ -145,7 +143,9 @@ public class StudentAccountController {
     public String result(@RequestParam Integer attemptId, Principal principal, Model model) {
         var result = placement.result(principal.getName(), attemptId);
         model.addAttribute("placementResult", result);
-        model.addAttribute("scoreGuides", scoringGuides.forResult(result));
+        var scoreGuideView = scoringGuides.forResultView(result);
+        model.addAttribute("scoreGuides", scoreGuideView.guides());
+        model.addAttribute("feedbackWithoutGuide", scoreGuideView.feedbackWithoutGuide());
         return "student/account/placement-result";
     }
 

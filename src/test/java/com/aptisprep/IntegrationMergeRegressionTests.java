@@ -17,6 +17,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.Properties;
 import org.junit.jupiter.api.Test;
 import org.springframework.test.util.ReflectionTestUtils;
 
@@ -36,11 +37,18 @@ class IntegrationMergeRegressionTests {
         assertFalse(ddl.toUpperCase().contains("INSERT INTO"));
         assertFalse(ddl.contains("flyway_schema_history"));
         assertFalse(ddl.contains("CREATE DATABASE"));
-        String settings = Files.readString(Path.of("src/main/resources/application.properties"));
-        assertTrue(settings.contains("spring.jpa.hibernate.ddl-auto=validate"));
-        assertTrue(settings.contains("spring.sql.init.mode=never"));
-        assertTrue(settings.contains("spring.datasource.password=${DB_PASSWORD}"));
-        assertFalse(settings.contains("app.demo-data.enabled"));
+        Properties settings = new Properties();
+        Path settingsPath = Path.of("src/main/resources/application.properties");
+        try (var reader = Files.newBufferedReader(settingsPath)) {
+            settings.load(reader);
+        }
+        assertEquals("validate", settings.getProperty("spring.jpa.hibernate.ddl-auto"));
+        assertEquals("never", settings.getProperty("spring.sql.init.mode"));
+        String passwordSetting = settings.getProperty("spring.datasource.password", "");
+        assertTrue(
+                passwordSetting.matches("\\$\\{DB_PASSWORD:[^}]+\\}"),
+                "The datasource password must support a DB_PASSWORD override and a default");
+        assertFalse(settings.containsKey("app.demo-data.enabled"));
     }
 
     @Test

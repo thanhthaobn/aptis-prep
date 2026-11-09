@@ -112,12 +112,23 @@ public class LearningPathService implements LearningPathContract {
             String currentLevel,
             String status,
             List<StageLesson> lessons) {
+        public StageProgress progress() {
+            if (currentLevel == null || lessons == null || lessons.isEmpty()) return null;
+            long completedLessons = lessons.stream().filter(StageLesson::completed).count();
+            int totalLessons = lessons.size();
+            return new StageProgress(
+                    completedLessons + "/" + totalLessons + " bài",
+                    (int) (completedLessons * 100 / totalLessons));
+        }
+
         public List<StageLesson> missingRequiredLessons() {
             return lessons.stream()
                     .filter(lesson -> lesson.required() && !lesson.completed())
                     .toList();
         }
     }
+
+    public record StageProgress(String label, int percent) {}
 
     public record StageLesson(
             Integer id,

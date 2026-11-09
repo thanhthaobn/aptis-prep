@@ -44,16 +44,12 @@ public class StudentDashboardController {
     @GetMapping("/student/dashboard")
     public String dashboard(Principal principal, Model model) {
         List<PathProgress> paths = learningPaths.ensureAndSummaries(principal.getName());
-        int completedLessons = paths.stream().mapToInt(PathProgress::completedLessons).sum();
-        int totalLessons = paths.stream().mapToInt(PathProgress::totalLessons).sum();
+        boolean hasLearningContent = paths.stream().anyMatch(path -> path.totalLessons() > 0);
         Recommendation recommendation =
                 recommendations.recommend(learningPaths.userId(principal.getName()), paths);
         model.addAttribute("email", principal.getName());
         model.addAttribute("paths", paths);
-        model.addAttribute("completedLessons", completedLessons);
-        model.addAttribute("totalLessons", totalLessons);
-        model.addAttribute("recommendation", recommendation);
-        model.addAttribute("hasLearningContent", totalLessons > 0);
+        model.addAttribute("hasLearningContent", hasLearningContent);
         AccountSnapshot account = accounts.snapshot(principal.getName());
         model.addAttribute("account", account);
         ArrayList<SkillOverview> skillOverview = new ArrayList<SkillOverview>();
@@ -93,7 +89,6 @@ public class StudentDashboardController {
                                 .stream()
                                 .findFirst()
                                 .orElse(null);
-        model.addAttribute("latestResult", latestResult);
         boolean newcomer =
                 activityView.totalActivities() == 0
                         && account.goal() == null

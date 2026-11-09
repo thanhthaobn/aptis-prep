@@ -175,6 +175,20 @@ class GeminiGradingServiceTests {
     }
 
     @Test
+    void transientProviderErrorRetriesOnce() {
+        server.expect(method(HttpMethod.POST))
+                .andRespond(withStatus(HttpStatus.SERVICE_UNAVAILABLE));
+        server.expect(method(HttpMethod.POST))
+                .andRespond(
+                        withSuccess(
+                                response(
+                                        "{\"score\":30,\"cefr\":\"B1\",\"feedback\":\"OK\",\"transcript\":\"\"}"),
+                                MediaType.APPLICATION_JSON));
+        assertEquals(new BigDecimal("30"), service.grade("Task", "Answer").estimatedScore());
+        server.verify();
+    }
+
+    @Test
     void speakingSendsAudioInlineAndReturnsTranscript(@TempDir Path directory) throws Exception {
         Path audio = directory.resolve("sample.wav");
         Files.write(audio, new byte[] {82, 73, 70, 70});
@@ -203,11 +217,14 @@ class GeminiGradingServiceTests {
                         requestTo(
                                 "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash-lite:generateContent"))
                 .andExpect(content().string(org.hamcrest.Matchers.containsString("inlineData")))
+                .andExpect(
+                        content()
+                                .string(
+                                        org.hamcrest.Matchers.not(
+                                                org.hamcrest.Matchers.containsString("\"score\""))))
                 .andRespond(
                         withSuccess(
-                                response(
-                                        "{\"score\":30,\"cefr\":\"B1\",\"feedback\":\"Nội dung bản"
-                                                + " ghi.\",\"transcript\":\"I enjoy reading books.\"}"),
+                                response("{\"transcript\":\"I enjoy reading books.\"}"),
                                 MediaType.APPLICATION_JSON));
         assertEquals("I enjoy reading books.", service.transcribe(audio));
         server.verify();

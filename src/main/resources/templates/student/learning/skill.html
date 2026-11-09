@@ -1,13 +1,256 @@
 <!doctype html>
-<!--/*@thymesVar id="display" type="com.aptisprep.controller.DisplayFormatting"*/-->
 <html lang="vi" xmlns:th="http://www.thymeleaf.org">
-  <head th:replace="~{fragments/head :: head(${selectedSkill})}"></head>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="description"
+      content="AptisPrep - Nền tảng luyện thi Aptis chuẩn CEFR (Reading, Listening, Writing, Speaking) với lộ trình cá nhân hóa và chấm điểm thông minh."
+    />
+    <title th:text="${selectedSkill} + ' | AptisPrep'">AptisPrep</title>
+    <link
+      rel="icon"
+      type="image/svg+xml"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%230F6E56'/%3E%3Cpath d='M16 6 L24 25 L19.5 25 L17.5 20 L14.5 20 L12.5 25 L8 25 Z M16 12 L15.2 17 L16.8 17 Z' fill='%23ffffff'/%3E%3C/svg%3E"
+    />
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+      integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB"
+      crossorigin="anonymous"
+    />
+    <link rel="stylesheet" th:href="@{/css/variables.css}" />
+    <link rel="stylesheet" th:href="@{/css/base.css}" />
+    <link rel="stylesheet" th:href="@{/css/layout.css}" />
+    <link rel="stylesheet" th:href="@{/css/components.css}" />
+    <link rel="stylesheet" th:href="@{/css/forms.css}" />
+    <link rel="stylesheet" th:href="@{/css/learning-theme.css}" />
+    <link rel="stylesheet" th:href="@{/css/navi.css}" />
+    <link rel="stylesheet" th:href="@{/css/exam.css}" />
+    <link rel="stylesheet" th:href="@{/css/result.css}" />
+    <link rel="stylesheet" th:href="@{/css/catalog-compact.css}" />
+    <link rel="stylesheet" th:href="@{/css/admin-overview.css}" />
+    <link rel="stylesheet" th:href="@{/css/typography.css}" />
+    <script th:src="@{/js/app-dialog.js}" defer></script>
+    <script
+      src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"
+      integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI"
+      crossorigin="anonymous"
+      defer
+    ></script>
+  </head>
   <body class="student-theme">
-    <div th:replace="~{fragments/navbar :: navbar}"></div>
+    <header class="site-header">
+      <a href="#main-content" class="ap-skip-link">Bỏ qua điều hướng</a>
+
+      <div class="container ap-container nav-wrap">
+        <a class="brand" th:href="@{/}">
+          <span class="brand-mark" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+              <path d="M5 19V7.5L12 4l7 3.5V19" />
+              <path d="M8.5 10.5 12 12l3.5-1.5M12 12v8" />
+            </svg>
+          </span>
+          <span>AptisPrep</span>
+        </a>
+
+        <button
+          class="nav-toggle"
+          id="navToggle"
+          type="button"
+          aria-label="Mở menu điều hướng"
+          aria-expanded="false"
+          aria-controls="primaryNav"
+        >
+          <svg
+            class="hamburger-icon"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            aria-hidden="true"
+          >
+            <line x1="3" y1="6" x2="21" y2="6" />
+            <line x1="3" y1="12" x2="21" y2="12" />
+            <line x1="3" y1="18" x2="21" y2="18" />
+          </svg>
+        </button>
+
+        <nav class="nav-links" id="primaryNav" aria-label="Điều hướng chính">
+          <a
+            th:href="@{/}"
+            th:classappend="${navSection == 'home'} ? 'active'"
+            th:attr="aria-current=${navSection == 'home' ? 'page' : null}"
+          >
+            Trang chủ
+          </a>
+          <a
+            th:if="${isStudent}"
+            th:href="@{/student/dashboard}"
+            th:classappend="${navSection == 'student'} ? 'active'"
+            th:attr="aria-current=${navSection == 'student' ? 'page' : null}"
+          >
+            Học tập
+          </a>
+          <a
+            th:if="${isAdmin}"
+            th:href="@{/admin/dashboard}"
+            th:classappend="${navSection == 'admin'} ? 'active'"
+            th:attr="aria-current=${navSection == 'admin' ? 'page' : null}"
+          >
+            Quản trị
+          </a>
+          <a
+            th:if="${signedIn != true}"
+            th:href="@{/login}"
+            th:classappend="${navSection == 'login'} ? 'active'"
+            th:attr="aria-current=${navSection == 'login' ? 'page' : null}"
+          >
+            Đăng nhập
+          </a>
+          <a
+            th:if="${signedIn != true}"
+            class="button button-small"
+            th:href="@{/register}"
+            th:classappend="${navSection == 'register'} ? 'active'"
+            th:attr="aria-current=${navSection == 'register' ? 'page' : null}"
+          >
+            Đăng ký
+          </a>
+          <form th:if="${signedIn}" th:action="@{/logout}" method="post">
+            <button class="button button-secondary button-small" type="submit">Đăng xuất</button>
+          </form>
+        </nav>
+      </div>
+
+      <script th:src="@{/js/navigation.js}" defer></script>
+    </header>
     <div class="container ap-container app-shell">
-      <div th:replace="~{fragments/student-sidebar :: studentSidebar('learning-path')}"></div>
+      <aside th:with="activePage='learning-path'" class="app-sidebar">
+        <button
+          class="sidebar-toggle collapsed"
+          type="button"
+          data-bs-toggle="collapse"
+          data-bs-target="#student-sidebar-content"
+          aria-expanded="false"
+          aria-controls="student-sidebar-content"
+        >
+          <span>Menu học tập</span>
+          <span class="sidebar-toggle-icon" aria-hidden="true">⌄</span>
+        </button>
+        <div class="sidebar-content collapse d-lg-block" id="student-sidebar-content">
+          <span class="sidebar-label">HỌC TẬP</span>
+          <nav class="sidebar-nav" aria-label="Điều hướng học tập">
+            <a
+              class="sidebar-link"
+              th:classappend="${activePage == 'dashboard'} ? 'active'"
+              th:href="@{/student/dashboard}"
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M4 4h6v6H4zm10 0h6v6h-6zM4 14h6v6H4zm10 0h6v6h-6z" />
+              </svg>
+              Tổng quan
+            </a>
+
+            <a
+              class="sidebar-link"
+              th:classappend="${activePage == 'learning-path'} ? 'active'"
+              th:href="@{/student/learning-path}"
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M5 5h4v4H5zM15 15h4v4h-4zM9 7h3a5 5 0 0 1 5 5v3" />
+              </svg>
+              Lộ trình của tôi
+            </a>
+            <a
+              class="sidebar-link"
+              th:classappend="${activePage == 'lessons'} ? 'active'"
+              th:href="@{/student/lessons}"
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20V4H6.5A2.5 2.5 0 0 0 4 6.5z" />
+              </svg>
+              Bài học
+            </a>
+            <a
+              class="sidebar-link"
+              th:classappend="${activePage == 'exams'} ? 'active'"
+              th:href="@{/student/exams}"
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M7 3h10v4H7zM5 7h14v14H5z" />
+              </svg>
+              Đề thi
+            </a>
+            <a
+              class="sidebar-link"
+              th:classappend="${activePage == 'results'} ? 'active'"
+              th:href="@{/student/results}"
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M4 19V5m0 14h16M8 16v-4m4 4V7m4 9v-6" />
+              </svg>
+              Kết quả
+            </a>
+            <a
+              class="sidebar-link"
+              th:classappend="${activePage == 'flashcards'} ? 'active'"
+              th:href="@{/student/flashcards}"
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="6" y="6" width="15" height="15" rx="3" />
+                <path d="M17 6V3H3v14h3" />
+              </svg>
+              Flashcard
+            </a>
+          </nav>
+          <div class="sidebar-divider"></div>
+          <span class="sidebar-label">TÀI KHOẢN</span>
+          <nav class="sidebar-nav">
+            <a
+              class="sidebar-link"
+              th:classappend="${activePage == 'placement'} ? 'active'"
+              th:href="@{/student/placement}"
+            >
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                aria-hidden="true"
+              >
+                <rect x="5" y="4" width="14" height="17" rx="2" />
+                <path d="M9 4V2h6v2M8 12l3 3 5-6" />
+              </svg>
+              Kiểm tra đầu vào
+            </a>
+            <a
+              class="sidebar-link"
+              th:classappend="${activePage == 'profile'} ? 'active'"
+              th:href="@{/student/profile}"
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="8" r="4" />
+                <path d="M4 21a8 8 0 0 1 16 0" />
+              </svg>
+              Hồ sơ
+            </a>
+          </nav>
+        </div>
+      </aside>
       <main class="app-main student-content" id="main-content" tabindex="-1">
-        <div th:replace="~{fragments/back-link :: backLink(@{/student/learning-path})}"></div>
+        <a class="back-link" th:href="@{/student/learning-path}">
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            aria-hidden="true"
+          >
+            <path d="m14 6-6 6 6 6" />
+          </svg>
+          <span>Quay lại</span>
+        </a>
 
         <header class="page-header">
           <div>
@@ -16,13 +259,127 @@
           </div>
         </header>
 
-        <!-- Thông báo alert chuẩn thống nhất -->
-        <div th:replace="~{fragments/messages :: messages}"></div>
+        <div class="messages-container" aria-live="polite">
+          <div
+            class="alert alert-success ap-alert ap-alert-success"
+            role="status"
+            th:if="${successMessage != null or (message != null and error == null)}"
+            th:text="${successMessage != null ? successMessage : message}"
+          ></div>
+          <div
+            class="alert alert-danger ap-alert ap-alert-danger"
+            role="alert"
+            th:if="${errorMessage != null or error != null}"
+            th:text="${errorMessage != null ? errorMessage : error}"
+          ></div>
+          <div
+            class="alert alert-warning ap-alert ap-alert-warning"
+            role="alert"
+            th:if="${warningMessage != null or warning != null}"
+            th:text="${warningMessage != null ? warningMessage : warning}"
+          ></div>
+          <div
+            class="alert alert-info ap-alert ap-alert-info"
+            role="status"
+            th:if="${infoMessage != null or info != null}"
+            th:text="${infoMessage != null ? infoMessage : info}"
+          ></div>
+        </div>
 
-        <div
-          th:if="${paths == null or paths.isEmpty()}"
-          th:insert="~{fragments/path-stage :: pathStage(${selectedSkill})}"
-        ></div>
+        <div th:if="${paths == null or paths.isEmpty()}">
+          <th:block th:with="skill=${selectedSkill}">
+            <section class="stage-overview" aria-label="Trình độ và đích chặng">
+              <div
+                th:each="stage : ${stages}"
+                th:if="${stage.skill == skill}"
+                class="path-overview"
+              >
+                <dl class="path-summary">
+                  <div>
+                    <dt>
+                      Trình độ hiện tại
+                      <span class="sr-only" style="display: none">Hiện tại</span>
+                    </dt>
+                    <dd th:text="${stage.currentLevel != null ? stage.currentLevel : '—'}"></dd>
+                  </div>
+                  <div>
+                    <dt>
+                      Chặng tiếp theo
+                      <span class="sr-only" style="display: none">Đích chặng</span>
+                    </dt>
+                    <dd
+                      th:text="${stage.targetLevel != null ? stage.targetLevel : 'Đã hoàn tất'}"
+                    ></dd>
+                  </div>
+                  <div>
+                    <dt>
+                      Mục tiêu
+                      <span class="tile-label-suffix">cuối</span>
+                    </dt>
+                    <dd>
+                      <span th:if="${stage.goalLevel != null}" th:text="${stage.goalLevel}"></span>
+                      <a
+                        th:if="${stage.goalLevel == null}"
+                        th:href="@{/student/goals}"
+                        aria-label="Đặt mục tiêu cá nhân"
+                      >
+                        Đặt mục tiêu cá nhân
+                      </a>
+                    </dd>
+                  </div>
+                </dl>
+                <ol
+                  th:with="current=${stage.targetLevel},goal=${stage.goalLevel},scale=${display.learningLevels()}"
+                  class="stage-scale"
+                  th:attr="data-unassessed=${stage.currentLevel == null ? 'true' : null}"
+                  aria-label="Thang chặng CEFR"
+                  th:style="${'--stage-progress:' + (stage.currentLevel == null ? 0 : scale.indexOf(stage.currentLevel) + 1)}"
+                >
+                  <li
+                    th:each="level, levelStat : ${scale}"
+                    th:classappend="${(stage.currentLevel != null and level == stage.currentLevel ? ' is-current is-you-are-here' : '') + (stage.currentLevel != null and level == current and current != stage.currentLevel ? ' is-next-step' : '') + (level == goal ? ' is-goal' : '') + (stage.currentLevel != null and levelStat.index &lt; scale.indexOf(stage.currentLevel) ? ' is-reached' : '')}"
+                    th:attr="aria-current=${stage.currentLevel != null and level == stage.currentLevel ? 'step' : null}"
+                    th:title="${stage.currentLevel == null ? (level == goal ? '★ Mục tiêu: ' + level : level) : (level == stage.currentLevel ? level + ': Trình độ hiện tại của bạn' : (levelStat.index &lt; scale.indexOf(stage.currentLevel) ? level + ': Đã đạt được' : (level == current ? level + ': Chặng tiếp theo cần đạt' : (level == goal ? '★ Mục tiêu: ' + level : level))))}"
+                  >
+                    <strong th:text="${level}"></strong>
+                    <small th:if="${stage.currentLevel != null and level == stage.currentLevel}">
+                      Bạn ở đây
+                    </small>
+                    <small
+                      th:if="${stage.currentLevel != null and level == current and current != stage.currentLevel}"
+                    >
+                      Chặng tới
+                    </small>
+                    <small class="stage-goal-label" th:if="${level == goal}">★ Mục tiêu</small>
+                  </li>
+                </ol>
+
+                <th:block th:with="progress=${stage.progress}">
+                  <div th:if="${progress != null}" class="stage-progress-wrap">
+                    <div class="stage-progress-info">
+                      <span>Tiến độ chặng</span>
+                      <strong th:text="${progress.label}"></strong>
+                    </div>
+                    <div
+                      class="stage-progress-track"
+                      role="progressbar"
+                      aria-label="Tiến độ chặng"
+                      th:attr="aria-valuenow=${progress.percent}, aria-valuemin=0, aria-valuemax=100"
+                      th:style="|--stage-pct:${progress.percent}%|"
+                    >
+                      <div class="stage-progress-fill"></div>
+                    </div>
+                  </div>
+                </th:block>
+
+                <p class="muted" th:if="${stage.status == 'NO_CONTENT'}">
+                  Chưa có bài học cho chặng này.
+                </p>
+              </div>
+              <a class="stage-goal-action" th:href="@{/student/goals}">Thiết lập mục tiêu</a>
+            </section>
+          </th:block>
+        </div>
         <section class="curriculum-tree" aria-label="Kỹ năng, cấp độ và bài học">
           <p th:if="${paths == null or paths.isEmpty()}" class="empty-box">
             Chưa có chặng phù hợp hoặc mục tiêu hiện tại đã đạt. Bạn vẫn có thể ôn bài trong thư
@@ -42,7 +399,101 @@
                 th:text="${path.totalLessons() == 0 ? 'Chưa có bài học' : path.completedLessons() + '/' + path.totalLessons() + ' bài · ' + path.progressPercent() + '%'}"
               ></span>
             </header>
-            <div th:replace="~{fragments/path-stage :: pathStage(${path.skill()})}"></div>
+            <th:block th:with="skill=${path.skill()}">
+              <section class="stage-overview" aria-label="Trình độ và đích chặng">
+                <div
+                  th:each="stage : ${stages}"
+                  th:if="${stage.skill == skill}"
+                  class="path-overview"
+                >
+                  <dl class="path-summary">
+                    <div>
+                      <dt>
+                        Trình độ hiện tại
+                        <span class="sr-only" style="display: none">Hiện tại</span>
+                      </dt>
+                      <dd th:text="${stage.currentLevel != null ? stage.currentLevel : '—'}"></dd>
+                    </div>
+                    <div>
+                      <dt>
+                        Chặng tiếp theo
+                        <span class="sr-only" style="display: none">Đích chặng</span>
+                      </dt>
+                      <dd
+                        th:text="${stage.targetLevel != null ? stage.targetLevel : 'Đã hoàn tất'}"
+                      ></dd>
+                    </div>
+                    <div>
+                      <dt>
+                        Mục tiêu
+                        <span class="tile-label-suffix">cuối</span>
+                      </dt>
+                      <dd>
+                        <span
+                          th:if="${stage.goalLevel != null}"
+                          th:text="${stage.goalLevel}"
+                        ></span>
+                        <a
+                          th:if="${stage.goalLevel == null}"
+                          th:href="@{/student/goals}"
+                          aria-label="Đặt mục tiêu cá nhân"
+                        >
+                          Đặt mục tiêu cá nhân
+                        </a>
+                      </dd>
+                    </div>
+                  </dl>
+                  <ol
+                    th:with="current=${stage.targetLevel},goal=${stage.goalLevel},scale=${display.learningLevels()}"
+                    class="stage-scale"
+                    th:attr="data-unassessed=${stage.currentLevel == null ? 'true' : null}"
+                    aria-label="Thang chặng CEFR"
+                    th:style="${'--stage-progress:' + (stage.currentLevel == null ? 0 : scale.indexOf(stage.currentLevel) + 1)}"
+                  >
+                    <li
+                      th:each="level, levelStat : ${scale}"
+                      th:classappend="${(stage.currentLevel != null and level == stage.currentLevel ? ' is-current is-you-are-here' : '') + (stage.currentLevel != null and level == current and current != stage.currentLevel ? ' is-next-step' : '') + (level == goal ? ' is-goal' : '') + (stage.currentLevel != null and levelStat.index &lt; scale.indexOf(stage.currentLevel) ? ' is-reached' : '')}"
+                      th:attr="aria-current=${stage.currentLevel != null and level == stage.currentLevel ? 'step' : null}"
+                      th:title="${stage.currentLevel == null ? (level == goal ? '★ Mục tiêu: ' + level : level) : (level == stage.currentLevel ? level + ': Trình độ hiện tại của bạn' : (levelStat.index &lt; scale.indexOf(stage.currentLevel) ? level + ': Đã đạt được' : (level == current ? level + ': Chặng tiếp theo cần đạt' : (level == goal ? '★ Mục tiêu: ' + level : level))))}"
+                    >
+                      <strong th:text="${level}"></strong>
+                      <small th:if="${stage.currentLevel != null and level == stage.currentLevel}">
+                        Bạn ở đây
+                      </small>
+                      <small
+                        th:if="${stage.currentLevel != null and level == current and current != stage.currentLevel}"
+                      >
+                        Chặng tới
+                      </small>
+                      <small class="stage-goal-label" th:if="${level == goal}">★ Mục tiêu</small>
+                    </li>
+                  </ol>
+
+                  <th:block th:with="progress=${stage.progress}">
+                    <div th:if="${progress != null}" class="stage-progress-wrap">
+                      <div class="stage-progress-info">
+                        <span>Tiến độ chặng</span>
+                        <strong th:text="${progress.label}"></strong>
+                      </div>
+                      <div
+                        class="stage-progress-track"
+                        role="progressbar"
+                        aria-label="Tiến độ chặng"
+                        th:attr="aria-valuenow=${progress.percent}, aria-valuemin=0, aria-valuemax=100"
+                        th:style="|--stage-pct:${progress.percent}%|"
+                      >
+                        <div class="stage-progress-fill"></div>
+                      </div>
+                    </div>
+                  </th:block>
+
+                  <p class="muted" th:if="${stage.status == 'NO_CONTENT'}">
+                    Chưa có bài học cho chặng này.
+                  </p>
+                </div>
+                <a class="stage-goal-action" th:href="@{/student/goals}">Thiết lập mục tiêu</a>
+              </section>
+            </th:block>
             <div th:each="stage : ${stages}" th:if="${stage.pathId == path.pathId}">
               <h2>Bài học được giao trong chặng</h2>
               <ol class="lesson-leaves">
@@ -79,7 +530,6 @@
               </ol>
             </div>
 
-            <!-- Khu vực Bài kiểm tra cuối chặng -->
             <div class="dashboard-section final-test-section">
               <h3>Bài kiểm tra cuối chặng</h3>
               <p
@@ -147,7 +597,6 @@
                 method="post"
                 th:action="@{/student/learning-path/{id}/checkpoint/start(id=${path.pathId()})}"
               >
-                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
                 <button
                   class="button"
                   type="submit"
@@ -159,6 +608,11 @@
         </section>
       </main>
     </div>
-    <div th:replace="~{fragments/footer :: footer}"></div>
+    <footer class="site-footer">
+      <div class="container footer-wrap">
+        <span>© 2026 AptisPrep. Học đúng lộ trình, tiến bộ mỗi ngày.</span>
+        <span>Nền tảng học tập và luyện thi Aptis</span>
+      </div>
+    </footer>
   </body>
 </html>

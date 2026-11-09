@@ -65,12 +65,31 @@ public class StudentExamController {
         }
     }
 
+    @PostMapping("/student/attempts/{id}/discard")
+    public String discard(
+            @PathVariable Integer id, Principal principal, RedirectAttributes redirect) {
+        Integer userId = accounts.requireActiveStudent(principal.getName());
+        try {
+            attempts.discard(userId, id);
+            redirect.addFlashAttribute("successMessage", "Đã xóa lượt làm dở.");
+        } catch (BusinessRuleException exception) {
+            redirect.addFlashAttribute("error", exception.getMessage());
+        }
+        return "redirect:/student/results";
+    }
+
     @GetMapping("/student/attempts/{id}")
     public String attempt(@PathVariable Integer id, Principal principal, Model model) {
         Integer userId = accounts.requireActiveStudent(principal.getName());
         ExamAttemptService.AttemptPage page = attempts.page(userId, id);
         model.addAttribute("attempt", page);
-        String exitUrl = "/student/exams";
+        return "student/attempt";
+    }
+
+    @PostMapping("/student/attempts/{id}/exit")
+    public String exitAttempt(@PathVariable Integer id, Principal principal) {
+        Integer userId = accounts.requireActiveStudent(principal.getName());
+        ExamAttemptService.AttemptPage page = attempts.page(userId, id);
         if ("PLACEMENT".equals(page.examType())) {
             String skill =
                     page.sectionSkill() != null
@@ -78,10 +97,9 @@ public class StudentExamController {
                             : page.questions().isEmpty()
                                     ? "READING"
                                     : page.questions().getFirst().skill();
-            exitUrl = "/student/placement?skill=" + skill;
+            return "redirect:/student/placement?skill=" + skill;
         }
-        model.addAttribute("attemptExitUrl", exitUrl);
-        return "student/attempt";
+        return "redirect:/student/exams";
     }
 
     @PostMapping("/student/attempts/{id}/answers")

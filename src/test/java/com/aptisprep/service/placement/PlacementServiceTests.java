@@ -27,7 +27,7 @@ class PlacementServiceTests {
                 .thenReturn(
                         List.of(
                                 new PlacementExamCatalogService.PlacementExam(
-                                        10, "Listening placement", "")));
+                                        10, "Listening placement", "", 15, List.of())));
         var service = new PlacementService(catalog, published, engines, access);
 
         assertFalse(service.available("learner@test.local", "LISTENING").getFirst().resumable());
@@ -52,7 +52,7 @@ class PlacementServiceTests {
                 .thenReturn(
                         List.of(
                                 new PlacementExamCatalogService.PlacementExam(
-                                        Integer.valueOf("1000"), "Placement", "")));
+                                        Integer.valueOf("1000"), "Placement", "", 15, List.of())));
         when(engine.startPlacement(eq(9), eq(1000), anyString()))
                 .thenReturn(new AttemptHandle(17, "IN_PROGRESS", null));
         var service = new PlacementService(catalog, published, engines, access);

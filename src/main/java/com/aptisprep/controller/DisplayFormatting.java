@@ -80,6 +80,16 @@ public class DisplayFormatting {
         };
     }
 
+    public String historyStateBadgeClass(String state) {
+        return switch (state == null ? "" : state) {
+            case "COMPLETED" -> "badge-success";
+            case "ERROR" -> "badge-danger";
+            case "EXPIRED" -> "badge-history-expired";
+            case "IN_PROGRESS" -> "badge-info";
+            default -> "badge-warning";
+        };
+    }
+
     public String checkpointAction(String state) {
         return switch (state == null ? "" : state) {
             case "in_progress" -> "Tiếp tục bài đang làm";
@@ -115,10 +125,6 @@ public class DisplayFormatting {
             if (value.name().equalsIgnoreCase(skill)) return value.label();
         }
         return skill;
-    }
-
-    public List<String> flashcardGroups(boolean admin) {
-        return admin ? List.of("admin") : List.of("mine", "lesson");
     }
 
     public boolean fieldInvalid(String formName, String field) {

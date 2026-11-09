@@ -61,7 +61,6 @@ public class AdminCatalogController {
         addModule(module, model);
         CatalogPage pageData = catalogService.findPage(module, q, skill, status, kind, page, size);
         model.addAttribute("pageData", pageData);
-        model.addAttribute("entries", pageData.items());
         model.addAttribute("q", q);
         model.addAttribute("selectedSkill", skill);
         model.addAttribute("selectedStatus", status);

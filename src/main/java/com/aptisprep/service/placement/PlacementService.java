@@ -47,7 +47,12 @@ public class PlacementService {
                 .map(
                         exam ->
                                 new PlacementOption(
-                                        exam.id(), exam.title(), exam.subtitle(), resumable))
+                                        exam.id(),
+                                        exam.title(),
+                                        exam.subtitle(),
+                                        exam.durationMinutes(),
+                                        exam.sections(),
+                                        resumable))
                 .toList();
     }
 
@@ -88,5 +93,15 @@ public class PlacementService {
         return attempt.result(account.requireActiveStudent(email), attemptId);
     }
 
-    public record PlacementOption(Integer id, String title, String subtitle, boolean resumable) {}
+    public record PlacementOption(
+            Integer id,
+            String title,
+            String subtitle,
+            int durationMinutes,
+            List<PlacementExamCatalogService.Section> sections,
+            boolean resumable) {
+        public String displayTitle() {
+            return title == null ? null : title.replaceFirst("^Aptis Placement 01\\s*[–-]\\s*", "");
+        }
+    }
 }

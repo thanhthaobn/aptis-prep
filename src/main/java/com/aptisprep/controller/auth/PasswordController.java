@@ -2,6 +2,7 @@ package com.aptisprep.controller.auth;
 
 import com.aptisprep.dto.form.PasswordForm;
 import com.aptisprep.exception.BusinessRuleException;
+import com.aptisprep.security.LoginSession;
 import com.aptisprep.service.auth.PasswordService;
 import com.aptisprep.validation.AccountInput;
 import jakarta.servlet.http.HttpServletRequest;
@@ -9,7 +10,6 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.*;
 import java.security.Principal;
 import java.util.Objects;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -101,8 +101,7 @@ public class PasswordController {
                             passwordForm.getCurrentPassword(),
                             passwordForm.getPassword());
                 else passwords.reset(token, passwordForm.getPassword());
-                SecurityContextHolder.clearContext();
-                if (request.getSession(false) != null) request.getSession(false).invalidate();
+                LoginSession.end(request);
                 redirect.addFlashAttribute(
                         "successMessage", "Đã đổi mật khẩu. Vui lòng đăng nhập lại.");
                 return "redirect:/login";

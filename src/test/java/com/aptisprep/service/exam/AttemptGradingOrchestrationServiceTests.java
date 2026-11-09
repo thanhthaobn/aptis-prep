@@ -12,8 +12,6 @@ import com.aptisprep.service.contract.IntegrationModels.LockedAnswer;
 import com.aptisprep.service.contract.IntegrationModels.LockedAttempt;
 import com.aptisprep.service.contract.IntegrationModels.LockedItem;
 import com.aptisprep.service.grading.AttemptFinalizationService;
-import com.aptisprep.service.grading.SpeakingGradingService;
-import com.aptisprep.service.storage.StorageService;
 import java.time.Instant;
 import java.util.List;
 import org.junit.jupiter.api.Test;
@@ -29,12 +27,7 @@ class AttemptGradingOrchestrationServiceTests {
         when(finalization.accepts(any())).thenReturn(true);
         AttemptGradingOrchestrationService service =
                 new AttemptGradingOrchestrationService(
-                        properties,
-                        ai,
-                        finalization,
-                        mock(SpeakingGradingService.class),
-                        mock(StorageService.class),
-                        mock(AttemptOutboxService.class));
+                        properties, ai, finalization, mock(AttemptOutboxService.class));
 
         LockedAnswer answer =
                 new LockedAnswer(

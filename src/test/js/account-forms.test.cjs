@@ -116,8 +116,22 @@ test('registration rejects common passwords and UTF-8 values beyond BCrypt limit
   assert.notEqual(r.password.message, '');
   r.password.input('đ'.repeat(40));
   assert.notEqual(r.password.message, '');
-  r.password.input('A long learning passphrase');
+  for (const invalid of ['learning2026!', 'LearningEnglish!', 'LearningEnglish2026 ']) {
+    r.password.input(invalid);
+    assert.match(r.password.message, /chữ in hoa, chữ số và ký tự đặc biệt/);
+  }
+  r.password.input('A long learning passphrase 2026!');
   assert.equal(r.password.message, '');
+});
+
+test('names require an uppercase initial and allow Vietnamese letters and spaces', () => {
+  const r = registration();
+  for (const invalid of ['nguyễn Văn An', 'Nguyễn Văn An2', 'Nguyễn-Văn An']) {
+    r.fullName.input(invalid);
+    assert.notEqual(r.fullName.message, '');
+  }
+  r.fullName.input('Nguyễn Văn An');
+  assert.equal(r.fullName.message, '');
 });
 
 test('password visibility toggles accessibly and server field errors receive focus', () => {

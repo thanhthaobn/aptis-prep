@@ -13,13 +13,13 @@ import com.aptisprep.repository.*;
 import com.aptisprep.service.contract.AiAssessmentContract;
 import com.aptisprep.service.contract.GradingTextLimits;
 import com.aptisprep.service.exam.AttemptOutboxService;
+import com.aptisprep.service.storage.StorageService;
 import java.math.BigDecimal;
 import java.time.*;
 import java.util.*;
 import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.PageRequest;
@@ -40,6 +40,7 @@ public class AiAssessmentService implements AiAssessmentContract {
     private final UserRepository userRepository;
     private final WritingGradingService writing;
     private final SpeakingGradingService speaking;
+    private final StorageService storage;
     private final TransactionTemplate transactions;
     private final ApplicationEventPublisher events;
     private final AttemptOutboxService outbox;
@@ -51,28 +52,7 @@ public class AiAssessmentService implements AiAssessmentContract {
             UserRepository userRepository,
             WritingGradingService writing,
             SpeakingGradingService speaking,
-            PlatformTransactionManager transactionManager,
-            ApplicationEventPublisher events,
-            AttemptOutboxService outbox) {
-        this(
-                aiAssessmentJobRepository,
-                aiAssessmentRepository,
-                userRepository,
-                writing,
-                speaking,
-                transactionManager,
-                events,
-                outbox,
-                null);
-    }
-
-    @Autowired
-    public AiAssessmentService(
-            AiAssessmentJobRepository aiAssessmentJobRepository,
-            AiAssessmentRepository aiAssessmentRepository,
-            UserRepository userRepository,
-            WritingGradingService writing,
-            SpeakingGradingService speaking,
+            StorageService storage,
             PlatformTransactionManager transactionManager,
             ApplicationEventPublisher events,
             AttemptOutboxService outbox,
@@ -82,6 +62,7 @@ public class AiAssessmentService implements AiAssessmentContract {
         this.userRepository = userRepository;
         this.writing = writing;
         this.speaking = speaking;
+        this.storage = storage;
         this.transactions = new TransactionTemplate(transactionManager);
         this.events = events;
         this.outbox = outbox;
@@ -112,12 +93,8 @@ public class AiAssessmentService implements AiAssessmentContract {
             result =
                     switch (claim.taskType()) {
                         case "WRITING" -> writing.grade(claim.taskContent(), claim.lockedContent());
-                        case "SPEAKING" -> {
-                            if (claim.transcript() == null || claim.transcript().isBlank())
-                                throw new AiGradingException(
-                                        "Chưa có transcript để chấm Speaking.");
-                            yield speaking.gradeTranscript(claim.taskContent(), claim.transcript());
-                        }
+                        case "SPEAKING" ->
+                                speaking.gradeTranscript(claim.taskContent(), transcriptFor(claim));
                         default ->
                                 throw new AiGradingException("Dạng bài tự luận không được hỗ trợ.");
                     };
@@ -128,6 +105,28 @@ public class AiAssessmentService implements AiAssessmentContract {
             return fail(claim, "Chưa thể chấm bài lúc này. Vui lòng thử lại sau.");
         }
         return succeed(claim, result);
+    }
+
+    private String transcriptFor(JobSnapshot claim) {
+        if (!blank(claim.transcript())) return claim.transcript();
+        if (!claim.examAnswer())
+            throw new AiGradingException("Chưa có transcript để chấm Speaking.");
+
+        // Exam jobs contain locked audio paths, grouped with the same labels as their prompts.
+        // Generate the transcript after claiming the job so replay and retry use that same audio.
+        List<String> transcripts = new ArrayList<>();
+        for (String item : claim.lockedContent().split("\n\n|\n--- ITEM ---\n")) {
+            int lineBreak = item.startsWith("Mục ") ? item.indexOf('\n') : -1;
+            String path = item.substring(lineBreak + 1).trim();
+            if (path.equals("[Chưa trả lời]")) continue;
+            String transcript = speaking.transcribe(storage.localPath(path));
+            if (blank(transcript))
+                throw new AiGradingException("Chưa có transcript để chấm Speaking.");
+            transcripts.add(item.substring(0, lineBreak + 1) + transcript);
+        }
+        if (transcripts.isEmpty())
+            throw new AiGradingException("Chưa có transcript để chấm Speaking.");
+        return String.join("\n\n", transcripts);
     }
 
     @Override
@@ -184,6 +183,7 @@ public class AiAssessmentService implements AiAssessmentContract {
             if (event != null) outbox.ensureAiAssessmentCompleted(event);
             return new JobSnapshot(
                     key,
+                    false,
                     null,
                     null,
                     null,
@@ -201,6 +201,7 @@ public class AiAssessmentService implements AiAssessmentContract {
             // A provider error requires an authorized retry, not an accidental second process call.
             return new JobSnapshot(
                     key,
+                    false,
                     null,
                     null,
                     null,
@@ -217,6 +218,7 @@ public class AiAssessmentService implements AiAssessmentContract {
         if (job.getState() == AiJobState.PROCESSING && !isStale(job)) {
             return new JobSnapshot(
                     key,
+                    false,
                     null,
                     null,
                     null,
@@ -239,6 +241,7 @@ public class AiAssessmentService implements AiAssessmentContract {
         aiAssessmentJobRepository.save(job);
         return new JobSnapshot(
                 key,
+                "EXAM_ANSWER".equals(job.getSourceType()),
                 job.getTaskType(),
                 job.getTaskContent(),
                 job.getLockedContent(),
@@ -410,6 +413,7 @@ public class AiAssessmentService implements AiAssessmentContract {
         if (event != null) outbox.enqueueAiAssessmentCompleted(event);
         return new JobSnapshot(
                 job.getAssessmentKey(),
+                false,
                 null,
                 null,
                 null,
@@ -592,7 +596,10 @@ public class AiAssessmentService implements AiAssessmentContract {
                 && Objects.equals(job.getPolicyVersion(), request.policyVersion().trim())
                 && job.getMaxScore() != null
                 && job.getMaxScore().compareTo(request.maxScore()) == 0
-                && Objects.equals(job.getTranscript(), blankToNull(request.transcript()));
+                // The exam recording is the input. A previously generated transcript can differ.
+                && (("EXAM_ANSWER".equals(job.getSourceType())
+                                && "SPEAKING".equals(job.getTaskType()))
+                        || Objects.equals(job.getTranscript(), blankToNull(request.transcript())));
     }
 
     private User activeUser(Integer id) {
@@ -688,6 +695,7 @@ public class AiAssessmentService implements AiAssessmentContract {
 
     private record JobSnapshot(
             String assessmentKey,
+            boolean examAnswer,
             String taskType,
             String taskContent,
             String lockedContent,
