@@ -393,7 +393,10 @@
                     th:text="${entry.subtitle}"
                   ></p>
                 </td>
-                <td data-label="Kỹ năng" th:text="${display.catalogSkill(entry.skill)}"></td>
+                <td
+                  data-label="Kỹ năng"
+                  th:text="${entry.skill == 'FULL_MOCK' ? 'Tổng hợp' : (entry.skill == 'GRAMMAR_VOCABULARY' ? 'Grammar & Vocabulary' : entry.skill)}"
+                ></td>
                 <td
                   th:attr="data-label=${catalog.key == 'results' ? 'CEFR ước lượng' : 'Cấp độ'}"
                   th:text="${entry.level}"

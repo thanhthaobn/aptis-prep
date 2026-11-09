@@ -571,7 +571,7 @@
           >
             <summary class="exam-preview-section-summary">
               <span
-                th:text="${'Phần ' + (order.index + 1) + ' · ' + display.catalogSkill(section.skill) + ' · ' + section.minutes + ' phút'}"
+                th:text="${'Phần ' + (order.index + 1) + ' · ' + (section.skill == 'GRAMMAR_VOCABULARY' ? 'Grammar & Vocabulary' : section.skill) + ' · ' + section.minutes + ' phút'}"
               ></span>
               <span class="badge" th:text="${section.questions.size() + ' câu'}"></span>
             </summary>
@@ -587,7 +587,7 @@
                   <div>
                     <p
                       class="eyebrow"
-                      th:text="${'Câu ' + (questionOrder.index + 1) + ' · ' + display.catalogSkill(question.skill)}"
+                      th:text="${'Câu ' + (questionOrder.index + 1) + ' · ' + (question.skill == 'GRAMMAR_VOCABULARY' ? 'Grammar & Vocabulary' : question.skill)}"
                     ></p>
                     <h3 th:text="${question.content}"></h3>
                   </div>

@@ -298,7 +298,9 @@
             th:each="skill : ${attemptResult.skills}"
           >
             <div class="result-skill-heading">
-              <h2 th:text="${display.catalogSkill(skill.skill)}"></h2>
+              <h2
+                th:text="${skill.skill == 'GRAMMAR_VOCABULARY' ? 'Grammar & Vocabulary' : skill.skill}"
+              ></h2>
               <strong
                 th:unless="${attemptResult.isCombined() and skill.skill == 'GRAMMAR_VOCABULARY'}"
                 th:text="${skill.estimatedLevel==null?'—':(skill.estimatedLevel == 'A0' ? 'Dưới A1' : skill.estimatedLevel)}"

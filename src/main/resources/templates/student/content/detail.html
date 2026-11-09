@@ -426,7 +426,9 @@
             </p>
             <article th:each="guide : ${scoreGuides}">
               <th:block>
-                <h3 th:text="${display.catalogSkill(guide.skill)}"></h3>
+                <h3
+                  th:text="${guide.skill == 'GRAMMAR_VOCABULARY' ? 'Grammar & Vocabulary' : guide.skill}"
+                ></h3>
                 <p
                   class="muted"
                   th:text="${'Thang điểm ' + guide.min.stripTrailingZeros().toPlainString() + '–' + guide.max.stripTrailingZeros().toPlainString()}"

@@ -284,7 +284,7 @@
             <select id="schemeExamType" name="examType">
               <option value="">Tất cả loại đề</option>
               <option
-                        th:each="type : ${examTypes}"
+                th:each="type : ${examTypes}"
                 th:value="${type}"
                 th:text="${examTypeLabels[type]}"
                 th:selected="${type == examType}"

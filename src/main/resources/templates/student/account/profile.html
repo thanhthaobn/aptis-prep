@@ -384,7 +384,10 @@
                   class="compare-item"
                   th:with="targetLvl=${account.goal != null and account.goal.targets != null ? account.goal.targets.get(code) : null}"
                 >
-                  <span class="compare-skill-name" th:text="${code == 'GRAMMAR_VOCABULARY' ? 'Grammar & Vocabulary' : code}"></span>
+                  <span
+                    class="compare-skill-name"
+                    th:text="${code == 'GRAMMAR_VOCABULARY' ? 'Grammar & Vocabulary' : code}"
+                  ></span>
                   <div class="compare-cols-right">
                     <span class="current-level-slot">
                       <span

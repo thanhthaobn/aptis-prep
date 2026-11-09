@@ -271,7 +271,10 @@
         </div>
 
         <section class="dashboard-section">
-          <h2 th:if="${skill != 'FULL_MOCK'}" th:text="${skill == 'GRAMMAR_VOCABULARY' ? 'Grammar & Vocabulary' : skill}"></h2>
+          <h2
+            th:if="${skill != 'FULL_MOCK'}"
+            th:text="${skill == 'GRAMMAR_VOCABULARY' ? 'Grammar & Vocabulary' : skill}"
+          ></h2>
           <div th:if="${placementExams == null or placementExams.isEmpty()}" class="empty-box">
             <figure class="navi navi-empty">
               <svg viewBox="0 0 160 130" role="img" aria-label="Navi đang chờ đề kiểm tra">
@@ -305,7 +308,9 @@
                 th:each="part : ${exam.sections}"
                 th:attr="data-skill=${part.skill == 'GRAMMAR_VOCABULARY' ? 'Grammar & Vocabulary' : part.skill}"
               >
-                <h4 th:text="${partStat.count + '. ' + (part.skill == 'GRAMMAR_VOCABULARY' ? 'Grammar & Vocabulary' : part.skill)}"></h4>
+                <h4
+                  th:text="${partStat.count + '. ' + (part.skill == 'GRAMMAR_VOCABULARY' ? 'Grammar & Vocabulary' : part.skill)}"
+                ></h4>
                 <strong th:text="${part.durationMinutes + ' phút'}"></strong>
               </div>
             </div>

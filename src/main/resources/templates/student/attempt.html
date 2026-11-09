@@ -407,7 +407,7 @@
       <aside class="exam-control-panel" aria-label="Thông tin bài thi">
         <div
           class="exam-control-heading"
-          th:text="${attempt.sectionSkill == null ? 'Bài thi' : display.catalogSkill(attempt.sectionSkill)}"
+          th:text="${attempt.sectionSkill == null ? 'Bài thi' : (attempt.sectionSkill == 'GRAMMAR_VOCABULARY' ? 'Grammar & Vocabulary' : attempt.sectionSkill)}"
         >
           Bài thi
         </div>
@@ -434,7 +434,7 @@
               <div class="exam-section-link">
                 <span>
                   <strong
-                    th:text="${'Phần ' + (section.index + 1) + ' · ' + display.catalogSkill(section.skill)}"
+                    th:text="${'Phần ' + (section.index + 1) + ' · ' + (section.skill == 'GRAMMAR_VOCABULARY' ? 'Grammar & Vocabulary' : section.skill)}"
                   ></strong>
                   <small
                     th:text="${section.questionCount + ' câu · ' + section.durationMinutes + ' phút'}"
@@ -538,7 +538,7 @@
         >
           <p
             class="eyebrow"
-            th:text="${'Nhóm ' + questionStat.count + ' · ' + display.catalogSkill(question.skill)}"
+            th:text="${'Nhóm ' + questionStat.count + ' · ' + (question.skill == 'GRAMMAR_VOCABULARY' ? 'Grammar & Vocabulary' : question.skill)}"
           ></p>
           <h2 tabindex="-1" th:text="${question.content}"></h2>
           <p

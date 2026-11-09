@@ -368,7 +368,7 @@
                 <option
                   th:each="skill : ${skillCodes}"
                   th:value="${skill}"
-                  th:text="${display.catalogSkill(skill)}"
+                  th:text="${skill == 'GRAMMAR_VOCABULARY' ? 'Grammar & Vocabulary' : skill}"
                 ></option>
               </select>
             </div>
@@ -435,7 +435,9 @@
                 th:attr="data-scoring-skill=${skill}"
                 th:with="scale=${schemeForm.skillScales.get(skill)}"
               >
-                <legend th:text="${display.catalogSkill(skill)}"></legend>
+                <legend
+                  th:text="${skill == 'GRAMMAR_VOCABULARY' ? 'Grammar & Vocabulary' : skill}"
+                ></legend>
                 <p class="muted" th:if="${skill == 'GRAMMAR_VOCABULARY'}">
                   Với đề tổng hợp, bảng CEFR này chỉ hỗ trợ xét kỹ năng sát ngưỡng theo quy tắc nội
                   bộ; kết quả G&amp;V chỉ hiển thị điểm.
@@ -515,7 +517,7 @@
                             step="0.01"
                             th:name="|ranges[${key}].minScore|"
                             th:value="${schemeForm.ranges.get(key).minScore}"
-                            th:attr="aria-label=${display.catalogSkill(skill) + ' ' + level + ' từ điểm'}"
+                            th:attr="aria-label=${(skill == 'GRAMMAR_VOCABULARY' ? 'Grammar & Vocabulary' : skill) + ' ' + level + ' từ điểm'}"
                           />
                         </td>
                         <td>
@@ -526,7 +528,7 @@
                             step="0.01"
                             th:name="|ranges[${key}].maxScore|"
                             th:value="${schemeForm.ranges.get(key).maxScore}"
-                            th:attr="aria-label=${display.catalogSkill(skill) + ' ' + level + ' đến điểm'}"
+                            th:attr="aria-label=${(skill == 'GRAMMAR_VOCABULARY' ? 'Grammar & Vocabulary' : skill) + ' ' + level + ' đến điểm'}"
                           />
                         </td>
                       </tr>

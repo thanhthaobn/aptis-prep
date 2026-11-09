@@ -255,7 +255,10 @@
           <h1 th:text="${review.title}">Xem lại bài làm</h1>
         </header>
         <section class="dashboard-panel dashboard-section" th:each="question : ${review.questions}">
-          <p class="eyebrow" th:text="${display.catalogSkill(question.skill)}"></p>
+          <p
+            class="eyebrow"
+            th:text="${question.skill == 'GRAMMAR_VOCABULARY' ? 'Grammar & Vocabulary' : question.skill}"
+          ></p>
           <h2 th:text="${question.content}"></h2>
           <p th:if="${question.instruction != null}" th:text="${question.instruction}"></p>
           <p

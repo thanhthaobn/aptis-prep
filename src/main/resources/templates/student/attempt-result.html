@@ -366,7 +366,10 @@
                       th:with="score=${skill.scaleScore != null ? skill.scaleScore : skill.rawScore}"
                     >
                       <tr>
-                        <th scope="row" th:text="${display.catalogSkill(skill.skill)}"></th>
+                        <th
+                          scope="row"
+                          th:text="${skill.skill == 'GRAMMAR_VOCABULARY' ? 'Grammar & Vocabulary' : skill.skill}"
+                        ></th>
                         <td
                           th:text="${score == null ? '—' : score.stripTrailingZeros().toPlainString()}"
                         ></td>
@@ -392,7 +395,9 @@
                   th:classappend="${guide.bands.isEmpty()} ? 'result-guide-card-compact'"
                 >
                   <th:block>
-                    <h3 th:text="${display.catalogSkill(guide.skill)}"></h3>
+                    <h3
+                      th:text="${guide.skill == 'GRAMMAR_VOCABULARY' ? 'Grammar & Vocabulary' : guide.skill}"
+                    ></h3>
                     <p
                       class="muted"
                       th:text="${'Thang điểm ' + guide.min.stripTrailingZeros().toPlainString() + '–' + guide.max.stripTrailingZeros().toPlainString()}"
@@ -430,7 +435,9 @@
                   </th:block>
                 </article>
                 <article class="result-guide-card" th:each="skill : ${feedbackWithoutGuide}">
-                  <h3 th:text="${display.catalogSkill(skill.skill)}"></h3>
+                  <h3
+                    th:text="${skill.skill == 'GRAMMAR_VOCABULARY' ? 'Grammar & Vocabulary' : skill.skill}"
+                  ></h3>
                   <div class="result-skill-feedback">
                     <strong>Nhận xét</strong>
                     <p th:text="${skill.feedback}"></p>

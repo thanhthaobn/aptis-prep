@@ -390,10 +390,7 @@
                 th:with="canContinue=${attempt.state == 'IN_PROGRESS' and attempt.canDiscard()}"
               >
                 <td>
-                  <span
-                    class="result-type-chip"
-                    th:text="${attempt.examTypeLabel}"
-                  ></span>
+                  <span class="result-type-chip" th:text="${attempt.examTypeLabel}"></span>
                   <strong
                     class="result-title-text"
                     th:text="${attempt.examTitle == null ? 'Bài thi #' + attempt.examId : attempt.examTitle}"
@@ -433,7 +430,7 @@
                       <span
                         th:each="skill : ${attempt.skills}"
                         class="skill-mini-pill"
-                        th:text="${display.catalogSkill(skill.skill) + ': ' + (skill.estimatedLevel == null ? 'Chờ chấm' : (skill.estimatedLevel == 'A0' ? 'Dưới A1' : skill.estimatedLevel))}"
+                        th:text="${(skill.skill == 'GRAMMAR_VOCABULARY' ? 'Grammar & Vocabulary' : skill.skill) + ': ' + (skill.estimatedLevel == null ? 'Chờ chấm' : (skill.estimatedLevel == 'A0' ? 'Dưới A1' : skill.estimatedLevel))}"
                       ></span>
                     </div>
                     <span
