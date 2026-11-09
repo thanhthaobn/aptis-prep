@@ -212,6 +212,32 @@
 .flashcard-filter-fields { display: flex; align-items: end; flex-wrap: wrap; gap: 12px; padding-top: 12px; }
 .flashcard-filter-fields > div { flex: 1 1 150px; }
 .flashcard-function-group { margin-top: 28px; }
+.flashcard-personal-group {
+  padding: 0 14px 14px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  background: #fff;
+}
+.flashcard-personal-group > summary {
+  margin: 0 -14px;
+  padding: 14px;
+  cursor: pointer;
+  list-style: none;
+}
+.flashcard-personal-group > summary::-webkit-details-marker { display: none; }
+.flashcard-personal-group > summary::after {
+  content: '⌄';
+  margin-left: auto;
+  color: var(--color-muted);
+  font-size: 1.1rem;
+  transition: transform .18s ease;
+}
+.flashcard-personal-group[open] > summary::after { transform: rotate(180deg); }
+.flashcard-personal-toolbar {
+  display: flex;
+  justify-content: flex-end;
+  margin: 0 0 8px;
+}
 .flashcard-personal-empty { padding: 10px 0 18px; border-bottom: 1px solid var(--color-border); font-size: .85rem; }
 .flashcard-personal-empty p { margin: 0 0 8px; color: var(--color-muted); }
 .flashcard-personal-empty a { font-weight: 650; }
@@ -250,9 +276,6 @@
 :is(.student-theme,.admin-theme) .flashcard-function-group .set-lesson-source span { font-size: .78rem; font-weight: 400; }
 :is(.student-theme,.admin-theme) .flashcard-function-group .flashcard-row .flashcard-set-actions { grid-column: auto; padding: 0; align-items: center; max-width: none; justify-content: flex-end; }
 :is(.student-theme,.admin-theme) .flashcard-function-group .flashcard-set-meta { font-size: .75rem; color: var(--color-muted); }
-.flashcard-manage { font-size: .78rem; }
-.flashcard-manage > summary { cursor: pointer; padding: 8px; color: var(--color-muted); }
-.flashcard-manage[open] { display: grid; gap: 8px; }
 @media(max-width:760px) { :is(.student-theme,.admin-theme) .flashcard-function-group .flashcard-set-grid .flashcard-row.flashcard-set-card { grid-template-columns: minmax(0,1fr); gap: 12px; } :is(.student-theme,.admin-theme) .flashcard-function-group .flashcard-row .flashcard-set-actions { justify-content: flex-start; } :is(.student-theme,.admin-theme) .flashcard-function-group .flashcard-set-actions .button { width: auto; } }
 @media(max-width:600px) { .flashcard-overview { grid-template-columns: repeat(2,minmax(0,1fr)); gap: 8px; } }
 .lesson-library-tree { display: grid; gap: 14px; margin-top: 24px; }
