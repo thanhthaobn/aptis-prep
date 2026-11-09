@@ -170,10 +170,6 @@ public class DisplayFormatting {
         return format(value, "dd/MM/yyyy HH:mm:ss");
     }
 
-    public String timeAndDate(TemporalAccessor value) {
-        return format(value, "HH:mm dd/MM/yyyy");
-    }
-
     private String format(TemporalAccessor value, String pattern) {
         if (value == null) return null;
         DateTimeFormatter formatter =

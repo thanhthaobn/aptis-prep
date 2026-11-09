@@ -42,7 +42,6 @@ class DisplayFormattingTests {
         assertEquals(
                 previous.format(local, "dd/MM/yyyy HH:mm:ss"), display.dateTimeWithSeconds(local));
         assertEquals(previous.format(instant, "dd/MM/yyyy HH:mm"), display.dateTime(instant));
-        assertEquals(previous.format(instant, "HH:mm dd/MM/yyyy"), display.timeAndDate(instant));
         assertNull(display.dateTime(null));
     }
 
