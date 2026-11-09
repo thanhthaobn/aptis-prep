@@ -153,8 +153,7 @@ public class StudentExamCatalogController {
     public String result(@PathVariable int id, Principal principal, Model model) {
         Integer userId = accounts.requireActiveStudent(principal.getName());
         AttemptResult result = attempts.result(userId, id);
-        if ("IN_PROGRESS".equals(result.state()))
-            return "redirect:/student/attempts/" + id;
+        if ("IN_PROGRESS".equals(result.state())) return "redirect:/student/attempts/" + id;
         if ("EXPIRED".equals(result.state()) && result.submittedAt() == null)
             return "redirect:/student/results";
         model.addAttribute("attemptResult", result);

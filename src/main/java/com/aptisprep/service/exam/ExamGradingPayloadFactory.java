@@ -29,7 +29,7 @@ final class ExamGradingPayloadFactory {
         this.userAnswerDetailRepository = userAnswerDetailRepository;
     }
 
-    LockedAttempt build(ExamAttemptEntity attempt, MockExamEntity exam) {
+    LockedAttempt build(ExamAttemptEntity attempt) {
         ExamAttemptSnapshotEntity snapshot = examSnapshots.require(attempt.getId());
         Map<Integer, ExamQuestionSnapshotEntity> lockedByQuestion =
                 examSnapshots.lockedQuestionEntities(attempt.getId()).stream()
@@ -150,12 +150,12 @@ final class ExamGradingPayloadFactory {
         return new LockedAttempt(
                 attempt.getId(),
                 attempt.getUserId(),
-                exam.getId(),
-                exam.getExamType(),
+                snapshot.getExamId(),
+                snapshot.getExamType(),
                 attempt.getAnswerVersion() == null ? 1 : attempt.getAnswerVersion(),
                 instant(attempt.getSubmittedAt()),
                 attempt.getScoringSchemeId() == null
-                        ? exam.getScoringSchemeId()
+                        ? snapshot.getScoringSchemeId()
                         : attempt.getScoringSchemeId(),
                 attempt.getPolicyVersion(),
                 attempt.getRubricVersion() == null

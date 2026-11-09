@@ -17,11 +17,13 @@ import com.aptisprep.service.contract.ScoringPolicyContract;
 import com.aptisprep.service.grading.AttemptFinalizationService;
 import com.aptisprep.service.grading.ObjectiveGradingService;
 import com.aptisprep.service.storage.StorageService;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.time.*;
 import java.util.*;
+import java.util.regex.Pattern;
 import java.util.stream.Stream;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.core.io.ClassPathResource;
@@ -32,6 +34,8 @@ import org.springframework.web.multipart.MultipartFile;
 
 @Service
 public class ExamAttemptService implements ExamAttemptContract {
+    private static final Pattern CHECKPOINT_REQUEST_KEY =
+            Pattern.compile("checkpoint:(\\d+):(\\d+):after:\\d+");
     private static final Set<String> ACTIVE_STATES =
             Set.of("IN_PROGRESS", "SUBMITTED", "WAITING_GRADING");
     private final UserRepository userRepository;
@@ -146,6 +150,22 @@ public class ExamAttemptService implements ExamAttemptContract {
             Integer userId, Integer examId, Integer pathId, String requestKey) {
         if (pathId == null) throw new BusinessRuleException("Checkpoint cần ngữ cảnh lộ trình học");
         return startInternal(userId, examId, requestKey, pathId, false);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Optional<Integer> checkpointOriginPathId(Integer userId, Integer attemptId) {
+        activeUser(userId);
+        return examAttemptRepository
+                .findByIdAndUserId(attemptId, userId)
+                .map(ExamAttemptEntity::getRequestKey)
+                .flatMap(
+                        key -> {
+                            var match = CHECKPOINT_REQUEST_KEY.matcher(key);
+                            return match.matches() && userId.toString().equals(match.group(1))
+                                    ? Optional.of(Integer.valueOf(match.group(2)))
+                                    : Optional.empty();
+                        });
     }
 
     private AttemptHandle startInternal(
@@ -632,6 +652,48 @@ public class ExamAttemptService implements ExamAttemptContract {
     @Transactional
     public AttemptReview review(Integer userId, Integer attemptId) {
         ExamAttemptEntity attempt = reviewableAttempt(userId, attemptId);
+        return buildReview(attempt);
+    }
+
+    @Transactional(readOnly = true)
+    public AttemptReview adminReview(String adminEmail, Integer attemptId) {
+        User admin =
+                userRepository
+                        .findByEmailIgnoreCase(adminEmail)
+                        .orElseThrow(() -> new AccessDeniedException("Không có quyền quản trị"));
+        if (admin.getRole() != Role.ADMIN || admin.getStatus() != UserStatus.ACTIVE)
+            throw new AccessDeniedException("Không có quyền quản trị");
+        ExamAttemptEntity attempt =
+                examAttemptRepository
+                        .findById(attemptId)
+                        .orElseThrow(
+                                () -> new ResourceNotFoundException("Không tìm thấy lượt thi"));
+        if (attempt.getSubmittedAt() == null && !"COMPLETED".equals(attempt.getStatus()))
+            return new AttemptReview("Lượt thi chưa nộp", List.of());
+        return buildReview(attempt);
+    }
+
+    @Transactional
+    public void adminDiscard(String adminEmail, Integer attemptId) {
+        User admin =
+                userRepository
+                        .findByEmailIgnoreCase(adminEmail)
+                        .orElseThrow(() -> new AccessDeniedException("Không có quyền quản trị"));
+        if (admin.getRole() != Role.ADMIN || admin.getStatus() != UserStatus.ACTIVE)
+            throw new AccessDeniedException("Không có quyền quản trị");
+        ExamAttemptEntity attempt =
+                examAttemptRepository
+                        .findById(attemptId)
+                        .orElseThrow(
+                                () -> new ResourceNotFoundException("Không tìm thấy lượt thi"));
+        if ("CANCELLED".equals(attempt.getStatus())) return;
+        attempt.setStatus("CANCELLED");
+        attempt.setGradingStatus("CANCELLED");
+        attempt.setRequestKey("admin-discarded-attempt:" + attemptId);
+    }
+
+    private AttemptReview buildReview(ExamAttemptEntity attempt) {
+        Integer attemptId = attempt.getId();
         MockExamEntity current = null;
         if (examSnapshots.frozenExam(attemptId).isEmpty()) {
             current =
@@ -892,7 +954,7 @@ public class ExamAttemptService implements ExamAttemptContract {
             List<OptionPage> options,
             Integer selectedOptionId,
             Integer userPosition,
-            Integer correctPosition,
+            @JsonIgnore Integer correctPosition,
             String textAnswer,
             boolean audioSaved) {
         public boolean answered() {
@@ -903,7 +965,8 @@ public class ExamAttemptService implements ExamAttemptContract {
         }
     }
 
-    public record OptionPage(Integer id, String code, String content, boolean correct) {}
+    public record OptionPage(
+            Integer id, String code, String content, @JsonIgnore boolean correct) {}
 
     public record MediaPage(Integer id, String type, String filename, String contentType) {}
 

@@ -329,17 +329,26 @@ public class LearningPathService implements LearningPathContract {
         User user = lock(active(userId));
         if (learningPathRepository.existsByUserIdAndSourceAttemptIdAndStatus(
                 userId, attemptId, "COMPLETED")) return;
-        AttemptResult result = engine().result(userId, attemptId);
+        ExamAttemptContract engine = engine();
+        AttemptResult result = engine.result(userId, attemptId);
         if (result == null
                 || !Objects.equals(result.userId(), userId)
                 || !Objects.equals(result.attemptId(), attemptId)
                 || !"CHECKPOINT".equals(result.examType())
                 || !checkpointStatus.terminal(result))
             throw new BusinessRuleException("Checkpoint chưa có kết quả hoàn tất hợp lệ");
+        // The start key records the stage whose required lessons authorized this attempt.
+        var originPathId = engine.checkpointOriginPathId(userId, attemptId);
+        var candidates =
+                originPathId.isPresent()
+                        ? learningPathRepository
+                                .findByIdAndUserId(originPathId.get(), userId)
+                                .stream()
+                        : learningPathRepository
+                                .findByUserIdAndStatusOrderBySkillAscCreatedAtDesc(userId, "ACTIVE")
+                                .stream();
         LearningPath path =
-                learningPathRepository
-                        .findByUserIdAndStatusOrderBySkillAscCreatedAtDesc(userId, "ACTIVE")
-                        .stream()
+                candidates
                         .filter(
                                 value ->
                                         Objects.equals(
@@ -349,7 +358,8 @@ public class LearningPathService implements LearningPathContract {
                         .orElseThrow(
                                 () ->
                                         new ResourceNotFoundException(
-                                                "Kết quả không thuộc chặng học hiện tại"));
+                                                "Kết quả không thuộc chặng học"));
+        if ("COMPLETED".equals(path.getStatus())) return;
         SkillResult skill =
                 result.skills() == null
                         ? null

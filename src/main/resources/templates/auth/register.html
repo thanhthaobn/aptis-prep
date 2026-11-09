@@ -136,11 +136,7 @@
           </span>
           <h1>Tạo tài khoản</h1>
 
-          <form
-            th:action="@{/register}"
-            th:object="${registerForm}"
-            method="post"
-          >
+          <form th:action="@{/register}" th:object="${registerForm}" method="post">
             <div
               class="alert alert-danger"
               th:if="${!#fields.globalErrors().isEmpty()}"

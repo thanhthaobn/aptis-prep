@@ -6,7 +6,6 @@ import com.aptisprep.event.AttemptCompletedEvent;
 import com.aptisprep.event.AttemptSubmittedEvent;
 import com.aptisprep.repository.AttemptOutboxRepository;
 import com.aptisprep.repository.ExamAttemptRepository;
-import com.aptisprep.repository.MockExamRepository;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.util.Base64;
@@ -16,6 +15,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import tools.jackson.databind.json.JsonMapper;
 
 /** Durable replay queue for attempt events. Handlers are idempotent by attempt/event keys. */
 @Service
@@ -23,20 +23,20 @@ public class AttemptOutboxService {
     private final AttemptOutboxRepository attemptOutboxRepository;
     private final ApplicationEventPublisher events;
     private final ExamAttemptRepository attempts;
-    private final MockExamRepository exams;
     private final ExamGradingPayloadFactory gradingPayloads;
+    private final JsonMapper json;
 
     public AttemptOutboxService(
             AttemptOutboxRepository attemptOutboxRepository,
             ApplicationEventPublisher events,
             ExamAttemptRepository attempts,
-            MockExamRepository exams,
-            ExamGradingPayloadFactory gradingPayloads) {
+            ExamGradingPayloadFactory gradingPayloads,
+            JsonMapper json) {
         this.attemptOutboxRepository = attemptOutboxRepository;
         this.events = events;
         this.attempts = attempts;
-        this.exams = exams;
         this.gradingPayloads = gradingPayloads;
+        this.json = json;
     }
 
     @Transactional
@@ -141,34 +141,54 @@ public class AttemptOutboxService {
     }
 
     private void dispatch(AttemptOutboxEntity row) {
+        String payload = row.getPayload();
+        boolean legacyJson = payload.stripLeading().startsWith("{");
         if ("ATTEMPT_SUBMITTED".equals(row.getEventType())) {
-            String[] values = row.getPayload().split("\\|", -1);
+            if (legacyJson) {
+                events.publishEvent(json.readValue(payload, AttemptSubmittedEvent.class));
+                return;
+            }
+            String[] values = payload.split("\\|", -1);
+            if (Character.isDigit(values[0].charAt(0))) {
+                // The original delimited format stored IDs as plain decimal strings.
+                events.publishEvent(
+                        new AttemptSubmittedEvent(
+                                Integer.valueOf(values[0]),
+                                Integer.valueOf(values[1]),
+                                Integer.valueOf(values[2]),
+                                values[3],
+                                null));
+                return;
+            }
             Integer attemptId = Integer.valueOf(decode(values[1]));
             var attempt = attempts.findById(attemptId).orElseThrow();
-            var exam = exams.findById(attempt.getMockExamId()).orElseThrow();
             events.publishEvent(
                     new AttemptSubmittedEvent(
                             Integer.valueOf(decode(values[0])),
                             attemptId,
                             Integer.valueOf(decode(values[2])),
                             decode(values[3]),
-                            gradingPayloads.build(attempt, exam)));
+                            gradingPayloads.build(attempt)));
         } else if ("ATTEMPT_COMPLETED".equals(row.getEventType())) {
-            String[] values = row.getPayload().split("\\|", -1);
+            String[] values = payload.split("\\|", -1);
             events.publishEvent(
                     new AttemptCompletedEvent(
                             Integer.valueOf(values[0]), Integer.valueOf(values[1]), values[2]));
         } else if ("AI_ASSESSMENT_COMPLETED".equals(row.getEventType())) {
-            String[] values = row.getPayload().split("\\|", -1);
+            if (legacyJson) {
+                events.publishEvent(json.readValue(payload, AiAssessmentCompletedEvent.class));
+                return;
+            }
+            String[] values = payload.split("\\|", -1);
             events.publishEvent(
                     new AiAssessmentCompletedEvent(
                             decode(values[0]),
-                            Integer.valueOf(values[1]),
-                            Integer.valueOf(values[2]),
-                            Integer.valueOf(values[3]),
+                            Integer.valueOf(decode(values[1])),
+                            Integer.valueOf(decode(values[2])),
+                            Integer.valueOf(decode(values[3])),
                             decode(values[4]),
                             decode(values[5]),
-                            Integer.valueOf(values[6])));
+                            Integer.valueOf(decode(values[6]))));
         }
     }
 

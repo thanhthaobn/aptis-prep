@@ -28,9 +28,6 @@ public class AdminStudentController {
         model.addAttribute("pageData", students.list(q, filter, page, size));
         model.addAttribute("q", q == null ? "" : q.trim());
         model.addAttribute("selectedStatus", status == null ? "" : status);
-        model.addAttribute("totalStudents", students.totalStudents());
-        model.addAttribute("activeStudents", students.activeStudents());
-        model.addAttribute("lockedStudents", students.lockedStudents());
         return "admin/student/list";
     }
 
