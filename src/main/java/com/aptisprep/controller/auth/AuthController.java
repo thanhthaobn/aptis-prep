@@ -42,7 +42,7 @@ public class AuthController {
                @RequestParam(name = "password", defaultValue = "") String password,
             HttpServletRequest request,
             RedirectAttributes redirectAttributes) {
-        User user = userService.getUserByEmailAndPassword(email, password).orElse(null);
+        User user = userService.getUserByEmailAndPassword(email, password);
         if (user == null) {
             redirectAttributes.addFlashAttribute("errorMessage", "Email hoặc mật khẩu không đúng.");
             return "redirect:/login";

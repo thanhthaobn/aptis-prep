@@ -333,13 +333,14 @@ public class FlashcardSetService {
                 .toList();
     }
 
-    public Optional<FlashcardSet> publishedForLesson(Integer lessonId) {
+    public FlashcardSet publishedForLesson(Integer lessonId) {
         return flashcardSetRepository.findFirstByLessonIdAndOwnerIsNullAndStatusOrderByIdDesc(
-                lessonId, "PUBLISHED");
+                lessonId, "PUBLISHED").orElse(null);
     }
 
-    public Optional<FlashcardSet> forLesson(Integer lessonId) {
-        return flashcardSetRepository.findFirstByLessonIdAndOwnerIsNullOrderByIdDesc(lessonId);
+    public FlashcardSet forLesson(Integer lessonId) {
+        return flashcardSetRepository.findFirstByLessonIdAndOwnerIsNullOrderByIdDesc(lessonId)
+                .orElse(null);
     }
 
     public List<Lesson> availableLessons() {

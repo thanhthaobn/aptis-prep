@@ -140,8 +140,9 @@ public class StudentContentController {
         model.addAttribute("entry", entry);
         if (!"CHECKPOINT".equals(entry.examType()) && !"PLACEMENT".equals(entry.examType())) {
             Integer userId = accounts.requireActiveStudent(principal.getName());
-            attempts.latestResumableAttemptId(userId, id)
-                    .ifPresent(attemptId -> model.addAttribute("resumableAttemptId", attemptId));
+            Integer resumableAttemptId = attempts.latestResumableAttemptId(userId, id);
+            if (resumableAttemptId != null)
+                model.addAttribute("resumableAttemptId", resumableAttemptId);
         }
         model.addAttribute("scoreGuides", scoringGuides.forExam(id));
         return "student/content/detail";

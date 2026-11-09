@@ -31,20 +31,20 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @Transactional(readOnly = true)
-    public Optional<User> getUserByEmailAndPassword(String email, String password) {
+    public User getUserByEmailAndPassword(String email, String password) {
         String normalizedEmail = email == null ? "" : email.strip().toLowerCase(Locale.ROOT);
         if (normalizedEmail.isBlank()
                 || normalizedEmail.length() > 255
                 || password == null
                 || password.isEmpty()
                 || password.getBytes(StandardCharsets.UTF_8).length > 72) {
-            return Optional.empty();
+            return null;
         }
         Optional<User> user = userRepository.findByEmailIgnoreCase(normalizedEmail);
         String hash = user.map(User::getPasswordHash).orElse(dummyPasswordHash);
         return passwordHasher.matches(password, hash)
-                ? user.filter(account -> account.getStatus() == UserStatus.ACTIVE)
-                : Optional.empty();
+                ? user.filter(account -> account.getStatus() == UserStatus.ACTIVE).orElse(null)
+                : null;
     }
 
     @Override

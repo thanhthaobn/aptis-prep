@@ -34,7 +34,7 @@ public class AdminLessonController {
     @GetMapping("/admin/lessons/{id}")
     public String detail(@PathVariable Integer id, Model m) {
         m.addAttribute("lesson", service.require(id));
-        m.addAttribute("flashcardSet", flashcards.forLesson(id).orElse(null));
+        m.addAttribute("flashcardSet", flashcards.forLesson(id));
         m.addAttribute("questions", service.questions(id));
         m.addAttribute("stats", service.stats(id));
         return "admin/lesson/detail";

@@ -284,9 +284,9 @@ public class LessonService {
         return lessonProgressRepository.findByUserIdAndLessonId(u.getId(), lessonId).orElseThrow();
     }
 
-    public Optional<LessonProgress> progress(String email, Integer lessonId) {
+    public LessonProgress progress(String email, Integer lessonId) {
         User u = active(email);
-        return lessonProgressRepository.findByUserIdAndLessonId(u.getId(), lessonId);
+        return lessonProgressRepository.findByUserIdAndLessonId(u.getId(), lessonId).orElse(null);
     }
 
     @Transactional(readOnly = true)

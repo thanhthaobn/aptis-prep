@@ -1,7 +1,6 @@
 package com.aptisprep.service.contract;
 
 import com.aptisprep.service.contract.IntegrationModels.*;
-import java.util.Optional;
 
 /** Lifecycle owner: Trâm. All methods recheck ownership/account status; grading is delegated to Thông. */
 public interface ExamAttemptContract {
@@ -11,7 +10,7 @@ public interface ExamAttemptContract {
 
     AttemptHandle start(Integer userId, Integer examId, String requestKey);
 
-    Optional<Integer> latestResumableAttemptId(Integer userId, Integer examId);
+    Integer latestResumableAttemptId(Integer userId, Integer examId);
 
     AttemptHandle startPlacement(Integer userId, Integer examId, String requestKey);
 

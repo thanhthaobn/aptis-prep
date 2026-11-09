@@ -84,15 +84,15 @@ public class StudentLessonController {
         m.addAttribute("canAssess", teaching.canAssess(id, p.getName()));
         m.addAttribute("aiAvailable", teaching.aiAvailable());
         m.addAttribute("lesson", l);
-        m.addAttribute("flashcardSet", flashcards.publishedForLesson(id).orElse(null));
+        m.addAttribute("flashcardSet", flashcards.publishedForLesson(id));
         m.addAttribute("questions", teaching.questions(id));
         m.addAttribute("savedResponse", teaching.response(id, p.getName()));
-        m.addAttribute("savedWork", teaching.savedWork(id, p.getName()).orElse(null));
+        m.addAttribute("savedWork", teaching.savedWork(id, p.getName()));
         m.addAttribute(
                 "videoId",
                 LessonTeachingService.videoId(
                         l.getMaterial() == null ? null : l.getMaterial().getVideoUrl()));
-        m.addAttribute("progress", service.progress(p.getName(), id).orElse(null));
+        m.addAttribute("progress", service.progress(p.getName(), id));
         m.addAttribute("attempts", teaching.history(id, p.getName()));
         m.addAttribute("submissions", teaching.submissionHistory(id, p.getName()));
         m.addAttribute("aiSubmissions", teaching.assessableSubmissions(id, p.getName()));
