@@ -313,8 +313,13 @@
                 ></td>
                 <td
                   data-label="Trạng thái"
-                  th:text="${@resultLabels.state(item.result.state)}"
-                ></td>
+                >
+                  <span
+                    class="badge"
+                    th:classappend="${item.result.state == 'COMPLETED' ? 'badge-success' : (item.result.state == 'ERROR' or item.result.state == 'GRADING_FAILED' ? 'badge-danger' : 'badge-warning')}"
+                    th:text="${@resultLabels.state(item.result.state)}"
+                  ></span>
+                </td>
                 <td
                   data-label="Nộp bài"
                   th:text="${item.result.submittedAt==null?'Chưa nộp':#temporals.format(item.result.submittedAt, 'dd/MM/yyyy HH:mm')}"
