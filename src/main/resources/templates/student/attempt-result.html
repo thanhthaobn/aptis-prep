@@ -308,6 +308,12 @@
               role="alert"
             >
               <p>Chấm điểm chưa thành công. Bài làm vẫn được lưu.</p>
+              <p
+                class="result-error-detail"
+                th:each="skill : ${res.skills}"
+                th:if="${skill.feedback != null and !skill.feedback.isBlank() and skill.gradingState == 'ERROR'}"
+                th:text="${skill.feedback}"
+              ></p>
               <form
                 th:if="${canRegradeEmpty == true}"
                 method="post"

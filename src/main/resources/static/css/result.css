@@ -173,6 +173,11 @@
 .result-container .result-message p {
   margin: 0;
 }
+.result-container .result-message .result-error-detail {
+  margin-top: 6px;
+  color: var(--color-danger);
+  font-weight: 700;
+}
 .result-container .result-message form {
   display: inline-block;
   margin: 6px 6px 0 0;

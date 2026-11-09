@@ -158,13 +158,20 @@ public class AttemptResultReader {
                                                             exam.getTargetLevel(),
                                                             confirmedLevel,
                                                             value.getScaleScore());
+                                    String feedback =
+                                            feedbackFor(attempt.getId(), value.getSkill());
+                                    if ("ERROR".equals(state)
+                                            && "AI_ERROR".equals(value.getGradingMethod())
+                                            && "SPEAKING".equals(value.getSkill()))
+                                        feedback =
+                                                "Không nhận được bản chép lời từ file ghi âm.";
                                     return new SkillResult(
                                             value.getSkill(),
                                             value.getRawScore(),
                                             value.getScaleScore(),
                                             confirmedLevel,
                                             state,
-                                            feedbackFor(attempt.getId(), value.getSkill()),
+                                            feedback,
                                             passed,
                                             "ERROR".equals(state)
                                                     && ("AI_ERROR".equals(value.getGradingMethod())
