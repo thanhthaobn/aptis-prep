@@ -63,7 +63,7 @@ public class PasswordController {
 
     @GetMapping({"/reset-password", "/student/password"})
     public String form(
-              @RequestParam(name = "token", required = false) String token,
+               @RequestParam(name = "token", defaultValue = "") String token,
             HttpServletRequest request,
             Model model) {
         model.addAttribute(
@@ -79,7 +79,7 @@ public class PasswordController {
     public String save(
             @Valid @ModelAttribute PasswordForm passwordForm,
             BindingResult errors,
-              @RequestParam(name = "token", required = false) String token,
+               @RequestParam(name = "token", defaultValue = "") String token,
             Principal principal,
             HttpServletRequest request,
             Model model,

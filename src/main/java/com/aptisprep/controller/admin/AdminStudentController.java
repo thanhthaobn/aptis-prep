@@ -19,8 +19,8 @@ public class AdminStudentController {
 
     @GetMapping("/admin/students")
     public String list(
-             @RequestParam(name = "q", required = false) String q,
-             @RequestParam(name = "status", required = false) String status,
+              @RequestParam(name = "q", defaultValue = "") String q,
+              @RequestParam(name = "status", defaultValue = "") String status,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size,
             Model model) {

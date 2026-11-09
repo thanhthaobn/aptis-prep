@@ -24,12 +24,12 @@ public class AdminResultController {
 
     @GetMapping("/admin/results")
     public String list(
-              @RequestParam(name = "q", required = false) String q,
-              @RequestParam(name = "skill", required = false) String skill,
-              @RequestParam(name = "examType", required = false) String examType,
-              @RequestParam(name = "state", required = false) String state,
-              @RequestParam(name = "from", required = false) String from,
-              @RequestParam(name = "to", required = false) String to,
+               @RequestParam(name = "q", defaultValue = "") String q,
+               @RequestParam(name = "skill", defaultValue = "") String skill,
+               @RequestParam(name = "examType", defaultValue = "") String examType,
+               @RequestParam(name = "state", defaultValue = "") String state,
+               @RequestParam(name = "from", defaultValue = "") String from,
+               @RequestParam(name = "to", defaultValue = "") String to,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             Principal principal,

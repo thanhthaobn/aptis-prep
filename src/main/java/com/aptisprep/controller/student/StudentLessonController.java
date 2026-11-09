@@ -36,9 +36,9 @@ public class StudentLessonController {
 
     @GetMapping("/student/lessons")
     public String list(
-             @RequestParam(name = "q", required = false) String q,
-             @RequestParam(name = "skill", required = false) String skill,
-             @RequestParam(name = "level", required = false) String level,
+              @RequestParam(name = "q", defaultValue = "") String q,
+              @RequestParam(name = "skill", defaultValue = "") String skill,
+              @RequestParam(name = "level", defaultValue = "") String level,
             Principal principal,
             Model m) {
         String queryParam = q == null ? "" : q;

@@ -44,7 +44,7 @@ public class AdminLessonController {
     public String showCreateForm(
             @RequestParam(defaultValue = "Reading") String skill,
             @RequestParam(defaultValue = "A1") String level,
-              @RequestParam(name = "topic", required = false) String topic,
+               @RequestParam(name = "topic", defaultValue = "") String topic,
             Model m) {
         topic = topic == null ? "" : topic;
         if (topic.length() > 160) throw new BusinessRuleException("Tên chủ đề tối đa 160 ký tự");
