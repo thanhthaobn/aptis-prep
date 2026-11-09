@@ -1,12 +1,15 @@
 package com.aptisprep.controller.student;
 
 import com.aptisprep.dto.view.StudentCatalogView.Entry;
+import com.aptisprep.enums.Skill;
 import com.aptisprep.exception.BusinessRuleException;
 import com.aptisprep.service.account.AccountAccessService;
 import com.aptisprep.service.contract.ExamAttemptContract;
 import com.aptisprep.service.contract.IntegrationModels.AttemptResult;
 import com.aptisprep.service.contract.IntegrationModels.HistoryFilter;
 import com.aptisprep.service.contract.IntegrationModels.HistoryPage;
+import com.aptisprep.service.learning.LessonService;
+import com.aptisprep.service.scoring.ScoringGuideService;
 import com.aptisprep.service.student.StudentExamCatalogService;
 import com.aptisprep.service.student.StudentExamCatalogService.Catalog;
 import java.security.Principal;
@@ -24,6 +27,8 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 /** Published exams from the database; results use the ownership-checked attempt contract. */
 @Controller
 public class StudentContentController {
+    private final ScoringGuideService scoringGuides;
+
     private final StudentExamCatalogService catalog;
     private final AccountAccessService accounts;
     private final ExamAttemptContract attempts;
@@ -31,9 +36,11 @@ public class StudentContentController {
     public StudentContentController(
             StudentExamCatalogService catalog,
             AccountAccessService accounts,
-            ExamAttemptContract attempts) {
+            ExamAttemptContract attempts,
+            ScoringGuideService scoringGuides) {
         this.catalog = catalog;
         this.accounts = accounts;
+        this.scoringGuides = scoringGuides;
         this.attempts = attempts;
     }
 
@@ -41,10 +48,10 @@ public class StudentContentController {
     public String list(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "9") int size,
-            @RequestParam(defaultValue = "") String q,
-            @RequestParam(defaultValue = "") String skill,
-            @RequestParam(defaultValue = "") String level,
-            @RequestParam(defaultValue = "") String state,
+            @RequestParam(name = "q", defaultValue = "") String q,
+            @RequestParam(name = "skill", defaultValue = "") String skill,
+            @RequestParam(name = "level", defaultValue = "") String level,
+            @RequestParam(name = "state", defaultValue = "") String state,
             @RequestParam(defaultValue = "PRACTICE") String examType,
             @RequestParam(defaultValue = "level") String sort,
             Model model) {
@@ -52,7 +59,6 @@ public class StudentContentController {
             throw new BusinessRuleException("Phân trang không hợp lệ");
         if (q.length() > 255 || skill.length() > 80 || level.length() > 40 || state.length() > 40)
             throw new BusinessRuleException("Bộ lọc không hợp lệ");
-        examModel(model);
         if (!StudentExamCatalogService.EXAM_TYPES.contains(examType)
                 || !StudentExamCatalogService.SORT_OPTIONS.contains(sort))
             throw new BusinessRuleException("Phân loại hoặc sắp xếp đề thi không hợp lệ");
@@ -68,6 +74,9 @@ public class StudentContentController {
         model.addAttribute("entries", entries.getContent());
         model.addAttribute("examGroups", groups);
         model.addAttribute("examCategories", content.categories());
+        model.addAttribute(
+                "skills",
+                List.of("Grammar & Vocabulary", "Reading", "Listening", "Writing", "Speaking"));
         model.addAttribute("selectedExamType", examType);
         model.addAttribute("selectedSort", sort);
         model.addAttribute("categoryTitle", StudentExamCatalogService.categoryLabel(examType));
@@ -77,6 +86,8 @@ public class StudentContentController {
         model.addAttribute("selectedSkill", skill);
         model.addAttribute("selectedLevel", level);
         model.addAttribute("selectedState", state);
+        model.addAttribute("skillCodes", Skill.codes());
+        model.addAttribute("learningLevels", LessonService.LEVELS);
         return "student/content/list";
     }
 
@@ -84,10 +95,10 @@ public class StudentContentController {
     public String results(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
-            @RequestParam(defaultValue = "") String q,
-            @RequestParam(defaultValue = "") String skill,
-            @RequestParam(defaultValue = "") String examType,
-            @RequestParam(defaultValue = "") String state,
+            @RequestParam(name = "q", defaultValue = "") String q,
+            @RequestParam(name = "skill", defaultValue = "") String skill,
+            @RequestParam(name = "examType", defaultValue = "") String examType,
+            @RequestParam(name = "state", defaultValue = "") String state,
             Principal principal,
             Model model) {
         if (page < 0 || size < 1 || size > 50)
@@ -102,8 +113,14 @@ public class StudentContentController {
         model.addAttribute("history", history);
         model.addAttribute(
                 "totalPages", (history.totalItems() + history.size() - 1) / history.size());
-        model.addAttribute("page", history.page());
-        model.addAttribute("size", size);
+        model.addAttribute(
+                "inProgressCount",
+                history.items().stream()
+                        .filter(item -> "IN_PROGRESS".equals(item.state()))
+                        .count());
+        model.addAttribute(
+                "completedCount",
+                history.items().stream().filter(item -> "COMPLETED".equals(item.state())).count());
         model.addAttribute("q", q);
         model.addAttribute("selectedSkill", skill);
         model.addAttribute("selectedExamType", examType);
@@ -112,16 +129,33 @@ public class StudentContentController {
     }
 
     @GetMapping("/student/exams/{id}")
-    public String detail(@PathVariable int id, Model model) {
-        examModel(model);
-        model.addAttribute("entry", catalog.entry("exams", id));
+    public String detail(
+            @PathVariable int id,
+            @RequestParam(defaultValue = "false") boolean fromPlacement,
+            Principal principal,
+            Model model) {
+        model.addAttribute("module", "exams");
+        Entry entry = catalog.entry("exams", id);
+        model.addAttribute("fromPlacement", fromPlacement);
+        model.addAttribute("entry", entry);
+        if (!"CHECKPOINT".equals(entry.examType()) && !"PLACEMENT".equals(entry.examType())) {
+            Integer userId = accounts.requireActiveStudent(principal.getName());
+            Integer resumableAttemptId = attempts.latestResumableAttemptId(userId, id);
+            if (resumableAttemptId != null)
+                model.addAttribute("resumableAttemptId", resumableAttemptId);
+        }
+        model.addAttribute("scoreGuides", scoringGuides.forExam(id));
         return "student/content/detail";
     }
 
     @GetMapping("/student/attempts/{id}/result")
     public String result(@PathVariable int id, Principal principal, Model model) {
         Integer userId = accounts.requireActiveStudent(principal.getName());
-        model.addAttribute("attemptResult", attempts.result(userId, id));
+        AttemptResult result = attempts.result(userId, id);
+        model.addAttribute("attemptResult", result);
+        var scoreGuideView = scoringGuides.forResultView(result);
+        model.addAttribute("scoreGuides", scoreGuideView.guides());
+        model.addAttribute("feedbackWithoutGuide", scoreGuideView.feedbackWithoutGuide());
         model.addAttribute("canRegradeEmpty", attempts.canRegradeEmpty(userId, id));
         return "student/attempt-result";
     }
@@ -156,13 +190,5 @@ public class StudentContentController {
             redirect.addFlashAttribute("error", exception.getMessage());
         }
         return "redirect:/student/attempts/" + id + "/result";
-    }
-
-    private void examModel(Model model) {
-        model.addAttribute("module", "exams");
-        model.addAttribute("title", "Đề thi");
-        model.addAttribute(
-                "skills",
-                List.of("Grammar & Vocabulary", "Reading", "Listening", "Writing", "Speaking"));
     }
 }

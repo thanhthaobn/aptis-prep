@@ -1,7 +1,7 @@
 package com.aptisprep.controller;
 
+import static com.aptisprep.security.SessionMvcRequests.user;
 import static org.junit.jupiter.api.Assertions.*;
-import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -34,7 +34,7 @@ class NavbarActiveTests {
     @Test
     void homeRemainsActiveEvenAfterRoleLogin() throws Exception {
         for (String role : new String[] {"STUDENT", "ADMIN"}) {
-            mvc.perform(get("/").with(user("demo").roles(role)))
+            mvc.perform(get("/").with(user("demo-" + role).roles(role)))
                     .andExpect(status().isOk())
                     .andExpect(activeHref("/"));
         }

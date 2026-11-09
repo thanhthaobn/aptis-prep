@@ -31,7 +31,7 @@ class AccountProfileServiceTests {
     @BeforeEach
     void setup() {
         service =
-                new AccountProfileService(
+                new com.aptisprep.service.account.impl.AccountProfileServiceImpl(
                         userRepository,
                         certificateRepository,
                         userGoalRepository,

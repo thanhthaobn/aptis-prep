@@ -61,6 +61,7 @@ public class ExamAnswerWriter {
                                         new BusinessRuleException(
                                                 "Câu hỏi không thuộc lượt thi này"));
         JsonNode lockedQuestion = examSnapshots.lockedQuestions(attemptId).get(questionId);
+        examSnapshots.requireOpenSection(attempt, lockedQuestion);
         JsonNode lockedItem = chooseLockedItem(lockedQuestion, itemId);
         QuestionItemEntity item =
                 questionItemRepository
@@ -108,6 +109,7 @@ public class ExamAnswerWriter {
         JsonNode lockedQuestion = examSnapshots.lockedQuestions(attemptId).get(questionId);
         if (lockedQuestion == null)
             throw new BusinessRuleException("Câu hỏi không thuộc snapshot của lượt thi");
+        examSnapshots.requireOpenSection(attempt, lockedQuestion);
         JsonNode lockedItem = chooseLockedItem(lockedQuestion, itemId);
         QuestionItemEntity item =
                 questionItemRepository

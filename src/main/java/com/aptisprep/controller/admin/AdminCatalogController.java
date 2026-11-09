@@ -5,16 +5,25 @@ import com.aptisprep.dto.form.QuestionForm;
 import com.aptisprep.dto.view.AdminCatalogView.CatalogPage;
 import com.aptisprep.exception.BusinessRuleException;
 import com.aptisprep.service.admin.CatalogService;
+import java.util.Map;
 import org.springframework.core.io.Resource;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 @Controller
 public class AdminCatalogController {
+    private static final Map<String, String> EXAM_TYPE_LABELS =
+            Map.of(
+                    "PLACEMENT", "Kiểm tra đầu vào",
+                    "CHECKPOINT", "Kiểm tra cuối chặng",
+                    "FULL_MOCK", "Thi thử tổng hợp",
+                    "PRACTICE", "Bài luyện tập");
     private final CatalogService catalogService;
 
     public AdminCatalogController(CatalogService catalogService) {
@@ -23,10 +32,10 @@ public class AdminCatalogController {
 
     @GetMapping("/admin/questions")
     public String questions(
-            @RequestParam(defaultValue = "") String q,
-            @RequestParam(defaultValue = "") String skill,
-            @RequestParam(defaultValue = "") String status,
-            @RequestParam(defaultValue = "") String kind,
+            @RequestParam(name = "q", defaultValue = "") String q,
+            @RequestParam(name = "skill", defaultValue = "") String skill,
+            @RequestParam(name = "status", defaultValue = "") String status,
+            @RequestParam(name = "kind", defaultValue = "") String kind,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             Model model) {
@@ -35,10 +44,10 @@ public class AdminCatalogController {
 
     @GetMapping("/admin/exams")
     public String exams(
-            @RequestParam(defaultValue = "") String q,
-            @RequestParam(defaultValue = "") String skill,
-            @RequestParam(defaultValue = "") String status,
-            @RequestParam(defaultValue = "") String kind,
+            @RequestParam(name = "q", defaultValue = "") String q,
+            @RequestParam(name = "skill", defaultValue = "") String skill,
+            @RequestParam(name = "status", defaultValue = "") String status,
+            @RequestParam(name = "kind", defaultValue = "") String kind,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             Model model) {
@@ -59,11 +68,11 @@ public class AdminCatalogController {
         addModule(module, model);
         CatalogPage pageData = catalogService.findPage(module, q, skill, status, kind, page, size);
         model.addAttribute("pageData", pageData);
-        model.addAttribute("entries", pageData.items());
         model.addAttribute("q", q);
         model.addAttribute("selectedSkill", skill);
         model.addAttribute("selectedStatus", status);
         model.addAttribute("selectedKind", kind);
+        model.addAttribute("examTypeLabels", EXAM_TYPE_LABELS);
         return "admin/catalog/list";
     }
 
@@ -80,6 +89,8 @@ public class AdminCatalogController {
     private String detail(String module, int id, Model model) {
         addModule(module, model);
         model.addAttribute("entry", catalogService.entry(module, id));
+        if ("exams".equals(module))
+            model.addAttribute("examPreview", catalogService.examPreview(id));
         if ("questions".equals(module)) {
             model.addAttribute("mediaItems", catalogService.mediaItems(id));
         }
@@ -219,19 +230,50 @@ public class AdminCatalogController {
     }
 
     @PostMapping("/admin/exams")
-    public String saveExam(@ModelAttribute ExamForm form) {
-        return "redirect:/admin/exams/" + catalogService.saveExam(null, form);
+    public String saveExam(@ModelAttribute ExamForm form, BindingResult binding, Model model) {
+        return saveExamForm(null, form, binding, model);
     }
 
     @PostMapping("/admin/exams/{id}/edit")
-    public String updateExam(@PathVariable int id, @ModelAttribute ExamForm form) {
-        catalogService.saveExam(id, form);
-        return "redirect:/admin/exams/" + id;
+    public String updateExam(
+            @PathVariable int id,
+            @ModelAttribute ExamForm form,
+            BindingResult binding,
+            Model model) {
+        return saveExamForm(id, form, binding, model);
+    }
+
+    private String saveExamForm(Integer id, ExamForm form, BindingResult binding, Model model) {
+        String error = "Kiểm tra lại giá trị đã nhập trong đề thi.";
+        if (!binding.hasErrors()) {
+            try {
+                return "redirect:/admin/exams/" + catalogService.saveExam(id, form);
+            } catch (BusinessRuleException exception) {
+                error = exception.getMessage();
+            }
+        }
+        addModule("exams", model);
+        model.addAttribute("editing", id != null);
+        if (id != null) model.addAttribute("entry", catalogService.entry("exams", id));
+        model.addAttribute("examError", error);
+        prepareExamForm(model, form);
+        return "admin/catalog/form";
     }
 
     @PostMapping("/admin/exams/{id}/publish")
-    public String publishExam(@PathVariable int id) {
-        catalogService.publishExam(id);
+    public String publishExam(@PathVariable int id, RedirectAttributes redirect) {
+        try {
+            catalogService.publishExam(id);
+            redirect.addFlashAttribute("successMessage", "Đã công bố đề thi.");
+        } catch (BusinessRuleException exception) {
+            redirect.addFlashAttribute("error", exception.getMessage());
+        }
+        return "redirect:/admin/exams/" + id;
+    }
+
+    @PostMapping("/admin/exams/{id}/unpublish")
+    public String unpublishExam(@PathVariable int id) {
+        catalogService.unpublishExam(id);
         return "redirect:/admin/exams/" + id;
     }
 

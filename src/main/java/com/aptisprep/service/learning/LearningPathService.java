@@ -109,14 +109,26 @@ public class LearningPathService implements LearningPathContract {
             String fromLevel,
             String targetLevel,
             String goalLevel,
+            String currentLevel,
             String status,
             List<StageLesson> lessons) {
+        public StageProgress progress() {
+            if (currentLevel == null || lessons == null || lessons.isEmpty()) return null;
+            long completedLessons = lessons.stream().filter(StageLesson::completed).count();
+            int totalLessons = lessons.size();
+            return new StageProgress(
+                    completedLessons + "/" + totalLessons + " bài",
+                    (int) (completedLessons * 100 / totalLessons));
+        }
+
         public List<StageLesson> missingRequiredLessons() {
             return lessons.stream()
                     .filter(lesson -> lesson.required() && !lesson.completed())
                     .toList();
         }
     }
+
+    public record StageProgress(String label, int percent) {}
 
     public record StageLesson(
             Integer id,
@@ -131,6 +143,9 @@ public class LearningPathService implements LearningPathContract {
     @Transactional(readOnly = true)
     public List<Stage> stages(String email, String skill) {
         User user = active(email);
+        LearnerContext learner = accounts.context(user.getId());
+        List<SkillLevel> assessedLevels =
+                learner == null || learner.levels() == null ? List.of() : learner.levels();
         Map<Integer, String> targets = new HashMap<>();
         userGoalRepository
                 .findFirstByUserIdAndStatusOrderByCreatedAtDesc(user.getId(), GoalStatus.ACTIVE)
@@ -142,45 +157,84 @@ public class LearningPathService implements LearningPathContract {
                                                         targets.put(
                                                                 target.getId(),
                                                                 target.getTargetLevel())));
-        return summaries(user.getId()).stream()
-                .filter(view -> skill == null || view.skill().equals(skill))
-                .map(
-                        view -> {
-                            LearningPath path = owned(user.getId(), view.pathId());
-                            List<StageLesson> assigned =
-                                    learningPathItemRepository
-                                            .findByLearningPathIdOrderByPositionAsc(path.getId())
-                                            .stream()
-                                            .map(
-                                                    item ->
-                                                            new StageLesson(
-                                                                    item.getLesson().getId(),
-                                                                    item.getLesson().getTitle(),
-                                                                    item.getLesson().getCefrLevel(),
-                                                                    item.getStatus(),
-                                                                    "PUBLISHED"
-                                                                            .equals(
+        List<Stage> result =
+                new ArrayList<>(
+                        summaries(user.getId()).stream()
+                                .filter(view -> skill == null || view.skill().equals(skill))
+                                .map(
+                                        view -> {
+                                            LearningPath path = owned(user.getId(), view.pathId());
+                                            List<StageLesson> assigned =
+                                                    learningPathItemRepository
+                                                            .findByLearningPathIdOrderByPositionAsc(
+                                                                    path.getId())
+                                                            .stream()
+                                                            .map(
+                                                                    item ->
+                                                                            new StageLesson(
                                                                                     item.getLesson()
-                                                                                            .getStatus()),
-                                                                    item.getLesson().getMaterial()
-                                                                                    == null
-                                                                            ? null
-                                                                            : item.getLesson()
-                                                                                    .getMaterial()
-                                                                                    .getTopic(),
-                                                                    item.isRequired(),
-                                                                    completed(item)))
-                                            .toList();
-                            return new Stage(
-                                    path.getId(),
-                                    path.getSkill(),
-                                    path.getFromLevel(),
-                                    path.getTargetLevel(),
-                                    targets.get(path.getGoalSkillId()),
-                                    path.getStatus(),
-                                    assigned);
-                        })
-                .toList();
+                                                                                            .getId(),
+                                                                                    item.getLesson()
+                                                                                            .getTitle(),
+                                                                                    item.getLesson()
+                                                                                            .getCefrLevel(),
+                                                                                    item
+                                                                                            .getStatus(),
+                                                                                    "PUBLISHED"
+                                                                                            .equals(
+                                                                                                    item.getLesson()
+                                                                                                            .getStatus()),
+                                                                                    item.getLesson()
+                                                                                                            .getMaterial()
+                                                                                                    == null
+                                                                                            ? null
+                                                                                            : item.getLesson()
+                                                                                                    .getMaterial()
+                                                                                                    .getTopic(),
+                                                                                    item
+                                                                                            .isRequired(),
+                                                                                    completed(
+                                                                                            item)))
+                                                            .toList();
+                                            return new Stage(
+                                                    path.getId(),
+                                                    path.getSkill(),
+                                                    path.getFromLevel(),
+                                                    path.getTargetLevel(),
+                                                    targets.get(path.getGoalSkillId()),
+                                                    assessedLevel(assessedLevels, path.getSkill())
+                                                                    == null
+                                                            ? path.getFromLevel()
+                                                            : assessedLevel(
+                                                                            assessedLevels,
+                                                                            path.getSkill())
+                                                                    .estimatedLevel(),
+                                                    path.getStatus(),
+                                                    assigned);
+                                        })
+                                .toList());
+        Map<String, UserGoalSkill> personalGoals = goalTargets(user.getId());
+        for (String code : LessonService.SKILLS) {
+            if ((skill != null && !skill.equals(code))
+                    || result.stream().anyMatch(stage -> stage.skill().equals(code))) continue;
+            SkillLevel assessed = assessedLevel(assessedLevels, code);
+            String current = assessed == null ? null : assessed.estimatedLevel();
+            UserGoalSkill personal = personalGoals.get(codeSkill(code));
+            String goal = personal == null ? null : personal.getTargetLevel();
+            boolean reached = goal != null && current != null && rank(current) >= rank(goal);
+            String target = reached ? null : nextLevel(current);
+            result.add(
+                    new Stage(
+                            null,
+                            code,
+                            current,
+                            target,
+                            goal,
+                            current,
+                            reached ? "GOAL_REACHED" : target == null ? "COMPLETED" : "NO_CONTENT",
+                            List.of()));
+        }
+        return result;
     }
 
     @Override
@@ -309,13 +363,12 @@ public class LearningPathService implements LearningPathContract {
         if (skill == null
                 || !"COMPLETED".equals(skill.gradingState())
                 || skill.scaleScore() == null
-                || rank(skill.estimatedLevel()) < 0
                 || path.getTargetLevel() == null)
             throw new BusinessRuleException("Kỹ năng checkpoint chưa chấm xong");
         List<LearningPathItem> required = requiredItems(path);
         if (required.isEmpty() || required.stream().anyMatch(item -> !completed(item)))
             throw new BusinessRuleException("Chặng học chưa hoàn thành các bài bắt buộc");
-        accounts.applyAssessment(userId, attemptId);
+        if (skill.estimatedLevel() != null) accounts.applyAssessment(userId, attemptId);
         if (!skill.passed() || rank(skill.estimatedLevel()) < rank(path.getTargetLevel())) return;
         path.setStatus("COMPLETED");
         path.setCompletedAt(LocalDateTime.now());

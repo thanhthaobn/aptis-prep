@@ -9,7 +9,7 @@ public class ExamForm {
     private String examType = "PRACTICE";
     private String targetLevel = "B1";
     private String skill = "READING";
-    private Integer durationMinutes = 35;
+    private Integer durationMinutes;
     private Integer certificateId;
     private Integer scoringSchemeId;
     private String sectionSkill = "READING";

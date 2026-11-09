@@ -10,7 +10,7 @@ Project đã tích hợp các service nghiệp vụ và DB thật; không còn c
 
 - Java 21, Spring Boot 4.1.1, SQL Server, Maven Wrapper.
 - Thymeleaf và Spring MVC: Controller → Service → Repository.
-- Session, Spring Security form login, CSRF; không xây REST API cho giao diện.
+- Đăng nhập bằng form Thymeleaf và session servlet, phân quyền theo vai trò phía máy chủ, bảo vệ form và AJAX bằng CSRF.
 - Base package: com.aptisprep.
 - Từ 24/10/2026 dùng một application.properties, đọc DB_PASSWORD/API key từ môi trường; không commit secret.
 - Theo quyết định mới của chủ project, bỏ Flyway và dùng database/schema-current.sql cho DB mới/rỗng, Hibernate validate. Không tự nâng hoặc xóa DB hiện có. Các tên Vxxx bên dưới chỉ giải thích nguồn gốc tương thích dữ liệu cũ, không còn là cơ chế chạy schema.

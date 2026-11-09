@@ -18,12 +18,12 @@ public class ScoringScaleRuleForm {
 
     @NotNull
     @DecimalMin("0")
-    @DecimalMax("50")
+    @DecimalMax("999.99")
     private BigDecimal scaleMin;
 
     @NotNull
     @DecimalMin("0.01")
-    @DecimalMax("50")
+    @DecimalMax("999.99")
     private BigDecimal scaleMax;
 
     public BigDecimal getRawMin() {

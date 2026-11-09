@@ -1,47 +1,325 @@
 <!doctype html>
-<!--/*@thymesVar id="display" type="com.aptisprep.controller.DisplayFormatting"*/-->
 <html lang="vi" xmlns:th="http://www.thymeleaf.org">
-  <head th:replace="~{fragments/head :: head('Kết quả học tập')}"></head>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="description"
+      content="AptisPrep - Nền tảng luyện thi Aptis chuẩn CEFR (Reading, Listening, Writing, Speaking) với lộ trình cá nhân hóa và chấm điểm thông minh."
+    />
+    <title>Kết quả thi | AptisPrep</title>
+    <link
+      rel="icon"
+      type="image/svg+xml"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%230F6E56'/%3E%3Cpath d='M16 6 L24 25 L19.5 25 L17.5 20 L14.5 20 L12.5 25 L8 25 Z M16 12 L15.2 17 L16.8 17 Z' fill='%23ffffff'/%3E%3C/svg%3E"
+    />
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+      integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB"
+      crossorigin="anonymous"
+    />
+    <link rel="stylesheet" th:href="@{/css/variables.css}" />
+    <link rel="stylesheet" th:href="@{/css/base.css}" />
+    <link rel="stylesheet" th:href="@{/css/layout.css}" />
+    <link rel="stylesheet" th:href="@{/css/components.css}" />
+    <link rel="stylesheet" th:href="@{/css/forms.css}" />
+    <link rel="stylesheet" th:href="@{/css/learning-theme.css}" />
+    <link rel="stylesheet" th:href="@{/css/navi.css}" />
+    <link rel="stylesheet" th:href="@{/css/exam.css}" />
+    <link rel="stylesheet" th:href="@{/css/result.css}" />
+    <link rel="stylesheet" th:href="@{/css/catalog-compact.css}" />
+    <link rel="stylesheet" th:href="@{/css/admin-overview.css}" />
+    <link rel="stylesheet" th:href="@{/css/typography.css}" />
+    <script th:src="@{/js/app-dialog.js}" defer></script>
+    <script
+      src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"
+      integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI"
+      crossorigin="anonymous"
+      defer
+    ></script>
+  </head>
   <body class="student-theme">
-    <div th:replace="~{fragments/navbar :: navbar}"></div>
+    <header class="site-header">
+      <a href="#main-content" class="ap-skip-link">Bỏ qua điều hướng</a>
+
+      <div class="container ap-container nav-wrap">
+        <a class="brand" th:href="@{/}">
+          <span class="brand-mark" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+              <path d="M5 19V7.5L12 4l7 3.5V19" />
+              <path d="M8.5 10.5 12 12l3.5-1.5M12 12v8" />
+            </svg>
+          </span>
+          <span>AptisPrep</span>
+        </a>
+
+        <button
+          class="nav-toggle"
+          id="navToggle"
+          type="button"
+          aria-label="Mở menu điều hướng"
+          aria-expanded="false"
+          aria-controls="primaryNav"
+        >
+          <svg
+            class="hamburger-icon"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            aria-hidden="true"
+          >
+            <line x1="3" y1="6" x2="21" y2="6" />
+            <line x1="3" y1="12" x2="21" y2="12" />
+            <line x1="3" y1="18" x2="21" y2="18" />
+          </svg>
+        </button>
+
+        <nav class="nav-links" id="primaryNav" aria-label="Điều hướng chính">
+          <a th:href="@{/}">Trang chủ</a>
+          <a
+            th:if="${isStudent}"
+            th:href="@{/student/dashboard}"
+            th:classappend="'active'"
+            aria-current="page"
+          >
+            Học tập
+          </a>
+          <a th:if="${isAdmin}" th:href="@{/admin/dashboard}">Quản trị</a>
+          <a th:if="${signedIn != true}" th:href="@{/login}">Đăng nhập</a>
+          <a th:if="${signedIn != true}" class="button button-small" th:href="@{/register}">
+            Đăng ký
+          </a>
+          <form th:if="${signedIn}" th:action="@{/logout}" method="post">
+            <button class="button button-secondary button-small" type="submit">Đăng xuất</button>
+          </form>
+        </nav>
+      </div>
+
+      <script th:src="@{/js/navigation.js}" defer></script>
+    </header>
     <div class="container app-shell">
-      <div th:replace="~{fragments/student-sidebar :: studentSidebar('results')}"></div>
-      <main class="app-main student-content result-history-page">
+      <aside th:with="activePage='results'" class="app-sidebar">
+        <button
+          class="sidebar-toggle collapsed"
+          type="button"
+          data-bs-toggle="collapse"
+          data-bs-target="#student-sidebar-content"
+          aria-expanded="false"
+          aria-controls="student-sidebar-content"
+        >
+          <span>Menu học tập</span>
+          <span class="sidebar-toggle-icon" aria-hidden="true">⌄</span>
+        </button>
+        <div class="sidebar-content collapse d-lg-block" id="student-sidebar-content">
+          <span class="sidebar-label">HỌC TẬP</span>
+          <nav class="sidebar-nav" aria-label="Điều hướng học tập">
+            <a
+              class="sidebar-link"
+              th:classappend="${activePage == 'dashboard'} ? 'active'"
+              th:href="@{/student/dashboard}"
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M4 4h6v6H4zm10 0h6v6h-6zM4 14h6v6H4zm10 0h6v6h-6z" />
+              </svg>
+              Tổng quan
+            </a>
+
+            <a
+              class="sidebar-link"
+              th:classappend="${activePage == 'learning-path'} ? 'active'"
+              th:href="@{/student/learning-path}"
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M5 5h4v4H5zM15 15h4v4h-4zM9 7h3a5 5 0 0 1 5 5v3" />
+              </svg>
+              Lộ trình của tôi
+            </a>
+            <a
+              class="sidebar-link"
+              th:classappend="${activePage == 'lessons'} ? 'active'"
+              th:href="@{/student/lessons}"
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20V4H6.5A2.5 2.5 0 0 0 4 6.5z" />
+              </svg>
+              Bài học
+            </a>
+            <a
+              class="sidebar-link"
+              th:classappend="${activePage == 'exams'} ? 'active'"
+              th:href="@{/student/exams}"
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M7 3h10v4H7zM5 7h14v14H5z" />
+              </svg>
+              Đề thi
+            </a>
+            <a
+              class="sidebar-link"
+              th:classappend="${activePage == 'results'} ? 'active'"
+              th:href="@{/student/results}"
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M4 19V5m0 14h16M8 16v-4m4 4V7m4 9v-6" />
+              </svg>
+              Kết quả
+            </a>
+            <a
+              class="sidebar-link"
+              th:classappend="${activePage == 'flashcards'} ? 'active'"
+              th:href="@{/student/flashcards}"
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="6" y="6" width="15" height="15" rx="3" />
+                <path d="M17 6V3H3v14h3" />
+              </svg>
+              Flashcard
+            </a>
+          </nav>
+          <div class="sidebar-divider"></div>
+          <span class="sidebar-label">TÀI KHOẢN</span>
+          <nav class="sidebar-nav">
+            <a
+              class="sidebar-link"
+              th:classappend="${activePage == 'placement'} ? 'active'"
+              th:href="@{/student/placement}"
+            >
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                aria-hidden="true"
+              >
+                <rect x="5" y="4" width="14" height="17" rx="2" />
+                <path d="M9 4V2h6v2M8 12l3 3 5-6" />
+              </svg>
+              Kiểm tra đầu vào
+            </a>
+            <a
+              class="sidebar-link"
+              th:classappend="${activePage == 'profile'} ? 'active'"
+              th:href="@{/student/profile}"
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="8" r="4" />
+                <path d="M4 21a8 8 0 0 1 16 0" />
+              </svg>
+              Hồ sơ
+            </a>
+          </nav>
+        </div>
+      </aside>
+      <main
+        id="main-content"
+        tabindex="-1"
+        class="app-main student-content result-history-page"
+        th:with="filtered=${!q.isBlank() or !selectedSkill.isBlank() or !selectedExamType.isBlank() or !selectedState.isBlank()}"
+      >
         <header class="page-header">
           <div>
-            <p class="eyebrow">THEO DÕI TIẾN BỘ</p>
-            <h1>Kết quả học tập</h1>
+            <h1>Kết quả thi</h1>
+          </div>
+          <div class="page-header-actions">
+            <a class="button button-secondary" th:href="@{/student/exams}">Luyện đề mới</a>
           </div>
         </header>
 
-        <form class="toolbar result-filters" method="get" th:action="@{/student/results}">
+        <div class="messages-container" aria-live="polite">
+          <div
+            class="alert alert-success ap-alert ap-alert-success"
+            role="status"
+            th:if="${successMessage != null or (message != null and error == null)}"
+            th:text="${successMessage != null ? successMessage : message}"
+          ></div>
+          <div
+            class="alert alert-danger ap-alert ap-alert-danger"
+            role="alert"
+            th:if="${errorMessage != null or error != null}"
+            th:text="${errorMessage != null ? errorMessage : error}"
+          ></div>
+          <div
+            class="alert alert-warning ap-alert ap-alert-warning"
+            role="alert"
+            th:if="${warningMessage != null or warning != null}"
+            th:text="${warningMessage != null ? warningMessage : warning}"
+          ></div>
+          <div
+            class="alert alert-info ap-alert ap-alert-info"
+            role="status"
+            th:if="${infoMessage != null or info != null}"
+            th:text="${infoMessage != null ? infoMessage : info}"
+          ></div>
+        </div>
+
+        <nav role="tablist" aria-label="Phân loại trạng thái bài làm" class="results-tab-nav">
+          <a
+            role="tab"
+            class="tab-link"
+            th:classappend="${selectedState.isBlank() ? ' is-active' : ''}"
+            th:href="@{/student/results(state='',q=${q},skill=${selectedSkill},examType=${selectedExamType})}"
+          >
+            <span>Tất cả</span>
+            <span class="tab-count-badge" th:text="${history.totalItems}">0</span>
+          </a>
+          <a
+            role="tab"
+            class="tab-link"
+            th:classappend="${selectedState == 'IN_PROGRESS' ? ' is-active' : ''}"
+            th:href="@{/student/results(state='IN_PROGRESS',q=${q},skill=${selectedSkill},examType=${selectedExamType})}"
+          >
+            <span>Chưa nộp</span>
+            <span class="tab-count-badge" th:text="${inProgressCount}">0</span>
+          </a>
+          <a
+            role="tab"
+            class="tab-link"
+            th:classappend="${selectedState == 'COMPLETED' ? ' is-active' : ''}"
+            th:href="@{/student/results(state='COMPLETED',q=${q},skill=${selectedSkill},examType=${selectedExamType})}"
+          >
+            <span>Đã hoàn thành</span>
+            <span class="tab-count-badge" th:text="${completedCount}">0</span>
+          </a>
+        </nav>
+
+        <form
+          class="toolbar result-filters compact-filter-bar"
+          method="get"
+          th:action="@{/student/results}"
+        >
           <input type="hidden" name="size" th:value="${history.size}" />
-          <div class="field">
-            <label for="result-q">Tên đề</label>
+          <input type="hidden" name="state" th:value="${selectedState}" />
+
+          <div class="field field-search">
+            <label for="result-q" class="sr-only">Tên đề</label>
             <input
               id="result-q"
               name="q"
               maxlength="255"
               th:value="${q}"
-              placeholder="Ví dụ: Reading Part 1"
+              placeholder="Tìm theo tên đề thi..."
             />
           </div>
-          <div class="field">
-            <label for="result-skill">Kỹ năng</label>
+
+          <div class="field field-select">
+            <label for="result-skill" class="sr-only">Kỹ năng</label>
             <select id="result-skill" name="skill">
-              <option value="">Tất cả</option>
+              <option value="">Tất cả kỹ năng</option>
               <option
-                th:each="value : ${display.skillCodes()}"
+                th:each="value : ${skillCodes}"
                 th:value="${value}"
-                th:text="${(value == null ? null : value.replace('_', ' & '))}"
+                th:text="${(value == null ? null : value.replace('_', ' &amp; '))}"
                 th:selected="${selectedSkill == value}"
               ></option>
             </select>
           </div>
-          <div class="field">
-            <label for="result-type">Loại bài</label>
+
+          <div class="field field-select">
+            <label for="result-type" class="sr-only">Loại bài</label>
             <select id="result-type" name="examType">
-              <option value="">Tất cả</option>
+              <option value="">Tất cả loại bài</option>
               <option value="PLACEMENT" th:selected="${selectedExamType == 'PLACEMENT'}">
                 Kiểm tra đầu vào
               </option>
@@ -56,97 +334,232 @@
               </option>
             </select>
           </div>
-          <div class="field">
-            <label for="result-state">Trạng thái</label>
-            <select id="result-state" name="state">
-              <option value="">Tất cả</option>
-              <option value="IN_PROGRESS" th:selected="${selectedState == 'IN_PROGRESS'}">
-                Đang làm
-              </option>
-              <option value="WAITING_GRADING" th:selected="${selectedState == 'WAITING_GRADING'}">
-                Đang chấm
-              </option>
-              <option value="COMPLETED" th:selected="${selectedState == 'COMPLETED'}">
-                Hoàn thành
-              </option>
-              <option value="ERROR" th:selected="${selectedState == 'ERROR'}">Chấm lỗi</option>
-              <option value="EXPIRED" th:selected="${selectedState == 'EXPIRED'}">
-                Hết thời gian
-              </option>
-            </select>
-          </div>
-          <div class="actions">
-            <button class="button" type="submit">Lọc kết quả</button>
-            <a class="button button-secondary" th:href="@{/student/results}">Xóa bộ lọc</a>
+
+          <div class="filter-actions-right">
+            <button class="button button-small" type="submit">Tìm kiếm</button>
+            <a
+              class="button button-secondary button-small"
+              th:if="${filtered or !q.isBlank() or !selectedSkill.isBlank() or !selectedExamType.isBlank()}"
+              th:href="@{/student/results}"
+            >
+              Xóa bộ lọc
+            </a>
           </div>
         </form>
 
-        <section class="result-history-list" th:if="${!history.items.isEmpty()}">
-          <article class="dashboard-panel result-history-card" th:each="attempt : ${history.items}">
-            <div class="result-card-main">
-              <span
-                class="result-type"
-                th:text="${display.historyExamType(attempt.examType)}"
-              ></span>
-              <h2
-                th:text="${attempt.examTitle == null ? 'Bài thi #' + attempt.examId : attempt.examTitle}"
-              ></h2>
-              <p
-                th:if="${attempt.submittedAt != null}"
-                th:text="${'Đã nộp ' + (display.dateTime(attempt.submittedAt))}"
-              ></p>
-              <p th:unless="${attempt.submittedAt != null}">Chưa nộp bài</p>
-            </div>
-            <div class="result-card-summary">
-              <span
-                class="result-status"
-                th:classappend="${display.historyStateClass(attempt.state)}"
-                th:text="${display.historyState(attempt.state)}"
-              ></span>
-              <div class="result-levels" th:if="${!attempt.skills.isEmpty()}">
-                <span
-                  th:each="skill : ${attempt.skills}"
-                  th:text="${'' + ((skill.skill == null ? null : skill.skill.replace('_', ' '))) + ': ' + (skill.estimatedLevel == null ? 'Chờ chấm' : skill.estimatedLevel)}"
-                ></span>
-              </div>
-              <p
-                class="result-overall"
-                th:if="${attempt.finalScaleScore != null or attempt.overallCefr != null}"
-                th:text="${'Tổng quan: ' + (attempt.finalScaleScore == null ? '—' : attempt.finalScaleScore) + ' điểm · ' + (attempt.overallCefr == null ? 'Chưa có CEFR' : attempt.overallCefr)}"
-              ></p>
-              <a
-                class="button button-secondary"
-                th:if="${attempt.state == 'IN_PROGRESS'}"
-                th:href="@{/student/attempts/{id}(id=${attempt.attemptId})}"
+        <section class="results-table-container" th:if="${!history.items.isEmpty()}">
+          <table class="data-table result-compact-table" aria-label="Lịch sử làm bài thi">
+            <thead>
+              <tr>
+                <th scope="col">Loại &amp; Tên bài thi</th>
+                <th scope="col">Thời gian</th>
+                <th scope="col">Trạng thái</th>
+                <th scope="col" class="result-score-column">Điểm số / Đánh giá</th>
+                <th scope="col" class="result-actions-column">Thao tác</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr
+                th:each="attempt : ${history.items}"
+                th:with="canContinue=${attempt.state == 'IN_PROGRESS' and attempt.canDiscard()}"
               >
-                Tiếp tục làm bài
-              </a>
-              <a
-                class="button button-secondary"
-                th:unless="${attempt.state == 'IN_PROGRESS'}"
-                th:href="@{/student/attempts/{id}/result(id=${attempt.attemptId})}"
-              >
-                Xem kết quả
-              </a>
-            </div>
-          </article>
+                <td>
+                  <span class="result-type-chip" th:text="${attempt.examTypeLabel}"></span>
+                  <strong
+                    class="result-title-text"
+                    th:text="${attempt.examTitle == null ? 'Bài thi #' + attempt.examId : attempt.examTitle}"
+                  ></strong>
+                </td>
+
+                <td>
+                  <span
+                    class="time-meta-text"
+                    th:if="${attempt.submittedAt != null}"
+                    th:text="${'Đã nộp ' + #temporals.format(attempt.submittedAt, 'dd/MM/yyyy HH:mm')}"
+                  ></span>
+                  <span
+                    class="time-meta-text in-progress-time"
+                    th:unless="${attempt.submittedAt != null}"
+                  >
+                    Chưa nộp
+                  </span>
+                </td>
+
+                <td>
+                  <span
+                    class="badge"
+                    th:classappend="${attempt.stateBadgeClass}"
+                    th:text="${attempt.stateLabel}"
+                  ></span>
+                </td>
+
+                <td>
+                  <div class="result-score-cell">
+                    <p
+                      class="result-overall-score"
+                      th:if="${attempt.finalScaleScore != null or attempt.overallCefr != null}"
+                      th:text="${(attempt.finalScaleScore == null ? '—' : attempt.finalScaleScore) + ' điểm' + (attempt.overallCefr != null ? ' · ' + (attempt.overallCefr == 'A0' ? 'Dưới A1' : attempt.overallCefr) : '')}"
+                    ></p>
+                    <div class="result-levels-mini" th:if="${!attempt.skills.isEmpty()}">
+                      <span
+                        th:each="skill : ${attempt.skills}"
+                        class="skill-mini-pill"
+                        th:text="${(skill.skill == 'GRAMMAR_VOCABULARY' ? 'Grammar & Vocabulary' : skill.skill) + ': ' + (skill.estimatedLevel == null ? 'Chờ chấm' : (skill.estimatedLevel == 'A0' ? 'Dưới A1' : skill.estimatedLevel))}"
+                      ></span>
+                    </div>
+                    <span
+                      class="muted"
+                      th:if="${attempt.finalScaleScore == null and attempt.overallCefr == null and attempt.skills.isEmpty()}"
+                    >
+                      —
+                    </span>
+                  </div>
+                </td>
+
+                <td class="result-actions-column">
+                  <div class="table-row-actions">
+                    <a
+                      class="button button-small"
+                      th:if="${canContinue}"
+                      th:href="@{/student/attempts/{id}(id=${attempt.attemptId})}"
+                    >
+                      Tiếp tục
+                    </a>
+                    <a
+                      class="button button-secondary button-small text-nowrap"
+                      th:unless="${canContinue}"
+                      th:href="@{/student/attempts/{id}/result(id=${attempt.attemptId})}"
+                    >
+                      Xem kết quả
+                    </a>
+                    <form
+                      th:if="${attempt.canDiscard()}"
+                      th:action="@{/student/attempts/{id}/discard(id=${attempt.attemptId})}"
+                      method="post"
+                      data-confirm-title="Xóa lượt chưa nộp?"
+                      data-confirm-message="Lượt này sẽ biến mất khỏi lịch sử và bạn sẽ không thể làm tiếp các câu đã lưu."
+                      data-confirm-button="Xóa lượt chưa nộp"
+                    >
+                      <button
+                        class="button button-danger button-small result-discard-button"
+                        type="submit"
+                      >
+                        Loại bỏ
+                      </button>
+                    </form>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
         </section>
 
         <section class="dashboard-panel empty-result-state" th:if="${history.items.isEmpty()}">
-          <div class="empty-result-icon" aria-hidden="true">✓</div>
-          <h2>Bạn chưa có kết quả nào</h2>
-          <p>
+          <h2 th:text="${filtered ? 'Không có kết quả phù hợp' : 'Bạn chưa làm bài thi nào'}"></h2>
+          <p th:unless="${filtered}">
             Hãy làm bài kiểm tra đầu vào hoặc một đề luyện tập. Kết quả sẽ xuất hiện tại đây sau khi
             bạn nộp bài.
           </p>
-          <a class="button" th:href="@{/student/exams}">Khám phá đề thi</a>
+          <p th:if="${filtered}">Thử đổi điều kiện tìm kiếm hoặc xóa bộ lọc để xem lại lịch sử.</p>
+          <a class="button" th:if="${filtered}" th:href="@{/student/results}">Xóa bộ lọc</a>
+          <a class="button" th:unless="${filtered}" th:href="@{/student/exams}">Khám phá đề thi</a>
         </section>
 
-        <div
-          th:replace="~{fragments/student-pagination :: studentPagination(${history.page}, ${totalPages}, ${history.totalItems}, @{/student/results(size=${history.size},q=${q},skill=${selectedSkill},examType=${selectedExamType},state=${selectedState})})}"
-        ></div>
+        <th:block
+          th:with="currentPage=${history.page}, totalItems=${history.totalItems}, baseUrl=@{/student/results(size=${history.size},q=${q},skill=${selectedSkill},examType=${selectedExamType},state=${selectedState})}, pageParam='page'"
+        >
+          <nav
+            th:with="pageUrl=${baseUrl + (#strings.contains(baseUrl, '?') ? '&' : '?') + pageParam + '='}"
+            class="pagination student-pagination"
+            aria-label="Phân trang"
+          >
+            <span th:text="${'' + (totalItems) + ' kết quả'}">0 kết quả</span>
+            <div class="pagination-pages" th:if="${totalPages > 1}">
+              <a
+                class="page-link"
+                th:if="${currentPage > 0}"
+                th:href="${pageUrl + (currentPage - 1)}"
+                aria-label="Trang trước"
+              >
+                ‹
+              </a>
+              <span
+                class="page-link disabled"
+                th:unless="${currentPage > 0}"
+                aria-disabled="true"
+                aria-label="Trang trước"
+              >
+                ‹
+              </span>
+              <th:block
+                th:with="start=${currentPage > 2 ? currentPage - 2 : 0},end=${currentPage + 2 < totalPages ? currentPage + 2 : totalPages - 1}"
+              >
+                <a
+                  class="page-link"
+                  th:if="${start > 0}"
+                  th:href="${pageUrl + '0'}"
+                  aria-label="Trang 1"
+                >
+                  1
+                </a>
+                <span class="pagination-gap" th:if="${start > 1}" aria-hidden="true">…</span>
+                <th:block th:each="index : ${#numbers.sequence(start, end)}">
+                  <span
+                    class="page-link active"
+                    th:if="${index == currentPage}"
+                    aria-current="page"
+                    th:attr="aria-label=${'Trang ' + (index + 1)}"
+                    th:text="${index + 1}"
+                  ></span>
+                  <a
+                    class="page-link"
+                    th:unless="${index == currentPage}"
+                    th:href="${pageUrl + index}"
+                    th:attr="aria-label=${'Trang ' + (index + 1)}"
+                    th:text="${index + 1}"
+                  ></a>
+                </th:block>
+                <span class="pagination-gap" th:if="${end < totalPages - 2}" aria-hidden="true">
+                  …
+                </span>
+                <a
+                  class="page-link"
+                  th:if="${end < totalPages - 1}"
+                  th:href="${pageUrl + (totalPages - 1)}"
+                  th:attr="aria-label=${'Trang ' + (totalPages)}"
+                  th:text="${totalPages}"
+                ></a>
+              </th:block>
+              <a
+                class="page-link"
+                th:if="${currentPage + 1 < totalPages}"
+                th:href="${pageUrl + (currentPage + 1)}"
+                aria-label="Trang sau"
+              >
+                ›
+              </a>
+              <span
+                class="page-link disabled"
+                th:unless="${currentPage + 1 < totalPages}"
+                aria-disabled="true"
+                aria-label="Trang sau"
+              >
+                ›
+              </span>
+            </div>
+            <span
+              th:if="${totalPages > 1}"
+              th:text="${'Trang ' + (currentPage + 1) + ' / ' + (totalPages)}"
+            ></span>
+          </nav>
+        </th:block>
       </main>
     </div>
-    <div th:replace="~{fragments/footer :: footer}"></div>
+    <footer class="site-footer">
+      <div class="container footer-wrap">
+        <span>© 2026 AptisPrep. Học đúng lộ trình, tiến bộ mỗi ngày.</span>
+        <span>Nền tảng học tập và luyện thi Aptis</span>
+      </div>
+    </footer>
   </body>
 </html>

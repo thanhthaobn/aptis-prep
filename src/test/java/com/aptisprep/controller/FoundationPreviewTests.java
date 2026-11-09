@@ -1,7 +1,7 @@
 package com.aptisprep.controller;
 
+import static com.aptisprep.security.SessionMvcRequests.user;
 import static org.hamcrest.Matchers.*;
-import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -46,7 +46,12 @@ class FoundationPreviewTests {
                 .andExpect(content().string(not(containsString("Giao diện minh họa"))));
         mvc.perform(get("/student/placement").with(user("new@example.com").roles("STUDENT")))
                 .andExpect(status().isOk())
-                .andExpect(content().string(containsString("Bỏ qua và khám phá")));
+                .andExpect(
+                        content()
+                                .string(
+                                        containsString(
+                                                "<title>Kiểm tra đầu vào | AptisPrep</title>")))
+                .andExpect(content().string(not(containsString("Học trước, kiểm tra sau"))));
         mvc.perform(get("/admin/certificates").with(user("admin").roles("ADMIN")))
                 .andExpect(status().isOk())
                 .andExpect(content().string(not(containsString("api-key"))))
@@ -67,7 +72,7 @@ class FoundationPreviewTests {
     @Test
     void privateUploadsAreNotServedDirectly() throws Exception {
         for (String role : new String[] {"STUDENT", "ADMIN"}) {
-            mvc.perform(get("/uploads/recording.wav").with(user("demo").roles(role)))
+            mvc.perform(get("/uploads/recording.wav").with(user("demo-" + role).roles(role)))
                     .andExpect(status().isForbidden());
         }
     }

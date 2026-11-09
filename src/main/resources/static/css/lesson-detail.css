@@ -2,7 +2,6 @@
 .lesson-classroom.app-main {
   max-width: 1120px;
   margin-inline: auto;
-  padding-top: 24px;
 }
 
 .lesson-classroom .lesson-back {
@@ -22,14 +21,8 @@
   margin-bottom: 16px;
   padding: 20px 24px;
   border: 1px solid var(--skill-border, var(--color-border));
-  border-radius: 16px;
+  border-radius: var(--radius);
   background: var(--skill-tint, var(--color-primary-soft));
-}
-
-.lesson-classroom .lesson-header h1 {
-  margin: 6px 0;
-  font-size: clamp(1.35rem, 2.4vw, 1.9rem);
-  line-height: 1.4;
 }
 
 .lesson-classroom .lesson-header p {
@@ -52,14 +45,14 @@
   margin-bottom: 16px;
   padding: 6px;
   overflow-x: auto;
-  border-radius: 12px;
+  border-radius: var(--radius);
   box-shadow: none;
 }
 
 .lesson-classroom .lesson-step-nav a {
   flex: 0 0 auto;
   padding: 9px 12px;
-  border-radius: 8px;
+  border-radius: var(--radius);
   background: transparent;
   font-size: 0.8rem;
   font-weight: 600;
@@ -81,7 +74,7 @@
   min-width: 0;
   padding: 20px;
   border: 1px solid var(--color-border);
-  border-radius: 14px;
+  border-radius: var(--radius);
   background: var(--color-surface);
   box-shadow: none;
 }
@@ -122,7 +115,7 @@
 .lesson-classroom .lesson-video {
   margin: 12px 0;
   max-height: 360px;
-  border-radius: 10px;
+  border-radius: var(--radius);
 }
 
 .lesson-classroom #media > a {

@@ -16,13 +16,13 @@ public class ScoreBandForm {
     private String cefrLevel;
 
     @NotNull(message = "Điểm thấp nhất không được để trống")
-    @DecimalMin(value = "0.00", message = "Điểm phải từ 0 đến 50")
-    @DecimalMax(value = "50.00", message = "Điểm phải từ 0 đến 50")
+    @DecimalMin(value = "0.00", message = "Điểm phải từ 0 đến 999.99")
+    @DecimalMax(value = "999.99", message = "Điểm phải từ 0 đến 999.99")
     private BigDecimal minScore;
 
     @NotNull(message = "Điểm cao nhất không được để trống")
-    @DecimalMin(value = "0.00", message = "Điểm phải từ 0 đến 50")
-    @DecimalMax(value = "50.00", message = "Điểm phải từ 0 đến 50")
+    @DecimalMin(value = "0.00", message = "Điểm phải từ 0 đến 999.99")
+    @DecimalMax(value = "999.99", message = "Điểm phải từ 0 đến 999.99")
     private BigDecimal maxScore;
 
     public String getSkill() {

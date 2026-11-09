@@ -26,6 +26,28 @@ public class ScoringScheme {
     @Column(nullable = false, length = 30)
     private String version;
 
+    @Column(name = "exam_type", length = 30)
+    private String examType;
+
+    @Column(name = "scope_skill", length = 30)
+    private String scopeSkill;
+
+    public String getExamType() {
+        return examType;
+    }
+
+    public void setExamType(String value) {
+        examType = value;
+    }
+
+    public String getScopeSkill() {
+        return scopeSkill;
+    }
+
+    public void setScopeSkill(String value) {
+        scopeSkill = value;
+    }
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 30)
     private RecordStatus status;

@@ -37,8 +37,12 @@ public class StudentLearningPathController {
 
     @GetMapping("/student/learning-path")
     public String paths(Principal principal, Model model) {
-        model.addAttribute("paths", service.ensureAndSummaries(principal.getName()));
-        model.addAttribute("stages", service.stages(principal.getName(), null));
+        service.refreshPaths(principal.getName());
+        var stages = service.stages(principal.getName(), null);
+        boolean hasAssessment = stages.stream().anyMatch(stage -> stage.currentLevel() != null);
+        model.addAttribute("stages", stages);
+        model.addAttribute("hasAssessment", hasAssessment);
+        model.addAttribute("learningLevels", LessonService.LEVELS);
         return "student/learning/path";
     }
 
@@ -57,6 +61,7 @@ public class StudentLearningPathController {
                         .filter(path -> path.skill().equals(selected))
                         .toList());
         model.addAttribute("stages", service.stages(principal.getName(), selected));
+        model.addAttribute("learningLevels", LessonService.LEVELS);
         return "student/learning/skill";
     }
 

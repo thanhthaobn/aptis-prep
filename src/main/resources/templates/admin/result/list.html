@@ -1,17 +1,233 @@
 <!doctype html>
-<!--/*@thymesVar id="display" type="com.aptisprep.controller.DisplayFormatting"*/-->
 <html lang="vi" xmlns:th="http://www.thymeleaf.org">
-  <head th:replace="~{fragments/head :: head('Kết quả học viên')}"></head>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="description"
+      content="AptisPrep - Nền tảng luyện thi Aptis chuẩn CEFR (Reading, Listening, Writing, Speaking) với lộ trình cá nhân hóa và chấm điểm thông minh."
+    />
+    <title>Kết quả học viên | AptisPrep</title>
+    <link
+      rel="icon"
+      type="image/svg+xml"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%230F6E56'/%3E%3Cpath d='M16 6 L24 25 L19.5 25 L17.5 20 L14.5 20 L12.5 25 L8 25 Z M16 12 L15.2 17 L16.8 17 Z' fill='%23ffffff'/%3E%3C/svg%3E"
+    />
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+      integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB"
+      crossorigin="anonymous"
+    />
+    <link rel="stylesheet" th:href="@{/css/variables.css}" />
+    <link rel="stylesheet" th:href="@{/css/base.css}" />
+    <link rel="stylesheet" th:href="@{/css/layout.css}" />
+    <link rel="stylesheet" th:href="@{/css/components.css}" />
+    <link rel="stylesheet" th:href="@{/css/forms.css}" />
+    <link rel="stylesheet" th:href="@{/css/learning-theme.css}" />
+    <link rel="stylesheet" th:href="@{/css/navi.css}" />
+    <link rel="stylesheet" th:href="@{/css/exam.css}" />
+    <link rel="stylesheet" th:href="@{/css/result.css}" />
+    <link rel="stylesheet" th:href="@{/css/catalog-compact.css}" />
+    <link rel="stylesheet" th:href="@{/css/admin-overview.css}" />
+    <link rel="stylesheet" th:href="@{/css/typography.css}" />
+    <script th:src="@{/js/app-dialog.js}" defer></script>
+    <script
+      src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"
+      integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI"
+      crossorigin="anonymous"
+      defer
+    ></script>
+  </head>
   <body class="admin-theme">
-    <div th:replace="~{fragments/navbar :: navbar}"></div>
+    <header class="site-header">
+      <a href="#main-content" class="ap-skip-link">Bỏ qua điều hướng</a>
+
+      <div class="container ap-container nav-wrap">
+        <a class="brand" th:href="@{/}">
+          <span class="brand-mark" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+              <path d="M5 19V7.5L12 4l7 3.5V19" />
+              <path d="M8.5 10.5 12 12l3.5-1.5M12 12v8" />
+            </svg>
+          </span>
+          <span>AptisPrep</span>
+        </a>
+
+        <button
+          class="nav-toggle"
+          id="navToggle"
+          type="button"
+          aria-label="Mở menu điều hướng"
+          aria-expanded="false"
+          aria-controls="primaryNav"
+        >
+          <svg
+            class="hamburger-icon"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            aria-hidden="true"
+          >
+            <line x1="3" y1="6" x2="21" y2="6" />
+            <line x1="3" y1="12" x2="21" y2="12" />
+            <line x1="3" y1="18" x2="21" y2="18" />
+          </svg>
+        </button>
+
+        <nav class="nav-links" id="primaryNav" aria-label="Điều hướng chính">
+          <a th:href="@{/}">Trang chủ</a>
+          <a th:if="${isStudent}" th:href="@{/student/dashboard}">Học tập</a>
+          <a
+            th:if="${isAdmin}"
+            th:href="@{/admin/dashboard}"
+            th:classappend="'active'"
+            aria-current="page"
+          >
+            Quản trị
+          </a>
+          <a th:if="${signedIn != true}" th:href="@{/login}">Đăng nhập</a>
+          <a th:if="${signedIn != true}" class="button button-small" th:href="@{/register}">
+            Đăng ký
+          </a>
+          <form th:if="${signedIn}" th:action="@{/logout}" method="post">
+            <button class="button button-secondary button-small" type="submit">Đăng xuất</button>
+          </form>
+        </nav>
+      </div>
+
+      <script th:src="@{/js/navigation.js}" defer></script>
+    </header>
     <div class="container app-shell">
-      <div th:replace="~{fragments/admin-sidebar :: adminSidebar('results')}"></div>
+      <aside th:with="activePage='results'" class="app-sidebar">
+        <button
+          class="sidebar-toggle collapsed"
+          type="button"
+          data-bs-toggle="collapse"
+          data-bs-target="#admin-sidebar-content"
+          aria-expanded="false"
+          aria-controls="admin-sidebar-content"
+        >
+          <span>Menu quản trị</span>
+          <span class="sidebar-toggle-icon" aria-hidden="true">⌄</span>
+        </button>
+        <div class="sidebar-content collapse d-lg-block" id="admin-sidebar-content">
+          <span class="sidebar-label">QUẢN TRỊ</span>
+          <nav class="sidebar-nav" aria-label="Điều hướng quản trị">
+            <a
+              class="sidebar-link"
+              th:classappend="${activePage == 'dashboard'} ? 'active'"
+              th:href="@{/admin/dashboard}"
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M4 4h6v6H4zm10 0h6v6h-6zM4 14h6v6H4zm10 0h6v6h-6z" />
+              </svg>
+              Tổng quan
+            </a>
+            <a
+              class="sidebar-link"
+              th:classappend="${activePage == 'students'} ? 'active'"
+              th:href="@{/admin/students}"
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="9" cy="8" r="3" />
+                <path d="M3 20v-2a6 6 0 0 1 12 0v2M16 5a3 3 0 0 1 0 6m2 3a5 5 0 0 1 3 4v2" />
+              </svg>
+              Học viên
+            </a>
+            <a
+              class="sidebar-link"
+              th:classappend="${activePage == 'lessons'} ? 'active'"
+              th:href="@{/admin/lessons}"
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20V4H6.5A2.5 2.5 0 0 0 4 6.5z" />
+              </svg>
+              Bài học
+            </a>
+            <a
+              class="sidebar-link"
+              th:classappend="${activePage == 'questions'} ? 'active'"
+              th:href="@{/admin/questions}"
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="9" />
+                <path d="M9.5 9a2.5 2.5 0 1 1 3.2 2.4c-.7.3-.7.8-.7 1.6M12 17h.01" />
+              </svg>
+              Ngân hàng câu hỏi
+            </a>
+            <a
+              class="sidebar-link"
+              th:classappend="${activePage == 'exams'} ? 'active'"
+              th:href="@{/admin/exams}"
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M7 3h10v4H7zM5 7h14v14H5z" />
+              </svg>
+              Đề thi
+            </a>
+            <a
+              class="sidebar-link"
+              th:classappend="${activePage == 'results'} ? 'active'"
+              th:href="@{/admin/results}"
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M4 19V5m0 14h16M8 16v-4m4 4V7m4 9v-6" />
+              </svg>
+              Kết quả
+            </a>
+            <a
+              class="sidebar-link"
+              th:classappend="${activePage == 'flashcards'} ? 'active'"
+              th:href="@{/admin/flashcards}"
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="6" y="6" width="15" height="15" rx="3" />
+                <path d="M17 6V3H3v14h3" />
+              </svg>
+              Flashcard
+            </a>
+          </nav>
+          <div class="sidebar-divider"></div>
+          <span class="sidebar-label">HỆ THỐNG</span>
+          <nav class="sidebar-nav">
+            <a
+              class="sidebar-link"
+              th:classappend="${activePage == 'certificates'} ? 'active'"
+              th:href="@{/admin/certificates}"
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="3" />
+                <path
+                  d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1-2.8 2.8-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.6v.2h-4V21a1.7 1.7 0 0 0-1-1.6 1.7 1.7 0 0 0-1.9.3l-.1.1L4.2 17l.1-.1a1.7 1.7 0 0 0 .3-1.9A1.7 1.7 0 0 0 3 14H3v-4h.2a1.7 1.7 0 0 0 1.6-1 1.7 1.7 0 0 0-.3-1.9L4.2 7 7 4.2l.1.1A1.7 1.7 0 0 0 9 4.6 1.7 1.7 0 0 0 10 3V3h4v.2a1.7 1.7 0 0 0 1 1.6 1.7 1.7 0 0 0 1.9-.3l.1-.1L19.8 7l-.1.1a1.7 1.7 0 0 0-.3 1.9 1.7 1.7 0 0 0 1.6 1h.2v4H21a1.7 1.7 0 0 0-1.6 1Z"
+                />
+              </svg>
+              Chứng chỉ
+            </a>
+            <a
+              class="sidebar-link"
+              th:classappend="${activePage == 'scoring'} ? 'active'"
+              th:href="@{/admin/scoring-schemes}"
+            >
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                aria-hidden="true"
+              >
+                <path d="M4 19h16M7 16v-5m5 5V5m5 11V8" />
+              </svg>
+              Chấm điểm
+            </a>
+          </nav>
+        </div>
+      </aside>
       <main class="app-main admin-catalog">
         <header class="page-header">
           <div>
-            <p class="eyebrow">QUẢN TRỊ</p>
             <h1>Kết quả học viên</h1>
-            <p>Dữ liệu thật từ các lượt thi, không dùng nội dung minh họa.</p>
           </div>
         </header>
         <form class="dashboard-panel result-filters" method="get" th:action="@{/admin/results}">
@@ -36,7 +252,7 @@
             <select id="examType" name="examType">
               <option value="">Tất cả</option>
               <option
-                th:each="v : ${display.examTypes()}"
+                th:each="v : ${examTypes}"
                 th:value="${v}"
                 th:text="${@resultLabels.examType(v)}"
                 th:selected="${selectedExamType==v}"
@@ -48,7 +264,7 @@
             <select id="state" name="state">
               <option value="">Tất cả</option>
               <option
-                th:each="v : ${display.resultStates()}"
+                th:each="v : ${resultStates}"
                 th:value="${v}"
                 th:text="${@resultLabels.state(v)}"
                 th:selected="${selectedState==v}"
@@ -101,7 +317,7 @@
                 ></td>
                 <td
                   data-label="Nộp bài"
-                  th:text="${item.result.submittedAt==null?'Chưa nộp':display.dateTime(item.result.submittedAt)}"
+                  th:text="${item.result.submittedAt==null?'Chưa nộp':#temporals.format(item.result.submittedAt, 'dd/MM/yyyy HH:mm')}"
                 ></td>
                 <td data-label="Thao tác">
                   <a th:href="@{/admin/results/{id}(id=${item.result.attemptId})}">Xem chi tiết</a>
@@ -113,23 +329,101 @@
         <div class="empty-box" th:if="${history.items.isEmpty()}">
           <h2>Không có kết quả phù hợp</h2>
         </div>
-        <nav class="result-pagination" th:if="${history.totalItems>history.size}">
-          <a
-            th:if="${history.page>0}"
-            th:href="@{/admin/results(page=${history.page-1},size=${history.size},q=${q},skill=${selectedSkill},examType=${selectedExamType},state=${selectedState},from=${from},to=${to})}"
+        <th:block
+          th:with="currentPage=${history.page}, totalItems=${history.totalItems}, baseUrl=@{/admin/results(size=${history.size},q=${q},skill=${selectedSkill},examType=${selectedExamType},state=${selectedState},from=${from},to=${to})}, pageParam='page'"
+        >
+          <nav
+            th:with="pageUrl=${baseUrl + (#strings.contains(baseUrl, '?') ? '&' : '?') + pageParam + '='}"
+            class="pagination student-pagination"
+            aria-label="Phân trang"
           >
-            Trang trước
-          </a>
-          <span th:text="${'Trang ' + (history.page+1)}"></span>
-          <a
-            th:if="${(history.page+1)*history.size<history.totalItems}"
-            th:href="@{/admin/results(page=${history.page+1},size=${history.size},q=${q},skill=${selectedSkill},examType=${selectedExamType},state=${selectedState},from=${from},to=${to})}"
-          >
-            Trang sau
-          </a>
-        </nav>
+            <span th:text="${'' + (totalItems) + ' kết quả'}">0 kết quả</span>
+            <div class="pagination-pages" th:if="${totalPages > 1}">
+              <a
+                class="page-link"
+                th:if="${currentPage > 0}"
+                th:href="${pageUrl + (currentPage - 1)}"
+                aria-label="Trang trước"
+              >
+                ‹
+              </a>
+              <span
+                class="page-link disabled"
+                th:unless="${currentPage > 0}"
+                aria-disabled="true"
+                aria-label="Trang trước"
+              >
+                ‹
+              </span>
+              <th:block
+                th:with="start=${currentPage > 2 ? currentPage - 2 : 0},end=${currentPage + 2 < totalPages ? currentPage + 2 : totalPages - 1}"
+              >
+                <a
+                  class="page-link"
+                  th:if="${start > 0}"
+                  th:href="${pageUrl + '0'}"
+                  aria-label="Trang 1"
+                >
+                  1
+                </a>
+                <span class="pagination-gap" th:if="${start > 1}" aria-hidden="true">…</span>
+                <th:block th:each="index : ${#numbers.sequence(start, end)}">
+                  <span
+                    class="page-link active"
+                    th:if="${index == currentPage}"
+                    aria-current="page"
+                    th:attr="aria-label=${'Trang ' + (index + 1)}"
+                    th:text="${index + 1}"
+                  ></span>
+                  <a
+                    class="page-link"
+                    th:unless="${index == currentPage}"
+                    th:href="${pageUrl + index}"
+                    th:attr="aria-label=${'Trang ' + (index + 1)}"
+                    th:text="${index + 1}"
+                  ></a>
+                </th:block>
+                <span class="pagination-gap" th:if="${end < totalPages - 2}" aria-hidden="true">
+                  …
+                </span>
+                <a
+                  class="page-link"
+                  th:if="${end < totalPages - 1}"
+                  th:href="${pageUrl + (totalPages - 1)}"
+                  th:attr="aria-label=${'Trang ' + (totalPages)}"
+                  th:text="${totalPages}"
+                ></a>
+              </th:block>
+              <a
+                class="page-link"
+                th:if="${currentPage + 1 < totalPages}"
+                th:href="${pageUrl + (currentPage + 1)}"
+                aria-label="Trang sau"
+              >
+                ›
+              </a>
+              <span
+                class="page-link disabled"
+                th:unless="${currentPage + 1 < totalPages}"
+                aria-disabled="true"
+                aria-label="Trang sau"
+              >
+                ›
+              </span>
+            </div>
+            <span
+              th:if="${totalPages > 1}"
+              th:text="${'Trang ' + (currentPage + 1) + ' / ' + (totalPages)}"
+            ></span>
+          </nav>
+        </th:block>
       </main>
     </div>
-    <div th:replace="~{fragments/footer :: footer}"></div>
+    <footer class="site-footer">
+      <div class="container footer-wrap">
+        <span>© 2026 AptisPrep. Học đúng lộ trình, tiến bộ mỗi ngày.</span>
+        <span>Nền tảng học tập và luyện thi Aptis</span>
+      </div>
+    </footer>
   </body>
 </html>

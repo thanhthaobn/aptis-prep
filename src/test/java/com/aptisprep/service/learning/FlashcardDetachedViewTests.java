@@ -1,7 +1,7 @@
 package com.aptisprep.service.learning;
 
+import static com.aptisprep.security.SessionMvcRequests.user;
 import static org.hamcrest.Matchers.containsString;
-import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -65,7 +65,7 @@ class FlashcardDetachedViewTests {
                             get("/student/flashcards/" + libraryId)
                                     .with(user(learner.getEmail()).roles("STUDENT")))
                     .andExpect(status().isOk())
-                    .andExpect(view().name("flashcard/study"))
+                    .andExpect(view().name("student/flashcards/study"))
                     .andExpect(content().string(containsString("data-skill=\"Writing\"")))
                     .andExpect(content().string(containsString(lesson.getTitle())))
                     .andExpect(
@@ -74,8 +74,8 @@ class FlashcardDetachedViewTests {
                             get("/student/flashcards/" + personalId)
                                     .with(user(learner.getEmail()).roles("STUDENT")))
                     .andExpect(status().isOk())
-                    .andExpect(view().name("flashcard/study"))
-                    .andExpect(content().string(containsString("Quay lại bộ thẻ")));
+                    .andExpect(view().name("student/flashcards/study"))
+                    .andExpect(content().string(containsString("class=\"back-link\"")));
         } finally {
             for (Integer setId : new Integer[] {libraryId, personalId}) {
                 if (setId != null) {

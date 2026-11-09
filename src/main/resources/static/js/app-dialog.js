@@ -106,7 +106,7 @@
       )
         return;
       event.preventDefault();
-      if (await canLeave()) window.location.assign(url.href);
+      if (await canLeave()) link.click();
     });
     document.addEventListener(
       'submit',

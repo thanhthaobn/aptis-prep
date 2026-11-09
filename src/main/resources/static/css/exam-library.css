@@ -3,15 +3,6 @@
   margin-inline: auto;
 }
 
-.exam-library.app-main {
-  padding-top: 24px;
-}
-
-.exam-library .page-header p:last-child {
-  margin-top: 8px;
-  font-size: 0.86rem;
-}
-
 .exam-category-nav {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -25,7 +16,7 @@
   gap: 8px;
   padding: 12px;
   border: 1px solid var(--color-border);
-  border-radius: 12px;
+  border-radius: var(--radius);
   color: var(--color-text);
   background: #fff;
   font-size: 0.82rem;
@@ -149,7 +140,7 @@
   padding: 18px;
   border: 1px solid var(--color-border);
   border-top: 3px solid var(--skill-border, var(--color-primary));
-  border-radius: 12px;
+  border-radius: var(--radius);
   background: #fff;
   box-shadow: none;
 }

@@ -178,9 +178,9 @@ public class LessonTeachingService {
         this.json = json;
     }
 
-    public Optional<LessonResponse> savedWork(Integer lessonId, String email) {
+    public LessonResponse savedWork(Integer lessonId, String email) {
         User u = user(email);
-        return lessonResponseRepository.findByUserIdAndLessonId(u.getId(), lessonId);
+        return lessonResponseRepository.findByUserIdAndLessonId(u.getId(), lessonId).orElse(null);
     }
 
     public void saveRecording(Integer lessonId, MultipartFile file, String email) {

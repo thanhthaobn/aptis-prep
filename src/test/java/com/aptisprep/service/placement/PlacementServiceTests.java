@@ -13,6 +13,33 @@ import org.springframework.beans.factory.ObjectProvider;
 class PlacementServiceTests {
     @Test
     @SuppressWarnings("unchecked")
+    void availableExamsUseAnUnambiguousActionForTheCurrentAttemptState() {
+        var catalog = mock(PlacementExamCatalogService.class);
+        var published = mock(ExamCatalogContract.class);
+        var engine = mock(ExamAttemptContract.class);
+        var accounts = mock(AccountAccessContract.class);
+        ObjectProvider<ExamAttemptContract> engines = mock(ObjectProvider.class);
+        ObjectProvider<AccountAccessContract> access = mock(ObjectProvider.class);
+        when(engines.getIfAvailable()).thenReturn(engine);
+        when(access.getIfAvailable()).thenReturn(accounts);
+        when(accounts.requireActiveStudent("learner@test.local")).thenReturn(9);
+        when(catalog.findPublished("LISTENING"))
+                .thenReturn(
+                        List.of(
+                                new PlacementExamCatalogService.PlacementExam(
+                                        10, "Listening placement", "", 15, List.of())));
+        var service =
+                new com.aptisprep.service.placement.impl.PlacementServiceImpl(
+                        catalog, published, engines, access);
+
+        assertFalse(service.available("learner@test.local", "LISTENING").getFirst().resumable());
+
+        when(engine.hasInProgressPlacement(9, "LISTENING")).thenReturn(true);
+        assertTrue(service.available("learner@test.local", "LISTENING").getFirst().resumable());
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
     void selectionUsesIntegerValuesBeyondTheJvmCacheAndRejectsOtherIds() {
         var catalog = mock(PlacementExamCatalogService.class);
         var published = mock(ExamCatalogContract.class);
@@ -27,10 +54,12 @@ class PlacementServiceTests {
                 .thenReturn(
                         List.of(
                                 new PlacementExamCatalogService.PlacementExam(
-                                        Integer.valueOf("1000"), "Placement", "")));
+                                        Integer.valueOf("1000"), "Placement", "", 15, List.of())));
         when(engine.startPlacement(eq(9), eq(1000), anyString()))
                 .thenReturn(new AttemptHandle(17, "IN_PROGRESS", null));
-        var service = new PlacementService(catalog, published, engines, access);
+        var service =
+                new com.aptisprep.service.placement.impl.PlacementServiceImpl(
+                        catalog, published, engines, access);
         assertEquals(
                 17,
                 service.start("learner@test.local", "READING", Integer.valueOf("1000"))

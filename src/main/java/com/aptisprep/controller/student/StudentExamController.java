@@ -12,6 +12,7 @@ import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.http.MediaTypeFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.ResponseEntity.BodyBuilder;
 import org.springframework.stereotype.Controller;
@@ -47,11 +48,60 @@ public class StudentExamController {
         }
     }
 
+    @GetMapping("/student/attempts/{id}/review")
+    public String review(
+            @PathVariable Integer id,
+            Principal principal,
+            Model model,
+            RedirectAttributes redirect) {
+        Integer userId = accounts.requireActiveStudent(principal.getName());
+        try {
+            model.addAttribute("review", attempts.review(userId, id));
+            model.addAttribute("attemptId", id);
+            return "student/attempt-review";
+        } catch (BusinessRuleException exception) {
+            redirect.addFlashAttribute("error", exception.getMessage());
+            return "redirect:/student/attempts/" + id + "/result";
+        }
+    }
+
+    @PostMapping("/student/attempts/{id}/discard")
+    public String discard(
+            @PathVariable Integer id, Principal principal, RedirectAttributes redirect) {
+        Integer userId = accounts.requireActiveStudent(principal.getName());
+        try {
+            attempts.discard(userId, id);
+            redirect.addFlashAttribute("successMessage", "Đã xóa lượt làm dở.");
+        } catch (BusinessRuleException exception) {
+            redirect.addFlashAttribute("error", exception.getMessage());
+        }
+        return "redirect:/student/results";
+    }
+
     @GetMapping("/student/attempts/{id}")
     public String attempt(@PathVariable Integer id, Principal principal, Model model) {
         Integer userId = accounts.requireActiveStudent(principal.getName());
-        model.addAttribute("attempt", attempts.page(userId, id));
+        ExamAttemptService.AttemptPage page = attempts.page(userId, id);
+        model.addAttribute("attempt", page);
         return "student/attempt";
+    }
+
+    @PostMapping("/student/attempts/{id}/exit")
+    public String exitAttempt(
+            @PathVariable Integer id, Principal principal, RedirectAttributes redirectAttributes) {
+        Integer userId = accounts.requireActiveStudent(principal.getName());
+        ExamAttemptService.AttemptPage page = attempts.page(userId, id);
+        if ("PLACEMENT".equals(page.examType())) {
+            String skill =
+                    page.sectionSkill() != null
+                            ? "FULL_MOCK"
+                            : page.questions().isEmpty()
+                                    ? "READING"
+                                    : page.questions().getFirst().skill();
+            redirectAttributes.addAttribute("skill", skill);
+            return "redirect:/student/placement";
+        }
+        return "redirect:/student/exams";
     }
 
     @PostMapping("/student/attempts/{id}/answers")
@@ -114,6 +164,30 @@ public class StudentExamController {
         return "redirect:/student/attempts/" + id;
     }
 
+    @PostMapping(
+            value = "/student/attempts/{id}/answers/audio/autosave",
+            consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> audioAutosave(
+            @PathVariable Integer id,
+            @RequestParam Integer questionId,
+            @RequestParam(required = false) Integer itemId,
+            @RequestParam("audioFile") MultipartFile audioFile,
+            Principal principal) {
+        try {
+            attempts.saveSpeakingAudio(
+                    accounts.requireActiveStudent(principal.getName()),
+                    id,
+                    questionId,
+                    itemId,
+                    audioFile);
+            return ResponseEntity.ok(Map.of("saved", true));
+        } catch (BusinessRuleException exception) {
+            return ResponseEntity.badRequest()
+                    .body(Map.of("saved", false, "message", exception.getMessage()));
+        }
+    }
+
     @PostMapping("/student/attempts/{id}/media/{mediaId}/play")
     @ResponseBody
     public ResponseEntity<ExamAttemptService.MediaPlayResult> playMedia(
@@ -132,9 +206,41 @@ public class StudentExamController {
         MediaResource media =
                 attempts.mediaContent(
                         accounts.requireActiveStudent(principal.getName()), id, mediaId, token);
+        return inlineMedia(media);
+    }
+
+    @GetMapping("/student/attempts/{id}/review/media/{mediaId}")
+    public ResponseEntity<Resource> reviewMedia(
+            @PathVariable Integer id, @PathVariable Integer mediaId, Principal principal) {
+        return inlineMedia(
+                attempts.reviewMedia(
+                        accounts.requireActiveStudent(principal.getName()), id, mediaId));
+    }
+
+    @GetMapping("/student/attempts/{id}/review/recording/{questionId}/{itemId}")
+    public ResponseEntity<Resource> reviewRecording(
+            @PathVariable Integer id,
+            @PathVariable Integer questionId,
+            @PathVariable Integer itemId,
+            Principal principal) {
+        return inlineMedia(
+                attempts.reviewRecording(
+                        accounts.requireActiveStudent(principal.getName()),
+                        id,
+                        questionId,
+                        itemId));
+    }
+
+    private ResponseEntity<Resource> inlineMedia(MediaResource media) {
+        MediaType contentType = resolveType(media.contentType());
+        if (!contentType.isConcrete()) {
+            contentType =
+                    MediaTypeFactory.getMediaType(media.resource())
+                            .orElse(MediaType.APPLICATION_OCTET_STREAM);
+        }
         BodyBuilder response =
                 ResponseEntity.ok()
-                        .contentType(resolveType(media.contentType()))
+                        .contentType(contentType)
                         .header(HttpHeaders.CONTENT_DISPOSITION, "inline")
                         .header(HttpHeaders.CACHE_CONTROL, "private, no-store")
                         .header(HttpHeaders.ACCEPT_RANGES, "bytes");
@@ -156,6 +262,21 @@ public class StudentExamController {
         return ResponseEntity.ok()
                 .contentType(resolveType(media.contentType()))
                 .body(media.resource());
+    }
+
+    @PostMapping("/student/attempts/{id}/next-section")
+    public String nextSection(
+            @PathVariable Integer id,
+            @RequestParam int sectionEndMinute,
+            Principal principal,
+            RedirectAttributes redirect) {
+        Integer userId = accounts.requireActiveStudent(principal.getName());
+        try {
+            attempts.advanceSection(userId, id, sectionEndMinute);
+        } catch (BusinessRuleException exception) {
+            redirect.addFlashAttribute("error", exception.getMessage());
+        }
+        return "redirect:/student/attempts/" + id;
     }
 
     @PostMapping("/student/attempts/{id}/submit")

@@ -94,7 +94,8 @@ public class AttemptFinalizationService {
 
     @Transactional
     public boolean finalizeIfReady(ExamAttemptEntity attempt, MockExamEntity exam) {
-        if ("COMPLETED".equals(attempt.getStatus())) return false;
+        if ("COMPLETED".equals(attempt.getStatus())
+                || "COMPLETED".equals(attempt.getGradingStatus())) return false;
         List<ExamSkillResultEntity> results =
                 examSkillResultRepository.findByAttemptIdOrderBySkillAsc(attempt.getId());
         if (results.isEmpty()) return false;
@@ -118,9 +119,23 @@ public class AttemptFinalizationService {
                                                 value.getScaleScore(),
                                                 value.getCefrLevel()))
                         .toList();
-        BigDecimal average = schemeId == null ? null : scoring.overallScale(schemeId, scores);
-        String overall = schemeId == null ? null : scoring.overallLevel(schemeId, scores);
-        attempt.setFinalScaleScore(average);
+        BigDecimal total = null;
+        String overall = null;
+        if (schemeId != null
+                && ("FULL_MOCK".equals(exam.getExamType())
+                        || ("PLACEMENT".equals(exam.getExamType())
+                                && "FULL_MOCK".equals(exam.getSkill())))) {
+            var summary = scoring.fullMockScore(schemeId, scores);
+            total = summary.total();
+            overall = summary.cefrLevel();
+            for (int i = 0; i < results.size(); i++) {
+                results.get(i).setCefrLevel(summary.skills().get(i).cefrLevel());
+            }
+        } else if (schemeId != null) {
+            total = scoring.overallScale(schemeId, scores);
+            overall = scoring.overallLevel(schemeId, scores);
+        }
+        attempt.setFinalScaleScore(total);
         attempt.setEstimatedOverallCefr(overall);
         attempt.setCompletedAt(LocalDateTime.now());
         attempt.setGradingStatus("COMPLETED");
@@ -345,7 +360,12 @@ public class AttemptFinalizationService {
                         exam(attempt).getTargetLevel(),
                         scoring.estimatedLevel(
                                 schemeId, question.getSkill(), result.getScaleScore())));
-        if (result.getCefrLevel() == null) {
+        if (result.getCefrLevel() == null
+                && scoring.belowConfiguredTarget(
+                        schemeId, question.getSkill(), result.getScaleScore())) {
+            result.setGradingMethod("BELOW_TARGET");
+            result.setGradingStatus("COMPLETED");
+        } else if (result.getCefrLevel() == null) {
             result.setGradingMethod("POLICY_ERROR");
             result.setGradingStatus("ERROR");
         } else {
@@ -588,7 +608,8 @@ public class AttemptFinalizationService {
             return result.getRawScore() != null && "COMPLETED".equals(result.getGradingStatus());
         return result.getRawScore() != null
                 && result.getScaleScore() != null
-                && result.getCefrLevel() != null
+                && (result.getCefrLevel() != null
+                        || "BELOW_TARGET".equals(result.getGradingMethod()))
                 && (result.getGradingStatus() == null
                         || "COMPLETED".equals(result.getGradingStatus()));
     }
@@ -599,12 +620,21 @@ public class AttemptFinalizationService {
                 || ("COMPLETED".equals(result.getGradingStatus())
                         && (result.getRawScore() == null
                                 || result.getScaleScore() == null
-                                || result.getCefrLevel() == null));
+                                || (result.getCefrLevel() == null
+                                        && !"BELOW_TARGET".equals(result.getGradingMethod()))));
     }
 
     private MockExamEntity exam(ExamAttemptEntity attempt) {
-        return mockExamRepository
-                .findById(attempt.getMockExamId())
-                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy đề thi"));
+        return examAttemptSnapshotRepository
+                .findByAttemptId(attempt.getId())
+                .map(MockExamEntity::fromSnapshot)
+                .orElseGet(
+                        () ->
+                                mockExamRepository
+                                        .findById(attempt.getMockExamId())
+                                        .orElseThrow(
+                                                () ->
+                                                        new ResourceNotFoundException(
+                                                                "Không tìm thấy đề thi")));
     }
 }

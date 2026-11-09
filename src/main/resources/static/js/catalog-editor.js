@@ -114,6 +114,28 @@
 (() => {
   const sections = document.getElementById('exam-sections');
   const add = document.getElementById('add-exam-section');
+  const examType = document.getElementById('examType');
+  const certificate = document.getElementById('certificateId');
+  const scheme = document.getElementById('scoringSchemeId');
+  const options = scheme ? [...scheme.options] : [];
+  const originalScheme = scheme?.value;
+  const originalType = examType?.value;
+  const updateSchemes = () => {
+    if (!scheme || !examType || !certificate) return;
+    const selected = scheme.value;
+    const skill = sections?.querySelector('.section-skill')?.value;
+    const allowed = options.filter(
+      (option) =>
+        !option.value ||
+        (option.dataset.certificate === certificate.value &&
+          (option.dataset.examType
+            ? option.dataset.examType === examType.value &&
+              (!option.dataset.skill || option.dataset.skill === skill)
+            : option.value === originalScheme && examType.value === originalType)),
+    );
+    scheme.replaceChildren(...allowed);
+    scheme.value = allowed.some((option) => option.value === selected) ? selected : '';
+  };
   const renumberSections = () =>
     sections?.querySelectorAll('.exam-section-editor').forEach((section, index) => {
       section.dataset.sectionIndex = index;
@@ -122,10 +144,14 @@
     });
   const sync = () =>
     sections?.querySelectorAll('.exam-section-editor').forEach((section) => {
-      const values = [...section.querySelectorAll('.section-question:checked')].map(
-        (input) => input.dataset.questionId,
+      const selected = new Set(
+        [...section.querySelectorAll('.section-question:checked')].map(
+          (input) => input.dataset.questionId,
+        ),
       );
-      section.querySelector('.section-question-ids').value = values.join(',');
+      const field = section.querySelector('.section-question-ids');
+      const retained = field.value.split(',').filter((id) => selected.delete(id.trim()));
+      field.value = [...retained, ...selected].join(',');
     });
   const updateQuestionVisibility = (section) => {
     const skill = section.querySelector('.section-skill')?.value;
@@ -137,9 +163,15 @@
     });
   };
   sections?.querySelectorAll('.exam-section-editor').forEach(updateQuestionVisibility);
+  updateSchemes();
+  examType?.addEventListener('change', updateSchemes);
+  certificate?.addEventListener('change', updateSchemes);
   sections?.addEventListener('change', (event) => {
     const section = event.target.closest('.exam-section-editor');
-    if (section && event.target.matches('.section-skill')) updateQuestionVisibility(section);
+    if (section && event.target.matches('.section-skill')) {
+      updateQuestionVisibility(section);
+      updateSchemes();
+    }
     sync();
   });
   document.getElementById('exam-sections')?.closest('form')?.addEventListener('submit', sync);
@@ -168,4 +200,62 @@
     renumberSections();
     updateQuestionVisibility(clone);
   });
+})();
+
+(() => {
+  const type = document.getElementById('schemeExamType');
+  const field = document.getElementById('scheme-skill-field');
+  const skill = document.getElementById('schemeScopeSkill');
+  const configuration = document.getElementById('scheme-score-configuration');
+  const target = document.getElementById('scheme-target-score');
+  const ranges = document.getElementById('scheme-combined-ranges');
+  const legacy = document.getElementById('cefr-bands');
+  const certificate = document.getElementById('schemeCertificate');
+  const updateCefrLevels = () => {
+    const general =
+      certificate?.selectedOptions[0]?.dataset.certificateCode?.toUpperCase() === 'APTIS_GENERAL';
+    document.querySelectorAll('[data-c2]').forEach((control) => {
+      control.hidden = general;
+      if (control.tagName === 'OPTION') {
+        control.disabled = general;
+        if (general && control.selected) control.parentElement.value = '';
+      } else {
+        control.querySelectorAll('input').forEach((input) => {
+          input.disabled = general;
+        });
+      }
+    });
+  };
+  if (!type || !field || !skill) return;
+  const updateSkill = () => {
+    const single = type.value === 'PRACTICE' || type.value === 'CHECKPOINT';
+    field.hidden = !single;
+    skill.required = single;
+    if (configuration) configuration.hidden = !type.value;
+    if (target) {
+      target.hidden = !single;
+      target.disabled = configuration?.dataset.readOnly === 'true' || target.hidden;
+    }
+    if (ranges) {
+      ranges.hidden = !type.value;
+      ranges.querySelectorAll('[data-scoring-skill]').forEach((section) => {
+        section.hidden = single && section.dataset.scoringSkill !== skill.value;
+        section.disabled =
+          configuration?.dataset.readOnly === 'true' || section.hidden || !type.value;
+      });
+    }
+    const combinedHelp = document.getElementById('scheme-combined-help');
+    if (combinedHelp) combinedHelp.hidden = single || !type.value;
+    const borderlineHelp = document.getElementById('scheme-borderline-help');
+    if (borderlineHelp) borderlineHelp.hidden = single || !type.value;
+    ranges?.querySelectorAll('.below-a1-row').forEach((row) => {
+      row.hidden = type.value !== 'FULL_MOCK';
+    });
+    if (legacy) legacy.hidden = Boolean(type.value);
+  };
+  type.addEventListener('change', updateSkill);
+  skill.addEventListener('change', updateSkill);
+  certificate?.addEventListener('change', updateCefrLevels);
+  updateSkill();
+  updateCefrLevels();
 })();

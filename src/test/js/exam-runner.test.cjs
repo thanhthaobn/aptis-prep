@@ -17,7 +17,9 @@ function exam() {
   let interval,
     clock = 0,
     submissions = 0,
+    sectionAdvances = 0,
     dismissed = 0,
+    exits = 0,
     nextTimer = 0;
   const status = { textContent: '' };
   const error = {
@@ -45,12 +47,31 @@ function exam() {
       submissions++;
     },
   };
+  const exit = {
+    addEventListener: (name, handler) => {
+      if (name === 'submit') events.exitAttempt = handler;
+    },
+    submit() {
+      exits++;
+    },
+  };
+  const advance = {
+    ...submit,
+    addEventListener: (name, handler) => {
+      events.advanceSection = handler;
+    },
+    submit() {
+      sectionAdvances++;
+    },
+  };
   const ids = {
     'submit-attempt-form': submit,
     'submit-attempt': button,
     'attempt-submit-error': error,
     'exam-timer': { dataset: { deadline: new Date(60000).toISOString() } },
     'timer-display': {},
+    'exit-attempt-form': exit,
+    'next-section-form': advance,
   };
   runInNewContext(source, {
     URLSearchParams,
@@ -98,6 +119,8 @@ function exam() {
     requests,
     confirmations,
     submit: () => events.submitAttempt({ preventDefault() {} }),
+    advance: () => events.advanceSection({ preventDefault() {} }),
+    exit: () => events.exitAttempt({ preventDefault() {}, currentTarget: exit }),
     input(value) {
       answer.value = value;
       events.input();
@@ -115,9 +138,36 @@ function exam() {
       await tick();
     },
     submissions: () => submissions,
+    sectionAdvances: () => sectionAdvances,
     dismissed: () => dismissed,
+    exits: () => exits,
   };
 }
+
+test('advancing to the next section waits for pending answers without submitting the exam', async () => {
+  const page = exam();
+  page.input('last answer in section');
+  page.advance();
+  await page.confirm(true);
+  assert.equal(page.sectionAdvances(), 0);
+  assert.equal(page.requests.at(-1).body.get('textAnswer'), 'last answer in section');
+  await page.respond(true);
+  assert.equal(page.sectionAdvances(), 1);
+  assert.equal(page.submissions(), 0);
+});
+
+test('leaving an in-progress exam requires explicit confirmation', async () => {
+  const page = exam();
+  page.exit();
+  assert.match(page.confirmations.at(-1).options.title, /Thoát bài thi/);
+  await page.confirm(false);
+  assert.equal(page.exits(), 0);
+
+  page.exit();
+  await page.confirm(true);
+  assert.equal(page.exits(), 1);
+  assert.equal(page.submissions(), 0);
+});
 
 test('cancelling the in-page submit confirmation keeps the attempt editable', async () => {
   const page = exam();

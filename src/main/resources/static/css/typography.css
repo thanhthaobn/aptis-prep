@@ -1,0 +1,61 @@
+/* A compact type scale shared by application pages. */
+body {
+  font-size: var(--text-base);
+}
+
+body h1,
+body .page-header h1,
+body .dashboard-header h1,
+body .app-main > :is(.page-header, .dashboard-header) h1 {
+  font-size: var(--heading-large);
+  line-height: 1.2;
+}
+
+body h2,
+body .panel-heading h2,
+body .section-title-row h2 {
+  font-size: var(--heading-medium);
+  line-height: 1.3;
+}
+
+body h3,
+body .section-title,
+body .result-section-title,
+body .dialog-title {
+  font-size: var(--heading-small);
+  line-height: 1.4;
+}
+
+body :is(p, li, dd, input, select, textarea) {
+  font-size: var(--text-base);
+}
+
+body :is(label, button, .button, td, .sidebar-link, .catalog-table-actions a, .page-link) {
+  font-size: var(--text-small);
+}
+
+body :is(small, th, .eyebrow, .badge, .supporting-text, .field-help, .muted) {
+  font-size: var(--text-small);
+}
+
+body :is(.data-table, .catalog-table, .student-table, .skill-overview-table) {
+  font-size: var(--text-small);
+}
+
+body :is(.sidebar-label, .eyebrow, .learn-unit-banner p, .panel-kicker, .badge) {
+  font-weight: 700;
+  letter-spacing: normal;
+}
+
+/* Use one compact size for body text and controls on these two pages. */
+:is(.placement-page, .result-history-page)
+  :where(:not(h1, h2, h3, h4, h5, h6, :is(h1, h2, h3, h4, h5, h6) *)) {
+  font-size: var(--text-small) !important;
+}
+
+@media (max-width: 480px) {
+  body {
+    --heading-large: 1.5rem;
+    --heading-medium: 1.25rem;
+  }
+}

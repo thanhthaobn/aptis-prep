@@ -11,7 +11,9 @@ import com.aptisprep.exception.AiGradingException;
 import com.aptisprep.repository.*;
 import com.aptisprep.service.contract.AiAssessmentContract.*;
 import com.aptisprep.service.exam.AttemptOutboxService;
+import com.aptisprep.service.storage.StorageService;
 import java.math.BigDecimal;
+import java.nio.file.Path;
 import java.time.LocalDateTime;
 import java.util.Optional;
 import javax.sql.DataSource;
@@ -32,6 +34,7 @@ class AiAssessmentServiceTests {
     @Mock UserRepository users;
     @Mock WritingGradingService writing;
     @Mock SpeakingGradingService speaking;
+    @Mock StorageService storage;
     @Mock ApplicationEventPublisher events;
     @Mock AttemptOutboxService outbox;
 
@@ -50,9 +53,11 @@ class AiAssessmentServiceTests {
                         users,
                         writing,
                         speaking,
+                        storage,
                         new DataSourceTransactionManager(dataSource),
                         events,
-                        outbox);
+                        outbox,
+                        null);
         job = new AiAssessmentJob();
         job.setAssessmentKey("assessment-1");
         job.setUserId(1);
@@ -173,6 +178,36 @@ class AiAssessmentServiceTests {
         assertEquals("COMPLETED", result.state());
         assertEquals("I enjoy reading books.", result.transcript());
         verify(speaking).gradeTranscript("Talk about hobbies", "I enjoy reading books.");
+    }
+
+    @Test
+    void retryTranscribesSavedExamAudioAndKeepsTheItemLabel() {
+        job.setSkill("SPEAKING");
+        job.setTaskType("SPEAKING");
+        job.setTaskContent("Talk about hobbies");
+        job.setLockedContent("Mục 1:\n[Chưa trả lời]\n\nMục 2:\nattempts/2/audio/test.webm");
+        Path audio = Path.of("attempts/2/audio/test.webm");
+        when(storage.localPath("attempts/2/audio/test.webm")).thenReturn(audio);
+        when(speaking.transcribe(audio))
+                .thenThrow(new AiGradingException("Transcription failed"))
+                .thenReturn("I enjoy reading.");
+        String transcript = "Mục 2:\nI enjoy reading.";
+        when(speaking.gradeTranscript("Talk about hobbies", transcript))
+                .thenReturn(
+                        new GradingResult(
+                                BigDecimal.TEN,
+                                "A1",
+                                "Feedback",
+                                "mock",
+                                "test-model",
+                                transcript));
+
+        assertEquals("ERROR", service.process("assessment-1").state());
+        verify(speaking, never()).gradeTranscript(anyString(), anyString());
+        assertEquals(transcript, service.retry("assessment-1", 1, false).transcript());
+        assertEquals("COMPLETED", service.process("assessment-1").state());
+        verify(speaking, times(2)).transcribe(audio);
+        verify(speaking).gradeTranscript("Talk about hobbies", transcript);
     }
 
     @Test

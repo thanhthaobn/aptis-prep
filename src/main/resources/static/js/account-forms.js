@@ -1,0 +1,128 @@
+(() => {
+  const common = new Set([
+    'password',
+    'password1',
+    'password123',
+    '12345678',
+    '123456789',
+    '1234567890',
+    'qwerty123',
+    'qwertyuiop',
+    'abcdefgh',
+    '87654321',
+    '11111111',
+    'admin123',
+    'aptis123',
+    'letmein123',
+  ]);
+  const controlCharacters = /[\u0000-\u001f\u007f-\u009f]/u;
+  const normalizeName = (value) =>
+    controlCharacters.test(value)
+      ? value
+      : value
+          .normalize('NFC')
+          .replace(/\p{Zs}+/gu, ' ')
+          .trim();
+  document.querySelectorAll('[data-toggle-password]').forEach((button) => {
+    button.addEventListener('click', () => {
+      const field = document.getElementById(button.dataset.togglePassword);
+      const showing = field.type === 'password';
+      field.type = showing ? 'text' : 'password';
+      button.setAttribute('aria-pressed', String(showing));
+      button.textContent = showing ? 'Ẩn' : 'Hiện';
+      button.setAttribute('aria-label', showing ? 'Ẩn mật khẩu' : 'Hiện mật khẩu');
+    });
+  });
+  document.querySelectorAll('[data-account-form]').forEach((form) => {
+    const password = form.querySelector('[data-password-policy]');
+    const confirm = form.querySelector('[data-password-confirm]');
+    const validate = (field, show) => {
+      let message = '';
+      if (field === password && field.value) {
+        const v = field.value;
+        if (
+          v.length < 8 ||
+          v.length > 72 ||
+          new TextEncoder().encode(v).length > 72 ||
+          common.has(v.toLowerCase()) ||
+          controlCharacters.test(v)
+        )
+          message =
+            v.length < 8
+              ? 'Mật khẩu cần ít nhất 8 ký tự.'
+              : new TextEncoder().encode(v).length > 72
+                ? 'Mật khẩu quá dài. Hãy rút ngắn một chút.'
+                : 'Mật khẩu không hợp lệ hoặc quá dễ đoán.';
+        else if (!/\p{Uppercase}/u.test(v) || !/\p{Nd}/u.test(v) || !/[\p{P}\p{S}]/u.test(v))
+          message = 'Mật khẩu cần có chữ in hoa, chữ số và ký tự đặc biệt.';
+      }
+      if (field === confirm && field.value && field.value !== password?.value)
+        message = 'Mật khẩu xác nhận không khớp';
+      if (
+        field.name === 'fullName' &&
+        field.value &&
+        !/^\p{Lu}\p{M}*(?: *\p{L}\p{M}*)*$/u.test(normalizeName(field.value))
+      )
+        message = 'Họ tên phải bắt đầu bằng chữ in hoa và chỉ được chứa chữ cái và khoảng trắng.';
+      field.setCustomValidity(message);
+      if (show) {
+        const error = document.getElementById(`${field.id}-error`);
+        if (error)
+          error.textContent = message || (field.validity.valid ? '' : field.validationMessage);
+        field.setAttribute('aria-invalid', String(!field.validity.valid));
+      }
+    };
+    form.querySelectorAll('input:not([type="hidden"])').forEach((field) => {
+      field.addEventListener('blur', () => {
+        if (field.name === 'email') field.value = field.value.trim().toLowerCase();
+        if (field.name === 'fullName') field.value = normalizeName(field.value);
+        validate(field, true);
+      });
+      field.addEventListener('input', () => {
+        validate(field, field.getAttribute('aria-invalid') === 'true');
+        if (field === password && confirm?.value) validate(confirm, true);
+      });
+    });
+    form.addEventListener('submit', (event) => {
+      form.querySelectorAll('input:not([type="hidden"])').forEach((field) => validate(field, true));
+      if (!form.checkValidity()) {
+        event.preventDefault();
+        form.querySelector(':invalid')?.focus();
+      }
+    });
+    const invalid = form.querySelector('[aria-invalid="true"]');
+    if (invalid) invalid.focus();
+    else form.querySelector('[data-form-errors]')?.focus();
+  });
+
+  const pForm =
+    typeof document !== 'undefined' && document.getElementById
+      ? document.getElementById('profileForm')
+      : null;
+  if (pForm && typeof pForm.querySelector === 'function') {
+    const nameInput = pForm.querySelector('input[name="fullName"]');
+    const submitBtn = pForm.querySelector('button[type="submit"]');
+    const hintDirty = pForm.querySelector('#nameDirtyHint');
+    if (nameInput && submitBtn) {
+      const initialValue = nameInput.value.trim();
+      submitBtn.disabled = true;
+      const checkDirty = () => {
+        const val = nameInput.value.trim();
+        const isDirty = val !== initialValue;
+        const isValid = val.length >= 1;
+        submitBtn.disabled = !isDirty || !isValid;
+        if (hintDirty) {
+          hintDirty.style.display = isDirty ? 'inline-block' : 'none';
+        }
+      };
+      nameInput.addEventListener('input', checkDirty);
+      nameInput.addEventListener('change', checkDirty);
+      pForm.addEventListener('submit', () => {
+        if (!submitBtn.disabled) {
+          submitBtn.disabled = true;
+          submitBtn.textContent = 'Đang lưu...';
+        }
+      });
+    }
+  }
+})();

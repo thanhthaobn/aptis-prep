@@ -8,16 +8,16 @@ import com.aptisprep.exception.BusinessRuleException;
 import java.util.*;
 
 /** Validates a question definition without database writes or Spring state. */
-final class QuestionDefinitionValidator {
+public final class QuestionDefinitionValidator {
     private static final List<String> SKILLS = Skill.codes();
-    private static final List<String> LEVELS = CefrLevel.codes();
+    private static final List<String> LEVELS = CefrLevel.curriculumLevels();
     private static final List<String> TYPES =
             Arrays.stream(QuestionType.values()).map(Enum::name).toList();
     private static final List<String> DIFFICULTIES = List.of("EASY", "MEDIUM", "HARD");
 
     private QuestionDefinitionValidator() {}
 
-    static void validate(QuestionForm f) {
+    public static void validate(QuestionForm f) {
         if (f.getContent() == null || f.getContent().isBlank() || f.getContent().length() > 10000)
             throw new BusinessRuleException("Nội dung câu hỏi là bắt buộc");
         if (f.getReadingPassage() != null && f.getReadingPassage().length() > 50000)

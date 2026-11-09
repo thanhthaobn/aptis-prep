@@ -12,6 +12,10 @@ import org.springframework.web.bind.annotation.*;
 
 @Controller
 public class AdminResultController {
+    private static final List<String> EXAM_TYPES =
+            List.of("PLACEMENT", "PRACTICE", "CHECKPOINT", "FULL_MOCK");
+    private static final List<String> RESULT_STATES =
+            List.of("IN_PROGRESS", "WAITING_GRADING", "COMPLETED", "ERROR", "EXPIRED");
     private final ExamAttemptContract attempts;
 
     public AdminResultController(ExamAttemptContract attempts) {
@@ -20,12 +24,12 @@ public class AdminResultController {
 
     @GetMapping("/admin/results")
     public String list(
-            @RequestParam(defaultValue = "") String q,
-            @RequestParam(defaultValue = "") String skill,
-            @RequestParam(defaultValue = "") String examType,
-            @RequestParam(defaultValue = "") String state,
-            @RequestParam(defaultValue = "") String from,
-            @RequestParam(defaultValue = "") String to,
+            @RequestParam(name = "q", defaultValue = "") String q,
+            @RequestParam(name = "skill", defaultValue = "") String skill,
+            @RequestParam(name = "examType", defaultValue = "") String examType,
+            @RequestParam(name = "state", defaultValue = "") String state,
+            @RequestParam(name = "from", defaultValue = "") String from,
+            @RequestParam(name = "to", defaultValue = "") String to,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             Principal principal,
@@ -40,13 +44,14 @@ public class AdminResultController {
         Instant fromValue = parseDate(from, false), toValue = parseDate(to, true);
         if (fromValue != null && toValue != null && !fromValue.isBefore(toValue))
             throw new BusinessRuleException("Ngày bắt đầu phải không sau ngày kết thúc");
-        model.addAttribute(
-                "history",
+        var history =
                 attempts.adminHistory(
                         principal.getName(),
                         page,
                         size,
-                        new AdminHistoryFilter(q, skill, examType, state, fromValue, toValue)));
+                        new AdminHistoryFilter(q, skill, examType, state, fromValue, toValue));
+        model.addAttribute("history", history);
+        model.addAttribute("totalPages", (history.totalItems() + size - 1) / size);
         model.addAttribute("q", q);
         model.addAttribute("selectedSkill", skill);
         model.addAttribute("selectedExamType", examType);
@@ -56,6 +61,8 @@ public class AdminResultController {
         model.addAttribute(
                 "skills",
                 List.of("GRAMMAR_VOCABULARY", "READING", "LISTENING", "WRITING", "SPEAKING"));
+        model.addAttribute("examTypes", EXAM_TYPES);
+        model.addAttribute("resultStates", RESULT_STATES);
         return "admin/result/list";
     }
 

@@ -16,7 +16,6 @@ import com.aptisprep.service.contract.*;
 import com.aptisprep.service.contract.IntegrationModels.LockedAttempt;
 import com.aptisprep.service.grading.*;
 import com.aptisprep.service.placement.PlacementExamCatalogService;
-import com.aptisprep.service.storage.StorageService;
 import com.aptisprep.service.student.StudentExamCatalogService;
 import java.util.*;
 import org.junit.jupiter.api.Test;
@@ -75,12 +74,7 @@ class TramBusinessCompletionTests {
         config.setEnabled(true);
         var orchestration =
                 new AttemptGradingOrchestrationService(
-                        config,
-                        ai,
-                        finalization,
-                        mock(SpeakingGradingService.class),
-                        mock(StorageService.class),
-                        mock(AttemptOutboxService.class));
+                        config, ai, finalization, mock(AttemptOutboxService.class));
         orchestration.onSubmitted(
                 new AttemptSubmittedEvent(
                         f.user().getId(), id, f.exam().getId(), "PLACEMENT", locked));
@@ -250,6 +244,7 @@ class TramBusinessCompletionTests {
     @Test
     void adminDemoFlagRoundTripsEvenAfterRenamingTheExam() {
         var f = fixture(2);
+        admin.unpublishExam(f.exam().getId());
         var form = admin.examForm(f.exam().getId());
         form.setDemoOnly(true);
         form.setTitle("Ordinary-looking renamed exam");

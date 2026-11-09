@@ -1,9 +1,9 @@
 package com.aptisprep.controller;
 
+import static com.aptisprep.security.SessionMvcRequests.csrf;
+import static com.aptisprep.security.SessionMvcRequests.user;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.*;
-import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
-import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -11,9 +11,18 @@ import com.aptisprep.dto.view.StudentCatalogView.Entry;
 import com.aptisprep.entity.MockExamEntity;
 import com.aptisprep.entity.MockExamQuestionEntity;
 import com.aptisprep.entity.QuestionEntity;
+import com.aptisprep.entity.QuestionMediaEntity;
 import com.aptisprep.entity.ScoringScheme;
+import com.aptisprep.entity.User;
 import com.aptisprep.enums.RecordStatus;
+import com.aptisprep.enums.Role;
+import com.aptisprep.enums.UserStatus;
+import com.aptisprep.repository.ExamAttemptRepository;
+import com.aptisprep.repository.UserRepository;
+import com.aptisprep.service.storage.StorageService;
 import com.aptisprep.service.student.StudentExamCatalogService.Category;
+import com.aptisprep.support.TestAudio;
+import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.List;
 import org.junit.jupiter.api.Test;
@@ -33,8 +42,14 @@ class StudentContentPreviewTests {
     @Autowired com.aptisprep.repository.MockExamQuestionRepository examQuestions;
     @Autowired com.aptisprep.repository.MockExamSectionRepository sections;
     @Autowired com.aptisprep.repository.QuestionRepository questions;
+    @Autowired com.aptisprep.repository.QuestionMediaRepository media;
     @Autowired com.aptisprep.repository.CertificateRepository certificates;
     @Autowired com.aptisprep.repository.ScoringSchemeRepository schemes;
+    @Autowired com.aptisprep.repository.ScoringScaleRuleRepository rules;
+    @Autowired StorageService storage;
+    @Autowired com.aptisprep.repository.ScoreBandRepository bands;
+    @Autowired ExamAttemptRepository attempts;
+    @Autowired UserRepository users;
     private final java.util.List<Integer> examIds = new java.util.ArrayList<>();
 
     @org.junit.jupiter.api.BeforeEach
@@ -55,31 +70,23 @@ class StudentContentPreviewTests {
             exam.setTargetLevel(i == 1 ? "B1" : "B2");
             exam.setDurationMinutes(35);
             exam.setStatus("PUBLISHED");
+            if (i == 0) attachScoring(exam, com.aptisprep.enums.Skill.codes());
             exam = exams.saveAndFlush(exam);
             examIds.add(exam.getId());
-            if (i == 0) {
-                var section = new com.aptisprep.entity.MockExamSectionEntity();
-                section.setMockExamId(exam.getId());
-                section.setSkill("LISTENING");
-                section.setDisplayOrder(1);
-                section.setDurationMinutes(20);
-                section.setStatus("ACTIVE");
-                sections.saveAndFlush(section);
-            }
+            addExamQuestions(exam);
         }
     }
 
     @Test
     void temporaryExamCatalogUsesCompactSharedSkillTheme() throws Exception {
+        var learner = user(createLearner().getEmail()).roles("STUDENT");
         for (String path : new String[] {"/student/exams", "/student/exams/" + examIds.get(1)}) {
-            mvc.perform(get(path).with(user("student").roles("STUDENT")))
+            mvc.perform(get(path).with(learner))
                     .andExpect(status().isOk())
                     .andExpect(content().string(containsString("compact-catalog")))
                     .andExpect(content().string(containsString("data-skill=\"Reading\"")));
         }
-        mvc.perform(
-                        get("/student/exams/" + examIds.getFirst())
-                                .with(user("student").roles("STUDENT")))
+        mvc.perform(get("/student/exams/" + examIds.getFirst()).with(learner))
                 .andExpect(status().isOk())
                 .andExpect(content().string(containsString("data-skill=\"Tổng hợp\"")))
                 .andExpect(content().string(containsString("data-skill=\"Listening\"")));
@@ -94,14 +101,13 @@ class StudentContentPreviewTests {
 
     @Test
     void examPagesRenderWithoutGoalOrPlacement() throws Exception {
-        mvc.perform(get("/student/exams").with(user("new@student.local").roles("STUDENT")))
+        var learner = user(createLearner().getEmail()).roles("STUDENT");
+        mvc.perform(get("/student/exams").with(learner))
                 .andExpect(status().isOk())
                 .andExpect(view().name("student/content/list"))
                 .andExpect(content().string(not(containsString("minhanh@example.com"))));
         for (int id : examIds) {
-            mvc.perform(
-                            get("/student/exams/" + id)
-                                    .with(user("new@student.local").roles("STUDENT")))
+            mvc.perform(get("/student/exams/" + id).with(learner))
                     .andExpect(status().isOk())
                     .andExpect(view().name("student/content/detail"));
         }
@@ -121,14 +127,8 @@ class StudentContentPreviewTests {
 
     @Test
     void examPagesKeepEncodedFiltersAndDoNotRepeatEntries() throws Exception {
-        for (int id : examIds) {
-            var exam = exams.findById(id).orElseThrow();
-            exam.setTitle("Phân trang & đề " + id);
-            exam.setSkill("READING");
-            exam.setTargetLevel("B1");
-            exam.setExamType("PRACTICE");
-            exams.saveAndFlush(exam);
-        }
+        for (int i = 0; i < 3; i++)
+            catalogExam("Phân trang & đề " + i, "PRACTICE", "READING", "B1", 20);
         var seen = new HashSet<Integer>();
         for (int page = 0; page < 3; page++) {
             var response =
@@ -282,6 +282,23 @@ class StudentContentPreviewTests {
                                             type.equals("CHECKPOINT")
                                                     ? "/student/learning-path/Reading"
                                                     : "/student/placement?skill=READING")));
+            if ("PLACEMENT".equals(type)) {
+                detail.andExpect(
+                        content()
+                                .string(
+                                        containsString(
+                                                "class=\"back-link\" href=\"/student/exams?examType=PLACEMENT\"")));
+                mvc.perform(
+                                get("/student/exams/" + exam.getId())
+                                        .param("fromPlacement", "true")
+                                        .with(user("student").roles("STUDENT")))
+                        .andExpect(status().isOk())
+                        .andExpect(
+                                content()
+                                        .string(
+                                                containsString(
+                                                        "class=\"back-link\" href=\"/student/placement?skill=READING\"")));
+            }
             mvc.perform(
                             get("/student/exams")
                                     .param("examType", type)
@@ -290,6 +307,55 @@ class StudentContentPreviewTests {
                     .andExpect(status().isOk())
                     .andExpect(content().string(containsString("Categorized " + type)));
         }
+    }
+
+    @Test
+    void placementOpensTheCombinedExamAndPreventsOverlappingAttempts() throws Exception {
+        var learner = user(createLearner().getEmail()).roles("STUDENT");
+        var combined = catalogExam("Urban Life placement", "PLACEMENT", "FULL_MOCK", null, 25);
+        var reading = catalogExam("Reading placement", "PLACEMENT", "READING", null, 10);
+        mvc.perform(get("/student/placement").with(learner))
+                .andExpect(status().isOk())
+                .andExpect(model().attribute("skill", "FULL_MOCK"))
+                .andExpect(content().string(containsString("Urban Life placement")))
+                .andExpect(content().string(containsString("5. Speaking")))
+                .andExpect(content().string(not(containsString("Reading placement"))));
+
+        var combinedStart =
+                post("/student/placement/start")
+                        .param("skill", "FULL_MOCK")
+                        .param("examId", combined.getId().toString())
+                        .with(learner)
+                        .with(csrf());
+        var readingStart =
+                post("/student/placement/start")
+                        .param("skill", "READING")
+                        .param("examId", reading.getId().toString())
+                        .with(learner)
+                        .with(csrf());
+        String attemptUrl =
+                mvc.perform(combinedStart)
+                        .andExpect(redirectedUrlPattern("/student/attempts/*"))
+                        .andReturn()
+                        .getResponse()
+                        .getRedirectedUrl();
+        mvc.perform(combinedStart).andExpect(redirectedUrl(attemptUrl));
+        mvc.perform(readingStart)
+                .andExpect(redirectedUrl("/student/placement?skill=READING"))
+                .andExpect(flash().attributeExists("error"));
+        mvc.perform(
+                        post(attemptUrl + "/next-section")
+                                .param("sectionEndMinute", "5")
+                                .with(learner)
+                                .with(csrf()))
+                .andExpect(redirectedUrl(attemptUrl))
+                .andExpect(flash().attributeCount(0));
+        mvc.perform(post(attemptUrl + "/discard").with(learner).with(csrf()))
+                .andExpect(redirectedUrl("/student/results"));
+        mvc.perform(readingStart).andExpect(redirectedUrlPattern("/student/attempts/*"));
+        mvc.perform(combinedStart)
+                .andExpect(redirectedUrl("/student/placement?skill=FULL_MOCK"))
+                .andExpect(flash().attributeExists("error"));
     }
 
     @Test
@@ -322,60 +388,23 @@ class StudentContentPreviewTests {
         scheme.setStatus(RecordStatus.ACTIVE);
         scheme = schemes.saveAndFlush(scheme);
 
-        var question = new QuestionEntity();
-        question.setContent("Choose the correct answer.");
-        question.setQuestionType("SINGLE_CHOICE");
-        question.setSkill("READING");
-        question.setCefrLevel("B1");
-        question.setStatus("PUBLISHED");
-        question = questions.saveAndFlush(question);
-
         var exam = catalogExam("Incomplete policy exam", "PRACTICE", "READING", "B1", 35);
         exam.setScoringSchemeId(scheme.getId());
         exams.saveAndFlush(exam);
-
-        var link = new MockExamQuestionEntity();
-        link.setMockExamId(exam.getId());
-        link.setQuestionId(question.getId());
-        link.setPosition(1);
-        examQuestions.saveAndFlush(link);
 
         mvc.perform(
                         get("/student/exams")
                                 .param("q", "Incomplete policy exam")
                                 .with(user("student").roles("STUDENT")))
                 .andExpect(status().isOk())
-                .andExpect(content().string(containsString("Incomplete policy exam")));
+                .andExpect(content().string(containsString("0 kết quả")));
         mvc.perform(get("/student/exams/" + exam.getId()).with(user("student").roles("STUDENT")))
-                .andExpect(status().isOk())
-                .andExpect(content().string(containsString("raw-to-scale")))
-                .andExpect(
-                        content()
-                                .string(
-                                        not(
-                                                containsString(
-                                                        "/student/exams/"
-                                                                + exam.getId()
-                                                                + "/start"))));
+                .andExpect(status().isNotFound());
     }
 
     @Test
     void startablePracticeExamExposesStartActionInCatalog() throws Exception {
-        var question = new QuestionEntity();
-        question.setContent("Choose the correct answer.");
-        question.setQuestionType("SINGLE_CHOICE");
-        question.setSkill("READING");
-        question.setCefrLevel("B1");
-        question.setStatus("PUBLISHED");
-        question = questions.saveAndFlush(question);
-
         var exam = catalogExam("Startable practice exam", "PRACTICE", "READING", "B1", 35);
-        var link = new MockExamQuestionEntity();
-        link.setMockExamId(exam.getId());
-        link.setQuestionId(question.getId());
-        link.setPosition(1);
-        examQuestions.saveAndFlush(link);
-
         mvc.perform(
                         get("/student/exams")
                                 .param("q", "Startable practice exam")
@@ -389,6 +418,69 @@ class StudentContentPreviewTests {
                                                 "/student/exams/" + exam.getId() + "/start")));
     }
 
+    @Test
+    void examDetailOffersLatestResumableAttemptAndCanStillStartANewOne() throws Exception {
+        var learner = user(createLearner().getEmail()).roles("STUDENT");
+        String detail = "/student/exams/" + examIds.get(1);
+        String start = detail + "/start";
+        String first =
+                mvc.perform(post(start).with(learner).with(csrf()))
+                        .andExpect(status().is3xxRedirection())
+                        .andReturn()
+                        .getResponse()
+                        .getRedirectedUrl();
+        mvc.perform(get(first).with(learner))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("action=\"" + first + "/exit\"")));
+        mvc.perform(post(first + "/exit").with(learner)).andExpect(status().isForbidden());
+        mvc.perform(post(first + "/exit").with(learner).with(csrf()))
+                .andExpect(redirectedUrl("/student/exams"));
+        mvc.perform(get(first).with(learner)).andExpect(status().isOk());
+        mvc.perform(get(detail).with(learner))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("href=\"" + first + "\"")))
+                .andExpect(content().string(containsString("Tiếp tục làm bài")))
+                .andExpect(content().string(containsString("Bắt đầu lượt mới")));
+        mvc.perform(get(detail).with(user(createLearner().getEmail()).roles("STUDENT")))
+                .andExpect(status().isOk())
+                .andExpect(content().string(not(containsString("Tiếp tục làm bài"))))
+                .andExpect(content().string(containsString("Bắt đầu làm bài")));
+
+        String second =
+                mvc.perform(post(start).with(learner).with(csrf()))
+                        .andExpect(status().is3xxRedirection())
+                        .andReturn()
+                        .getResponse()
+                        .getRedirectedUrl();
+        assertThat(second).startsWith("/student/attempts/").isNotEqualTo(first);
+        mvc.perform(get(detail).with(learner))
+                .andExpect(content().string(containsString("href=\"" + second + "\"")));
+
+        int secondId = Integer.parseInt(second.substring(second.lastIndexOf('/') + 1));
+        var expired = attempts.findById(secondId).orElseThrow();
+        expired.setStartedAt(LocalDateTime.now().minusDays(1));
+        attempts.saveAndFlush(expired);
+        mvc.perform(get(detail).with(learner))
+                .andExpect(content().string(containsString("href=\"" + first + "\"")))
+                .andExpect(content().string(not(containsString("href=\"" + second + "\""))));
+
+        mvc.perform(post(first + "/discard").with(learner).with(csrf()))
+                .andExpect(flash().attributeExists("successMessage"));
+        mvc.perform(get(detail).with(learner))
+                .andExpect(content().string(not(containsString("Tiếp tục làm bài"))))
+                .andExpect(content().string(containsString("Bắt đầu làm bài")));
+    }
+
+    private User createLearner() {
+        var user = new User();
+        user.setEmail("exam-preview-" + System.nanoTime() + "@test.local");
+        user.setFullName("Học viên luyện đề");
+        user.setPasswordHash("unused");
+        user.setRole(Role.STUDENT);
+        user.setStatus(UserStatus.ACTIVE);
+        return users.saveAndFlush(user);
+    }
+
     private MockExamEntity catalogExam(
             String title, String type, String skill, String level, int minutes) {
         var exam = new MockExamEntity();
@@ -399,7 +491,78 @@ class StudentContentPreviewTests {
         exam.setTargetLevel(level);
         exam.setDurationMinutes(minutes);
         exam.setStatus("PUBLISHED");
-        return exams.saveAndFlush(exam);
+        if ("FULL_MOCK".equals(skill)) attachScoring(exam, com.aptisprep.enums.Skill.codes());
+        else if (List.of("PLACEMENT", "CHECKPOINT").contains(type))
+            attachScoring(exam, List.of(skill));
+        var saved = exams.saveAndFlush(exam);
+        addExamQuestions(saved);
+        return saved;
+    }
+
+    private void attachScoring(MockExamEntity exam, List<String> skillCodes) {
+        var scheme = new ScoringScheme();
+        scheme.setCertificate(certificates.findById(exam.getCertificateId()).orElseThrow());
+        scheme.setName("Test policy");
+        scheme.setVersion("TEST-" + System.nanoTime());
+        scheme.setStatus(RecordStatus.ACTIVE);
+        scheme = schemes.saveAndFlush(scheme);
+        for (String skill : skillCodes) {
+            var rule = new com.aptisprep.entity.ScoringScaleRule();
+            rule.setScheme(scheme);
+            rule.setSkill(skill);
+            rule.setRawMin(java.math.BigDecimal.ZERO);
+            rule.setRawMax(java.math.BigDecimal.TEN);
+            rule.setScaleMin(java.math.BigDecimal.ZERO);
+            rule.setScaleMax(java.math.BigDecimal.TEN);
+            rules.saveAndFlush(rule);
+            var band = new com.aptisprep.entity.ScoreBand();
+            band.setScheme(scheme);
+            band.setSkill(skill);
+            band.setCefrLevel("A1");
+            band.setMinScore(java.math.BigDecimal.ZERO);
+            band.setMaxScore(java.math.BigDecimal.TEN);
+            bands.saveAndFlush(band);
+        }
+        exam.setScoringSchemeId(scheme.getId());
+    }
+
+    private void addExamQuestions(MockExamEntity exam) {
+        boolean fullMock = "FULL_MOCK".equals(exam.getSkill());
+        var skills = fullMock ? com.aptisprep.enums.Skill.codes() : List.of(exam.getSkill());
+        int position = 0;
+        for (String skill : skills) {
+            var question = new QuestionEntity();
+            question.setContent("Test question");
+            question.setQuestionType("SINGLE_CHOICE");
+            question.setSkill(skill);
+            question.setCefrLevel("A1");
+            question.setStatus("PUBLISHED");
+            question = questions.saveAndFlush(question);
+            if ("LISTENING".equals(skill)) {
+                var audio = new QuestionMediaEntity();
+                audio.setQuestionId(question.getId());
+                audio.setMediaType("AUDIO");
+                audio.setMediaUrl(TestAudio.store(storage));
+                audio.setOriginalFilename("test.wav");
+                audio.setContentType("audio/wav");
+                audio.setPosition(1);
+                media.saveAndFlush(audio);
+            }
+            var link = new MockExamQuestionEntity();
+            link.setMockExamId(exam.getId());
+            link.setQuestionId(question.getId());
+            link.setPosition(++position);
+            if (fullMock) {
+                var section = new com.aptisprep.entity.MockExamSectionEntity();
+                section.setMockExamId(exam.getId());
+                section.setSkill(skill);
+                section.setDisplayOrder(position);
+                section.setDurationMinutes(5);
+                section.setStatus("ACTIVE");
+                link.setMockExamSectionId(sections.saveAndFlush(section).getId());
+            }
+            examQuestions.saveAndFlush(link);
+        }
     }
 
     @Test

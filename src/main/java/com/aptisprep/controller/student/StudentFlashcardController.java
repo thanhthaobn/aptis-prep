@@ -31,9 +31,9 @@ public class StudentFlashcardController {
     @GetMapping("/student/flashcards")
     public String list(
             @RequestParam(defaultValue = "all") String source,
-            @RequestParam(defaultValue = "") String q,
-            @RequestParam(defaultValue = "") String skill,
-            @RequestParam(defaultValue = "") String level,
+            @RequestParam(name = "q", defaultValue = "") String q,
+            @RequestParam(name = "skill", defaultValue = "") String skill,
+            @RequestParam(name = "level", defaultValue = "") String level,
             @RequestParam(defaultValue = "learning") String sort,
             Principal p,
             Model m) {
@@ -104,8 +104,7 @@ public class StudentFlashcardController {
         m.addAttribute(
                 "lessonCount",
                 all.stream().filter(set -> !set.personal() && set.lessonId() != null).count());
-        m.addAttribute("admin", false);
-        return "flashcard/list";
+        return "student/flashcards/list";
     }
 
     @GetMapping("/student/flashcards/create")
@@ -168,15 +167,14 @@ public class StudentFlashcardController {
         m.addAttribute("form", f);
         m.addAttribute("setId", id);
         m.addAttribute("levels", LessonService.LEVELS);
-        m.addAttribute("personal", true);
-        return "flashcard/form";
+        return "student/flashcards/form";
     }
 
     @GetMapping("/student/flashcards/{id}")
     public String study(@PathVariable Integer id, Principal p, Model m) {
         m.addAttribute("cards", service.study(id, p.getName()));
         m.addAttribute("set", service.studySet(id, p.getName()));
-        return "flashcard/study";
+        return "student/flashcards/study";
     }
 
     @PostMapping("/student/flashcards/{setId}/cards/{cardId}/state")

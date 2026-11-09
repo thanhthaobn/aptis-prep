@@ -11,6 +11,8 @@ public interface ScoringPolicyContract {
 
     String estimatedLevel(Integer schemeId, String skill, BigDecimal scaleScore);
 
+    boolean belowConfiguredTarget(Integer schemeId, String skill, BigDecimal scaleScore);
+
     String policyVersion(Integer schemeId);
 
     void validatePolicy(Integer schemeId, String skill);
@@ -18,6 +20,10 @@ public interface ScoringPolicyContract {
     BigDecimal overallScale(Integer schemeId, List<SkillScore> skillScores);
 
     String overallLevel(Integer schemeId, List<SkillScore> skillScores);
+
+    FullMockScore fullMockScore(Integer schemeId, List<SkillScore> skillScores);
+
+    record FullMockScore(BigDecimal total, String cefrLevel, List<SkillScore> skills) {}
 
     record SkillScore(String skill, BigDecimal scaleScore, String cefrLevel) {}
 }

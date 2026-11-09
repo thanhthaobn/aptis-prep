@@ -3,19 +3,25 @@ package com.aptisprep.service.exam;
 import com.aptisprep.entity.*;
 import com.aptisprep.exception.BusinessRuleException;
 import com.aptisprep.repository.*;
+import java.time.Duration;
+import java.time.LocalDateTime;
 import java.util.*;
 import org.springframework.stereotype.Service;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
+import tools.jackson.databind.node.ObjectNode;
 
-/** Owns immutable exam content snapshots; writes join the caller's attempt transaction. */
+/** Owns locked exam content and per-attempt metadata within the caller's transaction. */
 @Service
-final class ExamSnapshotService {
+public final class ExamSnapshotService {
+    private static final String SECTION_ADVANCE_MILLIS = "sectionAdvanceMillis";
     private final QuestionRepository questionRepository;
     private final QuestionItemRepository questionItemRepository;
     private final QuestionOptionRepository questionOptionRepository;
     private final QuestionMediaRepository questionMediaRepository;
     private final ExamAttemptSnapshotRepository examAttemptSnapshotRepository;
+    private final MockExamSectionRepository sections;
+    private final UserAnswerRepository answers;
     private final JsonMapper json;
 
     ExamSnapshotService(
@@ -24,12 +30,16 @@ final class ExamSnapshotService {
             QuestionOptionRepository questionOptionRepository,
             QuestionMediaRepository questionMediaRepository,
             ExamAttemptSnapshotRepository examAttemptSnapshotRepository,
+            MockExamSectionRepository sections,
+            UserAnswerRepository answers,
             JsonMapper json) {
         this.questionRepository = questionRepository;
         this.questionItemRepository = questionItemRepository;
         this.questionOptionRepository = questionOptionRepository;
         this.questionMediaRepository = questionMediaRepository;
         this.examAttemptSnapshotRepository = examAttemptSnapshotRepository;
+        this.sections = sections;
+        this.answers = answers;
         this.json = json;
     }
 
@@ -38,6 +48,32 @@ final class ExamSnapshotService {
                 .findByAttemptId(attemptId)
                 .orElseThrow(
                         () -> new BusinessRuleException("Không tìm thấy snapshot của lượt thi"));
+    }
+
+    public Optional<MockExamEntity> frozenExam(Integer attemptId) {
+        return examAttemptSnapshotRepository
+                .findByAttemptId(attemptId)
+                .map(MockExamEntity::fromSnapshot);
+    }
+
+    public void preserveLegacyAttempt(
+            ExamAttemptEntity attempt, MockExamEntity exam, List<MockExamQuestionEntity> links) {
+        Set<Integer> questionIds = new HashSet<>();
+        links.forEach(link -> questionIds.add(link.getQuestionId()));
+        if (links.isEmpty()
+                || answers.findByAttemptIdOrderByQuestionIdAsc(attempt.getId()).stream()
+                        .anyMatch(answer -> !questionIds.contains(answer.getQuestionId()))) {
+            throw new BusinessRuleException(
+                    "Không thể khôi phục câu hỏi của lượt thi #" + attempt.getId());
+        }
+        createSnapshot(attempt, exam, links);
+    }
+
+    Integer durationMinutes(Integer attemptId, Integer fallback) {
+        return examAttemptSnapshotRepository
+                .findByAttemptId(attemptId)
+                .map(ExamAttemptSnapshotEntity::getDurationMinutes)
+                .orElse(fallback);
     }
 
     void updateAnswerVersion(Integer attemptId, int version) {
@@ -56,20 +92,42 @@ final class ExamSnapshotService {
         snapshot.setAttemptId(attempt.getId());
         snapshot.setExamId(exam.getId());
         snapshot.setCertificateId(exam.getCertificateId());
-        snapshot.setScoringSchemeId(exam.getScoringSchemeId());
+        Integer schemeId =
+                attempt.getScoringSchemeId() == null
+                        ? exam.getScoringSchemeId()
+                        : attempt.getScoringSchemeId();
+        snapshot.setScoringSchemeId(schemeId);
         snapshot.setExamType(exam.getExamType());
         snapshot.setSkill(exam.getSkill());
         snapshot.setTargetLevel(exam.getTargetLevel());
         snapshot.setTitle(exam.getTitle());
         snapshot.setDurationMinutes(exam.getDurationMinutes());
-        snapshot.setAnswerVersion(1);
-        snapshot.setPolicyVersion(attempt.getPolicyVersion());
+        snapshot.setAnswerVersion(Objects.requireNonNullElse(attempt.getAnswerVersion(), 1));
+        snapshot.setPolicyVersion(
+                Objects.requireNonNullElse(
+                        attempt.getPolicyVersion(),
+                        schemeId == null ? "unscaled-v1" : "scoring-scheme:" + schemeId + ":v1"));
         Map<String, Object> grading = new LinkedHashMap<>();
         grading.put("certificateId", exam.getCertificateId());
-        grading.put("scoringSchemeId", exam.getScoringSchemeId());
+        grading.put("scoringSchemeId", schemeId);
         grading.put("policyVersion", snapshot.getPolicyVersion());
-        grading.put("answerVersion", 1);
+        grading.put("answerVersion", snapshot.getAnswerVersion());
         List<Map<String, Object>> lockedQuestions = new ArrayList<>();
+        Map<Integer, SectionWindow> windows = new HashMap<>();
+        List<MockExamSectionEntity> examSections = sections.findByMockExamIdOrderById(exam.getId());
+        if (examSections.size() > 1) {
+            examSections =
+                    examSections.stream()
+                            .sorted(Comparator.comparingInt(MockExamSectionEntity::getDisplayOrder))
+                            .toList();
+            int minute = 0;
+            for (MockExamSectionEntity section : examSections) {
+                int end = Math.addExact(minute, section.getDurationMinutes());
+                windows.put(section.getId(), new SectionWindow(minute, end));
+                minute = end;
+            }
+            snapshot.setDurationMinutes(minute);
+        }
         for (MockExamQuestionEntity link : links) {
             QuestionEntity question =
                     questionRepository.findById(link.getQuestionId()).orElseThrow();
@@ -81,6 +139,11 @@ final class ExamSnapshotService {
             q.put("readingPassage", question.getReadingPassage());
             q.put("type", question.getQuestionType());
             q.put("skill", question.getSkill());
+            SectionWindow window = windows.get(link.getMockExamSectionId());
+            if (window != null) {
+                q.put("sectionStartMinute", window.start());
+                q.put("sectionEndMinute", window.end());
+            }
             List<Map<String, Object>> lockedItems = new ArrayList<>();
             for (QuestionItemEntity item :
                     questionItemRepository.findByQuestionIdOrderByPosition(question.getId())) {
@@ -135,6 +198,51 @@ final class ExamSnapshotService {
             throw new BusinessRuleException("Không thể khóa nội dung đề thi cho lượt làm bài");
         }
         examAttemptSnapshotRepository.save(snapshot);
+    }
+
+    record SectionWindow(int start, int end) {
+        static SectionWindow of(JsonNode question) {
+            return question.has("sectionEndMinute")
+                    ? new SectionWindow(
+                            question.path("sectionStartMinute").asInt(),
+                            question.path("sectionEndMinute").asInt())
+                    : null;
+        }
+
+        boolean contains(LocalDateTime started, LocalDateTime now) {
+            return !now.isBefore(started.plusMinutes(start))
+                    && now.isBefore(started.plusMinutes(end));
+        }
+    }
+
+    LocalDateTime sectionClockStart(ExamAttemptEntity attempt) {
+        long advanceMillis =
+                examAttemptSnapshotRepository
+                        .findByAttemptId(attempt.getId())
+                        .map(
+                                snapshot ->
+                                        json.readTree(snapshot.getGradingContext())
+                                                .path(SECTION_ADVANCE_MILLIS)
+                                                .asLong())
+                        .orElse(0L);
+        return attempt.getStartedAt().minus(Duration.ofMillis(advanceMillis));
+    }
+
+    void advanceSectionClock(Integer attemptId, Duration remaining) {
+        ExamAttemptSnapshotEntity snapshot = require(attemptId);
+        ObjectNode context = (ObjectNode) json.readTree(snapshot.getGradingContext());
+        // Skip unused time without changing the durations stored in the locked section windows.
+        long millis = (remaining.toNanos() + 999_999) / 1_000_000;
+        context.put(SECTION_ADVANCE_MILLIS, context.path(SECTION_ADVANCE_MILLIS).asLong() + millis);
+        snapshot.setGradingContext(json.writeValueAsString(context));
+        examAttemptSnapshotRepository.save(snapshot);
+    }
+
+    void requireOpenSection(ExamAttemptEntity attempt, JsonNode question) {
+        if (question == null) return;
+        SectionWindow window = SectionWindow.of(question);
+        if (window != null && !window.contains(sectionClockStart(attempt), LocalDateTime.now()))
+            throw new BusinessRuleException("Câu hỏi không thuộc phần thi đang mở");
     }
 
     Map<Integer, JsonNode> lockedQuestions(Integer attemptId) {

@@ -58,9 +58,6 @@ function page() {
   const window = {
     location: {
       href: 'http://localhost/editor',
-      assign(url) {
-        navigations.push(url);
-      },
     },
   };
   runInNewContext(source, { document, window, URL });
@@ -167,7 +164,16 @@ test('unsaved edits block navigation on cancel and clear the guard after confirm
     },
     message: 'Unsaved edits',
   });
-  const link = { href: 'http://localhost/flashcards', target: '', hasAttribute: () => false };
+  const link = {
+    href: 'http://localhost/flashcards',
+    target: '',
+    hasAttribute: () => false,
+    click() {
+      const replay = event();
+      p.emit('click', replay);
+      if (!replay.defaultPrevented) p.navigations.push(this.href);
+    },
+  };
   const event = () => ({ button: 0, target: { closest: () => link } });
   const cancelled = p.emit('click', event());
   p.button('Tiếp tục chỉnh sửa').events.click();

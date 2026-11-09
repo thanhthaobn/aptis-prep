@@ -3,8 +3,9 @@ package com.aptisprep.dto.form;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
-import java.time.LocalDateTime;
-import org.springframework.format.annotation.DateTimeFormat;
+import java.math.BigDecimal;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 public class ScoringSchemeForm {
     @NotNull(message = "Phải chọn chứng chỉ")
@@ -19,10 +20,76 @@ public class ScoringSchemeForm {
     private String version;
 
     @NotBlank(message = "Trạng thái không được để trống")
-    private String status = "ACTIVE";
+    private String status = "DRAFT";
 
-    @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
-    private LocalDateTime effectiveFrom;
+    private String examType;
+    private String scopeSkill;
+    private boolean configureScores;
+    private final ScoringScaleRuleForm scale = new ScoringScaleRuleForm();
+    private final Map<String, ScoringScaleRuleForm> skillScales = new LinkedHashMap<>();
+    private final Map<String, ScoreBandForm> ranges = new LinkedHashMap<>();
+    private String targetLevel;
+    private BigDecimal passingScore;
+
+    public ScoringSchemeForm() {
+        for (String skill : com.aptisprep.enums.Skill.codes()) {
+            skillScales.put(skill, new ScoringScaleRuleForm());
+            for (String level : com.aptisprep.enums.CefrLevel.scoringCodes())
+                ranges.put(skill + "_" + level, new ScoreBandForm());
+        }
+    }
+
+    public boolean isConfigureScores() {
+        return configureScores;
+    }
+
+    public void setConfigureScores(boolean value) {
+        configureScores = value;
+    }
+
+    public ScoringScaleRuleForm getScale() {
+        return scale;
+    }
+
+    public Map<String, ScoringScaleRuleForm> getSkillScales() {
+        return skillScales;
+    }
+
+    public Map<String, ScoreBandForm> getRanges() {
+        return ranges;
+    }
+
+    public String getTargetLevel() {
+        return targetLevel;
+    }
+
+    public void setTargetLevel(String value) {
+        targetLevel = value;
+    }
+
+    public BigDecimal getPassingScore() {
+        return passingScore;
+    }
+
+    public void setPassingScore(BigDecimal value) {
+        passingScore = value;
+    }
+
+    public String getExamType() {
+        return examType;
+    }
+
+    public void setExamType(String value) {
+        examType = value;
+    }
+
+    public String getScopeSkill() {
+        return scopeSkill;
+    }
+
+    public void setScopeSkill(String value) {
+        scopeSkill = value;
+    }
 
     public Integer getCertificateId() {
         return certificateId;
@@ -40,10 +107,6 @@ public class ScoringSchemeForm {
         return status;
     }
 
-    public LocalDateTime getEffectiveFrom() {
-        return effectiveFrom;
-    }
-
     public void setCertificateId(Integer value) {
         certificateId = value;
     }
@@ -58,9 +121,5 @@ public class ScoringSchemeForm {
 
     public void setStatus(String value) {
         status = value;
-    }
-
-    public void setEffectiveFrom(LocalDateTime value) {
-        effectiveFrom = value;
     }
 }

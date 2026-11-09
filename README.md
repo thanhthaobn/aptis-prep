@@ -9,7 +9,7 @@ Setup chi tiết SQL Server TCP/IP, IntelliJ/JDK 21, kiểm thử và checklist 
 - Java 21
 - Spring Boot 4.1.1
 - Spring MVC và Thymeleaf
-- Spring Security Session
+- Đăng nhập bằng session và cookie `JSESSIONID`, phân quyền `ADMIN` và `STUDENT` phía máy chủ
 - Spring Data JPA
 - Microsoft SQL Server
 - SQL schema hiện tại, Hibernate validate (không tự thay đổi database)
@@ -25,6 +25,22 @@ Setup chi tiết SQL Server TCP/IP, IntelliJ/JDK 21, kiểm thử và checklist 
 6. Mở `http://localhost:8080`.
 
 Không tự tạo tài khoản/nội dung demo. Đăng ký người dùng thật và cấp quyền quản trị trên DB do bạn quản lý theo [SETUP_LOCAL.md](docs/SETUP_LOCAL.md).
+
+### Đề kiểm tra đầu vào tổng hợp
+
+Đề **Aptis Placement 01 – Urban Life** có 5 phần trong 48 phút. Để đưa đề vào
+trang **Kiểm tra đầu vào**, tạo ba đoạn nghe bằng Windows PowerShell với giọng
+tiếng Anh đã cài đặt, sau đó nhập nội dung vào cơ sở dữ liệu ứng dụng.
+
+1. Chạy `powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\build-placement-urban-life-audio.ps1` từ thư mục project. Nếu ứng dụng dùng thư mục media riêng, truyền `-UploadDirectory` trỏ đến thư mục đó.
+2. Mở [add-placement-urban-life-01.sql](database/add-placement-urban-life-01.sql) trong SQL Server Management Studio bằng UTF-8, chọn cơ sở dữ liệu ứng dụng và chạy script. Cơ sở dữ liệu cần có bộ chấm Aptis General đang hoạt động cho đủ 5 kỹ năng. Script nhập đề một lần và có thể chạy lại an toàn.
+3. Mở `/student/placement` để bắt đầu. Writing và Speaking dùng cấu hình chấm hiện có của ứng dụng.
+
+### Cấu hình đăng nhập
+
+Trình duyệt giữ mã session trong cookie `JSESSIONID` có `HttpOnly` và `SameSite=Lax`. Session hết hạn sau 30 phút không hoạt động và bị hủy khi đăng xuất. Các form và yêu cầu AJAX cập nhật dữ liệu dùng token CSRF của session. Mật khẩu BCrypt hiện có tiếp tục dùng được.
+
+Chạy local qua HTTP dùng cấu hình mặc định. Khi triển khai qua HTTPS, đặt `APTIS_SESSION_SECURE_COOKIE=true` để chỉ gửi cookie qua kết nối bảo mật.
 
 ## Lưu ảnh, video và audio
 

@@ -10,16 +10,17 @@ import java.util.Locale;
 import org.springframework.web.multipart.MultipartFile;
 
 /** Media validation/storage collaborator; the caller owns the catalog transaction. */
-final class QuestionMediaWriter {
+public final class QuestionMediaWriter {
     private final QuestionMediaRepository questionMediaRepository;
     private final StorageService storage;
 
-    QuestionMediaWriter(QuestionMediaRepository questionMediaRepository, StorageService storage) {
+    public QuestionMediaWriter(
+            QuestionMediaRepository questionMediaRepository, StorageService storage) {
         this.questionMediaRepository = questionMediaRepository;
         this.storage = storage;
     }
 
-    void save(Integer questionId, MultipartFile file) {
+    public void save(Integer questionId, MultipartFile file) {
         String type =
                 file.getContentType() == null ? "" : file.getContentType().toLowerCase(Locale.ROOT);
         if (!(type.startsWith("image/") || type.startsWith("audio/"))) {
@@ -57,6 +58,11 @@ final class QuestionMediaWriter {
                 || bytes.length >= 4 && ascii(bytes, 0, "OggS")
                 || bytes.length >= 3 && ascii(bytes, 0, "ID3")
                 || bytes.length >= 2 && (bytes[0] & 0xFF) == 0xFF && (bytes[1] & 0xE0) == 0xE0
+                || bytes.length >= 4
+                        && (bytes[0] & 0xFF) == 0x1A
+                        && (bytes[1] & 0xFF) == 0x45
+                        && (bytes[2] & 0xFF) == 0xDF
+                        && (bytes[3] & 0xFF) == 0xA3
                 || bytes.length >= 8 && ascii(bytes, 4, "ftyp");
     }
 

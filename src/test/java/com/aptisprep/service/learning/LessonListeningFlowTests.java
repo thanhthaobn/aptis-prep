@@ -1,8 +1,8 @@
 package com.aptisprep.service.learning;
 
+import static com.aptisprep.security.SessionMvcRequests.*;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.when;
-import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -42,7 +42,7 @@ class LessonListeningFlowTests {
                 LessonEngagementRepository engagements,
                 AudioDurationService durations,
                 LessonListeningServiceTests.MutableClock clock) {
-            return new LessonListeningService(
+            return new com.aptisprep.service.learning.impl.LessonListeningServiceImpl(
                     users,
                     lessons,
                     engagements,

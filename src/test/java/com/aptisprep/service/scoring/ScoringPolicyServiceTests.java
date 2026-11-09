@@ -13,6 +13,7 @@ import com.aptisprep.exception.BusinessRuleException;
 import com.aptisprep.repository.ScoreBandRepository;
 import com.aptisprep.repository.ScoringScaleRuleRepository;
 import com.aptisprep.repository.ScoringSchemeRepository;
+import com.aptisprep.service.contract.ScoringPolicyContract.SkillScore;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
@@ -42,7 +43,9 @@ class ScoringPolicyServiceTests {
                 .thenReturn(List.of(low, high));
         when(scaleRules.findBySchemeIdAndSkillIgnoreCase(1, "READING"))
                 .thenReturn(Optional.of(rule(50, 50)));
-        ScoringPolicyService service = new ScoringPolicyService(schemes, bands, scaleRules);
+        ScoringPolicyService service =
+                new com.aptisprep.service.scoring.impl.ScoringPolicyServiceImpl(
+                        schemes, bands, scaleRules);
 
         assertEquals(new BigDecimal("10.00"), service.scale(1, "Reading", new BigDecimal("9.995")));
         assertEquals("A2", service.estimatedLevel(1, "READING", new BigDecimal("10.00")));
@@ -56,7 +59,8 @@ class ScoringPolicyServiceTests {
         when(scaleRules.findBySchemeIdAndSkillIgnoreCase(1, "GRAMMAR_VOCABULARY"))
                 .thenReturn(Optional.of(rule(50, 50)));
         assertNull(
-                new ScoringPolicyService(schemes, bands, scaleRules)
+                new com.aptisprep.service.scoring.impl.ScoringPolicyServiceImpl(
+                                schemes, bands, scaleRules)
                         .estimatedLevel(1, "GRAMMAR & VOCABULARY", new BigDecimal("30")));
     }
 
@@ -69,7 +73,9 @@ class ScoringPolicyServiceTests {
         ScoreBand gap = band("25.01", "49.99", "A2");
         when(bands.findBySchemeIdAndSkillOrderByMinScoreAsc(1, "READING"))
                 .thenReturn(List.of(first, gap));
-        ScoringPolicyService service = new ScoringPolicyService(schemes, bands, scaleRules);
+        ScoringPolicyService service =
+                new com.aptisprep.service.scoring.impl.ScoringPolicyServiceImpl(
+                        schemes, bands, scaleRules);
 
         assertThrows(BusinessRuleException.class, () -> service.validatePolicy(1, "READING"));
     }
@@ -85,7 +91,8 @@ class ScoringPolicyServiceTests {
         assertThrows(
                 BusinessRuleException.class,
                 () ->
-                        new ScoringPolicyService(schemes, bands, scaleRules)
+                        new com.aptisprep.service.scoring.impl.ScoringPolicyServiceImpl(
+                                        schemes, bands, scaleRules)
                                 .validatePolicy(1, "READING"));
     }
 
@@ -95,7 +102,9 @@ class ScoringPolicyServiceTests {
         ScoringScaleRule readingRule = rule(40, 50);
         when(scaleRules.findBySchemeIdAndSkillIgnoreCase(1, "READING"))
                 .thenReturn(Optional.of(readingRule));
-        ScoringPolicyService service = new ScoringPolicyService(schemes, bands, scaleRules);
+        ScoringPolicyService service =
+                new com.aptisprep.service.scoring.impl.ScoringPolicyServiceImpl(
+                        schemes, bands, scaleRules);
         assertThrows(
                 BusinessRuleException.class,
                 () -> service.scale(1, "READING", new BigDecimal("50.01")));
@@ -106,10 +115,92 @@ class ScoringPolicyServiceTests {
         when(schemes.findById(1)).thenReturn(Optional.of(activeScheme()));
         when(scaleRules.findBySchemeIdAndSkillIgnoreCase(1, "READING"))
                 .thenReturn(Optional.of(rule(40, 50)));
-        ScoringPolicyService service = new ScoringPolicyService(schemes, bands, scaleRules);
+        ScoringPolicyService service =
+                new com.aptisprep.service.scoring.impl.ScoringPolicyServiceImpl(
+                        schemes, bands, scaleRules);
 
         assertEquals(new BigDecimal("30.00"), service.raw(1, "READING", 3, 4));
         assertEquals(new BigDecimal("37.50"), service.scale(1, "READING", new BigDecimal("30.00")));
+    }
+
+    @Test
+    void fullMockNormalizesFourScalesAndUsesCoreOnlyAtTheNextBoundary() {
+        when(schemes.findById(1)).thenReturn(Optional.of(activeScheme()));
+        when(scaleRules.findBySchemeIdAndSkillIgnoreCase(eq(1), anyString()))
+                .thenAnswer(
+                        call ->
+                                Optional.of(
+                                        rule(
+                                                50,
+                                                "READING".equals(call.getArgument(1)) ? 100 : 50)));
+        when(bands.findBySchemeIdAndSkillOrderByMinScoreAsc(1, "READING"))
+                .thenReturn(List.of(band("60", "79.99", "B2")));
+        when(bands.findBySchemeIdAndSkillOrderByMinScoreAsc(1, "LISTENING"))
+                .thenReturn(List.of(band("40", "50", "B2")));
+        ScoringPolicyService service =
+                new com.aptisprep.service.scoring.impl.ScoringPolicyServiceImpl(
+                        schemes, bands, scaleRules);
+        var result =
+                service.fullMockScore(
+                        1,
+                        List.of(
+                                new SkillScore("READING", new BigDecimal("59"), "B1"),
+                                new SkillScore("LISTENING", new BigDecimal("35"), "B1"),
+                                new SkillScore("WRITING", new BigDecimal("30"), "B1"),
+                                new SkillScore("SPEAKING", new BigDecimal("45"), "C1"),
+                                new SkillScore("GRAMMAR_VOCABULARY", new BigDecimal("50"), "C1")));
+
+        assertEquals(new BigDecimal("139.50"), result.total());
+        assertEquals("B2", result.cefrLevel());
+        assertEquals("B2", result.skills().get(0).cefrLevel());
+        assertEquals("B1", result.skills().get(1).cefrLevel());
+        assertNull(result.skills().get(4).cefrLevel());
+    }
+
+    @Test
+    void fullMockRoundsCefrMidpointUpAsInAptisScoringSystem() {
+        when(schemes.findById(1)).thenReturn(Optional.of(activeScheme()));
+        when(scaleRules.findBySchemeIdAndSkillIgnoreCase(eq(1), anyString()))
+                .thenReturn(Optional.of(rule(50, 50)));
+        ScoringPolicyService service =
+                new com.aptisprep.service.scoring.impl.ScoringPolicyServiceImpl(
+                        schemes, bands, scaleRules);
+
+        var result =
+                service.fullMockScore(
+                        1,
+                        List.of(
+                                new SkillScore("READING", BigDecimal.valueOf(40), "B2"),
+                                new SkillScore("LISTENING", BigDecimal.valueOf(36), "B2"),
+                                new SkillScore("WRITING", BigDecimal.valueOf(30), "B1"),
+                                new SkillScore("SPEAKING", BigDecimal.valueOf(30), "B1"),
+                                new SkillScore(
+                                        "GRAMMAR_VOCABULARY", BigDecimal.valueOf(30), "B1")));
+
+        assertEquals("B2", result.cefrLevel());
+    }
+
+    @Test
+    void fullMockRetainsBelowA1AndIncludesItInOverallLevel() {
+        when(schemes.findById(1)).thenReturn(Optional.of(activeScheme()));
+        when(scaleRules.findBySchemeIdAndSkillIgnoreCase(eq(1), anyString()))
+                .thenReturn(Optional.of(rule(50, 50)));
+        var service =
+                new com.aptisprep.service.scoring.impl.ScoringPolicyServiceImpl(
+                        schemes, bands, scaleRules);
+        var result =
+                service.fullMockScore(
+                        1,
+                        List.of(
+                                new SkillScore("READING", new BigDecimal("7.99"), "A0"),
+                                new SkillScore("LISTENING", new BigDecimal("7.99"), "A0"),
+                                new SkillScore("WRITING", new BigDecimal("5.99"), "A0"),
+                                new SkillScore("SPEAKING", new BigDecimal("3.99"), "A0"),
+                                new SkillScore(
+                                        "GRAMMAR_VOCABULARY", BigDecimal.valueOf(50), "C1")));
+        assertEquals("A0", result.cefrLevel());
+        assertEquals("A0", result.skills().getFirst().cefrLevel());
+        assertEquals(new BigDecimal("25.96"), result.total());
     }
 
     private ScoringScaleRule rule(int rawMax, int scaleMax) {
