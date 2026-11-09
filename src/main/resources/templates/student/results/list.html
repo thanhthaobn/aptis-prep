@@ -427,7 +427,7 @@
                     </a>
                     <a
                       class="button button-secondary button-small text-nowrap"
-                      th:unless="${canContinue}"
+                      th:if="${!canContinue and attempt.state != 'EXPIRED'}"
                       th:href="@{/student/attempts/{id}/result(id=${attempt.attemptId})}"
                     >
                       Xem kết quả
