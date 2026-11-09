@@ -10,6 +10,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.model;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.flash;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.view;
 
@@ -81,7 +82,8 @@ class SecurityFlowTests {
                 .andExpect(status().isForbidden());
         mockMvc.perform(post("/logout").session(authenticated)).andExpect(status().isForbidden());
         mockMvc.perform(post("/logout").session(authenticated).with(csrf()))
-                .andExpect(redirectedUrl("/login?logout"));
+                .andExpect(redirectedUrl("/login"))
+                .andExpect(flash().attribute("successMessage", "Bạn đã đăng xuất."));
         assertTrue(authenticated.isInvalid());
         mockMvc.perform(get("/student/dashboard").session(authenticated))
                 .andExpect(redirectedUrl("/login"));
