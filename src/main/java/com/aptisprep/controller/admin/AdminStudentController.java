@@ -22,7 +22,7 @@ public class AdminStudentController {
             @RequestParam(name = "q", defaultValue = "") String q,
             @RequestParam(name = "status", defaultValue = "") String status,
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "5") int size,
             Model model) {
         UserStatus filter = parseStatus(status);
         model.addAttribute("pageData", students.list(q, filter, page, size));
@@ -69,6 +69,19 @@ public class AdminStudentController {
             redirectAttributes.addFlashAttribute("errorMessage", exception.getMessage());
         }
         return "redirect:/admin/students/" + id;
+    }
+
+    @PostMapping("/admin/students/{id}/delete")
+    public String delete(
+            @PathVariable int id, Principal principal, RedirectAttributes redirectAttributes) {
+        try {
+            students.remove(principal.getName(), id);
+            redirectAttributes.addFlashAttribute(
+                    "successMessage", "Đã xóa tài khoản khỏi danh sách học viên.");
+        } catch (BusinessRuleException exception) {
+            redirectAttributes.addFlashAttribute("errorMessage", exception.getMessage());
+        }
+        return "redirect:/admin/students";
     }
 
     private UserStatus parseStatus(String value) {

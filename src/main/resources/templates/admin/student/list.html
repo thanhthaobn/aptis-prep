@@ -314,12 +314,24 @@
                   ></span>
                 </td>
                 <td data-label="Thao tác">
-                  <a
-                    class="button button-secondary button-small"
-                    th:href="@{/admin/students/{id}(id=${student.id})}"
-                  >
-                    Xem chi tiết
-                  </a>
+                  <div class="student-row-actions">
+                    <a
+                      class="button button-secondary button-small"
+                      th:href="@{/admin/students/{id}(id=${student.id})}"
+                    >
+                      Xem chi tiết
+                    </a>
+                    <form
+                      th:if="${student.status.name() == 'LOCKED'}"
+                      method="post"
+                      th:action="@{/admin/students/{id}/delete(id=${student.id})}"
+                      data-confirm-title="Xóa tài khoản?"
+                      data-confirm-message="Tài khoản sẽ được ẩn khỏi danh sách nhưng lịch sử học tập vẫn được giữ lại."
+                      data-confirm-button="Xóa tài khoản"
+                    >
+                      <button class="button button-danger button-small" type="submit">Xóa</button>
+                    </form>
+                  </div>
                 </td>
               </tr>
             </tbody>

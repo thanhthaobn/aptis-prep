@@ -301,6 +301,16 @@
               >
                 <button class="button button-secondary" type="submit">Mở khóa tài khoản</button>
               </form>
+              <form
+                th:if="${student.status.name() == 'LOCKED'}"
+                th:action="@{/admin/students/{id}/delete(id=${student.id})}"
+                method="post"
+                data-confirm-title="Xóa tài khoản?"
+                data-confirm-message="Tài khoản sẽ được ẩn khỏi danh sách nhưng lịch sử học tập vẫn được giữ lại."
+                data-confirm-button="Xóa tài khoản"
+              >
+                <button class="button button-danger" type="submit">Xóa tài khoản</button>
+              </form>
               <span
                 th:if="${student.status.name() == 'INACTIVE'}"
                 class="student-status student-status-inactive"
