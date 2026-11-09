@@ -222,23 +222,30 @@
 .flashcard-personal-dropdown > summary {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  gap: 10px;
   margin: 0 -14px;
-  padding: 14px;
+  padding: 14px 10px;
   cursor: pointer;
   list-style: none;
-  color: var(--color-primary-dark);
-  font-weight: 700;
+  border-radius: 8px;
 }
 .flashcard-personal-dropdown > summary::-webkit-details-marker { display: none; }
-.flashcard-personal-dropdown > summary::after {
-  content: '⌄';
-  margin-left: auto;
+.flashcard-personal-dropdown > summary::before {
+  content: '›';
   color: var(--color-muted);
-  font-size: 1.1rem;
-  transition: transform .18s ease;
+  font-size: 1.2rem;
+  line-height: 1;
+  transition: transform .15s;
 }
-.flashcard-personal-dropdown[open] > summary::after { transform: rotate(180deg); }
+.flashcard-personal-dropdown > summary::after {
+  content: '';
+  margin-left: auto;
+}
+.flashcard-personal-dropdown[open] > summary::before { transform: rotate(90deg); }
+.flashcard-personal-dropdown > summary:hover { background: #eef4f1; }
+.flashcard-personal-dropdown > summary > strong { color: var(--color-primary-dark); font-size: .95rem; }
+.flashcard-personal-dropdown > summary > span { margin-left: auto; color: var(--color-muted); font-size: .75rem; }
+.flashcard-personal-dropdown > summary:focus-visible { outline: 2px solid var(--color-primary); outline-offset: -2px; }
 .flashcard-personal-empty { padding: 10px 0 18px; border-bottom: 1px solid var(--color-border); font-size: .85rem; }
 .flashcard-personal-empty p { margin: 0 0 8px; color: var(--color-muted); }
 .flashcard-personal-empty a { font-weight: 650; }

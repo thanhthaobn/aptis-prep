@@ -281,7 +281,10 @@
           </header>
 
           <details class="flashcard-personal-dropdown" open>
-            <summary>Danh sách bộ thẻ cá nhân</summary>
+            <summary>
+              <strong>Bộ thẻ cá nhân</strong>
+              <span th:text="${'' + mineResultCount + ' bộ'}"></span>
+            </summary>
             <div class="flashcard-personal-empty" th:if="${mineResultCount==0 and mineCount>0}">
               <th:block th:if="${mineCount>0}">
                 <p>Bộ lọc hiện tại đang ẩn các bộ thẻ của bạn.</p>
