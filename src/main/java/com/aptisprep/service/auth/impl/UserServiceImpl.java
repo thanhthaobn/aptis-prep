@@ -12,20 +12,18 @@ import com.aptisprep.service.auth.UserService;
 import java.nio.charset.StandardCharsets;
 import java.util.Locale;
 import java.util.Optional;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class UserServiceImpl implements UserService {
-    @Autowired
-    private UserRepository userRepository;
-    @Autowired
-    private PasswordHasher passwordHasher;
-    private String dummyPasswordHash;
+    private final UserRepository userRepository;
+    private final PasswordHasher passwordHasher;
+    private final String dummyPasswordHash;
 
-    @Autowired
-    private void initializeDummyPasswordHash() {
+    public UserServiceImpl(UserRepository userRepository, PasswordHasher passwordHasher) {
+        this.userRepository = userRepository;
+        this.passwordHasher = passwordHasher;
         this.dummyPasswordHash = passwordHasher.encode("unused-login-password");
     }
 
