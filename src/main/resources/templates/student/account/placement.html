@@ -283,7 +283,7 @@
                 th:attr="data-skill=${part.skill == 'GRAMMAR_VOCABULARY' ? 'Grammar & Vocabulary' : part.skill}"
               >
                 <h4
-                  th:text="${partStat.count + '. ' + (part.skill == 'GRAMMAR_VOCABULARY' ? 'Grammar & Vocabulary' : part.skill)}"
+                  th:text="${partStat.count + '. ' + (part.skill == 'GRAMMAR_VOCABULARY' ? 'Grammar & Vocabulary' : (part.skill == 'READING' ? 'Reading' : (part.skill == 'LISTENING' ? 'Listening' : (part.skill == 'WRITING' ? 'Writing' : (part.skill == 'SPEAKING' ? 'Speaking' : part.skill)))))}"
                 ></h4>
                 <strong th:text="${part.durationMinutes + ' phút'}"></strong>
               </div>

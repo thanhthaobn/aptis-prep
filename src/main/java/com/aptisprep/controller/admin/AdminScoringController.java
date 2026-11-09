@@ -103,6 +103,8 @@ public class AdminScoringController {
         model.addAttribute("certificateId", certificateId);
         model.addAttribute("certificates", scoring.certificateViews());
         model.addAttribute("examTypes", EXAM_TYPES);
+        model.addAttribute("examTypeLabels", EXAM_TYPE_LABELS);
+        model.addAttribute("skillLabels", SKILL_LABELS);
         return "admin/settings/schemes";
     }
 
