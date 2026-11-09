@@ -77,44 +77,18 @@
         </button>
 
         <nav class="nav-links" id="primaryNav" aria-label="Điều hướng chính">
-          <a
-            th:href="@{/}"
-            th:classappend="${navSection == 'home'} ? 'active'"
-            th:attr="aria-current=${navSection == 'home' ? 'page' : null}"
-          >
-            Trang chủ
-          </a>
+          <a th:href="@{/}">Trang chủ</a>
           <a
             th:if="${isStudent}"
             th:href="@{/student/dashboard}"
-            th:classappend="${navSection == 'student'} ? 'active'"
-            th:attr="aria-current=${navSection == 'student' ? 'page' : null}"
+            th:classappend="'active'"
+            aria-current="page"
           >
             Học tập
           </a>
-          <a
-            th:if="${isAdmin}"
-            th:href="@{/admin/dashboard}"
-            th:classappend="${navSection == 'admin'} ? 'active'"
-            th:attr="aria-current=${navSection == 'admin' ? 'page' : null}"
-          >
-            Quản trị
-          </a>
-          <a
-            th:if="${signedIn != true}"
-            th:href="@{/login}"
-            th:classappend="${navSection == 'login'} ? 'active'"
-            th:attr="aria-current=${navSection == 'login' ? 'page' : null}"
-          >
-            Đăng nhập
-          </a>
-          <a
-            th:if="${signedIn != true}"
-            class="button button-small"
-            th:href="@{/register}"
-            th:classappend="${navSection == 'register'} ? 'active'"
-            th:attr="aria-current=${navSection == 'register' ? 'page' : null}"
-          >
+          <a th:if="${isAdmin}" th:href="@{/admin/dashboard}">Quản trị</a>
+          <a th:if="${signedIn != true}" th:href="@{/login}">Đăng nhập</a>
+          <a th:if="${signedIn != true}" class="button button-small" th:href="@{/register}">
             Đăng ký
           </a>
           <form th:if="${signedIn}" th:action="@{/logout}" method="post">
@@ -349,7 +323,7 @@
               <div class="goal-target-date">
                 <span
                   class="goal-eyebrow"
-                  th:text="${account.goal.targetDate != null ? 'HẠN THI: ' + display.date(account.goal.targetDate) : 'CHƯA ĐẶT NGÀY'}"
+                  th:text="${account.goal.targetDate != null ? 'HẠN THI: ' + #temporals.format(account.goal.targetDate, 'dd/MM/yyyy') : 'CHƯA ĐẶT NGÀY'}"
                 ></span>
                 <span
                   th:if="${account.goal.targetDate != null}"
@@ -380,11 +354,14 @@
               </div>
               <ul class="compare-list">
                 <li
-                  th:each="code : ${display.skillCodes()}"
+                  th:each="code : ${skillCodes}"
                   class="compare-item"
                   th:with="targetLvl=${account.goal != null and account.goal.targets != null ? account.goal.targets.get(code) : null}"
                 >
-                  <span class="compare-skill-name" th:text="${display.catalogSkill(code)}"></span>
+                  <span
+                    class="compare-skill-name"
+                    th:text="${code == 'GRAMMAR_VOCABULARY' ? 'Grammar & Vocabulary' : code}"
+                  ></span>
                   <div class="compare-cols-right">
                     <span class="current-level-slot">
                       <span
@@ -401,14 +378,14 @@
                           th:if="${p.skill == code or (code == 'GRAMMAR_VOCABULARY' and (p.skill == 'Grammar & Vocabulary' or p.skill == 'GRAMMAR_VOCABULARY'))}"
                           class="cefr-chip"
                           th:classappend="${p.currentLevel != null ? 'cefr-' + p.currentLevel.toLowerCase() : 'cefr-none'}"
-                          th:text="${p.currentLevel != null ? display.cefrLabel(p.currentLevel) : '—'}"
+                          th:text="${p.currentLevel != null ? (p.currentLevel == 'A0' ? 'Dưới A1' : p.currentLevel) : '—'}"
                         ></span>
                       </th:block>
                     </span>
                     <span
                       class="cefr-chip cefr-target-compare"
                       th:classappend="${targetLvl != null ? 'cefr-' + targetLvl.toLowerCase() : 'cefr-none'}"
-                      th:text="${targetLvl != null ? display.cefrLabel(targetLvl) : '—'}"
+                      th:text="${targetLvl != null ? (targetLvl == 'A0' ? 'Dưới A1' : targetLvl) : '—'}"
                     ></span>
                   </div>
                 </li>

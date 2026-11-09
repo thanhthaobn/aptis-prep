@@ -110,7 +110,7 @@ public class ExamAttemptService implements ExamAttemptContract {
 
     @Override
     @Transactional(readOnly = true)
-    public Optional<Integer> latestResumableAttemptId(Integer userId, Integer examId) {
+    public Integer latestResumableAttemptId(Integer userId, Integer examId) {
         activeUser(userId);
         LocalDateTime now = LocalDateTime.now();
         return examAttemptRepository
@@ -123,7 +123,8 @@ public class ExamAttemptService implements ExamAttemptContract {
                             return deadline == null || !deadline.isBefore(now);
                         })
                 .map(ExamAttemptEntity::getId)
-                .findFirst();
+                .findFirst()
+                .orElse(null);
     }
 
     @Override

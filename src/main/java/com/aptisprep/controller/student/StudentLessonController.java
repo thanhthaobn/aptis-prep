@@ -36,14 +36,17 @@ public class StudentLessonController {
 
     @GetMapping("/student/lessons")
     public String list(
-            @RequestParam(defaultValue = "") String q,
-            @RequestParam(defaultValue = "") String skill,
-            @RequestParam(defaultValue = "") String level,
+            @RequestParam(name = "q", defaultValue = "") String q,
+            @RequestParam(name = "skill", defaultValue = "") String skill,
+            @RequestParam(name = "level", defaultValue = "") String level,
             Principal principal,
             Model m) {
-        if (q.length() > 255 || skill.length() > 80 || level.length() > 40)
+        String queryParam = q == null ? "" : q;
+        String skillParam = skill == null ? "" : skill;
+        String levelParam = level == null ? "" : level;
+        if (queryParam.length() > 255 || skillParam.length() > 80 || levelParam.length() > 40)
             throw new BusinessRuleException("Bộ lọc không hợp lệ");
-        String query = fold(q);
+        String query = fold(queryParam);
         List<Lesson> items =
                 service.publishedLessons().stream()
                         .filter(
@@ -55,8 +58,8 @@ public class StudentLessonController {
                                                                 + " "
                                                                 + topic(l))
                                                         .contains(query))
-                        .filter(l -> skill.isBlank() || l.getSkill().equals(skill))
-                        .filter(l -> level.isBlank() || l.getCefrLevel().equals(level))
+                        .filter(l -> skillParam.isBlank() || l.getSkill().equals(skillParam))
+                        .filter(l -> levelParam.isBlank() || l.getCefrLevel().equals(levelParam))
                         .toList();
         m.addAttribute("lessonTree", tree(items));
         m.addAttribute(
@@ -81,15 +84,15 @@ public class StudentLessonController {
         m.addAttribute("canAssess", teaching.canAssess(id, p.getName()));
         m.addAttribute("aiAvailable", teaching.aiAvailable());
         m.addAttribute("lesson", l);
-        m.addAttribute("flashcardSet", flashcards.publishedForLesson(id).orElse(null));
+        m.addAttribute("flashcardSet", flashcards.publishedForLesson(id));
         m.addAttribute("questions", teaching.questions(id));
         m.addAttribute("savedResponse", teaching.response(id, p.getName()));
-        m.addAttribute("savedWork", teaching.savedWork(id, p.getName()).orElse(null));
+        m.addAttribute("savedWork", teaching.savedWork(id, p.getName()));
         m.addAttribute(
                 "videoId",
                 LessonTeachingService.videoId(
                         l.getMaterial() == null ? null : l.getMaterial().getVideoUrl()));
-        m.addAttribute("progress", service.progress(p.getName(), id).orElse(null));
+        m.addAttribute("progress", service.progress(p.getName(), id));
         m.addAttribute("attempts", teaching.history(id, p.getName()));
         m.addAttribute("submissions", teaching.submissionHistory(id, p.getName()));
         m.addAttribute("aiSubmissions", teaching.assessableSubmissions(id, p.getName()));

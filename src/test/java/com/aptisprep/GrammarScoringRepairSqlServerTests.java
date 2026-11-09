@@ -6,7 +6,6 @@ import static org.mockito.Mockito.*;
 import com.aptisprep.entity.*;
 import com.aptisprep.enums.RecordStatus;
 import com.aptisprep.repository.*;
-import com.aptisprep.service.scoring.ScoringPolicyService;
 import java.math.BigDecimal;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -197,7 +196,9 @@ class GrammarScoringRepairSqlServerTests {
             when(bands.findBySchemeIdAndSkillOrderByMinScoreAsc(schemeId, skill))
                     .thenReturn(values);
         }
-        var service = new ScoringPolicyService(schemes, bands, rules);
+        var service =
+                new com.aptisprep.service.scoring.impl.ScoringPolicyServiceImpl(
+                        schemes, bands, rules);
         for (String skill : SKILLS) service.validatePolicy(schemeId, skill);
         for (String[] boundary :
                 new String[][] {

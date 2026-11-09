@@ -355,44 +355,18 @@
         </button>
 
         <nav class="nav-links" id="primaryNav" aria-label="Điều hướng chính">
-          <a
-            th:href="@{/}"
-            th:classappend="${navSection == 'home'} ? 'active'"
-            th:attr="aria-current=${navSection == 'home' ? 'page' : null}"
-          >
-            Trang chủ
-          </a>
+          <a th:href="@{/}">Trang chủ</a>
           <a
             th:if="${isStudent}"
             th:href="@{/student/dashboard}"
-            th:classappend="${navSection == 'student'} ? 'active'"
-            th:attr="aria-current=${navSection == 'student' ? 'page' : null}"
+            th:classappend="'active'"
+            aria-current="page"
           >
             Học tập
           </a>
-          <a
-            th:if="${isAdmin}"
-            th:href="@{/admin/dashboard}"
-            th:classappend="${navSection == 'admin'} ? 'active'"
-            th:attr="aria-current=${navSection == 'admin' ? 'page' : null}"
-          >
-            Quản trị
-          </a>
-          <a
-            th:if="${signedIn != true}"
-            th:href="@{/login}"
-            th:classappend="${navSection == 'login'} ? 'active'"
-            th:attr="aria-current=${navSection == 'login' ? 'page' : null}"
-          >
-            Đăng nhập
-          </a>
-          <a
-            th:if="${signedIn != true}"
-            class="button button-small"
-            th:href="@{/register}"
-            th:classappend="${navSection == 'register'} ? 'active'"
-            th:attr="aria-current=${navSection == 'register' ? 'page' : null}"
-          >
+          <a th:if="${isAdmin}" th:href="@{/admin/dashboard}">Quản trị</a>
+          <a th:if="${signedIn != true}" th:href="@{/login}">Đăng nhập</a>
+          <a th:if="${signedIn != true}" class="button button-small" th:href="@{/register}">
             Đăng ký
           </a>
           <form th:if="${signedIn}" th:action="@{/logout}" method="post">
@@ -407,7 +381,7 @@
       <aside class="exam-control-panel" aria-label="Thông tin bài thi">
         <div
           class="exam-control-heading"
-          th:text="${attempt.sectionSkill == null ? 'Bài thi' : display.catalogSkill(attempt.sectionSkill)}"
+          th:text="${attempt.sectionSkill == null ? 'Bài thi' : (attempt.sectionSkill == 'GRAMMAR_VOCABULARY' ? 'Grammar & Vocabulary' : attempt.sectionSkill)}"
         >
           Bài thi
         </div>
@@ -434,7 +408,7 @@
               <div class="exam-section-link">
                 <span>
                   <strong
-                    th:text="${'Phần ' + (section.index + 1) + ' · ' + display.catalogSkill(section.skill)}"
+                    th:text="${'Phần ' + (section.index + 1) + ' · ' + (section.skill == 'GRAMMAR_VOCABULARY' ? 'Grammar & Vocabulary' : section.skill)}"
                   ></strong>
                   <small
                     th:text="${section.questionCount + ' câu · ' + section.durationMinutes + ' phút'}"
@@ -538,7 +512,7 @@
         >
           <p
             class="eyebrow"
-            th:text="${'Nhóm ' + questionStat.count + ' · ' + display.catalogSkill(question.skill)}"
+            th:text="${'Nhóm ' + questionStat.count + ' · ' + (question.skill == 'GRAMMAR_VOCABULARY' ? 'Grammar & Vocabulary' : question.skill)}"
           ></p>
           <h2 tabindex="-1" th:text="${question.content}"></h2>
           <p

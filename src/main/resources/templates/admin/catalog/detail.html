@@ -77,44 +77,18 @@
         </button>
 
         <nav class="nav-links" id="primaryNav" aria-label="Điều hướng chính">
-          <a
-            th:href="@{/}"
-            th:classappend="${navSection == 'home'} ? 'active'"
-            th:attr="aria-current=${navSection == 'home' ? 'page' : null}"
-          >
-            Trang chủ
-          </a>
-          <a
-            th:if="${isStudent}"
-            th:href="@{/student/dashboard}"
-            th:classappend="${navSection == 'student'} ? 'active'"
-            th:attr="aria-current=${navSection == 'student' ? 'page' : null}"
-          >
-            Học tập
-          </a>
+          <a th:href="@{/}">Trang chủ</a>
+          <a th:if="${isStudent}" th:href="@{/student/dashboard}">Học tập</a>
           <a
             th:if="${isAdmin}"
             th:href="@{/admin/dashboard}"
-            th:classappend="${navSection == 'admin'} ? 'active'"
-            th:attr="aria-current=${navSection == 'admin' ? 'page' : null}"
+            th:classappend="'active'"
+            aria-current="page"
           >
             Quản trị
           </a>
-          <a
-            th:if="${signedIn != true}"
-            th:href="@{/login}"
-            th:classappend="${navSection == 'login'} ? 'active'"
-            th:attr="aria-current=${navSection == 'login' ? 'page' : null}"
-          >
-            Đăng nhập
-          </a>
-          <a
-            th:if="${signedIn != true}"
-            class="button button-small"
-            th:href="@{/register}"
-            th:classappend="${navSection == 'register'} ? 'active'"
-            th:attr="aria-current=${navSection == 'register' ? 'page' : null}"
-          >
+          <a th:if="${signedIn != true}" th:href="@{/login}">Đăng nhập</a>
+          <a th:if="${signedIn != true}" class="button button-small" th:href="@{/register}">
             Đăng ký
           </a>
           <form th:if="${signedIn}" th:action="@{/logout}" method="post">
@@ -571,7 +545,7 @@
           >
             <summary class="exam-preview-section-summary">
               <span
-                th:text="${'Phần ' + (order.index + 1) + ' · ' + display.catalogSkill(section.skill) + ' · ' + section.minutes + ' phút'}"
+                th:text="${'Phần ' + (order.index + 1) + ' · ' + (section.skill == 'GRAMMAR_VOCABULARY' ? 'Grammar & Vocabulary' : section.skill) + ' · ' + section.minutes + ' phút'}"
               ></span>
               <span class="badge" th:text="${section.questions.size() + ' câu'}"></span>
             </summary>
@@ -587,7 +561,7 @@
                   <div>
                     <p
                       class="eyebrow"
-                      th:text="${'Câu ' + (questionOrder.index + 1) + ' · ' + display.catalogSkill(question.skill)}"
+                      th:text="${'Câu ' + (questionOrder.index + 1) + ' · ' + (question.skill == 'GRAMMAR_VOCABULARY' ? 'Grammar & Vocabulary' : question.skill)}"
                     ></p>
                     <h3 th:text="${question.content}"></h3>
                   </div>

@@ -9,7 +9,6 @@ import com.aptisprep.exception.BusinessRuleException;
 import com.aptisprep.exception.ResourceNotFoundException;
 import com.aptisprep.repository.*;
 import com.aptisprep.service.exam.ExamStartValidator;
-import com.aptisprep.service.student.StudentExamCatalogService;
 import java.util.*;
 import org.junit.jupiter.api.Test;
 import org.springframework.data.domain.PageRequest;
@@ -33,7 +32,9 @@ class UnavailableExamCatalogTests {
         doThrow(new BusinessRuleException("Missing questions"))
                 .when(validator)
                 .validate(eq(old), anyList());
-        var catalog = new StudentExamCatalogService(exams, sections, questions, validator);
+        var catalog =
+                new com.aptisprep.service.student.impl.StudentExamCatalogServiceImpl(
+                        exams, sections, questions, validator);
         var result = catalog.browse("", "", "", "", "PRACTICE", "level", PageRequest.of(0, 9));
         assertThat(result.page().getTotalElements()).isZero();
         assertThat(result.categories()).allMatch(category -> category.count() == 0);

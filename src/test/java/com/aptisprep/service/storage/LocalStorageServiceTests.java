@@ -18,7 +18,7 @@ class LocalStorageServiceTests {
     private LocalStorageService storage() {
         var properties = new StorageProperties();
         properties.setUploadDir(root);
-        return new LocalStorageService(properties);
+        return new com.aptisprep.service.storage.impl.LocalStorageServiceImpl(properties);
     }
 
     @Test

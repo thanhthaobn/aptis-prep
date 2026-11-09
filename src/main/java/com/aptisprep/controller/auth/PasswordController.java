@@ -4,7 +4,6 @@ import com.aptisprep.dto.form.PasswordForm;
 import com.aptisprep.exception.BusinessRuleException;
 import com.aptisprep.security.LoginSession;
 import com.aptisprep.service.auth.PasswordService;
-import com.aptisprep.validation.AccountInput;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.*;
@@ -35,7 +34,7 @@ public class PasswordController {
         }
 
         public void setEmail(String value) {
-            email = AccountInput.email(value);
+            email = value == null ? null : value.strip().toLowerCase(java.util.Locale.ROOT);
         }
     }
 
@@ -63,7 +62,7 @@ public class PasswordController {
 
     @GetMapping({"/reset-password", "/student/password"})
     public String form(
-            @RequestParam(defaultValue = "") String token,
+            @RequestParam(name = "token", defaultValue = "") String token,
             HttpServletRequest request,
             Model model) {
         model.addAttribute(
@@ -79,7 +78,7 @@ public class PasswordController {
     public String save(
             @Valid @ModelAttribute PasswordForm passwordForm,
             BindingResult errors,
-            @RequestParam(defaultValue = "") String token,
+            @RequestParam(name = "token", defaultValue = "") String token,
             Principal principal,
             HttpServletRequest request,
             Model model,

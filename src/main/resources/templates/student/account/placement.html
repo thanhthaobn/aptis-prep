@@ -77,44 +77,18 @@
         </button>
 
         <nav class="nav-links" id="primaryNav" aria-label="Điều hướng chính">
-          <a
-            th:href="@{/}"
-            th:classappend="${navSection == 'home'} ? 'active'"
-            th:attr="aria-current=${navSection == 'home' ? 'page' : null}"
-          >
-            Trang chủ
-          </a>
+          <a th:href="@{/}">Trang chủ</a>
           <a
             th:if="${isStudent}"
             th:href="@{/student/dashboard}"
-            th:classappend="${navSection == 'student'} ? 'active'"
-            th:attr="aria-current=${navSection == 'student' ? 'page' : null}"
+            th:classappend="'active'"
+            aria-current="page"
           >
             Học tập
           </a>
-          <a
-            th:if="${isAdmin}"
-            th:href="@{/admin/dashboard}"
-            th:classappend="${navSection == 'admin'} ? 'active'"
-            th:attr="aria-current=${navSection == 'admin' ? 'page' : null}"
-          >
-            Quản trị
-          </a>
-          <a
-            th:if="${signedIn != true}"
-            th:href="@{/login}"
-            th:classappend="${navSection == 'login'} ? 'active'"
-            th:attr="aria-current=${navSection == 'login' ? 'page' : null}"
-          >
-            Đăng nhập
-          </a>
-          <a
-            th:if="${signedIn != true}"
-            class="button button-small"
-            th:href="@{/register}"
-            th:classappend="${navSection == 'register'} ? 'active'"
-            th:attr="aria-current=${navSection == 'register' ? 'page' : null}"
-          >
+          <a th:if="${isAdmin}" th:href="@{/admin/dashboard}">Quản trị</a>
+          <a th:if="${signedIn != true}" th:href="@{/login}">Đăng nhập</a>
+          <a th:if="${signedIn != true}" class="button button-small" th:href="@{/register}">
             Đăng ký
           </a>
           <form th:if="${signedIn}" th:action="@{/logout}" method="post">
@@ -271,7 +245,10 @@
         </div>
 
         <section class="dashboard-section">
-          <h2 th:if="${skill != 'FULL_MOCK'}" th:text="${display.catalogSkill(skill)}"></h2>
+          <h2
+            th:if="${skill != 'FULL_MOCK'}"
+            th:text="${skill == 'GRAMMAR_VOCABULARY' ? 'Grammar & Vocabulary' : skill}"
+          ></h2>
           <div th:if="${placementExams == null or placementExams.isEmpty()}" class="empty-box">
             <figure class="navi navi-empty">
               <svg viewBox="0 0 160 130" role="img" aria-label="Navi đang chờ đề kiểm tra">
@@ -303,9 +280,11 @@
               <div
                 class="dashboard-panel study-exam-section"
                 th:each="part : ${exam.sections}"
-                th:attr="data-skill=${display.catalogSkill(part.skill)}"
+                th:attr="data-skill=${part.skill == 'GRAMMAR_VOCABULARY' ? 'Grammar & Vocabulary' : part.skill}"
               >
-                <h4 th:text="${partStat.count + '. ' + display.catalogSkill(part.skill)}"></h4>
+                <h4
+                  th:text="${partStat.count + '. ' + (part.skill == 'GRAMMAR_VOCABULARY' ? 'Grammar & Vocabulary' : (part.skill == 'READING' ? 'Reading' : (part.skill == 'LISTENING' ? 'Listening' : (part.skill == 'WRITING' ? 'Writing' : (part.skill == 'SPEAKING' ? 'Speaking' : part.skill)))))}"
+                ></h4>
                 <strong th:text="${part.durationMinutes + ' phút'}"></strong>
               </div>
             </div>
@@ -369,7 +348,7 @@
                   1
                 </a>
                 <span class="pagination-gap" th:if="${start > 1}" aria-hidden="true">…</span>
-                <th:block th:each="index : ${display.pageNumbers(start, end)}">
+                <th:block th:each="index : ${#numbers.sequence(start, end)}">
                   <span
                     class="page-link active"
                     th:if="${index == currentPage}"

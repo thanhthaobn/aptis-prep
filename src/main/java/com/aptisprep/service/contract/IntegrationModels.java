@@ -27,7 +27,16 @@ public final class IntegrationModels {
             int totalRequiredLessons,
             Integer nextLessonId,
             String nextLessonTitle,
-            String checkpointState) {}
+            String checkpointState) {
+        public String checkpointActionLabel() {
+            return switch (checkpointState == null ? "" : checkpointState) {
+                case "in_progress" -> "Tiếp tục bài đang làm";
+                case "grading" -> "Xem trạng thái chấm";
+                case "failed" -> "Làm lại kiểm tra cuối chặng";
+                default -> "Bắt đầu bài kiểm tra cuối chặng";
+            };
+        }
+    }
 
     public record ExamSummary(
             Integer examId,
@@ -200,6 +209,61 @@ public final class IntegrationModels {
                                     .map(SkillResult::skill)
                                     .collect(java.util.stream.Collectors.toSet())
                                     .containsAll(com.aptisprep.enums.Skill.codes()));
+        }
+
+        public String stateLabel() {
+            return switch (state == null ? "" : state) {
+                case "COMPLETED" -> "Đã hoàn thành";
+                case "ERROR" -> "Chấm điểm gặp lỗi";
+                case "EXPIRED" -> "Đã hết thời gian";
+                case "IN_PROGRESS" -> "Đang làm bài";
+                default -> "Đang chấm điểm";
+            };
+        }
+
+        public String examTypeLabel() {
+            return switch (examType == null ? "" : examType) {
+                case "PLACEMENT" -> "Kiểm tra đầu vào";
+                case "CHECKPOINT" -> "Kiểm tra cuối chặng";
+                case "FULL_MOCK" -> "Thi thử tổng hợp";
+                default -> "Bài luyện tập";
+            };
+        }
+
+        public String stateBadgeClass() {
+            return switch (state == null ? "" : state) {
+                case "COMPLETED" -> "badge-success";
+                case "ERROR" -> "badge-danger";
+                case "EXPIRED" -> "badge-history-expired";
+                case "IN_PROGRESS" -> "badge-info";
+                default -> "badge-warning";
+            };
+        }
+
+        public String stateClass() {
+            return switch (state == null ? "" : state) {
+                case "COMPLETED" -> " is-complete";
+                case "ERROR" -> " is-error";
+                default -> " is-pending";
+            };
+        }
+
+        public boolean hasPendingGrades() {
+            return skills != null
+                    && skills.stream()
+                            .anyMatch(
+                                    skill ->
+                                            "PENDING".equals(skill.gradingState())
+                                                    || "WAITING".equals(skill.gradingState()));
+        }
+
+        public boolean hasGradingErrors() {
+            return skills != null
+                    && skills.stream().anyMatch(skill -> "ERROR".equals(skill.gradingState()));
+        }
+
+        public boolean hasRetryableGrades() {
+            return skills != null && skills.stream().anyMatch(SkillResult::retryable);
         }
 
         public AttemptResult(

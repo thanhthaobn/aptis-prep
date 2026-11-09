@@ -77,44 +77,18 @@
         </button>
 
         <nav class="nav-links" id="primaryNav" aria-label="Điều hướng chính">
-          <a
-            th:href="@{/}"
-            th:classappend="${navSection == 'home'} ? 'active'"
-            th:attr="aria-current=${navSection == 'home' ? 'page' : null}"
-          >
-            Trang chủ
-          </a>
-          <a
-            th:if="${isStudent}"
-            th:href="@{/student/dashboard}"
-            th:classappend="${navSection == 'student'} ? 'active'"
-            th:attr="aria-current=${navSection == 'student' ? 'page' : null}"
-          >
-            Học tập
-          </a>
+          <a th:href="@{/}">Trang chủ</a>
+          <a th:if="${isStudent}" th:href="@{/student/dashboard}">Học tập</a>
           <a
             th:if="${isAdmin}"
             th:href="@{/admin/dashboard}"
-            th:classappend="${navSection == 'admin'} ? 'active'"
-            th:attr="aria-current=${navSection == 'admin' ? 'page' : null}"
+            th:classappend="'active'"
+            aria-current="page"
           >
             Quản trị
           </a>
-          <a
-            th:if="${signedIn != true}"
-            th:href="@{/login}"
-            th:classappend="${navSection == 'login'} ? 'active'"
-            th:attr="aria-current=${navSection == 'login' ? 'page' : null}"
-          >
-            Đăng nhập
-          </a>
-          <a
-            th:if="${signedIn != true}"
-            class="button button-small"
-            th:href="@{/register}"
-            th:classappend="${navSection == 'register'} ? 'active'"
-            th:attr="aria-current=${navSection == 'register' ? 'page' : null}"
-          >
+          <a th:if="${signedIn != true}" th:href="@{/login}">Đăng nhập</a>
+          <a th:if="${signedIn != true}" class="button button-small" th:href="@{/register}">
             Đăng ký
           </a>
           <form th:if="${signedIn}" th:action="@{/logout}" method="post">
@@ -321,9 +295,9 @@
                 <select id="schemeExamType" th:field="*{examType}" th:required="${!editing}">
                   <option value="">Chọn loại đề</option>
                   <option
-                    th:each="type : ${display.examTypes()}"
+                    th:each="type : ${examTypes}"
                     th:value="${type}"
-                    th:text="${display.historyExamType(type)}"
+                    th:text="${examTypeLabels[type]}"
                   ></option>
                 </select>
                 <p class="field-error" th:errors="*{examType}"></p>
@@ -366,9 +340,9 @@
               <select id="schemeScopeSkill" th:field="*{scopeSkill}" th:disabled="${readOnly}">
                 <option value="">Chọn kỹ năng</option>
                 <option
-                  th:each="skill : ${display.skillCodes()}"
+                  th:each="skill : ${skillCodes}"
                   th:value="${skill}"
-                  th:text="${display.catalogSkill(skill)}"
+                  th:text="${skill == 'GRAMMAR_VOCABULARY' ? 'Grammar & Vocabulary' : skill}"
                 ></option>
               </select>
             </div>
@@ -407,7 +381,7 @@
                   <select id="schemeTargetLevel" th:field="*{targetLevel}">
                     <option value="">Dùng bảng CEFR</option>
                     <option
-                      th:each="level : ${display.scoringLevels()}"
+                      th:each="level : ${scoringLevels}"
                       th:attr="data-c2=${level == 'C2' ? 'true' : null}"
                       th:value="${level}"
                       th:text="${level}"
@@ -430,12 +404,14 @@
             <div id="scheme-combined-ranges">
               <fieldset
                 class="catalog-form-section"
-                th:each="skill : ${display.skillCodes()}"
+                th:each="skill : ${skillCodes}"
                 th:disabled="${readOnly}"
                 th:attr="data-scoring-skill=${skill}"
                 th:with="scale=${schemeForm.skillScales.get(skill)}"
               >
-                <legend th:text="${display.catalogSkill(skill)}"></legend>
+                <legend
+                  th:text="${skill == 'GRAMMAR_VOCABULARY' ? 'Grammar & Vocabulary' : skill}"
+                ></legend>
                 <p class="muted" th:if="${skill == 'GRAMMAR_VOCABULARY'}">
                   Với đề tổng hợp, bảng CEFR này chỉ hỗ trợ xét kỹ năng sát ngưỡng theo quy tắc nội
                   bộ; kết quả G&amp;V chỉ hiển thị điểm.
@@ -501,12 +477,12 @@
                     </thead>
                     <tbody>
                       <tr
-                        th:each="level : ${skill == 'GRAMMAR_VOCABULARY' ? display.scoringLevels() : display.fullMockScoringLevels()}"
+                        th:each="level : ${skill == 'GRAMMAR_VOCABULARY' ? scoringLevels : fullMockScoringLevels}"
                         th:classappend="${level == 'A0'} ? 'below-a1-row'"
                         th:attr="data-c2=${level == 'C2' ? 'true' : null}"
                         th:with="key=${skill + '_' + level}"
                       >
-                        <th scope="row" th:text="${display.cefrLabel(level)}"></th>
+                        <th scope="row" th:text="${level == 'A0' ? 'Dưới A1' : level}"></th>
                         <td>
                           <input
                             type="number"
@@ -515,7 +491,7 @@
                             step="0.01"
                             th:name="|ranges[${key}].minScore|"
                             th:value="${schemeForm.ranges.get(key).minScore}"
-                            th:attr="aria-label=${display.catalogSkill(skill) + ' ' + level + ' từ điểm'}"
+                            th:attr="aria-label=${(skill == 'GRAMMAR_VOCABULARY' ? 'Grammar & Vocabulary' : skill) + ' ' + level + ' từ điểm'}"
                           />
                         </td>
                         <td>
@@ -526,7 +502,7 @@
                             step="0.01"
                             th:name="|ranges[${key}].maxScore|"
                             th:value="${schemeForm.ranges.get(key).maxScore}"
-                            th:attr="aria-label=${display.catalogSkill(skill) + ' ' + level + ' đến điểm'}"
+                            th:attr="aria-label=${(skill == 'GRAMMAR_VOCABULARY' ? 'Grammar & Vocabulary' : skill) + ' ' + level + ' đến điểm'}"
                           />
                         </td>
                       </tr>
@@ -536,8 +512,8 @@
               </fieldset>
             </div>
           </section>
-          <div class="alert alert-danger" th:if="${!display.allErrors('schemeForm').isEmpty()}">
-            <span th:each="message, status : ${display.allErrors('schemeForm')}">
+          <div class="alert alert-danger" th:if="${!#fields.allErrors().isEmpty()}">
+            <span th:each="message, status : ${#fields.allErrors()}">
               <br th:if="${!status.first}" />
               <span th:text="${message}"></span>
             </span>
@@ -578,7 +554,7 @@
           id="cefr-bands"
           class="dashboard-panel dashboard-section"
           th:if="${editing and scheme.examType == null}"
-          th:with="bandEditorOpen=${!readOnly and (addBand == true or bandForm.id != null or !display.allErrors('bandForm').isEmpty())}"
+          th:with="bandEditorOpen=${!readOnly and (addBand == true or bandForm.id != null or bandFormHasErrors)}"
         >
           <h2>Khoảng điểm CEFR</h2>
           <p class="muted">
@@ -714,11 +690,8 @@
                 </div>
               </div>
             </fieldset>
-            <div
-              class="alert alert-danger"
-              th:if="${!display.allErrors('scaleRuleForm').isEmpty()}"
-            >
-              <span th:each="message, status : ${display.allErrors('scaleRuleForm')}">
+            <div class="alert alert-danger" th:if="${!#fields.allErrors().isEmpty()}">
+              <span th:each="message, status : ${#fields.allErrors()}">
                 <br th:if="${!status.first}" />
                 <span th:text="${message}"></span>
               </span>
@@ -743,7 +716,7 @@
                 <label for="bandLevel">CEFR</label>
                 <select id="bandLevel" th:field="*{cefrLevel}">
                   <option
-                    th:each="level : ${display.scoringLevels()}"
+                    th:each="level : ${scoringLevels}"
                     th:value="${level}"
                     th:text="${level}"
                     th:attr="data-c2=${level == 'C2' ? 'true' : null}"
@@ -773,8 +746,8 @@
                 />
               </div>
             </div>
-            <div class="alert alert-danger" th:if="${!display.allErrors('bandForm').isEmpty()}">
-              <span th:each="message, status : ${display.allErrors('bandForm')}">
+            <div class="alert alert-danger" th:if="${!#fields.allErrors().isEmpty()}">
+              <span th:each="message, status : ${#fields.allErrors()}">
                 <br th:if="${!status.first}" />
                 <span th:text="${message}"></span>
               </span>

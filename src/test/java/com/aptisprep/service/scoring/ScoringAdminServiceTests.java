@@ -54,7 +54,7 @@ class ScoringAdminServiceTests {
         when(usage.isUsed(20)).thenReturn(true);
 
         ScoringAdminService service =
-                new ScoringAdminService(
+                new com.aptisprep.service.scoring.impl.ScoringAdminServiceImpl(
                         certificates, schemes, bands, users, usageProvider, scaleRules);
         ScoringSchemeForm sameVersion = form("1");
         assertThrows(
@@ -85,7 +85,7 @@ class ScoringAdminServiceTests {
                 .thenReturn(Optional.of(rule));
 
         ScoringAdminService service =
-                new ScoringAdminService(
+                new com.aptisprep.service.scoring.impl.ScoringAdminServiceImpl(
                         certificates, schemes, bands, users, usageProvider, scaleRules);
         ScoringScaleRuleForm scale = new ScoringScaleRuleForm();
         scale.setRawMin(BigDecimal.ZERO);

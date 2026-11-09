@@ -77,44 +77,18 @@
         </button>
 
         <nav class="nav-links" id="primaryNav" aria-label="Điều hướng chính">
-          <a
-            th:href="@{/}"
-            th:classappend="${navSection == 'home'} ? 'active'"
-            th:attr="aria-current=${navSection == 'home' ? 'page' : null}"
-          >
-            Trang chủ
-          </a>
-          <a
-            th:if="${isStudent}"
-            th:href="@{/student/dashboard}"
-            th:classappend="${navSection == 'student'} ? 'active'"
-            th:attr="aria-current=${navSection == 'student' ? 'page' : null}"
-          >
-            Học tập
-          </a>
+          <a th:href="@{/}">Trang chủ</a>
+          <a th:if="${isStudent}" th:href="@{/student/dashboard}">Học tập</a>
           <a
             th:if="${isAdmin}"
             th:href="@{/admin/dashboard}"
-            th:classappend="${navSection == 'admin'} ? 'active'"
-            th:attr="aria-current=${navSection == 'admin' ? 'page' : null}"
+            th:classappend="'active'"
+            aria-current="page"
           >
             Quản trị
           </a>
-          <a
-            th:if="${signedIn != true}"
-            th:href="@{/login}"
-            th:classappend="${navSection == 'login'} ? 'active'"
-            th:attr="aria-current=${navSection == 'login' ? 'page' : null}"
-          >
-            Đăng nhập
-          </a>
-          <a
-            th:if="${signedIn != true}"
-            class="button button-small"
-            th:href="@{/register}"
-            th:classappend="${navSection == 'register'} ? 'active'"
-            th:attr="aria-current=${navSection == 'register' ? 'page' : null}"
-          >
+          <a th:if="${signedIn != true}" th:href="@{/login}">Đăng nhập</a>
+          <a th:if="${signedIn != true}" class="button button-small" th:href="@{/register}">
             Đăng ký
           </a>
           <form th:if="${signedIn}" th:action="@{/logout}" method="post">
@@ -345,7 +319,7 @@
               <dd th:if="${student.goal == null}">Chưa đặt mục tiêu</dd>
               <dd
                 th:unless="${student.goal == null}"
-                th:text="${display.join(student.goal.targets.values(), ', ')}"
+                th:text="${#strings.listJoin(student.goal.targets.values(), ', ')}"
               ></dd>
             </div>
             <div>
@@ -353,7 +327,7 @@
               <dd th:if="${student.goal == null or student.goal.targetDate == null}">Chưa đặt</dd>
               <dd
                 th:unless="${student.goal == null or student.goal.targetDate == null}"
-                th:text="${display.date(student.goal.targetDate)}"
+                th:text="${#temporals.format(student.goal.targetDate, 'dd/MM/yyyy')}"
               ></dd>
             </div>
           </dl>

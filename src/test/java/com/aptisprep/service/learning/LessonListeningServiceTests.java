@@ -44,7 +44,7 @@ class LessonListeningServiceTests {
         progress.setLessonId(2);
         when(engagements.findByUserIdAndLessonId(1, 2)).thenReturn(Optional.of(progress));
         service =
-                new LessonListeningService(
+                new com.aptisprep.service.learning.impl.LessonListeningServiceImpl(
                         users,
                         lessons,
                         engagements,

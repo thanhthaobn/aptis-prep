@@ -77,44 +77,18 @@
         </button>
 
         <nav class="nav-links" id="primaryNav" aria-label="Điều hướng chính">
-          <a
-            th:href="@{/}"
-            th:classappend="${navSection == 'home'} ? 'active'"
-            th:attr="aria-current=${navSection == 'home' ? 'page' : null}"
-          >
-            Trang chủ
-          </a>
+          <a th:href="@{/}">Trang chủ</a>
           <a
             th:if="${isStudent}"
             th:href="@{/student/dashboard}"
-            th:classappend="${navSection == 'student'} ? 'active'"
-            th:attr="aria-current=${navSection == 'student' ? 'page' : null}"
+            th:classappend="'active'"
+            aria-current="page"
           >
             Học tập
           </a>
-          <a
-            th:if="${isAdmin}"
-            th:href="@{/admin/dashboard}"
-            th:classappend="${navSection == 'admin'} ? 'active'"
-            th:attr="aria-current=${navSection == 'admin' ? 'page' : null}"
-          >
-            Quản trị
-          </a>
-          <a
-            th:if="${signedIn != true}"
-            th:href="@{/login}"
-            th:classappend="${navSection == 'login'} ? 'active'"
-            th:attr="aria-current=${navSection == 'login' ? 'page' : null}"
-          >
-            Đăng nhập
-          </a>
-          <a
-            th:if="${signedIn != true}"
-            class="button button-small"
-            th:href="@{/register}"
-            th:classappend="${navSection == 'register'} ? 'active'"
-            th:attr="aria-current=${navSection == 'register' ? 'page' : null}"
-          >
+          <a th:if="${isAdmin}" th:href="@{/admin/dashboard}">Quản trị</a>
+          <a th:if="${signedIn != true}" th:href="@{/login}">Đăng nhập</a>
+          <a th:if="${signedIn != true}" class="button button-small" th:href="@{/register}">
             Đăng ký
           </a>
           <form th:if="${signedIn}" th:action="@{/logout}" method="post">
@@ -288,7 +262,7 @@
               </div>
               <span
                 class="result-status"
-                th:classappend="${display.historyStateClass(res.state)}"
+                th:classappend="${res.stateClass}"
                 th:text="${@resultLabels.state(res.state)}"
               ></span>
             </header>
@@ -301,7 +275,7 @@
                 <dt
                   th:text="${res.hasFullMockTotal() ? 'CEFR tổng hợp' : 'Trình độ ước lượng'}"
                 ></dt>
-                <dd th:text="${display.cefrLabel(res.overallCefr)}"></dd>
+                <dd th:text="${res.overallCefr == 'A0' ? 'Dưới A1' : res.overallCefr}"></dd>
               </div>
               <div th:if="${res.overallScaleScore != null}">
                 <dt th:text="${res.hasFullMockTotal() ? 'Tổng điểm bốn kỹ năng' : 'Điểm'}"></dt>
@@ -312,7 +286,7 @@
             </dl>
 
             <p
-              th:if="${res.state == 'SUBMITTED' or res.state == 'WAITING_GRADING' or display.hasPendingGrades(res.skills)}"
+              th:if="${res.state == 'SUBMITTED' or res.state == 'WAITING_GRADING' or res.hasPendingGrades}"
               class="result-message"
               role="status"
             >
@@ -326,13 +300,13 @@
               <a th:href="@{/student/attempts/{id}(id=${res.attemptId})}">Tiếp tục làm bài</a>
             </div>
             <div
-              th:if="${res.state == 'ERROR' or display.hasGradingErrors(res.skills)}"
+              th:if="${res.state == 'ERROR' or res.hasGradingErrors}"
               class="result-message result-message-error"
               role="alert"
             >
               <p>Chấm điểm chưa thành công. Bài làm vẫn được lưu.</p>
               <form
-                th:if="${res.state == 'ERROR' and display.hasRetryableGrades(res.skills)}"
+                th:if="${res.state == 'ERROR' and res.hasRetryableGrades}"
                 method="post"
                 th:action="@{/student/attempts/{id}/retry-grading(id=${res.attemptId})}"
               >
@@ -357,12 +331,15 @@
                       th:with="score=${skill.scaleScore != null ? skill.scaleScore : skill.rawScore}"
                     >
                       <tr>
-                        <th scope="row" th:text="${display.catalogSkill(skill.skill)}"></th>
+                        <th
+                          scope="row"
+                          th:text="${skill.skill == 'GRAMMAR_VOCABULARY' ? 'Grammar & Vocabulary' : skill.skill}"
+                        ></th>
                         <td
                           th:text="${score == null ? '—' : score.stripTrailingZeros().toPlainString()}"
                         ></td>
                         <td
-                          th:text="${skill.gradingState == 'ERROR' ? 'Chấm lỗi' : (skill.gradingState == 'PENDING' or skill.gradingState == 'WAITING' ? 'Đang chấm' : (res.isCombined() and skill.skill == 'GRAMMAR_VOCABULARY' ? '—' : (skill.estimatedLevel != null ? display.cefrLabel(skill.estimatedLevel) : (skill.gradingState == 'COMPLETED' and score != null and (res.examType == 'CHECKPOINT' or res.examType == 'PRACTICE') ? 'Chưa đạt' : '—'))))}"
+                          th:text="${skill.gradingState == 'ERROR' ? 'Chấm lỗi' : (skill.gradingState == 'PENDING' or skill.gradingState == 'WAITING' ? 'Đang chấm' : (res.isCombined() and skill.skill == 'GRAMMAR_VOCABULARY' ? '—' : (skill.estimatedLevel != null ? (skill.estimatedLevel == 'A0' ? 'Dưới A1' : skill.estimatedLevel) : (skill.gradingState == 'COMPLETED' and score != null and (res.examType == 'CHECKPOINT' or res.examType == 'PRACTICE') ? 'Chưa đạt' : '—'))))}"
                         ></td>
                       </tr>
                     </th:block>
@@ -383,7 +360,9 @@
                   th:classappend="${guide.bands.isEmpty()} ? 'result-guide-card-compact'"
                 >
                   <th:block>
-                    <h3 th:text="${display.catalogSkill(guide.skill)}"></h3>
+                    <h3
+                      th:text="${guide.skill == 'GRAMMAR_VOCABULARY' ? 'Grammar & Vocabulary' : guide.skill}"
+                    ></h3>
                     <p
                       class="muted"
                       th:text="${'Thang điểm ' + guide.min.stripTrailingZeros().toPlainString() + '–' + guide.max.stripTrailingZeros().toPlainString()}"
@@ -403,7 +382,7 @@
                             th:classappend="${band.attained ? 'table-success' : ''}"
                           >
                             <td th:text="${band.min + ' – ' + band.max}"></td>
-                            <td th:text="${display.cefrLabel(band.level)}"></td>
+                            <td th:text="${band.level == 'A0' ? 'Dưới A1' : band.level}"></td>
                             <td th:text="${band.attained ? 'Bạn đạt' : ''}"></td>
                           </tr>
                         </tbody>
@@ -421,7 +400,9 @@
                   </th:block>
                 </article>
                 <article class="result-guide-card" th:each="skill : ${feedbackWithoutGuide}">
-                  <h3 th:text="${display.catalogSkill(skill.skill)}"></h3>
+                  <h3
+                    th:text="${skill.skill == 'GRAMMAR_VOCABULARY' ? 'Grammar & Vocabulary' : skill.skill}"
+                  ></h3>
                   <div class="result-skill-feedback">
                     <strong>Nhận xét</strong>
                     <p th:text="${skill.feedback}"></p>

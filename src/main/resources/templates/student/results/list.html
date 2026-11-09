@@ -77,44 +77,18 @@
         </button>
 
         <nav class="nav-links" id="primaryNav" aria-label="Điều hướng chính">
-          <a
-            th:href="@{/}"
-            th:classappend="${navSection == 'home'} ? 'active'"
-            th:attr="aria-current=${navSection == 'home' ? 'page' : null}"
-          >
-            Trang chủ
-          </a>
+          <a th:href="@{/}">Trang chủ</a>
           <a
             th:if="${isStudent}"
             th:href="@{/student/dashboard}"
-            th:classappend="${navSection == 'student'} ? 'active'"
-            th:attr="aria-current=${navSection == 'student' ? 'page' : null}"
+            th:classappend="'active'"
+            aria-current="page"
           >
             Học tập
           </a>
-          <a
-            th:if="${isAdmin}"
-            th:href="@{/admin/dashboard}"
-            th:classappend="${navSection == 'admin'} ? 'active'"
-            th:attr="aria-current=${navSection == 'admin' ? 'page' : null}"
-          >
-            Quản trị
-          </a>
-          <a
-            th:if="${signedIn != true}"
-            th:href="@{/login}"
-            th:classappend="${navSection == 'login'} ? 'active'"
-            th:attr="aria-current=${navSection == 'login' ? 'page' : null}"
-          >
-            Đăng nhập
-          </a>
-          <a
-            th:if="${signedIn != true}"
-            class="button button-small"
-            th:href="@{/register}"
-            th:classappend="${navSection == 'register'} ? 'active'"
-            th:attr="aria-current=${navSection == 'register' ? 'page' : null}"
-          >
+          <a th:if="${isAdmin}" th:href="@{/admin/dashboard}">Quản trị</a>
+          <a th:if="${signedIn != true}" th:href="@{/login}">Đăng nhập</a>
+          <a th:if="${signedIn != true}" class="button button-small" th:href="@{/register}">
             Đăng ký
           </a>
           <form th:if="${signedIn}" th:action="@{/logout}" method="post">
@@ -334,7 +308,7 @@
             <select id="result-skill" name="skill">
               <option value="">Tất cả kỹ năng</option>
               <option
-                th:each="value : ${display.skillCodes()}"
+                th:each="value : ${skillCodes}"
                 th:value="${value}"
                 th:text="${(value == null ? null : value.replace('_', ' &amp; '))}"
                 th:selected="${selectedSkill == value}"
@@ -390,10 +364,7 @@
                 th:with="canContinue=${attempt.state == 'IN_PROGRESS' and attempt.canDiscard()}"
               >
                 <td>
-                  <span
-                    class="result-type-chip"
-                    th:text="${display.historyExamType(attempt.examType)}"
-                  ></span>
+                  <span class="result-type-chip" th:text="${attempt.examTypeLabel}"></span>
                   <strong
                     class="result-title-text"
                     th:text="${attempt.examTitle == null ? 'Bài thi #' + attempt.examId : attempt.examTitle}"
@@ -404,7 +375,7 @@
                   <span
                     class="time-meta-text"
                     th:if="${attempt.submittedAt != null}"
-                    th:text="${'Đã nộp ' + display.dateTime(attempt.submittedAt)}"
+                    th:text="${'Đã nộp ' + #temporals.format(attempt.submittedAt, 'dd/MM/yyyy HH:mm')}"
                   ></span>
                   <span
                     class="time-meta-text in-progress-time"
@@ -417,8 +388,8 @@
                 <td>
                   <span
                     class="badge"
-                    th:classappend="${display.historyStateBadgeClass(attempt.state)}"
-                    th:text="${display.historyState(attempt.state)}"
+                    th:classappend="${attempt.stateBadgeClass}"
+                    th:text="${attempt.stateLabel}"
                   ></span>
                 </td>
 
@@ -427,13 +398,13 @@
                     <p
                       class="result-overall-score"
                       th:if="${attempt.finalScaleScore != null or attempt.overallCefr != null}"
-                      th:text="${(attempt.finalScaleScore == null ? '—' : attempt.finalScaleScore) + ' điểm' + (attempt.overallCefr != null ? ' · ' + display.cefrLabel(attempt.overallCefr) : '')}"
+                      th:text="${(attempt.finalScaleScore == null ? '—' : attempt.finalScaleScore) + ' điểm' + (attempt.overallCefr != null ? ' · ' + (attempt.overallCefr == 'A0' ? 'Dưới A1' : attempt.overallCefr) : '')}"
                     ></p>
                     <div class="result-levels-mini" th:if="${!attempt.skills.isEmpty()}">
                       <span
                         th:each="skill : ${attempt.skills}"
                         class="skill-mini-pill"
-                        th:text="${display.catalogSkill(skill.skill) + ': ' + (skill.estimatedLevel == null ? 'Chờ chấm' : display.cefrLabel(skill.estimatedLevel))}"
+                        th:text="${(skill.skill == 'GRAMMAR_VOCABULARY' ? 'Grammar & Vocabulary' : skill.skill) + ': ' + (skill.estimatedLevel == null ? 'Chờ chấm' : (skill.estimatedLevel == 'A0' ? 'Dưới A1' : skill.estimatedLevel))}"
                       ></span>
                     </div>
                     <span
@@ -532,7 +503,7 @@
                   1
                 </a>
                 <span class="pagination-gap" th:if="${start > 1}" aria-hidden="true">…</span>
-                <th:block th:each="index : ${display.pageNumbers(start, end)}">
+                <th:block th:each="index : ${#numbers.sequence(start, end)}">
                   <span
                     class="page-link active"
                     th:if="${index == currentPage}"

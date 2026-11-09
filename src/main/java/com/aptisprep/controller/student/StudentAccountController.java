@@ -4,10 +4,12 @@ import com.aptisprep.controller.ListPagination;
 import com.aptisprep.dto.form.GoalForm;
 import com.aptisprep.dto.form.ProfileForm;
 import com.aptisprep.dto.view.AccountSnapshot;
+import com.aptisprep.enums.Skill;
 import com.aptisprep.exception.BusinessRuleException;
 import com.aptisprep.service.account.AccountProfileService;
 import com.aptisprep.service.account.LearningActivityService;
 import com.aptisprep.service.contract.IntegrationModels.AttemptHandle;
+import com.aptisprep.service.learning.LessonService;
 import com.aptisprep.service.placement.PlacementService;
 import com.aptisprep.service.scoring.ScoringGuideService;
 import jakarta.validation.Valid;
@@ -43,6 +45,7 @@ public class StudentAccountController {
         AccountSnapshot snapshot = accounts.snapshot(principal.getName());
         model.addAttribute("account", snapshot);
         model.addAttribute("activity", activity.activity(principal.getName()));
+        model.addAttribute("skillCodes", Skill.codes());
         if (!model.containsAttribute("profileForm")) {
             ProfileForm form = new ProfileForm();
             form.setFullName(snapshot.fullName());
@@ -75,6 +78,7 @@ public class StudentAccountController {
     @GetMapping("/student/goals")
     public String goals(Principal principal, Model model) {
         model.addAttribute("certificates", accounts.activeCertificates());
+        model.addAttribute("learningLevels", LessonService.LEVELS);
         if (!model.containsAttribute("goalForm"))
             model.addAttribute(
                     "goalForm", accounts.formFrom(accounts.snapshot(principal.getName())));
@@ -90,6 +94,7 @@ public class StudentAccountController {
             RedirectAttributes redirectAttributes) {
         if (bindingResult.hasErrors()) {
             model.addAttribute("certificates", accounts.activeCertificates());
+            model.addAttribute("learningLevels", LessonService.LEVELS);
             return "student/account/goals";
         }
         try {
@@ -97,6 +102,7 @@ public class StudentAccountController {
         } catch (BusinessRuleException exception) {
             bindingResult.reject("goal.invalid", exception.getMessage());
             model.addAttribute("certificates", accounts.activeCertificates());
+            model.addAttribute("learningLevels", LessonService.LEVELS);
             return "student/account/goals";
         }
         redirectAttributes.addFlashAttribute(
@@ -135,7 +141,8 @@ public class StudentAccountController {
                     + ("IN_PROGRESS".equals(handle.state()) ? "" : "/result");
         } catch (BusinessRuleException e) {
             redirect.addFlashAttribute("error", e.getMessage());
-            return "redirect:/student/placement?skill=" + skill;
+            redirect.addAttribute("skill", skill);
+            return "redirect:/student/placement";
         }
     }
 

@@ -12,6 +12,10 @@ import org.springframework.web.bind.annotation.*;
 
 @Controller
 public class AdminResultController {
+    private static final List<String> EXAM_TYPES =
+            List.of("PLACEMENT", "PRACTICE", "CHECKPOINT", "FULL_MOCK");
+    private static final List<String> RESULT_STATES =
+            List.of("IN_PROGRESS", "WAITING_GRADING", "COMPLETED", "ERROR", "EXPIRED");
     private final ExamAttemptContract attempts;
 
     public AdminResultController(ExamAttemptContract attempts) {
@@ -20,12 +24,12 @@ public class AdminResultController {
 
     @GetMapping("/admin/results")
     public String list(
-            @RequestParam(defaultValue = "") String q,
-            @RequestParam(defaultValue = "") String skill,
-            @RequestParam(defaultValue = "") String examType,
-            @RequestParam(defaultValue = "") String state,
-            @RequestParam(defaultValue = "") String from,
-            @RequestParam(defaultValue = "") String to,
+            @RequestParam(name = "q", defaultValue = "") String q,
+            @RequestParam(name = "skill", defaultValue = "") String skill,
+            @RequestParam(name = "examType", defaultValue = "") String examType,
+            @RequestParam(name = "state", defaultValue = "") String state,
+            @RequestParam(name = "from", defaultValue = "") String from,
+            @RequestParam(name = "to", defaultValue = "") String to,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             Principal principal,
@@ -57,6 +61,8 @@ public class AdminResultController {
         model.addAttribute(
                 "skills",
                 List.of("GRAMMAR_VOCABULARY", "READING", "LISTENING", "WRITING", "SPEAKING"));
+        model.addAttribute("examTypes", EXAM_TYPES);
+        model.addAttribute("resultStates", RESULT_STATES);
         return "admin/result/list";
     }
 

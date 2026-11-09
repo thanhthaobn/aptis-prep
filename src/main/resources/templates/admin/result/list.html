@@ -77,44 +77,18 @@
         </button>
 
         <nav class="nav-links" id="primaryNav" aria-label="Điều hướng chính">
-          <a
-            th:href="@{/}"
-            th:classappend="${navSection == 'home'} ? 'active'"
-            th:attr="aria-current=${navSection == 'home' ? 'page' : null}"
-          >
-            Trang chủ
-          </a>
-          <a
-            th:if="${isStudent}"
-            th:href="@{/student/dashboard}"
-            th:classappend="${navSection == 'student'} ? 'active'"
-            th:attr="aria-current=${navSection == 'student' ? 'page' : null}"
-          >
-            Học tập
-          </a>
+          <a th:href="@{/}">Trang chủ</a>
+          <a th:if="${isStudent}" th:href="@{/student/dashboard}">Học tập</a>
           <a
             th:if="${isAdmin}"
             th:href="@{/admin/dashboard}"
-            th:classappend="${navSection == 'admin'} ? 'active'"
-            th:attr="aria-current=${navSection == 'admin' ? 'page' : null}"
+            th:classappend="'active'"
+            aria-current="page"
           >
             Quản trị
           </a>
-          <a
-            th:if="${signedIn != true}"
-            th:href="@{/login}"
-            th:classappend="${navSection == 'login'} ? 'active'"
-            th:attr="aria-current=${navSection == 'login' ? 'page' : null}"
-          >
-            Đăng nhập
-          </a>
-          <a
-            th:if="${signedIn != true}"
-            class="button button-small"
-            th:href="@{/register}"
-            th:classappend="${navSection == 'register'} ? 'active'"
-            th:attr="aria-current=${navSection == 'register' ? 'page' : null}"
-          >
+          <a th:if="${signedIn != true}" th:href="@{/login}">Đăng nhập</a>
+          <a th:if="${signedIn != true}" class="button button-small" th:href="@{/register}">
             Đăng ký
           </a>
           <form th:if="${signedIn}" th:action="@{/logout}" method="post">
@@ -278,7 +252,7 @@
             <select id="examType" name="examType">
               <option value="">Tất cả</option>
               <option
-                th:each="v : ${display.examTypes()}"
+                th:each="v : ${examTypes}"
                 th:value="${v}"
                 th:text="${@resultLabels.examType(v)}"
                 th:selected="${selectedExamType==v}"
@@ -290,7 +264,7 @@
             <select id="state" name="state">
               <option value="">Tất cả</option>
               <option
-                th:each="v : ${display.resultStates()}"
+                th:each="v : ${resultStates}"
                 th:value="${v}"
                 th:text="${@resultLabels.state(v)}"
                 th:selected="${selectedState==v}"
@@ -343,7 +317,7 @@
                 ></td>
                 <td
                   data-label="Nộp bài"
-                  th:text="${item.result.submittedAt==null?'Chưa nộp':display.dateTime(item.result.submittedAt)}"
+                  th:text="${item.result.submittedAt==null?'Chưa nộp':#temporals.format(item.result.submittedAt, 'dd/MM/yyyy HH:mm')}"
                 ></td>
                 <td data-label="Thao tác">
                   <a th:href="@{/admin/results/{id}(id=${item.result.attemptId})}">Xem chi tiết</a>
@@ -393,7 +367,7 @@
                   1
                 </a>
                 <span class="pagination-gap" th:if="${start > 1}" aria-hidden="true">…</span>
-                <th:block th:each="index : ${display.pageNumbers(start, end)}">
+                <th:block th:each="index : ${#numbers.sequence(start, end)}">
                   <span
                     class="page-link active"
                     th:if="${index == currentPage}"

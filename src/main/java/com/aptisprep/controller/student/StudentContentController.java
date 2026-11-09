@@ -1,12 +1,14 @@
 package com.aptisprep.controller.student;
 
 import com.aptisprep.dto.view.StudentCatalogView.Entry;
+import com.aptisprep.enums.Skill;
 import com.aptisprep.exception.BusinessRuleException;
 import com.aptisprep.service.account.AccountAccessService;
 import com.aptisprep.service.contract.ExamAttemptContract;
 import com.aptisprep.service.contract.IntegrationModels.AttemptResult;
 import com.aptisprep.service.contract.IntegrationModels.HistoryFilter;
 import com.aptisprep.service.contract.IntegrationModels.HistoryPage;
+import com.aptisprep.service.learning.LessonService;
 import com.aptisprep.service.scoring.ScoringGuideService;
 import com.aptisprep.service.student.StudentExamCatalogService;
 import com.aptisprep.service.student.StudentExamCatalogService.Catalog;
@@ -46,10 +48,10 @@ public class StudentContentController {
     public String list(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "9") int size,
-            @RequestParam(defaultValue = "") String q,
-            @RequestParam(defaultValue = "") String skill,
-            @RequestParam(defaultValue = "") String level,
-            @RequestParam(defaultValue = "") String state,
+            @RequestParam(name = "q", defaultValue = "") String q,
+            @RequestParam(name = "skill", defaultValue = "") String skill,
+            @RequestParam(name = "level", defaultValue = "") String level,
+            @RequestParam(name = "state", defaultValue = "") String state,
             @RequestParam(defaultValue = "PRACTICE") String examType,
             @RequestParam(defaultValue = "level") String sort,
             Model model) {
@@ -84,6 +86,8 @@ public class StudentContentController {
         model.addAttribute("selectedSkill", skill);
         model.addAttribute("selectedLevel", level);
         model.addAttribute("selectedState", state);
+        model.addAttribute("skillCodes", Skill.codes());
+        model.addAttribute("learningLevels", LessonService.LEVELS);
         return "student/content/list";
     }
 
@@ -91,10 +95,10 @@ public class StudentContentController {
     public String results(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
-            @RequestParam(defaultValue = "") String q,
-            @RequestParam(defaultValue = "") String skill,
-            @RequestParam(defaultValue = "") String examType,
-            @RequestParam(defaultValue = "") String state,
+            @RequestParam(name = "q", defaultValue = "") String q,
+            @RequestParam(name = "skill", defaultValue = "") String skill,
+            @RequestParam(name = "examType", defaultValue = "") String examType,
+            @RequestParam(name = "state", defaultValue = "") String state,
             Principal principal,
             Model model) {
         if (page < 0 || size < 1 || size > 50)
@@ -136,8 +140,9 @@ public class StudentContentController {
         model.addAttribute("entry", entry);
         if (!"CHECKPOINT".equals(entry.examType()) && !"PLACEMENT".equals(entry.examType())) {
             Integer userId = accounts.requireActiveStudent(principal.getName());
-            attempts.latestResumableAttemptId(userId, id)
-                    .ifPresent(attemptId -> model.addAttribute("resumableAttemptId", attemptId));
+            Integer resumableAttemptId = attempts.latestResumableAttemptId(userId, id);
+            if (resumableAttemptId != null)
+                model.addAttribute("resumableAttemptId", resumableAttemptId);
         }
         model.addAttribute("scoreGuides", scoringGuides.forExam(id));
         return "student/content/detail";

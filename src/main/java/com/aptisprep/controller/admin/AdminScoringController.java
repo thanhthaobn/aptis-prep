@@ -1,8 +1,9 @@
 package com.aptisprep.controller.admin;
 
-import com.aptisprep.controller.DisplayFormatting;
 import com.aptisprep.controller.ListPagination;
 import com.aptisprep.dto.form.*;
+import com.aptisprep.enums.CefrLevel;
+import com.aptisprep.enums.Skill;
 import com.aptisprep.exception.BusinessRuleException;
 import com.aptisprep.repository.MockExamRepository;
 import com.aptisprep.service.scoring.ScoringAdminService;
@@ -11,6 +12,7 @@ import jakarta.validation.Valid;
 import java.security.Principal;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.TreeSet;
 import java.util.stream.Collectors;
 import org.springframework.stereotype.Controller;
@@ -21,15 +23,27 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 @Controller
 public class AdminScoringController {
+    private static final List<String> EXAM_TYPES =
+            List.of("PLACEMENT", "PRACTICE", "CHECKPOINT", "FULL_MOCK");
+    private static final Map<String, String> EXAM_TYPE_LABELS =
+            Map.of(
+                    "PLACEMENT", "Kiểm tra đầu vào",
+                    "CHECKPOINT", "Kiểm tra cuối chặng",
+                    "FULL_MOCK", "Thi thử tổng hợp",
+                    "PRACTICE", "Bài luyện tập");
+    private static final Map<String, String> SKILL_LABELS =
+            Map.of(
+                    "GRAMMAR_VOCABULARY", "Grammar & Vocabulary",
+                    "READING", "Reading",
+                    "LISTENING", "Listening",
+                    "WRITING", "Writing",
+                    "SPEAKING", "Speaking");
     private final ScoringAdminService scoring;
     private final MockExamRepository exams;
-    private final DisplayFormatting display;
 
-    public AdminScoringController(
-            ScoringAdminService scoring, MockExamRepository exams, DisplayFormatting display) {
+    public AdminScoringController(ScoringAdminService scoring, MockExamRepository exams) {
         this.scoring = scoring;
         this.exams = exams;
-        this.display = display;
     }
 
     @GetMapping("/admin/settings")
@@ -49,12 +63,13 @@ public class AdminScoringController {
     @GetMapping("/admin/scoring-schemes")
     public String showScoringSchemes(
             @RequestParam(defaultValue = "0") int schemePage,
-            @RequestParam(defaultValue = "") String examType,
+            @RequestParam(name = "examType", defaultValue = "") String examType,
             @RequestParam(required = false) Integer certificateId,
             Model model) {
-        if (!examType.isBlank()
-                && !"UNASSIGNED".equals(examType)
-                && !display.examTypes().contains(examType))
+        String normalizedExamType = examType == null ? "" : examType;
+        if (!normalizedExamType.isBlank()
+                && !"UNASSIGNED".equals(normalizedExamType)
+                && !EXAM_TYPES.contains(normalizedExamType))
             throw new BusinessRuleException("Loại đề không hợp lệ");
         var examTypes =
                 exams.findScoringSchemeExamTypes().stream()
@@ -72,22 +87,26 @@ public class AdminScoringController {
                                                 || certificateId.equals(scheme.certificateId()))
                         .filter(
                                 scheme ->
-                                        examType.isBlank()
-                                                || ("UNASSIGNED".equals(examType)
+                                        normalizedExamType.isBlank()
+                                                || ("UNASSIGNED".equals(normalizedExamType)
                                                         ? !examTypes.containsKey(scheme.id())
-                                                        : examType.equals(scheme.examType())
+                                                        : normalizedExamType.equals(
+                                                                        scheme.examType())
                                                                 || examTypes.containsKey(
                                                                                 scheme.id())
                                                                         && examTypes
                                                                                 .get(scheme.id())
                                                                                 .contains(
-                                                                                        examType)))
+                                                                                        normalizedExamType)))
                         .toList();
         model.addAttribute("schemePage", ListPagination.slice(schemes, schemePage));
         model.addAttribute("schemeExamTypes", examTypes);
-        model.addAttribute("examType", examType);
+        model.addAttribute("examType", normalizedExamType);
         model.addAttribute("certificateId", certificateId);
         model.addAttribute("certificates", scoring.certificateViews());
+        model.addAttribute("examTypes", EXAM_TYPES);
+        model.addAttribute("examTypeLabels", EXAM_TYPE_LABELS);
+        model.addAttribute("skillLabels", SKILL_LABELS);
         return "admin/settings/schemes";
     }
 
@@ -340,7 +359,8 @@ public class AdminScoringController {
                     default -> throw new BusinessRuleException("Kỹ năng không hợp lệ");
                 };
         ScoringViews.SchemeView value = scoring.scheme(id);
-        if (value.scopeSkill() != null) skill = display.catalogSkill(value.scopeSkill());
+        if (value.scopeSkill() != null)
+            skill = SKILL_LABELS.getOrDefault(value.scopeSkill(), value.scopeSkill());
         schemeOptions(model);
         if (value.scopeSkill() != null) model.addAttribute("skills", List.of(skill));
         model.addAttribute("scheme", value);
@@ -353,6 +373,10 @@ public class AdminScoringController {
         model.addAttribute("readOnly", readOnly);
         model.addAttribute("selectedSkill", skill);
         model.addAttribute("bands", scoring.bandViews(id, skill));
+        Object bandErrors = model.getAttribute(BindingResult.MODEL_KEY_PREFIX + "bandForm");
+        model.addAttribute(
+                "bandFormHasErrors",
+                bandErrors instanceof BindingResult result && result.hasErrors());
         if (!model.containsAttribute("scaleRuleForm"))
             model.addAttribute("scaleRuleForm", scoring.scaleRule(id, skill));
         if (!model.containsAttribute("bandForm")) {
@@ -393,6 +417,12 @@ public class AdminScoringController {
 
     private void schemeOptions(Model model) {
         model.addAttribute("certificates", scoring.certificateViews());
+        model.addAttribute("examTypes", EXAM_TYPES);
+        model.addAttribute("scoringLevels", CefrLevel.codes());
+        model.addAttribute("fullMockScoringLevels", CefrLevel.scoringCodes());
+        model.addAttribute("skillCodes", Skill.codes());
+        model.addAttribute("examTypeLabels", EXAM_TYPE_LABELS);
+        model.addAttribute("skillLabels", SKILL_LABELS);
         model.addAttribute(
                 "skills",
                 List.of("Grammar & Vocabulary", "Reading", "Listening", "Writing", "Speaking"));

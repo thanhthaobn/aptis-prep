@@ -77,44 +77,18 @@
         </button>
 
         <nav class="nav-links" id="primaryNav" aria-label="Điều hướng chính">
-          <a
-            th:href="@{/}"
-            th:classappend="${navSection == 'home'} ? 'active'"
-            th:attr="aria-current=${navSection == 'home' ? 'page' : null}"
-          >
-            Trang chủ
-          </a>
-          <a
-            th:if="${isStudent}"
-            th:href="@{/student/dashboard}"
-            th:classappend="${navSection == 'student'} ? 'active'"
-            th:attr="aria-current=${navSection == 'student' ? 'page' : null}"
-          >
-            Học tập
-          </a>
+          <a th:href="@{/}">Trang chủ</a>
+          <a th:if="${isStudent}" th:href="@{/student/dashboard}">Học tập</a>
           <a
             th:if="${isAdmin}"
             th:href="@{/admin/dashboard}"
-            th:classappend="${navSection == 'admin'} ? 'active'"
-            th:attr="aria-current=${navSection == 'admin' ? 'page' : null}"
+            th:classappend="'active'"
+            aria-current="page"
           >
             Quản trị
           </a>
-          <a
-            th:if="${signedIn != true}"
-            th:href="@{/login}"
-            th:classappend="${navSection == 'login'} ? 'active'"
-            th:attr="aria-current=${navSection == 'login' ? 'page' : null}"
-          >
-            Đăng nhập
-          </a>
-          <a
-            th:if="${signedIn != true}"
-            class="button button-small"
-            th:href="@{/register}"
-            th:classappend="${navSection == 'register'} ? 'active'"
-            th:attr="aria-current=${navSection == 'register' ? 'page' : null}"
-          >
+          <a th:if="${signedIn != true}" th:href="@{/login}">Đăng nhập</a>
+          <a th:if="${signedIn != true}" class="button button-small" th:href="@{/register}">
             Đăng ký
           </a>
           <form th:if="${signedIn}" th:action="@{/logout}" method="post">
@@ -393,14 +367,17 @@
                     th:text="${entry.subtitle}"
                   ></p>
                 </td>
-                <td data-label="Kỹ năng" th:text="${display.catalogSkill(entry.skill)}"></td>
+                <td
+                  data-label="Kỹ năng"
+                  th:text="${entry.skill == 'FULL_MOCK' ? 'Tổng hợp' : (entry.skill == 'GRAMMAR_VOCABULARY' ? 'Grammar & Vocabulary' : entry.skill)}"
+                ></td>
                 <td
                   th:attr="data-label=${catalog.key == 'results' ? 'CEFR ước lượng' : 'Cấp độ'}"
                   th:text="${entry.level}"
                 ></td>
                 <td
                   th:attr="data-label=${catalog.typeLabel}"
-                  th:text="${catalog.key == 'exams' ? display.historyExamType(entry.kind) : entry.kind}"
+                  th:text="${catalog.key == 'exams' ? examTypeLabels[entry.kind] : entry.kind}"
                 ></td>
                 <td data-label="Trạng thái">
                   <span
@@ -487,7 +464,7 @@
                   1
                 </a>
                 <span class="pagination-gap" th:if="${start > 1}" aria-hidden="true">…</span>
-                <th:block th:each="index : ${display.pageNumbers(start, end)}">
+                <th:block th:each="index : ${#numbers.sequence(start, end)}">
                   <span
                     class="page-link active"
                     th:if="${index == currentPage}"

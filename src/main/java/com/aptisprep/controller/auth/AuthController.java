@@ -40,11 +40,15 @@ public class AuthController {
 
     @PostMapping("/login")
     public String login(
-            @RequestParam(defaultValue = "") String email,
-            @RequestParam(defaultValue = "") String password,
-            HttpServletRequest request) {
-        User user = userService.authenticate(email, password).orElse(null);
-        if (user == null) return "redirect:/login?error";
+            @RequestParam(name = "email", defaultValue = "") String email,
+            @RequestParam(name = "password", defaultValue = "") String password,
+            HttpServletRequest request,
+            RedirectAttributes redirectAttributes) {
+        User user = userService.getUserByEmailAndPassword(email, password);
+        if (user == null) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Email hoặc mật khẩu không đúng.");
+            return "redirect:/login";
+        }
         LoginSession.start(request, user);
         return user.getRole() == Role.ADMIN
                 ? "redirect:/admin/dashboard"
@@ -52,9 +56,10 @@ public class AuthController {
     }
 
     @PostMapping("/logout")
-    public String logout(HttpServletRequest request) {
+    public String logout(HttpServletRequest request, RedirectAttributes redirectAttributes) {
         LoginSession.end(request);
-        return "redirect:/login?logout";
+        redirectAttributes.addFlashAttribute("successMessage", "Bạn đã đăng xuất.");
+        return "redirect:/login";
     }
 
     @GetMapping("/register")

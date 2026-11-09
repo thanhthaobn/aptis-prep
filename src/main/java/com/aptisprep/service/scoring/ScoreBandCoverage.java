@@ -7,12 +7,12 @@ import com.aptisprep.exception.BusinessRuleException;
 import java.math.BigDecimal;
 import java.util.List;
 
-final class ScoreBandCoverage {
+public final class ScoreBandCoverage {
     private static final BigDecimal SCORE_STEP = new BigDecimal("0.01");
 
     private ScoreBandCoverage() {}
 
-    static void requireComplete(ScoringScaleRule rule, List<ScoreBand> bands) {
+    public static void requireComplete(ScoringScaleRule rule, List<ScoreBand> bands) {
         if (rule == null
                 || rule.getScaleMin() == null
                 || rule.getScaleMax() == null

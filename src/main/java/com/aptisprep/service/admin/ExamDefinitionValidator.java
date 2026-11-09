@@ -16,8 +16,9 @@ import org.springframework.stereotype.Component;
 
 /** Read-only validation of exam policy, sections and question selection. */
 @Component
-final class ExamDefinitionValidator {
-    static final List<String> TYPES = List.of("PLACEMENT", "PRACTICE", "CHECKPOINT", "FULL_MOCK");
+public final class ExamDefinitionValidator {
+    public static final List<String> TYPES =
+            List.of("PLACEMENT", "PRACTICE", "CHECKPOINT", "FULL_MOCK");
     private static final List<String> SKILLS = Skill.codes();
     private static final List<String> LEVELS = CefrLevel.codes();
     private final CertificateRepository certificateRepository;
@@ -25,7 +26,7 @@ final class ExamDefinitionValidator {
     private final QuestionRepository questionRepository;
     private final CertificateSchemeContract certificateSchemes;
 
-    ExamDefinitionValidator(
+    public ExamDefinitionValidator(
             CertificateRepository certificateRepository,
             ScoringSchemeRepository scoringSchemeRepository,
             QuestionRepository questionRepository,
@@ -36,7 +37,7 @@ final class ExamDefinitionValidator {
         this.certificateSchemes = certificateSchemes;
     }
 
-    void validateBasics(ExamForm f) {
+    public void validateBasics(ExamForm f) {
         if (f.getTitle() == null || f.getTitle().isBlank() || f.getTitle().length() > 255)
             throw new BusinessRuleException("Tên đề thi là bắt buộc");
         if (!TYPES.contains(f.getExamType())
@@ -114,7 +115,7 @@ final class ExamDefinitionValidator {
                         f.getCertificateId(), f.getScoringSchemeId(), section.getSkill());
     }
 
-    void validateQuestionSelection(List<Integer> ids, String skill) {
+    public void validateQuestionSelection(List<Integer> ids, String skill) {
         Set<Integer> unique = new HashSet<>(ids);
         if (unique.size() != ids.size())
             throw new BusinessRuleException("Một câu hỏi không được chọn lặp trong cùng đề");

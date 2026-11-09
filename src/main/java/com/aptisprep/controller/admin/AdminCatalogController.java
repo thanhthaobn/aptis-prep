@@ -5,6 +5,7 @@ import com.aptisprep.dto.form.QuestionForm;
 import com.aptisprep.dto.view.AdminCatalogView.CatalogPage;
 import com.aptisprep.exception.BusinessRuleException;
 import com.aptisprep.service.admin.CatalogService;
+import java.util.Map;
 import org.springframework.core.io.Resource;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -17,6 +18,12 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 @Controller
 public class AdminCatalogController {
+    private static final Map<String, String> EXAM_TYPE_LABELS =
+            Map.of(
+                    "PLACEMENT", "Kiểm tra đầu vào",
+                    "CHECKPOINT", "Kiểm tra cuối chặng",
+                    "FULL_MOCK", "Thi thử tổng hợp",
+                    "PRACTICE", "Bài luyện tập");
     private final CatalogService catalogService;
 
     public AdminCatalogController(CatalogService catalogService) {
@@ -25,10 +32,10 @@ public class AdminCatalogController {
 
     @GetMapping("/admin/questions")
     public String questions(
-            @RequestParam(defaultValue = "") String q,
-            @RequestParam(defaultValue = "") String skill,
-            @RequestParam(defaultValue = "") String status,
-            @RequestParam(defaultValue = "") String kind,
+            @RequestParam(name = "q", defaultValue = "") String q,
+            @RequestParam(name = "skill", defaultValue = "") String skill,
+            @RequestParam(name = "status", defaultValue = "") String status,
+            @RequestParam(name = "kind", defaultValue = "") String kind,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             Model model) {
@@ -37,10 +44,10 @@ public class AdminCatalogController {
 
     @GetMapping("/admin/exams")
     public String exams(
-            @RequestParam(defaultValue = "") String q,
-            @RequestParam(defaultValue = "") String skill,
-            @RequestParam(defaultValue = "") String status,
-            @RequestParam(defaultValue = "") String kind,
+            @RequestParam(name = "q", defaultValue = "") String q,
+            @RequestParam(name = "skill", defaultValue = "") String skill,
+            @RequestParam(name = "status", defaultValue = "") String status,
+            @RequestParam(name = "kind", defaultValue = "") String kind,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             Model model) {
@@ -65,6 +72,7 @@ public class AdminCatalogController {
         model.addAttribute("selectedSkill", skill);
         model.addAttribute("selectedStatus", status);
         model.addAttribute("selectedKind", kind);
+        model.addAttribute("examTypeLabels", EXAM_TYPE_LABELS);
         return "admin/catalog/list";
     }
 
