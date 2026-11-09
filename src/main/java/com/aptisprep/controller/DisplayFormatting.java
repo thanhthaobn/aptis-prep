@@ -99,10 +99,6 @@ public class DisplayFormatting {
         return CefrLevel.BELOW_A1.equals(level) ? "Dưới A1" : level;
     }
 
-    public List<String> skillCodes() {
-        return Skill.codes();
-    }
-
     public String catalogSkill(String skill) {
         if ("FULL_MOCK".equals(skill)) return "Tổng hợp";
         for (Skill value : Skill.values()) {

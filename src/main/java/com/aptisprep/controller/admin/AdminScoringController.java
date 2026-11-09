@@ -4,6 +4,7 @@ import com.aptisprep.controller.DisplayFormatting;
 import com.aptisprep.controller.ListPagination;
 import com.aptisprep.dto.form.*;
 import com.aptisprep.enums.CefrLevel;
+import com.aptisprep.enums.Skill;
 import com.aptisprep.exception.BusinessRuleException;
 import com.aptisprep.repository.MockExamRepository;
 import com.aptisprep.service.scoring.ScoringAdminService;
@@ -400,6 +401,7 @@ public class AdminScoringController {
         model.addAttribute("examTypes", EXAM_TYPES);
         model.addAttribute("scoringLevels", CefrLevel.codes());
         model.addAttribute("fullMockScoringLevels", CefrLevel.scoringCodes());
+        model.addAttribute("skillCodes", Skill.codes());
         model.addAttribute(
                 "skills",
                 List.of("Grammar & Vocabulary", "Reading", "Listening", "Writing", "Speaking"));

@@ -366,7 +366,7 @@
               <select id="schemeScopeSkill" th:field="*{scopeSkill}" th:disabled="${readOnly}">
                 <option value="">Chọn kỹ năng</option>
                 <option
-                  th:each="skill : ${display.skillCodes()}"
+                  th:each="skill : ${skillCodes}"
                   th:value="${skill}"
                   th:text="${display.catalogSkill(skill)}"
                 ></option>
@@ -430,7 +430,7 @@
             <div id="scheme-combined-ranges">
               <fieldset
                 class="catalog-form-section"
-                th:each="skill : ${display.skillCodes()}"
+                th:each="skill : ${skillCodes}"
                 th:disabled="${readOnly}"
                 th:attr="data-scoring-skill=${skill}"
                 th:with="scale=${schemeForm.skillScales.get(skill)}"

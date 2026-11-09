@@ -334,7 +334,7 @@
             <select id="result-skill" name="skill">
               <option value="">Tất cả kỹ năng</option>
               <option
-                th:each="value : ${display.skillCodes()}"
+                th:each="value : ${skillCodes}"
                 th:value="${value}"
                 th:text="${(value == null ? null : value.replace('_', ' &amp; '))}"
                 th:selected="${selectedSkill == value}"

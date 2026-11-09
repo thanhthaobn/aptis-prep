@@ -10,6 +10,7 @@ import com.aptisprep.service.account.LearningActivityService;
 import com.aptisprep.service.contract.IntegrationModels.AttemptHandle;
 import com.aptisprep.service.placement.PlacementService;
 import com.aptisprep.service.scoring.ScoringGuideService;
+import com.aptisprep.enums.Skill;
 import jakarta.validation.Valid;
 import java.security.Principal;
 import java.util.List;
@@ -43,6 +44,7 @@ public class StudentAccountController {
         AccountSnapshot snapshot = accounts.snapshot(principal.getName());
         model.addAttribute("account", snapshot);
         model.addAttribute("activity", activity.activity(principal.getName()));
+        model.addAttribute("skillCodes", Skill.codes());
         if (!model.containsAttribute("profileForm")) {
             ProfileForm form = new ProfileForm();
             form.setFullName(snapshot.fullName());

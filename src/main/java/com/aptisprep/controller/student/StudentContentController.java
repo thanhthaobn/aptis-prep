@@ -9,6 +9,7 @@ import com.aptisprep.service.contract.IntegrationModels.HistoryFilter;
 import com.aptisprep.service.contract.IntegrationModels.HistoryPage;
 import com.aptisprep.service.scoring.ScoringGuideService;
 import com.aptisprep.service.student.StudentExamCatalogService;
+import com.aptisprep.enums.Skill;
 import com.aptisprep.service.student.StudentExamCatalogService.Catalog;
 import java.security.Principal;
 import java.util.ArrayList;
@@ -84,6 +85,7 @@ public class StudentContentController {
         model.addAttribute("selectedSkill", skill);
         model.addAttribute("selectedLevel", level);
         model.addAttribute("selectedState", state);
+        model.addAttribute("skillCodes", Skill.codes());
         return "student/content/list";
     }
 

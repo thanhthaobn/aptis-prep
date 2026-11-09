@@ -380,7 +380,7 @@
               </div>
               <ul class="compare-list">
                 <li
-                  th:each="code : ${display.skillCodes()}"
+                  th:each="code : ${skillCodes}"
                   class="compare-item"
                   th:with="targetLvl=${account.goal != null and account.goal.targets != null ? account.goal.targets.get(code) : null}"
                 >
