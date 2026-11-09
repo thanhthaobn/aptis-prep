@@ -48,7 +48,7 @@ public class AdminScoringController {
 
     @GetMapping("/admin/settings")
     public String settings() {
-        return "redirect:/admin/certificates";
+        return "redirect:/admin/scoring-schemes";
     }
 
     @GetMapping("/admin/certificates")

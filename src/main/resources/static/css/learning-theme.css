@@ -64,6 +64,7 @@ h1,h2,h3 { letter-spacing: -.015em; font-weight: 700; line-height: 1.3; }
 .sidebar-link.active { border-color: #a3d9cb; background: var(--color-primary-soft); color: var(--color-primary-dark); }
 .admin-theme .sidebar-link.active { border-color: var(--color-accent); background: var(--color-accent-soft); color: var(--color-primary-dark); }
 .sidebar-link.disabled { color: #a0a9a0; }
+.admin-theme .sidebar-link[href$="/admin/certificates"] { display: none; }
 .sidebar-label { padding-block: 1rem .5rem; font-size: .7rem; }
 .landing-theme .hero-shell { background: #fff; }.landing-theme .hero-shell::before { display: none; }
 .landing-theme .hero { min-height: 610px; gap: 5rem; }
