@@ -70,9 +70,10 @@ public class AdminScoringController {
              @RequestParam(name = "examType", required = false) String examType,
             @RequestParam(required = false) Integer certificateId,
             Model model) {
-        if (!examType.isBlank()
-                && !"UNASSIGNED".equals(examType)
-                && !EXAM_TYPES.contains(examType))
+        String normalizedExamType = examType == null ? "" : examType;
+        if (!normalizedExamType.isBlank()
+                && !"UNASSIGNED".equals(normalizedExamType)
+                && !EXAM_TYPES.contains(normalizedExamType))
             throw new BusinessRuleException("Loại đề không hợp lệ");
         var examTypes =
                 exams.findScoringSchemeExamTypes().stream()
@@ -90,20 +91,20 @@ public class AdminScoringController {
                                                 || certificateId.equals(scheme.certificateId()))
                         .filter(
                                 scheme ->
-                                        examType.isBlank()
-                                                || ("UNASSIGNED".equals(examType)
+                                        normalizedExamType.isBlank()
+                                                || ("UNASSIGNED".equals(normalizedExamType)
                                                         ? !examTypes.containsKey(scheme.id())
-                                                        : examType.equals(scheme.examType())
+                                                        : normalizedExamType.equals(scheme.examType())
                                                                 || examTypes.containsKey(
                                                                                 scheme.id())
                                                                         && examTypes
                                                                                 .get(scheme.id())
-                                                                                .contains(
-                                                                                        examType)))
+                                                                        .contains(
+                                                                                        normalizedExamType)))
                         .toList();
         model.addAttribute("schemePage", ListPagination.slice(schemes, schemePage));
         model.addAttribute("schemeExamTypes", examTypes);
-        model.addAttribute("examType", examType);
+        model.addAttribute("examType", normalizedExamType);
         model.addAttribute("certificateId", certificateId);
         model.addAttribute("certificates", scoring.certificateViews());
         model.addAttribute("examTypes", EXAM_TYPES);

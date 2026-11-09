@@ -36,14 +36,17 @@ public class StudentLessonController {
 
     @GetMapping("/student/lessons")
     public String list(
-             @RequestParam(name = "q", defaultValue = "") String q,
-             @RequestParam(name = "skill", defaultValue = "") String skill,
-             @RequestParam(name = "level", defaultValue = "") String level,
+             @RequestParam(name = "q", required = false) String q,
+             @RequestParam(name = "skill", required = false) String skill,
+             @RequestParam(name = "level", required = false) String level,
             Principal principal,
             Model m) {
-        if (q.length() > 255 || skill.length() > 80 || level.length() > 40)
+        String queryParam = q == null ? "" : q;
+        String skillParam = skill == null ? "" : skill;
+        String levelParam = level == null ? "" : level;
+        if (queryParam.length() > 255 || skillParam.length() > 80 || levelParam.length() > 40)
             throw new BusinessRuleException("Bộ lọc không hợp lệ");
-        String query = fold(q);
+        String query = fold(queryParam);
         List<Lesson> items =
                 service.publishedLessons().stream()
                         .filter(
@@ -55,8 +58,8 @@ public class StudentLessonController {
                                                                 + " "
                                                                 + topic(l))
                                                         .contains(query))
-                        .filter(l -> skill.isBlank() || l.getSkill().equals(skill))
-                        .filter(l -> level.isBlank() || l.getCefrLevel().equals(level))
+                        .filter(l -> skillParam.isBlank() || l.getSkill().equals(skillParam))
+                        .filter(l -> levelParam.isBlank() || l.getCefrLevel().equals(levelParam))
                         .toList();
         m.addAttribute("lessonTree", tree(items));
         m.addAttribute(
