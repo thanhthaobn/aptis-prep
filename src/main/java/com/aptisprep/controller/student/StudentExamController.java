@@ -87,7 +87,10 @@ public class StudentExamController {
     }
 
     @PostMapping("/student/attempts/{id}/exit")
-    public String exitAttempt(@PathVariable Integer id, Principal principal) {
+    public String exitAttempt(
+            @PathVariable Integer id,
+            Principal principal,
+            RedirectAttributes redirectAttributes) {
         Integer userId = accounts.requireActiveStudent(principal.getName());
         ExamAttemptService.AttemptPage page = attempts.page(userId, id);
         if ("PLACEMENT".equals(page.examType())) {
@@ -97,7 +100,8 @@ public class StudentExamController {
                             : page.questions().isEmpty()
                                     ? "READING"
                                     : page.questions().getFirst().skill();
-            return "redirect:/student/placement?skill=" + skill;
+            redirectAttributes.addAttribute("skill", skill);
+            return "redirect:/student/placement";
         }
         return "redirect:/student/exams";
     }

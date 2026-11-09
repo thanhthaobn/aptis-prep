@@ -141,7 +141,8 @@ public class StudentAccountController {
                     + ("IN_PROGRESS".equals(handle.state()) ? "" : "/result");
         } catch (BusinessRuleException e) {
             redirect.addFlashAttribute("error", e.getMessage());
-            return "redirect:/student/placement?skill=" + skill;
+            redirect.addAttribute("skill", skill);
+            return "redirect:/student/placement";
         }
     }
 
