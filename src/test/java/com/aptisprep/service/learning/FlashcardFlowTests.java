@@ -380,7 +380,9 @@ class FlashcardFlowTests {
         mvc.perform(get("/admin/flashcards/" + id + "/edit").with(user("admin").roles("ADMIN")))
                 .andExpect(status().isOk())
                 .andExpect(view().name("admin/flashcards/form"))
-                .andExpect(content().string(org.hamcrest.Matchers.containsString("name=\"lessonId\"")));
+                .andExpect(
+                        content()
+                                .string(org.hamcrest.Matchers.containsString("name=\"lessonId\"")));
         mvc.perform(get("/student/flashcards").with(user(a.getEmail()).roles("STUDENT")))
                 .andExpect(status().isOk())
                 .andExpect(view().name("student/flashcards/list"));
@@ -391,7 +393,8 @@ class FlashcardFlowTests {
                         content()
                                 .string(
                                         org.hamcrest.Matchers.not(
-                                                org.hamcrest.Matchers.containsString("name=\"lessonId\""))));
+                                                org.hamcrest.Matchers.containsString(
+                                                        "name=\"lessonId\""))));
         mvc.perform(get("/student/flashcards/" + id).with(user(a.getEmail()).roles("STUDENT")))
                 .andExpect(status().isOk())
                 .andExpect(

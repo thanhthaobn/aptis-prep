@@ -479,7 +479,8 @@ public class ExamAttemptService implements ExamAttemptContract {
                 || attempt.getFinalScaleScore() != null
                 || attempt.getEstimatedOverallCefr() != null
                 || examSkillResultRepository.existsByAttemptId(attemptId))
-            throw new BusinessRuleException("Chỉ có thể loại bỏ lượt thi chưa nộp và chưa có kết quả.");
+            throw new BusinessRuleException(
+                    "Chỉ có thể loại bỏ lượt thi chưa nộp và chưa có kết quả.");
         attempt.setStatus("CANCELLED");
         attempt.setGradingStatus("CANCELLED");
         // A new checkpoint may reuse the start key of the discarded attempt.

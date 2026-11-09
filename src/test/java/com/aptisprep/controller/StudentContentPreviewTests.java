@@ -350,10 +350,7 @@ class StudentContentPreviewTests {
                                 .with(csrf()))
                 .andExpect(redirectedUrl(attemptUrl))
                 .andExpect(flash().attributeCount(0));
-        mvc.perform(
-                        post(attemptUrl + "/discard")
-                                .with(learner)
-                                .with(csrf()))
+        mvc.perform(post(attemptUrl + "/discard").with(learner).with(csrf()))
                 .andExpect(redirectedUrl("/student/results"));
         mvc.perform(readingStart).andExpect(redirectedUrlPattern("/student/attempts/*"));
         mvc.perform(combinedStart)
