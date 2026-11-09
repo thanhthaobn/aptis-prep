@@ -456,6 +456,21 @@
 
 /* Aligned placement actions and compact learning overview. */
 .student-theme .placement-exam-row { display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 20px; align-items: center; }
+.student-theme .placement-exam-card { margin-top: 18px; padding: 18px 20px; }
+.student-theme .placement-exam-card .section-title-row { margin-bottom: 12px; }
+.student-theme .placement-exam-card .section-title-row h3 { margin: 0; font-size: 1.15rem; }
+.student-theme .placement-sections { display: grid; gap: 10px; }
+.student-theme .placement-sections .study-exam-section {
+  min-height: 0;
+  margin: 0;
+  padding: 14px 16px;
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  box-shadow: none;
+}
+.student-theme .placement-sections .study-exam-section h4 { margin: 0; font-size: 1rem; line-height: 1.35; }
+.student-theme .placement-sections .study-exam-section > strong { font-size: .85rem; }
+.student-theme .placement-exam-actions { margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--color-border); }
 .placement-exam-row > div:first-child { min-width: 0; }
 .placement-exam-row p { margin-bottom: 0; }
 .placement-exam-actions { display: flex; align-items: center; justify-content: flex-end; gap: 12px; }
