@@ -118,7 +118,7 @@ public class StudentLessonController {
     @PostMapping("/student/lessons/{id}/response")
     public String response(
             @PathVariable Integer id,
-            @RequestParam String response,
+            @RequestParam(name = "response") String response,
             Principal principal,
             RedirectAttributes redirect) {
         try {
@@ -133,7 +133,7 @@ public class StudentLessonController {
     @PostMapping("/student/lessons/{id}/assess")
     public String assess(
             @PathVariable Integer id,
-            @RequestParam Integer submissionId,
+            @RequestParam(name = "submissionId") Integer submissionId,
             Principal principal,
             RedirectAttributes redirect) {
         try {
@@ -148,7 +148,9 @@ public class StudentLessonController {
     @PostMapping("/student/lessons/{id}/response/autosave")
     @ResponseBody
     public void autosave(
-            @PathVariable Integer id, @RequestParam String response, Principal principal) {
+            @PathVariable Integer id,
+            @RequestParam(name = "response") String response,
+            Principal principal) {
         teaching.saveResponse(id, response, principal.getName());
     }
 
@@ -166,7 +168,9 @@ public class StudentLessonController {
     @PostMapping("/student/lessons/{id}/listening/start")
     @ResponseBody
     public LessonListeningService.Playback startListening(
-            @PathVariable Integer id, @RequestParam double position, Principal principal) {
+            @PathVariable Integer id,
+            @RequestParam(name = "position") double position,
+            Principal principal) {
         return listening.start(id, principal.getName(), position);
     }
 
@@ -174,11 +178,11 @@ public class StudentLessonController {
     @ResponseBody
     public LessonListeningService.Playback listeningHeartbeat(
             @PathVariable Integer id,
-            @RequestParam String token,
-            @RequestParam int sequence,
-            @RequestParam double position,
-            @RequestParam boolean playing,
-            @RequestParam(defaultValue = "false") boolean discontinuity,
+            @RequestParam(name = "token") String token,
+            @RequestParam(name = "sequence") int sequence,
+            @RequestParam(name = "position") double position,
+            @RequestParam(name = "playing") boolean playing,
+            @RequestParam(name = "discontinuity", defaultValue = "false") boolean discontinuity,
             Principal principal) {
         return listening.heartbeat(
                 id, principal.getName(), token, sequence, position, playing, discontinuity);
@@ -193,14 +197,15 @@ public class StudentLessonController {
 
     @PostMapping("/student/lessons/{id}/section")
     @ResponseBody
-    public void section(@PathVariable Integer id, @RequestParam String section, Principal p) {
+    public void section(
+            @PathVariable Integer id, @RequestParam(name = "section") String section, Principal p) {
         teaching.section(id, section, p.getName());
     }
 
     @PostMapping("/student/lessons/{id}/recording")
     public String recording(
             @PathVariable Integer id,
-            @RequestParam MultipartFile recording,
+            @RequestParam(name = "recording") MultipartFile recording,
             Principal p,
             RedirectAttributes r) {
         teaching.saveRecording(id, recording, p.getName());

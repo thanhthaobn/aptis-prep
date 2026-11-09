@@ -5,8 +5,10 @@ import com.aptisprep.event.AiAssessmentCompletedEvent;
 import com.aptisprep.event.AttemptCompletedEvent;
 import com.aptisprep.event.AttemptSubmittedEvent;
 import com.aptisprep.repository.AttemptOutboxRepository;
-import com.aptisprep.service.contract.IntegrationModels.LockedAttempt;
+import com.aptisprep.repository.ExamAttemptRepository;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
+import java.util.Base64;
 import java.util.List;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -20,14 +22,20 @@ import tools.jackson.databind.json.JsonMapper;
 public class AttemptOutboxService {
     private final AttemptOutboxRepository attemptOutboxRepository;
     private final ApplicationEventPublisher events;
+    private final ExamAttemptRepository attempts;
+    private final ExamGradingPayloadFactory gradingPayloads;
     private final JsonMapper json;
 
     public AttemptOutboxService(
             AttemptOutboxRepository attemptOutboxRepository,
             ApplicationEventPublisher events,
+            ExamAttemptRepository attempts,
+            ExamGradingPayloadFactory gradingPayloads,
             JsonMapper json) {
         this.attemptOutboxRepository = attemptOutboxRepository;
         this.events = events;
+        this.attempts = attempts;
+        this.gradingPayloads = gradingPayloads;
         this.json = json;
     }
 
@@ -37,13 +45,7 @@ public class AttemptOutboxService {
                 "attempt:" + event.attemptId() + ":submitted",
                 "ATTEMPT_SUBMITTED",
                 event.attemptId(),
-                json.writeValueAsString(
-                        new SubmittedPayload(
-                                event.userId(),
-                                event.attemptId(),
-                                event.examId(),
-                                event.examType(),
-                                event.lockedAttempt())));
+                flat(event.userId(), event.attemptId(), event.examId(), event.examType()));
     }
 
     @Transactional
@@ -118,15 +120,14 @@ public class AttemptOutboxService {
         row.setEventType("AI_ASSESSMENT_COMPLETED");
         row.setAggregateId(event.attemptId());
         row.setPayload(
-                json.writeValueAsString(
-                        new AiPayload(
-                                event.assessmentKey(),
-                                event.userId(),
-                                event.attemptId(),
-                                event.answerId(),
-                                event.state(),
-                                event.errorMessage(),
-                                event.answerVersion())));
+                flat(
+                        event.assessmentKey(),
+                        event.userId(),
+                        event.attemptId(),
+                        event.answerId(),
+                        event.state(),
+                        event.errorMessage(),
+                        event.answerVersion()));
         row.setStatus("PENDING");
         row.setAttempts(0);
         row.setNextAttemptAt(LocalDateTime.now());
@@ -140,43 +141,54 @@ public class AttemptOutboxService {
     }
 
     private void dispatch(AttemptOutboxEntity row) {
+        String payload = row.getPayload();
+        boolean legacyJson = payload.stripLeading().startsWith("{");
         if ("ATTEMPT_SUBMITTED".equals(row.getEventType())) {
-            SubmittedPayload payload;
-            try {
-                payload = json.readValue(row.getPayload(), SubmittedPayload.class);
-            } catch (RuntimeException legacyPayload) {
-                String[] values = row.getPayload().split("\\|", -1);
-                payload =
-                        new SubmittedPayload(
+            if (legacyJson) {
+                events.publishEvent(json.readValue(payload, AttemptSubmittedEvent.class));
+                return;
+            }
+            String[] values = payload.split("\\|", -1);
+            if (Character.isDigit(values[0].charAt(0))) {
+                // The original delimited format stored IDs as plain decimal strings.
+                events.publishEvent(
+                        new AttemptSubmittedEvent(
                                 Integer.valueOf(values[0]),
                                 Integer.valueOf(values[1]),
                                 Integer.valueOf(values[2]),
                                 values[3],
-                                null);
+                                null));
+                return;
             }
+            Integer attemptId = Integer.valueOf(decode(values[1]));
+            var attempt = attempts.findById(attemptId).orElseThrow();
             events.publishEvent(
                     new AttemptSubmittedEvent(
-                            payload.userId(),
-                            payload.attemptId(),
-                            payload.examId(),
-                            payload.examType(),
-                            payload.lockedAttempt()));
+                            Integer.valueOf(decode(values[0])),
+                            attemptId,
+                            Integer.valueOf(decode(values[2])),
+                            decode(values[3]),
+                            gradingPayloads.build(attempt)));
         } else if ("ATTEMPT_COMPLETED".equals(row.getEventType())) {
-            String[] values = row.getPayload().split("\\|", -1);
+            String[] values = payload.split("\\|", -1);
             events.publishEvent(
                     new AttemptCompletedEvent(
                             Integer.valueOf(values[0]), Integer.valueOf(values[1]), values[2]));
         } else if ("AI_ASSESSMENT_COMPLETED".equals(row.getEventType())) {
-            AiPayload payload = json.readValue(row.getPayload(), AiPayload.class);
+            if (legacyJson) {
+                events.publishEvent(json.readValue(payload, AiAssessmentCompletedEvent.class));
+                return;
+            }
+            String[] values = payload.split("\\|", -1);
             events.publishEvent(
                     new AiAssessmentCompletedEvent(
-                            payload.assessmentKey(),
-                            payload.userId(),
-                            payload.attemptId(),
-                            payload.answerId(),
-                            payload.state(),
-                            payload.errorMessage(),
-                            payload.answerVersion()));
+                            decode(values[0]),
+                            Integer.valueOf(decode(values[1])),
+                            Integer.valueOf(decode(values[2])),
+                            Integer.valueOf(decode(values[3])),
+                            decode(values[4]),
+                            decode(values[5]),
+                            Integer.valueOf(decode(values[6]))));
         }
     }
 
@@ -217,19 +229,19 @@ public class AttemptOutboxService {
                 : value.substring(0, Math.min(1000, value.length()));
     }
 
-    private record SubmittedPayload(
-            Integer userId,
-            Integer attemptId,
-            Integer examId,
-            String examType,
-            LockedAttempt lockedAttempt) {}
+    private String flat(Object... values) {
+        return java.util.Arrays.stream(values)
+                .map(value -> encode(value == null ? "" : value.toString()))
+                .collect(java.util.stream.Collectors.joining("|"));
+    }
 
-    private record AiPayload(
-            String assessmentKey,
-            Integer userId,
-            Integer attemptId,
-            Integer answerId,
-            String state,
-            String errorMessage,
-            Integer answerVersion) {}
+    private String encode(String value) {
+        return Base64.getUrlEncoder()
+                .withoutPadding()
+                .encodeToString(value.getBytes(StandardCharsets.UTF_8));
+    }
+
+    private String decode(String value) {
+        return new String(Base64.getUrlDecoder().decode(value), StandardCharsets.UTF_8);
+    }
 }

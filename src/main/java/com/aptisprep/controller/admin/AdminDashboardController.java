@@ -44,7 +44,7 @@ public class AdminDashboardController {
         model.addAttribute("lessonCount", lessonRepository.count());
         model.addAttribute("questionCount", questionRepository.count());
         model.addAttribute("publishedExamCount", mockExamRepository.countByStatus("PUBLISHED"));
-        PageRequest recent = PageRequest.of(0, 5, Sort.by(Sort.Direction.DESC, "updatedAt", "id"));
+        PageRequest recent = PageRequest.of(0, 3, Sort.by(Sort.Direction.DESC, "updatedAt", "id"));
         ArrayList<ContentUpdate> content = new ArrayList<ContentUpdate>();
         lessonRepository
                 .findAll(recent)
@@ -83,14 +83,14 @@ public class AdminDashboardController {
                                 Comparator.comparing(
                                         ContentUpdate::updatedAt,
                                         Comparator.nullsLast(Comparator.reverseOrder())))
-                        .limit(5)
+                        .limit(3)
                         .toList());
         model.addAttribute(
                 "recentAttempts",
                 attempts.adminHistory(
                                 principal.getName(),
                                 0,
-                                5,
+                                3,
                                 new AdminHistoryFilter("", "", "", "", null, null))
                         .items());
         return "admin/dashboard";

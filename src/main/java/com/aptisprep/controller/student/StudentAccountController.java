@@ -6,9 +6,12 @@ import com.aptisprep.dto.form.ProfileForm;
 import com.aptisprep.dto.view.AccountSnapshot;
 import com.aptisprep.enums.Skill;
 import com.aptisprep.exception.BusinessRuleException;
+import com.aptisprep.service.account.AccountAccessService;
 import com.aptisprep.service.account.AccountProfileService;
 import com.aptisprep.service.account.LearningActivityService;
+import com.aptisprep.service.contract.ExamAttemptContract;
 import com.aptisprep.service.contract.IntegrationModels.AttemptHandle;
+import com.aptisprep.service.exam.ExamAttemptService;
 import com.aptisprep.service.learning.LessonService;
 import com.aptisprep.service.placement.PlacementService;
 import com.aptisprep.service.scoring.ScoringGuideService;
@@ -28,16 +31,22 @@ public class StudentAccountController {
     private final PlacementService placement;
     private final AccountProfileService accounts;
     private final LearningActivityService activity;
+    private final ExamAttemptContract attempts;
+    private final AccountAccessService access;
 
     public StudentAccountController(
             PlacementService placement,
             AccountProfileService accounts,
             LearningActivityService activity,
-            ScoringGuideService scoringGuides) {
+            ScoringGuideService scoringGuides,
+            ExamAttemptContract attempts,
+            AccountAccessService access) {
         this.placement = placement;
         this.accounts = accounts;
         this.scoringGuides = scoringGuides;
         this.activity = activity;
+        this.attempts = attempts;
+        this.access = access;
     }
 
     @GetMapping("/student/profile")
@@ -77,7 +86,6 @@ public class StudentAccountController {
 
     @GetMapping("/student/goals")
     public String goals(Principal principal, Model model) {
-        model.addAttribute("certificates", accounts.activeCertificates());
         model.addAttribute("learningLevels", LessonService.LEVELS);
         if (!model.containsAttribute("goalForm"))
             model.addAttribute(
@@ -93,7 +101,6 @@ public class StudentAccountController {
             Model model,
             RedirectAttributes redirectAttributes) {
         if (bindingResult.hasErrors()) {
-            model.addAttribute("certificates", accounts.activeCertificates());
             model.addAttribute("learningLevels", LessonService.LEVELS);
             return "student/account/goals";
         }
@@ -101,7 +108,6 @@ public class StudentAccountController {
             accounts.saveGoal(principal.getName(), goalForm);
         } catch (BusinessRuleException exception) {
             bindingResult.reject("goal.invalid", exception.getMessage());
-            model.addAttribute("certificates", accounts.activeCertificates());
             model.addAttribute("learningLevels", LessonService.LEVELS);
             return "student/account/goals";
         }
@@ -149,11 +155,19 @@ public class StudentAccountController {
     @GetMapping("/student/placement/result")
     public String result(@RequestParam Integer attemptId, Principal principal, Model model) {
         var result = placement.result(principal.getName(), attemptId);
-        model.addAttribute("placementResult", result);
+        if ("IN_PROGRESS".equals(result.state())) return "redirect:/student/attempts/" + attemptId;
+        if ("EXPIRED".equals(result.state()) && result.submittedAt() == null)
+            return "redirect:/student/placement";
+        model.addAttribute("attemptResult", result);
+        model.addAttribute("fromPlacement", true);
+        Integer userId = access.requireActiveStudent(principal.getName());
+        if (!"IN_PROGRESS".equals(result.state())
+                && attempts instanceof ExamAttemptService reviewService)
+            model.addAttribute("review", reviewService.review(userId, attemptId));
         var scoreGuideView = scoringGuides.forResultView(result);
         model.addAttribute("scoreGuides", scoreGuideView.guides());
         model.addAttribute("feedbackWithoutGuide", scoreGuideView.feedbackWithoutGuide());
-        return "student/account/placement-result";
+        return "student/attempt-result";
     }
 
     private List<String> placementSkills() {

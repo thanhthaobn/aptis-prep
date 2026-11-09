@@ -190,11 +190,13 @@ public final class IntegrationModels {
             String overallCefr,
             Instant submittedAt) {
         public boolean canDiscard() {
-            return ("IN_PROGRESS".equals(state) || "EXPIRED".equals(state))
-                    && submittedAt == null
-                    && finalScaleScore == null
-                    && overallCefr == null
-                    && (skills == null || skills.isEmpty());
+            return "EXPIRED".equals(state)
+                    || "COMPLETED".equals(state)
+                    || ("IN_PROGRESS".equals(state)
+                            && submittedAt == null
+                            && finalScaleScore == null
+                            && overallCefr == null
+                            && (skills == null || skills.isEmpty()));
         }
 
         public boolean hasFullMockTotal() {

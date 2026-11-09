@@ -213,7 +213,10 @@
         </div>
       </aside>
       <main class="app-main student-content" id="main-content" tabindex="-1">
-        <a class="back-link" th:href="@{/student/results}">
+        <a
+          class="back-link"
+          th:href="${fromPlacement == true} ? @{/student/placement} : @{/student/results}"
+        >
           <svg
             viewBox="0 0 24 24"
             fill="none"
@@ -251,7 +254,7 @@
             th:text="${infoMessage != null ? infoMessage : info}"
           ></div>
         </div>
-        <th:block th:with="res=${attemptResult}, isPlacement=false">
+        <th:block th:with="res=${attemptResult}, isPlacement=${fromPlacement == true}">
           <div class="result-container">
             <header class="result-detail-header">
               <div>
@@ -305,6 +308,12 @@
               role="alert"
             >
               <p>Chấm điểm chưa thành công. Bài làm vẫn được lưu.</p>
+              <p
+                class="result-error-detail"
+                th:each="skill : ${res.skills}"
+                th:if="${skill.feedback != null and !skill.feedback.isBlank() and skill.gradingState == 'ERROR'}"
+                th:text="${skill.feedback}"
+              ></p>
               <form
                 th:if="${canRegradeEmpty == true}"
                 method="post"
@@ -348,7 +357,7 @@
                           th:text="${score == null ? '—' : score.stripTrailingZeros().toPlainString()}"
                         ></td>
                         <td
-                          th:text="${skill.gradingState == 'ERROR' ? 'Chấm lỗi' : (skill.gradingState == 'PENDING' or skill.gradingState == 'WAITING' ? 'Đang chấm' : (res.isCombined() and skill.skill == 'GRAMMAR_VOCABULARY' ? '—' : (skill.estimatedLevel != null ? (skill.estimatedLevel == 'A0' ? 'Dưới A1' : skill.estimatedLevel) : (skill.gradingState == 'COMPLETED' and score != null and (res.examType == 'CHECKPOINT' or res.examType == 'PRACTICE') ? 'Chưa đạt' : '—'))))}"
+                          th:text="${skill.gradingState == 'ERROR' ? 'Chấm lỗi' : (skill.gradingState == 'PENDING' or skill.gradingState == 'WAITING' ? 'Đang chấm' : (skill.estimatedLevel != null ? (skill.estimatedLevel == 'A0' ? 'Dưới A1' : skill.estimatedLevel) : (skill.gradingState == 'COMPLETED' and score != null and (res.examType == 'CHECKPOINT' or res.examType == 'PRACTICE') ? 'Chưa đạt' : '—')))}"
                         ></td>
                       </tr>
                     </th:block>
@@ -356,6 +365,87 @@
                 </table>
               </div>
             </section>
+
+            <details
+              class="dashboard-panel result-review-panel"
+              th:if="${review != null and !review.questions.isEmpty()}"
+            >
+              <summary>
+                <span>Xem câu hỏi và đáp án</span>
+                <span class="review-summary-note">Đối chiếu theo từng kỹ năng</span>
+              </summary>
+              <section
+                class="result-review-question"
+                th:each="question, questionStat : ${review.questions}"
+              >
+                <div class="review-question-heading">
+                  <span
+                    class="review-skill-badge"
+                    th:text="${question.skill == 'GRAMMAR_VOCABULARY' ? 'Grammar & Vocabulary' : question.skill}"
+                  ></span>
+                  <span
+                    class="review-question-number"
+                    th:text="${'Câu hỏi ' + (questionStat.index + 1)}"
+                  ></span>
+                </div>
+                <h3 class="review-question-title" th:text="${question.content}"></h3>
+                <p
+                  class="review-instruction"
+                  th:if="${question.instruction != null}"
+                  th:text="${question.instruction}"
+                ></p>
+                <p
+                  class="reading-passage-text"
+                  th:if="${question.readingPassage != null}"
+                  th:text="${question.readingPassage}"
+                ></p>
+                <div class="result-review-items">
+                  <div class="result-review-item" th:each="item : ${question.items}">
+                    <div class="review-item-heading">
+                      <span class="review-item-number" th:text="${item.position}"></span>
+                      <h4 th:text="${item.content}"></h4>
+                    </div>
+                    <p class="review-field-label" th:if="${!item.options.isEmpty()}">
+                      Các lựa chọn
+                    </p>
+                    <ul class="review-options" th:if="${!item.options.isEmpty()}">
+                      <li
+                        th:each="option : ${item.options}"
+                        th:classappend="${(item.selectedOptionId == option.id ? ' is-selected' : '') + (option.correct ? ' is-correct' : '')}"
+                      >
+                        <span class="review-option-code" th:text="${option.code}"></span>
+                        <span class="review-option-content" th:text="${option.content}"></span>
+                        <span
+                          class="review-option-status"
+                          th:if="${item.selectedOptionId == option.id}"
+                        >
+                          Đã chọn
+                        </span>
+                        <span class="review-option-status correct" th:if="${option.correct}">
+                          Đáp án đúng
+                        </span>
+                      </li>
+                    </ul>
+                    <div
+                      class="review-answer-summary"
+                      th:if="${!item.answered() or item.userPosition != null or (item.textAnswer != null and !item.textAnswer.isBlank())}"
+                    >
+                      <p th:if="${!item.answered()}" class="review-answer-empty">Chưa trả lời</p>
+                      <p
+                        th:if="${item.userPosition != null}"
+                        class="review-answer-line"
+                        th:text="${'Vị trí đã chọn: ' + item.userPosition + (item.correctPosition == null ? '' : ' · Đáp án đúng: ' + item.correctPosition)}"
+                      ></p>
+                      <p
+                        th:if="${item.textAnswer != null and !item.textAnswer.isBlank()}"
+                        class="review-answer-line"
+                        th:text="${'Câu trả lời: ' + item.textAnswer}"
+                      ></p>
+                    </div>
+                  </div>
+                </div>
+              </section>
+            </details>
 
             <section class="result-guides" aria-labelledby="result-guides-title">
               <h2 id="result-guides-title">Thang điểm và trình độ</h2>

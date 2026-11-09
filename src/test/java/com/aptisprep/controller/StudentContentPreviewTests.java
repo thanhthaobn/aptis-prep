@@ -104,12 +104,12 @@ class StudentContentPreviewTests {
         var learner = user(createLearner().getEmail()).roles("STUDENT");
         mvc.perform(get("/student/exams").with(learner))
                 .andExpect(status().isOk())
-                .andExpect(view().name("student/content/list"))
+                .andExpect(view().name("student/exams/exam-list"))
                 .andExpect(content().string(not(containsString("minhanh@example.com"))));
         for (int id : examIds) {
             mvc.perform(get("/student/exams/" + id).with(learner))
                     .andExpect(status().isOk())
-                    .andExpect(view().name("student/content/detail"));
+                    .andExpect(view().name("student/exams/exam-detail"));
         }
     }
 

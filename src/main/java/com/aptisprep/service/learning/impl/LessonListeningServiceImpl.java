@@ -24,8 +24,6 @@ import java.util.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import tools.jackson.databind.JsonNode;
-import tools.jackson.databind.json.JsonMapper;
 
 /** Server-timed, owner-bound playback. Never credits a range twice or trusts client duration. */
 @Service
@@ -36,22 +34,19 @@ public class LessonListeningServiceImpl implements LessonListeningService {
     private final LessonEngagementRepository lessonEngagementRepository;
     private final AudioDurationService durations;
     private final Clock clock;
-    private final JsonMapper json;
 
     @Autowired
     public LessonListeningServiceImpl(
             UserRepository userRepository,
             LessonRepository lessonRepository,
             LessonEngagementRepository lessonEngagementRepository,
-            AudioDurationService durations,
-            JsonMapper json) {
+            AudioDurationService durations) {
         this(
                 userRepository,
                 lessonRepository,
                 lessonEngagementRepository,
                 durations,
-                Clock.systemDefaultZone(),
-                json);
+                Clock.systemDefaultZone());
     }
 
     public LessonListeningServiceImpl(
@@ -59,14 +54,12 @@ public class LessonListeningServiceImpl implements LessonListeningService {
             LessonRepository lessonRepository,
             LessonEngagementRepository lessonEngagementRepository,
             AudioDurationService durations,
-            Clock clock,
-            JsonMapper json) {
+            Clock clock) {
         this.userRepository = userRepository;
         this.lessonRepository = lessonRepository;
         this.lessonEngagementRepository = lessonEngagementRepository;
         this.durations = durations;
         this.clock = clock;
-        this.json = json;
     }
 
     public Playback start(Integer lessonId, String email, double position) {
@@ -82,7 +75,7 @@ public class LessonListeningServiceImpl implements LessonListeningService {
         validatePosition(position, duration);
         position = Math.min(position, duration);
         if (!Objects.equals(value.getPlaybackAudioPath(), lesson.getAudioPath())) {
-            value.setPlaybackRangesJson("[]");
+            value.replacePlaybackRanges(List.of());
         }
         String token = UUID.randomUUID().toString();
         value.setPlaybackTokenHash(hash(token));
@@ -150,7 +143,7 @@ public class LessonListeningServiceImpl implements LessonListeningService {
                         });
         }
         ranges = merge(ranges);
-        value.setPlaybackRangesJson(json.writeValueAsString(ranges));
+        value.replacePlaybackRanges(ranges);
         value.setPlaybackPositionSeconds(position);
         value.setPlaybackLastPingAt(now());
         value.setPlaybackExpiresAt(now().plusMinutes(5));
@@ -183,10 +176,9 @@ public class LessonListeningServiceImpl implements LessonListeningService {
     }
 
     private List<double[]> ranges(LessonEngagement value) {
-        ArrayList<double[]> result = new ArrayList<double[]>();
-        if (value.getPlaybackRangesJson() != null)
-            for (JsonNode range : json.readTree(value.getPlaybackRangesJson()))
-                result.add(new double[] {range.get(0).asDouble(), range.get(1).asDouble()});
+        ArrayList<double[]> result = new ArrayList<>();
+        for (var range : value.getPlaybackRanges())
+            result.add(new double[] {range.getStartSeconds(), range.getEndSeconds()});
         return result;
     }
 

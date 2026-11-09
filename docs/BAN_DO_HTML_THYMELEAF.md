@@ -26,13 +26,13 @@ Bảng này ghi các thao tác thay đổi dữ liệu và điều hướng chí
 | Hoạt động | Route | Handler | Xử lý |
 |---|---|---|---|
 | Đăng nhập và đăng xuất | `POST /login`, `POST /logout` | [AuthController.login](../src/main/java/com/aptisprep/controller/auth/AuthController.java#L42), [AuthController.logout](../src/main/java/com/aptisprep/controller/auth/AuthController.java#L55) | Xác thực qua UserService và mở hoặc hủy LoginSession. |
-| Đăng ký và mật khẩu | `POST /register`, `POST /forgot-password`, `POST /reset-password`, `POST /student/password` | [AuthController.register](../src/main/java/com/aptisprep/controller/auth/AuthController.java#L72), [PasswordController.forgotSubmit](../src/main/java/com/aptisprep/controller/auth/PasswordController.java#L51), [PasswordController.save](../src/main/java/com/aptisprep/controller/auth/PasswordController.java#L79) | UserService tạo tài khoản. PasswordService nhận yêu cầu khôi phục, đặt lại hoặc đổi mật khẩu. |
+| Đăng ký và đổi mật khẩu | `POST /register`, `POST /student/password` | [AuthController.register](../src/main/java/com/aptisprep/controller/auth/AuthController.java#L72), [PasswordController.save](../src/main/java/com/aptisprep/controller/auth/PasswordController.java#L42) | UserService tạo tài khoản. PasswordService đổi mật khẩu cho học viên đã đăng nhập. |
 | Cập nhật hồ sơ và mục tiêu | `POST /student/profile/edit`, `POST /student/goals` | [StudentAccountController.updateProfile](../src/main/java/com/aptisprep/controller/student/StudentAccountController.java#L60), [StudentAccountController.saveGoal](../src/main/java/com/aptisprep/controller/student/StudentAccountController.java#L85) | AccountProfileService xác thực form và lưu thông tin hoặc mục tiêu. |
 | Bắt đầu đề đầu vào | `POST /student/placement/start` | [StudentAccountController.start](../src/main/java/com/aptisprep/controller/student/StudentAccountController.java#L126) | PlacementService nhận skill và examId rồi mở hoặc tiếp tục lượt thi. |
 | Bắt đầu đề thường và checkpoint | `POST /student/exams/{id}/start`, `POST /student/learning-path/{pathId}/checkpoint/start` | [StudentExamController.start](../src/main/java/com/aptisprep/controller/student/StudentExamController.java#L35), [StudentLearningPathController.startCheckpoint](../src/main/java/com/aptisprep/controller/student/StudentLearningPathController.java#L67) | ExamAttemptService khởi tạo lượt thường. Lộ trình kiểm tra điều kiện trước khi mở checkpoint. |
 | Lưu đáp án và ghi âm | `POST /student/attempts/{id}/answers/autosave`, `POST /student/attempts/{id}/answers/audio/autosave` | [StudentExamController.autosave](../src/main/java/com/aptisprep/controller/student/StudentExamController.java#L127), [StudentExamController.audioAutosave](../src/main/java/com/aptisprep/controller/student/StudentExamController.java#L169) | exam-runner.js gửi đáp án hoặc file Speaking. ExamAttemptService lưu vào lượt thi đang làm. |
 | Nghe, chuyển phần, thoát và nộp | `POST /student/attempts/{id}/media/{mediaId}/play`, `GET /student/attempts/{id}/media/{mediaId}/content`, `POST /student/attempts/{id}/next-section`, `POST /student/attempts/{id}/exit`, `POST /student/attempts/{id}/submit` | [StudentExamController.playMedia](../src/main/java/com/aptisprep/controller/student/StudentExamController.java#L191), [StudentExamController.mediaContent](../src/main/java/com/aptisprep/controller/student/StudentExamController.java#L199), [StudentExamController.nextSection](../src/main/java/com/aptisprep/controller/student/StudentExamController.java#L266), [StudentExamController.exitAttempt](../src/main/java/com/aptisprep/controller/student/StudentExamController.java#L90), [StudentExamController.submit](../src/main/java/com/aptisprep/controller/student/StudentExamController.java#L281) | Engine cấp lượt nghe và phục vụ audio theo token, đổi phần và lưu bài nộp. Nút Thoát trả về danh sách đề phù hợp với loại đề. |
-| Xem lại, xóa lượt dở, chấm lại | `GET /student/attempts/{id}/review`, `POST /student/attempts/{id}/discard`, `POST /student/attempts/{id}/retry-grading`, `POST /student/attempts/{id}/regrade-empty` | [StudentExamController.review](../src/main/java/com/aptisprep/controller/student/StudentExamController.java#L52), [StudentExamController.discard](../src/main/java/com/aptisprep/controller/student/StudentExamController.java#L69), [StudentContentController.retryGrading](../src/main/java/com/aptisprep/controller/student/StudentContentController.java#L173), [StudentContentController.regradeEmpty](../src/main/java/com/aptisprep/controller/student/StudentContentController.java#L159) | Trang kết quả và lịch sử hiển thị các thao tác tùy trạng thái lượt thi. |
+| Xem lại, xóa lượt dở, chấm lại | `GET /student/attempts/{id}/review`, `POST /student/attempts/{id}/discard`, `POST /student/attempts/{id}/retry-grading`, `POST /student/attempts/{id}/regrade-empty` | [StudentExamController.review](../src/main/java/com/aptisprep/controller/student/StudentExamController.java#L52), [StudentExamController.discard](../src/main/java/com/aptisprep/controller/student/StudentExamController.java#L69), [StudentExamCatalogController.retryGrading](../src/main/java/com/aptisprep/controller/student/StudentExamCatalogController.java#L173), [StudentExamCatalogController.regradeEmpty](../src/main/java/com/aptisprep/controller/student/StudentExamCatalogController.java#L159) | Trang kết quả và lịch sử hiển thị các thao tác tùy trạng thái lượt thi. |
 | Cập nhật lộ trình | `POST /student/learning-path/refresh` | [StudentLearningPathController.refresh](../src/main/java/com/aptisprep/controller/student/StudentLearningPathController.java#L28) | LearningPathService cập nhật các chặng học. |
 | Thực hành bài học | `POST /student/lessons/{id}/check`, `POST /student/lessons/{id}/response`, `POST /student/lessons/{id}/response/autosave`, `POST /student/lessons/{id}/recording`, `POST /student/lessons/{id}/assess`, `POST /student/lessons/{id}/complete` | [StudentLessonController.check](../src/main/java/com/aptisprep/controller/student/StudentLessonController.java#L103), [StudentLessonController.response](../src/main/java/com/aptisprep/controller/student/StudentLessonController.java#L116), [StudentLessonController.autosave](../src/main/java/com/aptisprep/controller/student/StudentLessonController.java#L147), [StudentLessonController.recording](../src/main/java/com/aptisprep/controller/student/StudentLessonController.java#L198), [StudentLessonController.assess](../src/main/java/com/aptisprep/controller/student/StudentLessonController.java#L131), [StudentLessonController.complete](../src/main/java/com/aptisprep/controller/student/StudentLessonController.java#L153) | LessonTeachingService kiểm tra, lưu câu trả lời hoặc ghi âm và tạo yêu cầu chấm khi đủ điều kiện. |
 | Theo dõi nghe bài học | `POST /student/lessons/{id}/listening/start`, `POST /student/lessons/{id}/listening/heartbeat` | [StudentLessonController.startListening](../src/main/java/com/aptisprep/controller/student/StudentLessonController.java#L165), [StudentLessonController.listeningHeartbeat](../src/main/java/com/aptisprep/controller/student/StudentLessonController.java#L172) | lesson-player.js báo tiến độ để máy chủ xác minh điều kiện mở câu hỏi. |
@@ -50,8 +50,7 @@ Bảng này ghi các thao tác thay đổi dữ liệu và điều hướng chí
 - [index.html](#html-1) · Trang chủ AptisPrep · `/`
 - [auth/login.html](#html-2) · Đăng nhập · `/login`
 - [auth/register.html](#html-3) · Đăng ký học viên · `/register`
-- [auth/forgot-password.html](#html-4) · Yêu cầu đặt lại mật khẩu · `/forgot-password`
-- [auth/password.html](#html-5) · Đặt lại hoặc đổi mật khẩu · `/reset-password`, `/student/password`
+- [auth/password.html](#html-4) · Đổi mật khẩu · `/student/password`
 - [error/400.html](#html-6) · Yêu cầu không hợp lệ · `HTTP 400`
 - [error/403.html](#html-7) · Truy cập bị từ chối · `HTTP 403`, `/access-denied`
 - [error/404.html](#html-8) · Không tìm thấy tài nguyên · `HTTP 404`
@@ -59,13 +58,13 @@ Bảng này ghi các thao tác thay đổi dữ liệu và điều hướng chí
 - [student/account/profile.html](#html-10) · Hồ sơ học viên · `/student/profile`
 - [student/account/goals.html](#html-11) · Mục tiêu học tập · `/student/goals`
 - [student/account/placement.html](#html-12) · Kiểm tra đầu vào · `/student/placement`
-- [student/account/placement-result.html](#html-13) · Kết quả đầu vào chuyên biệt · `/student/placement/result?attemptId={id}`
+- [student/attempt-result.html](#html-13) · Kết quả bài thi và đầu vào · `/student/attempts/{id}/result`, `/student/placement/result?attemptId={id}`
 - [student/learning/path.html](#html-14) · Lộ trình của tôi · `/student/learning-path`
 - [student/learning/skill.html](#html-15) · Chi tiết lộ trình một kỹ năng · `/student/learning-path/{skill}`
 - [student/lesson/list.html](#html-16) · Thư viện bài học · `/student/lessons`
 - [student/lesson/detail.html](#html-17) · Học và làm bài thực hành · `/student/lessons/{id}`
-- [student/content/list.html](#html-18) · Thư viện đề thi · `/student/exams`
-- [student/content/detail.html](#html-19) · Chi tiết đề và thang điểm · `/student/exams/{id}`, `/student/exams/{id}?fromPlacement=true`
+- [student/exams/exam-list.html](#html-18) · Thư viện đề thi · `/student/exams`
+- [student/exams/exam-detail.html](#html-19) · Chi tiết đề và thang điểm · `/student/exams/{id}`, `/student/exams/{id}?fromPlacement=true`
 - [student/attempt.html](#html-20) · Màn hình làm đề · `/student/attempts/{id}`
 - [student/attempt-result.html](#html-21) · Kết quả một lượt thi · `/student/attempts/{id}/result`
 - [student/attempt-review.html](#html-22) · Xem lại câu hỏi và bài làm · `/student/attempts/{id}/review`
@@ -142,7 +141,7 @@ Fragment còn lại được DisplayFormattingTests render trực tiếp để k
 
 - **Đích form** `POST @{/logout}`, `POST @{/login}`.
 - **Tên input, select hoặc button khai báo trực tiếp** `email`, `password`.
-- **Class CSS ít dùng chung hơn** `auth-layout`, `auth-page`, `auth-welcome`, `button-block`, `forgot-password-link`, `form-card`, `form-logo`, `form-note`, `landing-theme`, `navi-welcome`, `password-input`, `password-input--inline-toggle`, `password-toggle`.
+- **Class CSS ít dùng chung hơn** `auth-layout`, `auth-page`, `auth-welcome`, `button-block`, `form-card`, `form-logo`, `form-note`, `landing-theme`, `navi-welcome`, `password-input`, `password-input--inline-toggle`, `password-toggle`.
 - **Class CSS thường dùng lại** `alert`, `alert-danger`, `alert-info`, `alert-success`, `alert-warning`, `ap-alert`, `ap-alert-danger`, `ap-alert-info`, `ap-alert-success`, `ap-alert-warning`, `ap-container`, `ap-skip-link`, `brand`, `brand-mark`, `button`, `button-secondary`, `button-small`, `container`, `eyebrow`, `field`, `footer-wrap`, `hamburger-icon`, `messages-container`, `nav-links`, `nav-toggle`, `nav-wrap`, `navi`, `navi-antenna`, `navi-arm`, `navi-arm-left`, `navi-arm-right`, `navi-body`, `navi-eye`, `navi-mouth`, `navi-shadow`, `site-footer`, `site-header`.
 
 </details>
@@ -178,42 +177,14 @@ Fragment còn lại được DisplayFormattingTests render trực tiếp để k
 
 <a id="html-4"></a>
 
-### Yêu cầu đặt lại mật khẩu · `auth/forgot-password.html`
-
-- **Template** [auth/forgot-password.html](../src/main/resources/templates/auth/forgot-password.html)
-- **Đường dẫn** `/forgot-password`.
-- **Phương thức render** [PasswordController.forgot](../src/main/java/com/aptisprep/controller/auth/PasswordController.java#L43).
-- **Lớp liên quan** [PasswordController.RecoveryForm](../src/main/java/com/aptisprep/controller/auth/PasswordController.java#L27), [PasswordService](../src/main/java/com/aptisprep/service/auth/PasswordService.java).
-- **Chức năng** POST /forgot-password tiếp nhận email và tạo yêu cầu khôi phục khi tính năng khả dụng.
-- **Biến đọc trong template từ controller hoặc luồng redirect** `recoveryAvailable`, `recoveryForm`, `requested`.
-- **Biến dùng chung** `display`, `isAdmin`, `isStudent`, `message`, `navSection`, `signedIn`.
-- **Biến cục bộ hoặc tham số fragment** `message`.
-- **JavaScript nạp trực tiếp** [js/app-dialog.js](../src/main/resources/static/js/app-dialog.js), [js/navigation.js](../src/main/resources/static/js/navigation.js).
-- **CSS nạp trực tiếp** nhóm CSS dùng chung ở trên.
-- **Thư viện từ CDN** Bootstrap 5.3.8.
-
-<details>
-<summary>Chi tiết template và form</summary>
-
-- **Đích form** `POST @{/logout}`, `POST @{/forgot-password}`.
-- **Đối tượng form từ th:object** `${recoveryForm}`.
-- **Field gắn với đối tượng form** `email`.
-- **Tên trùng giữa model và phạm vi cục bộ** `message`.
-- **Class CSS ít dùng chung hơn** `auth-page`, `field-error`, `form-card`, `landing-theme`.
-- **Class CSS thường dùng lại** `alert`, `alert-info`, `ap-container`, `ap-skip-link`, `back-link`, `brand`, `brand-mark`, `button`, `button-secondary`, `button-small`, `container`, `field`, `footer-wrap`, `hamburger-icon`, `nav-links`, `nav-toggle`, `nav-wrap`, `site-footer`, `site-header`.
-
-</details>
-
-<a id="html-5"></a>
-
-### Đặt lại hoặc đổi mật khẩu · `auth/password.html`
+### Đổi mật khẩu · `auth/password.html`
 
 - **Template** [auth/password.html](../src/main/resources/templates/auth/password.html)
-- **Đường dẫn** `/reset-password`, `/student/password`.
+- **Đường dẫn** `/student/password`.
 - **Phương thức render** [PasswordController.form](../src/main/java/com/aptisprep/controller/auth/PasswordController.java#L65).
 - **Lớp liên quan** [PasswordForm](../src/main/java/com/aptisprep/dto/form/PasswordForm.java), [AccountInput](../src/main/java/com/aptisprep/validation/AccountInput.java), [PasswordService](../src/main/java/com/aptisprep/service/auth/PasswordService.java).
-- **Chức năng** POST cùng đường dẫn. Chế độ reset dùng token, chế độ đổi mật khẩu dùng phiên học viên.
-- **Biến đọc trong template từ controller hoặc luồng redirect** `changing`, `passwordForm`, `token`.
+- **Chức năng** Học viên đã đăng nhập nhập mật khẩu hiện tại và mật khẩu mới.
+- **Biến đọc trong template từ controller hoặc luồng redirect** `passwordForm`.
 - **Biến dùng chung** `display`, `isAdmin`, `isStudent`, `message`, `navSection`, `signedIn`.
 - **Biến cục bộ hoặc tham số fragment** `message`.
 - **JavaScript nạp trực tiếp** [js/account-forms.js](../src/main/resources/static/js/account-forms.js), [js/app-dialog.js](../src/main/resources/static/js/app-dialog.js), [js/navigation.js](../src/main/resources/static/js/navigation.js).
@@ -223,10 +194,9 @@ Fragment còn lại được DisplayFormattingTests render trực tiếp để k
 <details>
 <summary>Chi tiết template và form</summary>
 
-- **Đích form** `POST @{/logout}`, `POST ${changing} ? @{/student/password} : @{/reset-password}`.
+- **Đích form** `POST @{/logout}`, `POST @{/student/password}`.
 - **Đối tượng form từ th:object** `${passwordForm}`.
 - **Field gắn với đối tượng form** `confirmPassword`, `currentPassword`, `password`.
-- **Tên input, select hoặc button khai báo trực tiếp** `token`.
 - **Tên trùng giữa model và phạm vi cục bộ** `message`.
 - **Class CSS ít dùng chung hơn** `account-page`, `auth-page`, `field-error`, `form-card`, `landing-theme`, `password-input`, `password-toggle`.
 - **Class CSS thường dùng lại** `ap-container`, `ap-skip-link`, `back-link`, `brand`, `brand-mark`, `button`, `button-secondary`, `button-small`, `container`, `field`, `footer-wrap`, `hamburger-icon`, `nav-links`, `nav-toggle`, `nav-wrap`, `site-footer`, `site-header`.
@@ -414,14 +384,14 @@ Fragment còn lại được DisplayFormattingTests render trực tiếp để k
 
 <a id="html-13"></a>
 
-### Kết quả đầu vào chuyên biệt · `student/account/placement-result.html`
+### Kết quả bài thi và kiểm tra đầu vào · `student/attempt-result.html`
 
-- **Template** [student/account/placement-result.html](../src/main/resources/templates/student/account/placement-result.html)
-- **Đường dẫn** `/student/placement/result?attemptId={id}`.
-- **Phương thức render** [StudentAccountController.result](../src/main/java/com/aptisprep/controller/student/StudentAccountController.java#L143).
+- **Template** [student/attempt-result.html](../src/main/resources/templates/student/attempt-result.html)
+- **Đường dẫn** `/student/attempts/{id}/result` và `/student/placement/result?attemptId={id}`.
+- **Phương thức render** [StudentExamCatalogController.result](../src/main/java/com/aptisprep/controller/student/StudentExamCatalogController.java#L147), [StudentAccountController.result](../src/main/java/com/aptisprep/controller/student/StudentAccountController.java#L143).
 - **Lớp liên quan** [PlacementService](../src/main/java/com/aptisprep/service/placement/PlacementService.java), [ScoringGuideService](../src/main/java/com/aptisprep/service/scoring/ScoringGuideService.java), [IntegrationModels.AttemptResult](../src/main/java/com/aptisprep/service/contract/IntegrationModels.java#L171).
 - **Chức năng** Đọc kết quả đầu vào theo mã lượt thi. Lượt nộp qua engine cũng có trang kết quả chung.
-- **Biến đọc trong template từ controller hoặc luồng redirect** `feedbackWithoutGuide`, `placementResult`, `scoreGuides`.
+- **Biến đọc trong template từ controller hoặc luồng redirect** `attemptResult`, `fromPlacement`, `canRegradeEmpty`, `feedbackWithoutGuide`, `scoreGuides`.
 - **Biến dùng chung** `display`, `error`, `errorMessage`, `info`, `infoMessage`, `isAdmin`, `isStudent`, `message`, `navSection`, `resultLabels`, `signedIn`, `successMessage`, `warning`, `warningMessage`.
 - **Biến cục bộ hoặc tham số fragment** `activePage`, `band`, `guide`, `isPlacement`, `res`, `score`, `skill`.
 - **JavaScript nạp trực tiếp** [js/app-dialog.js](../src/main/resources/static/js/app-dialog.js), [js/navigation.js](../src/main/resources/static/js/navigation.js).
@@ -551,11 +521,11 @@ Fragment còn lại được DisplayFormattingTests render trực tiếp để k
 
 <a id="html-18"></a>
 
-### Thư viện đề thi · `student/content/list.html`
+### Thư viện đề thi · `student/exams/exam-list.html`
 
-- **Template** [student/content/list.html](../src/main/resources/templates/student/content/list.html)
+- **Template** [student/exams/exam-list.html](../src/main/resources/templates/student/exams/exam-list.html)
 - **Đường dẫn** `/student/exams`.
-- **Phương thức render** [StudentContentController.list](../src/main/java/com/aptisprep/controller/student/StudentContentController.java#L46).
+- **Phương thức render** [StudentExamCatalogController.list](../src/main/java/com/aptisprep/controller/student/StudentExamCatalogController.java#L46).
 - **Lớp liên quan** [StudentExamCatalogService](../src/main/java/com/aptisprep/service/student/StudentExamCatalogService.java), [StudentCatalogView](../src/main/java/com/aptisprep/dto/view/StudentCatalogView.java), [AccountAccessService](../src/main/java/com/aptisprep/service/account/AccountAccessService.java).
 - **Chức năng** Tìm, lọc, phân trang đề và hiển thị nhóm theo loại đề.
 - **Biến đọc trong template từ controller hoặc luồng redirect** `catalogPage`, `categoryTitle`, `entries`, `examCategories`, `examGroups`, `selectedExamType`, `selectedLevel`, `selectedSkill`, `selectedSort`, `selectedState`, `size`, `skills`.
@@ -580,11 +550,11 @@ Fragment còn lại được DisplayFormattingTests render trực tiếp để k
 
 <a id="html-19"></a>
 
-### Chi tiết đề và thang điểm · `student/content/detail.html`
+### Chi tiết đề và thang điểm · `student/exams/exam-detail.html`
 
-- **Template** [student/content/detail.html](../src/main/resources/templates/student/content/detail.html)
+- **Template** [student/exams/exam-detail.html](../src/main/resources/templates/student/exams/exam-detail.html)
 - **Đường dẫn** `/student/exams/{id}`, `/student/exams/{id}?fromPlacement=true`.
-- **Phương thức render** [StudentContentController.detail](../src/main/java/com/aptisprep/controller/student/StudentContentController.java#L128).
+- **Phương thức render** [StudentExamCatalogController.detail](../src/main/java/com/aptisprep/controller/student/StudentExamCatalogController.java#L128).
 - **Lớp liên quan** [StudentExamCatalogService](../src/main/java/com/aptisprep/service/student/StudentExamCatalogService.java), [StudentCatalogView.Entry](../src/main/java/com/aptisprep/dto/view/StudentCatalogView.java#L13), [ScoringGuideService](../src/main/java/com/aptisprep/service/scoring/ScoringGuideService.java), [ExamAttemptContract](../src/main/java/com/aptisprep/service/contract/ExamAttemptContract.java), [StudentExamController](../src/main/java/com/aptisprep/controller/student/StudentExamController.java).
 - **Chức năng** Hiển thị phần thi và thang điểm. Đề thường bắt đầu qua POST /student/exams/{id}/start. Placement bắt đầu từ trang Kiểm tra đầu vào. Khối hướng dẫn trước khi làm bài được ẩn cho đề đầu vào.
 - **Biến đọc trong template từ controller hoặc luồng redirect** `entry`, `fromPlacement`, `module`, `resumableAttemptId`, `scoreGuides`.
@@ -639,7 +609,7 @@ Fragment còn lại được DisplayFormattingTests render trực tiếp để k
 
 - **Template** [student/attempt-result.html](../src/main/resources/templates/student/attempt-result.html)
 - **Đường dẫn** `/student/attempts/{id}/result`.
-- **Phương thức render** [StudentContentController.result](../src/main/java/com/aptisprep/controller/student/StudentContentController.java#L147).
+- **Phương thức render** [StudentExamCatalogController.result](../src/main/java/com/aptisprep/controller/student/StudentExamCatalogController.java#L147).
 - **Lớp liên quan** [ExamAttemptContract](../src/main/java/com/aptisprep/service/contract/ExamAttemptContract.java), [ExamAttemptService](../src/main/java/com/aptisprep/service/exam/ExamAttemptService.java), [AttemptResultReader](../src/main/java/com/aptisprep/service/exam/AttemptResultReader.java), [AttemptFinalizationService](../src/main/java/com/aptisprep/service/grading/AttemptFinalizationService.java), [ScoringGuideService](../src/main/java/com/aptisprep/service/scoring/ScoringGuideService.java), [IntegrationModels.AttemptResult](../src/main/java/com/aptisprep/service/contract/IntegrationModels.java#L171).
 - **Chức năng** Hiển thị điểm, phản hồi, trạng thái chấm và nút xem lại hoặc chấm lại khi đủ điều kiện.
 - **Biến đọc trong template từ controller hoặc luồng redirect** `attemptResult`, `canRegradeEmpty`, `feedbackWithoutGuide`, `scoreGuides`.
@@ -692,7 +662,7 @@ Fragment còn lại được DisplayFormattingTests render trực tiếp để k
 
 - **Template** [student/results/list.html](../src/main/resources/templates/student/results/list.html)
 - **Đường dẫn** `/student/results`.
-- **Phương thức render** [StudentContentController.results](../src/main/java/com/aptisprep/controller/student/StudentContentController.java#L91).
+- **Phương thức render** [StudentExamCatalogController.results](../src/main/java/com/aptisprep/controller/student/StudentExamCatalogController.java#L91).
 - **Lớp liên quan** [ExamAttemptContract](../src/main/java/com/aptisprep/service/contract/ExamAttemptContract.java), [ExamAttemptService](../src/main/java/com/aptisprep/service/exam/ExamAttemptService.java), [AttemptResultReader](../src/main/java/com/aptisprep/service/exam/AttemptResultReader.java), [IntegrationModels.HistoryPage](../src/main/java/com/aptisprep/service/contract/IntegrationModels.java#L278).
 - **Chức năng** Tìm và lọc các lượt thi, mở kết quả hoặc tiếp tục lượt chưa hoàn tất.
 - **Biến đọc trong template từ controller hoặc luồng redirect** `completedCount`, `history`, `inProgressCount`, `selectedExamType`, `selectedSkill`, `selectedState`, `totalPages`.
@@ -1329,6 +1299,6 @@ Fragment còn lại được DisplayFormattingTests render trực tiếp để k
 2. Nút **Bắt đầu** gửi `skill` và `examId` tới `POST /student/placement/start`. `PlacementService` chuyển sang `ExamAttemptService`. Lượt thi mở tại `GET /student/attempts/{id}`.
 3. `attempt.html` đọc `attempt`. `exam-runner.js` dùng các URL của `StudentExamController` để lưu bài, phát media, chuyển phần và nộp. Khi thoát, form gửi `POST /student/attempts/{id}/exit`.
 4. Sau khi nộp, phần khách quan chạy qua `ObjectiveGradingService`. Writing và Speaking đi qua `AttemptGradingOrchestrationService`, `AiAssessmentService` và `GeminiGradingService`. Speaking dùng file ghi âm để phiên âm và dùng bản chép lời để chấm nội dung.
-5. `StudentContentController.result()` nhận kết quả từ luồng `ExamAttemptService` và `AttemptResultReader`, rồi đưa `attemptResult`, `scoreGuides` và các cờ liên quan vào `attempt-result.html`.
+5. `StudentExamCatalogController.result()` nhận kết quả từ luồng `ExamAttemptService` và `AttemptResultReader`, rồi đưa `attemptResult`, `scoreGuides` và các cờ liên quan vào `attempt-result.html`.
 
 Nội dung đề được thêm bằng [add-placement-urban-life-01.sql](../database/add-placement-urban-life-01.sql). Audio được tạo bằng [build-placement-urban-life-audio.ps1](../scripts/build-placement-urban-life-audio.ps1).

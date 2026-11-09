@@ -322,8 +322,8 @@
                   </td>
                   <td data-label="Trạng thái">
                     <span
-                      class="scoring-status"
-                      th:classappend="${scheme.status == 'ACTIVE'} ? 'is-active'"
+                      class="badge"
+                      th:classappend="${scheme.status == 'ACTIVE'} ? 'badge-success' : 'badge-warning'"
                       th:text="${scheme.statusLabel}"
                     ></span>
                   </td>

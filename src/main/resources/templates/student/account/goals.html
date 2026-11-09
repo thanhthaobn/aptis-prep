@@ -229,10 +229,6 @@
           <div>
             <p class="eyebrow">MỤC TIÊU</p>
             <h1>Mục tiêu học tập</h1>
-            <p>
-              Giáo trình hỗ trợ A1–C1. Mục tiêu C2 cũ được giữ trong lịch sử; khi cập nhật, hãy chọn
-              mục tiêu trong phạm vi A1–C1.
-            </p>
           </div>
         </header>
         <div class="messages-container" aria-live="polite">
@@ -268,17 +264,6 @@
           method="post"
         >
           <h2>Mục tiêu của bạn</h2>
-          <div class="field">
-            <label for="certificateId">Chứng chỉ</label>
-            <select id="certificateId" th:field="*{certificateId}">
-              <option value="">Không chọn</option>
-              <option
-                th:each="certificate : ${certificates}"
-                th:value="${certificate.id}"
-                th:text="${'' + (certificate.name) + ' (' + (certificate.code) + ')'}"
-              ></option>
-            </select>
-          </div>
           <div class="field">
             <label for="targetDate">Ngày mục tiêu</label>
             <input id="targetDate" type="date" th:field="*{targetDate}" />

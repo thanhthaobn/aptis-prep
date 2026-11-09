@@ -1,6 +1,7 @@
 package com.aptisprep.service.contract;
 
 import com.aptisprep.service.contract.IntegrationModels.*;
+import java.util.Optional;
 
 /** Lifecycle owner: Trâm. All methods recheck ownership/account status; grading is delegated to Thông. */
 public interface ExamAttemptContract {
@@ -16,6 +17,8 @@ public interface ExamAttemptContract {
 
     AttemptHandle startCheckpoint(
             Integer userId, Integer examId, Integer pathId, String requestKey);
+
+    Optional<Integer> checkpointOriginPathId(Integer userId, Integer attemptId);
 
     void submit(Integer userId, Integer attemptId, String requestKey);
 

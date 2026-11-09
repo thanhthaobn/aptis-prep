@@ -437,7 +437,7 @@ class ExamAttemptConcurrencyTests {
     }
 
     @Test
-    void passingRealA1CheckpointCreatesOnlyTheA2Stage() {
+    void passingStartedA1CheckpointOpensA2AfterNewLessonRefresh() {
         Fixture fixture = fixture("checkpoint-path");
         fixture.exam().setExamType("CHECKPOINT");
         fixture.exam().setTargetLevel("A1");
@@ -472,7 +472,23 @@ class ExamAttemptConcurrencyTests {
                 fixture.option().getId(),
                 null,
                 null);
+        var added = lessonService.newForm("Listening", "A1");
+        added.setTitle("A1 lesson published during the checkpoint");
+        added.setStatus("PUBLISHED");
+        lessonService.save(null, added);
+        learningPaths.refreshPaths(fixture.user().getEmail());
+        assertEquals(
+                "ARCHIVED", learningPathRepository.findById(old.getId()).orElseThrow().getStatus());
+        var refreshed =
+                learningPathRepository
+                        .findFirstByUserIdAndSkillAndStatusOrderByCreatedAtDesc(
+                                fixture.user().getId(), "Listening", "ACTIVE")
+                        .orElseThrow();
+        assertEquals(
+                "locked",
+                learningPaths.summary(fixture.user().getId(), refreshed.getId()).checkpointState());
         attempts.submit(fixture.user().getId(), id, "checkpoint-path-submit");
+        assertTrue(attempts.result(fixture.user().getId(), id).skills().getFirst().passed());
         assertEquals(
                 "A1",
                 skillProfiles
@@ -482,6 +498,9 @@ class ExamAttemptConcurrencyTests {
         assertEquals(
                 "COMPLETED",
                 learningPathRepository.findById(old.getId()).orElseThrow().getStatus());
+        assertEquals(
+                "ARCHIVED",
+                learningPathRepository.findById(refreshed.getId()).orElseThrow().getStatus());
         assertEquals(
                 "A2",
                 learningPathRepository
@@ -563,18 +582,13 @@ class ExamAttemptConcurrencyTests {
                                         org.hamcrest.Matchers.not(
                                                 org.hamcrest.Matchers.containsString(
                                                         "data-speech"))));
-        assertTrue(
-                snapshots
-                        .findByAttemptId(id)
-                        .orElseThrow()
-                        .getLockedQuestionSnapshot()
-                        .contains(secret));
-        org.junit.jupiter.api.Assertions.assertFalse(
-                snapshots
-                        .findByAttemptId(id)
-                        .orElseThrow()
-                        .getLockedQuestionSnapshot()
-                        .contains("CHANGED LIVE TRANSCRIPT"));
+        var lockedMedia =
+                snapshots.findByAttemptId(id).orElseThrow().getQuestions().stream()
+                        .flatMap(question -> question.getMedia().stream())
+                        .filter(entry -> entry.getSourceMediaId().equals(f.media().getId()))
+                        .findFirst()
+                        .orElseThrow();
+        assertEquals(secret, lockedMedia.getTranscript());
         assertEquals(1, attempts.playMedia(f.user().getId(), id, f.media().getId()).playCount());
         assertEquals(2, attempts.playMedia(f.user().getId(), id, f.media().getId()).playCount());
         assertThrows(

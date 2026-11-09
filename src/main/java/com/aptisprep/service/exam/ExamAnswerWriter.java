@@ -10,8 +10,6 @@ import java.util.*;
 import java.util.stream.Collectors;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
-import tools.jackson.databind.JsonNode;
-import tools.jackson.databind.json.JsonMapper;
 
 /** Answer persistence only. Caller holds the owner-bound attempt lock and transaction. */
 @Component
@@ -22,7 +20,6 @@ public class ExamAnswerWriter {
     private final UserAnswerDetailRepository userAnswerDetailRepository;
     private final ExamSnapshotService examSnapshots;
     private final AudioUploadService audioUploads;
-    private final JsonMapper json;
 
     public ExamAnswerWriter(
             QuestionRepository questionRepository,
@@ -30,15 +27,13 @@ public class ExamAnswerWriter {
             UserAnswerRepository userAnswerRepository,
             UserAnswerDetailRepository userAnswerDetailRepository,
             ExamSnapshotService examSnapshots,
-            AudioUploadService audioUploads,
-            JsonMapper json) {
+            AudioUploadService audioUploads) {
         this.questionRepository = questionRepository;
         this.questionItemRepository = questionItemRepository;
         this.userAnswerRepository = userAnswerRepository;
         this.userAnswerDetailRepository = userAnswerDetailRepository;
         this.examSnapshots = examSnapshots;
         this.audioUploads = audioUploads;
-        this.json = json;
     }
 
     void saveSpeakingAudio(
@@ -60,12 +55,13 @@ public class ExamAnswerWriter {
                                 () ->
                                         new BusinessRuleException(
                                                 "Câu hỏi không thuộc lượt thi này"));
-        JsonNode lockedQuestion = examSnapshots.lockedQuestions(attemptId).get(questionId);
+        ExamQuestionSnapshotEntity lockedQuestion =
+                examSnapshots.lockedQuestionEntity(attemptId, questionId);
         examSnapshots.requireOpenSection(attempt, lockedQuestion);
-        JsonNode lockedItem = chooseLockedItem(lockedQuestion, itemId);
+        ExamItemSnapshotEntity lockedItem = chooseLockedItem(lockedQuestion, itemId);
         QuestionItemEntity item =
                 questionItemRepository
-                        .findById(lockedItem.path("id").asInt())
+                        .findById(lockedItem.getSourceItemId())
                         .orElseThrow(
                                 () ->
                                         new ResourceNotFoundException(
@@ -106,19 +102,20 @@ public class ExamAnswerWriter {
                                 () ->
                                         new BusinessRuleException(
                                                 "Câu hỏi không thuộc lượt thi này"));
-        JsonNode lockedQuestion = examSnapshots.lockedQuestions(attemptId).get(questionId);
+        ExamQuestionSnapshotEntity lockedQuestion =
+                examSnapshots.lockedQuestionEntity(attemptId, questionId);
         if (lockedQuestion == null)
             throw new BusinessRuleException("Câu hỏi không thuộc snapshot của lượt thi");
         examSnapshots.requireOpenSection(attempt, lockedQuestion);
-        JsonNode lockedItem = chooseLockedItem(lockedQuestion, itemId);
+        ExamItemSnapshotEntity lockedItem = chooseLockedItem(lockedQuestion, itemId);
         QuestionItemEntity item =
                 questionItemRepository
-                        .findById(lockedItem.path("id").asInt())
+                        .findById(lockedItem.getSourceItemId())
                         .orElseThrow(
                                 () ->
                                         new ResourceNotFoundException(
                                                 "Mục câu hỏi không còn tồn tại"));
-        String questionType = lockedQuestion.path("type").asText();
+        String questionType = lockedQuestion.getQuestionType();
         UserAnswerDetailEntity detail =
                 userAnswerDetailRepository
                         .findByUserAnswerIdAndQuestionItemId(answer.getId(), item.getId())
@@ -131,7 +128,7 @@ public class ExamAnswerWriter {
                                 });
         if ("ORDERING".equals(questionType)) {
             if (userPosition != null
-                    && (userPosition < 1 || userPosition > lockedQuestion.path("items").size()))
+                    && (userPosition < 1 || userPosition > lockedQuestion.getItems().size()))
                 throw new BusinessRuleException("Vị trí sắp xếp không hợp lệ");
             detail.setUserPosition(userPosition);
         } else if (usesOptions(questionType)) {
@@ -184,23 +181,22 @@ public class ExamAnswerWriter {
                             .filter(path -> !path.isBlank())
                             .toList();
             answer.setAudioUrl(paths.isEmpty() ? null : paths.getFirst());
-            answer.setAudioManifest(
-                    json.writeValueAsString(
-                            paths.stream().map(path -> Map.of("path", path)).toList()));
+            answer.setAudioManifest(String.join("\n", paths));
         }
     }
 
-    private JsonNode chooseLockedItem(JsonNode question, Integer itemId) {
-        if (question == null || question.isMissingNode())
+    private ExamItemSnapshotEntity chooseLockedItem(
+            ExamQuestionSnapshotEntity question, Integer itemId) {
+        if (question == null)
             throw new BusinessRuleException("Câu hỏi không thuộc snapshot của lượt thi");
-        for (JsonNode item : question.path("items"))
-            if (itemId == null || item.path("id").asInt() == itemId) return item;
+        for (ExamItemSnapshotEntity item : question.getItems())
+            if (itemId == null || item.getSourceItemId().equals(itemId)) return item;
         throw new ResourceNotFoundException("Mục câu hỏi không thuộc câu hỏi");
     }
 
-    private boolean hasLockedOption(JsonNode item, Integer optionId) {
-        for (JsonNode option : item.path("options"))
-            if (option.path("id").asInt() == optionId) return true;
+    private boolean hasLockedOption(ExamItemSnapshotEntity item, Integer optionId) {
+        for (ExamOptionSnapshotEntity option : item.getOptions())
+            if (option.getSourceOptionId().equals(optionId)) return true;
         return false;
     }
 

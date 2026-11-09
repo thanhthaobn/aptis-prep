@@ -228,20 +228,6 @@
         <header class="page-header">
           <div><h1>Học viên</h1></div>
         </header>
-        <section class="student-summary" aria-label="Tổng quan học viên">
-          <article class="dashboard-panel">
-            <span>Tổng học viên</span>
-            <strong th:text="${totalStudents}">4</strong>
-          </article>
-          <article class="dashboard-panel">
-            <span>Đang hoạt động</span>
-            <strong th:text="${activeStudents}">2</strong>
-          </article>
-          <article class="dashboard-panel">
-            <span>Đã khóa</span>
-            <strong th:text="${lockedStudents}">1</strong>
-          </article>
-        </section>
         <form
           class="toolbar student-toolbar"
           th:action="@{/admin/students}"
@@ -262,7 +248,7 @@
           <div>
             <label for="studentStatus">Trạng thái</label>
             <select id="studentStatus" name="status">
-              <option value="">Tất cả trạng thái</option>
+              <option value="">Đang hoạt động và đã khóa</option>
               <option value="ACTIVE" th:selected="${selectedStatus == 'ACTIVE'}">
                 Đang hoạt động
               </option>
@@ -314,12 +300,24 @@
                   ></span>
                 </td>
                 <td data-label="Thao tác">
-                  <a
-                    class="button button-secondary button-small"
-                    th:href="@{/admin/students/{id}(id=${student.id})}"
-                  >
-                    Xem chi tiết
-                  </a>
+                  <div class="student-row-actions">
+                    <a
+                      class="button button-secondary button-small"
+                      th:href="@{/admin/students/{id}(id=${student.id})}"
+                    >
+                      Xem chi tiết
+                    </a>
+                    <form
+                      th:if="${student.status.name() == 'LOCKED'}"
+                      method="post"
+                      th:action="@{/admin/students/{id}/delete(id=${student.id})}"
+                      data-confirm-title="Xóa tài khoản?"
+                      data-confirm-message="Tài khoản sẽ được ẩn khỏi danh sách nhưng lịch sử học tập vẫn được giữ lại."
+                      data-confirm-button="Xóa tài khoản"
+                    >
+                      <button class="button button-danger button-small" type="submit">Xóa</button>
+                    </form>
+                  </div>
                 </td>
               </tr>
             </tbody>

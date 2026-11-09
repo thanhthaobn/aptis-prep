@@ -88,6 +88,12 @@ class StudentResultFlowTests {
                     "/student/attempts/" + attempt.getId() + "/result",
                     "/student/placement/result?attemptId=" + attempt.getId()
                 }) {
+            if (state.equals("IN_PROGRESS")) {
+                mvc.perform(get(path).with(user(learner.getEmail()).roles("STUDENT")))
+                        .andExpect(status().is3xxRedirection())
+                        .andExpect(redirectedUrl("/student/attempts/" + attempt.getId()));
+                continue;
+            }
             var result =
                     mvc.perform(get(path).with(user(learner.getEmail()).roles("STUDENT")))
                             .andExpect(status().isOk())
@@ -99,8 +105,6 @@ class StudentResultFlowTests {
                                                             containsString("Mã lượt thi"))));
             if (state.equals("ERROR"))
                 result.andExpect(content().string(containsString("Chấm lại phần lỗi")));
-            if (state.equals("IN_PROGRESS"))
-                result.andExpect(content().string(containsString("Tiếp tục làm bài")));
             result.andExpect(
                     content()
                             .string(
@@ -372,13 +376,13 @@ class StudentResultFlowTests {
                                                         "/student/attempts/"
                                                                 + scoredDraft.getId()
                                                                 + "/discard"))))
-                .andExpect(content().string(not(containsString(completedUrl + "/discard"))));
+                .andExpect(content().string(containsString(completedUrl + "/discard")));
         mvc.perform(post(discardUrl).with(owner)).andExpect(status().isForbidden());
         mvc.perform(post(discardUrl).with(user(other.getEmail()).roles("STUDENT")).with(csrf()))
                 .andExpect(status().isForbidden());
         mvc.perform(post(completedUrl + "/discard").with(owner).with(csrf()))
                 .andExpect(redirectedUrl("/student/results"))
-                .andExpect(flash().attributeExists("error"));
+                .andExpect(flash().attributeExists("successMessage"));
         mvc.perform(post(expiredDiscardUrl).with(owner).with(csrf()))
                 .andExpect(redirectedUrl("/student/results"))
                 .andExpect(flash().attributeExists("successMessage"));
@@ -398,7 +402,7 @@ class StudentResultFlowTests {
                 .andExpect(status().isOk())
                 .andExpect(content().string(not(containsString(discardUrl))))
                 .andExpect(content().string(not(containsString(draftUrl + "/result"))))
-                .andExpect(content().string(containsString(completedUrl + "/result")));
+                .andExpect(content().string(not(containsString(completedUrl + "/result"))));
         mvc.perform(get("/student/attempts/{id}", draft.getId()).with(owner))
                 .andExpect(status().isNotFound());
         assertThat(attempts.findByUserIdAndRequestKey(learner.getId(), "discard-draft")).isEmpty();

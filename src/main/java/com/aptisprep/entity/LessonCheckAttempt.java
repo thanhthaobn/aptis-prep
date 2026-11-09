@@ -2,19 +2,30 @@ package com.aptisprep.entity;
 
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "lesson_check_attempts")
 public class LessonCheckAttempt {
-    @Column(name = "content_snapshot", columnDefinition = "nvarchar(max)")
-    private String contentSnapshot;
+    @OneToMany(mappedBy = "attempt", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OrderBy("id ASC")
+    private List<LessonCheckAnswerEntity> answers = new ArrayList<>();
+
+    @OneToMany(mappedBy = "attempt", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OrderBy("id ASC")
+    private List<LessonCheckFeedbackEntity> feedback = new ArrayList<>();
+
+    @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true)
+    @JoinColumn(name = "context_snapshot_id")
+    private LessonContextSnapshotEntity contextSnapshotEntity;
 
     public LessonContextSnapshot getContext() {
-        return LessonContextSnapshot.read(contentSnapshot);
+        return contextSnapshotEntity == null ? null : contextSnapshotEntity.toRecord();
     }
 
     public void snapshot(Lesson lesson) {
-        contentSnapshot = LessonContextSnapshot.serialize(lesson);
+        contextSnapshotEntity = LessonContextSnapshotEntity.capture(lesson);
     }
 
     @Id
@@ -32,20 +43,6 @@ public class LessonCheckAttempt {
 
     @Column(nullable = false)
     private int total;
-
-    @Column(name = "answers_json", nullable = false, columnDefinition = "nvarchar(max)")
-    private String answersJson;
-
-    @Column(name = "review_json", columnDefinition = "nvarchar(max)")
-    private String reviewJson;
-
-    public String getReviewJson() {
-        return reviewJson;
-    }
-
-    public void setReviewJson(String value) {
-        reviewJson = value;
-    }
 
     @Column(name = "submitted_at", nullable = false)
     private LocalDateTime submittedAt;
@@ -91,12 +88,22 @@ public class LessonCheckAttempt {
         total = v;
     }
 
-    public String getAnswersJson() {
-        return answersJson;
+    public List<LessonCheckAnswerEntity> getAnswers() {
+        return answers;
     }
 
-    public void setAnswersJson(String v) {
-        answersJson = v;
+    public List<LessonCheckFeedbackEntity> getFeedback() {
+        return feedback;
+    }
+
+    public void addAnswer(LessonCheckAnswerEntity value) {
+        answers.add(value);
+        value.setAttempt(this);
+    }
+
+    public void addFeedback(LessonCheckFeedbackEntity value) {
+        feedback.add(value);
+        value.setAttempt(this);
     }
 
     public LocalDateTime getSubmittedAt() {

@@ -182,8 +182,8 @@ public class StudentFlashcardController {
     public ResponseEntity<Void> mark(
             @PathVariable Integer setId,
             @PathVariable Integer cardId,
-            @RequestParam String state,
-            @RequestParam String reviewKey,
+            @RequestParam(name = "state") String state,
+            @RequestParam(name = "reviewKey") String reviewKey,
             Principal p) {
         service.mark(setId, cardId, state, p.getName(), reviewKey);
         return ResponseEntity.noContent().build();

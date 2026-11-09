@@ -17,14 +17,22 @@ import com.aptisprep.service.contract.IntegrationModels.LockedAttempt;
 import com.aptisprep.service.grading.*;
 import com.aptisprep.service.placement.PlacementExamCatalogService;
 import com.aptisprep.service.student.StudentExamCatalogService;
+import java.time.LocalDateTime;
 import java.util.*;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.event.ApplicationEvents;
+import org.springframework.test.context.event.RecordApplicationEvents;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.support.TransactionTemplate;
 import tools.jackson.databind.json.JsonMapper;
 
 @SpringBootTest
+@RecordApplicationEvents
 class TramBusinessCompletionTests {
     @Autowired ExamAttemptService engine;
     @Autowired ExamGradingPayloadFactory gradingPayloads;
@@ -37,6 +45,9 @@ class TramBusinessCompletionTests {
     @Autowired QuestionOptionRepository options;
     @Autowired ExamAttemptRepository attempts;
     @Autowired AttemptOutboxRepository outbox;
+    @Autowired AttemptOutboxService delivery;
+    @Autowired ApplicationEvents events;
+    @Autowired PlatformTransactionManager transactionManager;
     @Autowired UserAnswerRepository answers;
     @Autowired StudentExamCatalogService library;
     @Autowired PlacementExamCatalogService placement;
@@ -47,8 +58,9 @@ class TramBusinessCompletionTests {
     @Autowired ScoreBandRepository bands;
     private final JsonMapper json = JsonMapper.builder().build();
 
-    @Test
-    void snapshotThroughOutboxToAiRetainsOldPromptsAndMatchingAnswers() {
+    @ParameterizedTest
+    @ValueSource(booleans = {false, true})
+    void snapshotThroughOutboxToAiRetainsOldPromptsAndMatchingAnswers(boolean legacyJson) {
         var f = fixture(2);
         int id = start(f);
         save(f, id, 0, "Answer to first prompt");
@@ -63,10 +75,25 @@ class TramBusinessCompletionTests {
         engine.submit(f.user().getId(), id, "submit");
         var row = outbox.findByEventKey("attempt:" + id + ":submitted").orElseThrow();
         assertEquals("DISPATCHED", row.getStatus());
-        LockedAttempt locked =
-                json.readValue(
-                        json.readTree(row.getPayload()).get("lockedAttempt").toString(),
-                        LockedAttempt.class);
+        if (legacyJson) {
+            var original = events.stream(AttemptSubmittedEvent.class).findFirst().orElseThrow();
+            row.setPayload(json.writeValueAsString(original));
+        }
+        events.clear();
+        new TransactionTemplate(transactionManager)
+                .executeWithoutResult(
+                        status -> {
+                            row.setStatus("PROCESSING");
+                            row.setNextAttemptAt(LocalDateTime.now().minusSeconds(1));
+                            outbox.saveAndFlush(row);
+                            delivery.recoverPending();
+                        });
+        var replayed =
+                events.stream(AttemptSubmittedEvent.class)
+                        .filter(event -> event.attemptId().equals(id))
+                        .findFirst()
+                        .orElseThrow();
+        assertEquals("DISPATCHED", outbox.findById(row.getId()).orElseThrow().getStatus());
         var ai = mock(AiAssessmentContract.class);
         var finalization = mock(AttemptFinalizationService.class);
         when(finalization.accepts(any())).thenReturn(true);
@@ -75,9 +102,7 @@ class TramBusinessCompletionTests {
         var orchestration =
                 new AttemptGradingOrchestrationService(
                         config, ai, finalization, mock(AttemptOutboxService.class));
-        orchestration.onSubmitted(
-                new AttemptSubmittedEvent(
-                        f.user().getId(), id, f.exam().getId(), "PLACEMENT", locked));
+        orchestration.onSubmitted(replayed);
         var request = ArgumentCaptor.forClass(AiAssessmentContract.AssessmentRequest.class);
         verify(ai).request(request.capture());
         assertEquals(
@@ -136,7 +161,11 @@ class TramBusinessCompletionTests {
         save(f, id, 0, "a".repeat(20_000));
         save(f, id, 1, "b".repeat(20_000));
         save(f, id, 2, "c");
-        LockedAttempt draft = gradingPayloads.build(attempts.findById(id).orElseThrow(), f.exam());
+        LockedAttempt draft =
+                new TransactionTemplate(transactionManager)
+                        .execute(
+                                status ->
+                                        gradingPayloads.build(attempts.findById(id).orElseThrow()));
         var answer = draft.answers().getFirst();
         int overhead =
                 GradingContextFormatter.task(answer).length()

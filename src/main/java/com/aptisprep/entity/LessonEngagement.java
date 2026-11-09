@@ -2,6 +2,8 @@ package com.aptisprep.entity;
 
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(
@@ -26,8 +28,9 @@ public class LessonEngagement {
     @Column(name = "playback_expires_at")
     private LocalDateTime playbackExpiresAt;
 
-    @Column(name = "playback_ranges_json", columnDefinition = "nvarchar(max)")
-    private String playbackRangesJson;
+    @OneToMany(mappedBy = "engagement", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OrderBy("startSeconds ASC")
+    private List<LessonPlaybackRangeEntity> playbackRanges = new ArrayList<>();
 
     @Column(name = "playback_sequence", nullable = false)
     private int playbackSequence;
@@ -86,12 +89,19 @@ public class LessonEngagement {
         playbackExpiresAt = value;
     }
 
-    public String getPlaybackRangesJson() {
-        return playbackRangesJson;
+    public List<LessonPlaybackRangeEntity> getPlaybackRanges() {
+        return playbackRanges;
     }
 
-    public void setPlaybackRangesJson(String value) {
-        playbackRangesJson = value;
+    public void replacePlaybackRanges(List<double[]> values) {
+        playbackRanges.clear();
+        for (double[] range : values) {
+            LessonPlaybackRangeEntity entity = new LessonPlaybackRangeEntity();
+            entity.setEngagement(this);
+            entity.setStartSeconds(range[0]);
+            entity.setEndSeconds(range[1]);
+            playbackRanges.add(entity);
+        }
     }
 
     public int getPlaybackSequence() {

@@ -47,11 +47,11 @@ Mỗi handler có một URL và một HTTP method; không trùng cặp HTTP meth
 | GET | `/student/assessments/{key}` | `AiAssessmentController.showStudentAssessment()` | view / redirect |
 | GET | `/student/attempts/{id}/answers/{answerId}/audio` | `StudentExamController.speakingAudio()` | resource / response |
 | GET | `/student/attempts/{id}/media/{mediaId}/content` | `StudentExamController.mediaContent()` | resource / response |
-| GET | `/student/attempts/{id}/result` | `StudentContentController.result()` | view / redirect |
+| GET | `/student/attempts/{id}/result` | `StudentExamCatalogController.result()` | view / redirect |
 | GET | `/student/attempts/{id}` | `StudentExamController.attempt()` | view / redirect |
 | GET | `/student/dashboard` | `StudentDashboardController.dashboard()` | view / redirect |
-| GET | `/student/exams/{id}` | `StudentContentController.detail()` | view / redirect |
-| GET | `/student/exams` | `StudentContentController.list()` | view / redirect |
+| GET | `/student/exams/{id}` | `StudentExamCatalogController.detail()` | view / redirect |
+| GET | `/student/exams` | `StudentExamCatalogController.list()` | view / redirect |
 | GET | `/student/flashcards/create` | `StudentFlashcardController.showCreateForm()` | view / redirect |
 | GET | `/student/flashcards/{id}/edit` | `StudentFlashcardController.showEditForm()` | view / redirect |
 | GET | `/student/flashcards/{id}` | `StudentFlashcardController.study()` | view / redirect |
@@ -69,7 +69,7 @@ Mỗi handler có một URL và một HTTP method; không trùng cặp HTTP meth
 | GET | `/student/placement` | `StudentAccountController.placement()` | view / redirect |
 | GET | `/student/profile/edit` | `StudentAccountController.profileEdit()` | view / redirect |
 | GET | `/student/profile` | `StudentAccountController.profile()` | view / redirect |
-| GET | `/student/results` | `StudentContentController.results()` | view / redirect |
+| GET | `/student/results` | `StudentExamCatalogController.results()` | view / redirect |
 | POST | `/admin/assessments/{key}/retry` | `AiAssessmentController.retryAdminAssessment()` | view / redirect |
 | POST | `/admin/certificates/{id}/disable` | `AdminScoringController.disableCertificate()` | view / redirect |
 | POST | `/admin/certificates/{id}` | `AdminScoringController.updateCertificate()` | view / redirect |
@@ -107,7 +107,7 @@ Mỗi handler có một URL và một HTTP method; không trùng cặp HTTP meth
 | POST | `/student/attempts/{id}/answers/autosave` | `StudentExamController.autosave()` | response body |
 | POST | `/student/attempts/{id}/answers` | `StudentExamController.answer()` | view / redirect |
 | POST | `/student/attempts/{id}/media/{mediaId}/play` | `StudentExamController.playMedia()` | response body |
-| POST | `/student/attempts/{id}/retry-grading` | `StudentContentController.retryGrading()` | view / redirect |
+| POST | `/student/attempts/{id}/retry-grading` | `StudentExamCatalogController.retryGrading()` | view / redirect |
 | POST | `/student/attempts/{id}/submit` | `StudentExamController.submit()` | view / redirect |
 | POST | `/student/exams/{id}/start` | `StudentExamController.start()` | view / redirect |
 | POST | `/student/flashcards/{id}/archive` | `StudentFlashcardController.archive()` | view / redirect |
