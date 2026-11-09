@@ -345,7 +345,7 @@
               <dd th:if="${student.goal == null}">Chưa đặt mục tiêu</dd>
               <dd
                 th:unless="${student.goal == null}"
-                th:text="${display.join(student.goal.targets.values(), ', ')}"
+                th:text="${#strings.listJoin(student.goal.targets.values(), ', ')}"
               ></dd>
             </div>
             <div>

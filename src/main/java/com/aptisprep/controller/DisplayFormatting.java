@@ -76,7 +76,4 @@ public class DisplayFormatting {
         }
     }
 
-    public String join(Iterable<String> values, String separator) {
-        return values == null ? null : String.join(separator, values);
-    }
 }
