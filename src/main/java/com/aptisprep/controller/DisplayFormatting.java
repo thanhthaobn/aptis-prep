@@ -44,15 +44,6 @@ public class DisplayFormatting {
         return false;
     }
 
-    public String historyExamType(String type) {
-        return switch (type == null ? "" : type) {
-            case "PLACEMENT" -> "Kiểm tra đầu vào";
-            case "CHECKPOINT" -> "Kiểm tra cuối chặng";
-            case "FULL_MOCK" -> "Thi thử tổng hợp";
-            default -> "Bài luyện tập";
-        };
-    }
-
     public String historyStateClass(String state) {
         return switch (state == null ? "" : state) {
             case "COMPLETED" -> " is-complete";

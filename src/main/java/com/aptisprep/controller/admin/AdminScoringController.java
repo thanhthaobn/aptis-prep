@@ -13,6 +13,7 @@ import jakarta.validation.Valid;
 import java.security.Principal;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.TreeSet;
 import java.util.stream.Collectors;
 import org.springframework.stereotype.Controller;
@@ -25,6 +26,19 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 public class AdminScoringController {
     private static final List<String> EXAM_TYPES =
             List.of("PLACEMENT", "PRACTICE", "CHECKPOINT", "FULL_MOCK");
+    private static final Map<String, String> EXAM_TYPE_LABELS =
+            Map.of(
+                    "PLACEMENT", "Kiểm tra đầu vào",
+                    "CHECKPOINT", "Kiểm tra cuối chặng",
+                    "FULL_MOCK", "Thi thử tổng hợp",
+                    "PRACTICE", "Bài luyện tập");
+    private static final Map<String, String> SKILL_LABELS =
+            Map.of(
+                    "GRAMMAR_VOCABULARY", "Grammar & Vocabulary",
+                    "READING", "Reading",
+                    "LISTENING", "Listening",
+                    "WRITING", "Writing",
+                    "SPEAKING", "Speaking");
     private final ScoringAdminService scoring;
     private final MockExamRepository exams;
     private final DisplayFormatting display;
@@ -402,6 +416,8 @@ public class AdminScoringController {
         model.addAttribute("scoringLevels", CefrLevel.codes());
         model.addAttribute("fullMockScoringLevels", CefrLevel.scoringCodes());
         model.addAttribute("skillCodes", Skill.codes());
+        model.addAttribute("examTypeLabels", EXAM_TYPE_LABELS);
+        model.addAttribute("skillLabels", SKILL_LABELS);
         model.addAttribute(
                 "skills",
                 List.of("Grammar & Vocabulary", "Reading", "Listening", "Writing", "Speaking"));

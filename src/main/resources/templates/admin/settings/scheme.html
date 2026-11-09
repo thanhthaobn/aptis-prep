@@ -323,7 +323,7 @@
                   <option
                     th:each="type : ${examTypes}"
                     th:value="${type}"
-                    th:text="${display.historyExamType(type)}"
+                    th:text="${examTypeLabels[type]}"
                   ></option>
                 </select>
                 <p class="field-error" th:errors="*{examType}"></p>

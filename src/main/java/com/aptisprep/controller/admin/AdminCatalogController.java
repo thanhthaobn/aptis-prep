@@ -14,9 +14,16 @@ import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+import java.util.Map;
 
 @Controller
 public class AdminCatalogController {
+    private static final Map<String, String> EXAM_TYPE_LABELS =
+            Map.of(
+                    "PLACEMENT", "Kiểm tra đầu vào",
+                    "CHECKPOINT", "Kiểm tra cuối chặng",
+                    "FULL_MOCK", "Thi thử tổng hợp",
+                    "PRACTICE", "Bài luyện tập");
     private final CatalogService catalogService;
 
     public AdminCatalogController(CatalogService catalogService) {
@@ -65,6 +72,7 @@ public class AdminCatalogController {
         model.addAttribute("selectedSkill", skill);
         model.addAttribute("selectedStatus", status);
         model.addAttribute("selectedKind", kind);
+        model.addAttribute("examTypeLabels", EXAM_TYPE_LABELS);
         return "admin/catalog/list";
     }
 

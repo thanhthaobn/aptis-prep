@@ -286,7 +286,7 @@
               <option
                         th:each="type : ${examTypes}"
                 th:value="${type}"
-                th:text="${display.historyExamType(type)}"
+                th:text="${examTypeLabels[type]}"
                 th:selected="${type == examType}"
               ></option>
               <option value="UNASSIGNED" th:selected="${examType == 'UNASSIGNED'}">
@@ -337,13 +337,13 @@
                   >
                     <span
                       th:if="${scheme.examType != null}"
-                      th:text="${display.historyExamType(scheme.examType) + (scheme.scopeSkill == null ? '' : ' · ' + display.catalogSkill(scheme.scopeSkill))}"
+                      th:text="${examTypeLabels[scheme.examType] + (scheme.scopeSkill == null ? '' : ' · ' + skillLabels[scheme.scopeSkill])}"
                     ></span>
                     <span th:if="${scheme.examType == null and types == null}">Chưa phân loại</span>
                     <div
                       th:if="${scheme.examType == null}"
                       th:each="type : ${types}"
-                      th:text="${display.historyExamType(type)}"
+                      th:text="${examTypeLabels[type]}"
                     ></div>
                   </td>
                   <td data-label="Trạng thái">

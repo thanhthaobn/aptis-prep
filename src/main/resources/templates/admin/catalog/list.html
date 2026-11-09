@@ -400,7 +400,7 @@
                 ></td>
                 <td
                   th:attr="data-label=${catalog.typeLabel}"
-                  th:text="${catalog.key == 'exams' ? display.historyExamType(entry.kind) : entry.kind}"
+                  th:text="${catalog.key == 'exams' ? examTypeLabels[entry.kind] : entry.kind}"
                 ></td>
                 <td data-label="Trạng thái">
                   <span
