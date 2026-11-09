@@ -160,6 +160,8 @@ public class StudentAccountController {
         var result = placement.result(principal.getName(), attemptId);
         if ("IN_PROGRESS".equals(result.state()))
             return "redirect:/student/attempts/" + attemptId;
+        if ("EXPIRED".equals(result.state()) && result.submittedAt() == null)
+            return "redirect:/student/placement";
         model.addAttribute("attemptResult", result);
         model.addAttribute("fromPlacement", true);
         Integer userId = access.requireActiveStudent(principal.getName());

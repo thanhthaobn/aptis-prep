@@ -474,13 +474,16 @@ public class ExamAttemptService implements ExamAttemptContract {
                                         new AccessDeniedException(
                                                 "Bạn không có quyền với lượt thi này"));
         if ("CANCELLED".equals(attempt.getStatus())) return;
-        if (!("IN_PROGRESS".equals(attempt.getStatus()) || "EXPIRED".equals(attempt.getStatus()))
-                || attempt.getSubmittedAt() != null
-                || attempt.getFinalScaleScore() != null
-                || attempt.getEstimatedOverallCefr() != null
-                || examSkillResultRepository.existsByAttemptId(attemptId))
+        boolean expired = "EXPIRED".equals(attempt.getStatus());
+        boolean cleanDraft =
+                "IN_PROGRESS".equals(attempt.getStatus())
+                        && attempt.getSubmittedAt() == null
+                        && attempt.getFinalScaleScore() == null
+                        && attempt.getEstimatedOverallCefr() == null
+                        && !examSkillResultRepository.existsByAttemptId(attemptId);
+        if (!expired && !cleanDraft)
             throw new BusinessRuleException(
-                    "Chỉ có thể loại bỏ lượt thi chưa nộp và chưa có kết quả.");
+                    "Chỉ có thể loại bỏ lượt thi đang làm hoặc đã hết thời gian.");
         attempt.setStatus("CANCELLED");
         attempt.setGradingStatus("CANCELLED");
         // A new checkpoint may reuse the start key of the discarded attempt.

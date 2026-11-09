@@ -155,6 +155,8 @@ public class StudentExamCatalogController {
         AttemptResult result = attempts.result(userId, id);
         if ("IN_PROGRESS".equals(result.state()))
             return "redirect:/student/attempts/" + id;
+        if ("EXPIRED".equals(result.state()) && result.submittedAt() == null)
+            return "redirect:/student/results";
         model.addAttribute("attemptResult", result);
         var scoreGuideView = scoringGuides.forResultView(result);
         model.addAttribute("scoreGuides", scoreGuideView.guides());
