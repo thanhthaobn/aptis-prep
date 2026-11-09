@@ -267,12 +267,10 @@
           </div>
         </form>
 
-        <details class="flashcard-function-group flashcard-personal-group" open>
-          <summary class="flashcard-group-heading">
+        <section class="flashcard-function-group">
+          <header class="flashcard-group-heading">
             <h2>Bộ thẻ của tôi</h2>
             <span th:text="${'' + mineResultCount + ' bộ'}"></span>
-          </summary>
-          <div class="flashcard-personal-toolbar">
             <a
               class="button button-secondary flashcard-create-action"
               th:href="@{/student/flashcards/create}"
@@ -280,15 +278,18 @@
               <span aria-hidden="true">＋</span>
               <span>Tạo bộ thẻ riêng</span>
             </a>
-          </div>
-          <div class="flashcard-personal-empty" th:if="${mineResultCount==0 and mineCount>0}">
-            <th:block th:if="${mineCount>0}">
-              <p>Bộ lọc hiện tại đang ẩn các bộ thẻ của bạn.</p>
-              <a th:href="@{/student/flashcards(source='mine')}">Xem tất cả bộ thẻ của tôi →</a>
-            </th:block>
-          </div>
+          </header>
 
-          <section class="flashcard-set-grid" aria-label="Danh sách bộ flashcard">
+          <details class="flashcard-personal-dropdown" open>
+            <summary>Danh sách bộ thẻ cá nhân</summary>
+            <div class="flashcard-personal-empty" th:if="${mineResultCount==0 and mineCount>0}">
+              <th:block th:if="${mineCount>0}">
+                <p>Bộ lọc hiện tại đang ẩn các bộ thẻ của bạn.</p>
+                <a th:href="@{/student/flashcards(source='mine')}">Xem tất cả bộ thẻ của tôi →</a>
+              </th:block>
+            </div>
+
+            <section class="flashcard-set-grid" aria-label="Danh sách bộ flashcard">
             <article
               class="flashcard-set-card flashcard-row"
               th:each="set : ${sets}"
@@ -340,8 +341,9 @@
                 </form>
               </div>
             </article>
-          </section>
-        </details>
+            </section>
+          </details>
+        </section>
 
         <section class="flashcard-function-group" th:if="${lessonResultCount>0}">
           <header class="flashcard-group-heading">
