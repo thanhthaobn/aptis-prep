@@ -278,7 +278,7 @@
             <select id="examType" name="examType">
               <option value="">Tất cả</option>
               <option
-                th:each="v : ${display.examTypes()}"
+                th:each="v : ${examTypes}"
                 th:value="${v}"
                 th:text="${@resultLabels.examType(v)}"
                 th:selected="${selectedExamType==v}"

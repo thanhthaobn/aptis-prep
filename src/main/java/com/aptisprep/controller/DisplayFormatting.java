@@ -20,10 +20,6 @@ import org.springframework.web.servlet.support.RequestContext;
 /** Presentation formatting shared by HTML pages; does not query or modify business data. */
 @Component
 public class DisplayFormatting {
-    public List<String> examTypes() {
-        return List.of("PLACEMENT", "PRACTICE", "CHECKPOINT", "FULL_MOCK");
-    }
-
     public List<String> resultStates() {
         return List.of("IN_PROGRESS", "WAITING_GRADING", "COMPLETED", "ERROR", "EXPIRED");
     }

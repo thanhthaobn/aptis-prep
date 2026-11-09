@@ -21,6 +21,8 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 @Controller
 public class AdminScoringController {
+    private static final List<String> EXAM_TYPES =
+            List.of("PLACEMENT", "PRACTICE", "CHECKPOINT", "FULL_MOCK");
     private final ScoringAdminService scoring;
     private final MockExamRepository exams;
     private final DisplayFormatting display;
@@ -54,7 +56,7 @@ public class AdminScoringController {
             Model model) {
         if (!examType.isBlank()
                 && !"UNASSIGNED".equals(examType)
-                && !display.examTypes().contains(examType))
+                && !EXAM_TYPES.contains(examType))
             throw new BusinessRuleException("Loại đề không hợp lệ");
         var examTypes =
                 exams.findScoringSchemeExamTypes().stream()
@@ -88,6 +90,7 @@ public class AdminScoringController {
         model.addAttribute("examType", examType);
         model.addAttribute("certificateId", certificateId);
         model.addAttribute("certificates", scoring.certificateViews());
+        model.addAttribute("examTypes", EXAM_TYPES);
         return "admin/settings/schemes";
     }
 
@@ -393,6 +396,7 @@ public class AdminScoringController {
 
     private void schemeOptions(Model model) {
         model.addAttribute("certificates", scoring.certificateViews());
+        model.addAttribute("examTypes", EXAM_TYPES);
         model.addAttribute(
                 "skills",
                 List.of("Grammar & Vocabulary", "Reading", "Listening", "Writing", "Speaking"));

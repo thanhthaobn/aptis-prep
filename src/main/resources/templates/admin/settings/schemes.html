@@ -284,7 +284,7 @@
             <select id="schemeExamType" name="examType">
               <option value="">Tất cả loại đề</option>
               <option
-                th:each="type : ${display.examTypes()}"
+                        th:each="type : ${examTypes}"
                 th:value="${type}"
                 th:text="${display.historyExamType(type)}"
                 th:selected="${type == examType}"

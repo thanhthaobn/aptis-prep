@@ -321,7 +321,7 @@
                 <select id="schemeExamType" th:field="*{examType}" th:required="${!editing}">
                   <option value="">Chọn loại đề</option>
                   <option
-                    th:each="type : ${display.examTypes()}"
+                    th:each="type : ${examTypes}"
                     th:value="${type}"
                     th:text="${display.historyExamType(type)}"
                   ></option>
