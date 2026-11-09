@@ -312,7 +312,7 @@
             </dl>
 
             <p
-              th:if="${res.state == 'SUBMITTED' or res.state == 'WAITING_GRADING' or display.hasPendingGrades(res.skills)}"
+              th:if="${res.state == 'SUBMITTED' or res.state == 'WAITING_GRADING' or res.hasPendingGrades}"
               class="result-message"
               role="status"
             >
@@ -326,13 +326,13 @@
               <a th:href="@{/student/attempts/{id}(id=${res.attemptId})}">Tiếp tục làm bài</a>
             </div>
             <div
-              th:if="${res.state == 'ERROR' or display.hasGradingErrors(res.skills)}"
+              th:if="${res.state == 'ERROR' or res.hasGradingErrors}"
               class="result-message result-message-error"
               role="alert"
             >
               <p>Chấm điểm chưa thành công. Bài làm vẫn được lưu.</p>
               <form
-                th:if="${res.state == 'ERROR' and display.hasRetryableGrades(res.skills)}"
+                th:if="${res.state == 'ERROR' and res.hasRetryableGrades}"
                 method="post"
                 th:action="@{/student/attempts/{id}/retry-grading(id=${res.attemptId})}"
               >

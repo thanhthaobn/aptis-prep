@@ -1,6 +1,5 @@
 package com.aptisprep.controller;
 
-import com.aptisprep.service.contract.IntegrationModels.SkillResult;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.TemporalAccessor;
@@ -17,31 +16,6 @@ import org.springframework.web.servlet.support.RequestContext;
 /** Presentation formatting shared by HTML pages; does not query or modify business data. */
 @Component
 public class DisplayFormatting {
-    public boolean hasPendingGrades(List<SkillResult> skills) {
-        if (skills == null) return false;
-        for (SkillResult skill : skills) {
-            if ("PENDING".equals(skill.gradingState()) || "WAITING".equals(skill.gradingState()))
-                return true;
-        }
-        return false;
-    }
-
-    public boolean hasGradingErrors(List<SkillResult> skills) {
-        if (skills == null) return false;
-        for (SkillResult skill : skills) {
-            if ("ERROR".equals(skill.gradingState())) return true;
-        }
-        return false;
-    }
-
-    public boolean hasRetryableGrades(List<SkillResult> skills) {
-        if (skills == null) return false;
-        for (SkillResult skill : skills) {
-            if (skill.retryable()) return true;
-        }
-        return false;
-    }
-
     public boolean fieldInvalid(String formName, String field) {
         if (!(RequestContextHolder.getRequestAttributes()
                 instanceof ServletRequestAttributes attributes)) return false;

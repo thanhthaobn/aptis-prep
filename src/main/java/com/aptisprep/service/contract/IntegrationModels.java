@@ -248,6 +248,24 @@ public final class IntegrationModels {
             };
         }
 
+        public boolean hasPendingGrades() {
+            return skills != null
+                    && skills.stream()
+                            .anyMatch(
+                                    skill ->
+                                            "PENDING".equals(skill.gradingState())
+                                                    || "WAITING".equals(skill.gradingState()));
+        }
+
+        public boolean hasGradingErrors() {
+            return skills != null
+                    && skills.stream().anyMatch(skill -> "ERROR".equals(skill.gradingState()));
+        }
+
+        public boolean hasRetryableGrades() {
+            return skills != null && skills.stream().anyMatch(SkillResult::retryable);
+        }
+
         public AttemptResult(
                 Integer attemptId,
                 Integer userId,
