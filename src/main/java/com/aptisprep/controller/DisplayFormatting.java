@@ -67,13 +67,4 @@ public class DisplayFormatting {
         return formatter.format(value);
     }
 
-    public List<Integer> pageNumbers(int start, int end) {
-        List<Integer> result = new ArrayList<>();
-        int step = start <= end ? 1 : -1;
-        for (int number = start; ; number += step) {
-            result.add(number);
-            if (number == end) return result;
-        }
-    }
-
 }

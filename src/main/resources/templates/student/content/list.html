@@ -484,7 +484,7 @@
                   1
                 </a>
                 <span class="pagination-gap" th:if="${start > 1}" aria-hidden="true">…</span>
-                <th:block th:each="index : ${display.pageNumbers(start, end)}">
+                <th:block th:each="index : ${#numbers.sequence(start, end)}">
                   <span
                     class="page-link active"
                     th:if="${index == currentPage}"
