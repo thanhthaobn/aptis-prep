@@ -31,7 +31,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @Transactional(readOnly = true)
-    public Optional<User> authenticate(String email, String password) {
+    public Optional<User> getUserByEmailAndPassword(String email, String password) {
         String normalizedEmail = email == null ? "" : email.strip().toLowerCase(Locale.ROOT);
         if (normalizedEmail.isBlank()
                 || normalizedEmail.length() > 255

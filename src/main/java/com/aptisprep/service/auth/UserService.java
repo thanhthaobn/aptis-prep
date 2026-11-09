@@ -5,7 +5,7 @@ import com.aptisprep.entity.User;
 import java.util.Optional;
 
 public interface UserService {
-    Optional<User> authenticate(String email, String password);
+    Optional<User> getUserByEmailAndPassword(String email, String password);
 
     User registerStudent(RegisterForm form);
 }
