@@ -75,15 +75,17 @@
     .admin-theme .admin-catalog .catalog-table { font-size: .86rem; }
     .admin-theme .admin-catalog .catalog-table th { font-size: .74rem; white-space: nowrap; }
     .admin-theme .admin-catalog .catalog-table td { padding: .72rem .65rem; line-height: 1.35; }
-    .admin-theme .admin-catalog .catalog-table th:nth-child(1),.admin-theme .admin-catalog .catalog-table td:nth-child(1) { width: 27%; }
+    .admin-theme .admin-catalog .catalog-table th:nth-child(1),.admin-theme .admin-catalog .catalog-table td:nth-child(1) { width: 25%; }
     .admin-theme .admin-catalog .catalog-table th:nth-child(2),.admin-theme .admin-catalog .catalog-table td:nth-child(2) { width: 14%; }
     .admin-theme .admin-catalog .catalog-table th:nth-child(3),.admin-theme .admin-catalog .catalog-table td:nth-child(3) { width: 8%; }
-    .admin-theme .admin-catalog .catalog-table th:nth-child(4),.admin-theme .admin-catalog .catalog-table td:nth-child(4) { width: 14%; }
-    .admin-theme .admin-catalog .catalog-table th:nth-child(5),.admin-theme .admin-catalog .catalog-table td:nth-child(5) { width: 13%; }
-    .admin-theme .admin-catalog .catalog-table th:nth-child(6),.admin-theme .admin-catalog .catalog-table td:nth-child(6) { width: 11%; }
+    .admin-theme .admin-catalog .catalog-table th:nth-child(4),.admin-theme .admin-catalog .catalog-table td:nth-child(4) { width: 13%; }
+    .admin-theme .admin-catalog .catalog-table th:nth-child(5),.admin-theme .admin-catalog .catalog-table td:nth-child(5) { width: 16%; padding-inline: .9rem; }
+    .admin-theme .admin-catalog .catalog-table th:nth-child(6),.admin-theme .admin-catalog .catalog-table td:nth-child(6) { width: 12%; }
     .admin-theme .admin-catalog .catalog-table th:nth-child(7),.admin-theme .admin-catalog .catalog-table td:nth-child(7) { width: 13%; }
     .admin-theme .admin-catalog .catalog-table td:nth-child(3),
+    .admin-theme .admin-catalog .catalog-table td:nth-child(5),
     .admin-theme .admin-catalog .catalog-table td:nth-child(6) { white-space: nowrap; }
+    .admin-theme .admin-catalog .catalog-table td:nth-child(5) .badge { display: inline-flex; white-space: nowrap; }
     .admin-theme .result-history-table { font-size: .86rem; }
     .admin-theme .result-history-table th { font-size: .74rem; white-space: nowrap; }
     .admin-theme .result-history-table td { padding: .78rem .7rem; line-height: 1.35; }
