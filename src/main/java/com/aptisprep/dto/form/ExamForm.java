@@ -2,7 +2,6 @@ package com.aptisprep.dto.form;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 
 public class ExamForm {
     private String title;
@@ -75,17 +74,6 @@ public class ExamForm {
 
     public void setDurationMinutes(Integer v) {
         durationMinutes = v;
-    }
-
-    public Integer getTotalDurationMinutes() {
-        if (sections == null || sections.isEmpty()) return durationMinutes;
-        long total =
-                sections.stream()
-                        .map(SectionForm::getDurationMinutes)
-                        .filter(Objects::nonNull)
-                        .mapToLong(Integer::longValue)
-                        .sum();
-        return total > Integer.MAX_VALUE ? Integer.MAX_VALUE : (int) total;
     }
 
     public Integer getCertificateId() {

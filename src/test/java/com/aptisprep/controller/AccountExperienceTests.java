@@ -1,18 +1,19 @@
 package com.aptisprep.controller;
 
+import static com.aptisprep.security.SessionMvcRequests.*;
 import static org.assertj.core.api.Assertions.*;
-import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 import com.aptisprep.entity.User;
 import com.aptisprep.enums.*;
 import com.aptisprep.repository.UserRepository;
+import com.aptisprep.service.auth.PasswordHasher;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
-import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.mock.web.MockHttpSession;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -22,7 +23,7 @@ import org.springframework.transaction.annotation.Transactional;
 class AccountExperienceTests {
     @Autowired MockMvc mvc;
     @Autowired UserRepository users;
-    @Autowired PasswordEncoder encoder;
+    @Autowired PasswordHasher encoder;
     @Autowired com.aptisprep.repository.LessonRepository lessons;
     @Autowired com.aptisprep.repository.UserSkillProfileRepository profiles;
     @Autowired com.aptisprep.service.learning.LearningPathService learning;
@@ -54,11 +55,16 @@ class AccountExperienceTests {
                         content()
                                 .string(
                                         org.hamcrest.Matchers.containsString(
+                                                "aria-valuenow=\"0\"")))
+                .andExpect(
+                        content()
+                                .string(
+                                        org.hamcrest.Matchers.containsString(
                                                 "Đặt mục tiêu cá nhân")));
     }
 
     @Test
-    void passwordChangeInvalidatesAnotherPreviouslyAuthenticatedSession() throws Exception {
+    void passwordChangeInvalidatesAnotherLoginSession() throws Exception {
         User user = student("session-experience@example.com");
         var result =
                 mvc.perform(
@@ -68,14 +74,13 @@ class AccountExperienceTests {
                                         .param("password", "Hoc-tieng-Anh-2026"))
                         .andExpect(status().is3xxRedirection())
                         .andReturn();
-        var session =
-                (org.springframework.mock.web.MockHttpSession)
-                        result.getRequest().getSession(false);
+        var session = (MockHttpSession) result.getRequest().getSession(false);
         assertThat(session).isNotNull();
         user.setPasswordHash(encoder.encode("New-session-password-2026"));
         users.saveAndFlush(user);
         mvc.perform(get("/student/profile").session(session))
                 .andExpect(redirectedUrl("/login?passwordChanged"));
+        assertThat(session.isInvalid()).isTrue();
     }
 
     @Test
@@ -109,6 +114,24 @@ class AccountExperienceTests {
                                         org.hamcrest.Matchers.containsString(
                                                 "aria-invalid=\"true\"")));
         assertThat(users.existsByEmailIgnoreCase("invalid-experience@example.com")).isFalse();
+    }
+
+    @Test
+    void registrationRequiresCapitalizedNameAndAllPasswordCharacterTypes() throws Exception {
+        for (String password :
+                new String[] {"learning2026!", "LearningEnglish!", "Learning2026 "}) {
+            mvc.perform(
+                            post("/register")
+                                    .with(csrf())
+                                    .param("fullName", "thảo")
+                                    .param("email", "password-policy@example.com")
+                                    .param("password", password)
+                                    .param("confirmPassword", password))
+                    .andExpect(
+                            model().attributeHasFieldErrors(
+                                            "registerForm", "fullName", "password"));
+        }
+        assertThat(users.existsByEmailIgnoreCase("password-policy@example.com")).isFalse();
     }
 
     @Test

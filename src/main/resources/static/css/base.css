@@ -4,7 +4,7 @@ body {
     margin: 0;
     color: var(--color-text);
     background: var(--color-background);
-    font-family: var(--font-sans);
+    font-family: var(--font-ui);
     line-height: 1.6;
     -webkit-font-smoothing: antialiased;
 }
@@ -52,8 +52,11 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
 
 a { color: var(--color-primary); text-decoration: none; }
 a:hover { color: var(--color-primary-dark); }
+/* Relative bold can select Arial Black inside already-bold text on Windows. */
+b, strong { font-weight: 700; }
 button, input, select, textarea { font: inherit; }
-body, button, input, select, textarea, .button, .badge { font-family: var(--font-ui); }
+optgroup, option, code, kbd, samp, pre { font-family: inherit; }
+input::file-selector-button { font-family: inherit; }
 img, svg { display: block; }
 h1, h2, h3, p { margin-top: 0; }
 h1, h2, h3 { color: var(--color-navy); line-height: 1.2; font-weight: 700; }
@@ -132,7 +135,7 @@ h3 { margin-bottom: 0.45rem; font-size: 1.1rem; }
     gap: .7rem;
     color: var(--color-navy);
     font-size: 1.25rem;
-    font-weight: 800;
+    font-weight: 700;
     letter-spacing: -.02em;
 }
 .brand:hover { color: var(--color-primary); }
@@ -245,7 +248,7 @@ h3 { margin-bottom: 0.45rem; font-size: 1.1rem; }
     gap: .55rem;
     margin-bottom: 1rem;
     color: var(--color-primary);
-    font-weight: 800;
+    font-weight: 700;
     letter-spacing: .1em;
     font-size: .8rem;
     text-transform: uppercase;

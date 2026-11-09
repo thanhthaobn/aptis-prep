@@ -5,7 +5,9 @@ import com.aptisprep.enums.Skill;
 import com.aptisprep.exception.BusinessRuleException;
 import com.aptisprep.repository.MockExamQuestionRepository;
 import com.aptisprep.repository.MockExamRepository;
+import com.aptisprep.repository.MockExamSectionRepository;
 import com.aptisprep.service.exam.ExamStartValidator;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
 import org.springframework.stereotype.Service;
@@ -15,14 +17,17 @@ import org.springframework.stereotype.Service;
 public class PlacementExamCatalogService {
     private final MockExamRepository mockExamRepository;
     private final MockExamQuestionRepository mockExamQuestionRepository;
+    private final MockExamSectionRepository sections;
     private final ExamStartValidator startValidator;
 
     public PlacementExamCatalogService(
             MockExamRepository mockExamRepository,
             MockExamQuestionRepository mockExamQuestionRepository,
+            MockExamSectionRepository sections,
             ExamStartValidator startValidator) {
         this.mockExamRepository = mockExamRepository;
         this.mockExamQuestionRepository = mockExamQuestionRepository;
+        this.sections = sections;
         this.startValidator = startValidator;
     }
 
@@ -36,11 +41,25 @@ public class PlacementExamCatalogService {
                 .filter(exam -> !exam.isDemoOnly())
                 .filter(exam -> "PLACEMENT".equals(exam.getExamType()))
                 .filter(this::isReady)
-                .map(
-                        exam ->
-                                new PlacementExam(
-                                        exam.getId(), exam.getTitle(), exam.getDescription()))
+                .map(this::describe)
                 .toList();
+    }
+
+    private PlacementExam describe(MockExamEntity exam) {
+        List<Section> schedule =
+                sections.findByMockExamIdOrderById(exam.getId()).stream()
+                        .sorted(Comparator.comparingInt(section -> section.getDisplayOrder()))
+                        .map(
+                                section ->
+                                        new Section(
+                                                section.getSkill(), section.getDurationMinutes()))
+                        .toList();
+        return new PlacementExam(
+                exam.getId(),
+                exam.getTitle(),
+                exam.getDescription(),
+                exam.getDurationMinutes(),
+                schedule);
     }
 
     private boolean isReady(MockExamEntity exam) {
@@ -53,5 +72,12 @@ public class PlacementExamCatalogService {
         }
     }
 
-    public record PlacementExam(Integer id, String title, String subtitle) {}
+    public record PlacementExam(
+            Integer id,
+            String title,
+            String subtitle,
+            int durationMinutes,
+            List<Section> sections) {}
+
+    public record Section(String skill, int durationMinutes) {}
 }

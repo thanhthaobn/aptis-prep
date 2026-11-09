@@ -4,13 +4,17 @@ import java.nio.charset.StandardCharsets;
 import java.text.Normalizer;
 import java.util.Locale;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 public final class AccountInput {
     private AccountInput() {}
 
-    public static final String NAME_PATTERN = "(?s)(?=.*\\p{L})[\\p{L}\\p{M} .’'\\-]+";
+    public static final String NAME_PATTERN = "\\p{Lu}\\p{M}*(?: *\\p{L}\\p{M}*)*";
+    public static final String NAME_HINT =
+            "Họ tên phải bắt đầu bằng chữ in hoa và chỉ được chứa chữ cái, dấu tiếng Việt và khoảng trắng.";
     public static final String PASSWORD_HINT =
-            "Dùng 8–72 ký tự, tối đa 72 byte UTF-8; tránh mật khẩu phổ biến, chuỗi liên tiếp hoặc một ký tự lặp lại.";
+            "Dùng 8–72 ký tự, tối đa 72 byte UTF-8, có ít nhất một chữ in hoa, một chữ số và một ký tự đặc biệt.";
+    private static final Pattern SPECIAL_CHARACTER = Pattern.compile("[\\p{P}\\p{S}]");
     private static final Set<String> COMMON =
             Set.of(
                     "password",
@@ -43,7 +47,9 @@ public final class AccountInput {
                 && value.length() <= 72
                 && value.getBytes(StandardCharsets.UTF_8).length <= 72
                 && !COMMON.contains(value.toLowerCase(Locale.ROOT))
-                && value.codePoints().distinct().count() > 1
+                && value.codePoints().anyMatch(Character::isUpperCase)
+                && value.codePoints().anyMatch(Character::isDigit)
+                && SPECIAL_CHARACTER.matcher(value).find()
                 && value.codePoints().noneMatch(Character::isISOControl);
     }
 }

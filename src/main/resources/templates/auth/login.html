@@ -1,12 +1,155 @@
 <!doctype html>
-<html lang="vi" xmlns:th="http://www.thymeleaf.org">
-  <head th:replace="~{fragments/head :: head('Đăng nhập')}"></head>
+<html
+  lang="vi"
+  xmlns:th="http://www.thymeleaf.org"
+>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="description"
+      content="AptisPrep - Nền tảng luyện thi Aptis chuẩn CEFR (Reading, Listening, Writing, Speaking) với lộ trình cá nhân hóa và chấm điểm thông minh."
+    />
+    <title>Đăng nhập | AptisPrep</title>
+    <link
+      rel="icon"
+      type="image/svg+xml"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%230F6E56'/%3E%3Cpath d='M16 6 L24 25 L19.5 25 L17.5 20 L14.5 20 L12.5 25 L8 25 Z M16 12 L15.2 17 L16.8 17 Z' fill='%23ffffff'/%3E%3C/svg%3E"
+    />
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+      integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB"
+      crossorigin="anonymous"
+    />
+    <link rel="stylesheet" th:href="@{/css/variables.css}" />
+    <link rel="stylesheet" th:href="@{/css/base.css}" />
+    <link rel="stylesheet" th:href="@{/css/layout.css}" />
+    <link rel="stylesheet" th:href="@{/css/components.css}" />
+    <link rel="stylesheet" th:href="@{/css/forms.css}" />
+    <link rel="stylesheet" th:href="@{/css/learning-theme.css}" />
+    <link rel="stylesheet" th:href="@{/css/navi.css}" />
+    <link rel="stylesheet" th:href="@{/css/exam.css}" />
+    <link rel="stylesheet" th:href="@{/css/result.css}" />
+    <link rel="stylesheet" th:href="@{/css/catalog-compact.css}" />
+    <link rel="stylesheet" th:href="@{/css/admin-overview.css}" />
+    <link rel="stylesheet" th:href="@{/css/typography.css}" />
+    <script th:src="@{/js/app-dialog.js}" defer></script>
+    <script
+      src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"
+      integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI"
+      crossorigin="anonymous"
+      defer
+    ></script>
+  </head>
   <body class="landing-theme">
-    <div th:replace="~{fragments/navbar :: navbar}"></div>
+    <header class="site-header">
+      <a href="#main-content" class="ap-skip-link">Bỏ qua điều hướng</a>
+
+      <div class="container ap-container nav-wrap">
+        <a class="brand" th:href="@{/}">
+          <span class="brand-mark" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+              <path d="M5 19V7.5L12 4l7 3.5V19" />
+              <path d="M8.5 10.5 12 12l3.5-1.5M12 12v8" />
+            </svg>
+          </span>
+          <span>AptisPrep</span>
+        </a>
+
+        <button
+          class="nav-toggle"
+          id="navToggle"
+          type="button"
+          aria-label="Mở menu điều hướng"
+          aria-expanded="false"
+          aria-controls="primaryNav"
+        >
+          <svg
+            class="hamburger-icon"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            aria-hidden="true"
+          >
+            <line x1="3" y1="6" x2="21" y2="6" />
+            <line x1="3" y1="12" x2="21" y2="12" />
+            <line x1="3" y1="18" x2="21" y2="18" />
+          </svg>
+        </button>
+
+        <nav class="nav-links" id="primaryNav" aria-label="Điều hướng chính">
+          <a
+            th:href="@{/}"
+            th:classappend="${navSection == 'home'} ? 'active'"
+            th:attr="aria-current=${navSection == 'home' ? 'page' : null}"
+          >
+            Trang chủ
+          </a>
+          <a
+            th:if="${isStudent}"
+            th:href="@{/student/dashboard}"
+            th:classappend="${navSection == 'student'} ? 'active'"
+            th:attr="aria-current=${navSection == 'student' ? 'page' : null}"
+          >
+            Học tập
+          </a>
+          <a
+            th:if="${isAdmin}"
+            th:href="@{/admin/dashboard}"
+            th:classappend="${navSection == 'admin'} ? 'active'"
+            th:attr="aria-current=${navSection == 'admin' ? 'page' : null}"
+          >
+            Quản trị
+          </a>
+          <a
+            th:if="${signedIn != true}"
+            th:href="@{/login}"
+            th:classappend="${navSection == 'login'} ? 'active'"
+            th:attr="aria-current=${navSection == 'login' ? 'page' : null}"
+          >
+            Đăng nhập
+          </a>
+          <a
+            th:if="${signedIn != true}"
+            class="button button-small"
+            th:href="@{/register}"
+            th:classappend="${navSection == 'register'} ? 'active'"
+            th:attr="aria-current=${navSection == 'register' ? 'page' : null}"
+          >
+            Đăng ký
+          </a>
+          <form th:if="${signedIn}" th:action="@{/logout}" method="post">
+            <button class="button button-secondary button-small" type="submit">Đăng xuất</button>
+          </form>
+        </nav>
+      </div>
+
+      <script th:src="@{/js/navigation.js}" defer></script>
+    </header>
     <main id="main-content" tabindex="-1" class="auth-page">
       <div class="container ap-container auth-layout">
         <section class="auth-welcome" aria-label="Chào mừng trở lại">
-          <div th:replace="~{fragments/navi :: navi('welcome', 'Navi đồng hành cùng bạn')}"></div>
+          <figure class="navi navi-welcome">
+            <svg viewBox="0 0 160 130" role="img" aria-label="Navi đồng hành cùng bạn">
+              <path
+                class="navi-shadow"
+                d="M36 118c0-8 21-14 46-14s46 6 46 14-21 10-46 10-46-2-46-10Z"
+              ></path>
+              <path
+                class="navi-body"
+                d="M43 68c0-29 17-48 40-48s42 19 42 48c0 32-13 48-42 48S43 100 43 68Z"
+              ></path>
+              <path class="navi-antenna" d="M82 21V9m0 0 9-5"></path>
+              <circle class="navi-eye" cx="67" cy="63" r="5"></circle>
+              <circle class="navi-eye" cx="99" cy="63" r="5"></circle>
+              <path class="navi-mouth" d="M72 79c6 6 15 6 22 0"></path>
+              <path class="navi-arm navi-arm-left" d="M46 73 25 61"></path>
+              <path class="navi-arm navi-arm-right" d="m122 73 19-17"></path>
+            </svg>
+            <figcaption>Navi đồng hành cùng bạn</figcaption>
+          </figure>
           <p class="eyebrow">MỖI NGÀY MỘT BƯỚC NHỎ</p>
           <h2>Hôm nay, mình cùng tiến bộ nhé!</h2>
           <p>Luyện Aptis theo nhịp của bạn.</p>
@@ -18,7 +161,32 @@
             </svg>
           </span>
           <h1>Đăng nhập</h1>
-          <div th:replace="~{fragments/messages :: messages}"></div>
+          <div class="messages-container" aria-live="polite">
+            <div
+              class="alert alert-success ap-alert ap-alert-success"
+              role="status"
+              th:if="${successMessage != null or (message != null and error == null)}"
+              th:text="${successMessage != null ? successMessage : message}"
+            ></div>
+            <div
+              class="alert alert-danger ap-alert ap-alert-danger"
+              role="alert"
+              th:if="${errorMessage != null or error != null}"
+              th:text="${errorMessage != null ? errorMessage : error}"
+            ></div>
+            <div
+              class="alert alert-warning ap-alert ap-alert-warning"
+              role="alert"
+              th:if="${warningMessage != null or warning != null}"
+              th:text="${warningMessage != null ? warningMessage : warning}"
+            ></div>
+            <div
+              class="alert alert-info ap-alert ap-alert-info"
+              role="status"
+              th:if="${infoMessage != null or info != null}"
+              th:text="${infoMessage != null ? infoMessage : info}"
+            ></div>
+          </div>
           <div class="alert alert-danger" th:if="${param.error}">
             Email hoặc mật khẩu không đúng.
           </div>
@@ -27,7 +195,6 @@
             Mật khẩu đã thay đổi. Vui lòng đăng nhập lại.
           </div>
           <form th:action="@{/login}" method="post">
-            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
             <div class="field">
               <label for="email">Email</label>
               <input
@@ -73,6 +240,11 @@
       </div>
     </main>
     <script th:src="@{/js/account-forms.js}" defer></script>
-    <div th:replace="~{fragments/footer :: footer}"></div>
+    <footer class="site-footer">
+      <div class="container footer-wrap">
+        <span>© 2026 AptisPrep. Học đúng lộ trình, tiến bộ mỗi ngày.</span>
+        <span>Nền tảng học tập và luyện thi Aptis</span>
+      </div>
+    </footer>
   </body>
 </html>

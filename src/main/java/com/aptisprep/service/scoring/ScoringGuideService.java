@@ -2,6 +2,7 @@ package com.aptisprep.service.scoring;
 
 import com.aptisprep.repository.*;
 import com.aptisprep.service.contract.IntegrationModels.AttemptResult;
+import com.aptisprep.service.contract.IntegrationModels.SkillResult;
 import java.math.BigDecimal;
 import java.util.*;
 import org.springframework.stereotype.Service;
@@ -34,6 +35,20 @@ public class ScoringGuideService {
 
     public record Guide(
             String skill, String version, BigDecimal min, BigDecimal max, List<Band> bands) {}
+
+    public record ResultGuideView(List<Guide> guides, List<SkillResult> feedbackWithoutGuide) {}
+
+    public ResultGuideView forResultView(AttemptResult result) {
+        List<Guide> scoreGuides = forResult(result);
+        Set<String> guidedSkills = new HashSet<>();
+        scoreGuides.forEach(guide -> guidedSkills.add(guide.skill()));
+        List<SkillResult> feedbackWithoutGuide =
+                result.skills().stream()
+                        .filter(skill -> !guidedSkills.contains(skill.skill()))
+                        .filter(skill -> skill.feedback() != null && !skill.feedback().isBlank())
+                        .toList();
+        return new ResultGuideView(scoreGuides, feedbackWithoutGuide);
+    }
 
     public List<Guide> forExam(Integer examId) {
         return exams.findById(examId)

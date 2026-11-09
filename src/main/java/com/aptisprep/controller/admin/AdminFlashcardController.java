@@ -24,7 +24,6 @@ public class AdminFlashcardController {
     public String showFlashcardList(Model model) {
         List<SetView> sets = flashcardSetService.list(true);
         model.addAttribute("sets", sets);
-        model.addAttribute("admin", true);
         model.addAttribute("lessonBranches", FlashcardSetService.groupBySkillAndLevel(sets));
         model.addAttribute(
                 "unclassifiedSets",
@@ -36,7 +35,7 @@ public class AdminFlashcardController {
                                                 || !LessonService.SKILLS.contains(s.lessonSkill())
                                                 || !LessonService.LEVELS.contains(s.level()))
                         .toList());
-        return "flashcard/list";
+        return "admin/flashcards/list";
     }
 
     @GetMapping("/admin/flashcards/create")
@@ -87,7 +86,6 @@ public class AdminFlashcardController {
         model.addAttribute("setId", id);
         model.addAttribute("levels", LessonService.LEVELS);
         model.addAttribute("lessons", flashcardSetService.availableLessons());
-        model.addAttribute("personal", false);
-        return "flashcard/form";
+        return "admin/flashcards/form";
     }
 }

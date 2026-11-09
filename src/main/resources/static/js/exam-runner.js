@@ -119,9 +119,9 @@
     item.focus({ preventScroll: true });
     item.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
-  document.getElementById('exit-attempt')?.addEventListener('click', async (event) => {
+  document.getElementById('exit-attempt-form')?.addEventListener('submit', async (event) => {
     event.preventDefault();
-    const exitUrl = event.currentTarget.href;
+    const exitForm = event.currentTarget;
     const confirmed = await window.AppDialog.confirm({
       title: 'Thoát bài thi?',
       message:
@@ -129,7 +129,7 @@
       confirmText: 'Thoát bài thi',
       cancelText: 'Ở lại làm bài',
     });
-    if (confirmed) window.location.assign(exitUrl);
+    if (confirmed && !submitting && !deadlineReached) exitForm.submit();
   });
   if (!document.body.classList.contains('full-mock-exam')) {
     questionLinks.forEach((link) => {

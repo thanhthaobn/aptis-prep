@@ -2647,8 +2647,8 @@ Giao diện dùng Thymeleaf (server-side rendering), không xây REST API:
 - Form submit dùng form object/DTO + validation, áp dụng Post/Redirect/Get
   sau khi xử lý POST.
 
-- Xác thực dùng Spring Security form login với session, phân quyền theo
-  role STUDENT/ADMIN; bật CSRF cho các form.
+- Xác thực bằng form đăng nhập và session servlet, phân quyền theo vai trò
+  STUDENT/ADMIN. Form và AJAX cập nhật dữ liệu dùng CSRF.
 
 Các module package có thể chia:
 

@@ -7,8 +7,10 @@ import com.aptisprep.enums.UserStatus;
 import com.aptisprep.exception.BusinessRuleException;
 import com.aptisprep.exception.DuplicateEmailException;
 import com.aptisprep.repository.UserRepository;
+import com.aptisprep.validation.AccountInput;
+import java.nio.charset.StandardCharsets;
 import java.util.Locale;
-import org.springframework.security.crypto.password.PasswordEncoder;
+import java.util.Optional;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -16,11 +18,29 @@ import org.springframework.transaction.annotation.Transactional;
 public class UserService {
 
     private final UserRepository userRepository;
-    private final PasswordEncoder passwordEncoder;
+    private final PasswordHasher passwordHasher;
+    private final String dummyPasswordHash;
 
-    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder) {
+    public UserService(UserRepository userRepository, PasswordHasher passwordHasher) {
         this.userRepository = userRepository;
-        this.passwordEncoder = passwordEncoder;
+        this.passwordHasher = passwordHasher;
+        this.dummyPasswordHash = passwordHasher.encode("unused-login-password");
+    }
+
+    @Transactional(readOnly = true)
+    public Optional<User> authenticate(String email, String password) {
+        String normalizedEmail = AccountInput.email(email);
+        if (normalizedEmail.isBlank()
+                || normalizedEmail.length() > 255
+                || password.isEmpty()
+                || password.getBytes(StandardCharsets.UTF_8).length > 72) {
+            return Optional.empty();
+        }
+        Optional<User> user = userRepository.findByEmailIgnoreCase(normalizedEmail);
+        String hash = user.map(User::getPasswordHash).orElse(dummyPasswordHash);
+        return passwordHasher.matches(password, hash)
+                ? user.filter(account -> account.getStatus() == UserStatus.ACTIVE)
+                : Optional.empty();
     }
 
     @Transactional
@@ -37,7 +57,7 @@ public class UserService {
         User user = new User();
         user.setFullName(form.getFullName().trim());
         user.setEmail(normalizedEmail);
-        user.setPasswordHash(passwordEncoder.encode(form.getPassword()));
+        user.setPasswordHash(passwordHasher.encode(form.getPassword()));
         user.setRole(Role.STUDENT);
         user.setStatus(UserStatus.ACTIVE);
         return userRepository.saveAndFlush(user);

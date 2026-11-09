@@ -1,7 +1,7 @@
 package com.aptisprep;
 
+import static com.aptisprep.security.SessionMvcRequests.*;
 import static org.junit.jupiter.api.Assertions.*;
-import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -346,10 +346,13 @@ class V2BusinessRegressionTests {
         mvc.perform(get("/student/goals").with(user(learner.getEmail()).roles("STUDENT")))
                 .andExpect(status().isOk())
                 .andExpect(
+                        content().string(org.hamcrest.Matchers.containsString("name=\"reading\"")))
+                .andExpect(
                         content()
                                 .string(
-                                        org.hamcrest.Matchers.containsString(
-                                                "targetScores[READING]")));
+                                        org.hamcrest.Matchers.not(
+                                                org.hamcrest.Matchers.containsString(
+                                                        "targetScores["))));
     }
 
     @Test

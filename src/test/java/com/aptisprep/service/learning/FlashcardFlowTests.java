@@ -1,7 +1,7 @@
 package com.aptisprep.service.learning;
 
+import static com.aptisprep.security.SessionMvcRequests.*;
 import static org.assertj.core.api.Assertions.*;
-import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -375,11 +375,23 @@ class FlashcardFlowTests {
         var id = create();
         var card = service.study(id, a.getEmail()).getFirst();
         mvc.perform(get("/admin/flashcards").with(user("admin").roles("ADMIN")))
-                .andExpect(status().isOk());
+                .andExpect(status().isOk())
+                .andExpect(view().name("admin/flashcards/list"));
         mvc.perform(get("/admin/flashcards/" + id + "/edit").with(user("admin").roles("ADMIN")))
-                .andExpect(status().isOk());
+                .andExpect(status().isOk())
+                .andExpect(view().name("admin/flashcards/form"))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("name=\"lessonId\"")));
         mvc.perform(get("/student/flashcards").with(user(a.getEmail()).roles("STUDENT")))
-                .andExpect(status().isOk());
+                .andExpect(status().isOk())
+                .andExpect(view().name("student/flashcards/list"));
+        mvc.perform(get("/student/flashcards/create").with(user(a.getEmail()).roles("STUDENT")))
+                .andExpect(status().isOk())
+                .andExpect(view().name("student/flashcards/form"))
+                .andExpect(
+                        content()
+                                .string(
+                                        org.hamcrest.Matchers.not(
+                                                org.hamcrest.Matchers.containsString("name=\"lessonId\""))));
         mvc.perform(get("/student/flashcards/" + id).with(user(a.getEmail()).roles("STUDENT")))
                 .andExpect(status().isOk())
                 .andExpect(

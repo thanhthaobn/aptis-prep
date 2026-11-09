@@ -15,6 +15,14 @@
     'aptis123',
     'letmein123',
   ]);
+  const controlCharacters = /[\u0000-\u001f\u007f-\u009f]/u;
+  const normalizeName = (value) =>
+    controlCharacters.test(value)
+      ? value
+      : value
+          .normalize('NFC')
+          .replace(/\p{Zs}+/gu, ' ')
+          .trim();
   document.querySelectorAll('[data-toggle-password]').forEach((button) => {
     button.addEventListener('click', () => {
       const field = document.getElementById(button.dataset.togglePassword);
@@ -37,24 +45,25 @@
           v.length > 72 ||
           new TextEncoder().encode(v).length > 72 ||
           common.has(v.toLowerCase()) ||
-          new Set(v).size < 2 ||
-          /[\u0000-\u001f\u007f-\u009f]/u.test(v)
+          controlCharacters.test(v)
         )
           message =
             v.length < 8
               ? 'Mật khẩu cần ít nhất 8 ký tự.'
               : new TextEncoder().encode(v).length > 72
                 ? 'Mật khẩu quá dài. Hãy rút ngắn một chút.'
-                : 'Mật khẩu quá dễ đoán. Hãy dùng cụm từ khác.';
+                : 'Mật khẩu không hợp lệ hoặc quá dễ đoán.';
+        else if (!/\p{Uppercase}/u.test(v) || !/\p{Nd}/u.test(v) || !/[\p{P}\p{S}]/u.test(v))
+          message = 'Mật khẩu cần có chữ in hoa, chữ số và ký tự đặc biệt.';
       }
       if (field === confirm && field.value && field.value !== password?.value)
         message = 'Mật khẩu xác nhận không khớp';
       if (
         field.name === 'fullName' &&
         field.value &&
-        !/^(?=.*\p{L})[\p{L}\p{M} .’'\-]+$/u.test(field.value)
+        !/^\p{Lu}\p{M}*(?: *\p{L}\p{M}*)*$/u.test(normalizeName(field.value))
       )
-        message = 'Họ tên không hợp lệ. Vui lòng dùng chữ.';
+        message = 'Họ tên phải bắt đầu bằng chữ in hoa và chỉ được chứa chữ cái và khoảng trắng.';
       field.setCustomValidity(message);
       if (show) {
         const error = document.getElementById(`${field.id}-error`);
@@ -66,11 +75,7 @@
     form.querySelectorAll('input:not([type="hidden"])').forEach((field) => {
       field.addEventListener('blur', () => {
         if (field.name === 'email') field.value = field.value.trim().toLowerCase();
-        if (field.name === 'fullName' && !/[\u0000-\u001f\u007f-\u009f]/u.test(field.value))
-          field.value = field.value
-            .normalize('NFC')
-            .replace(/\p{Zs}+/gu, ' ')
-            .trim();
+        if (field.name === 'fullName') field.value = normalizeName(field.value);
         validate(field, true);
       });
       field.addEventListener('input', () => {

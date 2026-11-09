@@ -12,13 +12,23 @@ import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
 class PasswordServiceTests {
     @Test
+    void verifiesExistingBcryptHashesAtTheUtf8LengthLimit() {
+        // Produced by the former encoder from a synthetic 72-byte password.
+        String legacyHash = "$2a$04$w8S7HTjIfG.8RRVOhLZWtuRZnMfgZfzBVgmS6DM5RvNYiWFDoZaFi";
+        String password = "á".repeat(34) + "Aa1!";
+        var hasher = new PasswordHasher();
+        assertThat(hasher.matches(password, legacyHash)).isTrue();
+        assertThat(hasher.matches(password + "x", legacyHash)).isFalse();
+        assertThat(hasher.matches("wrong-password", legacyHash)).isFalse();
+    }
+
+    @Test
     void resetTokenRejectsTamperingAndReplayAndThrottlesRepeatedRequests() {
         var users = mock(UserRepository.class);
-        var encoder = new BCryptPasswordEncoder(4);
+        var encoder = new PasswordHasher();
         var sender = mock(JavaMailSender.class);
         @SuppressWarnings("unchecked")
         ObjectProvider<JavaMailSender> provider = mock(ObjectProvider.class);

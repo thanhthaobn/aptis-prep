@@ -37,8 +37,11 @@ public class StudentLearningPathController {
 
     @GetMapping("/student/learning-path")
     public String paths(Principal principal, Model model) {
-        model.addAttribute("paths", service.ensureAndSummaries(principal.getName()));
-        model.addAttribute("stages", service.stages(principal.getName(), null));
+        service.refreshPaths(principal.getName());
+        var stages = service.stages(principal.getName(), null);
+        boolean hasAssessment = stages.stream().anyMatch(stage -> stage.currentLevel() != null);
+        model.addAttribute("stages", stages);
+        model.addAttribute("hasAssessment", hasAssessment);
         return "student/learning/path";
     }
 

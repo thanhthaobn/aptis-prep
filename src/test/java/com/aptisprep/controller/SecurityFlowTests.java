@@ -1,7 +1,11 @@
 package com.aptisprep.controller;
 
-import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
-import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
+import static com.aptisprep.security.SessionMvcRequests.csrf;
+import static com.aptisprep.security.SessionMvcRequests.user;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.model;
@@ -13,11 +17,14 @@ import com.aptisprep.entity.User;
 import com.aptisprep.enums.Role;
 import com.aptisprep.enums.UserStatus;
 import com.aptisprep.repository.UserRepository;
+import com.aptisprep.service.auth.PasswordHasher;
+import java.util.regex.Pattern;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.springframework.mock.web.MockHttpSession;
 import org.springframework.test.web.servlet.MockMvc;
 
 @SpringBootTest
@@ -27,6 +34,58 @@ class SecurityFlowTests {
     @Autowired private MockMvc mockMvc;
 
     @Autowired private UserRepository users;
+    @Autowired private PasswordHasher passwords;
+
+    @Test
+    void loginRotatesTheSessionAndLogoutInvalidatesIt() throws Exception {
+        User student = new User();
+        student.setFullName("Session Student");
+        student.setEmail("session-login-student@example.com");
+        student.setRole(Role.STUDENT);
+        student.setStatus(UserStatus.ACTIVE);
+        student.setPasswordHash(passwords.encode("Session-Test-Password-42"));
+        users.saveAndFlush(student);
+
+        mockMvc.perform(
+                        post("/login")
+                                .param("email", student.getEmail())
+                                .param("password", "Session-Test-Password-42"))
+                .andExpect(status().isForbidden());
+
+        var loginPage = mockMvc.perform(get("/login")).andExpect(status().isOk()).andReturn();
+        var anonymous = (MockHttpSession) loginPage.getRequest().getSession(false);
+        assertNotNull(anonymous);
+        String anonymousId = anonymous.getId();
+        var csrfField =
+                Pattern.compile("name=\"_csrf\" value=\"([^\"]+)\"")
+                        .matcher(loginPage.getResponse().getContentAsString());
+        assertTrue(csrfField.find(), "The rendered login form must contain the CSRF field");
+        String csrfToken = csrfField.group(1);
+        assertFalse(csrfField.find(), "The login form only needs one CSRF field");
+        var login =
+                mockMvc.perform(
+                                post("/login")
+                                        .session(anonymous)
+                                        .param("_csrf", csrfToken)
+                                        .param("email", student.getEmail())
+                                        .param("password", "Session-Test-Password-42"))
+                        .andExpect(redirectedUrl("/student/dashboard"))
+                        .andReturn();
+        var authenticated = (MockHttpSession) login.getRequest().getSession(false);
+        assertNotNull(authenticated);
+        assertNotEquals(anonymousId, authenticated.getId());
+        assertTrue(anonymous.isInvalid());
+        mockMvc.perform(get("/student/dashboard").session(authenticated))
+                .andExpect(status().isOk());
+        mockMvc.perform(get("/admin/dashboard").session(authenticated))
+                .andExpect(status().isForbidden());
+        mockMvc.perform(post("/logout").session(authenticated)).andExpect(status().isForbidden());
+        mockMvc.perform(post("/logout").session(authenticated).with(csrf()))
+                .andExpect(redirectedUrl("/login?logout"));
+        assertTrue(authenticated.isInvalid());
+        mockMvc.perform(get("/student/dashboard").session(authenticated))
+                .andExpect(redirectedUrl("/login"));
+    }
 
     @BeforeEach
     void seedRealStudents() {

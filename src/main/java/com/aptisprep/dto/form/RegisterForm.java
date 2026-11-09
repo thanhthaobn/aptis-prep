@@ -11,9 +11,7 @@ public class RegisterForm {
 
     @NotBlank(message = "Họ tên không được để trống")
     @Size(max = 255, message = "Họ tên không được vượt quá 255 ký tự")
-    @Pattern(
-            regexp = AccountInput.NAME_PATTERN,
-            message = "Họ tên cần có chữ, chỉ dùng chữ, dấu cách, dấu chấm, nháy hoặc gạch nối")
+    @Pattern(regexp = AccountInput.NAME_PATTERN, message = AccountInput.NAME_HINT)
     private String fullName;
 
     @NotBlank(message = "Email không được để trống")

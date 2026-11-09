@@ -1,11 +1,11 @@
 package com.aptisprep.controller;
 
 import com.aptisprep.entity.User;
+import com.aptisprep.enums.Role;
 import com.aptisprep.exception.ResourceNotFoundException;
 import com.aptisprep.repository.UserRepository;
 import com.aptisprep.service.contract.AiAssessmentContract;
 import java.security.Principal;
-import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -23,28 +23,18 @@ public class AiAssessmentController {
 
     @GetMapping("/student/assessments/{key}")
     public String showStudentAssessment(
-            @PathVariable String key,
-            Principal principal,
-            Authentication authentication,
-            Model model) {
-        return renderAssessment(key, principal, authentication, model);
+            @PathVariable String key, Principal principal, Model model) {
+        return renderAssessment(key, principal, model);
     }
 
     @GetMapping("/admin/assessments/{key}")
-    public String showAdminAssessment(
-            @PathVariable String key,
-            Principal principal,
-            Authentication authentication,
-            Model model) {
-        return renderAssessment(key, principal, authentication, model);
+    public String showAdminAssessment(@PathVariable String key, Principal principal, Model model) {
+        return renderAssessment(key, principal, model);
     }
 
-    private String renderAssessment(
-            String key, Principal principal, Authentication authentication, Model model) {
+    private String renderAssessment(String key, Principal principal, Model model) {
         User user = user(principal);
-        boolean admin =
-                authentication.getAuthorities().stream()
-                        .anyMatch(value -> value.getAuthority().equals("ROLE_ADMIN"));
+        boolean admin = user.getRole() == Role.ADMIN;
         model.addAttribute("assessment", assessments.get(key, user.getId(), admin));
         model.addAttribute(
                 "assessmentBasePath", admin ? "/admin/assessments/" : "/student/assessments/");
@@ -53,31 +43,19 @@ public class AiAssessmentController {
 
     @PostMapping("/student/assessments/{key}/retry")
     public String retryStudentAssessment(
-            @PathVariable String key,
-            Principal principal,
-            Authentication authentication,
-            RedirectAttributes redirect) {
-        return retryAssessment(key, principal, authentication, redirect);
+            @PathVariable String key, Principal principal, RedirectAttributes redirect) {
+        return retryAssessment(key, principal, redirect);
     }
 
     @PostMapping("/admin/assessments/{key}/retry")
     public String retryAdminAssessment(
-            @PathVariable String key,
-            Principal principal,
-            Authentication authentication,
-            RedirectAttributes redirect) {
-        return retryAssessment(key, principal, authentication, redirect);
+            @PathVariable String key, Principal principal, RedirectAttributes redirect) {
+        return retryAssessment(key, principal, redirect);
     }
 
-    private String retryAssessment(
-            String key,
-            Principal principal,
-            Authentication authentication,
-            RedirectAttributes redirect) {
+    private String retryAssessment(String key, Principal principal, RedirectAttributes redirect) {
         User user = user(principal);
-        boolean admin =
-                authentication.getAuthorities().stream()
-                        .anyMatch(value -> value.getAuthority().equals("ROLE_ADMIN"));
+        boolean admin = user.getRole() == Role.ADMIN;
         assessments.retry(key, user.getId(), admin);
         redirect.addFlashAttribute("successMessage", "Đã gửi yêu cầu chấm lại phần lỗi.");
         return "redirect:/" + (admin ? "admin" : "student") + "/assessments/" + key;

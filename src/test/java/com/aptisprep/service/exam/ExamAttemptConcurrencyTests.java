@@ -1,10 +1,10 @@
 package com.aptisprep.service.exam;
 
+import static com.aptisprep.security.SessionMvcRequests.user;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 
 import com.aptisprep.entity.Certificate;
 import com.aptisprep.entity.MockExamEntity;
@@ -327,10 +327,7 @@ class ExamAttemptConcurrencyTests {
         assertEquals(
                 original.question().getId(),
                 attempts.review(userId, completed).questions().getFirst().questionId());
-        var student =
-                org.springframework.security.test.web.servlet.request
-                        .SecurityMockMvcRequestPostProcessors.user(original.user().getEmail())
-                        .roles("STUDENT");
+        var student = user(original.user().getEmail()).roles("STUDENT");
         mvc.perform(
                         org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get(
                                         "/student/attempts/{id}/review", completed)
@@ -551,11 +548,7 @@ class ExamAttemptConcurrencyTests {
         mvc.perform(
                         org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get(
                                         "/student/attempts/" + id)
-                                .with(
-                                        org.springframework.security.test.web.servlet.request
-                                                .SecurityMockMvcRequestPostProcessors.user(
-                                                        f.user().getEmail())
-                                                .roles("STUDENT")))
+                                .with(user(f.user().getEmail()).roles("STUDENT")))
                 .andExpect(
                         org.springframework.test.web.servlet.result.MockMvcResultMatchers.status()
                                 .isOk())
