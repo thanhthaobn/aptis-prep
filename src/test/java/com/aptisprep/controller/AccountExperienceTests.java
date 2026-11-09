@@ -186,10 +186,8 @@ class AccountExperienceTests {
     }
 
     @Test
-    void accountAndRecoveryPagesRenderAndFilteredHistoryExplainsEmptyResults() throws Exception {
+    void accountPagesRenderAndFilteredHistoryExplainsEmptyResults() throws Exception {
         student("pages-experience@example.com");
-        mvc.perform(get("/forgot-password")).andExpect(status().isOk());
-        mvc.perform(get("/reset-password").param("token", "invalid")).andExpect(status().isOk());
         for (String route :
                 new String[] {
                     "/student/profile",

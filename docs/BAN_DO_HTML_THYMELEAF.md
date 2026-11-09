@@ -26,7 +26,7 @@ Bảng này ghi các thao tác thay đổi dữ liệu và điều hướng chí
 | Hoạt động | Route | Handler | Xử lý |
 |---|---|---|---|
 | Đăng nhập và đăng xuất | `POST /login`, `POST /logout` | [AuthController.login](../src/main/java/com/aptisprep/controller/auth/AuthController.java#L42), [AuthController.logout](../src/main/java/com/aptisprep/controller/auth/AuthController.java#L55) | Xác thực qua UserService và mở hoặc hủy LoginSession. |
-| Đăng ký và mật khẩu | `POST /register`, `POST /forgot-password`, `POST /reset-password`, `POST /student/password` | [AuthController.register](../src/main/java/com/aptisprep/controller/auth/AuthController.java#L72), [PasswordController.forgotSubmit](../src/main/java/com/aptisprep/controller/auth/PasswordController.java#L51), [PasswordController.save](../src/main/java/com/aptisprep/controller/auth/PasswordController.java#L79) | UserService tạo tài khoản. PasswordService nhận yêu cầu khôi phục, đặt lại hoặc đổi mật khẩu. |
+| Đăng ký và đổi mật khẩu | `POST /register`, `POST /student/password` | [AuthController.register](../src/main/java/com/aptisprep/controller/auth/AuthController.java#L72), [PasswordController.save](../src/main/java/com/aptisprep/controller/auth/PasswordController.java#L42) | UserService tạo tài khoản. PasswordService đổi mật khẩu cho học viên đã đăng nhập. |
 | Cập nhật hồ sơ và mục tiêu | `POST /student/profile/edit`, `POST /student/goals` | [StudentAccountController.updateProfile](../src/main/java/com/aptisprep/controller/student/StudentAccountController.java#L60), [StudentAccountController.saveGoal](../src/main/java/com/aptisprep/controller/student/StudentAccountController.java#L85) | AccountProfileService xác thực form và lưu thông tin hoặc mục tiêu. |
 | Bắt đầu đề đầu vào | `POST /student/placement/start` | [StudentAccountController.start](../src/main/java/com/aptisprep/controller/student/StudentAccountController.java#L126) | PlacementService nhận skill và examId rồi mở hoặc tiếp tục lượt thi. |
 | Bắt đầu đề thường và checkpoint | `POST /student/exams/{id}/start`, `POST /student/learning-path/{pathId}/checkpoint/start` | [StudentExamController.start](../src/main/java/com/aptisprep/controller/student/StudentExamController.java#L35), [StudentLearningPathController.startCheckpoint](../src/main/java/com/aptisprep/controller/student/StudentLearningPathController.java#L67) | ExamAttemptService khởi tạo lượt thường. Lộ trình kiểm tra điều kiện trước khi mở checkpoint. |
@@ -50,8 +50,7 @@ Bảng này ghi các thao tác thay đổi dữ liệu và điều hướng chí
 - [index.html](#html-1) · Trang chủ AptisPrep · `/`
 - [auth/login.html](#html-2) · Đăng nhập · `/login`
 - [auth/register.html](#html-3) · Đăng ký học viên · `/register`
-- [auth/forgot-password.html](#html-4) · Yêu cầu đặt lại mật khẩu · `/forgot-password`
-- [auth/password.html](#html-5) · Đặt lại hoặc đổi mật khẩu · `/reset-password`, `/student/password`
+- [auth/password.html](#html-4) · Đổi mật khẩu · `/student/password`
 - [error/400.html](#html-6) · Yêu cầu không hợp lệ · `HTTP 400`
 - [error/403.html](#html-7) · Truy cập bị từ chối · `HTTP 403`, `/access-denied`
 - [error/404.html](#html-8) · Không tìm thấy tài nguyên · `HTTP 404`
@@ -142,7 +141,7 @@ Fragment còn lại được DisplayFormattingTests render trực tiếp để k
 
 - **Đích form** `POST @{/logout}`, `POST @{/login}`.
 - **Tên input, select hoặc button khai báo trực tiếp** `email`, `password`.
-- **Class CSS ít dùng chung hơn** `auth-layout`, `auth-page`, `auth-welcome`, `button-block`, `forgot-password-link`, `form-card`, `form-logo`, `form-note`, `landing-theme`, `navi-welcome`, `password-input`, `password-input--inline-toggle`, `password-toggle`.
+- **Class CSS ít dùng chung hơn** `auth-layout`, `auth-page`, `auth-welcome`, `button-block`, `form-card`, `form-logo`, `form-note`, `landing-theme`, `navi-welcome`, `password-input`, `password-input--inline-toggle`, `password-toggle`.
 - **Class CSS thường dùng lại** `alert`, `alert-danger`, `alert-info`, `alert-success`, `alert-warning`, `ap-alert`, `ap-alert-danger`, `ap-alert-info`, `ap-alert-success`, `ap-alert-warning`, `ap-container`, `ap-skip-link`, `brand`, `brand-mark`, `button`, `button-secondary`, `button-small`, `container`, `eyebrow`, `field`, `footer-wrap`, `hamburger-icon`, `messages-container`, `nav-links`, `nav-toggle`, `nav-wrap`, `navi`, `navi-antenna`, `navi-arm`, `navi-arm-left`, `navi-arm-right`, `navi-body`, `navi-eye`, `navi-mouth`, `navi-shadow`, `site-footer`, `site-header`.
 
 </details>
@@ -178,42 +177,14 @@ Fragment còn lại được DisplayFormattingTests render trực tiếp để k
 
 <a id="html-4"></a>
 
-### Yêu cầu đặt lại mật khẩu · `auth/forgot-password.html`
-
-- **Template** [auth/forgot-password.html](../src/main/resources/templates/auth/forgot-password.html)
-- **Đường dẫn** `/forgot-password`.
-- **Phương thức render** [PasswordController.forgot](../src/main/java/com/aptisprep/controller/auth/PasswordController.java#L43).
-- **Lớp liên quan** [PasswordController.RecoveryForm](../src/main/java/com/aptisprep/controller/auth/PasswordController.java#L27), [PasswordService](../src/main/java/com/aptisprep/service/auth/PasswordService.java).
-- **Chức năng** POST /forgot-password tiếp nhận email và tạo yêu cầu khôi phục khi tính năng khả dụng.
-- **Biến đọc trong template từ controller hoặc luồng redirect** `recoveryAvailable`, `recoveryForm`, `requested`.
-- **Biến dùng chung** `display`, `isAdmin`, `isStudent`, `message`, `navSection`, `signedIn`.
-- **Biến cục bộ hoặc tham số fragment** `message`.
-- **JavaScript nạp trực tiếp** [js/app-dialog.js](../src/main/resources/static/js/app-dialog.js), [js/navigation.js](../src/main/resources/static/js/navigation.js).
-- **CSS nạp trực tiếp** nhóm CSS dùng chung ở trên.
-- **Thư viện từ CDN** Bootstrap 5.3.8.
-
-<details>
-<summary>Chi tiết template và form</summary>
-
-- **Đích form** `POST @{/logout}`, `POST @{/forgot-password}`.
-- **Đối tượng form từ th:object** `${recoveryForm}`.
-- **Field gắn với đối tượng form** `email`.
-- **Tên trùng giữa model và phạm vi cục bộ** `message`.
-- **Class CSS ít dùng chung hơn** `auth-page`, `field-error`, `form-card`, `landing-theme`.
-- **Class CSS thường dùng lại** `alert`, `alert-info`, `ap-container`, `ap-skip-link`, `back-link`, `brand`, `brand-mark`, `button`, `button-secondary`, `button-small`, `container`, `field`, `footer-wrap`, `hamburger-icon`, `nav-links`, `nav-toggle`, `nav-wrap`, `site-footer`, `site-header`.
-
-</details>
-
-<a id="html-5"></a>
-
-### Đặt lại hoặc đổi mật khẩu · `auth/password.html`
+### Đổi mật khẩu · `auth/password.html`
 
 - **Template** [auth/password.html](../src/main/resources/templates/auth/password.html)
-- **Đường dẫn** `/reset-password`, `/student/password`.
+- **Đường dẫn** `/student/password`.
 - **Phương thức render** [PasswordController.form](../src/main/java/com/aptisprep/controller/auth/PasswordController.java#L65).
 - **Lớp liên quan** [PasswordForm](../src/main/java/com/aptisprep/dto/form/PasswordForm.java), [AccountInput](../src/main/java/com/aptisprep/validation/AccountInput.java), [PasswordService](../src/main/java/com/aptisprep/service/auth/PasswordService.java).
-- **Chức năng** POST cùng đường dẫn. Chế độ reset dùng token, chế độ đổi mật khẩu dùng phiên học viên.
-- **Biến đọc trong template từ controller hoặc luồng redirect** `changing`, `passwordForm`, `token`.
+- **Chức năng** Học viên đã đăng nhập nhập mật khẩu hiện tại và mật khẩu mới.
+- **Biến đọc trong template từ controller hoặc luồng redirect** `passwordForm`.
 - **Biến dùng chung** `display`, `isAdmin`, `isStudent`, `message`, `navSection`, `signedIn`.
 - **Biến cục bộ hoặc tham số fragment** `message`.
 - **JavaScript nạp trực tiếp** [js/account-forms.js](../src/main/resources/static/js/account-forms.js), [js/app-dialog.js](../src/main/resources/static/js/app-dialog.js), [js/navigation.js](../src/main/resources/static/js/navigation.js).
@@ -223,10 +194,9 @@ Fragment còn lại được DisplayFormattingTests render trực tiếp để k
 <details>
 <summary>Chi tiết template và form</summary>
 
-- **Đích form** `POST @{/logout}`, `POST ${changing} ? @{/student/password} : @{/reset-password}`.
+- **Đích form** `POST @{/logout}`, `POST @{/student/password}`.
 - **Đối tượng form từ th:object** `${passwordForm}`.
 - **Field gắn với đối tượng form** `confirmPassword`, `currentPassword`, `password`.
-- **Tên input, select hoặc button khai báo trực tiếp** `token`.
 - **Tên trùng giữa model và phạm vi cục bộ** `message`.
 - **Class CSS ít dùng chung hơn** `account-page`, `auth-page`, `field-error`, `form-card`, `landing-theme`, `password-input`, `password-toggle`.
 - **Class CSS thường dùng lại** `ap-container`, `ap-skip-link`, `back-link`, `brand`, `brand-mark`, `button`, `button-secondary`, `button-small`, `container`, `field`, `footer-wrap`, `hamburger-icon`, `nav-links`, `nav-toggle`, `nav-wrap`, `site-footer`, `site-header`.
