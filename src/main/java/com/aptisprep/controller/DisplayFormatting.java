@@ -20,10 +20,6 @@ import org.springframework.web.servlet.support.RequestContext;
 /** Presentation formatting shared by HTML pages; does not query or modify business data. */
 @Component
 public class DisplayFormatting {
-    public List<String> resultStates() {
-        return List.of("IN_PROGRESS", "WAITING_GRADING", "COMPLETED", "ERROR", "EXPIRED");
-    }
-
     public boolean hasPendingGrades(List<SkillResult> skills) {
         if (skills == null) return false;
         for (SkillResult skill : skills) {

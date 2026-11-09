@@ -14,6 +14,8 @@ import org.springframework.web.bind.annotation.*;
 public class AdminResultController {
     private static final List<String> EXAM_TYPES =
             List.of("PLACEMENT", "PRACTICE", "CHECKPOINT", "FULL_MOCK");
+    private static final List<String> RESULT_STATES =
+            List.of("IN_PROGRESS", "WAITING_GRADING", "COMPLETED", "ERROR", "EXPIRED");
     private final ExamAttemptContract attempts;
 
     public AdminResultController(ExamAttemptContract attempts) {
@@ -60,6 +62,7 @@ public class AdminResultController {
                 "skills",
                 List.of("GRAMMAR_VOCABULARY", "READING", "LISTENING", "WRITING", "SPEAKING"));
         model.addAttribute("examTypes", EXAM_TYPES);
+        model.addAttribute("resultStates", RESULT_STATES);
         return "admin/result/list";
     }
 

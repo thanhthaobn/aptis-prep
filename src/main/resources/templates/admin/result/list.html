@@ -290,7 +290,7 @@
             <select id="state" name="state">
               <option value="">Tất cả</option>
               <option
-                th:each="v : ${display.resultStates()}"
+                th:each="v : ${resultStates}"
                 th:value="${v}"
                 th:text="${@resultLabels.state(v)}"
                 th:selected="${selectedState==v}"
