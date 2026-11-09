@@ -7,17 +7,6 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 /** Shared navbar state follows the route, not the signed-in user's role. */
 @ControllerAdvice
 public class NavigationModelAdvice {
-    private final DisplayFormatting displayFormatting;
-
-    public NavigationModelAdvice(DisplayFormatting displayFormatting) {
-        this.displayFormatting = displayFormatting;
-    }
-
-    @ModelAttribute("display")
-    public DisplayFormatting display() {
-        return displayFormatting;
-    }
-
     @ModelAttribute("navSection")
     public String navSection(HttpServletRequest request) {
         String path = request.getRequestURI().substring(request.getContextPath().length());

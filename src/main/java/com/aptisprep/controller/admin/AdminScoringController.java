@@ -1,6 +1,5 @@
 package com.aptisprep.controller.admin;
 
-import com.aptisprep.controller.DisplayFormatting;
 import com.aptisprep.controller.ListPagination;
 import com.aptisprep.dto.form.*;
 import com.aptisprep.enums.CefrLevel;
@@ -41,13 +40,9 @@ public class AdminScoringController {
                     "SPEAKING", "Speaking");
     private final ScoringAdminService scoring;
     private final MockExamRepository exams;
-    private final DisplayFormatting display;
-
-    public AdminScoringController(
-            ScoringAdminService scoring, MockExamRepository exams, DisplayFormatting display) {
+    public AdminScoringController(ScoringAdminService scoring, MockExamRepository exams) {
         this.scoring = scoring;
         this.exams = exams;
-        this.display = display;
     }
 
     @GetMapping("/admin/settings")
@@ -373,6 +368,9 @@ public class AdminScoringController {
         model.addAttribute("readOnly", readOnly);
         model.addAttribute("selectedSkill", skill);
         model.addAttribute("bands", scoring.bandViews(id, skill));
+        Object bandErrors = model.getAttribute(BindingResult.MODEL_KEY_PREFIX + "bandForm");
+        model.addAttribute(
+                "bandFormHasErrors", bandErrors instanceof BindingResult result && result.hasErrors());
         if (!model.containsAttribute("scaleRuleForm"))
             model.addAttribute("scaleRuleForm", scoring.scaleRule(id, skill));
         if (!model.containsAttribute("bandForm")) {
