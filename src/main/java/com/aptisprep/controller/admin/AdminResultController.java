@@ -81,7 +81,8 @@ public class AdminResultController {
     public String delete(
             @PathVariable Integer id, Principal principal, RedirectAttributes redirectAttributes) {
         attemptDetails.adminDiscard(principal.getName(), id);
-        redirectAttributes.addFlashAttribute("successMessage", "Đã loại bỏ lượt thi khỏi danh sách.");
+        redirectAttributes.addFlashAttribute(
+                "successMessage", "Đã loại bỏ lượt thi khỏi danh sách.");
         return "redirect:/admin/results";
     }
 

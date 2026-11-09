@@ -154,13 +154,17 @@ public class AccountProfileServiceImpl implements AccountProfileService {
         } else {
             certificate =
                     userGoalRepository
-                            .findFirstByUserIdAndStatusOrderByCreatedAtDesc(userId, GoalStatus.ACTIVE)
+                            .findFirstByUserIdAndStatusOrderByCreatedAtDesc(
+                                    userId, GoalStatus.ACTIVE)
                             .map(UserGoal::getCertificate)
                             .orElseGet(
                                     () ->
                                             certificateRepository
                                                     .findByCodeIgnoreCase("APTIS_GENERAL")
-                                                    .filter(value -> value.getStatus() == RecordStatus.ACTIVE)
+                                                    .filter(
+                                                            value ->
+                                                                    value.getStatus()
+                                                                            == RecordStatus.ACTIVE)
                                                     .orElse(null));
         }
         userGoalRepository

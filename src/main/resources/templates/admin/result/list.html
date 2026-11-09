@@ -311,9 +311,7 @@
                   data-label="Loại"
                   th:text="${@resultLabels.examType(item.result.examType)}"
                 ></td>
-                <td
-                  data-label="Trạng thái"
-                >
+                <td data-label="Trạng thái">
                   <span
                     class="badge"
                     th:classappend="${item.result.state == 'COMPLETED' ? 'badge-success' : (item.result.state == 'ERROR' or item.result.state == 'GRADING_FAILED' ? 'badge-danger' : 'badge-warning')}"
@@ -326,7 +324,9 @@
                 ></td>
                 <td data-label="Thao tác">
                   <div class="catalog-table-actions">
-                    <a th:href="@{/admin/results/{id}(id=${item.result.attemptId})}">Xem chi tiết</a>
+                    <a th:href="@{/admin/results/{id}(id=${item.result.attemptId})}">
+                      Xem chi tiết
+                    </a>
                     <form
                       method="post"
                       th:action="@{/admin/results/{id}/delete(id=${item.result.attemptId})}"
@@ -334,7 +334,9 @@
                       data-confirm-message="Lượt thi sẽ được ẩn khỏi danh sách quản trị; dữ liệu lịch sử vẫn được giữ lại."
                       data-confirm-button="Loại bỏ"
                     >
-                      <button class="button button-danger button-small" type="submit">Loại bỏ</button>
+                      <button class="button button-danger button-small" type="submit">
+                        Loại bỏ
+                      </button>
                     </form>
                   </div>
                 </td>

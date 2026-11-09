@@ -139,7 +139,8 @@ public class StudentManagementServiceImpl implements StudentManagementService {
         User target =
                 userRepository
                         .findByIdForUpdate(id)
-                        .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy học viên"));
+                        .orElseThrow(
+                                () -> new ResourceNotFoundException("Không tìm thấy học viên"));
         if (target.getRole() != Role.STUDENT)
             throw new ResourceNotFoundException("Không tìm thấy học viên");
         if (target.getStatus() != UserStatus.LOCKED)

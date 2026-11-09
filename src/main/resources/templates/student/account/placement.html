@@ -271,7 +271,10 @@
             </figure>
             <p>Hiện chưa có đề kiểm tra đầu vào khả dụng.</p>
           </div>
-          <article th:each="exam : ${placementExams}" class="dashboard-panel dashboard-section placement-exam-card">
+          <article
+            th:each="exam : ${placementExams}"
+            class="dashboard-panel dashboard-section placement-exam-card"
+          >
             <div class="section-title-row">
               <h3 th:text="${exam.displayTitle}"></h3>
               <strong th:text="${exam.durationMinutes + ' phút'}"></strong>
