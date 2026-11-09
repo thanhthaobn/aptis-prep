@@ -6,9 +6,12 @@ import com.aptisprep.dto.form.ProfileForm;
 import com.aptisprep.dto.view.AccountSnapshot;
 import com.aptisprep.enums.Skill;
 import com.aptisprep.exception.BusinessRuleException;
+import com.aptisprep.service.account.AccountAccessService;
 import com.aptisprep.service.account.AccountProfileService;
 import com.aptisprep.service.account.LearningActivityService;
+import com.aptisprep.service.contract.ExamAttemptContract;
 import com.aptisprep.service.contract.IntegrationModels.AttemptHandle;
+import com.aptisprep.service.exam.ExamAttemptService;
 import com.aptisprep.service.learning.LessonService;
 import com.aptisprep.service.placement.PlacementService;
 import com.aptisprep.service.scoring.ScoringGuideService;
@@ -28,16 +31,22 @@ public class StudentAccountController {
     private final PlacementService placement;
     private final AccountProfileService accounts;
     private final LearningActivityService activity;
+    private final ExamAttemptContract attempts;
+    private final AccountAccessService access;
 
     public StudentAccountController(
             PlacementService placement,
             AccountProfileService accounts,
             LearningActivityService activity,
-            ScoringGuideService scoringGuides) {
+            ScoringGuideService scoringGuides,
+            ExamAttemptContract attempts,
+            AccountAccessService access) {
         this.placement = placement;
         this.accounts = accounts;
         this.scoringGuides = scoringGuides;
         this.activity = activity;
+        this.attempts = attempts;
+        this.access = access;
     }
 
     @GetMapping("/student/profile")
@@ -151,6 +160,10 @@ public class StudentAccountController {
         var result = placement.result(principal.getName(), attemptId);
         model.addAttribute("attemptResult", result);
         model.addAttribute("fromPlacement", true);
+        Integer userId = access.requireActiveStudent(principal.getName());
+        if (!"IN_PROGRESS".equals(result.state())
+                && attempts instanceof ExamAttemptService reviewService)
+            model.addAttribute("review", reviewService.review(userId, attemptId));
         var scoreGuideView = scoringGuides.forResultView(result);
         model.addAttribute("scoreGuides", scoreGuideView.guides());
         model.addAttribute("feedbackWithoutGuide", scoreGuideView.feedbackWithoutGuide());

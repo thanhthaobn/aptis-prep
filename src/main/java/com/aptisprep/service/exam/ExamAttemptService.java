@@ -434,12 +434,12 @@ public class ExamAttemptService implements ExamAttemptContract {
                         : attempt.getRubricVersion());
         attempt.setGradingRequestKey(
                 "attempt:" + attemptId + ":grading:v" + attempt.getAnswerVersion());
-        LockedAttempt draftLocked = gradingPayloads.build(attempt, exam);
+        LockedAttempt draftLocked = gradingPayloads.build(attempt);
         gradingPayloads.validate(draftLocked);
         attempt.setSubmittedAt(now);
         attempt.setGradingStatus("GRADING");
         attempt.setStatus(expired ? "EXPIRED" : "SUBMITTED");
-        LockedAttempt locked = gradingPayloads.build(attempt, exam);
+        LockedAttempt locked = gradingPayloads.build(attempt);
         objectiveGrading.gradeObjective(locked, exam);
         boolean waiting =
                 examSkillResultRepository.findByAttemptIdOrderBySkillAsc(attempt.getId()).stream()
@@ -557,7 +557,7 @@ public class ExamAttemptService implements ExamAttemptContract {
         if (!emptyError) return false;
         LockedAttempt locked;
         try {
-            locked = gradingPayloads.build(attempt, examFor(attempt));
+            locked = gradingPayloads.build(attempt);
         } catch (BusinessRuleException | ResourceNotFoundException unavailableSnapshot) {
             return false;
         }
@@ -587,7 +587,7 @@ public class ExamAttemptService implements ExamAttemptContract {
                     "Chỉ tính lại phần bỏ trống của lượt thi bị AI_EMPTY hoặc AI_DISABLED; lỗi AI của bài có nội dung không được đổi thành 0.");
         }
         MockExamEntity exam = examFor(attempt);
-        LockedAttempt locked = gradingPayloads.build(attempt, exam);
+        LockedAttempt locked = gradingPayloads.build(attempt);
         objectiveGrading.gradeObjective(locked, exam);
         if (!finalization.finalizeIfReady(attempt, exam)) {
             throw new BusinessRuleException(
@@ -628,19 +628,23 @@ public class ExamAttemptService implements ExamAttemptContract {
     @Transactional
     public AttemptReview review(Integer userId, Integer attemptId) {
         ExamAttemptEntity attempt = reviewableAttempt(userId, attemptId);
+        MockExamEntity current = null;
         if (examSnapshots.frozenExam(attemptId).isEmpty()) {
-            MockExamEntity current =
+            current =
                     mockExamRepository
                             .findByIdForUpdate(attempt.getMockExamId())
                             .orElseThrow(
                                     () -> new ResourceNotFoundException("Không tìm thấy đề thi"));
-            if (examSnapshots.frozenExam(attemptId).isEmpty()) {
-                examSnapshots.preserveLegacyAttempt(
-                        attempt,
-                        current,
-                        mockExamQuestionRepository.findByMockExamIdOrderByPosition(
-                                current.getId()));
-            }
+            if (examSnapshots.frozenExam(attemptId).isEmpty())
+                try {
+                    examSnapshots.preserveLegacyAttempt(
+                            attempt,
+                            current,
+                            mockExamQuestionRepository.findByMockExamIdOrderByPosition(
+                                    current.getId()));
+                } catch (BusinessRuleException ignored) {
+                    return new AttemptReview(current.getTitle(), List.of());
+                }
         }
         List<QuestionPage> questions = new ArrayList<>();
         int number = 1;
@@ -652,7 +656,11 @@ public class ExamAttemptService implements ExamAttemptContract {
             number += page.items().size();
         }
         return new AttemptReview(
-                examSnapshots.require(attemptId).getTitle(), List.copyOf(questions));
+                examSnapshots
+                        .frozenExam(attemptId)
+                        .map(MockExamEntity::getTitle)
+                        .orElseGet(current::getTitle),
+                List.copyOf(questions));
     }
 
     public record AttemptReview(String title, List<QuestionPage> questions) {}
@@ -883,6 +891,7 @@ public class ExamAttemptService implements ExamAttemptContract {
             List<OptionPage> options,
             Integer selectedOptionId,
             Integer userPosition,
+            Integer correctPosition,
             String textAnswer,
             boolean audioSaved) {
         public boolean answered() {
@@ -893,7 +902,7 @@ public class ExamAttemptService implements ExamAttemptContract {
         }
     }
 
-    public record OptionPage(Integer id, String code, String content) {}
+    public record OptionPage(Integer id, String code, String content, boolean correct) {}
 
     public record MediaPage(Integer id, String type, String filename, String contentType) {}
 
@@ -1093,7 +1102,8 @@ public class ExamAttemptService implements ExamAttemptContract {
                     new OptionPage(
                             option.getSourceOptionId(),
                             option.getOptionCode(),
-                            option.getContent()));
+                            option.getContent(),
+                            Boolean.TRUE.equals(option.getCorrect())));
         }
         Integer responseSeconds = item.getResponseSeconds();
         return new ItemPage(
@@ -1104,6 +1114,7 @@ public class ExamAttemptService implements ExamAttemptContract {
                 options,
                 answer == null ? null : answer.getSelectedOptionId(),
                 answer == null ? null : answer.getUserPosition(),
+                item.getCorrectPosition(),
                 answer == null ? null : answer.getAnswerText(),
                 answer != null && answer.getAudioPath() != null);
     }
