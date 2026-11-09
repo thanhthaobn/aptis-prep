@@ -427,13 +427,13 @@
                     <p
                       class="result-overall-score"
                       th:if="${attempt.finalScaleScore != null or attempt.overallCefr != null}"
-                      th:text="${(attempt.finalScaleScore == null ? '—' : attempt.finalScaleScore) + ' điểm' + (attempt.overallCefr != null ? ' · ' + display.cefrLabel(attempt.overallCefr) : '')}"
+                      th:text="${(attempt.finalScaleScore == null ? '—' : attempt.finalScaleScore) + ' điểm' + (attempt.overallCefr != null ? ' · ' + (attempt.overallCefr == 'A0' ? 'Dưới A1' : attempt.overallCefr) : '')}"
                     ></p>
                     <div class="result-levels-mini" th:if="${!attempt.skills.isEmpty()}">
                       <span
                         th:each="skill : ${attempt.skills}"
                         class="skill-mini-pill"
-                        th:text="${display.catalogSkill(skill.skill) + ': ' + (skill.estimatedLevel == null ? 'Chờ chấm' : display.cefrLabel(skill.estimatedLevel))}"
+                        th:text="${display.catalogSkill(skill.skill) + ': ' + (skill.estimatedLevel == null ? 'Chờ chấm' : (skill.estimatedLevel == 'A0' ? 'Dưới A1' : skill.estimatedLevel))}"
                       ></span>
                     </div>
                     <span

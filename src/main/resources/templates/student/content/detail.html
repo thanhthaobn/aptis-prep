@@ -446,7 +446,7 @@
                         th:classappend="${band.attained ? 'table-success' : ''}"
                       >
                         <td th:text="${band.min + ' – ' + band.max}"></td>
-                        <td th:text="${display.cefrLabel(band.level)}"></td>
+                        <td th:text="${band.level == 'A0' ? 'Dưới A1' : band.level}"></td>
                         <td th:text="${band.attained ? 'Bạn đạt' : ''}"></td>
                       </tr>
                     </tbody>

@@ -301,7 +301,7 @@
                 <dt
                   th:text="${res.hasFullMockTotal() ? 'CEFR tổng hợp' : 'Trình độ ước lượng'}"
                 ></dt>
-                <dd th:text="${display.cefrLabel(res.overallCefr)}"></dd>
+                <dd th:text="${res.overallCefr == 'A0' ? 'Dưới A1' : res.overallCefr}"></dd>
               </div>
               <div th:if="${res.overallScaleScore != null}">
                 <dt th:text="${res.hasFullMockTotal() ? 'Tổng điểm bốn kỹ năng' : 'Điểm'}"></dt>
@@ -362,7 +362,7 @@
                           th:text="${score == null ? '—' : score.stripTrailingZeros().toPlainString()}"
                         ></td>
                         <td
-                          th:text="${skill.gradingState == 'ERROR' ? 'Chấm lỗi' : (skill.gradingState == 'PENDING' or skill.gradingState == 'WAITING' ? 'Đang chấm' : (res.isCombined() and skill.skill == 'GRAMMAR_VOCABULARY' ? '—' : (skill.estimatedLevel != null ? display.cefrLabel(skill.estimatedLevel) : (skill.gradingState == 'COMPLETED' and score != null and (res.examType == 'CHECKPOINT' or res.examType == 'PRACTICE') ? 'Chưa đạt' : '—'))))}"
+                          th:text="${skill.gradingState == 'ERROR' ? 'Chấm lỗi' : (skill.gradingState == 'PENDING' or skill.gradingState == 'WAITING' ? 'Đang chấm' : (res.isCombined() and skill.skill == 'GRAMMAR_VOCABULARY' ? '—' : (skill.estimatedLevel != null ? (skill.estimatedLevel == 'A0' ? 'Dưới A1' : skill.estimatedLevel) : (skill.gradingState == 'COMPLETED' and score != null and (res.examType == 'CHECKPOINT' or res.examType == 'PRACTICE') ? 'Chưa đạt' : '—'))))}"
                         ></td>
                       </tr>
                     </th:block>
@@ -403,7 +403,7 @@
                             th:classappend="${band.attained ? 'table-success' : ''}"
                           >
                             <td th:text="${band.min + ' – ' + band.max}"></td>
-                            <td th:text="${display.cefrLabel(band.level)}"></td>
+                            <td th:text="${band.level == 'A0' ? 'Dưới A1' : band.level}"></td>
                             <td th:text="${band.attained ? 'Bạn đạt' : ''}"></td>
                           </tr>
                         </tbody>

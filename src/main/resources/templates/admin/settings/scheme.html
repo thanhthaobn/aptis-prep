@@ -506,7 +506,7 @@
                         th:attr="data-c2=${level == 'C2' ? 'true' : null}"
                         th:with="key=${skill + '_' + level}"
                       >
-                        <th scope="row" th:text="${display.cefrLabel(level)}"></th>
+                        <th scope="row" th:text="${level == 'A0' ? 'Dưới A1' : level}"></th>
                         <td>
                           <input
                             type="number"

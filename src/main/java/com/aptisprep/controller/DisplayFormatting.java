@@ -1,6 +1,5 @@
 package com.aptisprep.controller;
 
-import com.aptisprep.enums.CefrLevel;
 import com.aptisprep.enums.Skill;
 import com.aptisprep.service.contract.IntegrationModels.SkillResult;
 import java.time.ZoneId;
@@ -42,10 +41,6 @@ public class DisplayFormatting {
             if (skill.retryable()) return true;
         }
         return false;
-    }
-
-    public String cefrLabel(String level) {
-        return CefrLevel.BELOW_A1.equals(level) ? "Dưới A1" : level;
     }
 
     public String catalogSkill(String skill) {

@@ -401,14 +401,14 @@
                           th:if="${p.skill == code or (code == 'GRAMMAR_VOCABULARY' and (p.skill == 'Grammar & Vocabulary' or p.skill == 'GRAMMAR_VOCABULARY'))}"
                           class="cefr-chip"
                           th:classappend="${p.currentLevel != null ? 'cefr-' + p.currentLevel.toLowerCase() : 'cefr-none'}"
-                          th:text="${p.currentLevel != null ? display.cefrLabel(p.currentLevel) : '—'}"
+                          th:text="${p.currentLevel != null ? (p.currentLevel == 'A0' ? 'Dưới A1' : p.currentLevel) : '—'}"
                         ></span>
                       </th:block>
                     </span>
                     <span
                       class="cefr-chip cefr-target-compare"
                       th:classappend="${targetLvl != null ? 'cefr-' + targetLvl.toLowerCase() : 'cefr-none'}"
-                      th:text="${targetLvl != null ? display.cefrLabel(targetLvl) : '—'}"
+                      th:text="${targetLvl != null ? (targetLvl == 'A0' ? 'Dưới A1' : targetLvl) : '—'}"
                     ></span>
                   </div>
                 </li>

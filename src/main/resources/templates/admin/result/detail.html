@@ -284,7 +284,7 @@
           <div>
             <span th:text="${attemptResult.isCombined() ? 'CEFR tổng hợp' : 'CEFR kỹ năng'}"></span>
             <strong
-              th:text="${attemptResult.overallCefr==null?'—':display.cefrLabel(attemptResult.overallCefr)}"
+              th:text="${attemptResult.overallCefr==null?'—':(attemptResult.overallCefr == 'A0' ? 'Dưới A1' : attemptResult.overallCefr)}"
             ></strong>
           </div>
         </section>
@@ -301,7 +301,7 @@
               <h2 th:text="${display.catalogSkill(skill.skill)}"></h2>
               <strong
                 th:unless="${attemptResult.isCombined() and skill.skill == 'GRAMMAR_VOCABULARY'}"
-                th:text="${skill.estimatedLevel==null?'—':display.cefrLabel(skill.estimatedLevel)}"
+                th:text="${skill.estimatedLevel==null?'—':(skill.estimatedLevel == 'A0' ? 'Dưới A1' : skill.estimatedLevel)}"
               ></strong>
             </div>
             <dl class="result-score-list">
