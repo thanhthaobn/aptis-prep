@@ -86,7 +86,6 @@ public class StudentAccountController {
 
     @GetMapping("/student/goals")
     public String goals(Principal principal, Model model) {
-        model.addAttribute("certificates", accounts.activeCertificates());
         model.addAttribute("learningLevels", LessonService.LEVELS);
         if (!model.containsAttribute("goalForm"))
             model.addAttribute(
@@ -102,7 +101,6 @@ public class StudentAccountController {
             Model model,
             RedirectAttributes redirectAttributes) {
         if (bindingResult.hasErrors()) {
-            model.addAttribute("certificates", accounts.activeCertificates());
             model.addAttribute("learningLevels", LessonService.LEVELS);
             return "student/account/goals";
         }
@@ -110,7 +108,6 @@ public class StudentAccountController {
             accounts.saveGoal(principal.getName(), goalForm);
         } catch (BusinessRuleException exception) {
             bindingResult.reject("goal.invalid", exception.getMessage());
-            model.addAttribute("certificates", accounts.activeCertificates());
             model.addAttribute("learningLevels", LessonService.LEVELS);
             return "student/account/goals";
         }
@@ -158,8 +155,7 @@ public class StudentAccountController {
     @GetMapping("/student/placement/result")
     public String result(@RequestParam Integer attemptId, Principal principal, Model model) {
         var result = placement.result(principal.getName(), attemptId);
-        if ("IN_PROGRESS".equals(result.state()))
-            return "redirect:/student/attempts/" + attemptId;
+        if ("IN_PROGRESS".equals(result.state())) return "redirect:/student/attempts/" + attemptId;
         if ("EXPIRED".equals(result.state()) && result.submittedAt() == null)
             return "redirect:/student/placement";
         model.addAttribute("attemptResult", result);

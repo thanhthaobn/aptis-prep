@@ -151,6 +151,17 @@ public class AccountProfileServiceImpl implements AccountProfileService {
                                                     "Không tìm thấy chứng chỉ"));
             if (certificate.getStatus() != RecordStatus.ACTIVE)
                 throw new BusinessRuleException("Chứng chỉ đã ngừng sử dụng");
+        } else {
+            certificate =
+                    userGoalRepository
+                            .findFirstByUserIdAndStatusOrderByCreatedAtDesc(userId, GoalStatus.ACTIVE)
+                            .map(UserGoal::getCertificate)
+                            .orElseGet(
+                                    () ->
+                                            certificateRepository
+                                                    .findByCodeIgnoreCase("APTIS_GENERAL")
+                                                    .filter(value -> value.getStatus() == RecordStatus.ACTIVE)
+                                                    .orElse(null));
         }
         userGoalRepository
                 .findFirstByUserIdAndStatusOrderByCreatedAtDesc(userId, GoalStatus.ACTIVE)
