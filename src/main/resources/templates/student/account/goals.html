@@ -316,7 +316,7 @@
               <select id="grammarVocabulary" th:field="*{grammarVocabulary}">
                 <option value="">Chưa đặt</option>
                 <option
-                  th:each="level : ${display.learningLevels()}"
+                  th:each="level : ${learningLevels}"
                   th:value="${level}"
                   th:text="${level}"
                 ></option>
@@ -327,7 +327,7 @@
               <select id="reading" th:field="*{reading}">
                 <option value="">Chưa đặt</option>
                 <option
-                  th:each="level : ${display.learningLevels()}"
+                  th:each="level : ${learningLevels}"
                   th:value="${level}"
                   th:text="${level}"
                 ></option>
@@ -338,7 +338,7 @@
               <select id="listening" th:field="*{listening}">
                 <option value="">Chưa đặt</option>
                 <option
-                  th:each="level : ${display.learningLevels()}"
+                  th:each="level : ${learningLevels}"
                   th:value="${level}"
                   th:text="${level}"
                 ></option>
@@ -349,7 +349,7 @@
               <select id="writing" th:field="*{writing}">
                 <option value="">Chưa đặt</option>
                 <option
-                  th:each="level : ${display.learningLevels()}"
+                  th:each="level : ${learningLevels}"
                   th:value="${level}"
                   th:text="${level}"
                 ></option>
@@ -360,7 +360,7 @@
               <select id="speaking" th:field="*{speaking}">
                 <option value="">Chưa đặt</option>
                 <option
-                  th:each="level : ${display.learningLevels()}"
+                  th:each="level : ${learningLevels}"
                   th:value="${level}"
                   th:text="${level}"
                 ></option>

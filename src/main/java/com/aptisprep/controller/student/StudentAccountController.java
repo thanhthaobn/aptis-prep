@@ -10,6 +10,7 @@ import com.aptisprep.service.account.LearningActivityService;
 import com.aptisprep.service.contract.IntegrationModels.AttemptHandle;
 import com.aptisprep.service.placement.PlacementService;
 import com.aptisprep.service.scoring.ScoringGuideService;
+import com.aptisprep.service.learning.LessonService;
 import com.aptisprep.enums.Skill;
 import jakarta.validation.Valid;
 import java.security.Principal;
@@ -77,6 +78,7 @@ public class StudentAccountController {
     @GetMapping("/student/goals")
     public String goals(Principal principal, Model model) {
         model.addAttribute("certificates", accounts.activeCertificates());
+        model.addAttribute("learningLevels", LessonService.LEVELS);
         if (!model.containsAttribute("goalForm"))
             model.addAttribute(
                     "goalForm", accounts.formFrom(accounts.snapshot(principal.getName())));
@@ -92,6 +94,7 @@ public class StudentAccountController {
             RedirectAttributes redirectAttributes) {
         if (bindingResult.hasErrors()) {
             model.addAttribute("certificates", accounts.activeCertificates());
+            model.addAttribute("learningLevels", LessonService.LEVELS);
             return "student/account/goals";
         }
         try {
@@ -99,6 +102,7 @@ public class StudentAccountController {
         } catch (BusinessRuleException exception) {
             bindingResult.reject("goal.invalid", exception.getMessage());
             model.addAttribute("certificates", accounts.activeCertificates());
+            model.addAttribute("learningLevels", LessonService.LEVELS);
             return "student/account/goals";
         }
         redirectAttributes.addFlashAttribute(

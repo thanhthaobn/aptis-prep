@@ -11,6 +11,7 @@ import com.aptisprep.service.scoring.ScoringGuideService;
 import com.aptisprep.service.student.StudentExamCatalogService;
 import com.aptisprep.enums.Skill;
 import com.aptisprep.service.student.StudentExamCatalogService.Catalog;
+import com.aptisprep.service.learning.LessonService;
 import java.security.Principal;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -86,6 +87,7 @@ public class StudentContentController {
         model.addAttribute("selectedLevel", level);
         model.addAttribute("selectedState", state);
         model.addAttribute("skillCodes", Skill.codes());
+        model.addAttribute("learningLevels", LessonService.LEVELS);
         return "student/content/list";
     }
 

@@ -314,7 +314,7 @@
             <select id="studyLevel" name="level">
               <option value="">Tất cả cấp độ</option>
               <option
-                th:each="level : ${display.learningLevels()}"
+                th:each="level : ${learningLevels}"
                 th:value="${level}"
                 th:text="${level}"
                 th:selected="${selectedLevel == level}"

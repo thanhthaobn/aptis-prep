@@ -42,6 +42,7 @@ public class StudentLearningPathController {
         boolean hasAssessment = stages.stream().anyMatch(stage -> stage.currentLevel() != null);
         model.addAttribute("stages", stages);
         model.addAttribute("hasAssessment", hasAssessment);
+        model.addAttribute("learningLevels", LessonService.LEVELS);
         return "student/learning/path";
     }
 
@@ -60,6 +61,7 @@ public class StudentLearningPathController {
                         .filter(path -> path.skill().equals(selected))
                         .toList());
         model.addAttribute("stages", service.stages(principal.getName(), selected));
+        model.addAttribute("learningLevels", LessonService.LEVELS);
         return "student/learning/skill";
     }
 

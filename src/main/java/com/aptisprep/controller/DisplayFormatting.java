@@ -3,7 +3,6 @@ package com.aptisprep.controller;
 import com.aptisprep.enums.CefrLevel;
 import com.aptisprep.enums.Skill;
 import com.aptisprep.service.contract.IntegrationModels.SkillResult;
-import com.aptisprep.service.learning.LessonService;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.TemporalAccessor;
@@ -89,10 +88,6 @@ public class DisplayFormatting {
             case "failed" -> "Làm lại kiểm tra cuối chặng";
             default -> "Bắt đầu bài kiểm tra cuối chặng";
         };
-    }
-
-    public List<String> learningLevels() {
-        return LessonService.LEVELS;
     }
 
     public String cefrLabel(String level) {

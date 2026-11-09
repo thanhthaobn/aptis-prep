@@ -329,7 +329,7 @@
                   </div>
                 </dl>
                 <ol
-                  th:with="current=${stage.targetLevel},goal=${stage.goalLevel},scale=${display.learningLevels()}"
+                  th:with="current=${stage.targetLevel},goal=${stage.goalLevel},scale=${learningLevels}"
                   class="stage-scale"
                   th:attr="data-unassessed=${stage.currentLevel == null ? 'true' : null}"
                   aria-label="Thang chặng CEFR"
@@ -444,7 +444,7 @@
                     </div>
                   </dl>
                   <ol
-                    th:with="current=${stage.targetLevel},goal=${stage.goalLevel},scale=${display.learningLevels()}"
+                    th:with="current=${stage.targetLevel},goal=${stage.goalLevel},scale=${learningLevels}"
                     class="stage-scale"
                     th:attr="data-unassessed=${stage.currentLevel == null ? 'true' : null}"
                     aria-label="Thang chặng CEFR"
