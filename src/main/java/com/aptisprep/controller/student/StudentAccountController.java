@@ -123,12 +123,9 @@ public class StudentAccountController {
             @RequestParam(defaultValue = "0") int page,
             Principal principal,
             Model model) {
-        if (skill == null || skill.isBlank()) skill = "FULL_MOCK";
-        if (!placementSkills().contains(skill))
-            throw new BusinessRuleException("Kỹ năng Placement không hợp lệ");
-        model.addAttribute("skill", skill);
+        model.addAttribute("skill", "FULL_MOCK");
         var placementPage =
-                ListPagination.slice(placement.available(principal.getName(), skill), page);
+                ListPagination.slice(placement.availableForStudent(principal.getName()), page);
         model.addAttribute("placementPage", placementPage);
         model.addAttribute("placementExams", placementPage.getContent());
         return "student/account/placement";
@@ -136,12 +133,18 @@ public class StudentAccountController {
 
     @PostMapping("/student/placement/start")
     public String start(
-            @RequestParam String skill,
-            @RequestParam Integer examId,
+            @RequestParam(required = false) String skill,
+            @RequestParam(required = false) Integer examId,
             Principal principal,
             RedirectAttributes redirect) {
         try {
-            AttemptHandle handle = placement.start(principal.getName(), skill, examId);
+            // Keep accepting the legacy skill/examId form parameters for bookmarks and
+            // older clients.  The current placement page does not send them and therefore
+            // always starts the single combined placement exam.
+            AttemptHandle handle =
+                    skill != null || examId != null
+                            ? placement.start(principal.getName(), skill, examId)
+                            : placement.start(principal.getName());
             return "redirect:/student/attempts/"
                     + handle.attemptId()
                     + ("IN_PROGRESS".equals(handle.state()) ? "" : "/result");

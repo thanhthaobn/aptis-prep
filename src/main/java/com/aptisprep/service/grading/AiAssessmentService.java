@@ -366,7 +366,14 @@ public class AiAssessmentService implements AiAssessmentContract {
             transactions.executeWithoutResult(
                     status -> {
                         AiAssessmentJob job = jobForUpdate(key);
-                        if (job.getState() == AiJobState.PENDING) {
+                        // A provider/database failure can happen after the claim has
+                        // committed. Release that lease as well; otherwise the job is
+                        // left in PROCESSING until the stale-lease timeout and restart
+                        // recovery cannot make progress.
+                        if (job.getState() == AiJobState.PENDING
+                                || job.getState() == AiJobState.PROCESSING) {
+                            job.setState(AiJobState.PENDING);
+                            job.setProcessingToken(null);
                             job.setNextRetryAt(
                                     LocalDateTime.now()
                                             .plusSeconds(AiProcessingPolicy.CLAIM_RETRY_SECONDS));

@@ -514,13 +514,32 @@ public class AttemptFinalizationService {
                                 attempt.getRubricVersion(),
                                 AiJobState.ERROR)
                         .stream()
-                        .filter(job -> job.getRetryCount() < AiProcessingPolicy.MAX_ATTEMPTS)
                         .filter(job -> isRetryableExamJob(job, attemptId))
                         .toList();
+        if (failed.isEmpty()) {
+            // Be tolerant of jobs created by an older policy/rubric version;
+            // the immutable job still contains the correct payload to replay.
+            failed =
+                    aiAssessmentJobRepository
+                            .findExamJobsByAttemptAndState(
+                                    attempt.getUserId(), attemptId, AiJobState.ERROR)
+                            .stream()
+                            .filter(
+                                    job ->
+                                            Objects.equals(
+                                                    job.getAnswerVersion(),
+                                                    attempt.getAnswerVersion()))
+                            .filter(job -> isRetryableExamJob(job, attemptId))
+                            .toList();
+        }
         if (failed.isEmpty())
             throw new BusinessRuleException("Không tìm thấy tác vụ AI lỗi để thử lại");
         List<String> keys = new ArrayList<>();
         for (AiAssessmentJob job : failed) {
+            // A learner-triggered retry starts a fresh retry window after the
+            // bounded automatic attempts have been exhausted.
+            job.setRetryCount(0);
+            aiAssessmentJobRepository.save(job);
             keys.add(job.getAssessmentKey());
             QuestionEntity question =
                     userAnswerRepository
