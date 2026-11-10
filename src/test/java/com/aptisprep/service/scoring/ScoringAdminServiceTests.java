@@ -7,6 +7,8 @@ import static org.mockito.Mockito.*;
 
 import com.aptisprep.mvc.auth.entity.User;
 import com.aptisprep.mvc.auth.repository.UserRepository;
+import com.aptisprep.mvc.catalog.service.*;
+import com.aptisprep.mvc.catalog.service.ScoringSchemeUsageService;
 import com.aptisprep.mvc.common.enums.RecordStatus;
 import com.aptisprep.mvc.common.enums.Role;
 import com.aptisprep.mvc.common.exception.BusinessRuleException;
@@ -21,7 +23,6 @@ import com.aptisprep.mvc.scoring.entity.ScoringScheme;
 import com.aptisprep.mvc.scoring.repository.*;
 import com.aptisprep.mvc.scoring.service.*;
 import com.aptisprep.repository.*;
-import com.aptisprep.service.contract.ScoringSchemeUsageContract;
 import java.math.BigDecimal;
 import java.util.Optional;
 import org.junit.jupiter.api.Test;
@@ -36,8 +37,8 @@ class ScoringAdminServiceTests {
     @Mock ScoringSchemeRepository schemes;
     @Mock ScoreBandRepository bands;
     @Mock UserRepository users;
-    @Mock ObjectProvider<ScoringSchemeUsageContract> usageProvider;
-    @Mock ScoringSchemeUsageContract usage;
+    @Mock ObjectProvider<ScoringSchemeUsageService> usageProvider;
+    @Mock ScoringSchemeUsageService usage;
     @Mock ScoringScaleRuleRepository scaleRules;
 
     @Test

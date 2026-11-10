@@ -11,14 +11,16 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.aptisprep.entity.ExamAttemptEntity;
 import com.aptisprep.entity.ExamSkillResultEntity;
-import com.aptisprep.entity.MockExamEntity;
 import com.aptisprep.mvc.auth.entity.User;
 import com.aptisprep.mvc.auth.repository.UserRepository;
+import com.aptisprep.mvc.catalog.entity.*;
+import com.aptisprep.mvc.catalog.entity.MockExamEntity;
+import com.aptisprep.mvc.catalog.repository.*;
+import com.aptisprep.mvc.catalog.repository.MockExamRepository;
 import com.aptisprep.mvc.common.enums.Role;
 import com.aptisprep.mvc.common.enums.UserStatus;
 import com.aptisprep.repository.ExamAttemptRepository;
 import com.aptisprep.repository.ExamSkillResultRepository;
-import com.aptisprep.repository.MockExamRepository;
 import com.aptisprep.service.contract.IntegrationModels.HistoryPage;
 import java.math.BigDecimal;
 import java.util.ArrayList;

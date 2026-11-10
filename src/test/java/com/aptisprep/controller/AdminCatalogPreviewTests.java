@@ -11,6 +11,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.aptisprep.mvc.auth.entity.User;
 import com.aptisprep.mvc.auth.repository.UserRepository;
+import com.aptisprep.mvc.catalog.entity.*;
+import com.aptisprep.mvc.catalog.repository.*;
 import com.aptisprep.mvc.common.enums.Role;
 import com.aptisprep.mvc.common.enums.UserStatus;
 import com.aptisprep.mvc.scoring.entity.*;
@@ -29,8 +31,8 @@ import org.springframework.test.web.servlet.MockMvc;
 class AdminCatalogPreviewTests {
     @Autowired MockMvc mvc;
     @Autowired UserRepository users;
-    @Autowired com.aptisprep.repository.QuestionRepository questions;
-    @Autowired com.aptisprep.repository.MockExamRepository exams;
+    @Autowired com.aptisprep.mvc.catalog.repository.QuestionRepository questions;
+    @Autowired com.aptisprep.mvc.catalog.repository.MockExamRepository exams;
     @Autowired com.aptisprep.mvc.scoring.repository.CertificateRepository certificates;
     private final java.util.List<Integer> questionIds = new java.util.ArrayList<>();
     private final java.util.List<Integer> examIds = new java.util.ArrayList<>();
@@ -43,14 +45,14 @@ class AdminCatalogPreviewTests {
         certificate.setStatus(com.aptisprep.mvc.common.enums.RecordStatus.ACTIVE);
         certificate = certificates.saveAndFlush(certificate);
         for (int i = 0; i < 3; i++) {
-            var question = new com.aptisprep.entity.QuestionEntity();
+            var question = new com.aptisprep.mvc.catalog.entity.QuestionEntity();
             question.setContent(i == 1 ? "Viết thư cho câu lạc bộ" : "Chọn từ phù hợp trong câu");
             question.setSkill(i == 1 ? "WRITING" : "READING");
             question.setCefrLevel("B1");
             question.setQuestionType(i == 1 ? "WRITING_TEXT" : "SINGLE_CHOICE");
             question.setStatus("DRAFT");
             questionIds.add(questions.saveAndFlush(question).getId());
-            var exam = new com.aptisprep.entity.MockExamEntity();
+            var exam = new com.aptisprep.mvc.catalog.entity.MockExamEntity();
             exam.setCertificateId(certificate.getId());
             exam.setTitle("Database exam " + System.nanoTime());
             exam.setExamType("PRACTICE");

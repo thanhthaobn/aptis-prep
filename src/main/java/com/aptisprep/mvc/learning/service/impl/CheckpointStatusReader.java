@@ -1,10 +1,11 @@
 package com.aptisprep.mvc.learning.service.impl;
 
+import com.aptisprep.mvc.catalog.service.*;
+import com.aptisprep.mvc.catalog.service.ExamCatalogService;
 import com.aptisprep.mvc.common.exception.BusinessRuleException;
 import com.aptisprep.mvc.common.exception.ResourceNotFoundException;
 import com.aptisprep.mvc.learning.entity.LearningPath;
 import com.aptisprep.service.contract.ExamAttemptContract;
-import com.aptisprep.service.contract.ExamCatalogContract;
 import com.aptisprep.service.contract.IntegrationModels.*;
 import java.time.ZoneId;
 import java.util.*;
@@ -15,10 +16,10 @@ import org.springframework.stereotype.Component;
 @Component
 final class CheckpointStatusReader {
     private final ObjectProvider<ExamAttemptContract> attempts;
-    private final ExamCatalogContract catalog;
+    private final ExamCatalogService catalog;
 
     CheckpointStatusReader(
-            ObjectProvider<ExamAttemptContract> attempts, ExamCatalogContract catalog) {
+            ObjectProvider<ExamAttemptContract> attempts, ExamCatalogService catalog) {
         this.attempts = attempts;
         this.catalog = catalog;
     }

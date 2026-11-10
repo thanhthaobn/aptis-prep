@@ -3,14 +3,18 @@ package com.aptisprep;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-import com.aptisprep.dto.form.ExamForm;
-import com.aptisprep.entity.MockExamEntity;
-import com.aptisprep.entity.MockExamQuestionEntity;
-import com.aptisprep.entity.MockExamSectionEntity;
+import com.aptisprep.mvc.catalog.dto.*;
+import com.aptisprep.mvc.catalog.dto.ExamFormDTO;
+import com.aptisprep.mvc.catalog.entity.*;
+import com.aptisprep.mvc.catalog.entity.MockExamEntity;
+import com.aptisprep.mvc.catalog.entity.MockExamQuestionEntity;
+import com.aptisprep.mvc.catalog.entity.MockExamSectionEntity;
+import com.aptisprep.mvc.catalog.repository.*;
+import com.aptisprep.mvc.catalog.repository.MockExamQuestionRepository;
+import com.aptisprep.mvc.catalog.repository.MockExamRepository;
+import com.aptisprep.mvc.catalog.repository.MockExamSectionRepository;
+import com.aptisprep.mvc.catalog.service.*;
 import com.aptisprep.mvc.common.exception.ResourceNotFoundException;
-import com.aptisprep.repository.MockExamQuestionRepository;
-import com.aptisprep.repository.MockExamRepository;
-import com.aptisprep.repository.MockExamSectionRepository;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -52,11 +56,11 @@ class IntegrationMergeRegressionTests {
 
     @Test
     void examFormKeepsLegacyFieldsAndNewSectionsWithNullSafety() {
-        var form = new ExamForm();
+        var form = new ExamFormDTO();
         form.setSectionSkill("READING");
         form.setSectionDurationMinutes(35);
         form.setQuestionIds("1,2");
-        var section = new ExamForm.SectionForm();
+        var section = new ExamFormDTO.SectionForm();
         section.setSkill("LISTENING");
         section.setDurationMinutes(40);
         section.setQuestionIds("3,4");

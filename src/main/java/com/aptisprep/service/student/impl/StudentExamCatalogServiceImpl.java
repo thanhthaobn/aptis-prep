@@ -1,16 +1,19 @@
 package com.aptisprep.service.student.impl;
 
 import com.aptisprep.dto.view.StudentCatalogView.*;
-import com.aptisprep.entity.MockExamEntity;
-import com.aptisprep.entity.MockExamQuestionEntity;
-import com.aptisprep.entity.MockExamSectionEntity;
-import com.aptisprep.entity.QuestionMediaEntity;
+import com.aptisprep.mvc.catalog.entity.*;
+import com.aptisprep.mvc.catalog.entity.MockExamEntity;
+import com.aptisprep.mvc.catalog.entity.MockExamQuestionEntity;
+import com.aptisprep.mvc.catalog.entity.MockExamSectionEntity;
+import com.aptisprep.mvc.catalog.entity.QuestionMediaEntity;
+import com.aptisprep.mvc.catalog.repository.*;
+import com.aptisprep.mvc.catalog.repository.MockExamQuestionRepository;
+import com.aptisprep.mvc.catalog.repository.MockExamRepository;
+import com.aptisprep.mvc.catalog.repository.MockExamSectionRepository;
+import com.aptisprep.mvc.catalog.repository.QuestionMediaRepository;
+import com.aptisprep.mvc.catalog.service.*;
 import com.aptisprep.mvc.common.exception.BusinessRuleException;
 import com.aptisprep.mvc.common.exception.ResourceNotFoundException;
-import com.aptisprep.repository.MockExamQuestionRepository;
-import com.aptisprep.repository.MockExamRepository;
-import com.aptisprep.repository.MockExamSectionRepository;
-import com.aptisprep.repository.QuestionMediaRepository;
 import com.aptisprep.service.exam.ExamStartValidator;
 import com.aptisprep.service.student.StudentExamCatalogService;
 import java.text.Normalizer;

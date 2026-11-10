@@ -1,9 +1,10 @@
 package com.aptisprep.service.placement.impl;
 
 import com.aptisprep.mvc.account.service.AccountAccessService;
+import com.aptisprep.mvc.catalog.service.*;
+import com.aptisprep.mvc.catalog.service.ExamCatalogService;
 import com.aptisprep.mvc.common.exception.BusinessRuleException;
 import com.aptisprep.service.contract.ExamAttemptContract;
-import com.aptisprep.service.contract.ExamCatalogContract;
 import com.aptisprep.service.contract.IntegrationModels.AttemptHandle;
 import com.aptisprep.service.contract.IntegrationModels.AttemptResult;
 import com.aptisprep.service.placement.PlacementExamCatalogService;
@@ -18,13 +19,13 @@ import org.springframework.stereotype.Service;
 @Service
 public class PlacementServiceImpl implements PlacementService {
     private final PlacementExamCatalogService catalog;
-    private final ExamCatalogContract examCatalog;
+    private final ExamCatalogService examCatalog;
     private final ObjectProvider<ExamAttemptContract> attempts;
     private final ObjectProvider<AccountAccessService> accounts;
 
     public PlacementServiceImpl(
             PlacementExamCatalogService catalog,
-            ExamCatalogContract examCatalog,
+            ExamCatalogService examCatalog,
             ObjectProvider<ExamAttemptContract> attempts,
             ObjectProvider<AccountAccessService> accounts) {
         this.catalog = catalog;

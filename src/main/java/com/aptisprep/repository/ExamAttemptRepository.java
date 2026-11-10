@@ -1,6 +1,7 @@
 package com.aptisprep.repository;
 
 import com.aptisprep.entity.ExamAttemptEntity;
+import com.aptisprep.mvc.catalog.entity.*;
 import jakarta.persistence.LockModeType;
 import java.time.LocalDateTime;
 import java.util.Collection;

@@ -3,11 +3,14 @@ package com.aptisprep.service.placement;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.*;
 
-import com.aptisprep.entity.MockExamEntity;
-import com.aptisprep.entity.MockExamQuestionEntity;
-import com.aptisprep.repository.MockExamQuestionRepository;
-import com.aptisprep.repository.MockExamRepository;
-import com.aptisprep.repository.MockExamSectionRepository;
+import com.aptisprep.mvc.catalog.entity.*;
+import com.aptisprep.mvc.catalog.entity.MockExamEntity;
+import com.aptisprep.mvc.catalog.entity.MockExamQuestionEntity;
+import com.aptisprep.mvc.catalog.repository.*;
+import com.aptisprep.mvc.catalog.repository.MockExamQuestionRepository;
+import com.aptisprep.mvc.catalog.repository.MockExamRepository;
+import com.aptisprep.mvc.catalog.repository.MockExamSectionRepository;
+import com.aptisprep.mvc.catalog.service.*;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 

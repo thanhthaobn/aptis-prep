@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 import com.aptisprep.mvc.account.service.AccountAccessService;
+import com.aptisprep.mvc.catalog.service.*;
 import com.aptisprep.mvc.common.exception.BusinessRuleException;
 import com.aptisprep.service.contract.*;
 import com.aptisprep.service.contract.IntegrationModels.AttemptHandle;
@@ -16,7 +17,7 @@ class PlacementServiceTests {
     @SuppressWarnings("unchecked")
     void availableExamsUseAnUnambiguousActionForTheCurrentAttemptState() {
         var catalog = mock(PlacementExamCatalogService.class);
-        var published = mock(ExamCatalogContract.class);
+        var published = mock(ExamCatalogService.class);
         var engine = mock(ExamAttemptContract.class);
         var accounts = mock(AccountAccessService.class);
         ObjectProvider<ExamAttemptContract> engines = mock(ObjectProvider.class);
@@ -43,7 +44,7 @@ class PlacementServiceTests {
     @SuppressWarnings("unchecked")
     void selectionUsesIntegerValuesBeyondTheJvmCacheAndRejectsOtherIds() {
         var catalog = mock(PlacementExamCatalogService.class);
-        var published = mock(ExamCatalogContract.class);
+        var published = mock(ExamCatalogService.class);
         var engine = mock(ExamAttemptContract.class);
         var accounts = mock(AccountAccessService.class);
         ObjectProvider<ExamAttemptContract> engines = mock(ObjectProvider.class);

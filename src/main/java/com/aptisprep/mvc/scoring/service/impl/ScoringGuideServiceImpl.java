@@ -1,5 +1,6 @@
 package com.aptisprep.mvc.scoring.service.impl;
 
+import com.aptisprep.mvc.catalog.repository.*;
 import com.aptisprep.mvc.scoring.entity.*;
 import com.aptisprep.mvc.scoring.repository.*;
 import com.aptisprep.mvc.scoring.service.ScoringGuideService;

@@ -4,9 +4,12 @@ import static org.assertj.core.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
-import com.aptisprep.entity.MockExamEntity;
-import com.aptisprep.entity.MockExamQuestionEntity;
-import com.aptisprep.entity.MockExamSectionEntity;
+import com.aptisprep.mvc.catalog.entity.*;
+import com.aptisprep.mvc.catalog.entity.MockExamEntity;
+import com.aptisprep.mvc.catalog.entity.MockExamQuestionEntity;
+import com.aptisprep.mvc.catalog.entity.MockExamSectionEntity;
+import com.aptisprep.mvc.catalog.repository.*;
+import com.aptisprep.mvc.catalog.service.*;
 import com.aptisprep.mvc.common.exception.BusinessRuleException;
 import com.aptisprep.mvc.common.exception.ResourceNotFoundException;
 import com.aptisprep.repository.*;

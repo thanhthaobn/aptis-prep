@@ -1,9 +1,10 @@
 package com.aptisprep.service.grading;
 
 import com.aptisprep.entity.ExamSkillResultEntity;
-import com.aptisprep.entity.MockExamEntity;
 import com.aptisprep.entity.UserAnswerDetailEntity;
 import com.aptisprep.entity.UserAnswerEntity;
+import com.aptisprep.mvc.catalog.entity.*;
+import com.aptisprep.mvc.catalog.entity.MockExamEntity;
 import com.aptisprep.mvc.common.exception.BusinessRuleException;
 import com.aptisprep.mvc.common.exception.ResourceNotFoundException;
 import com.aptisprep.mvc.scoring.service.ScoringPolicyService;

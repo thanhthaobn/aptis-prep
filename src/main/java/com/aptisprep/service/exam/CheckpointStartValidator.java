@@ -1,6 +1,7 @@
 package com.aptisprep.service.exam;
 
 import com.aptisprep.entity.*;
+import com.aptisprep.mvc.catalog.entity.*;
 import com.aptisprep.mvc.common.exception.BusinessRuleException;
 import com.aptisprep.mvc.learning.entity.LearningPath;
 import com.aptisprep.mvc.learning.entity.LearningPathItem;

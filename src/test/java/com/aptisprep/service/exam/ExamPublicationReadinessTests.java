@@ -4,6 +4,8 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 import com.aptisprep.entity.*;
+import com.aptisprep.mvc.catalog.entity.*;
+import com.aptisprep.mvc.catalog.repository.*;
 import com.aptisprep.mvc.common.exception.BusinessRuleException;
 import com.aptisprep.mvc.scoring.service.*;
 import com.aptisprep.mvc.scoring.service.CertificateSchemeService;

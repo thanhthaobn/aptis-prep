@@ -1,9 +1,10 @@
 package com.aptisprep.service.admin.impl;
 
 import com.aptisprep.dto.view.AdminDashboardView;
+import com.aptisprep.mvc.catalog.repository.*;
+import com.aptisprep.mvc.catalog.repository.MockExamRepository;
+import com.aptisprep.mvc.catalog.repository.QuestionRepository;
 import com.aptisprep.mvc.learning.repository.LessonRepository;
-import com.aptisprep.repository.MockExamRepository;
-import com.aptisprep.repository.QuestionRepository;
 import com.aptisprep.service.admin.AdminDashboardService;
 import com.aptisprep.service.admin.StudentManagementService;
 import com.aptisprep.service.contract.ExamAttemptContract;

@@ -1,6 +1,8 @@
 package com.aptisprep.service.exam;
 
 import com.aptisprep.entity.*;
+import com.aptisprep.mvc.catalog.entity.*;
+import com.aptisprep.mvc.catalog.repository.*;
 import com.aptisprep.mvc.common.enums.Skill;
 import com.aptisprep.mvc.common.exception.BusinessRuleException;
 import com.aptisprep.mvc.common.exception.ResourceNotFoundException;

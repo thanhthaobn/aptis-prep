@@ -3,10 +3,13 @@ package com.aptisprep.service.admin;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-import com.aptisprep.entity.QuestionMediaEntity;
+import com.aptisprep.mvc.catalog.entity.*;
+import com.aptisprep.mvc.catalog.entity.QuestionMediaEntity;
+import com.aptisprep.mvc.catalog.repository.*;
+import com.aptisprep.mvc.catalog.repository.QuestionMediaRepository;
+import com.aptisprep.mvc.catalog.service.impl.QuestionMediaWriter;
 import com.aptisprep.mvc.common.exception.BusinessRuleException;
 import com.aptisprep.mvc.storage.service.StorageService;
-import com.aptisprep.repository.QuestionMediaRepository;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.mock.web.MockMultipartFile;

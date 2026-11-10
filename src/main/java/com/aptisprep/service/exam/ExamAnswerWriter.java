@@ -1,6 +1,8 @@
 package com.aptisprep.service.exam;
 
 import com.aptisprep.entity.*;
+import com.aptisprep.mvc.catalog.entity.*;
+import com.aptisprep.mvc.catalog.repository.*;
 import com.aptisprep.mvc.common.exception.*;
 import com.aptisprep.mvc.storage.service.AudioUploadService;
 import com.aptisprep.repository.*;

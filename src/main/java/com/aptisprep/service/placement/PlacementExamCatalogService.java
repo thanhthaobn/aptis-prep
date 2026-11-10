@@ -1,11 +1,14 @@
 package com.aptisprep.service.placement;
 
-import com.aptisprep.entity.MockExamEntity;
+import com.aptisprep.mvc.catalog.entity.*;
+import com.aptisprep.mvc.catalog.entity.MockExamEntity;
+import com.aptisprep.mvc.catalog.repository.*;
+import com.aptisprep.mvc.catalog.repository.MockExamQuestionRepository;
+import com.aptisprep.mvc.catalog.repository.MockExamRepository;
+import com.aptisprep.mvc.catalog.repository.MockExamSectionRepository;
+import com.aptisprep.mvc.catalog.service.*;
 import com.aptisprep.mvc.common.enums.Skill;
 import com.aptisprep.mvc.common.exception.BusinessRuleException;
-import com.aptisprep.repository.MockExamQuestionRepository;
-import com.aptisprep.repository.MockExamRepository;
-import com.aptisprep.repository.MockExamSectionRepository;
 import com.aptisprep.service.exam.ExamStartValidator;
 import java.util.Comparator;
 import java.util.List;

@@ -8,12 +8,15 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 import com.aptisprep.dto.view.StudentCatalogView.Entry;
-import com.aptisprep.entity.MockExamEntity;
-import com.aptisprep.entity.MockExamQuestionEntity;
-import com.aptisprep.entity.QuestionEntity;
-import com.aptisprep.entity.QuestionMediaEntity;
 import com.aptisprep.mvc.auth.entity.User;
 import com.aptisprep.mvc.auth.repository.UserRepository;
+import com.aptisprep.mvc.catalog.entity.*;
+import com.aptisprep.mvc.catalog.entity.MockExamEntity;
+import com.aptisprep.mvc.catalog.entity.MockExamQuestionEntity;
+import com.aptisprep.mvc.catalog.entity.QuestionEntity;
+import com.aptisprep.mvc.catalog.entity.QuestionMediaEntity;
+import com.aptisprep.mvc.catalog.repository.*;
+import com.aptisprep.mvc.catalog.service.*;
 import com.aptisprep.mvc.common.enums.RecordStatus;
 import com.aptisprep.mvc.common.enums.Role;
 import com.aptisprep.mvc.common.enums.UserStatus;
@@ -40,11 +43,11 @@ import org.springframework.test.web.servlet.MockMvc;
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_CLASS)
 class StudentContentPreviewTests {
     @Autowired MockMvc mvc;
-    @Autowired com.aptisprep.repository.MockExamRepository exams;
-    @Autowired com.aptisprep.repository.MockExamQuestionRepository examQuestions;
-    @Autowired com.aptisprep.repository.MockExamSectionRepository sections;
-    @Autowired com.aptisprep.repository.QuestionRepository questions;
-    @Autowired com.aptisprep.repository.QuestionMediaRepository media;
+    @Autowired com.aptisprep.mvc.catalog.repository.MockExamRepository exams;
+    @Autowired com.aptisprep.mvc.catalog.repository.MockExamQuestionRepository examQuestions;
+    @Autowired com.aptisprep.mvc.catalog.repository.MockExamSectionRepository sections;
+    @Autowired com.aptisprep.mvc.catalog.repository.QuestionRepository questions;
+    @Autowired com.aptisprep.mvc.catalog.repository.QuestionMediaRepository media;
     @Autowired com.aptisprep.mvc.scoring.repository.CertificateRepository certificates;
     @Autowired com.aptisprep.mvc.scoring.repository.ScoringSchemeRepository schemes;
     @Autowired com.aptisprep.mvc.scoring.repository.ScoringScaleRuleRepository rules;
@@ -64,7 +67,7 @@ class StudentContentPreviewTests {
         String[] skills = {"FULL_MOCK", "READING", "WRITING"};
         String[] titles = {"Thi thử tổng hợp số 01", "Luyện tập Reading", "Luyện tập Writing"};
         for (int i = 0; i < skills.length; i++) {
-            var exam = new com.aptisprep.entity.MockExamEntity();
+            var exam = new com.aptisprep.mvc.catalog.entity.MockExamEntity();
             exam.setTitle(titles[i]);
             exam.setCertificateId(certificate.getId());
             exam.setExamType(i == 0 ? "FULL_MOCK" : "PRACTICE");
@@ -557,7 +560,7 @@ class StudentContentPreviewTests {
             link.setQuestionId(question.getId());
             link.setPosition(++position);
             if (fullMock) {
-                var section = new com.aptisprep.entity.MockExamSectionEntity();
+                var section = new com.aptisprep.mvc.catalog.entity.MockExamSectionEntity();
                 section.setMockExamId(exam.getId());
                 section.setSkill(skill);
                 section.setDisplayOrder(position);

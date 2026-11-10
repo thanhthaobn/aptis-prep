@@ -5,7 +5,6 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-import com.aptisprep.dto.form.*;
 import com.aptisprep.entity.*;
 import com.aptisprep.mvc.account.dto.GoalFormDTO;
 import com.aptisprep.mvc.account.entity.UserGoal;
@@ -15,6 +14,12 @@ import com.aptisprep.mvc.account.repository.UserSkillProfileRepository;
 import com.aptisprep.mvc.account.service.AccountProfileService;
 import com.aptisprep.mvc.auth.entity.User;
 import com.aptisprep.mvc.auth.repository.UserRepository;
+import com.aptisprep.mvc.catalog.dto.*;
+import com.aptisprep.mvc.catalog.entity.*;
+import com.aptisprep.mvc.catalog.repository.*;
+import com.aptisprep.mvc.catalog.service.*;
+import com.aptisprep.mvc.catalog.service.CatalogService;
+import com.aptisprep.mvc.catalog.service.ScoringSchemeUsageService;
 import com.aptisprep.mvc.common.enums.*;
 import com.aptisprep.mvc.common.exception.BusinessRuleException;
 import com.aptisprep.mvc.flashcard.dto.*;
@@ -26,8 +31,6 @@ import com.aptisprep.mvc.scoring.entity.*;
 import com.aptisprep.mvc.scoring.repository.*;
 import com.aptisprep.mvc.scoring.service.*;
 import com.aptisprep.repository.*;
-import com.aptisprep.service.admin.CatalogService;
-import com.aptisprep.service.contract.ScoringSchemeUsageContract;
 import com.aptisprep.service.exam.ExamAttemptService;
 import java.math.BigDecimal;
 import java.util.*;
@@ -44,7 +47,7 @@ import org.springframework.transaction.annotation.Transactional;
 class V2BusinessRegressionTests {
     @Autowired CatalogService catalog;
     @Autowired ScoringAdminService scoring;
-    @Autowired ScoringSchemeUsageContract usage;
+    @Autowired ScoringSchemeUsageService usage;
     @Autowired CertificateSchemeService available;
     @Autowired AccountProfileService accounts;
     @Autowired ExamAttemptService engine;
@@ -101,19 +104,19 @@ class V2BusinessRegressionTests {
         return users.saveAndFlush(value);
     }
 
-    private QuestionForm question(String type, String skill) {
-        var form = new QuestionForm();
+    private QuestionFormDTO question(String type, String skill) {
+        var form = new QuestionFormDTO();
         form.setContent("V2 question");
         form.setSkill(skill);
         form.setCefrLevel("A1");
         form.setQuestionType(type);
         form.setStatus("DRAFT");
-        var item = new QuestionForm.ItemForm();
+        var item = new QuestionFormDTO.ItemForm();
         item.setContent("First item");
         item.setCorrectPosition(1);
-        var a = new QuestionForm.OptionForm("A");
+        var a = new QuestionFormDTO.OptionForm("A");
         a.setContent("A");
-        var b = new QuestionForm.OptionForm("B");
+        var b = new QuestionFormDTO.OptionForm("B");
         b.setContent("B");
         item.setOptions(new ArrayList<>(List.of(a, b)));
         form.setItems(new ArrayList<>(List.of(item)));
@@ -211,7 +214,7 @@ class V2BusinessRegressionTests {
     void orderingUsesItemsWithoutOptionsAndRejectsDuplicateOrMissingPositions() {
         var form = question("ORDERING", "READING");
         form.getItems().getFirst().setOptions(new ArrayList<>());
-        var second = new QuestionForm.ItemForm();
+        var second = new QuestionFormDTO.ItemForm();
         second.setContent("Second item");
         second.setCorrectPosition(1);
         second.setOptions(new ArrayList<>());
@@ -266,7 +269,7 @@ class V2BusinessRegressionTests {
     @Test
     void writingKeepsAllItemsInCanonicalAnswerAndDoesNotEraseEarlierItems() {
         var form = question("WRITING_TEXT", "WRITING");
-        var second = new QuestionForm.ItemForm();
+        var second = new QuestionFormDTO.ItemForm();
         second.setContent("Second");
         form.getItems().add(second);
         int questionId = catalog.saveQuestion(null, form, null);
@@ -370,19 +373,19 @@ class V2BusinessRegressionTests {
 
     @Test
     void fullMockRejectsMissingSkillsAndAcceptsAllFiveSkills() {
-        var form = new ExamForm();
+        var form = new ExamFormDTO();
         form.setTitle("Complete full mock");
         form.setExamType("FULL_MOCK");
         form.setCertificateId(certificate.getId());
         for (String skill : List.of("READING", "LISTENING")) {
-            var section = new ExamForm.SectionForm();
+            var section = new ExamFormDTO.SectionForm();
             section.setSkill(skill);
             section.setDurationMinutes(20);
             form.getSections().add(section);
         }
         assertThrows(BusinessRuleException.class, () -> catalog.saveExam(null, form));
         for (String skill : List.of("GRAMMAR_VOCABULARY", "WRITING", "SPEAKING")) {
-            var section = new ExamForm.SectionForm();
+            var section = new ExamFormDTO.SectionForm();
             section.setSkill(skill);
             section.setDurationMinutes(20);
             form.getSections().add(section);
@@ -398,7 +401,7 @@ class V2BusinessRegressionTests {
     void singleSkillExamCanBePublishedWithoutASchemeTargetOrSection() {
         int questionId = catalog.saveQuestion(null, question("SINGLE_CHOICE", "READING"), null);
         catalog.publishQuestion(questionId);
-        var form = new ExamForm();
+        var form = new ExamFormDTO();
         form.setTitle("Sectionless practice");
         form.setCertificateId(certificate.getId());
         form.setTargetLevel(null);

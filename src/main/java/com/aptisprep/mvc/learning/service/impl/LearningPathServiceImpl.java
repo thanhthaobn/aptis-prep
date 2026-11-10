@@ -8,6 +8,8 @@ import com.aptisprep.mvc.account.repository.UserGoalRepository;
 import com.aptisprep.mvc.account.service.AccountAccessService;
 import com.aptisprep.mvc.auth.entity.User;
 import com.aptisprep.mvc.auth.repository.UserRepository;
+import com.aptisprep.mvc.catalog.service.*;
+import com.aptisprep.mvc.catalog.service.ExamCatalogService;
 import com.aptisprep.mvc.common.enums.*;
 import com.aptisprep.mvc.common.exception.*;
 import com.aptisprep.mvc.learning.dto.LearningPathViewsDTO.StageDTO;
@@ -18,7 +20,6 @@ import com.aptisprep.mvc.learning.repository.*;
 import com.aptisprep.mvc.learning.service.LearningPathService;
 import com.aptisprep.mvc.learning.service.LessonService;
 import com.aptisprep.service.contract.ExamAttemptContract;
-import com.aptisprep.service.contract.ExamCatalogContract;
 import com.aptisprep.service.contract.IntegrationModels.*;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
@@ -37,7 +38,7 @@ public class LearningPathServiceImpl implements LearningPathService {
     private final UserRepository userRepository;
     private final UserGoalRepository userGoalRepository;
     private final ObjectProvider<ExamAttemptContract> attempts;
-    private final ExamCatalogContract catalog;
+    private final ExamCatalogService catalog;
     private final AccountAccessService accounts;
     private final CheckpointStatusReader checkpointStatus;
 
@@ -49,7 +50,7 @@ public class LearningPathServiceImpl implements LearningPathService {
             UserRepository userRepository,
             UserGoalRepository userGoalRepository,
             ObjectProvider<ExamAttemptContract> attempts,
-            ExamCatalogContract catalog,
+            ExamCatalogService catalog,
             AccountAccessService accounts,
             CheckpointStatusReader checkpointStatus) {
         this.learningPathRepository = learningPathRepository;

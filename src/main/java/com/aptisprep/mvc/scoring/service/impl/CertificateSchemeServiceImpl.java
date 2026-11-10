@@ -138,4 +138,14 @@ public class CertificateSchemeServiceImpl implements CertificateSchemeService {
     public java.util.Optional<Certificate> findByCodeIgnoreCase(String code) {
         return certificateRepository.findByCodeIgnoreCase(code);
     }
+
+    @Override
+    public java.util.Optional<ScoringScheme> findSchemeById(Integer id) {
+        return scoringSchemeRepository.findById(id);
+    }
+
+    @Override
+    public List<ScoringScheme> findAllActiveSchemes() {
+        return scoringSchemeRepository.findByStatusOrderByName(RecordStatus.ACTIVE);
+    }
 }

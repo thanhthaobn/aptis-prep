@@ -15,6 +15,8 @@ import com.aptisprep.mvc.account.repository.UserGoalRepository;
 import com.aptisprep.mvc.account.repository.UserSkillProfileRepository;
 import com.aptisprep.mvc.auth.entity.User;
 import com.aptisprep.mvc.auth.repository.UserRepository;
+import com.aptisprep.mvc.catalog.entity.*;
+import com.aptisprep.mvc.catalog.repository.*;
 import com.aptisprep.mvc.common.enums.*;
 import com.aptisprep.mvc.common.exception.*;
 import com.aptisprep.mvc.learning.dto.*;

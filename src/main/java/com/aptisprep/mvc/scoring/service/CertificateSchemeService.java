@@ -1,6 +1,7 @@
 package com.aptisprep.mvc.scoring.service;
 
 import com.aptisprep.mvc.scoring.entity.Certificate;
+import com.aptisprep.mvc.scoring.entity.ScoringScheme;
 import java.util.List;
 import java.util.Optional;
 
@@ -29,4 +30,8 @@ public interface CertificateSchemeService {
     Optional<Certificate> findByCodeIgnoreCase(String code);
 
     List<Certificate> findAllActiveCertificates();
+
+    Optional<ScoringScheme> findSchemeById(Integer id);
+
+    List<ScoringScheme> findAllActiveSchemes();
 }

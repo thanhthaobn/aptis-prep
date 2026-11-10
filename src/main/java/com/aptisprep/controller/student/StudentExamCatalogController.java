@@ -2,6 +2,7 @@ package com.aptisprep.controller.student;
 
 import com.aptisprep.dto.view.StudentCatalogView.Entry;
 import com.aptisprep.mvc.account.service.AccountAccessService;
+import com.aptisprep.mvc.catalog.service.*;
 import com.aptisprep.mvc.common.enums.Skill;
 import com.aptisprep.mvc.common.exception.BusinessRuleException;
 import com.aptisprep.mvc.learning.service.LessonService;

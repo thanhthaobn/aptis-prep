@@ -3,6 +3,9 @@ package com.aptisprep.mvc.scoring.service.impl;
 import com.aptisprep.entity.*;
 import com.aptisprep.mvc.auth.entity.User;
 import com.aptisprep.mvc.auth.repository.UserRepository;
+import com.aptisprep.mvc.catalog.repository.*;
+import com.aptisprep.mvc.catalog.service.*;
+import com.aptisprep.mvc.catalog.service.ScoringSchemeUsageService;
 import com.aptisprep.mvc.common.enums.*;
 import com.aptisprep.mvc.common.enums.CefrLevel;
 import com.aptisprep.mvc.common.enums.Skill;
@@ -14,7 +17,6 @@ import com.aptisprep.mvc.scoring.entity.*;
 import com.aptisprep.mvc.scoring.repository.*;
 import com.aptisprep.mvc.scoring.service.ScoringAdminService;
 import com.aptisprep.repository.*;
-import com.aptisprep.service.contract.ScoringSchemeUsageContract;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDateTime;
@@ -35,7 +37,7 @@ public class ScoringAdminServiceImpl implements ScoringAdminService {
     private final ScoringSchemeRepository scoringSchemeRepository;
     private final ScoreBandRepository scoreBandRepository;
     private final UserRepository userRepository;
-    private final ObjectProvider<ScoringSchemeUsageContract> usage;
+    private final ObjectProvider<ScoringSchemeUsageService> usage;
     private final ScoringScaleRuleRepository scoringScaleRuleRepository;
     private final MockExamRepository mockExamRepository;
 
@@ -44,7 +46,7 @@ public class ScoringAdminServiceImpl implements ScoringAdminService {
             ScoringSchemeRepository scoringSchemeRepository,
             ScoreBandRepository scoreBandRepository,
             UserRepository userRepository,
-            ObjectProvider<ScoringSchemeUsageContract> usage,
+            ObjectProvider<ScoringSchemeUsageService> usage,
             ScoringScaleRuleRepository scoringScaleRuleRepository) {
         this(
                 certificateRepository,
@@ -62,7 +64,7 @@ public class ScoringAdminServiceImpl implements ScoringAdminService {
             ScoringSchemeRepository scoringSchemeRepository,
             ScoreBandRepository scoreBandRepository,
             UserRepository userRepository,
-            ObjectProvider<ScoringSchemeUsageContract> usage,
+            ObjectProvider<ScoringSchemeUsageService> usage,
             ScoringScaleRuleRepository scoringScaleRuleRepository,
             MockExamRepository mockExamRepository) {
         this.certificateRepository = certificateRepository;
@@ -595,7 +597,7 @@ public class ScoringAdminServiceImpl implements ScoringAdminService {
     }
 
     private boolean schemeIsUsed(Integer schemeId) {
-        ScoringSchemeUsageContract contract = usage.getIfAvailable();
+        ScoringSchemeUsageService contract = usage.getIfAvailable();
         if (contract == null)
             throw new IllegalStateException("Thiếu dịch vụ bảo vệ lịch sử chấm điểm");
         return contract.isUsed(schemeId);

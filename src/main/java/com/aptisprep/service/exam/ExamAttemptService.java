@@ -5,6 +5,8 @@ import static com.aptisprep.service.contract.GradingContextFormatter.DEFAULT_RUB
 import com.aptisprep.entity.*;
 import com.aptisprep.mvc.auth.entity.User;
 import com.aptisprep.mvc.auth.repository.UserRepository;
+import com.aptisprep.mvc.catalog.entity.*;
+import com.aptisprep.mvc.catalog.repository.*;
 import com.aptisprep.mvc.common.enums.Role;
 import com.aptisprep.mvc.common.enums.UserStatus;
 import com.aptisprep.mvc.common.event.AttemptSubmittedEvent;
