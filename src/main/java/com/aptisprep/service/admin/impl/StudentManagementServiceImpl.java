@@ -133,7 +133,12 @@ public class StudentManagementServiceImpl implements StudentManagementService {
 
     @Override
     @Transactional
-    public void remove(String adminEmail, Integer id) {
+    public void remove(String adminEmail, Integer id, String reason) {
+        var normalizedReason = reason == null ? "" : reason.trim();
+        if (normalizedReason.isBlank())
+            throw new BusinessRuleException("Vui lòng nhập lý do xóa tài khoản");
+        if (normalizedReason.length() > 1000)
+            throw new BusinessRuleException("Lý do xóa tài khoản tối đa 1000 ký tự");
         User admin =
                 userRepository
                         .findByEmailIgnoreCase(adminEmail)
@@ -152,8 +157,8 @@ public class StudentManagementServiceImpl implements StudentManagementService {
             throw new ResourceNotFoundException("Không tìm thấy học viên");
         if (target.getStatus() != UserStatus.LOCKED)
             throw new BusinessRuleException("Chỉ có thể xóa tài khoản đã khóa");
-        // Keep historical attempts and answers; hide the account by archiving it.
         target.setStatus(UserStatus.INACTIVE);
+        target.setLockReason(normalizedReason);
     }
 
     public long totalStudents() {
@@ -233,6 +238,8 @@ public class StudentManagementServiceImpl implements StudentManagementService {
     private List<AdminStudentView.Progress> progressFor(Integer userId) {
         LearningPathContract contract = paths.getIfAvailable();
         if (contract == null) return List.of();
+        AccountSnapshot.GoalView goal = goalView(userId);
+        Map<String, String> targetMap = goal == null ? Map.of() : goal.targets();
         List<PathProgress> values = contract.summaries(userId);
         return values == null
                 ? List.of()
@@ -250,7 +257,8 @@ public class StudentManagementServiceImpl implements StudentManagementService {
                                                 value.completedRequiredLessons(),
                                                 value.totalRequiredLessons(),
                                                 value.nextLessonTitle(),
-                                                checkpointLabel(value.checkpointState())))
+                                                checkpointLabel(value.checkpointState()),
+                                                targetMap.get(value.skill())))
                         .toList();
     }
 
@@ -334,9 +342,14 @@ public class StudentManagementServiceImpl implements StudentManagementService {
     private String statusLabel(String value) {
         if (value == null) return "Chưa có trạng thái";
         return switch (value.toUpperCase(Locale.ROOT)) {
+            case "IN_PROGRESS" -> "Đang làm bài";
+            case "SUBMITTED" -> "Đã nộp bài";
+            case "WAITING_GRADING" -> "Đang chờ chấm";
             case "COMPLETED" -> "Đã hoàn thành";
             case "PENDING", "GRADING" -> "Đang chờ chấm";
             case "ERROR" -> "Lỗi chấm";
+            case "GRADING_FAILED" -> "Chấm chưa thành công";
+            case "EXPIRED" -> "Đã hết thời gian";
             default -> value;
         };
     }

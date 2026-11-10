@@ -73,9 +73,12 @@ public class AdminStudentController {
 
     @PostMapping("/admin/students/{id}/delete")
     public String delete(
-            @PathVariable int id, Principal principal, RedirectAttributes redirectAttributes) {
+            @PathVariable int id,
+            @RequestParam(name = "reason", defaultValue = "") String reason,
+            Principal principal,
+            RedirectAttributes redirectAttributes) {
         try {
-            students.remove(principal.getName(), id);
+            students.remove(principal.getName(), id, reason);
             redirectAttributes.addFlashAttribute(
                     "successMessage", "Đã xóa tài khoản khỏi danh sách học viên.");
         } catch (BusinessRuleException exception) {

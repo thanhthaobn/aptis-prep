@@ -12,7 +12,7 @@ public interface StudentManagementService {
 
     void unlock(String adminEmail, Integer id);
 
-    void remove(String adminEmail, Integer id);
+    void remove(String adminEmail, Integer id, String reason);
 
     long totalStudents();
 

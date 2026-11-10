@@ -292,11 +292,14 @@
                 th:action="@{/admin/students/{id}/lock(id=${student.id})}"
                 method="post"
               >
-                <label class="sr-only" th:for="${'lock-reason-' + student.id}">
+                <label
+                  class="student-action-label text-nowrap"
+                  th:for="${'lock-reason-' + student.id}"
+                >
                   Lý do khóa tài khoản
                 </label>
                 <textarea
-                  class="form-control"
+                  class="form-control student-action-reason"
                   th:id="${'lock-reason-' + student.id}"
                   name="reason"
                   rows="2"
@@ -311,16 +314,27 @@
                 th:action="@{/admin/students/{id}/unlock(id=${student.id})}"
                 method="post"
               >
-                <button class="button button-secondary" type="submit">Mở khóa tài khoản</button>
+                <button class="button button-secondary text-nowrap" type="submit">
+                  Mở khóa tài khoản
+                </button>
               </form>
               <form
                 th:if="${student.status.name() == 'LOCKED'}"
                 th:action="@{/admin/students/{id}/delete(id=${student.id})}"
                 method="post"
-                data-confirm-title="Xóa tài khoản?"
-                data-confirm-message="Tài khoản sẽ được ẩn khỏi danh sách nhưng lịch sử học tập vẫn được giữ lại."
-                data-confirm-button="Xóa tài khoản"
               >
+                <label class="student-action-label" th:for="${'delete-reason-' + student.id}">
+                  Lý do xóa tài khoản
+                </label>
+                <textarea
+                  class="form-control student-action-reason"
+                  th:id="${'delete-reason-' + student.id}"
+                  name="reason"
+                  rows="2"
+                  maxlength="1000"
+                  placeholder="Nhập lý do xóa tài khoản"
+                  required
+                ></textarea>
                 <button class="button button-danger" type="submit">Xóa tài khoản</button>
               </form>
               <span
@@ -374,7 +388,7 @@
             >
               <p
                 class="student-target"
-                th:text="${'' + (path.skill) + ' · ' + (path.pathSource)}"
+                th:text="${'' + path.skill + ' · ' + (path.pathSource == 'GOAL' ? 'Theo mục tiêu cá nhân (' + (path.targetLevel == null ? 'chưa xác định' : path.targetLevel) + ')' : (path.pathSource == 'PLACEMENT' ? 'Theo kết quả đầu vào' : 'Lộ trình mặc định'))}"
               ></p>
               <p
                 th:text="${'' + (path.completedLessons) + '/' + (path.totalLessons) + ' bài học'}"
@@ -493,23 +507,39 @@
             <h2>Chưa có lượt thi</h2>
           </div>
           <nav
-            class="pagination"
-            th:if="${student.attemptTotal > student.attemptSize}"
+            class="pagination student-detail-pagination"
+            th:if="${student.attemptTotal > 0}"
             aria-label="Phân trang lịch sử thi"
           >
             <a
+              class="page-link"
               th:if="${student.attemptPage > 0}"
               th:href="@{/admin/students/{id}(id=${student.id},attemptPage=${student.attemptPage - 1},attemptSize=${student.attemptSize})}"
             >
-              Trang trước
+              ← Trang trước
             </a>
-            <span th:text="${'Trang ' + (student.attemptPage + 1)}">Trang 1</span>
+            <span class="page-link disabled" th:unless="${student.attemptPage > 0}">
+              ← Trang trước
+            </span>
+            <span
+              class="pagination-page-label"
+              th:text="${'Trang ' + (student.attemptPage + 1) + ' / ' + ((student.attemptTotal + student.attemptSize - 1) / student.attemptSize)}"
+            >
+              Trang 1 / 1
+            </span>
             <a
+              class="page-link"
               th:if="${(student.attemptPage + 1) * student.attemptSize < student.attemptTotal}"
               th:href="@{/admin/students/{id}(id=${student.id},attemptPage=${student.attemptPage + 1},attemptSize=${student.attemptSize})}"
             >
-              Trang sau
+              Trang sau →
             </a>
+            <span
+              class="page-link disabled"
+              th:unless="${(student.attemptPage + 1) * student.attemptSize < student.attemptTotal}"
+            >
+              Trang sau →
+            </span>
           </nav>
         </section>
       </main>
