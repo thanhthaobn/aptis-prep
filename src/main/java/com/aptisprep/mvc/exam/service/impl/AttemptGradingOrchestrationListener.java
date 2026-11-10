@@ -3,13 +3,13 @@ package com.aptisprep.mvc.exam.service.impl;
 import com.aptisprep.mvc.common.config.AiProperties;
 import com.aptisprep.mvc.common.event.AiAssessmentCompletedEvent;
 import com.aptisprep.mvc.common.event.AttemptSubmittedEvent;
+import com.aptisprep.mvc.exam.dto.LockedAnswerDTO;
+import com.aptisprep.mvc.exam.dto.LockedAttemptDTO;
 import com.aptisprep.mvc.exam.service.AttemptOutboxService;
 import com.aptisprep.mvc.grading.dto.AiAssessmentDTO;
 import com.aptisprep.mvc.grading.service.AiAssessmentService;
 import com.aptisprep.mvc.grading.service.AttemptFinalizationService;
 import com.aptisprep.mvc.grading.service.impl.GradingContextFormatter;
-import com.aptisprep.service.contract.IntegrationModels.LockedAnswer;
-import com.aptisprep.service.contract.IntegrationModels.LockedAttempt;
 import java.math.BigDecimal;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Propagation;
@@ -47,12 +47,12 @@ public class AttemptGradingOrchestrationListener {
             outbox.markDelivered(event);
             return;
         }
-        LockedAttempt locked = event.lockedAttempt();
+        LockedAttemptDTO locked = event.lockedAttempt();
         if (locked == null) {
             outbox.markDelivered(event);
             return;
         }
-        for (LockedAnswer answer : locked.answers()) {
+        for (LockedAnswerDTO answer : locked.answers()) {
             if (!"WRITING_TEXT".equals(answer.questionType())
                     && !"SPEAKING_AUDIO".equals(answer.questionType())) continue;
             if (!GradingContextFormatter.hasSubmission(answer)) continue;

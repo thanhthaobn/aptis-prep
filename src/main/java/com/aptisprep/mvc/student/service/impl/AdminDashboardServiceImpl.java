@@ -1,14 +1,13 @@
-package com.aptisprep.service.admin.impl;
+package com.aptisprep.mvc.student.service.impl;
 
-import com.aptisprep.dto.view.AdminDashboardView;
-import com.aptisprep.mvc.catalog.repository.*;
 import com.aptisprep.mvc.catalog.repository.MockExamRepository;
 import com.aptisprep.mvc.catalog.repository.QuestionRepository;
+import com.aptisprep.mvc.exam.dto.AdminHistoryFilterDTO;
 import com.aptisprep.mvc.exam.service.ExamAttemptService;
 import com.aptisprep.mvc.learning.repository.LessonRepository;
-import com.aptisprep.service.admin.AdminDashboardService;
-import com.aptisprep.service.admin.StudentManagementService;
-import com.aptisprep.service.contract.IntegrationModels.AdminHistoryFilter;
+import com.aptisprep.mvc.student.dto.AdminDashboardViewDTO;
+import com.aptisprep.mvc.student.service.AdminDashboardService;
+import com.aptisprep.mvc.student.service.StudentManagementService;
 import java.util.ArrayList;
 import java.util.Comparator;
 import org.springframework.data.domain.PageRequest;
@@ -37,15 +36,15 @@ public class AdminDashboardServiceImpl implements AdminDashboardService {
     }
 
     @Override
-    public AdminDashboardView dashboard(String adminEmail) {
+    public AdminDashboardViewDTO dashboard(String adminEmail) {
         PageRequest recent = PageRequest.of(0, 3, Sort.by(Sort.Direction.DESC, "updatedAt", "id"));
-        ArrayList<AdminDashboardView.ContentUpdate> content = new ArrayList<>();
+        ArrayList<AdminDashboardViewDTO.ContentUpdate> content = new ArrayList<>();
         lessonRepository
                 .findAll(recent)
                 .forEach(
                         value ->
                                 content.add(
-                                        new AdminDashboardView.ContentUpdate(
+                                        new AdminDashboardViewDTO.ContentUpdate(
                                                 value.getTitle(),
                                                 "Bài học",
                                                 "/admin/lessons/" + value.getId(),
@@ -55,7 +54,7 @@ public class AdminDashboardServiceImpl implements AdminDashboardService {
                 .forEach(
                         value ->
                                 content.add(
-                                        new AdminDashboardView.ContentUpdate(
+                                        new AdminDashboardViewDTO.ContentUpdate(
                                                 value.getContent(),
                                                 "Câu hỏi",
                                                 "/admin/questions/" + value.getId(),
@@ -65,13 +64,13 @@ public class AdminDashboardServiceImpl implements AdminDashboardService {
                 .forEach(
                         value ->
                                 content.add(
-                                        new AdminDashboardView.ContentUpdate(
+                                        new AdminDashboardViewDTO.ContentUpdate(
                                                 value.getTitle(),
                                                 "Đề thi",
                                                 "/admin/exams/" + value.getId(),
                                                 value.getUpdatedAt())));
 
-        return new AdminDashboardView(
+        return new AdminDashboardViewDTO(
                 adminEmail,
                 students.totalStudents(),
                 lessonRepository.count(),
@@ -80,7 +79,7 @@ public class AdminDashboardServiceImpl implements AdminDashboardService {
                 content.stream()
                         .sorted(
                                 Comparator.comparing(
-                                        AdminDashboardView.ContentUpdate::updatedAt,
+                                        AdminDashboardViewDTO.ContentUpdate::updatedAt,
                                         Comparator.nullsLast(Comparator.reverseOrder())))
                         .limit(3)
                         .toList(),
@@ -88,7 +87,7 @@ public class AdminDashboardServiceImpl implements AdminDashboardService {
                                 adminEmail,
                                 0,
                                 3,
-                                new AdminHistoryFilter("", "", "", "", null, null))
+                                new AdminHistoryFilterDTO("", "", "", "", null, null))
                         .items());
     }
 }

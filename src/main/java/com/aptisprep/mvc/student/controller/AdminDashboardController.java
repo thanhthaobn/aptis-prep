@@ -1,7 +1,7 @@
-package com.aptisprep.controller.admin;
+package com.aptisprep.mvc.student.controller;
 
-import com.aptisprep.dto.view.AdminDashboardView;
-import com.aptisprep.service.admin.AdminDashboardService;
+import com.aptisprep.mvc.student.dto.AdminDashboardViewDTO;
+import com.aptisprep.mvc.student.service.AdminDashboardService;
 import java.security.Principal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -17,7 +17,7 @@ public class AdminDashboardController {
 
     @GetMapping("/admin/dashboard")
     public String dashboard(Principal principal, Model model) {
-        AdminDashboardView page = dashboardService.dashboard(principal.getName());
+        AdminDashboardViewDTO page = dashboardService.dashboard(principal.getName());
         model.addAttribute("email", page.email());
         model.addAttribute("studentCount", page.studentCount());
         model.addAttribute("lessonCount", page.lessonCount());

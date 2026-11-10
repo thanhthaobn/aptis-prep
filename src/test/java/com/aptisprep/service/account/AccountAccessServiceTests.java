@@ -11,8 +11,9 @@ import com.aptisprep.mvc.auth.entity.User;
 import com.aptisprep.mvc.auth.service.UserService;
 import com.aptisprep.mvc.common.enums.Role;
 import com.aptisprep.mvc.common.enums.UserStatus;
+import com.aptisprep.mvc.exam.dto.AttemptResultDTO;
+import com.aptisprep.mvc.exam.dto.SkillResultDTO;
 import com.aptisprep.mvc.exam.service.ExamAttemptService;
-import com.aptisprep.service.contract.IntegrationModels.*;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.List;
@@ -224,10 +225,10 @@ class AccountAccessServiceTests {
                 profile.getCheckpointLastSubmittedAt());
     }
 
-    private AttemptResult result(
+    private AttemptResultDTO result(
             int attemptId, String type, String level, Instant submittedAt, boolean passed) {
-        SkillResult skill =
-                new SkillResult(
+        SkillResultDTO skill =
+                new SkillResultDTO(
                         "READING",
                         new BigDecimal("30"),
                         new BigDecimal("30"),
@@ -235,7 +236,7 @@ class AccountAccessServiceTests {
                         "COMPLETED",
                         "ok",
                         passed);
-        return new AttemptResult(
+        return new AttemptResultDTO(
                 attemptId, 1, 100, type, 1, "COMPLETED", List.of(skill), submittedAt);
     }
 }

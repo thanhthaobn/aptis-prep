@@ -6,11 +6,11 @@ import static org.mockito.Mockito.*;
 import com.aptisprep.mvc.account.service.AccountAccessService;
 import com.aptisprep.mvc.catalog.service.ExamCatalogService;
 import com.aptisprep.mvc.common.exception.BusinessRuleException;
+import com.aptisprep.mvc.exam.dto.AttemptHandleDTO;
 import com.aptisprep.mvc.exam.service.ExamAttemptService;
 import com.aptisprep.mvc.placement.dto.PlacementDTO;
 import com.aptisprep.mvc.placement.service.PlacementExamCatalogService;
 import com.aptisprep.mvc.placement.service.impl.PlacementServiceImpl;
-import com.aptisprep.service.contract.IntegrationModels.AttemptHandle;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.ObjectProvider;
@@ -59,7 +59,7 @@ class PlacementServiceTests {
                                 new PlacementDTO.PlacementExam(
                                         Integer.valueOf("1000"), "Placement", "", 15, List.of())));
         when(engine.startPlacement(eq(9), eq(1000), anyString()))
-                .thenReturn(new AttemptHandle(17, "IN_PROGRESS", null));
+                .thenReturn(new AttemptHandleDTO(17, "IN_PROGRESS", null));
         var service = new PlacementServiceImpl(catalog, published, engines, access);
         assertEquals(
                 17,

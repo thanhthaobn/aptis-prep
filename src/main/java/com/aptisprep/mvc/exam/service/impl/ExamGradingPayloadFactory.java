@@ -3,12 +3,14 @@ package com.aptisprep.mvc.exam.service.impl;
 import static com.aptisprep.mvc.grading.service.impl.GradingContextFormatter.DEFAULT_RUBRIC_VERSION;
 
 import com.aptisprep.mvc.common.exception.BusinessRuleException;
+import com.aptisprep.mvc.exam.dto.LockedAnswerDTO;
+import com.aptisprep.mvc.exam.dto.LockedAttemptDTO;
+import com.aptisprep.mvc.exam.dto.LockedItemDTO;
 import com.aptisprep.mvc.exam.entity.*;
 import com.aptisprep.mvc.exam.repository.UserAnswerDetailRepository;
 import com.aptisprep.mvc.exam.repository.UserAnswerRepository;
 import com.aptisprep.mvc.grading.service.impl.GradingContextFormatter;
 import com.aptisprep.mvc.grading.service.impl.GradingTextLimits;
-import com.aptisprep.service.contract.IntegrationModels.*;
 import java.time.*;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -30,7 +32,7 @@ public class ExamGradingPayloadFactory {
         this.userAnswerDetailRepository = userAnswerDetailRepository;
     }
 
-    public LockedAttempt build(ExamAttemptEntity attempt) {
+    public LockedAttemptDTO build(ExamAttemptEntity attempt) {
         ExamAttemptSnapshotEntity snapshot = examSnapshots.require(attempt.getId());
         Map<Integer, ExamQuestionSnapshotEntity> lockedByQuestion =
                 examSnapshots.lockedQuestionEntities(attempt.getId()).stream()
@@ -40,7 +42,7 @@ public class ExamGradingPayloadFactory {
                                         value -> value,
                                         (left, right) -> left,
                                         LinkedHashMap::new));
-        List<LockedAnswer> lockedAnswers =
+        List<LockedAnswerDTO> lockedAnswers =
                 userAnswerRepository.findByAttemptIdOrderByQuestionIdAsc(attempt.getId()).stream()
                         .map(
                                 answer -> {
@@ -95,7 +97,7 @@ public class ExamGradingPayloadFactory {
                                                         .collect(
                                                                 Collectors.joining(
                                                                         "\n--- ITEM ---\n"));
-                                    List<LockedItem> lockedItems = new ArrayList<>();
+                                    List<LockedItemDTO> lockedItems = new ArrayList<>();
                                     for (ExamItemSnapshotEntity item : question.getItems()) {
                                         UserAnswerDetailEntity detail =
                                                 userAnswerDetailRepository
@@ -118,7 +120,7 @@ public class ExamGradingPayloadFactory {
                                             }
                                         }
                                         lockedItems.add(
-                                                new LockedItem(
+                                                new LockedItemDTO(
                                                         item.getSourceItemId(),
                                                         item.getPosition(),
                                                         itemPrompt(item),
@@ -128,14 +130,14 @@ public class ExamGradingPayloadFactory {
                                     }
                                     String lockedContent =
                                             lockedItems.stream()
-                                                    .map(LockedItem::lockedContent)
+                                                    .map(LockedItemDTO::lockedContent)
                                                     .filter(Objects::nonNull)
                                                     .filter(value -> !value.isBlank())
                                                     .collect(
                                                             Collectors.joining("\n--- ITEM ---\n"));
                                     if (lockedContent.isBlank())
                                         lockedContent = legacyLockedContent;
-                                    return new LockedAnswer(
+                                    return new LockedAnswerDTO(
                                             answer.getId(),
                                             answer.getQuestionId(),
                                             question.getSkill(),
@@ -146,7 +148,7 @@ public class ExamGradingPayloadFactory {
                                             lockedItems);
                                 })
                         .toList();
-        return new LockedAttempt(
+        return new LockedAttemptDTO(
                 attempt.getId(),
                 attempt.getUserId(),
                 snapshot.getExamId(),
@@ -165,12 +167,12 @@ public class ExamGradingPayloadFactory {
                 lockedAnswers);
     }
 
-    void validate(LockedAttempt locked) {
-        for (LockedAnswer answer : locked.answers()) {
+    void validate(LockedAttemptDTO locked) {
+        for (LockedAnswerDTO answer : locked.answers()) {
             if (!Set.of("WRITING_TEXT", "SPEAKING_AUDIO").contains(answer.questionType())) continue;
             String task = GradingContextFormatter.task(answer);
             String submission = GradingContextFormatter.submission(answer);
-            for (LockedItem item : answer.items()) {
+            for (LockedItemDTO item : answer.items()) {
                 if (GradingTextLimits.length(item.lockedContent())
                         > GradingTextLimits.MAX_ITEM_CHARS) {
                     throw new BusinessRuleException(

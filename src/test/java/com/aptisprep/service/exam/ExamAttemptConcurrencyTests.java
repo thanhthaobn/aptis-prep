@@ -93,7 +93,7 @@ class ExamAttemptConcurrencyTests {
     @Autowired LearningPathRepository learningPathRepository;
     @Autowired com.aptisprep.mvc.account.repository.UserSkillProfileRepository skillProfiles;
     @Autowired org.springframework.test.web.servlet.MockMvc mvc;
-    @Autowired com.aptisprep.service.student.StudentExamCatalogService studentCatalog;
+    @Autowired com.aptisprep.mvc.student.service.StudentExamCatalogService studentCatalog;
 
     @Test
     void concurrentStartWithSameRequestKeyCreatesOneAttemptAndSnapshot() throws Exception {

@@ -3,13 +3,13 @@ package com.aptisprep.mvc.placement.service.impl;
 import com.aptisprep.mvc.account.service.AccountAccessService;
 import com.aptisprep.mvc.catalog.service.ExamCatalogService;
 import com.aptisprep.mvc.common.exception.BusinessRuleException;
+import com.aptisprep.mvc.exam.dto.AttemptHandleDTO;
+import com.aptisprep.mvc.exam.dto.AttemptResultDTO;
 import com.aptisprep.mvc.exam.service.ExamAttemptService;
 import com.aptisprep.mvc.placement.dto.PlacementDTO.PlacementExam;
 import com.aptisprep.mvc.placement.dto.PlacementDTO.PlacementOption;
 import com.aptisprep.mvc.placement.service.PlacementExamCatalogService;
 import com.aptisprep.mvc.placement.service.PlacementService;
-import com.aptisprep.service.contract.IntegrationModels.AttemptHandle;
-import com.aptisprep.service.contract.IntegrationModels.AttemptResult;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
@@ -65,7 +65,7 @@ public class PlacementServiceImpl implements PlacementService {
     }
 
     @Override
-    public AttemptHandle start(String email) {
+    public AttemptHandleDTO start(String email) {
         AccountAccessService account = accounts.getIfAvailable();
         ExamAttemptService attempt = attempts.getIfAvailable();
         if (account == null || attempt == null)
@@ -110,12 +110,12 @@ public class PlacementServiceImpl implements PlacementService {
     }
 
     @Override
-    public AttemptHandle start(String email, String skill) {
+    public AttemptHandleDTO start(String email, String skill) {
         return start(email, skill, null);
     }
 
     @Override
-    public AttemptHandle start(String email, String skill, Integer examId) {
+    public AttemptHandleDTO start(String email, String skill, Integer examId) {
         AccountAccessService account = accounts.getIfAvailable();
         ExamAttemptService attempt = attempts.getIfAvailable();
         if (account == null || attempt == null)
@@ -150,7 +150,7 @@ public class PlacementServiceImpl implements PlacementService {
     }
 
     @Override
-    public AttemptResult result(String email, Integer attemptId) {
+    public AttemptResultDTO result(String email, Integer attemptId) {
         AccountAccessService account = accounts.getIfAvailable();
         ExamAttemptService attempt = attempts.getIfAvailable();
         if (account == null || attempt == null)

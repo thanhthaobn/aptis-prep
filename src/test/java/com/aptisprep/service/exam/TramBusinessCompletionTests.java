@@ -15,6 +15,7 @@ import com.aptisprep.mvc.common.enums.*;
 import com.aptisprep.mvc.common.event.AttemptSubmittedEvent;
 import com.aptisprep.mvc.common.exception.BusinessRuleException;
 import com.aptisprep.mvc.common.exception.ResourceNotFoundException;
+import com.aptisprep.mvc.exam.dto.LockedAttemptDTO;
 import com.aptisprep.mvc.exam.entity.*;
 import com.aptisprep.mvc.exam.repository.*;
 import com.aptisprep.mvc.exam.service.AttemptOutboxService;
@@ -29,8 +30,7 @@ import com.aptisprep.mvc.grading.service.impl.GradingTextLimits;
 import com.aptisprep.mvc.placement.service.PlacementExamCatalogService;
 import com.aptisprep.mvc.scoring.entity.*;
 import com.aptisprep.mvc.scoring.repository.*;
-import com.aptisprep.service.contract.IntegrationModels.LockedAttempt;
-import com.aptisprep.service.student.StudentExamCatalogService;
+import com.aptisprep.mvc.student.service.StudentExamCatalogService;
 import java.time.LocalDateTime;
 import java.util.*;
 import org.junit.jupiter.api.Test;
@@ -175,7 +175,7 @@ class TramBusinessCompletionTests {
         save(f, id, 0, "a".repeat(20_000));
         save(f, id, 1, "b".repeat(20_000));
         save(f, id, 2, "c");
-        LockedAttempt draft =
+        LockedAttemptDTO draft =
                 new TransactionTemplate(transactionManager)
                         .execute(
                                 status ->

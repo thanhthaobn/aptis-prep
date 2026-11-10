@@ -1,12 +1,13 @@
 package com.aptisprep.mvc.learning.service.impl;
 
-import com.aptisprep.mvc.catalog.service.*;
 import com.aptisprep.mvc.catalog.service.ExamCatalogService;
 import com.aptisprep.mvc.common.exception.BusinessRuleException;
 import com.aptisprep.mvc.common.exception.ResourceNotFoundException;
+import com.aptisprep.mvc.exam.dto.AttemptResultDTO;
+import com.aptisprep.mvc.exam.dto.HistoryFilterDTO;
+import com.aptisprep.mvc.exam.dto.HistoryPageDTO;
 import com.aptisprep.mvc.exam.service.ExamAttemptService;
 import com.aptisprep.mvc.learning.entity.LearningPath;
-import com.aptisprep.service.contract.IntegrationModels.*;
 import java.time.ZoneId;
 import java.util.*;
 import org.springframework.beans.factory.ObjectProvider;
@@ -27,9 +28,9 @@ final class CheckpointStatusReader {
     String state(LearningPath path) {
         ExamAttemptService engine = attempts.getIfAvailable();
         if (engine != null && path.getCheckpointExamId() != null) {
-            List<AttemptResult> history = history(path, engine);
+            List<AttemptResultDTO> history = history(path, engine);
             if (!history.isEmpty()) {
-                AttemptResult latest = history.getFirst();
+                AttemptResultDTO latest = history.getFirst();
                 if (unfinished(latest))
                     return "IN_PROGRESS".equals(latest.state()) ? "in_progress" : "grading";
                 if (latest.skills() != null
@@ -60,22 +61,22 @@ final class CheckpointStatusReader {
         }
     }
 
-    List<AttemptResult> history(LearningPath path, ExamAttemptService engine) {
-        HistoryPage history =
+    List<AttemptResultDTO> history(LearningPath path, ExamAttemptService engine) {
+        HistoryPageDTO history =
                 engine.history(
                         path.getUser().getId(),
                         0,
                         100,
-                        new HistoryFilter("", codeSkill(path.getSkill()), "CHECKPOINT", ""));
+                        new HistoryFilterDTO("", codeSkill(path.getSkill()), "CHECKPOINT", ""));
         if (history == null || history.items() == null) return List.of();
         return history.items().stream()
                 .filter(result -> Objects.equals(result.examId(), path.getCheckpointExamId()))
                 .filter(result -> result.submittedAt() == null || notBeforePath(result, path))
-                .sorted(Comparator.comparing(AttemptResult::attemptId).reversed())
+                .sorted(Comparator.comparing(AttemptResultDTO::attemptId).reversed())
                 .toList();
     }
 
-    boolean unfinished(AttemptResult result) {
+    boolean unfinished(AttemptResultDTO result) {
         return "IN_PROGRESS".equals(result.state())
                 || "SUBMITTED".equals(result.state())
                 || "WAITING_GRADING".equals(result.state())
@@ -95,11 +96,11 @@ final class CheckpointStatusReader {
                                                                                         .gradingState()))));
     }
 
-    boolean terminal(AttemptResult result) {
+    boolean terminal(AttemptResultDTO result) {
         return "COMPLETED".equals(result.state()) || "EXPIRED".equals(result.state());
     }
 
-    boolean notBeforePath(AttemptResult result, LearningPath path) {
+    boolean notBeforePath(AttemptResultDTO result, LearningPath path) {
         return result.submittedAt() != null
                 && (path.getCreatedAt() == null
                         || !result.submittedAt()

@@ -1,12 +1,21 @@
-package com.aptisprep.dto.view;
+package com.aptisprep.mvc.student.dto;
 
 import com.aptisprep.mvc.account.dto.AccountSnapshotDTO;
 import com.aptisprep.mvc.common.enums.UserStatus;
 import java.time.LocalDateTime;
 import java.util.List;
 
-public final class AdminStudentView {
-    private AdminStudentView() {}
+public final class AdminStudentViewDTO {
+    private AdminStudentViewDTO() {}
+
+    public static String labels(UserStatus status) {
+        if (status == null) return "Không xác định";
+        return switch (status) {
+            case ACTIVE -> "Đang hoạt động";
+            case LOCKED -> "Đang bị khóa";
+            case INACTIVE -> "Chưa kích hoạt";
+        };
+    }
 
     public record ListItem(
             Integer id,
@@ -98,21 +107,5 @@ public final class AdminStudentView {
         public boolean hasNext() {
             return page + 1 < totalPages();
         }
-
-        public int previousPage() {
-            return Math.max(0, page - 1);
-        }
-
-        public int nextPage() {
-            return page + 1;
-        }
-    }
-
-    private static String labels(UserStatus status) {
-        return switch (status) {
-            case ACTIVE -> "Đang hoạt động";
-            case LOCKED -> "Đã khóa";
-            case INACTIVE -> "Ngừng hoạt động";
-        };
     }
 }

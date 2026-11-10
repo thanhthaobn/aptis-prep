@@ -1,7 +1,7 @@
 package com.aptisprep.mvc.grading.service.impl;
 
-import com.aptisprep.service.contract.IntegrationModels.LockedAnswer;
-import com.aptisprep.service.contract.IntegrationModels.LockedItem;
+import com.aptisprep.mvc.exam.dto.LockedAnswerDTO;
+import com.aptisprep.mvc.exam.dto.LockedItemDTO;
 
 /** Formats only the immutable snapshot DTO for the AI boundary. */
 public final class GradingContextFormatter {
@@ -10,11 +10,11 @@ public final class GradingContextFormatter {
 
     private GradingContextFormatter() {}
 
-    public static String task(LockedAnswer answer) {
+    public static String task(LockedAnswerDTO answer) {
         StringBuilder value = new StringBuilder(blank(answer.taskContent()));
         if (answer.items() == null || answer.items().isEmpty()) return value.toString();
         value.append("\n\nYÊU CẦU THEO TỪNG MỤC:");
-        for (LockedItem item : answer.items()) {
+        for (LockedItemDTO item : answer.items()) {
             value.append(ITEM_SEPARATOR)
                     .append("Mục ")
                     .append(item.position())
@@ -24,11 +24,11 @@ public final class GradingContextFormatter {
         return value.toString();
     }
 
-    public static String submission(LockedAnswer answer) {
+    public static String submission(LockedAnswerDTO answer) {
         if (answer.items() == null || answer.items().isEmpty())
             return blank(answer.lockedContent());
         StringBuilder value = new StringBuilder();
-        for (LockedItem item : answer.items()) {
+        for (LockedItemDTO item : answer.items()) {
             if (value.length() > 0) value.append(ITEM_SEPARATOR);
             value.append("Mục ")
                     .append(item.position())
@@ -41,7 +41,7 @@ public final class GradingContextFormatter {
         return value.toString();
     }
 
-    public static boolean hasSubmission(LockedAnswer answer) {
+    public static boolean hasSubmission(LockedAnswerDTO answer) {
         if (answer.items() == null || answer.items().isEmpty())
             return !blank(answer.lockedContent()).isBlank();
         return answer.items().stream().anyMatch(item -> !blank(item.lockedContent()).isBlank());

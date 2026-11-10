@@ -1,16 +1,18 @@
-package com.aptisprep.controller.student;
+package com.aptisprep.mvc.student.controller;
 
 import com.aptisprep.mvc.account.dto.AccountSnapshotDTO;
 import com.aptisprep.mvc.account.dto.AccountSnapshotDTO.SkillViewDTO;
 import com.aptisprep.mvc.account.service.AccountProfileService;
 import com.aptisprep.mvc.account.service.LearningActivityService;
 import com.aptisprep.mvc.common.enums.Skill;
+import com.aptisprep.mvc.exam.dto.AttemptResultDTO;
 import com.aptisprep.mvc.exam.service.ExamAttemptService;
 import com.aptisprep.mvc.learning.dto.LessonRecommendationDTO;
 import com.aptisprep.mvc.learning.dto.PathProgressDTO;
 import com.aptisprep.mvc.learning.service.LearningPathService;
 import com.aptisprep.mvc.learning.service.LessonRecommendationService;
-import com.aptisprep.service.contract.IntegrationModels.AttemptResult;
+import com.aptisprep.mvc.student.dto.StudentDashboardViewDTO.NextAction;
+import com.aptisprep.mvc.student.dto.StudentDashboardViewDTO.SkillOverview;
 import java.security.Principal;
 import java.util.ArrayList;
 import java.util.List;
@@ -80,7 +82,7 @@ public class StudentDashboardController {
         var activityView = activity.activity(principal.getName());
         model.addAttribute("activity", activityView);
         ExamAttemptService attemptService = attempts.getIfAvailable();
-        AttemptResult latestResult =
+        AttemptResultDTO latestResult =
                 attemptService == null
                         ? null
                         : attemptService
@@ -138,10 +140,6 @@ public class StudentDashboardController {
         model.addAttribute("nextAction", nextAction);
         return "student/dashboard";
     }
-
-    public record NextAction(String title, String url, String label) {}
-
-    public record SkillOverview(String label, String current, String goal) {}
 
     /** Read-only orientation preview: no goals, attempts or progress are created. */
     @GetMapping("/student/orientation")

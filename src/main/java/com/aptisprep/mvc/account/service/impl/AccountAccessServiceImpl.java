@@ -16,8 +16,9 @@ import com.aptisprep.mvc.common.enums.*;
 import com.aptisprep.mvc.common.exception.AccessDeniedException;
 import com.aptisprep.mvc.common.exception.BusinessRuleException;
 import com.aptisprep.mvc.common.exception.ResourceNotFoundException;
+import com.aptisprep.mvc.exam.dto.AttemptResultDTO;
+import com.aptisprep.mvc.exam.dto.SkillResultDTO;
 import com.aptisprep.mvc.exam.service.ExamAttemptService;
-import com.aptisprep.service.contract.IntegrationModels.*;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDateTime;
@@ -108,7 +109,7 @@ public class AccountAccessServiceImpl implements AccountAccessService {
         if (attemptContract == null) {
             throw new BusinessRuleException("Chưa có dịch vụ kết quả bài thi để xác nhận hồ sơ");
         }
-        AttemptResult result = attemptContract.result(userId, attemptId);
+        AttemptResultDTO result = attemptContract.result(userId, attemptId);
         if (result == null
                 || !Objects.equals(result.userId(), userId)
                 || !Objects.equals(result.attemptId(), attemptId)) {
@@ -128,7 +129,7 @@ public class AccountAccessServiceImpl implements AccountAccessService {
             throw new BusinessRuleException("Kết quả chưa có kỹ năng đủ điều kiện");
         }
         boolean applied = false;
-        for (SkillResult skillResult : result.skills()) {
+        for (SkillResultDTO skillResult : result.skills()) {
             if (!"COMPLETED".equalsIgnoreCase(skillResult.gradingState())
                     || skillResult.scaleScore() == null
                     || skillResult.estimatedLevel() == null) continue;
@@ -139,7 +140,7 @@ public class AccountAccessServiceImpl implements AccountAccessService {
     }
 
     private boolean applySkillResult(
-            User user, Integer attemptId, String type, Instant submittedAt, SkillResult result) {
+            User user, Integer attemptId, String type, Instant submittedAt, SkillResultDTO result) {
         String skill = normalizeSkill(result.skill());
         boolean belowA1 = CefrLevel.BELOW_A1.equals(result.estimatedLevel());
         CefrLevel level = CefrLevel.parse(result.estimatedLevel());

@@ -66,7 +66,7 @@ class V2BusinessRegressionTests {
     @Autowired QuestionOptionRepository questionOptions;
     @Autowired UserFlashcardProgressRepository progress;
     @Autowired MockMvc mvc;
-    @Autowired com.aptisprep.service.student.StudentExamCatalogService studentCatalog;
+    @Autowired com.aptisprep.mvc.student.service.StudentExamCatalogService studentCatalog;
     @Autowired com.aptisprep.mvc.placement.service.PlacementExamCatalogService placementCatalog;
     @Autowired com.aptisprep.mvc.placement.service.PlacementService placement;
     @Autowired ExamAttemptRepository attempts;

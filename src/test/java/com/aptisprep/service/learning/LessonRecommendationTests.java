@@ -16,7 +16,6 @@ import com.aptisprep.mvc.learning.repository.LessonProgressRepository;
 import com.aptisprep.mvc.learning.service.*;
 import com.aptisprep.mvc.learning.service.LessonRecommendationService;
 import com.aptisprep.mvc.learning.service.impl.*;
-import com.aptisprep.service.contract.IntegrationModels.*;
 import java.time.LocalDateTime;
 import java.util.List;
 import org.junit.jupiter.api.Test;

@@ -6,14 +6,14 @@ import static org.mockito.Mockito.*;
 
 import com.aptisprep.mvc.common.config.AiProperties;
 import com.aptisprep.mvc.common.event.AttemptSubmittedEvent;
+import com.aptisprep.mvc.exam.dto.LockedAnswerDTO;
+import com.aptisprep.mvc.exam.dto.LockedAttemptDTO;
+import com.aptisprep.mvc.exam.dto.LockedItemDTO;
 import com.aptisprep.mvc.exam.service.AttemptOutboxService;
 import com.aptisprep.mvc.exam.service.impl.AttemptGradingOrchestrationListener;
 import com.aptisprep.mvc.grading.dto.AiAssessmentDTO.AssessmentRequest;
 import com.aptisprep.mvc.grading.service.AiAssessmentService;
 import com.aptisprep.mvc.grading.service.AttemptFinalizationService;
-import com.aptisprep.service.contract.IntegrationModels.LockedAnswer;
-import com.aptisprep.service.contract.IntegrationModels.LockedAttempt;
-import com.aptisprep.service.contract.IntegrationModels.LockedItem;
 import java.time.Instant;
 import java.util.List;
 import org.junit.jupiter.api.Test;
@@ -31,8 +31,8 @@ class AttemptGradingOrchestrationListenerTests {
                 new AttemptGradingOrchestrationListener(
                         properties, ai, finalization, mock(AttemptOutboxService.class));
 
-        LockedAnswer answer =
-                new LockedAnswer(
+        LockedAnswerDTO answer =
+                new LockedAnswerDTO(
                         11,
                         21,
                         "WRITING",
@@ -41,22 +41,22 @@ class AttemptGradingOrchestrationListenerTests {
                         "first answer\n--- ITEM ---\nsecond answer",
                         null,
                         List.of(
-                                new LockedItem(
+                                new LockedItemDTO(
                                         31,
                                         1,
                                         "Write to Ana about the meeting",
                                         "first answer",
                                         null,
                                         null),
-                                new LockedItem(
+                                new LockedItemDTO(
                                         32,
                                         2,
                                         "Write to Ben about the timetable",
                                         "second answer",
                                         null,
                                         null)));
-        LockedAttempt locked =
-                new LockedAttempt(
+        LockedAttemptDTO locked =
+                new LockedAttemptDTO(
                         7,
                         2,
                         9,
@@ -86,7 +86,7 @@ class AttemptGradingOrchestrationListenerTests {
     @Test
     void learnerQuestionViewHasNoAnswerKeyFields() {
         var view =
-                new com.aptisprep.service.contract.IntegrationModels.QuestionView(
+                new com.aptisprep.mvc.catalog.dto.QuestionViewDTO(
                         21, "WRITING", "WRITING_TEXT", 1, "Write a message");
         String serializedShape =
                 view.getClass().getRecordComponents() == null

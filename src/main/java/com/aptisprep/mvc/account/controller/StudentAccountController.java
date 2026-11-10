@@ -9,11 +9,11 @@ import com.aptisprep.mvc.account.service.LearningActivityService;
 import com.aptisprep.mvc.common.enums.Skill;
 import com.aptisprep.mvc.common.exception.BusinessRuleException;
 import com.aptisprep.mvc.common.util.ListPagination;
+import com.aptisprep.mvc.exam.dto.AttemptHandleDTO;
 import com.aptisprep.mvc.exam.service.ExamAttemptService;
 import com.aptisprep.mvc.learning.service.LessonService;
 import com.aptisprep.mvc.placement.service.PlacementService;
 import com.aptisprep.mvc.scoring.service.ScoringGuideService;
-import com.aptisprep.service.contract.IntegrationModels.AttemptHandle;
 import jakarta.validation.Valid;
 import java.security.Principal;
 import java.util.List;
@@ -136,7 +136,7 @@ public class StudentAccountController {
             Principal principal,
             RedirectAttributes redirect) {
         try {
-            AttemptHandle handle =
+            AttemptHandleDTO handle =
                     skill != null || examId != null
                             ? placement.start(principal.getName(), skill, examId)
                             : placement.start(principal.getName());

@@ -1,18 +1,19 @@
 package com.aptisprep.mvc.exam.controller;
 
-import com.aptisprep.dto.view.StudentCatalogView.Entry;
 import com.aptisprep.mvc.account.service.AccountAccessService;
 import com.aptisprep.mvc.catalog.service.*;
 import com.aptisprep.mvc.common.enums.Skill;
 import com.aptisprep.mvc.common.exception.BusinessRuleException;
+import com.aptisprep.mvc.exam.dto.AttemptResultDTO;
+import com.aptisprep.mvc.exam.dto.HistoryFilterDTO;
+import com.aptisprep.mvc.exam.dto.HistoryPageDTO;
 import com.aptisprep.mvc.exam.service.ExamAttemptService;
 import com.aptisprep.mvc.learning.service.LessonService;
 import com.aptisprep.mvc.scoring.service.ScoringGuideService;
-import com.aptisprep.service.contract.IntegrationModels.AttemptResult;
-import com.aptisprep.service.contract.IntegrationModels.HistoryFilter;
-import com.aptisprep.service.contract.IntegrationModels.HistoryPage;
-import com.aptisprep.service.student.StudentExamCatalogService;
-import com.aptisprep.service.student.StudentExamCatalogService.Catalog;
+import com.aptisprep.mvc.student.dto.StudentCatalogViewDTO;
+import com.aptisprep.mvc.student.dto.StudentCatalogViewDTO.Entry;
+import com.aptisprep.mvc.student.service.StudentExamCatalogService;
+import com.aptisprep.mvc.student.service.StudentExamCatalogService.Catalog;
 import java.security.Principal;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -80,7 +81,7 @@ public class StudentExamCatalogController {
                 List.of("Grammar & Vocabulary", "Reading", "Listening", "Writing", "Speaking"));
         model.addAttribute("selectedExamType", examType);
         model.addAttribute("selectedSort", sort);
-        model.addAttribute("categoryTitle", StudentExamCatalogService.categoryLabel(examType));
+        model.addAttribute("categoryTitle", StudentCatalogViewDTO.categoryLabel(examType));
         model.addAttribute("catalogPage", entries);
         model.addAttribute("size", size);
         model.addAttribute("q", q);
@@ -109,8 +110,9 @@ public class StudentExamCatalogController {
                 || examType.length() > 40
                 || state.length() > 40) throw new BusinessRuleException("Bộ lọc không hợp lệ");
         Integer userId = accounts.requireActiveStudent(principal.getName());
-        HistoryPage history =
-                attempts.history(userId, page, size, new HistoryFilter(q, skill, examType, state));
+        HistoryPageDTO history =
+                attempts.history(
+                        userId, page, size, new HistoryFilterDTO(q, skill, examType, state));
         model.addAttribute("history", history);
         model.addAttribute(
                 "totalPages", (history.totalItems() + history.size() - 1) / history.size());
@@ -152,7 +154,7 @@ public class StudentExamCatalogController {
     @GetMapping("/student/attempts/{id}/result")
     public String result(@PathVariable int id, Principal principal, Model model) {
         Integer userId = accounts.requireActiveStudent(principal.getName());
-        AttemptResult result = attempts.result(userId, id);
+        AttemptResultDTO result = attempts.result(userId, id);
         if ("IN_PROGRESS".equals(result.state())) return "redirect:/student/attempts/" + id;
         if ("EXPIRED".equals(result.state()) && result.submittedAt() == null)
             return "redirect:/student/results";
@@ -184,7 +186,7 @@ public class StudentExamCatalogController {
     public String retryGrading(
             @PathVariable int id, Principal principal, RedirectAttributes redirect) {
         Integer userId = accounts.requireActiveStudent(principal.getName());
-        AttemptResult result = attempts.result(userId, id);
+        AttemptResultDTO result = attempts.result(userId, id);
         if (!"ERROR".equals(result.state())
                 || result.skills().stream().noneMatch(skill -> skill.retryable()))
             throw new BusinessRuleException("Lượt thi không có phần chấm lỗi có thể thử lại");

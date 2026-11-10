@@ -2,7 +2,12 @@ package com.aptisprep.mvc.exam.service;
 
 import com.aptisprep.mvc.catalog.entity.MockExamEntity;
 import com.aptisprep.mvc.catalog.entity.MockExamQuestionEntity;
-import com.aptisprep.service.contract.IntegrationModels.*;
+import com.aptisprep.mvc.exam.dto.AdminHistoryFilterDTO;
+import com.aptisprep.mvc.exam.dto.AdminHistoryPageDTO;
+import com.aptisprep.mvc.exam.dto.AttemptHandleDTO;
+import com.aptisprep.mvc.exam.dto.AttemptResultDTO;
+import com.aptisprep.mvc.exam.dto.HistoryFilterDTO;
+import com.aptisprep.mvc.exam.dto.HistoryPageDTO;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.time.Instant;
 import java.util.List;
@@ -18,28 +23,29 @@ public interface ExamAttemptService {
 
     boolean hasPlacementAttempt(Integer userId);
 
-    AttemptHandle start(Integer userId, Integer examId, String requestKey);
+    AttemptHandleDTO start(Integer userId, Integer examId, String requestKey);
 
     Integer latestResumableAttemptId(Integer userId, Integer examId);
 
-    AttemptHandle startPlacement(Integer userId, Integer examId, String requestKey);
+    AttemptHandleDTO startPlacement(Integer userId, Integer examId, String requestKey);
 
-    AttemptHandle startCheckpoint(
+    AttemptHandleDTO startCheckpoint(
             Integer userId, Integer examId, Integer pathId, String requestKey);
 
     Optional<Integer> checkpointOriginPathId(Integer userId, Integer attemptId);
 
     void submit(Integer userId, Integer attemptId, String requestKey);
 
-    AttemptResult result(Integer userId, Integer attemptId);
+    AttemptResultDTO result(Integer userId, Integer attemptId);
 
-    HistoryPage history(Integer userId, int page, int size);
+    HistoryPageDTO history(Integer userId, int page, int size);
 
-    HistoryPage history(Integer userId, int page, int size, HistoryFilter filter);
+    HistoryPageDTO history(Integer userId, int page, int size, HistoryFilterDTO filter);
 
-    AdminHistoryPage adminHistory(String adminEmail, int page, int size, AdminHistoryFilter filter);
+    AdminHistoryPageDTO adminHistory(
+            String adminEmail, int page, int size, AdminHistoryFilterDTO filter);
 
-    AttemptResult adminResult(String adminEmail, Integer attemptId);
+    AttemptResultDTO adminResult(String adminEmail, Integer attemptId);
 
     void retryFailedGrading(Integer userId, Integer attemptId, String requestKey);
 

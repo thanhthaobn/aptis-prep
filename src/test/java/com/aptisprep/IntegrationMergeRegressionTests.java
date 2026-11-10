@@ -99,7 +99,7 @@ class IntegrationMergeRegressionTests {
         var sections = mock(MockExamSectionRepository.class);
         var questions = mock(MockExamQuestionRepository.class);
         var service =
-                new com.aptisprep.service.student.impl.StudentExamCatalogServiceImpl(
+                new com.aptisprep.mvc.student.service.impl.StudentExamCatalogServiceImpl(
                         exams, sections, questions);
         var published = new MockExamEntity();
         ReflectionTestUtils.setField(published, "id", 12);
@@ -124,7 +124,7 @@ class IntegrationMergeRegressionTests {
     @Test
     void emptyDatabaseFallbackDoesNotRestoreFakeLessonsOrResults() {
         var service =
-                new com.aptisprep.service.student.impl.StudentExamCatalogServiceImpl(
+                new com.aptisprep.mvc.student.service.impl.StudentExamCatalogServiceImpl(
                         mock(MockExamRepository.class),
                         mock(MockExamSectionRepository.class),
                         mock(MockExamQuestionRepository.class));

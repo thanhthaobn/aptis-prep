@@ -18,6 +18,10 @@ import com.aptisprep.mvc.catalog.entity.*;
 import com.aptisprep.mvc.catalog.repository.*;
 import com.aptisprep.mvc.common.enums.*;
 import com.aptisprep.mvc.common.exception.*;
+import com.aptisprep.mvc.exam.dto.AttemptHandleDTO;
+import com.aptisprep.mvc.exam.dto.AttemptResultDTO;
+import com.aptisprep.mvc.exam.dto.HistoryPageDTO;
+import com.aptisprep.mvc.exam.dto.SkillResultDTO;
 import com.aptisprep.mvc.exam.service.ExamAttemptService;
 import com.aptisprep.mvc.learning.dto.*;
 import com.aptisprep.mvc.learning.dto.LearningPathViewsDTO.StageLessonDTO;
@@ -25,7 +29,6 @@ import com.aptisprep.mvc.learning.entity.*;
 import com.aptisprep.mvc.learning.repository.*;
 import com.aptisprep.mvc.learning.service.*;
 import com.aptisprep.mvc.learning.service.impl.*;
-import com.aptisprep.service.contract.IntegrationModels.*;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.ZoneId;
@@ -158,7 +161,7 @@ class LearningPathCheckpointTests {
         var failed = result(user, exam, 1011, "COMPLETED", "A1", false);
         when(engine.result(user.getId(), 1011)).thenReturn(failed);
         when(engine.history(eq(user.getId()), eq(0), eq(100), any()))
-                .thenReturn(new HistoryPage(List.of(failed), 0, 100, 1));
+                .thenReturn(new HistoryPageDTO(List.of(failed), 0, 100, 1));
         service.applyCheckpoint(user.getId(), 1011);
         assertThat(current(user).getId()).isEqualTo(path.getId());
         assertThat(profiles.findByUserIdAndSkill(user.getId(), "READING")).isEmpty();
@@ -252,10 +255,10 @@ class LearningPathCheckpointTests {
                 .isEqualTo("A1");
         assertThat(service.summary(user.getId(), path.getId()).completedLessons()).isEqualTo(1);
         when(engine.history(eq(user.getId()), eq(0), eq(100), any()))
-                .thenReturn(new HistoryPage(List.of(failed), 0, 100, 1));
+                .thenReturn(new HistoryPageDTO(List.of(failed), 0, 100, 1));
         when(engine.startCheckpoint(
                         eq(user.getId()), eq(exam.getId()), eq(path.getId()), anyString()))
-                .thenReturn(new AttemptHandle(1004, "IN_PROGRESS", null));
+                .thenReturn(new AttemptHandleDTO(1004, "IN_PROGRESS", null));
         assertThat(service.startCheckpoint(user.getId(), path.getId(), "client-key"))
                 .isEqualTo(1004);
         verify(engine)
@@ -281,7 +284,7 @@ class LearningPathCheckpointTests {
                 .isInstanceOf(BusinessRuleException.class);
         when(engine.result(user.getId(), 1005))
                 .thenReturn(
-                        new AttemptResult(
+                        new AttemptResultDTO(
                                 1005,
                                 user.getId(),
                                 exam.getId(),
@@ -290,7 +293,7 @@ class LearningPathCheckpointTests {
                                 1,
                                 "COMPLETED",
                                 List.of(
-                                        new SkillResult(
+                                        new SkillResultDTO(
                                                 "LISTENING",
                                                 BigDecimal.TEN,
                                                 BigDecimal.TEN,
@@ -328,7 +331,7 @@ class LearningPathCheckpointTests {
                 .andExpect(redirectedUrl("/student/attempts/1006"));
         var pending = result(user, exam, 1006, "WAITING_GRADING", null, false);
         when(engine.history(eq(user.getId()), eq(0), eq(100), any()))
-                .thenReturn(new HistoryPage(List.of(pending), 0, 100, 1));
+                .thenReturn(new HistoryPageDTO(List.of(pending), 0, 100, 1));
         when(engine.result(user.getId(), 1006)).thenReturn(pending);
         mvc.perform(
                         post("/student/learning-path/" + path.getId() + "/checkpoint/start")
@@ -498,18 +501,18 @@ class LearningPathCheckpointTests {
     private void start(User user, LearningPath path, MockExamEntity exam, int id, String state) {
         when(engine.startCheckpoint(
                         eq(user.getId()), eq(exam.getId()), eq(path.getId()), anyString()))
-                .thenReturn(new AttemptHandle(id, state, null));
+                .thenReturn(new AttemptHandleDTO(id, state, null));
         when(engine.result(user.getId(), id))
                 .thenReturn(
-                        new AttemptResult(
+                        new AttemptResultDTO(
                                 id, user.getId(), exam.getId(), "CHECKPOINT", 1, state, List.of()));
         assertThat(service.startCheckpoint(user.getId(), path.getId(), "ignored")).isEqualTo(id);
     }
 
-    private AttemptResult result(
+    private AttemptResultDTO result(
             User user, MockExamEntity exam, int id, String state, String level, boolean passed) {
         var skill =
-                new SkillResult(
+                new SkillResultDTO(
                         "READING",
                         level == null ? null : BigDecimal.valueOf(40),
                         level == null ? null : BigDecimal.valueOf(40),
@@ -517,7 +520,7 @@ class LearningPathCheckpointTests {
                         level == null ? "PENDING" : "COMPLETED",
                         null,
                         passed);
-        return new AttemptResult(
+        return new AttemptResultDTO(
                 id,
                 user.getId(),
                 exam.getId(),

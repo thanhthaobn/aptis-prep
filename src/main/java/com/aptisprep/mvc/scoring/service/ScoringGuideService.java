@@ -1,7 +1,7 @@
 package com.aptisprep.mvc.scoring.service;
 
-import com.aptisprep.service.contract.IntegrationModels.AttemptResult;
-import com.aptisprep.service.contract.IntegrationModels.SkillResult;
+import com.aptisprep.mvc.exam.dto.AttemptResultDTO;
+import com.aptisprep.mvc.exam.dto.SkillResultDTO;
 import java.math.BigDecimal;
 import java.util.List;
 
@@ -10,11 +10,11 @@ public interface ScoringGuideService {
 
     record Guide(String skill, String version, BigDecimal min, BigDecimal max, List<Band> bands) {}
 
-    record ResultGuideView(List<Guide> guides, List<SkillResult> feedbackWithoutGuide) {}
+    record ResultGuideView(List<Guide> guides, List<SkillResultDTO> feedbackWithoutGuide) {}
 
-    ResultGuideView forResultView(AttemptResult result);
+    ResultGuideView forResultView(AttemptResultDTO result);
 
     List<Guide> forExam(Integer examId);
 
-    List<Guide> forResult(AttemptResult result);
+    List<Guide> forResult(AttemptResultDTO result);
 }

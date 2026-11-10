@@ -1,21 +1,21 @@
-package com.aptisprep.service.student.impl;
+package com.aptisprep.mvc.student.service.impl;
 
-import com.aptisprep.dto.view.StudentCatalogView.*;
-import com.aptisprep.mvc.catalog.entity.*;
 import com.aptisprep.mvc.catalog.entity.MockExamEntity;
 import com.aptisprep.mvc.catalog.entity.MockExamQuestionEntity;
 import com.aptisprep.mvc.catalog.entity.MockExamSectionEntity;
 import com.aptisprep.mvc.catalog.entity.QuestionMediaEntity;
-import com.aptisprep.mvc.catalog.repository.*;
 import com.aptisprep.mvc.catalog.repository.MockExamQuestionRepository;
 import com.aptisprep.mvc.catalog.repository.MockExamRepository;
 import com.aptisprep.mvc.catalog.repository.MockExamSectionRepository;
 import com.aptisprep.mvc.catalog.repository.QuestionMediaRepository;
-import com.aptisprep.mvc.catalog.service.*;
 import com.aptisprep.mvc.common.exception.BusinessRuleException;
 import com.aptisprep.mvc.common.exception.ResourceNotFoundException;
 import com.aptisprep.mvc.exam.service.impl.ExamStartValidator;
-import com.aptisprep.service.student.StudentExamCatalogService;
+import com.aptisprep.mvc.student.dto.StudentCatalogViewDTO;
+import com.aptisprep.mvc.student.dto.StudentCatalogViewDTO.Block;
+import com.aptisprep.mvc.student.dto.StudentCatalogViewDTO.Entry;
+import com.aptisprep.mvc.student.dto.StudentCatalogViewDTO.Fact;
+import com.aptisprep.mvc.student.service.StudentExamCatalogService;
 import java.text.Normalizer;
 import java.util.*;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -101,7 +101,7 @@ public class StudentExamCatalogServiceImpl implements StudentExamCatalogService 
                                 type ->
                                         new Category(
                                                 type,
-                                                StudentExamCatalogService.categoryLabel(type),
+                                                StudentCatalogViewDTO.categoryLabel(type),
                                                 matches.stream()
                                                         .filter(
                                                                 exam ->

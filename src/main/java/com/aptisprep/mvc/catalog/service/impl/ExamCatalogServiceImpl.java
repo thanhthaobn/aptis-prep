@@ -1,12 +1,12 @@
 package com.aptisprep.mvc.catalog.service.impl;
 
+import com.aptisprep.mvc.catalog.dto.ExamSummaryDTO;
+import com.aptisprep.mvc.catalog.dto.ExamViewDTO;
+import com.aptisprep.mvc.catalog.dto.QuestionViewDTO;
 import com.aptisprep.mvc.catalog.entity.*;
 import com.aptisprep.mvc.catalog.repository.*;
 import com.aptisprep.mvc.catalog.service.ExamCatalogService;
 import com.aptisprep.mvc.common.exception.ResourceNotFoundException;
-import com.aptisprep.service.contract.IntegrationModels.ExamSummary;
-import com.aptisprep.service.contract.IntegrationModels.ExamView;
-import com.aptisprep.service.contract.IntegrationModels.QuestionView;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.stereotype.Service;
@@ -94,7 +94,7 @@ public class ExamCatalogServiceImpl implements ExamCatalogService {
     }
 
     @Override
-    public ExamView publishedExam(Integer userId, Integer examId) {
+    public ExamViewDTO publishedExam(Integer userId, Integer examId) {
         MockExamEntity exam =
                 mockExamRepository
                         .findById(examId)
@@ -103,8 +103,8 @@ public class ExamCatalogServiceImpl implements ExamCatalogService {
                                 () ->
                                         new ResourceNotFoundException(
                                                 "Đề thi chưa được công bố hoặc không tồn tại"));
-        ExamSummary summary = summary(exam);
-        List<QuestionView> views =
+        ExamSummaryDTO summary = summary(exam);
+        List<QuestionViewDTO> views =
                 mockExamQuestionRepository.findByMockExamIdOrderByPosition(examId).stream()
                         .map(
                                 link ->
@@ -113,7 +113,7 @@ public class ExamCatalogServiceImpl implements ExamCatalogService {
                                                 .filter(q -> "PUBLISHED".equals(q.getStatus()))
                                                 .map(
                                                         q ->
-                                                                new QuestionView(
+                                                                new QuestionViewDTO(
                                                                         q.getId(),
                                                                         q.getSkill(),
                                                                         q.getQuestionType(),
@@ -125,11 +125,11 @@ public class ExamCatalogServiceImpl implements ExamCatalogService {
                                                                         "Đề thi chứa câu hỏi chưa công bố")))
                         .toList();
         if (views.isEmpty()) throw new ResourceNotFoundException("Đề thi chưa có câu hỏi");
-        return new ExamView(summary, views);
+        return new ExamViewDTO(summary, views);
     }
 
     @Override
-    public ExamSummary checkpoint(String skill, String targetLevel) {
+    public ExamSummaryDTO checkpoint(String skill, String targetLevel) {
         return mockExamRepository.findByStatusOrderByUpdatedAtDesc("PUBLISHED").stream()
                 .filter(x -> !x.isDemoOnly())
                 .filter(
@@ -147,8 +147,8 @@ public class ExamCatalogServiceImpl implements ExamCatalogService {
                 .orElseThrow(() -> new ResourceNotFoundException("Chưa có đề checkpoint phù hợp"));
     }
 
-    private ExamSummary summary(MockExamEntity x) {
-        return new ExamSummary(
+    private ExamSummaryDTO summary(MockExamEntity x) {
+        return new ExamSummaryDTO(
                 x.getId(),
                 x.getTitle(),
                 x.getExamType(),

@@ -1,6 +1,5 @@
-package com.aptisprep.service.admin.impl;
+package com.aptisprep.mvc.student.service.impl;
 
-import com.aptisprep.dto.view.AdminStudentView;
 import com.aptisprep.mvc.account.dto.AccountSnapshotDTO;
 import com.aptisprep.mvc.account.entity.UserGoal;
 import com.aptisprep.mvc.account.entity.UserGoalSkill;
@@ -15,11 +14,13 @@ import com.aptisprep.mvc.common.enums.Skill;
 import com.aptisprep.mvc.common.exception.AccessDeniedException;
 import com.aptisprep.mvc.common.exception.BusinessRuleException;
 import com.aptisprep.mvc.common.exception.ResourceNotFoundException;
+import com.aptisprep.mvc.exam.dto.AttemptResultDTO;
+import com.aptisprep.mvc.exam.dto.HistoryPageDTO;
 import com.aptisprep.mvc.exam.service.ExamAttemptService;
 import com.aptisprep.mvc.learning.service.LearningPathService;
 import com.aptisprep.mvc.scoring.entity.Certificate;
-import com.aptisprep.service.admin.StudentManagementService;
-import com.aptisprep.service.contract.IntegrationModels.*;
+import com.aptisprep.mvc.student.dto.AdminStudentViewDTO;
+import com.aptisprep.mvc.student.service.StudentManagementService;
 import java.util.*;
 import java.util.stream.Collectors;
 import org.springframework.beans.factory.ObjectProvider;
@@ -54,7 +55,7 @@ public class StudentManagementServiceImpl implements StudentManagementService {
     }
 
     @Transactional(readOnly = true)
-    public AdminStudentView.Page list(String query, UserStatus status, int page, int size) {
+    public AdminStudentViewDTO.Page list(String query, UserStatus status, int page, int size) {
         int safePage = Math.max(0, page);
         int safeSize = Math.min(100, Math.max(1, size));
         String term = query == null ? "" : query.trim();
@@ -67,7 +68,7 @@ public class StudentManagementServiceImpl implements StudentManagementService {
                         pattern,
                         status == null ? null : status.name(),
                         PageRequest.of(safePage, safeSize));
-        return new AdminStudentView.Page(
+        return new AdminStudentViewDTO.Page(
                 result.getContent().stream().map(this::listItem).toList(),
                 safePage,
                 safeSize,
@@ -75,7 +76,7 @@ public class StudentManagementServiceImpl implements StudentManagementService {
     }
 
     @Transactional(readOnly = true)
-    public AdminStudentView.Detail detail(Integer id, int attemptPage, int attemptSize) {
+    public AdminStudentViewDTO.Detail detail(Integer id, int attemptPage, int attemptSize) {
         User user = studentsOnly(id);
         int safePage = Math.max(0, attemptPage);
         int safeSize = Math.min(100, Math.max(1, attemptSize));
@@ -88,12 +89,12 @@ public class StudentManagementServiceImpl implements StudentManagementService {
                                         UserSkillProfile::getSkill,
                                         value -> value,
                                         (left, right) -> right));
-        List<AdminStudentView.Skill> skillViews =
+        List<AdminStudentViewDTO.Skill> skillViews =
                 SKILLS.stream()
                         .map(
                                 skill -> {
                                     UserSkillProfile profile = profileMap.get(skill);
-                                    return new AdminStudentView.Skill(
+                                    return new AdminStudentViewDTO.Skill(
                                             skillLabel(skill),
                                             profile == null
                                                     ? "Chưa đánh giá"
@@ -101,11 +102,11 @@ public class StudentManagementServiceImpl implements StudentManagementService {
                                             targetMap.getOrDefault(skill, "Chưa đặt"));
                                 })
                         .toList();
-        List<AdminStudentView.Progress> progress = progressFor(user.getId());
-        HistoryPage history = historyFor(user.getId(), safePage, safeSize);
-        List<AdminStudentView.Attempt> attempts =
+        List<AdminStudentViewDTO.Progress> progress = progressFor(user.getId());
+        HistoryPageDTO history = historyFor(user.getId(), safePage, safeSize);
+        List<AdminStudentViewDTO.Attempt> attempts =
                 history.items().stream().map(this::attemptView).toList();
-        return new AdminStudentView.Detail(
+        return new AdminStudentViewDTO.Detail(
                 user.getId(),
                 user.getFullName(),
                 user.getEmail(),
@@ -208,13 +209,13 @@ public class StudentManagementServiceImpl implements StudentManagementService {
         return target;
     }
 
-    private AdminStudentView.ListItem listItem(User user) {
+    private AdminStudentViewDTO.ListItem listItem(User user) {
         AccountSnapshotDTO.GoalViewDTO goal = goalView(user.getId());
         String target =
                 goal == null || goal.targets().isEmpty()
                         ? "Chưa đặt mục tiêu"
                         : goal.targets().values().stream().collect(Collectors.joining(", "));
-        return new AdminStudentView.ListItem(
+        return new AdminStudentViewDTO.ListItem(
                 user.getId(),
                 user.getFullName(),
                 user.getEmail(),
@@ -242,7 +243,7 @@ public class StudentManagementServiceImpl implements StudentManagementService {
                 targets);
     }
 
-    private List<AdminStudentView.Progress> progressFor(Integer userId) {
+    private List<AdminStudentViewDTO.Progress> progressFor(Integer userId) {
         LearningPathService contract = paths.getIfAvailable();
         if (contract == null) return List.of();
         AccountSnapshotDTO.GoalViewDTO goal = goalView(userId);
@@ -253,7 +254,7 @@ public class StudentManagementServiceImpl implements StudentManagementService {
                 : values.stream()
                         .map(
                                 value ->
-                                        new AdminStudentView.Progress(
+                                        new AdminStudentViewDTO.Progress(
                                                 value.pathId(),
                                                 skillLabel(value.skill()),
                                                 value.pathSource(),
@@ -269,14 +270,14 @@ public class StudentManagementServiceImpl implements StudentManagementService {
                         .toList();
     }
 
-    private HistoryPage historyFor(Integer userId, int page, int size) {
+    private HistoryPageDTO historyFor(Integer userId, int page, int size) {
         ExamAttemptService contract = attempts.getIfAvailable();
-        if (contract == null) return new HistoryPage(List.of(), page, size, 0);
-        HistoryPage value = contract.history(userId, page, size);
-        return value == null ? new HistoryPage(List.of(), page, size, 0) : value;
+        if (contract == null) return new HistoryPageDTO(List.of(), page, size, 0);
+        HistoryPageDTO value = contract.history(userId, page, size);
+        return value == null ? new HistoryPageDTO(List.of(), page, size, 0) : value;
     }
 
-    private AdminStudentView.Attempt attemptView(AttemptResult result) {
+    private AdminStudentViewDTO.Attempt attemptView(AttemptResultDTO result) {
         String date = result.submittedAt() == null ? "Chưa nộp" : result.submittedAt().toString();
         String status = statusLabel(result.state());
         List<String> scores =
@@ -292,7 +293,7 @@ public class StudentManagementServiceImpl implements StudentManagementService {
                                                                 .stripTrailingZeros()
                                                                 .toPlainString())
                                 .toList();
-        return new AdminStudentView.Attempt(
+        return new AdminStudentViewDTO.Attempt(
                 result.examType() == null ? "Lượt thi" : result.examType(),
                 date,
                 status,

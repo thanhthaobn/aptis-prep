@@ -1,10 +1,19 @@
-package com.aptisprep.dto.view;
+package com.aptisprep.mvc.student.dto;
 
 import java.util.List;
 
 /** Student-facing summaries of published database content. */
-public final class StudentCatalogView {
-    private StudentCatalogView() {}
+public final class StudentCatalogViewDTO {
+    private StudentCatalogViewDTO() {}
+
+    public static String categoryLabel(String type) {
+        return switch (type == null ? "" : type) {
+            case "FULL_MOCK" -> "Thi thử tổng hợp";
+            case "PLACEMENT" -> "Kiểm tra đầu vào";
+            case "CHECKPOINT" -> "Kiểm tra cuối chặng";
+            default -> "Luyện từng kỹ năng";
+        };
+    }
 
     public record Fact(String label, String value) {}
 

@@ -8,10 +8,11 @@ import com.aptisprep.mvc.account.service.AccountAccessService;
 import com.aptisprep.mvc.catalog.service.*;
 import com.aptisprep.mvc.common.exception.BusinessRuleException;
 import com.aptisprep.mvc.exam.controller.StudentExamCatalogController;
+import com.aptisprep.mvc.exam.dto.AttemptResultDTO;
+import com.aptisprep.mvc.exam.dto.SkillResultDTO;
 import com.aptisprep.mvc.exam.service.ExamAttemptService;
 import com.aptisprep.mvc.scoring.service.*;
-import com.aptisprep.service.contract.IntegrationModels.*;
-import com.aptisprep.service.student.StudentExamCatalogService;
+import com.aptisprep.mvc.student.service.StudentExamCatalogService;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.springframework.web.servlet.mvc.support.RedirectAttributesModelMap;
@@ -30,7 +31,7 @@ class StudentResultRetryTests {
         when(accounts.requireActiveStudent("learner@test.local")).thenReturn(12);
         when(attempts.result(12, 99))
                 .thenReturn(
-                        new AttemptResult(
+                        new AttemptResultDTO(
                                 99,
                                 12,
                                 5,
@@ -38,7 +39,7 @@ class StudentResultRetryTests {
                                 1,
                                 "ERROR",
                                 List.of(
-                                        new SkillResult(
+                                        new SkillResultDTO(
                                                 "WRITING", null, null, null, "ERROR", null, false,
                                                 true))));
         assertThat(
@@ -47,7 +48,7 @@ class StudentResultRetryTests {
                 .isEqualTo("redirect:/student/attempts/99/result");
         verify(attempts).retryFailedGrading(eq(12), eq(99), anyString());
         when(attempts.result(12, 99))
-                .thenReturn(new AttemptResult(99, 12, 5, "PRACTICE", 1, "COMPLETED", List.of()));
+                .thenReturn(new AttemptResultDTO(99, 12, 5, "PRACTICE", 1, "COMPLETED", List.of()));
         assertThatThrownBy(
                         () ->
                                 controller.retryGrading(

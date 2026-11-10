@@ -1,8 +1,8 @@
 package com.aptisprep.mvc.grading.service;
 
 import com.aptisprep.mvc.catalog.entity.MockExamEntity;
-import com.aptisprep.service.contract.IntegrationModels.LockedAttempt;
+import com.aptisprep.mvc.exam.dto.LockedAttemptDTO;
 
 public interface ObjectiveGradingService {
-    void gradeObjective(LockedAttempt locked, MockExamEntity exam);
+    void gradeObjective(LockedAttemptDTO locked, MockExamEntity exam);
 }

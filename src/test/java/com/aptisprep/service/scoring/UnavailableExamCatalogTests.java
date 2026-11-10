@@ -38,7 +38,7 @@ class UnavailableExamCatalogTests {
                 .when(validator)
                 .validate(eq(old), anyList());
         var catalog =
-                new com.aptisprep.service.student.impl.StudentExamCatalogServiceImpl(
+                new com.aptisprep.mvc.student.service.impl.StudentExamCatalogServiceImpl(
                         exams, sections, questions, validator);
         var result = catalog.browse("", "", "", "", "PRACTICE", "level", PageRequest.of(0, 9));
         assertThat(result.page().getTotalElements()).isZero();
@@ -95,7 +95,7 @@ class UnavailableExamCatalogTests {
                 .validate(eq(exam), eq(links));
 
         var catalog =
-                new com.aptisprep.service.student.impl.StudentExamCatalogServiceImpl(
+                new com.aptisprep.mvc.student.service.impl.StudentExamCatalogServiceImpl(
                         exams, sections, questions, validator);
 
         var page = catalog.browse("", "", "", "", "FULL_MOCK", "level", PageRequest.of(0, 9));
@@ -137,7 +137,7 @@ class UnavailableExamCatalogTests {
                 .validate(eq(exam), eq(List.of(link)));
 
         var catalog =
-                new com.aptisprep.service.student.impl.StudentExamCatalogServiceImpl(
+                new com.aptisprep.mvc.student.service.impl.StudentExamCatalogServiceImpl(
                         exams, sections, questions, validator);
 
         var page =

@@ -1,9 +1,9 @@
 package com.aptisprep.mvc.placement.service;
 
+import com.aptisprep.mvc.exam.dto.AttemptHandleDTO;
+import com.aptisprep.mvc.exam.dto.AttemptResultDTO;
 import com.aptisprep.mvc.placement.dto.PlacementDTO.PlacementExam;
 import com.aptisprep.mvc.placement.dto.PlacementDTO.PlacementOption;
-import com.aptisprep.service.contract.IntegrationModels.AttemptHandle;
-import com.aptisprep.service.contract.IntegrationModels.AttemptResult;
 import java.util.List;
 
 public interface PlacementService {
@@ -11,15 +11,15 @@ public interface PlacementService {
 
     List<PlacementOption> availableForStudent(String email);
 
-    AttemptHandle start(String email);
+    AttemptHandleDTO start(String email);
 
     List<PlacementExam> available(String skill);
 
     List<PlacementOption> available(String email, String skill);
 
-    AttemptHandle start(String email, String skill);
+    AttemptHandleDTO start(String email, String skill);
 
-    AttemptHandle start(String email, String skill, Integer examId);
+    AttemptHandleDTO start(String email, String skill, Integer examId);
 
-    AttemptResult result(String email, Integer attemptId);
+    AttemptResultDTO result(String email, Integer attemptId);
 }

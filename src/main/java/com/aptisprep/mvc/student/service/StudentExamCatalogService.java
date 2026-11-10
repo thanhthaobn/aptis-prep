@@ -1,7 +1,6 @@
-package com.aptisprep.service.student;
+package com.aptisprep.mvc.student.service;
 
-import com.aptisprep.dto.view.StudentCatalogView.Entry;
-import com.aptisprep.mvc.catalog.service.*;
+import com.aptisprep.mvc.student.dto.StudentCatalogViewDTO.Entry;
 import java.util.List;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -26,13 +25,4 @@ public interface StudentExamCatalogService {
             Pageable pageable);
 
     Entry entry(String module, int id);
-
-    static String categoryLabel(String type) {
-        return switch (type) {
-            case "FULL_MOCK" -> "Thi thử tổng hợp";
-            case "PLACEMENT" -> "Kiểm tra đầu vào";
-            case "CHECKPOINT" -> "Kiểm tra cuối chặng";
-            default -> "Luyện từng kỹ năng";
-        };
-    }
 }

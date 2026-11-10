@@ -8,10 +8,13 @@ import com.aptisprep.mvc.account.repository.UserGoalRepository;
 import com.aptisprep.mvc.account.service.AccountAccessService;
 import com.aptisprep.mvc.auth.entity.User;
 import com.aptisprep.mvc.auth.repository.UserRepository;
+import com.aptisprep.mvc.catalog.dto.ExamSummaryDTO;
 import com.aptisprep.mvc.catalog.service.*;
 import com.aptisprep.mvc.catalog.service.ExamCatalogService;
 import com.aptisprep.mvc.common.enums.*;
 import com.aptisprep.mvc.common.exception.*;
+import com.aptisprep.mvc.exam.dto.AttemptResultDTO;
+import com.aptisprep.mvc.exam.dto.SkillResultDTO;
 import com.aptisprep.mvc.exam.service.ExamAttemptService;
 import com.aptisprep.mvc.learning.dto.LearningPathViewsDTO.StageDTO;
 import com.aptisprep.mvc.learning.dto.LearningPathViewsDTO.StageLessonDTO;
@@ -20,7 +23,6 @@ import com.aptisprep.mvc.learning.entity.*;
 import com.aptisprep.mvc.learning.repository.*;
 import com.aptisprep.mvc.learning.service.LearningPathService;
 import com.aptisprep.mvc.learning.service.LessonService;
-import com.aptisprep.service.contract.IntegrationModels.*;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 import java.util.*;
@@ -241,21 +243,21 @@ public class LearningPathServiceImpl implements LearningPathService {
                     "Hành trình học chỉ hỗ trợ từ A1 đến C1; chặng cũ được giữ để tra cứu");
         ExamAttemptService engine = engine();
         if (path.getCheckpointExamId() != null) {
-            Optional<AttemptResult> running =
+            Optional<AttemptResultDTO> running =
                     checkpointStatus.history(path, engine).stream()
                             .filter(checkpointStatus::unfinished)
                             .findFirst();
             if (running.isPresent()) return running.get().attemptId();
         }
-        ExamSummary checkpoint =
+        ExamSummaryDTO checkpoint =
                 catalog.checkpoint(codeSkill(path.getSkill()), path.getTargetLevel());
         path.setCheckpointExamId(checkpoint.examId());
         learningPathRepository.save(path);
-        List<AttemptResult> previous = checkpointStatus.history(path, engine);
-        Optional<AttemptResult> unfinished =
+        List<AttemptResultDTO> previous = checkpointStatus.history(path, engine);
+        Optional<AttemptResultDTO> unfinished =
                 previous.stream().filter(checkpointStatus::unfinished).findFirst();
         if (unfinished.isPresent()) return unfinished.get().attemptId();
-        int last = previous.stream().mapToInt(AttemptResult::attemptId).max().orElse(0);
+        int last = previous.stream().mapToInt(AttemptResultDTO::attemptId).max().orElse(0);
         return engine.startCheckpoint(
                         userId,
                         checkpoint.examId(),
@@ -267,7 +269,7 @@ public class LearningPathServiceImpl implements LearningPathService {
     @Override
     @Transactional(readOnly = true)
     public String checkpointDestination(String email, Integer attemptId) {
-        AttemptResult result = engine().result(active(email).getId(), attemptId);
+        AttemptResultDTO result = engine().result(active(email).getId(), attemptId);
         return "/student/attempts/"
                 + attemptId
                 + ("IN_PROGRESS".equals(result.state()) ? "" : "/result");
@@ -318,7 +320,7 @@ public class LearningPathServiceImpl implements LearningPathService {
         if (learningPathRepository.existsByUserIdAndSourceAttemptIdAndStatus(
                 userId, attemptId, "COMPLETED")) return;
         ExamAttemptService engine = engine();
-        AttemptResult result = engine.result(userId, attemptId);
+        AttemptResultDTO result = engine.result(userId, attemptId);
         if (result == null
                 || !Objects.equals(result.userId(), userId)
                 || !Objects.equals(result.attemptId(), attemptId)
@@ -347,7 +349,7 @@ public class LearningPathServiceImpl implements LearningPathService {
                                         new ResourceNotFoundException(
                                                 "Kết quả không thuộc chặng học"));
         if ("COMPLETED".equals(path.getStatus())) return;
-        SkillResult skill =
+        SkillResultDTO skill =
                 result.skills() == null
                         ? null
                         : result.skills().stream()

@@ -1,13 +1,13 @@
 package com.aptisprep.mvc.scoring.service.impl;
 
 import com.aptisprep.mvc.catalog.service.ExamCatalogService;
+import com.aptisprep.mvc.exam.dto.AttemptResultDTO;
+import com.aptisprep.mvc.exam.dto.SkillResultDTO;
 import com.aptisprep.mvc.exam.service.ExamAttemptService;
 import com.aptisprep.mvc.exam.service.ExamAttemptService.SnapshotSchemeInfo;
 import com.aptisprep.mvc.scoring.entity.*;
 import com.aptisprep.mvc.scoring.repository.*;
 import com.aptisprep.mvc.scoring.service.ScoringGuideService;
-import com.aptisprep.service.contract.IntegrationModels.AttemptResult;
-import com.aptisprep.service.contract.IntegrationModels.SkillResult;
 import java.math.BigDecimal;
 import java.util.*;
 import org.springframework.stereotype.Service;
@@ -36,11 +36,11 @@ public class ScoringGuideServiceImpl implements ScoringGuideService {
         this.examAttemptService = examAttemptService;
     }
 
-    public ResultGuideView forResultView(AttemptResult result) {
+    public ResultGuideView forResultView(AttemptResultDTO result) {
         List<Guide> scoreGuides = forResult(result);
         Set<String> guidedSkills = new HashSet<>();
         scoreGuides.forEach(guide -> guidedSkills.add(guide.skill()));
-        List<SkillResult> feedbackWithoutGuide =
+        List<SkillResultDTO> feedbackWithoutGuide =
                 result.skills().stream()
                         .filter(skill -> !guidedSkills.contains(skill.skill()))
                         .filter(skill -> skill.feedback() != null && !skill.feedback().isBlank())
@@ -62,7 +62,7 @@ public class ScoringGuideServiceImpl implements ScoringGuideService {
     }
 
     /** Called only after the attempt contract has checked ownership. Uses the original scheme. */
-    public List<Guide> forResult(AttemptResult result) {
+    public List<Guide> forResult(AttemptResultDTO result) {
         var snapshot = examAttemptService.findSnapshotSchemeInfo(result.attemptId());
         Integer scheme =
                 snapshot.map(SnapshotSchemeInfo::scoringSchemeId).orElse(result.scoringSchemeId());

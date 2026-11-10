@@ -7,12 +7,12 @@ import com.aptisprep.mvc.catalog.service.ExamCatalogService;
 import com.aptisprep.mvc.common.enums.Role;
 import com.aptisprep.mvc.common.enums.UserStatus;
 import com.aptisprep.mvc.common.exception.*;
+import com.aptisprep.mvc.exam.dto.*;
 import com.aptisprep.mvc.exam.entity.*;
 import com.aptisprep.mvc.exam.repository.ExamAttemptRepository;
 import com.aptisprep.mvc.exam.repository.UserAnswerRepository;
 import com.aptisprep.mvc.grading.service.GradingResultQueryService;
 import com.aptisprep.mvc.scoring.service.impl.CheckpointScorePolicy;
-import com.aptisprep.service.contract.IntegrationModels.*;
 import java.time.*;
 import java.util.*;
 import org.springframework.data.domain.Page;
@@ -46,10 +46,10 @@ class AttemptResultReader {
     }
 
     @Transactional(readOnly = true)
-    public HistoryPage history(Integer userId, int page, int size, HistoryFilter filter) {
+    public HistoryPageDTO history(Integer userId, int page, int size, HistoryFilterDTO filter) {
         int safeSize = Math.min(100, Math.max(1, size));
         int safePage = Math.min(Math.max(0, page), Integer.MAX_VALUE / safeSize);
-        HistoryFilter safeFilter = filter == null ? HistoryFilter.empty() : filter;
+        HistoryFilterDTO safeFilter = filter == null ? HistoryFilterDTO.empty() : filter;
         String pattern =
                 safeFilter.query() == null || safeFilter.query().isBlank()
                         ? ""
@@ -76,17 +76,17 @@ class AttemptResultReader {
                             state,
                             PageRequest.of(safePage, safeSize));
         }
-        List<AttemptResult> values = result.stream().map(a -> view(a, examFor(a))).toList();
-        return new HistoryPage(values, safePage, safeSize, result.getTotalElements());
+        List<AttemptResultDTO> values = result.stream().map(a -> view(a, examFor(a))).toList();
+        return new HistoryPageDTO(values, safePage, safeSize, result.getTotalElements());
     }
 
     @Transactional(readOnly = true)
-    public AdminHistoryPage adminHistory(
-            String adminEmail, int page, int size, AdminHistoryFilter filter) {
+    public AdminHistoryPageDTO adminHistory(
+            String adminEmail, int page, int size, AdminHistoryFilterDTO filter) {
         requireAdmin(adminEmail);
         int safePage = Math.max(0, page), safeSize = Math.min(100, Math.max(1, size));
-        AdminHistoryFilter f =
-                filter == null ? new AdminHistoryFilter("", "", "", "", null, null) : filter;
+        AdminHistoryFilterDTO f =
+                filter == null ? new AdminHistoryFilterDTO("", "", "", "", null, null) : filter;
         String pattern =
                 f.query() == null || f.query().isBlank()
                         ? ""
@@ -108,22 +108,22 @@ class AttemptResultReader {
                         from,
                         to,
                         PageRequest.of(safePage, safeSize));
-        List<AdminHistoryItem> values =
+        List<AdminHistoryItemDTO> values =
                 pageData.stream()
                         .map(
                                 a -> {
                                     User user = userService.findById(a.getUserId()).orElseThrow();
-                                    return new AdminHistoryItem(
+                                    return new AdminHistoryItemDTO(
                                             user.getFullName(),
                                             user.getEmail(),
                                             view(a, examFor(a)));
                                 })
                         .toList();
-        return new AdminHistoryPage(values, safePage, safeSize, pageData.getTotalElements());
+        return new AdminHistoryPageDTO(values, safePage, safeSize, pageData.getTotalElements());
     }
 
     @Transactional(readOnly = true)
-    public AttemptResult adminResult(String adminEmail, Integer attemptId) {
+    public AttemptResultDTO adminResult(String adminEmail, Integer attemptId) {
         requireAdmin(adminEmail);
         ExamAttemptEntity attempt =
                 examAttemptRepository
@@ -132,8 +132,8 @@ class AttemptResultReader {
         return view(attempt, examFor(attempt));
     }
 
-    AttemptResult view(ExamAttemptEntity attempt, MockExamEntity exam) {
-        List<SkillResult> skills =
+    AttemptResultDTO view(ExamAttemptEntity attempt, MockExamEntity exam) {
+        List<SkillResultDTO> skills =
                 gradingResultQueryService.findSkillResultsByAttemptId(attempt.getId()).stream()
                         .map(
                                 value -> {
@@ -168,7 +168,7 @@ class AttemptResultReader {
                                             && "AI_ERROR".equals(value.getGradingMethod())
                                             && "SPEAKING".equals(value.getSkill()))
                                         feedback = "Không nhận được bản chép lời từ file ghi âm.";
-                                    return new SkillResult(
+                                    return new SkillResultDTO(
                                             value.getSkill(),
                                             value.getRawScore(),
                                             value.getScaleScore(),
@@ -188,7 +188,7 @@ class AttemptResultReader {
                 attempt.getScoringSchemeId() == null
                         ? exam.getScoringSchemeId()
                         : attempt.getScoringSchemeId();
-        return new AttemptResult(
+        return new AttemptResultDTO(
                 attempt.getId(),
                 attempt.getUserId(),
                 exam.getId(),

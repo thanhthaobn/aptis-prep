@@ -4,11 +4,12 @@ import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 import com.aptisprep.mvc.catalog.repository.*;
+import com.aptisprep.mvc.exam.dto.AttemptResultDTO;
+import com.aptisprep.mvc.exam.dto.SkillResultDTO;
 import com.aptisprep.mvc.exam.entity.*;
 import com.aptisprep.mvc.exam.repository.*;
 import com.aptisprep.mvc.scoring.entity.*;
 import com.aptisprep.mvc.scoring.repository.*;
-import com.aptisprep.service.contract.IntegrationModels.*;
 import java.math.BigDecimal;
 import java.util.*;
 import org.junit.jupiter.api.Test;
@@ -45,7 +46,7 @@ class ScoringGuideServiceTests {
         when(bands.findBySchemeIdAndSkillOrderByMinScoreAsc(7, "READING"))
                 .thenReturn(List.of(band));
         var result =
-                new AttemptResult(
+                new AttemptResultDTO(
                         42,
                         2,
                         9,
@@ -53,7 +54,7 @@ class ScoringGuideServiceTests {
                         99,
                         "COMPLETED",
                         List.of(
-                                new SkillResult(
+                                new SkillResultDTO(
                                         "READING",
                                         BigDecimal.TEN,
                                         new BigDecimal("60"),

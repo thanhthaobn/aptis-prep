@@ -3,6 +3,9 @@ package com.aptisprep.mvc.grading.service.impl;
 import com.aptisprep.mvc.catalog.entity.MockExamEntity;
 import com.aptisprep.mvc.common.exception.BusinessRuleException;
 import com.aptisprep.mvc.common.exception.ResourceNotFoundException;
+import com.aptisprep.mvc.exam.dto.LockedAnswerDTO;
+import com.aptisprep.mvc.exam.dto.LockedAttemptDTO;
+import com.aptisprep.mvc.exam.dto.LockedItemDTO;
 import com.aptisprep.mvc.exam.entity.UserAnswerDetailEntity;
 import com.aptisprep.mvc.exam.entity.UserAnswerEntity;
 import com.aptisprep.mvc.exam.service.ExamGradingPersistenceService;
@@ -11,9 +14,6 @@ import com.aptisprep.mvc.grading.repository.ExamSkillResultRepository;
 import com.aptisprep.mvc.grading.service.ObjectiveGradingService;
 import com.aptisprep.mvc.scoring.service.ScoringPolicyService;
 import com.aptisprep.mvc.scoring.service.impl.CheckpointScorePolicy;
-import com.aptisprep.service.contract.IntegrationModels.LockedAnswer;
-import com.aptisprep.service.contract.IntegrationModels.LockedAttempt;
-import com.aptisprep.service.contract.IntegrationModels.LockedItem;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.LinkedHashMap;
@@ -41,28 +41,28 @@ public class ObjectiveGradingServiceImpl implements ObjectiveGradingService {
 
     @Override
     @Transactional
-    public void gradeObjective(LockedAttempt locked, MockExamEntity exam) {
+    public void gradeObjective(LockedAttemptDTO locked, MockExamEntity exam) {
         if (locked == null || locked.answers() == null) return;
-        Map<String, List<LockedAnswer>> grouped =
+        Map<String, List<LockedAnswerDTO>> grouped =
                 locked.answers().stream()
                         .collect(
                                 Collectors.groupingBy(
-                                        LockedAnswer::skill,
+                                        LockedAnswerDTO::skill,
                                         LinkedHashMap::new,
                                         Collectors.toList()));
         grouped.forEach((skill, skillAnswers) -> gradeSkill(locked, exam, skill, skillAnswers));
     }
 
     private void gradeSkill(
-            LockedAttempt locked,
+            LockedAttemptDTO locked,
             MockExamEntity exam,
             String skill,
-            List<LockedAnswer> skillAnswers) {
+            List<LockedAnswerDTO> skillAnswers) {
         int total = 0;
         int correct = 0;
         boolean subjective = false;
         int emptySubjective = 0;
-        for (LockedAnswer lockedAnswer : skillAnswers) {
+        for (LockedAnswerDTO lockedAnswer : skillAnswers) {
             UserAnswerEntity answer =
                     examGrading
                             .findAnswerByIdAndAttemptId(lockedAnswer.answerId(), locked.attemptId())
@@ -85,9 +85,9 @@ public class ObjectiveGradingServiceImpl implements ObjectiveGradingService {
                 }
                 continue;
             }
-            List<LockedItem> lockedItems =
+            List<LockedItemDTO> lockedItems =
                     lockedAnswer.items() == null ? List.of() : lockedAnswer.items();
-            for (LockedItem item : lockedItems) {
+            for (LockedItemDTO item : lockedItems) {
                 total++;
                 UserAnswerDetailEntity detail =
                         examGrading.findAnswerDetail(answer.getId(), item.itemId()).orElse(null);
@@ -212,7 +212,7 @@ public class ObjectiveGradingServiceImpl implements ObjectiveGradingService {
         return "C1";
     }
 
-    private boolean isCorrect(String type, LockedItem item, UserAnswerDetailEntity detail) {
+    private boolean isCorrect(String type, LockedItemDTO item, UserAnswerDetailEntity detail) {
         if (detail == null) return false;
         if ("ORDERING".equals(type))
             return detail.getUserPosition() != null

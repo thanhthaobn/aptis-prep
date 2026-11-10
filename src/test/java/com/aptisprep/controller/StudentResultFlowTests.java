@@ -15,11 +15,11 @@ import com.aptisprep.mvc.catalog.entity.MockExamEntity;
 import com.aptisprep.mvc.catalog.repository.MockExamRepository;
 import com.aptisprep.mvc.common.enums.Role;
 import com.aptisprep.mvc.common.enums.UserStatus;
+import com.aptisprep.mvc.exam.dto.HistoryPageDTO;
 import com.aptisprep.mvc.exam.entity.ExamAttemptEntity;
 import com.aptisprep.mvc.exam.repository.ExamAttemptRepository;
 import com.aptisprep.mvc.grading.entity.ExamSkillResultEntity;
 import com.aptisprep.mvc.grading.repository.ExamSkillResultRepository;
-import com.aptisprep.service.contract.IntegrationModels.HistoryPage;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -197,7 +197,8 @@ class StudentResultFlowTests {
                                         containsString(
                                                 "/student/results?size=2&amp;q=Reading%20%26%20Email&amp;skill=READING&amp;examType=PRACTICE&amp;state=COMPLETED&amp;page=1")));
             var history =
-                    (HistoryPage) response.andReturn().getModelAndView().getModel().get("history");
+                    (HistoryPageDTO)
+                            response.andReturn().getModelAndView().getModel().get("history");
             assertThat(history.totalItems()).isEqualTo(3);
             assertThat(history.items()).hasSize(page == 0 ? 2 : 1);
             for (var item : history.items()) {

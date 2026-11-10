@@ -13,6 +13,7 @@ import com.aptisprep.mvc.common.event.AttemptSubmittedEvent;
 import com.aptisprep.mvc.common.exception.AccessDeniedException;
 import com.aptisprep.mvc.common.exception.BusinessRuleException;
 import com.aptisprep.mvc.common.exception.ResourceNotFoundException;
+import com.aptisprep.mvc.exam.dto.*;
 import com.aptisprep.mvc.exam.entity.*;
 import com.aptisprep.mvc.exam.repository.*;
 import com.aptisprep.mvc.exam.service.AttemptOutboxService;
@@ -25,7 +26,6 @@ import com.aptisprep.mvc.grading.service.ObjectiveGradingService;
 import com.aptisprep.mvc.grading.service.impl.GradingContextFormatter;
 import com.aptisprep.mvc.scoring.service.ScoringPolicyService;
 import com.aptisprep.mvc.storage.service.StorageService;
-import com.aptisprep.service.contract.IntegrationModels.*;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -108,7 +108,7 @@ public class ExamAttemptServiceImpl implements ExamAttemptService {
 
     @Override
     @Transactional
-    public AttemptHandle start(Integer userId, Integer examId, String requestKey) {
+    public AttemptHandleDTO start(Integer userId, Integer examId, String requestKey) {
         return startInternal(userId, examId, requestKey, null, false);
     }
 
@@ -133,7 +133,7 @@ public class ExamAttemptServiceImpl implements ExamAttemptService {
 
     @Override
     @Transactional
-    public AttemptHandle startPlacement(Integer userId, Integer examId, String requestKey) {
+    public AttemptHandleDTO startPlacement(Integer userId, Integer examId, String requestKey) {
         return startInternal(userId, examId, requestKey, null, true);
     }
 
@@ -162,7 +162,7 @@ public class ExamAttemptServiceImpl implements ExamAttemptService {
 
     @Override
     @Transactional
-    public AttemptHandle startCheckpoint(
+    public AttemptHandleDTO startCheckpoint(
             Integer userId, Integer examId, Integer pathId, String requestKey) {
         if (pathId == null) throw new BusinessRuleException("Checkpoint cần ngữ cảnh lộ trình học");
         return startInternal(userId, examId, requestKey, pathId, false);
@@ -184,7 +184,7 @@ public class ExamAttemptServiceImpl implements ExamAttemptService {
                         });
     }
 
-    private AttemptHandle startInternal(
+    private AttemptHandleDTO startInternal(
             Integer userId, Integer examId, String requestKey, Integer pathId, boolean placement) {
         // Lock the user row for the whole transaction. A JVM lock is not enough here:
         // another request can enter after the first synchronized block exits but before
@@ -477,12 +477,12 @@ public class ExamAttemptServiceImpl implements ExamAttemptService {
         attempt.setGradingRequestKey(
                 "attempt:" + attemptId + ":grading:v" + attempt.getAnswerVersion());
         validateWritingWordLimits(attempt.getId());
-        LockedAttempt draftLocked = gradingPayloads.build(attempt);
+        LockedAttemptDTO draftLocked = gradingPayloads.build(attempt);
         gradingPayloads.validate(draftLocked);
         attempt.setSubmittedAt(now);
         attempt.setGradingStatus("GRADING");
         attempt.setStatus(expired ? "EXPIRED" : "SUBMITTED");
-        LockedAttempt locked = gradingPayloads.build(attempt);
+        LockedAttemptDTO locked = gradingPayloads.build(attempt);
         objectiveGrading.gradeObjective(locked, exam);
         boolean waiting =
                 gradingResultQueryService.findSkillResultsByAttemptId(attempt.getId()).stream()
@@ -538,7 +538,7 @@ public class ExamAttemptServiceImpl implements ExamAttemptService {
 
     @Override
     @Transactional
-    public AttemptResult result(Integer userId, Integer attemptId) {
+    public AttemptResultDTO result(Integer userId, Integer attemptId) {
         activeUser(userId);
         ExamAttemptEntity attempt =
                 examAttemptRepository
@@ -556,20 +556,20 @@ public class ExamAttemptServiceImpl implements ExamAttemptService {
 
     @Override
     @Transactional(readOnly = true)
-    public HistoryPage history(Integer userId, int page, int size, HistoryFilter filter) {
+    public HistoryPageDTO history(Integer userId, int page, int size, HistoryFilterDTO filter) {
         return resultReader.history(userId, page, size, filter);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public AdminHistoryPage adminHistory(
-            String adminEmail, int page, int size, AdminHistoryFilter filter) {
+    public AdminHistoryPageDTO adminHistory(
+            String adminEmail, int page, int size, AdminHistoryFilterDTO filter) {
         return resultReader.adminHistory(adminEmail, page, size, filter);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public AttemptResult adminResult(String adminEmail, Integer attemptId) {
+    public AttemptResultDTO adminResult(String adminEmail, Integer attemptId) {
         return resultReader.adminResult(adminEmail, attemptId);
     }
 
@@ -604,14 +604,14 @@ public class ExamAttemptServiceImpl implements ExamAttemptService {
             emptyError = true;
         }
         if (!emptyError) return false;
-        LockedAttempt locked;
+        LockedAttemptDTO locked;
         try {
             locked = gradingPayloads.build(attempt);
         } catch (BusinessRuleException | ResourceNotFoundException unavailableSnapshot) {
             return false;
         }
         boolean hasSubjective = false;
-        for (LockedAnswer answer : locked.answers()) {
+        for (LockedAnswerDTO answer : locked.answers()) {
             if (!Set.of("WRITING_TEXT", "SPEAKING_AUDIO").contains(answer.questionType())) continue;
             hasSubjective = true;
             if (GradingContextFormatter.hasSubmission(answer)) return false;
@@ -636,7 +636,7 @@ public class ExamAttemptServiceImpl implements ExamAttemptService {
                     "Chỉ tính lại phần bỏ trống của lượt thi bị AI_EMPTY hoặc AI_DISABLED; lỗi AI của bài có nội dung không được đổi thành 0.");
         }
         MockExamEntity exam = examFor(attempt);
-        LockedAttempt locked = gradingPayloads.build(attempt);
+        LockedAttemptDTO locked = gradingPayloads.build(attempt);
         objectiveGrading.gradeObjective(locked, exam);
         if (!finalization.finalizeIfReady(attempt, exam)) {
             throw new BusinessRuleException(
@@ -880,8 +880,8 @@ public class ExamAttemptServiceImpl implements ExamAttemptService {
     }
 
     @Override
-    public HistoryPage history(Integer userId, int page, int size) {
-        return history(userId, page, size, HistoryFilter.empty());
+    public HistoryPageDTO history(Integer userId, int page, int size) {
+        return history(userId, page, size, HistoryFilterDTO.empty());
     }
 
     @Override
@@ -1020,8 +1020,8 @@ public class ExamAttemptServiceImpl implements ExamAttemptService {
         return user;
     }
 
-    private AttemptHandle handle(ExamAttemptEntity attempt, MockExamEntity exam) {
-        return new AttemptHandle(
+    private AttemptHandleDTO handle(ExamAttemptEntity attempt, MockExamEntity exam) {
+        return new AttemptHandleDTO(
                 attempt.getId(),
                 attempt.getStatus(),
                 instant(

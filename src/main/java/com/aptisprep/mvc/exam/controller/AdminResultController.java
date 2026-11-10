@@ -1,8 +1,8 @@
 package com.aptisprep.mvc.exam.controller;
 
 import com.aptisprep.mvc.common.exception.BusinessRuleException;
+import com.aptisprep.mvc.exam.dto.AdminHistoryFilterDTO;
 import com.aptisprep.mvc.exam.service.ExamAttemptService;
-import com.aptisprep.service.contract.IntegrationModels.AdminHistoryFilter;
 import java.security.Principal;
 import java.time.*;
 import java.util.List;
@@ -50,7 +50,7 @@ public class AdminResultController {
                         principal.getName(),
                         page,
                         size,
-                        new AdminHistoryFilter(q, skill, examType, state, fromValue, toValue));
+                        new AdminHistoryFilterDTO(q, skill, examType, state, fromValue, toValue));
         model.addAttribute("history", history);
         model.addAttribute("totalPages", (history.totalItems() + size - 1) / size);
         model.addAttribute("q", q);

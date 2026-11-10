@@ -11,6 +11,7 @@ import com.aptisprep.mvc.common.event.AttemptSubmittedEvent;
 import com.aptisprep.mvc.common.exception.AccessDeniedException;
 import com.aptisprep.mvc.common.exception.BusinessRuleException;
 import com.aptisprep.mvc.common.exception.ResourceNotFoundException;
+import com.aptisprep.mvc.exam.dto.LockedAnswerDTO;
 import com.aptisprep.mvc.exam.entity.ExamAttemptEntity;
 import com.aptisprep.mvc.exam.entity.ExamAttemptSnapshotEntity;
 import com.aptisprep.mvc.exam.entity.UserAnswerEntity;
@@ -28,7 +29,6 @@ import com.aptisprep.mvc.grading.service.AttemptFinalizationService;
 import com.aptisprep.mvc.scoring.service.ScoringPolicyService;
 import com.aptisprep.mvc.scoring.service.ScoringPolicyService.SkillScore;
 import com.aptisprep.mvc.scoring.service.impl.CheckpointScorePolicy;
-import com.aptisprep.service.contract.IntegrationModels.LockedAnswer;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDateTime;
@@ -372,7 +372,7 @@ public class AttemptFinalizationServiceImpl implements AttemptFinalizationServic
         if (event == null || event.lockedAttempt() == null || !accepts(event)) return;
         if (reason == null) return;
         Set<String> unavailableSkills = new HashSet<>();
-        for (LockedAnswer answer : event.lockedAttempt().answers()) {
+        for (LockedAnswerDTO answer : event.lockedAttempt().answers()) {
             if (("WRITING_TEXT".equals(answer.questionType())
                             || "SPEAKING_AUDIO".equals(answer.questionType()))
                     && answer.skill() != null) {
@@ -455,7 +455,7 @@ public class AttemptFinalizationServiceImpl implements AttemptFinalizationServic
         List<UserAnswerEntity> expected = examGrading.findAnswersByAttemptId(attempt.getId());
         if (expected.size() != event.lockedAttempt().answers().size()) return false;
         Set<Integer> seen = new HashSet<>();
-        for (LockedAnswer snapshot : event.lockedAttempt().answers()) {
+        for (LockedAnswerDTO snapshot : event.lockedAttempt().answers()) {
             if (snapshot == null || !seen.add(snapshot.answerId())) return false;
             UserAnswerEntity actual =
                     expected.stream()

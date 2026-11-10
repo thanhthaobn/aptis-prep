@@ -7,7 +7,6 @@ import static org.hamcrest.Matchers.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-import com.aptisprep.dto.view.StudentCatalogView.Entry;
 import com.aptisprep.mvc.auth.entity.User;
 import com.aptisprep.mvc.auth.repository.UserRepository;
 import com.aptisprep.mvc.catalog.entity.*;
@@ -26,7 +25,8 @@ import com.aptisprep.mvc.scoring.entity.*;
 import com.aptisprep.mvc.scoring.entity.ScoringScheme;
 import com.aptisprep.mvc.scoring.repository.*;
 import com.aptisprep.mvc.storage.service.StorageService;
-import com.aptisprep.service.student.StudentExamCatalogService.Category;
+import com.aptisprep.mvc.student.dto.StudentCatalogViewDTO.Entry;
+import com.aptisprep.mvc.student.service.StudentExamCatalogService.Category;
 import com.aptisprep.support.TestAudio;
 import java.time.LocalDateTime;
 import java.util.HashSet;

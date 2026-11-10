@@ -1,12 +1,12 @@
-package com.aptisprep.service.admin;
+package com.aptisprep.mvc.student.service;
 
-import com.aptisprep.dto.view.AdminStudentView;
 import com.aptisprep.mvc.common.enums.UserStatus;
+import com.aptisprep.mvc.student.dto.AdminStudentViewDTO;
 
 public interface StudentManagementService {
-    AdminStudentView.Page list(String query, UserStatus status, int page, int size);
+    AdminStudentViewDTO.Page list(String query, UserStatus status, int page, int size);
 
-    AdminStudentView.Detail detail(Integer id, int attemptPage, int attemptSize);
+    AdminStudentViewDTO.Detail detail(Integer id, int attemptPage, int attemptSize);
 
     void lock(String adminEmail, Integer id, String reason);
 
