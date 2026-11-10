@@ -24,7 +24,8 @@ import org.springframework.web.util.pattern.PathPatternParser;
 public class SessionAuthenticationFilter extends OncePerRequestFilter {
     private static final List<PathPattern> ASSETS =
             paths("/css/**", "/js/**", "/images/**", "/demo/**");
-    private static final List<PathPattern> PUBLIC = paths("/", "/login", "/register", "/error");
+    private static final List<PathPattern> PUBLIC =
+            paths("/", "/login", "/register", "/account-locked", "/error");
     private static final List<PathPattern> ADMIN = paths("/admin/**");
     private static final List<PathPattern> STUDENT =
             paths("/student/**", "/lessons/**", "/exams/**", "/attempts/**");

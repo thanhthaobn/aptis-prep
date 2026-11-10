@@ -110,6 +110,7 @@ class SecurityFlowTests {
         mockMvc.perform(
                         post("/admin/students/" + id + "/lock")
                                 .with(user("admin@aptis.local").roles("ADMIN"))
+                                .param("reason", "Vi phạm quy định sử dụng")
                                 .with(csrf()))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(redirectedUrl("/admin/students/" + id));
@@ -129,6 +130,24 @@ class SecurityFlowTests {
                 .andExpect(status().is3xxRedirection());
         org.junit.jupiter.api.Assertions.assertEquals(
                 UserStatus.ACTIVE, users.findById(id).orElseThrow().getStatus());
+    }
+
+    @Test
+    void lockedAccountLoginShowsTheAdministratorReason() throws Exception {
+        User student = saveIfMissing("Bị khóa", "locked-login@example.com", UserStatus.LOCKED);
+        student.setPasswordHash(passwords.encode("Locked-password-42"));
+        student.setLockReason("Tài khoản vi phạm quy định");
+        users.saveAndFlush(student);
+
+        mockMvc.perform(
+                        post("/login")
+                                .with(csrf())
+                                .param("email", student.getEmail())
+                                .param("password", "Locked-password-42"))
+                .andExpect(redirectedUrl("/account-locked"))
+                .andExpect(flash().attribute("lockReason", "Tài khoản vi phạm quy định"));
+
+        mockMvc.perform(get("/account-locked")).andExpect(status().isOk());
     }
 
     @Test
@@ -283,15 +302,16 @@ class SecurityFlowTests {
         }
     }
 
-    private void saveIfMissing(String name, String email, UserStatus status) {
-        if (users.findByEmailIgnoreCase(email).isPresent()) return;
+    private User saveIfMissing(String name, String email, UserStatus status) {
+        var existing = users.findByEmailIgnoreCase(email);
+        if (existing.isPresent()) return existing.get();
         User value = new User();
         value.setFullName(name);
         value.setEmail(email);
         value.setPasswordHash("test-hash");
         value.setRole(Role.STUDENT);
         value.setStatus(status);
-        users.save(value);
+        return users.save(value);
     }
 
     private void saveAdminIfMissing() {

@@ -412,6 +412,7 @@ erDiagram
         string password_hash "VARCHAR(255); NOT NULL"
         string role "VARCHAR(30); NOT NULL"
         string status "VARCHAR(30); NOT NULL"
+        string lock_reason "NVARCHAR(1000); NULL"
         datetime created_at "DATETIME2; NOT NULL"
         datetime updated_at "DATETIME2; NOT NULL"
     }

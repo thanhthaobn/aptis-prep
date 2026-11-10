@@ -40,9 +40,7 @@ public class UserServiceImpl implements UserService {
         }
         Optional<User> user = userRepository.findByEmailIgnoreCase(normalizedEmail);
         String hash = user.map(User::getPasswordHash).orElse(dummyPasswordHash);
-        return passwordHasher.matches(password, hash)
-                ? user.filter(account -> account.getStatus() == UserStatus.ACTIVE).orElse(null)
-                : null;
+        return passwordHasher.matches(password, hash) ? user.orElse(null) : null;
     }
 
     @Override

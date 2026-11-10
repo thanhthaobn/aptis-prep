@@ -43,7 +43,8 @@ public final class AdminStudentView {
             int completedRequiredLessons,
             int totalRequiredLessons,
             String nextLessonTitle,
-            String checkpointState) {
+            String checkpointState,
+            String targetLevel) {
         public String percentLabel() {
             return progressPercent == null ? "Chưa có dữ liệu" : progressPercent + "%";
         }

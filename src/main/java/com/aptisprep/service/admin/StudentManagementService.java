@@ -8,11 +8,11 @@ public interface StudentManagementService {
 
     AdminStudentView.Detail detail(Integer id, int attemptPage, int attemptSize);
 
-    void lock(String adminEmail, Integer id);
+    void lock(String adminEmail, Integer id, String reason);
 
     void unlock(String adminEmail, Integer id);
 
-    void remove(String adminEmail, Integer id);
+    void remove(String adminEmail, Integer id, String reason);
 
     long totalStudents();
 

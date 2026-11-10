@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Tài khoản bị khóa | AptisPrep</title>
+    <link rel="stylesheet" th:href="@{/css/variables.css}" />
+    <link rel="stylesheet" th:href="@{/css/base.css}" />
+    <link rel="stylesheet" th:href="@{/css/layout.css}" />
+    <link rel="stylesheet" th:href="@{/css/components.css}" />
+    <link rel="stylesheet" th:href="@{/css/forms.css}" />
+  </head>
+  <body class="landing-theme">
+    <main class="container ap-container auth-page">
+      <section class="form-card" role="alert">
+        <p class="eyebrow">TÀI KHOẢN</p>
+        <h1>Tài khoản đã bị khóa</h1>
+        <p>Quản trị viên đã khóa tài khoản của bạn.</p>
+        <div class="alert alert-danger ap-alert ap-alert-danger">
+          <strong>Lý do:</strong>
+          <span th:text="${lockReason ?: 'Tài khoản đã bị khóa bởi quản trị viên.'}"></span>
+        </div>
+        <a class="button button-block" th:href="@{/login}">Quay lại đăng nhập</a>
+      </section>
+    </main>
+  </body>
+</html>

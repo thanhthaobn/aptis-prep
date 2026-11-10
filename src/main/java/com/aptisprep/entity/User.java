@@ -39,6 +39,9 @@ public class User {
     @Column(nullable = false, length = 30)
     private UserStatus status;
 
+    @Column(name = "lock_reason", length = 1000)
+    private String lockReason;
+
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 
@@ -103,6 +106,14 @@ public class User {
 
     public void setStatus(UserStatus status) {
         this.status = status;
+    }
+
+    public String getLockReason() {
+        return lockReason;
+    }
+
+    public void setLockReason(String lockReason) {
+        this.lockReason = lockReason;
     }
 
     public LocalDateTime getCreatedAt() {
