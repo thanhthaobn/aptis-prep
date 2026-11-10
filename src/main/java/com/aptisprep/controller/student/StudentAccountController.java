@@ -137,7 +137,13 @@ public class StudentAccountController {
             Principal principal,
             RedirectAttributes redirect) {
         try {
-            AttemptHandle handle = placement.start(principal.getName());
+            // Keep accepting the legacy skill/examId form parameters for bookmarks and
+            // older clients.  The current placement page does not send them and therefore
+            // always starts the single combined placement exam.
+            AttemptHandle handle =
+                    skill != null || examId != null
+                            ? placement.start(principal.getName(), skill, examId)
+                            : placement.start(principal.getName());
             return "redirect:/student/attempts/"
                     + handle.attemptId()
                     + ("IN_PROGRESS".equals(handle.state()) ? "" : "/result");
