@@ -1,7 +1,7 @@
 package com.aptisprep.repository;
 
 import com.aptisprep.entity.ScoringScheme;
-import com.aptisprep.enums.RecordStatus;
+import com.aptisprep.mvc.common.enums.RecordStatus;
 import jakarta.persistence.LockModeType;
 import java.util.List;
 import java.util.Optional;

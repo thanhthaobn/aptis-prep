@@ -1,7 +1,7 @@
 package com.aptisprep.service.exam;
 
 import com.aptisprep.entity.*;
-import com.aptisprep.exception.BusinessRuleException;
+import com.aptisprep.mvc.common.exception.BusinessRuleException;
 import com.aptisprep.repository.*;
 import java.time.Duration;
 import java.time.LocalDateTime;

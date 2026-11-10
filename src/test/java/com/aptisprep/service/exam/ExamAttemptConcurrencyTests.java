@@ -1,6 +1,6 @@
 package com.aptisprep.service.exam;
 
-import static com.aptisprep.security.SessionMvcRequests.user;
+import static com.aptisprep.mvc.common.security.SessionMvcRequests.user;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -19,11 +19,11 @@ import com.aptisprep.entity.ScoreBand;
 import com.aptisprep.entity.ScoringScaleRule;
 import com.aptisprep.entity.ScoringScheme;
 import com.aptisprep.entity.User;
-import com.aptisprep.enums.RecordStatus;
-import com.aptisprep.enums.Role;
-import com.aptisprep.enums.UserStatus;
-import com.aptisprep.exception.AccessDeniedException;
-import com.aptisprep.exception.BusinessRuleException;
+import com.aptisprep.mvc.common.enums.RecordStatus;
+import com.aptisprep.mvc.common.enums.Role;
+import com.aptisprep.mvc.common.enums.UserStatus;
+import com.aptisprep.mvc.common.exception.AccessDeniedException;
+import com.aptisprep.mvc.common.exception.BusinessRuleException;
 import com.aptisprep.repository.AttemptOutboxRepository;
 import com.aptisprep.repository.CertificateRepository;
 import com.aptisprep.repository.ExamAttemptRepository;
@@ -774,7 +774,7 @@ class ExamAttemptConcurrencyTests {
         adminExams.unpublishExam(examId);
         assertEquals("ARCHIVED", exams.findById(examId).orElseThrow().getStatus());
         assertThrows(
-                com.aptisprep.exception.ResourceNotFoundException.class,
+                com.aptisprep.mvc.common.exception.ResourceNotFoundException.class,
                 () -> attempts.start(userId, examId, "new-after-unpublish"));
         attempts.submit(userId, attemptId, "submit-after-unpublish");
         assertEquals("COMPLETED", attemptRepository.findById(attemptId).orElseThrow().getStatus());

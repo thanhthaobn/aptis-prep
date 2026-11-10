@@ -3,12 +3,12 @@ package com.aptisprep.service.exam;
 import static com.aptisprep.service.contract.GradingContextFormatter.DEFAULT_RUBRIC_VERSION;
 
 import com.aptisprep.entity.*;
-import com.aptisprep.enums.Role;
-import com.aptisprep.enums.UserStatus;
-import com.aptisprep.event.AttemptSubmittedEvent;
-import com.aptisprep.exception.AccessDeniedException;
-import com.aptisprep.exception.BusinessRuleException;
-import com.aptisprep.exception.ResourceNotFoundException;
+import com.aptisprep.mvc.common.enums.Role;
+import com.aptisprep.mvc.common.enums.UserStatus;
+import com.aptisprep.mvc.common.event.AttemptSubmittedEvent;
+import com.aptisprep.mvc.common.exception.AccessDeniedException;
+import com.aptisprep.mvc.common.exception.BusinessRuleException;
+import com.aptisprep.mvc.common.exception.ResourceNotFoundException;
 import com.aptisprep.repository.*;
 import com.aptisprep.service.contract.ExamAttemptContract;
 import com.aptisprep.service.contract.GradingContextFormatter;

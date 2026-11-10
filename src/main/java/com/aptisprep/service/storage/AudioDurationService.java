@@ -1,6 +1,6 @@
 package com.aptisprep.service.storage;
 
-import com.aptisprep.exception.BusinessRuleException;
+import com.aptisprep.mvc.common.exception.BusinessRuleException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;

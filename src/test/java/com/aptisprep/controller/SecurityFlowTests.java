@@ -1,7 +1,7 @@
 package com.aptisprep.controller;
 
-import static com.aptisprep.security.SessionMvcRequests.csrf;
-import static com.aptisprep.security.SessionMvcRequests.user;
+import static com.aptisprep.mvc.common.security.SessionMvcRequests.csrf;
+import static com.aptisprep.mvc.common.security.SessionMvcRequests.user;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -15,8 +15,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.view;
 
 import com.aptisprep.entity.User;
-import com.aptisprep.enums.Role;
-import com.aptisprep.enums.UserStatus;
+import com.aptisprep.mvc.common.enums.Role;
+import com.aptisprep.mvc.common.enums.UserStatus;
 import com.aptisprep.repository.UserRepository;
 import com.aptisprep.service.auth.PasswordHasher;
 import java.util.regex.Pattern;

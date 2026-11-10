@@ -1,6 +1,6 @@
 package com.aptisprep.controller.student;
 
-import com.aptisprep.exception.BusinessRuleException;
+import com.aptisprep.mvc.common.exception.BusinessRuleException;
 import com.aptisprep.service.account.AccountAccessService;
 import com.aptisprep.service.exam.ExamAttemptService;
 import com.aptisprep.service.exam.ExamAttemptService.MediaResource;

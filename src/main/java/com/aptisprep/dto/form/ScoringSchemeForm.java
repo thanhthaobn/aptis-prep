@@ -32,9 +32,9 @@ public class ScoringSchemeForm {
     private BigDecimal passingScore;
 
     public ScoringSchemeForm() {
-        for (String skill : com.aptisprep.enums.Skill.codes()) {
+        for (String skill : com.aptisprep.mvc.common.enums.Skill.codes()) {
             skillScales.put(skill, new ScoringScaleRuleForm());
-            for (String level : com.aptisprep.enums.CefrLevel.scoringCodes())
+            for (String level : com.aptisprep.mvc.common.enums.CefrLevel.scoringCodes())
                 ranges.put(skill + "_" + level, new ScoreBandForm());
         }
     }

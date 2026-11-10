@@ -1,6 +1,6 @@
 package com.aptisprep.service.scoring;
 
-import com.aptisprep.enums.CefrLevel;
+import com.aptisprep.mvc.common.enums.CefrLevel;
 import java.math.BigDecimal;
 import java.util.List;
 

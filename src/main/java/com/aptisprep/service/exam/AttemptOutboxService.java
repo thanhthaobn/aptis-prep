@@ -1,9 +1,9 @@
 package com.aptisprep.service.exam;
 
 import com.aptisprep.entity.AttemptOutboxEntity;
-import com.aptisprep.event.AiAssessmentCompletedEvent;
-import com.aptisprep.event.AttemptCompletedEvent;
-import com.aptisprep.event.AttemptSubmittedEvent;
+import com.aptisprep.mvc.common.event.AiAssessmentCompletedEvent;
+import com.aptisprep.mvc.common.event.AttemptCompletedEvent;
+import com.aptisprep.mvc.common.event.AttemptSubmittedEvent;
 import com.aptisprep.repository.AttemptOutboxRepository;
 import com.aptisprep.repository.ExamAttemptRepository;
 import java.nio.charset.StandardCharsets;

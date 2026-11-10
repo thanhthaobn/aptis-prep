@@ -1,7 +1,7 @@
 package com.aptisprep.service.admin;
 
 import com.aptisprep.dto.view.AdminStudentView;
-import com.aptisprep.enums.UserStatus;
+import com.aptisprep.mvc.common.enums.UserStatus;
 
 public interface StudentManagementService {
     AdminStudentView.Page list(String query, UserStatus status, int page, int size);

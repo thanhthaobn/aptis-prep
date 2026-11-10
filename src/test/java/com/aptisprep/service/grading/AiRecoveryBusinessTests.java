@@ -5,10 +5,10 @@ import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 import com.aptisprep.entity.*;
-import com.aptisprep.enums.*;
-import com.aptisprep.event.AiAssessmentCompletedEvent;
-import com.aptisprep.exception.AiGradingException;
-import com.aptisprep.exception.BusinessRuleException;
+import com.aptisprep.mvc.common.enums.*;
+import com.aptisprep.mvc.common.event.AiAssessmentCompletedEvent;
+import com.aptisprep.mvc.common.exception.AiGradingException;
+import com.aptisprep.mvc.common.exception.BusinessRuleException;
 import com.aptisprep.repository.*;
 import com.aptisprep.service.exam.AttemptOutboxService;
 import java.math.BigDecimal;
@@ -60,7 +60,7 @@ class AiRecoveryBusinessTests {
     @Autowired PlatformTransactionManager transactionManager;
     @Autowired ApplicationEventPublisher events;
     @Autowired JsonMapper json;
-    @Autowired com.aptisprep.config.AiProperties properties;
+    @Autowired com.aptisprep.mvc.common.config.AiProperties properties;
 
     @BeforeEach
     void isolateQueuesInTheDedicatedInMemoryDatabase() throws Exception {

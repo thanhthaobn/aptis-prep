@@ -6,8 +6,8 @@ import static org.mockito.Mockito.*;
 
 import com.aptisprep.entity.User;
 import com.aptisprep.entity.UserSkillProfile;
-import com.aptisprep.enums.Role;
-import com.aptisprep.enums.UserStatus;
+import com.aptisprep.mvc.common.enums.Role;
+import com.aptisprep.mvc.common.enums.UserStatus;
 import com.aptisprep.repository.*;
 import com.aptisprep.service.contract.ExamAttemptContract;
 import com.aptisprep.service.contract.IntegrationModels.*;

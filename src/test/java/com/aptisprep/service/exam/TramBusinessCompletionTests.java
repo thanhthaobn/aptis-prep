@@ -3,12 +3,12 @@ package com.aptisprep.service.exam;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-import com.aptisprep.config.AiProperties;
 import com.aptisprep.entity.*;
-import com.aptisprep.enums.*;
-import com.aptisprep.event.AttemptSubmittedEvent;
-import com.aptisprep.exception.BusinessRuleException;
-import com.aptisprep.exception.ResourceNotFoundException;
+import com.aptisprep.mvc.common.config.AiProperties;
+import com.aptisprep.mvc.common.enums.*;
+import com.aptisprep.mvc.common.event.AttemptSubmittedEvent;
+import com.aptisprep.mvc.common.exception.BusinessRuleException;
+import com.aptisprep.mvc.common.exception.ResourceNotFoundException;
 import com.aptisprep.repository.*;
 import com.aptisprep.service.admin.CatalogService;
 import com.aptisprep.service.catalog.PublishedExamCatalogService;

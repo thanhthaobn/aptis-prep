@@ -1,6 +1,6 @@
 package com.aptisprep.service.learning;
 
-import static com.aptisprep.security.SessionMvcRequests.*;
+import static com.aptisprep.mvc.common.security.SessionMvcRequests.*;
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
@@ -8,8 +8,8 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 import com.aptisprep.entity.*;
-import com.aptisprep.enums.*;
-import com.aptisprep.exception.*;
+import com.aptisprep.mvc.common.enums.*;
+import com.aptisprep.mvc.common.exception.*;
 import com.aptisprep.repository.*;
 import com.aptisprep.service.contract.IntegrationModels.*;
 import com.aptisprep.service.exam.ExamAttemptService;
@@ -172,12 +172,12 @@ class LearningPathCheckpointTests {
         tx.executeWithoutResult(
                 status ->
                         events.publishEvent(
-                                new com.aptisprep.event.AttemptCompletedEvent(
+                                new com.aptisprep.mvc.common.event.AttemptCompletedEvent(
                                         user.getId(), 1001, "CHECKPOINT")));
         tx.executeWithoutResult(
                 status ->
                         events.publishEvent(
-                                new com.aptisprep.event.AttemptCompletedEvent(
+                                new com.aptisprep.mvc.common.event.AttemptCompletedEvent(
                                         user.getId(), 1001, "CHECKPOINT")));
         var closed = paths.findById(first.getId()).orElseThrow();
         assertThat(closed.getStatus()).isEqualTo("COMPLETED");

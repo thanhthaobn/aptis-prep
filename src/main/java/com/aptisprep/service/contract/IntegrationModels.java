@@ -211,7 +211,7 @@ public final class IntegrationModels {
                             && skills.stream()
                                     .map(SkillResult::skill)
                                     .collect(java.util.stream.Collectors.toSet())
-                                    .containsAll(com.aptisprep.enums.Skill.codes()));
+                                    .containsAll(com.aptisprep.mvc.common.enums.Skill.codes()));
         }
 
         public String stateLabel() {

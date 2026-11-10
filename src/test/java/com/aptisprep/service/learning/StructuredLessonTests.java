@@ -1,16 +1,16 @@
 package com.aptisprep.service.learning;
 
-import static com.aptisprep.security.SessionMvcRequests.*;
+import static com.aptisprep.mvc.common.security.SessionMvcRequests.*;
 import static org.assertj.core.api.Assertions.*;
 import static org.hamcrest.Matchers.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-import com.aptisprep.config.StorageProperties;
 import com.aptisprep.dto.form.LessonForm;
 import com.aptisprep.entity.*;
-import com.aptisprep.enums.*;
-import com.aptisprep.exception.BusinessRuleException;
+import com.aptisprep.mvc.common.config.StorageProperties;
+import com.aptisprep.mvc.common.enums.*;
+import com.aptisprep.mvc.common.exception.BusinessRuleException;
 import com.aptisprep.repository.*;
 import com.aptisprep.service.storage.StorageService;
 import com.aptisprep.support.TestAudio;

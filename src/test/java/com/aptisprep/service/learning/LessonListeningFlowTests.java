@@ -1,13 +1,13 @@
 package com.aptisprep.service.learning;
 
-import static com.aptisprep.security.SessionMvcRequests.*;
+import static com.aptisprep.mvc.common.security.SessionMvcRequests.*;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 import com.aptisprep.entity.*;
-import com.aptisprep.enums.*;
+import com.aptisprep.mvc.common.enums.*;
 import com.aptisprep.repository.*;
 import com.aptisprep.service.storage.AudioDurationService;
 import java.time.Instant;

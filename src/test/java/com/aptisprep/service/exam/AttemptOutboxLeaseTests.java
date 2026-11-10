@@ -4,7 +4,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 import com.aptisprep.entity.AttemptOutboxEntity;
-import com.aptisprep.event.AttemptCompletedEvent;
+import com.aptisprep.mvc.common.event.AttemptCompletedEvent;
 import com.aptisprep.repository.AttemptOutboxRepository;
 import com.aptisprep.repository.ExamAttemptRepository;
 import java.time.LocalDateTime;

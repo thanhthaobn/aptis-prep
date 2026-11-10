@@ -30,7 +30,7 @@ class PlacementExamCatalogServiceTests {
                 .thenReturn(List.of(placement, practice, empty));
         when(examQuestions.findByMockExamIdOrderByPosition(101)).thenReturn(List.of(link));
         when(examQuestions.findByMockExamIdOrderByPosition(103)).thenReturn(List.of());
-        doThrow(new com.aptisprep.exception.BusinessRuleException("Empty exam"))
+        doThrow(new com.aptisprep.mvc.common.exception.BusinessRuleException("Empty exam"))
                 .when(validator)
                 .validate(eq(empty), anyList());
 

@@ -4,7 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import com.aptisprep.config.AiProperties;
+import com.aptisprep.mvc.common.config.AiProperties;
 import java.math.BigDecimal;
 import java.util.Set;
 import org.junit.jupiter.api.Assumptions;

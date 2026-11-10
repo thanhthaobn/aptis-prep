@@ -1,7 +1,7 @@
 package com.aptisprep.repository;
 
 import com.aptisprep.entity.AiAssessmentJob;
-import com.aptisprep.enums.AiJobState;
+import com.aptisprep.mvc.common.enums.AiJobState;
 import jakarta.persistence.LockModeType;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -85,11 +85,11 @@ public interface AiAssessmentJobRepository extends JpaRepository<AiAssessmentJob
             """
 select job.assessmentKey from AiAssessmentJob job
 where job.sourceType = 'EXAM_ANSWER'
-  and job.state = com.aptisprep.enums.AiJobState.COMPLETED
+  and job.state = com.aptisprep.mvc.common.enums.AiJobState.COMPLETED
   and job.attemptId is not null and job.answerId is not null
   and exists (select a.id from AiAssessment a where a.job.id = job.id
       and a.answerVersion = job.answerVersion
-      and a.state = com.aptisprep.enums.AiAssessmentState.COMPLETED and a.score is not null)
+      and a.state = com.aptisprep.mvc.common.enums.AiAssessmentState.COMPLETED and a.score is not null)
   and not exists (select o.id from AttemptOutboxEntity o
       where o.eventKey = concat('ai:', job.assessmentKey, ':v', cast(job.answerVersion as string), ':COMPLETED'))
 order by job.id

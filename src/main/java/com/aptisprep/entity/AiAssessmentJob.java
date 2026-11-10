@@ -1,6 +1,6 @@
 package com.aptisprep.entity;
 
-import com.aptisprep.enums.AiJobState;
+import com.aptisprep.mvc.common.enums.AiJobState;
 import jakarta.persistence.*;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;

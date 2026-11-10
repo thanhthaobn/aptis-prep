@@ -1,7 +1,7 @@
 package com.aptisprep.controller;
 
-import static com.aptisprep.security.SessionMvcRequests.csrf;
-import static com.aptisprep.security.SessionMvcRequests.user;
+import static com.aptisprep.mvc.common.security.SessionMvcRequests.csrf;
+import static com.aptisprep.mvc.common.security.SessionMvcRequests.user;
 import static org.hamcrest.Matchers.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -12,7 +12,7 @@ import com.aptisprep.entity.MockExamEntity;
 import com.aptisprep.entity.ScoreBand;
 import com.aptisprep.entity.ScoringScheme;
 import com.aptisprep.entity.User;
-import com.aptisprep.enums.RecordStatus;
+import com.aptisprep.mvc.common.enums.RecordStatus;
 import com.aptisprep.repository.CertificateRepository;
 import com.aptisprep.repository.MockExamRepository;
 import com.aptisprep.repository.ScoreBandRepository;
@@ -51,8 +51,9 @@ class AdminScoringPreviewTests {
                                     value.setFullName("Test Admin");
                                     value.setEmail("admin@aptis.local");
                                     value.setPasswordHash("test-hash");
-                                    value.setRole(com.aptisprep.enums.Role.ADMIN);
-                                    value.setStatus(com.aptisprep.enums.UserStatus.ACTIVE);
+                                    value.setRole(com.aptisprep.mvc.common.enums.Role.ADMIN);
+                                    value.setStatus(
+                                            com.aptisprep.mvc.common.enums.UserStatus.ACTIVE);
                                     return users.save(value);
                                 });
         certificate =

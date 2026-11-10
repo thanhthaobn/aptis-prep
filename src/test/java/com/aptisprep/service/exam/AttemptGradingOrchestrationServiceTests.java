@@ -4,8 +4,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
-import com.aptisprep.config.AiProperties;
-import com.aptisprep.event.AttemptSubmittedEvent;
+import com.aptisprep.mvc.common.config.AiProperties;
+import com.aptisprep.mvc.common.event.AttemptSubmittedEvent;
 import com.aptisprep.service.contract.AiAssessmentContract;
 import com.aptisprep.service.contract.AiAssessmentContract.AssessmentRequest;
 import com.aptisprep.service.contract.IntegrationModels.LockedAnswer;

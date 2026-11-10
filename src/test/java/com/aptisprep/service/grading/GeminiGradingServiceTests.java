@@ -4,8 +4,8 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.*;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.*;
 
-import com.aptisprep.config.AiProperties;
-import com.aptisprep.exception.AiGradingException;
+import com.aptisprep.mvc.common.config.AiProperties;
+import com.aptisprep.mvc.common.exception.AiGradingException;
 import java.math.BigDecimal;
 import java.nio.file.Files;
 import java.nio.file.Path;

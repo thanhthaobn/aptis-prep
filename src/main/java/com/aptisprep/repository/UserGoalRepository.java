@@ -1,7 +1,7 @@
 package com.aptisprep.repository;
 
 import com.aptisprep.entity.UserGoal;
-import com.aptisprep.enums.GoalStatus;
+import com.aptisprep.mvc.common.enums.GoalStatus;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 

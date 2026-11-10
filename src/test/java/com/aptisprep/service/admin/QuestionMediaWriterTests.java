@@ -4,7 +4,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 import com.aptisprep.entity.QuestionMediaEntity;
-import com.aptisprep.exception.BusinessRuleException;
+import com.aptisprep.mvc.common.exception.BusinessRuleException;
 import com.aptisprep.repository.QuestionMediaRepository;
 import com.aptisprep.service.storage.StorageService;
 import org.junit.jupiter.api.Test;

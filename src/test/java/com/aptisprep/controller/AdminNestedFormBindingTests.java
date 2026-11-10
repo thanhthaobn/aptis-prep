@@ -1,12 +1,12 @@
 package com.aptisprep.controller;
 
-import static com.aptisprep.security.SessionMvcRequests.*;
+import static com.aptisprep.mvc.common.security.SessionMvcRequests.*;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 import com.aptisprep.entity.*;
-import com.aptisprep.enums.*;
+import com.aptisprep.mvc.common.enums.*;
 import com.aptisprep.repository.*;
 import java.util.*;
 import java.util.regex.Pattern;

@@ -4,10 +4,10 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
-import com.aptisprep.config.AiProperties;
 import com.aptisprep.entity.*;
-import com.aptisprep.enums.*;
-import com.aptisprep.exception.AiGradingException;
+import com.aptisprep.mvc.common.config.AiProperties;
+import com.aptisprep.mvc.common.enums.*;
+import com.aptisprep.mvc.common.exception.AiGradingException;
 import com.aptisprep.repository.*;
 import com.aptisprep.service.grading.GeminiGradingService;
 import com.aptisprep.service.grading.GradingResult;
@@ -135,10 +135,10 @@ class SubjectiveBlankSubmissionTests {
                 attempts.start(owner.user().getId(), owner.exam().getId(), "owner-check")
                         .attemptId();
         assertThrows(
-                com.aptisprep.exception.AccessDeniedException.class,
+                com.aptisprep.mvc.common.exception.AccessDeniedException.class,
                 () -> attempts.canRegradeEmpty(other.user().getId(), attemptId));
         assertThrows(
-                com.aptisprep.exception.AccessDeniedException.class,
+                com.aptisprep.mvc.common.exception.AccessDeniedException.class,
                 () -> attempts.regradeEmpty(other.user().getId(), attemptId));
     }
 
@@ -167,7 +167,7 @@ class SubjectiveBlankSubmissionTests {
                         .scaleScore());
         assertFalse(attempts.canRegradeEmpty(fixture.user().getId(), attemptId));
         assertThrows(
-                com.aptisprep.exception.BusinessRuleException.class,
+                com.aptisprep.mvc.common.exception.BusinessRuleException.class,
                 () -> attempts.regradeEmpty(fixture.user().getId(), attemptId));
         verifyNoInteractions(provider);
     }
@@ -242,7 +242,7 @@ class SubjectiveBlankSubmissionTests {
         assertNull(result.skills().getFirst().scaleScore());
         assertFalse(attempts.canRegradeEmpty(fixture.user().getId(), attemptId));
         assertThrows(
-                com.aptisprep.exception.BusinessRuleException.class,
+                com.aptisprep.mvc.common.exception.BusinessRuleException.class,
                 () -> attempts.regradeEmpty(fixture.user().getId(), attemptId));
     }
 

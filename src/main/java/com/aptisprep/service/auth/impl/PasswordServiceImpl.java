@@ -1,8 +1,8 @@
 package com.aptisprep.service.auth.impl;
 
 import com.aptisprep.entity.User;
-import com.aptisprep.enums.UserStatus;
-import com.aptisprep.exception.BusinessRuleException;
+import com.aptisprep.mvc.common.enums.UserStatus;
+import com.aptisprep.mvc.common.exception.BusinessRuleException;
 import com.aptisprep.repository.UserRepository;
 import com.aptisprep.service.auth.PasswordHasher;
 import com.aptisprep.service.auth.PasswordService;

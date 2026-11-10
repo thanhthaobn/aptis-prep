@@ -1,6 +1,6 @@
 package com.aptisprep.service.placement;
 
-import com.aptisprep.event.AttemptCompletedEvent;
+import com.aptisprep.mvc.common.event.AttemptCompletedEvent;
 import com.aptisprep.service.account.AccountAccessService;
 import com.aptisprep.service.contract.LearningPathContract;
 import com.aptisprep.service.exam.AttemptOutboxService;

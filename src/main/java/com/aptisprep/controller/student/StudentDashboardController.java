@@ -2,7 +2,7 @@ package com.aptisprep.controller.student;
 
 import com.aptisprep.dto.view.AccountSnapshot;
 import com.aptisprep.dto.view.AccountSnapshot.SkillView;
-import com.aptisprep.enums.Skill;
+import com.aptisprep.mvc.common.enums.Skill;
 import com.aptisprep.service.account.AccountProfileService;
 import com.aptisprep.service.account.LearningActivityService;
 import com.aptisprep.service.contract.ExamAttemptContract;

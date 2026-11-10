@@ -1,8 +1,8 @@
 package com.aptisprep.repository;
 
 import com.aptisprep.entity.User;
-import com.aptisprep.enums.Role;
-import com.aptisprep.enums.UserStatus;
+import com.aptisprep.mvc.common.enums.Role;
+import com.aptisprep.mvc.common.enums.UserStatus;
 import jakarta.persistence.LockModeType;
 import java.util.Optional;
 import org.springframework.data.domain.Page;

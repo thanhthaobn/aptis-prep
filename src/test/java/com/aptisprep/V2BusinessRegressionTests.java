@@ -1,14 +1,14 @@
 package com.aptisprep;
 
-import static com.aptisprep.security.SessionMvcRequests.*;
+import static com.aptisprep.mvc.common.security.SessionMvcRequests.*;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 import com.aptisprep.dto.form.*;
 import com.aptisprep.entity.*;
-import com.aptisprep.enums.*;
-import com.aptisprep.exception.BusinessRuleException;
+import com.aptisprep.mvc.common.enums.*;
+import com.aptisprep.mvc.common.exception.BusinessRuleException;
 import com.aptisprep.repository.*;
 import com.aptisprep.service.account.AccountProfileService;
 import com.aptisprep.service.admin.CatalogService;
@@ -511,7 +511,7 @@ class V2BusinessRegressionTests {
                 .andExpect(status().is3xxRedirection())
                 .andExpect(flash().attributeExists("error"));
         assertThrows(
-                com.aptisprep.exception.ResourceNotFoundException.class,
+                com.aptisprep.mvc.common.exception.ResourceNotFoundException.class,
                 () -> studentCatalog.entry("exams", exam.getId()));
         assertEquals(0, attempts.countByUserId(learner.getId()));
     }
@@ -532,7 +532,7 @@ class V2BusinessRegressionTests {
                 BusinessRuleException.class,
                 () -> engine.start(learner.getId(), exam.getId(), "foreign-section"));
         assertThrows(
-                com.aptisprep.exception.ResourceNotFoundException.class,
+                com.aptisprep.mvc.common.exception.ResourceNotFoundException.class,
                 () -> studentCatalog.entry("exams", exam.getId()));
         assertEquals(0, attempts.countByUserId(learner.getId()));
     }
@@ -559,7 +559,7 @@ class V2BusinessRegressionTests {
                 BusinessRuleException.class,
                 () -> engine.start(learner.getId(), exam.getId(), "wrong-exam-skill"));
         assertThrows(
-                com.aptisprep.exception.ResourceNotFoundException.class,
+                com.aptisprep.mvc.common.exception.ResourceNotFoundException.class,
                 () -> studentCatalog.entry("exams", exam.getId()));
     }
 
@@ -573,7 +573,7 @@ class V2BusinessRegressionTests {
                 BusinessRuleException.class,
                 () -> engine.start(learner.getId(), exam.getId(), "placement:forged"));
         assertThrows(
-                com.aptisprep.exception.ResourceNotFoundException.class,
+                com.aptisprep.mvc.common.exception.ResourceNotFoundException.class,
                 () -> studentCatalog.entry("exams", exam.getId()));
         assertTrue(
                 placementCatalog.findPublished("READING").stream()
@@ -624,7 +624,7 @@ class V2BusinessRegressionTests {
                 BusinessRuleException.class,
                 () -> engine.startPlacement(learner.getId(), exam.getId(), "inactive-policy"));
         assertThrows(
-                com.aptisprep.exception.ResourceNotFoundException.class,
+                com.aptisprep.mvc.common.exception.ResourceNotFoundException.class,
                 () -> studentCatalog.entry("exams", exam.getId()));
         assertEquals(0, attempts.countByUserId(learner.getId()));
     }

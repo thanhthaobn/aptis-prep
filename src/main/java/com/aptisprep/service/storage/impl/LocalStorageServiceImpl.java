@@ -1,7 +1,7 @@
 package com.aptisprep.service.storage.impl;
 
-import com.aptisprep.config.StorageProperties;
-import com.aptisprep.exception.BusinessRuleException;
+import com.aptisprep.mvc.common.config.StorageProperties;
+import com.aptisprep.mvc.common.exception.BusinessRuleException;
 import com.aptisprep.service.storage.LocalStorageService;
 import java.io.IOException;
 import java.io.InputStream;

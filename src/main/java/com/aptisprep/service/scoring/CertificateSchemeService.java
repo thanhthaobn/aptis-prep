@@ -1,10 +1,10 @@
 package com.aptisprep.service.scoring;
 
 import com.aptisprep.entity.*;
-import com.aptisprep.enums.RecordStatus;
-import com.aptisprep.enums.Skill;
-import com.aptisprep.exception.BusinessRuleException;
-import com.aptisprep.exception.ResourceNotFoundException;
+import com.aptisprep.mvc.common.enums.RecordStatus;
+import com.aptisprep.mvc.common.enums.Skill;
+import com.aptisprep.mvc.common.exception.BusinessRuleException;
+import com.aptisprep.mvc.common.exception.ResourceNotFoundException;
 import com.aptisprep.repository.*;
 import com.aptisprep.service.contract.CertificateSchemeContract;
 import java.util.*;

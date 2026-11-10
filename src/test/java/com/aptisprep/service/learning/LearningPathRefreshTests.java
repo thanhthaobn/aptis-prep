@@ -3,7 +3,7 @@ package com.aptisprep.service.learning;
 import static org.assertj.core.api.Assertions.*;
 
 import com.aptisprep.entity.*;
-import com.aptisprep.enums.*;
+import com.aptisprep.mvc.common.enums.*;
 import com.aptisprep.repository.*;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;

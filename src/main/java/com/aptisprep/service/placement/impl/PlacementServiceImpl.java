@@ -1,6 +1,6 @@
 package com.aptisprep.service.placement.impl;
 
-import com.aptisprep.exception.BusinessRuleException;
+import com.aptisprep.mvc.common.exception.BusinessRuleException;
 import com.aptisprep.service.contract.AccountAccessContract;
 import com.aptisprep.service.contract.ExamAttemptContract;
 import com.aptisprep.service.contract.ExamCatalogContract;

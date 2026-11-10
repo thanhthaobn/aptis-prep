@@ -1,7 +1,7 @@
 package com.aptisprep.controller;
 
-import static com.aptisprep.security.SessionMvcRequests.csrf;
-import static com.aptisprep.security.SessionMvcRequests.user;
+import static com.aptisprep.mvc.common.security.SessionMvcRequests.csrf;
+import static com.aptisprep.mvc.common.security.SessionMvcRequests.user;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.not;
@@ -13,8 +13,8 @@ import com.aptisprep.entity.ExamAttemptEntity;
 import com.aptisprep.entity.ExamSkillResultEntity;
 import com.aptisprep.entity.MockExamEntity;
 import com.aptisprep.entity.User;
-import com.aptisprep.enums.Role;
-import com.aptisprep.enums.UserStatus;
+import com.aptisprep.mvc.common.enums.Role;
+import com.aptisprep.mvc.common.enums.UserStatus;
 import com.aptisprep.repository.ExamAttemptRepository;
 import com.aptisprep.repository.ExamSkillResultRepository;
 import com.aptisprep.repository.MockExamRepository;

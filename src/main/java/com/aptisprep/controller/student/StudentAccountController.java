@@ -1,11 +1,11 @@
 package com.aptisprep.controller.student;
 
-import com.aptisprep.controller.ListPagination;
 import com.aptisprep.dto.form.GoalForm;
 import com.aptisprep.dto.form.ProfileForm;
 import com.aptisprep.dto.view.AccountSnapshot;
-import com.aptisprep.enums.Skill;
-import com.aptisprep.exception.BusinessRuleException;
+import com.aptisprep.mvc.common.enums.Skill;
+import com.aptisprep.mvc.common.exception.BusinessRuleException;
+import com.aptisprep.mvc.common.util.ListPagination;
 import com.aptisprep.service.account.AccountAccessService;
 import com.aptisprep.service.account.AccountProfileService;
 import com.aptisprep.service.account.LearningActivityService;

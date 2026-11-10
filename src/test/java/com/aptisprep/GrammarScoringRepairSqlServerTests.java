@@ -4,7 +4,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 import com.aptisprep.entity.*;
-import com.aptisprep.enums.RecordStatus;
+import com.aptisprep.mvc.common.enums.RecordStatus;
 import com.aptisprep.repository.*;
 import java.math.BigDecimal;
 import java.nio.file.Files;
@@ -223,7 +223,7 @@ class GrammarScoringRepairSqlServerTests {
                 new BigDecimal("30.00"),
                 service.scale(schemeId, "GRAMMAR_VOCABULARY", new BigDecimal("30")));
         assertThrows(
-                com.aptisprep.exception.BusinessRuleException.class,
+                com.aptisprep.mvc.common.exception.BusinessRuleException.class,
                 () ->
                         service.estimatedLevel(
                                 schemeId, "GRAMMAR_VOCABULARY", new BigDecimal("50.01")));

@@ -1,6 +1,6 @@
 package com.aptisprep.entity;
 
-import com.aptisprep.enums.RecordStatus;
+import com.aptisprep.mvc.common.enums.RecordStatus;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 

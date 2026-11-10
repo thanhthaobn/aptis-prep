@@ -1,12 +1,12 @@
 package com.aptisprep.controller;
 
-import static com.aptisprep.security.SessionMvcRequests.*;
+import static com.aptisprep.mvc.common.security.SessionMvcRequests.*;
 import static org.assertj.core.api.Assertions.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 import com.aptisprep.entity.User;
-import com.aptisprep.enums.*;
+import com.aptisprep.mvc.common.enums.*;
 import com.aptisprep.repository.UserRepository;
 import com.aptisprep.service.auth.PasswordHasher;
 import org.junit.jupiter.api.Test;

@@ -3,7 +3,7 @@ package com.aptisprep.controller.admin;
 import com.aptisprep.dto.form.ExamForm;
 import com.aptisprep.dto.form.QuestionForm;
 import com.aptisprep.dto.view.AdminCatalogView.CatalogPage;
-import com.aptisprep.exception.BusinessRuleException;
+import com.aptisprep.mvc.common.exception.BusinessRuleException;
 import com.aptisprep.service.admin.CatalogService;
 import java.util.Map;
 import org.springframework.core.io.Resource;

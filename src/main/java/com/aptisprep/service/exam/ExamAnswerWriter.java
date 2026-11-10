@@ -1,7 +1,7 @@
 package com.aptisprep.service.exam;
 
 import com.aptisprep.entity.*;
-import com.aptisprep.exception.*;
+import com.aptisprep.mvc.common.exception.*;
 import com.aptisprep.repository.*;
 import com.aptisprep.service.contract.GradingTextLimits;
 import com.aptisprep.service.storage.AudioUploadService;

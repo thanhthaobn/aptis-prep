@@ -1,7 +1,7 @@
 package com.aptisprep.entity;
 
-import com.aptisprep.enums.Role;
-import com.aptisprep.enums.UserStatus;
+import com.aptisprep.mvc.common.enums.Role;
+import com.aptisprep.mvc.common.enums.UserStatus;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;

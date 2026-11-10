@@ -1,6 +1,6 @@
 package com.aptisprep.service.learning;
 
-import static com.aptisprep.security.SessionMvcRequests.*;
+import static com.aptisprep.mvc.common.security.SessionMvcRequests.*;
 import static org.assertj.core.api.Assertions.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -9,7 +9,7 @@ import com.aptisprep.dto.form.FlashcardSetForm;
 import com.aptisprep.dto.view.FlashcardViews;
 import com.aptisprep.entity.Lesson;
 import com.aptisprep.entity.User;
-import com.aptisprep.enums.*;
+import com.aptisprep.mvc.common.enums.*;
 import com.aptisprep.repository.*;
 import com.aptisprep.service.storage.StorageService;
 import com.aptisprep.support.TestAudio;
@@ -440,7 +440,7 @@ class FlashcardFlowTests {
         var id = service.savePersonal(null, f, a.getEmail());
         assertThat(service.listForStudent(a.getEmail())).anyMatch(s -> s.id().equals(id));
         assertThatThrownBy(() -> service.archivePersonal(id, b.getEmail()))
-                .isInstanceOf(com.aptisprep.exception.ResourceNotFoundException.class);
+                .isInstanceOf(com.aptisprep.mvc.common.exception.ResourceNotFoundException.class);
         service.archivePersonal(id, a.getEmail());
         assertThat(service.listForStudent(a.getEmail())).noneMatch(s -> s.id().equals(id));
     }

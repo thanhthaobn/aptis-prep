@@ -3,7 +3,7 @@ package com.aptisprep;
 import static org.junit.jupiter.api.Assertions.*;
 
 import com.aptisprep.dto.form.LessonForm;
-import com.aptisprep.exception.BusinessRuleException;
+import com.aptisprep.mvc.common.exception.BusinessRuleException;
 import com.aptisprep.repository.*;
 import com.aptisprep.service.learning.LessonTeachingService;
 import java.nio.file.*;
@@ -239,7 +239,7 @@ class V2SqlServerPreservationTests {
                                     null,
                                     repositories.getRepository(LessonProgressRepository.class),
                                     null,
-                                    new com.aptisprep.config.AiProperties());
+                                    new com.aptisprep.mvc.common.config.AiProperties());
                     // Storage and AI are intentionally unused by Knowledge Check operations.
                     var lesson = new com.aptisprep.entity.Lesson();
                     lesson.setTitle("SQL Server Knowledge Check regression");
@@ -350,14 +350,14 @@ class V2SqlServerPreservationTests {
                         .toList());
         assertTrue(
                 jobs.findRecoverableKeys(
-                                com.aptisprep.enums.AiJobState.PENDING,
-                                com.aptisprep.enums.AiJobState.PROCESSING,
+                                com.aptisprep.mvc.common.enums.AiJobState.PENDING,
+                                com.aptisprep.mvc.common.enums.AiJobState.PROCESSING,
                                 java.time.LocalDateTime.now(),
                                 java.time.LocalDateTime.now().minusMinutes(15),
                                 org.springframework.data.domain.PageRequest.of(0, 50))
                         .contains(examJob.getAssessmentKey()));
-        examJob.setState(com.aptisprep.enums.AiJobState.ERROR);
-        lessonJob.setState(com.aptisprep.enums.AiJobState.ERROR);
+        examJob.setState(com.aptisprep.mvc.common.enums.AiJobState.ERROR);
+        lessonJob.setState(com.aptisprep.mvc.common.enums.AiJobState.ERROR);
         em.flush();
         assertEquals(
                 List.of(examJob.getAssessmentKey()),
@@ -368,11 +368,11 @@ class V2SqlServerPreservationTests {
                                 1,
                                 "p1",
                                 "r1",
-                                com.aptisprep.enums.AiJobState.ERROR)
+                                com.aptisprep.mvc.common.enums.AiJobState.ERROR)
                         .stream()
                         .map(com.aptisprep.entity.AiAssessmentJob::getAssessmentKey)
                         .toList());
-        examJob.setState(com.aptisprep.enums.AiJobState.COMPLETED);
+        examJob.setState(com.aptisprep.mvc.common.enums.AiJobState.COMPLETED);
         var assessment = new com.aptisprep.entity.AiAssessment();
         assessment.setJob(examJob);
         assessment.setAssessmentKey(examJob.getAssessmentKey());
@@ -380,7 +380,7 @@ class V2SqlServerPreservationTests {
         assessment.setAnswerVersion(1);
         assessment.setPolicyVersion("p1");
         assessment.setRubricVersion("r1");
-        assessment.setState(com.aptisprep.enums.AiAssessmentState.COMPLETED);
+        assessment.setState(com.aptisprep.mvc.common.enums.AiAssessmentState.COMPLETED);
         assessment.setScore(java.math.BigDecimal.valueOf(20));
         em.persist(assessment);
         em.flush();
@@ -419,7 +419,7 @@ class V2SqlServerPreservationTests {
         job.setTaskContent("SQL regression task");
         job.setLockedContent("Preserved response");
         job.setMaxScore(java.math.BigDecimal.valueOf(50));
-        job.setState(com.aptisprep.enums.AiJobState.PENDING);
+        job.setState(com.aptisprep.mvc.common.enums.AiJobState.PENDING);
         return job;
     }
 

@@ -1,7 +1,7 @@
 package com.aptisprep.service.admin;
 
 import com.aptisprep.entity.QuestionMediaEntity;
-import com.aptisprep.exception.BusinessRuleException;
+import com.aptisprep.mvc.common.exception.BusinessRuleException;
 import com.aptisprep.repository.QuestionMediaRepository;
 import com.aptisprep.service.storage.StorageService;
 import java.io.IOException;

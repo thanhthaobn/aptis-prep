@@ -2,8 +2,8 @@ package com.aptisprep.service.storage;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import com.aptisprep.config.StorageProperties;
-import com.aptisprep.exception.BusinessRuleException;
+import com.aptisprep.mvc.common.config.StorageProperties;
+import com.aptisprep.mvc.common.exception.BusinessRuleException;
 import com.aptisprep.support.TestAudio;
 import java.nio.file.Files;
 import java.nio.file.Path;

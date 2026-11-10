@@ -1,7 +1,7 @@
 package com.aptisprep.controller;
 
-import static com.aptisprep.security.SessionMvcRequests.csrf;
-import static com.aptisprep.security.SessionMvcRequests.user;
+import static com.aptisprep.mvc.common.security.SessionMvcRequests.csrf;
+import static com.aptisprep.mvc.common.security.SessionMvcRequests.user;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
@@ -14,9 +14,9 @@ import com.aptisprep.entity.QuestionEntity;
 import com.aptisprep.entity.QuestionMediaEntity;
 import com.aptisprep.entity.ScoringScheme;
 import com.aptisprep.entity.User;
-import com.aptisprep.enums.RecordStatus;
-import com.aptisprep.enums.Role;
-import com.aptisprep.enums.UserStatus;
+import com.aptisprep.mvc.common.enums.RecordStatus;
+import com.aptisprep.mvc.common.enums.Role;
+import com.aptisprep.mvc.common.enums.UserStatus;
 import com.aptisprep.repository.ExamAttemptRepository;
 import com.aptisprep.repository.UserRepository;
 import com.aptisprep.service.storage.StorageService;
@@ -57,7 +57,7 @@ class StudentContentPreviewTests {
         var certificate = new com.aptisprep.entity.Certificate();
         certificate.setCode("STUDENT-UI-" + System.nanoTime());
         certificate.setName("Test certificate");
-        certificate.setStatus(com.aptisprep.enums.RecordStatus.ACTIVE);
+        certificate.setStatus(com.aptisprep.mvc.common.enums.RecordStatus.ACTIVE);
         certificate = certificates.saveAndFlush(certificate);
         String[] skills = {"FULL_MOCK", "READING", "WRITING"};
         String[] titles = {"Thi thử tổng hợp số 01", "Luyện tập Reading", "Luyện tập Writing"};
@@ -70,7 +70,7 @@ class StudentContentPreviewTests {
             exam.setTargetLevel(i == 1 ? "B1" : "B2");
             exam.setDurationMinutes(35);
             exam.setStatus("PUBLISHED");
-            if (i == 0) attachScoring(exam, com.aptisprep.enums.Skill.codes());
+            if (i == 0) attachScoring(exam, com.aptisprep.mvc.common.enums.Skill.codes());
             exam = exams.saveAndFlush(exam);
             examIds.add(exam.getId());
             addExamQuestions(exam);
@@ -491,7 +491,8 @@ class StudentContentPreviewTests {
         exam.setTargetLevel(level);
         exam.setDurationMinutes(minutes);
         exam.setStatus("PUBLISHED");
-        if ("FULL_MOCK".equals(skill)) attachScoring(exam, com.aptisprep.enums.Skill.codes());
+        if ("FULL_MOCK".equals(skill))
+            attachScoring(exam, com.aptisprep.mvc.common.enums.Skill.codes());
         else if (List.of("PLACEMENT", "CHECKPOINT").contains(type))
             attachScoring(exam, List.of(skill));
         var saved = exams.saveAndFlush(exam);
@@ -528,7 +529,8 @@ class StudentContentPreviewTests {
 
     private void addExamQuestions(MockExamEntity exam) {
         boolean fullMock = "FULL_MOCK".equals(exam.getSkill());
-        var skills = fullMock ? com.aptisprep.enums.Skill.codes() : List.of(exam.getSkill());
+        var skills =
+                fullMock ? com.aptisprep.mvc.common.enums.Skill.codes() : List.of(exam.getSkill());
         int position = 0;
         for (String skill : skills) {
             var question = new QuestionEntity();

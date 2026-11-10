@@ -2,11 +2,11 @@ package com.aptisprep.controller.auth;
 
 import com.aptisprep.dto.form.RegisterForm;
 import com.aptisprep.entity.User;
-import com.aptisprep.enums.Role;
-import com.aptisprep.enums.UserStatus;
-import com.aptisprep.exception.BusinessRuleException;
-import com.aptisprep.exception.DuplicateEmailException;
-import com.aptisprep.security.LoginSession;
+import com.aptisprep.mvc.common.enums.Role;
+import com.aptisprep.mvc.common.enums.UserStatus;
+import com.aptisprep.mvc.common.exception.BusinessRuleException;
+import com.aptisprep.mvc.common.exception.DuplicateEmailException;
+import com.aptisprep.mvc.common.security.LoginSession;
 import com.aptisprep.service.auth.UserService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;

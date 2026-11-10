@@ -1,14 +1,14 @@
 package com.aptisprep.service.grading;
 
-import com.aptisprep.config.AiProperties;
 import com.aptisprep.entity.*;
-import com.aptisprep.enums.*;
-import com.aptisprep.enums.CefrLevel;
-import com.aptisprep.event.AiAssessmentCompletedEvent;
-import com.aptisprep.exception.AccessDeniedException;
-import com.aptisprep.exception.AiGradingException;
-import com.aptisprep.exception.BusinessRuleException;
-import com.aptisprep.exception.ResourceNotFoundException;
+import com.aptisprep.mvc.common.config.AiProperties;
+import com.aptisprep.mvc.common.enums.*;
+import com.aptisprep.mvc.common.enums.CefrLevel;
+import com.aptisprep.mvc.common.event.AiAssessmentCompletedEvent;
+import com.aptisprep.mvc.common.exception.AccessDeniedException;
+import com.aptisprep.mvc.common.exception.AiGradingException;
+import com.aptisprep.mvc.common.exception.BusinessRuleException;
+import com.aptisprep.mvc.common.exception.ResourceNotFoundException;
 import com.aptisprep.repository.*;
 import com.aptisprep.service.contract.AiAssessmentContract;
 import com.aptisprep.service.contract.GradingTextLimits;

@@ -5,9 +5,9 @@ import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 import com.aptisprep.entity.*;
-import com.aptisprep.enums.*;
-import com.aptisprep.event.AiAssessmentCompletedEvent;
-import com.aptisprep.exception.AiGradingException;
+import com.aptisprep.mvc.common.enums.*;
+import com.aptisprep.mvc.common.event.AiAssessmentCompletedEvent;
+import com.aptisprep.mvc.common.exception.AiGradingException;
 import com.aptisprep.repository.*;
 import com.aptisprep.service.contract.AiAssessmentContract.*;
 import com.aptisprep.service.exam.AttemptOutboxService;
@@ -315,7 +315,7 @@ class AiAssessmentServiceTests {
                         null);
 
         assertThrows(
-                com.aptisprep.exception.BusinessRuleException.class,
+                com.aptisprep.mvc.common.exception.BusinessRuleException.class,
                 () -> service.request(request));
         verifyNoInteractions(jobs, assessments);
 
@@ -335,7 +335,7 @@ class AiAssessmentServiceTests {
                         new BigDecimal("50"),
                         null);
         assertThrows(
-                com.aptisprep.exception.BusinessRuleException.class,
+                com.aptisprep.mvc.common.exception.BusinessRuleException.class,
                 () -> service.request(combined));
         verifyNoInteractions(jobs, assessments);
     }
@@ -370,10 +370,10 @@ class AiAssessmentServiceTests {
         other.setStatus(UserStatus.ACTIVE);
         when(users.findById(9)).thenReturn(Optional.of(other));
         assertThrows(
-                com.aptisprep.exception.AccessDeniedException.class,
+                com.aptisprep.mvc.common.exception.AccessDeniedException.class,
                 () -> service.get("assessment-1", 9, false));
         assertThrows(
-                com.aptisprep.exception.AccessDeniedException.class,
+                com.aptisprep.mvc.common.exception.AccessDeniedException.class,
                 () -> service.get("assessment-1", 1, true));
     }
 

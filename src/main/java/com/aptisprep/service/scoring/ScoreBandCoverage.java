@@ -2,8 +2,8 @@ package com.aptisprep.service.scoring;
 
 import com.aptisprep.entity.ScoreBand;
 import com.aptisprep.entity.ScoringScaleRule;
-import com.aptisprep.enums.CefrLevel;
-import com.aptisprep.exception.BusinessRuleException;
+import com.aptisprep.mvc.common.enums.CefrLevel;
+import com.aptisprep.mvc.common.exception.BusinessRuleException;
 import java.math.BigDecimal;
 import java.util.List;
 

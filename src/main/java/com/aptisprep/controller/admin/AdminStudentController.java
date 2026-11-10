@@ -1,7 +1,7 @@
 package com.aptisprep.controller.admin;
 
-import com.aptisprep.enums.UserStatus;
-import com.aptisprep.exception.BusinessRuleException;
+import com.aptisprep.mvc.common.enums.UserStatus;
+import com.aptisprep.mvc.common.exception.BusinessRuleException;
 import com.aptisprep.service.admin.StudentManagementService;
 import java.security.Principal;
 import org.springframework.stereotype.Controller;

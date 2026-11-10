@@ -3,7 +3,7 @@ package com.aptisprep.service.placement;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-import com.aptisprep.exception.BusinessRuleException;
+import com.aptisprep.mvc.common.exception.BusinessRuleException;
 import com.aptisprep.service.contract.*;
 import com.aptisprep.service.contract.IntegrationModels.AttemptHandle;
 import java.util.List;

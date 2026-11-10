@@ -1,8 +1,8 @@
 package com.aptisprep.controller.auth;
 
 import com.aptisprep.dto.form.PasswordForm;
-import com.aptisprep.exception.BusinessRuleException;
-import com.aptisprep.security.LoginSession;
+import com.aptisprep.mvc.common.exception.BusinessRuleException;
+import com.aptisprep.mvc.common.security.LoginSession;
 import com.aptisprep.service.auth.PasswordService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;

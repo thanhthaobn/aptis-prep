@@ -17,9 +17,9 @@ import com.aptisprep.entity.ExamAttemptEntity;
 import com.aptisprep.entity.ExamSkillResultEntity;
 import com.aptisprep.entity.QuestionEntity;
 import com.aptisprep.entity.UserAnswerEntity;
-import com.aptisprep.enums.AiAssessmentState;
-import com.aptisprep.enums.AiJobState;
-import com.aptisprep.event.AiAssessmentCompletedEvent;
+import com.aptisprep.mvc.common.enums.AiAssessmentState;
+import com.aptisprep.mvc.common.enums.AiJobState;
+import com.aptisprep.mvc.common.event.AiAssessmentCompletedEvent;
 import com.aptisprep.repository.AiAssessmentJobRepository;
 import com.aptisprep.repository.AiAssessmentRepository;
 import com.aptisprep.repository.ExamAttemptRepository;
@@ -179,7 +179,7 @@ class AttemptFinalizationServiceTests {
                 .thenReturn(List.of(lessonJob));
 
         assertThrows(
-                com.aptisprep.exception.BusinessRuleException.class,
+                com.aptisprep.mvc.common.exception.BusinessRuleException.class,
                 () -> service.retryFailedGrading(2, 1));
         verify(ai, never()).retry(anyString(), anyInt(), anyBoolean());
     }

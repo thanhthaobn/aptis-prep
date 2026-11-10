@@ -3,7 +3,7 @@ package com.aptisprep.controller.admin;
 import com.aptisprep.dto.LessonEntityDto;
 import com.aptisprep.dto.form.LessonForm;
 import com.aptisprep.entity.Lesson;
-import com.aptisprep.exception.BusinessRuleException;
+import com.aptisprep.mvc.common.exception.BusinessRuleException;
 import com.aptisprep.service.learning.FlashcardSetService;
 import com.aptisprep.service.learning.LessonAuthorProfile;
 import com.aptisprep.service.learning.LessonService;

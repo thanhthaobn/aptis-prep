@@ -1,6 +1,6 @@
 package com.aptisprep.service.account;
 
-import com.aptisprep.event.GoalChangedEvent;
+import com.aptisprep.mvc.common.event.GoalChangedEvent;
 import com.aptisprep.service.contract.LearningPathContract;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.stereotype.Component;

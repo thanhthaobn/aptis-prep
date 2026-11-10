@@ -2,7 +2,7 @@ package com.aptisprep.controller;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import com.aptisprep.enums.RecordStatus;
+import com.aptisprep.mvc.common.enums.RecordStatus;
 import java.util.Map;
 import java.util.Set;
 import org.junit.jupiter.api.Test;

@@ -1,6 +1,6 @@
 package com.aptisprep.dto.view;
 
-import com.aptisprep.enums.UserStatus;
+import com.aptisprep.mvc.common.enums.UserStatus;
 import java.time.LocalDateTime;
 import java.util.List;
 

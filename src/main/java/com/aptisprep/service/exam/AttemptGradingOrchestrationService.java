@@ -1,8 +1,8 @@
 package com.aptisprep.service.exam;
 
-import com.aptisprep.config.AiProperties;
-import com.aptisprep.event.AiAssessmentCompletedEvent;
-import com.aptisprep.event.AttemptSubmittedEvent;
+import com.aptisprep.mvc.common.config.AiProperties;
+import com.aptisprep.mvc.common.event.AiAssessmentCompletedEvent;
+import com.aptisprep.mvc.common.event.AttemptSubmittedEvent;
 import com.aptisprep.service.contract.AiAssessmentContract;
 import com.aptisprep.service.contract.GradingContextFormatter;
 import com.aptisprep.service.contract.IntegrationModels.LockedAnswer;

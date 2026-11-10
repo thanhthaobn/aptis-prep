@@ -2,7 +2,7 @@ package com.aptisprep.service.learning.impl;
 
 import com.aptisprep.entity.Lesson;
 import com.aptisprep.entity.LessonProgress;
-import com.aptisprep.enums.CefrLevel;
+import com.aptisprep.mvc.common.enums.CefrLevel;
 import com.aptisprep.repository.LessonProgressRepository;
 import com.aptisprep.service.contract.AccountAccessContract;
 import com.aptisprep.service.contract.IntegrationModels.*;

@@ -1,10 +1,10 @@
 package com.aptisprep.service.learning;
 
-import com.aptisprep.config.AiProperties;
 import com.aptisprep.dto.form.LessonForm;
 import com.aptisprep.entity.*;
-import com.aptisprep.enums.*;
-import com.aptisprep.exception.*;
+import com.aptisprep.mvc.common.config.AiProperties;
+import com.aptisprep.mvc.common.enums.*;
+import com.aptisprep.mvc.common.exception.*;
 import com.aptisprep.repository.*;
 import com.aptisprep.service.contract.AiAssessmentContract;
 import com.aptisprep.service.contract.AiAssessmentContract.AssessmentRequest;

@@ -1,8 +1,8 @@
 package com.aptisprep.service.learning;
 
 import com.aptisprep.entity.*;
-import com.aptisprep.enums.*;
-import com.aptisprep.exception.*;
+import com.aptisprep.mvc.common.enums.*;
+import com.aptisprep.mvc.common.exception.*;
 import com.aptisprep.repository.*;
 import com.aptisprep.service.contract.*;
 import com.aptisprep.service.contract.IntegrationModels.*;

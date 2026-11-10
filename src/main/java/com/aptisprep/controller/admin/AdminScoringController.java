@@ -1,10 +1,10 @@
 package com.aptisprep.controller.admin;
 
-import com.aptisprep.controller.ListPagination;
 import com.aptisprep.dto.form.*;
-import com.aptisprep.enums.CefrLevel;
-import com.aptisprep.enums.Skill;
-import com.aptisprep.exception.BusinessRuleException;
+import com.aptisprep.mvc.common.enums.CefrLevel;
+import com.aptisprep.mvc.common.enums.Skill;
+import com.aptisprep.mvc.common.exception.BusinessRuleException;
+import com.aptisprep.mvc.common.util.ListPagination;
 import com.aptisprep.service.scoring.ScoringAdminService;
 import com.aptisprep.service.scoring.ScoringViews;
 import jakarta.validation.Valid;

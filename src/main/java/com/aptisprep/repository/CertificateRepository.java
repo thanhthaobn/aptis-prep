@@ -1,7 +1,7 @@
 package com.aptisprep.repository;
 
 import com.aptisprep.entity.Certificate;
-import com.aptisprep.enums.RecordStatus;
+import com.aptisprep.mvc.common.enums.RecordStatus;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;

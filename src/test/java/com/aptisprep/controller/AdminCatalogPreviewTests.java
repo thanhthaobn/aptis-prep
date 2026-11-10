@@ -1,7 +1,7 @@
 package com.aptisprep.controller;
 
-import static com.aptisprep.security.SessionMvcRequests.csrf;
-import static com.aptisprep.security.SessionMvcRequests.user;
+import static com.aptisprep.mvc.common.security.SessionMvcRequests.csrf;
+import static com.aptisprep.mvc.common.security.SessionMvcRequests.user;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.not;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -10,8 +10,8 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 import com.aptisprep.entity.User;
-import com.aptisprep.enums.Role;
-import com.aptisprep.enums.UserStatus;
+import com.aptisprep.mvc.common.enums.Role;
+import com.aptisprep.mvc.common.enums.UserStatus;
 import com.aptisprep.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -38,7 +38,7 @@ class AdminCatalogPreviewTests {
         var certificate = new com.aptisprep.entity.Certificate();
         certificate.setCode("UI-" + System.nanoTime());
         certificate.setName("Test certificate");
-        certificate.setStatus(com.aptisprep.enums.RecordStatus.ACTIVE);
+        certificate.setStatus(com.aptisprep.mvc.common.enums.RecordStatus.ACTIVE);
         certificate = certificates.saveAndFlush(certificate);
         for (int i = 0; i < 3; i++) {
             var question = new com.aptisprep.entity.QuestionEntity();

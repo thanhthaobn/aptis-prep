@@ -2,7 +2,7 @@ package com.aptisprep.controller.admin;
 
 import com.aptisprep.dto.form.FlashcardSetForm;
 import com.aptisprep.dto.view.FlashcardViews.SetView;
-import com.aptisprep.exception.BusinessRuleException;
+import com.aptisprep.mvc.common.exception.BusinessRuleException;
 import com.aptisprep.service.learning.FlashcardSetService;
 import com.aptisprep.service.learning.LessonService;
 import jakarta.validation.Valid;

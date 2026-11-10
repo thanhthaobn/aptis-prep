@@ -1,6 +1,6 @@
 package com.aptisprep.controller.admin;
 
-import com.aptisprep.exception.BusinessRuleException;
+import com.aptisprep.mvc.common.exception.BusinessRuleException;
 import com.aptisprep.service.contract.ExamAttemptContract;
 import com.aptisprep.service.contract.IntegrationModels.AdminHistoryFilter;
 import com.aptisprep.service.exam.ExamAttemptService;

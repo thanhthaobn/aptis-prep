@@ -1,8 +1,8 @@
 package com.aptisprep.service.grading;
 
-import com.aptisprep.config.AiProperties;
-import com.aptisprep.enums.CefrLevel;
-import com.aptisprep.exception.AiGradingException;
+import com.aptisprep.mvc.common.config.AiProperties;
+import com.aptisprep.mvc.common.enums.CefrLevel;
+import com.aptisprep.mvc.common.exception.AiGradingException;
 import com.aptisprep.service.contract.GradingTextLimits;
 import java.io.IOException;
 import java.math.BigDecimal;

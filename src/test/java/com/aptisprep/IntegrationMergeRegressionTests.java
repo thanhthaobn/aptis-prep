@@ -7,7 +7,7 @@ import com.aptisprep.dto.form.ExamForm;
 import com.aptisprep.entity.MockExamEntity;
 import com.aptisprep.entity.MockExamQuestionEntity;
 import com.aptisprep.entity.MockExamSectionEntity;
-import com.aptisprep.exception.ResourceNotFoundException;
+import com.aptisprep.mvc.common.exception.ResourceNotFoundException;
 import com.aptisprep.repository.MockExamQuestionRepository;
 import com.aptisprep.repository.MockExamRepository;
 import com.aptisprep.repository.MockExamSectionRepository;
