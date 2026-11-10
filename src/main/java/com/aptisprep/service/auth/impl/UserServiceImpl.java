@@ -1,11 +1,13 @@
 package com.aptisprep.service.auth.impl;
 
+import com.aptisprep.dto.UserEntityDto;
 import com.aptisprep.dto.form.RegisterForm;
 import com.aptisprep.entity.User;
 import com.aptisprep.enums.Role;
 import com.aptisprep.enums.UserStatus;
 import com.aptisprep.exception.BusinessRuleException;
 import com.aptisprep.exception.DuplicateEmailException;
+import com.aptisprep.exception.ResourceNotFoundException;
 import com.aptisprep.repository.UserRepository;
 import com.aptisprep.service.auth.PasswordHasher;
 import com.aptisprep.service.auth.UserService;
@@ -46,6 +48,14 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    @Transactional(readOnly = true)
+    public User requireByEmail(String email) {
+        return userRepository
+                .findByEmailIgnoreCase(email)
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy tài khoản"));
+    }
+
+    @Override
     @Transactional
     public User registerStudent(RegisterForm form) {
         if (!form.getPassword().equals(form.getConfirmPassword())) {
@@ -55,8 +65,8 @@ public class UserServiceImpl implements UserService {
         if (userRepository.existsByEmailIgnoreCase(normalizedEmail)) {
             throw new DuplicateEmailException();
         }
-        User user = new User();
-        user.setFullName(form.getFullName().trim());
+        User user = UserEntityDto.convertDtoToEntity(form);
+        user.setFullName(user.getFullName().trim());
         user.setEmail(normalizedEmail);
         user.setPasswordHash(passwordHasher.encode(form.getPassword()));
         user.setRole(Role.STUDENT);

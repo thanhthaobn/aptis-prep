@@ -1,5 +1,6 @@
 package com.aptisprep.service.admin.impl;
 
+import com.aptisprep.dto.QuestionEntityDto;
 import com.aptisprep.dto.form.ExamForm;
 import com.aptisprep.dto.form.QuestionForm;
 import com.aptisprep.dto.view.AdminCatalogView.CatalogPage;
@@ -165,17 +166,7 @@ public class CatalogServiceImpl implements CatalogService {
                 questionRepository
                         .findById(id)
                         .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy câu hỏi"));
-        form.setContent(q.getContent());
-        form.setInstruction(q.getInstruction());
-        form.setReadingPassage(q.getReadingPassage());
-        form.setQuestionType(q.getQuestionType());
-        form.setSkill(q.getSkill());
-        form.setPartNo(q.getPartNo());
-        form.setCefrLevel(q.getCefrLevel());
-        form.setDifficulty(q.getDifficulty());
-        form.setAllowOptionReuse(q.isAllowOptionReuse());
-        form.setPreparationSeconds(q.getPreparationSeconds());
-        form.setStatus(q.getStatus());
+        form = QuestionEntityDto.convertEntityToDto(q).toForm();
         List<QuestionForm.ItemForm> values = new ArrayList<>();
         for (QuestionItemEntity item : questionItemRepository.findByQuestionIdOrderByPosition(id)) {
             QuestionForm.ItemForm itemForm = new QuestionForm.ItemForm();
@@ -641,18 +632,18 @@ public class CatalogServiceImpl implements CatalogService {
     }
 
     private void applyQuestionFields(QuestionEntity question, QuestionForm form) {
-        question.setContent(form.getContent().trim());
-        question.setInstruction(blankToNull(form.getInstruction()));
-        question.setReadingPassage(
-                "READING".equals(form.getSkill()) ? blankToNull(form.getReadingPassage()) : null);
-        question.setQuestionType(form.getQuestionType());
-        question.setSkill(form.getSkill());
-        question.setPartNo(form.getPartNo());
-        question.setCefrLevel(form.getCefrLevel());
-        question.setDifficulty(form.getDifficulty());
-        question.setAllowOptionReuse(form.isAllowOptionReuse());
-        question.setPreparationSeconds(form.getPreparationSeconds());
-        question.setStatus(form.getStatus());
+        QuestionEntity mapped = QuestionEntityDto.convertDtoToEntity(form);
+        question.setContent(mapped.getContent());
+        question.setInstruction(mapped.getInstruction());
+        question.setReadingPassage(mapped.getReadingPassage());
+        question.setQuestionType(mapped.getQuestionType());
+        question.setSkill(mapped.getSkill());
+        question.setPartNo(mapped.getPartNo());
+        question.setCefrLevel(mapped.getCefrLevel());
+        question.setDifficulty(mapped.getDifficulty());
+        question.setAllowOptionReuse(mapped.isAllowOptionReuse());
+        question.setPreparationSeconds(mapped.getPreparationSeconds());
+        question.setStatus(mapped.getStatus());
     }
 
     private void replaceQuestionItems(Integer questionId, QuestionForm form, boolean editing) {

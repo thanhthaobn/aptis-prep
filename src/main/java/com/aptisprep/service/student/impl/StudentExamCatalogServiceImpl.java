@@ -157,7 +157,11 @@ public class StudentExamCatalogServiceImpl implements StudentExamCatalogService 
                                         || level.isBlank()
                                         || level.equalsIgnoreCase(exam.getTargetLevel()))
                 .filter(exam -> state == null || state.isBlank() || state.equals(exam.getStatus()))
-                .filter(this::eligibleForCatalog)
+                // A published composite exam must remain visible so the learner can see its
+                // complete section/skill format even when a legacy media or scoring record
+                // makes it temporarily not startable. The readiness message on the entry is
+                // the source of truth for whether the learner may begin the attempt.
+                .filter(exam -> isCompositeExam(exam) || eligibleForCatalog(exam))
                 .sorted(
                         Comparator.comparing(
                                         MockExamEntity::getUpdatedAt,
@@ -180,11 +184,16 @@ public class StudentExamCatalogServiceImpl implements StudentExamCatalogService 
     private boolean matchesSkill(MockExamEntity exam, String skill) {
         if (normalize(skill).isBlank()) return true;
         String code = normalizeSkill(skill);
-        if ("FULL_MOCK".equals(code) && "FULL_MOCK".equals(exam.getExamType())) return true;
+        if ("FULL_MOCK".equals(code) && isCompositeExam(exam)) return true;
         if (code.equals(normalizeSkill(exam.getSkill()))) return true;
-        return "FULL_MOCK".equals(exam.getSkill())
+        return isCompositeExam(exam)
                 && mockExamSectionRepository.findByMockExamIdOrderById(exam.getId()).stream()
                         .anyMatch(section -> code.equals(normalizeSkill(section.getSkill())));
+    }
+
+    private boolean isCompositeExam(MockExamEntity exam) {
+        return "FULL_MOCK".equals(normalizeSkill(exam.getSkill()))
+                || "FULL_MOCK".equals(normalizeSkill(exam.getExamType()));
     }
 
     public Entry entry(String module, int id) {
@@ -193,7 +202,7 @@ public class StudentExamCatalogServiceImpl implements StudentExamCatalogService 
                 mockExamRepository
                         .findById(id)
                         .filter(exam -> "PUBLISHED".equals(exam.getStatus()) && !exam.isDemoOnly())
-                        .filter(this::eligibleForCatalog)
+                        .filter(exam -> isCompositeExam(exam) || eligibleForCatalog(exam))
                         .orElseThrow(
                                 () ->
                                         new ResourceNotFoundException(

@@ -1,5 +1,9 @@
 package com.aptisprep.service.scoring.impl;
 
+import com.aptisprep.dto.CertificateEntityDto;
+import com.aptisprep.dto.ScoreBandEntityDto;
+import com.aptisprep.dto.ScoringScaleRuleEntityDto;
+import com.aptisprep.dto.ScoringSchemeEntityDto;
 import com.aptisprep.dto.form.*;
 import com.aptisprep.entity.*;
 import com.aptisprep.enums.*;
@@ -19,6 +23,7 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.*;
 import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -34,6 +39,7 @@ public class ScoringAdminServiceImpl implements ScoringAdminService {
     private final UserRepository userRepository;
     private final ObjectProvider<ScoringSchemeUsageContract> usage;
     private final ScoringScaleRuleRepository scoringScaleRuleRepository;
+    private final MockExamRepository mockExamRepository;
 
     public ScoringAdminServiceImpl(
             CertificateRepository certificateRepository,
@@ -42,12 +48,32 @@ public class ScoringAdminServiceImpl implements ScoringAdminService {
             UserRepository userRepository,
             ObjectProvider<ScoringSchemeUsageContract> usage,
             ScoringScaleRuleRepository scoringScaleRuleRepository) {
+        this(
+                certificateRepository,
+                scoringSchemeRepository,
+                scoreBandRepository,
+                userRepository,
+                usage,
+                scoringScaleRuleRepository,
+                null);
+    }
+
+    @Autowired
+    public ScoringAdminServiceImpl(
+            CertificateRepository certificateRepository,
+            ScoringSchemeRepository scoringSchemeRepository,
+            ScoreBandRepository scoreBandRepository,
+            UserRepository userRepository,
+            ObjectProvider<ScoringSchemeUsageContract> usage,
+            ScoringScaleRuleRepository scoringScaleRuleRepository,
+            MockExamRepository mockExamRepository) {
         this.certificateRepository = certificateRepository;
         this.scoringSchemeRepository = scoringSchemeRepository;
         this.scoreBandRepository = scoreBandRepository;
         this.userRepository = userRepository;
         this.usage = usage;
         this.scoringScaleRuleRepository = scoringScaleRuleRepository;
+        this.mockExamRepository = mockExamRepository;
     }
 
     @Transactional(readOnly = true)
@@ -61,6 +87,14 @@ public class ScoringAdminServiceImpl implements ScoringAdminService {
     public List<ScoringViews.SchemeView> schemeViews() {
         return scoringSchemeRepository.findAllByOrderByCertificateNameAscVersionDesc().stream()
                 .map(this::schemeView)
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public List<ScoringViews.SchemeExamTypeView> schemeExamTypes() {
+        if (mockExamRepository == null) return List.of();
+        return mockExamRepository.findScoringSchemeExamTypes().stream()
+                .map(value -> new ScoringViews.SchemeExamTypeView(value.getSchemeId(), value.getExamType()))
                 .toList();
     }
 
@@ -119,10 +153,10 @@ public class ScoringAdminServiceImpl implements ScoringAdminService {
         String code = normalizeCode(form.getCode());
         if (certificateRepository.existsByCodeIgnoreCase(code))
             throw new BusinessRuleException("Mã chứng chỉ đã tồn tại");
-        Certificate value = new Certificate();
-        value.setName(required(form.getName(), "Tên chứng chỉ"));
+        Certificate value = CertificateEntityDto.convertDtoToEntity(form);
+        value.setName(required(value.getName(), "Tên chứng chỉ"));
         value.setCode(code);
-        value.setDescription(blankToNull(form.getDescription()));
+        value.setDescription(blankToNull(value.getDescription()));
         value.setStatus(status(form.getStatus()));
         value.setCreatedBy(admin);
         try {
@@ -143,9 +177,10 @@ public class ScoringAdminServiceImpl implements ScoringAdminService {
         String code = normalizeCode(form.getCode());
         if (certificateRepository.existsByCodeIgnoreCaseAndIdNot(code, id))
             throw new BusinessRuleException("Mã chứng chỉ đã tồn tại");
-        value.setName(required(form.getName(), "Tên chứng chỉ"));
+        Certificate mapped = CertificateEntityDto.convertDtoToEntity(form);
+        value.setName(required(mapped.getName(), "Tên chứng chỉ"));
         value.setCode(code);
-        value.setDescription(blankToNull(form.getDescription()));
+        value.setDescription(blankToNull(mapped.getDescription()));
         value.setStatus(status(form.getStatus()));
     }
 
@@ -462,14 +497,15 @@ public class ScoringAdminServiceImpl implements ScoringAdminService {
             throw new BusinessRuleException("Khoảng điểm bị chồng lấn, kể cả khi chung biên");
         ScoreBand value =
                 id == null
-                        ? new ScoreBand()
+                        ? ScoreBandEntityDto.convertDtoToEntity(form, scheme)
                         : scoreBandRepository
                                 .findByIdAndSchemeId(id, schemeId)
                                 .orElseThrow(
                                         () ->
                                                 new ResourceNotFoundException(
                                                         "Không tìm thấy khoảng điểm"));
-        value.setScheme(scheme);
+        ScoreBand mapped = ScoreBandEntityDto.convertDtoToEntity(form, scheme);
+        value.setScheme(mapped.getScheme());
         value.setSkill(skill);
         value.setCefrLevel(level);
         value.setMinScore(min);
@@ -494,11 +530,12 @@ public class ScoringAdminServiceImpl implements ScoringAdminService {
 
     private void setScheme(
             ScoringScheme value, Certificate certificate, ScoringSchemeForm form, String version) {
-        value.setCertificate(certificate);
-        value.setName(required(form.getName(), "Tên bộ chấm điểm"));
+        ScoringScheme mapped = ScoringSchemeEntityDto.convertDtoToEntity(form, certificate);
+        value.setCertificate(mapped.getCertificate());
+        value.setName(required(mapped.getName(), "Tên bộ chấm điểm"));
         value.setVersion(version);
-        String type = blankToNull(form.getExamType());
-        String skill = blankToNull(form.getScopeSkill());
+        String type = mapped.getExamType();
+        String skill = mapped.getScopeSkill();
         if (type != null
                 && !Set.of("PLACEMENT", "FULL_MOCK", "CHECKPOINT", "PRACTICE").contains(type))
             throw new BusinessRuleException("Loại đề không hợp lệ");
@@ -612,8 +649,10 @@ public class ScoringAdminServiceImpl implements ScoringAdminService {
                 scoringScaleRuleRepository
                         .findBySchemeIdAndSkillIgnoreCase(schemeId, normalized)
                         .orElseGet(ScoringScaleRule::new);
-        rule.setScheme(scheme);
-        rule.setSkill(normalized);
+        ScoringScaleRule mapped =
+                ScoringScaleRuleEntityDto.convertDtoToEntity(form, scheme, normalized);
+        rule.setScheme(mapped.getScheme());
+        rule.setSkill(mapped.getSkill());
         rule.setRawMin(rawMin);
         rule.setRawMax(rawMax);
         rule.setScaleMin(scaleMin);

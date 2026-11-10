@@ -1,5 +1,6 @@
 package com.aptisprep.service.admin.impl;
 
+import com.aptisprep.dto.MockExamEntityDto;
 import com.aptisprep.dto.form.ExamForm;
 import com.aptisprep.dto.view.AdminCatalogView.Entry;
 import com.aptisprep.dto.view.AdminCatalogView.Field;
@@ -50,11 +51,11 @@ public class AdminExamServiceImpl implements AdminExamService {
     }
 
     public ExamForm examForm(Integer id) {
-        ExamForm form = new ExamForm();
-        certificateRepository.findByStatusOrderByName(RecordStatus.ACTIVE).stream()
-                .findFirst()
-                .ifPresent(x -> form.setCertificateId(x.getId()));
         if (id == null) {
+            ExamForm form = new ExamForm();
+            certificateRepository.findByStatusOrderByName(RecordStatus.ACTIVE).stream()
+                    .findFirst()
+                    .ifPresent(x -> form.setCertificateId(x.getId()));
             ExamForm.SectionForm section = new ExamForm.SectionForm();
             section.setSkill(form.getSectionSkill());
             section.setDurationMinutes(form.getSectionDurationMinutes());
@@ -66,17 +67,8 @@ public class AdminExamServiceImpl implements AdminExamService {
                 mockExamRepository
                         .findById(id)
                         .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy đề thi"));
-        form.setTitle(exam.getTitle());
-        form.setDescription(exam.getDescription());
-        form.setDemoOnly(exam.isDemoOnly());
-        form.setExamType(exam.getExamType());
-        form.setTargetLevel(exam.getTargetLevel());
-        form.setSkill(exam.getSkill());
+        ExamForm form = MockExamEntityDto.convertEntityToDto(exam).toForm();
         form.setSectionSkill(exam.getSkill());
-        form.setDurationMinutes(exam.getDurationMinutes());
-        form.setCertificateId(exam.getCertificateId());
-        form.setScoringSchemeId(exam.getScoringSchemeId());
-        form.setStatus(exam.getStatus());
         form.setQuestionIds(
                 mockExamQuestionRepository.findByMockExamIdOrderByPosition(id).stream()
                         .map(x -> "" + x.getQuestionId())
@@ -243,11 +235,12 @@ public class AdminExamServiceImpl implements AdminExamService {
     }
 
     private void applyExamFields(MockExamEntity exam, ExamForm form) {
-        exam.setTitle(form.getTitle().trim());
-        exam.setDescription(blankToNull(form.getDescription()));
-        exam.setDemoOnly(form.isDemoOnly());
-        exam.setExamType(form.getExamType());
-        exam.setTargetLevel(blankToNull(form.getTargetLevel()));
+        MockExamEntity mapped = MockExamEntityDto.convertDtoToEntity(form);
+        exam.setTitle(mapped.getTitle());
+        exam.setDescription(mapped.getDescription());
+        exam.setDemoOnly(mapped.isDemoOnly());
+        exam.setExamType(mapped.getExamType());
+        exam.setTargetLevel(mapped.getTargetLevel());
         exam.setSkill(
                 "FULL_MOCK".equals(form.getExamType())
                                 || ("PLACEMENT".equals(form.getExamType())
@@ -258,10 +251,10 @@ public class AdminExamServiceImpl implements AdminExamService {
                                                 > 1)
                         ? "FULL_MOCK"
                         : form.getSections().getFirst().getSkill());
-        exam.setDurationMinutes(form.getDurationMinutes());
-        exam.setCertificateId(form.getCertificateId());
-        exam.setScoringSchemeId(form.getScoringSchemeId());
-        exam.setStatus("PUBLISHED".equals(form.getStatus()) ? "DRAFT" : form.getStatus());
+        exam.setDurationMinutes(mapped.getDurationMinutes());
+        exam.setCertificateId(mapped.getCertificateId());
+        exam.setScoringSchemeId(mapped.getScoringSchemeId());
+        exam.setStatus("PUBLISHED".equals(form.getStatus()) ? "DRAFT" : mapped.getStatus());
     }
 
     private void replaceExamSections(

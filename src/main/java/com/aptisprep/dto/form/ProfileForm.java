@@ -13,6 +13,7 @@ public class ProfileForm {
                     "Họ tên phải bắt đầu bằng chữ in hoa và chỉ được chứa chữ cái, dấu tiếng Việt và khoảng trắng.")
     private String fullName;
 
+
     public String getFullName() {
         return fullName;
     }

@@ -111,12 +111,19 @@ public class StudentFlashcardController {
     public String showCreateForm(Model m) {
         FlashcardSetForm f = new FlashcardSetForm();
         f.getRows().add(new FlashcardSetForm.Row());
-        return form(m, f, null);
+        m.addAttribute("form", f);
+        m.addAttribute("setId", null);
+        m.addAttribute("levels", LessonService.LEVELS);
+        return "student/flashcards/form";
     }
 
     @GetMapping("/student/flashcards/{id}/edit")
     public String showEditForm(@PathVariable Integer id, Principal p, Model m) {
-        return form(m, service.personalForm(id, p.getName()), id);
+        FlashcardSetForm f = service.personalForm(id, p.getName());
+        m.addAttribute("form", f);
+        m.addAttribute("setId", id);
+        m.addAttribute("levels", LessonService.LEVELS);
+        return "student/flashcards/form";
     }
 
     @PostMapping("/student/flashcards")
@@ -125,7 +132,17 @@ public class StudentFlashcardController {
             BindingResult b,
             Principal p,
             Model m) {
-        return save(null, f, b, p, m);
+        if (!b.hasErrors())
+            try {
+                service.savePersonal(null, f, p.getName());
+                return "redirect:/student/flashcards";
+            } catch (BusinessRuleException e) {
+                b.reject("invalid", e.getMessage());
+            }
+        m.addAttribute("form", f);
+        m.addAttribute("setId", null);
+        m.addAttribute("levels", LessonService.LEVELS);
+        return "student/flashcards/form";
     }
 
     @PostMapping("/student/flashcards/{id}")
@@ -135,7 +152,17 @@ public class StudentFlashcardController {
             BindingResult b,
             Principal p,
             Model m) {
-        return save(id, f, b, p, m);
+        if (!b.hasErrors())
+            try {
+                service.savePersonal(id, f, p.getName());
+                return "redirect:/student/flashcards";
+            } catch (BusinessRuleException e) {
+                b.reject("invalid", e.getMessage());
+            }
+        m.addAttribute("form", f);
+        m.addAttribute("setId", id);
+        m.addAttribute("levels", LessonService.LEVELS);
+        return "student/flashcards/form";
     }
 
     @PostMapping("/student/flashcards/{id}/archive")
@@ -150,24 +177,6 @@ public class StudentFlashcardController {
                 .replaceAll("\\p{M}", "")
                 .toLowerCase(Locale.ROOT)
                 .replace('đ', 'd');
-    }
-
-    private String save(Integer id, FlashcardSetForm f, BindingResult b, Principal p, Model m) {
-        if (!b.hasErrors())
-            try {
-                service.savePersonal(id, f, p.getName());
-                return "redirect:/student/flashcards";
-            } catch (BusinessRuleException e) {
-                b.reject("invalid", e.getMessage());
-            }
-        return form(m, f, id);
-    }
-
-    private String form(Model m, FlashcardSetForm f, Integer id) {
-        m.addAttribute("form", f);
-        m.addAttribute("setId", id);
-        m.addAttribute("levels", LessonService.LEVELS);
-        return "student/flashcards/form";
     }
 
     @GetMapping("/student/flashcards/{id}")

@@ -1,5 +1,6 @@
 package com.aptisprep.controller.admin;
 
+import com.aptisprep.dto.LessonEntityDto;
 import com.aptisprep.dto.form.LessonForm;
 import com.aptisprep.entity.Lesson;
 import com.aptisprep.exception.BusinessRuleException;
@@ -33,7 +34,7 @@ public class AdminLessonController {
 
     @GetMapping("/admin/lessons/{id}")
     public String detail(@PathVariable Integer id, Model m) {
-        m.addAttribute("lesson", service.require(id));
+        m.addAttribute("lesson", LessonEntityDto.convertEntityToDto(service.require(id)));
         m.addAttribute("flashcardSet", flashcards.forLesson(id));
         m.addAttribute("questions", service.questions(id));
         m.addAttribute("stats", service.stats(id));
@@ -63,7 +64,17 @@ public class AdminLessonController {
             @RequestParam(required = false) MultipartFile video,
             Model m,
             RedirectAttributes r) {
-        return save(null, f, b, audio, false, image, false, video, false, m, r);
+        if (!b.hasErrors()) {
+            try {
+                Lesson lesson = service.save(null, f, audio, false, image, false, video, false);
+                r.addFlashAttribute("message", "Đã tạo bài học");
+                return "redirect:/admin/lessons/" + lesson.getId();
+            } catch (BusinessRuleException e) {
+                b.reject("lesson.invalid", e.getMessage());
+            }
+        }
+        formModel(m, f, false, null);
+        return "admin/lesson/form";
     }
 
     @GetMapping("/admin/lessons/{id}/edit")
@@ -85,21 +96,6 @@ public class AdminLessonController {
             @RequestParam(defaultValue = "false") boolean removeVideo,
             Model m,
             RedirectAttributes r) {
-        return save(id, f, b, audio, removeAudio, image, removeImage, video, removeVideo, m, r);
-    }
-
-    private String save(
-            Integer id,
-            LessonForm f,
-            BindingResult b,
-            MultipartFile audio,
-            boolean removeAudio,
-            MultipartFile image,
-            boolean removeImage,
-            MultipartFile video,
-            boolean removeVideo,
-            Model m,
-            RedirectAttributes r) {
         if (!b.hasErrors()) {
             try {
                 Lesson lesson =
@@ -112,7 +108,7 @@ public class AdminLessonController {
                 b.reject("lesson.invalid", e.getMessage());
             }
         }
-        formModel(m, f, id != null, id);
+        formModel(m, f, true, id);
         return "admin/lesson/form";
     }
 
@@ -148,7 +144,9 @@ public class AdminLessonController {
         m.addAttribute("form", f);
         m.addAttribute("editing", editing);
         m.addAttribute("lessonId", id);
-        m.addAttribute("lesson", id == null ? null : service.require(id));
+        m.addAttribute(
+                "lesson",
+                id == null ? null : LessonEntityDto.convertEntityToDto(service.require(id)));
         m.addAttribute("skills", LessonService.SKILLS);
         m.addAttribute("levels", LessonService.LEVELS);
         m.addAttribute("statuses", LessonService.STATUSES);

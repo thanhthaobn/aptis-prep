@@ -39,7 +39,17 @@ public class AdminCatalogController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             Model model) {
-        return list("questions", q, skill, status, kind, page, size, model);
+        if (q.length() > 255 || skill.length() > 80 || status.length() > 40 || kind.length() > 80)
+            throw new BusinessRuleException("Bộ lọc không hợp lệ");
+        addModule("questions", model);
+        CatalogPage pageData = catalogService.findPage("questions", q, skill, status, kind, page, size);
+        model.addAttribute("pageData", pageData);
+        model.addAttribute("q", q);
+        model.addAttribute("selectedSkill", skill);
+        model.addAttribute("selectedStatus", status);
+        model.addAttribute("selectedKind", kind);
+        model.addAttribute("examTypeLabels", EXAM_TYPE_LABELS);
+        return "admin/catalog/list";
     }
 
     @GetMapping("/admin/exams")
@@ -51,22 +61,10 @@ public class AdminCatalogController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             Model model) {
-        return list("exams", q, skill, status, kind, page, size, model);
-    }
-
-    private String list(
-            String module,
-            String q,
-            String skill,
-            String status,
-            String kind,
-            int page,
-            int size,
-            Model model) {
         if (q.length() > 255 || skill.length() > 80 || status.length() > 40 || kind.length() > 80)
             throw new BusinessRuleException("Bộ lọc không hợp lệ");
-        addModule(module, model);
-        CatalogPage pageData = catalogService.findPage(module, q, skill, status, kind, page, size);
+        addModule("exams", model);
+        CatalogPage pageData = catalogService.findPage("exams", q, skill, status, kind, page, size);
         model.addAttribute("pageData", pageData);
         model.addAttribute("q", q);
         model.addAttribute("selectedSkill", skill);
@@ -78,61 +76,51 @@ public class AdminCatalogController {
 
     @GetMapping("/admin/questions/{id}")
     public String question(@PathVariable int id, Model model) {
-        return detail("questions", id, model);
+        addModule("questions", model);
+        model.addAttribute("entry", catalogService.entry("questions", id));
+        model.addAttribute("mediaItems", catalogService.mediaItems(id));
+        return "admin/catalog/detail";
     }
 
     @GetMapping("/admin/exams/{id}")
     public String exam(@PathVariable int id, Model model) {
-        return detail("exams", id, model);
-    }
-
-    private String detail(String module, int id, Model model) {
-        addModule(module, model);
-        model.addAttribute("entry", catalogService.entry(module, id));
-        if ("exams".equals(module))
-            model.addAttribute("examPreview", catalogService.examPreview(id));
-        if ("questions".equals(module)) {
-            model.addAttribute("mediaItems", catalogService.mediaItems(id));
-        }
+        addModule("exams", model);
+        model.addAttribute("entry", catalogService.entry("exams", id));
+        model.addAttribute("examPreview", catalogService.examPreview(id));
         return "admin/catalog/detail";
     }
 
     @GetMapping("/admin/questions/create")
     public String createQuestion(Model model) {
-        return create("questions", model);
+        addModule("questions", model);
+        model.addAttribute("editing", false);
+        model.addAttribute("questionForm", catalogService.questionForm(null));
+        return "admin/catalog/form";
     }
 
     @GetMapping("/admin/exams/create")
     public String createExam(Model model) {
-        return create("exams", model);
-    }
-
-    private String create(String module, Model model) {
-        addModule(module, model);
+        addModule("exams", model);
         model.addAttribute("editing", false);
-        if ("questions".equals(module))
-            model.addAttribute("questionForm", catalogService.questionForm(null));
-        if ("exams".equals(module)) prepareExamForm(model, catalogService.examForm(null));
+        prepareExamForm(model, catalogService.examForm(null));
         return "admin/catalog/form";
     }
 
     @GetMapping("/admin/questions/{id}/edit")
     public String editQuestion(@PathVariable int id, Model model) {
-        return edit("questions", id, model);
+        addModule("questions", model);
+        model.addAttribute("editing", true);
+        model.addAttribute("entry", catalogService.entry("questions", id));
+        model.addAttribute("questionForm", catalogService.questionForm(id));
+        return "admin/catalog/form";
     }
 
     @GetMapping("/admin/exams/{id}/edit")
     public String editExam(@PathVariable int id, Model model) {
-        return edit("exams", id, model);
-    }
-
-    private String edit(String module, int id, Model model) {
-        addModule(module, model);
+        addModule("exams", model);
         model.addAttribute("editing", true);
-        model.addAttribute("entry", catalogService.entry(module, id));
-        if ("questions".equals(module))
-            model.addAttribute("questionForm", catalogService.questionForm(id));
-        else prepareExamForm(model, catalogService.examForm(id));
+        model.addAttribute("entry", catalogService.entry("exams", id));
+        prepareExamForm(model, catalogService.examForm(id));
         return "admin/catalog/form";
     }
 
@@ -231,7 +219,19 @@ public class AdminCatalogController {
 
     @PostMapping("/admin/exams")
     public String saveExam(@ModelAttribute ExamForm form, BindingResult binding, Model model) {
-        return saveExamForm(null, form, binding, model);
+        String error = "Kiểm tra lại giá trị đã nhập trong đề thi.";
+        if (!binding.hasErrors()) {
+            try {
+                return "redirect:/admin/exams/" + catalogService.saveExam(null, form);
+            } catch (BusinessRuleException exception) {
+                error = exception.getMessage();
+            }
+        }
+        addModule("exams", model);
+        model.addAttribute("editing", false);
+        model.addAttribute("examError", error);
+        prepareExamForm(model, form);
+        return "admin/catalog/form";
     }
 
     @PostMapping("/admin/exams/{id}/edit")
@@ -240,10 +240,6 @@ public class AdminCatalogController {
             @ModelAttribute ExamForm form,
             BindingResult binding,
             Model model) {
-        return saveExamForm(id, form, binding, model);
-    }
-
-    private String saveExamForm(Integer id, ExamForm form, BindingResult binding, Model model) {
         String error = "Kiểm tra lại giá trị đã nhập trong đề thi.";
         if (!binding.hasErrors()) {
             try {
@@ -253,8 +249,8 @@ public class AdminCatalogController {
             }
         }
         addModule("exams", model);
-        model.addAttribute("editing", id != null);
-        if (id != null) model.addAttribute("entry", catalogService.entry("exams", id));
+        model.addAttribute("editing", true);
+        model.addAttribute("entry", catalogService.entry("exams", id));
         model.addAttribute("examError", error);
         prepareExamForm(model, form);
         return "admin/catalog/form";
