@@ -125,6 +125,15 @@ public class PlacementServiceImpl implements PlacementService {
                                 () ->
                                         new BusinessRuleException(
                                                 "Chưa có đề Placement đã công bố cho kỹ năng này"));
+        // Legacy callers may still select a skill. Keep the old overlap contract for
+        // those requests while the current UI uses start(email) for the single
+        // combined assessment. A different placement cannot be opened while one is
+        // still active, but retrying the same skill resumes its existing attempt.
+        if (attempt.hasInProgressPlacement(userId)
+                && !attempt.hasInProgressPlacement(userId, skill)) {
+            throw new BusinessRuleException(
+                    "Bạn còn một bài kiểm tra đầu vào đang làm. Hãy hoàn tất bài đó trước khi bắt đầu bài mới.");
+        }
         examCatalog.publishedExam(userId, exam.id());
         // A new Placement/Practice run must not reuse the key of a terminal attempt.
         // Repeated clicks in the same request are still protected by the engine's
