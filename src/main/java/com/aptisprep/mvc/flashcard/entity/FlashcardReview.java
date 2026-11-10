@@ -1,4 +1,4 @@
-package com.aptisprep.entity;
+package com.aptisprep.mvc.flashcard.entity;
 
 import jakarta.persistence.*;
 import java.time.LocalDateTime;

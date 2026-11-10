@@ -1,9 +1,9 @@
-package com.aptisprep.controller.admin;
+package com.aptisprep.mvc.flashcard.controller;
 
-import com.aptisprep.dto.form.FlashcardSetForm;
-import com.aptisprep.dto.view.FlashcardViews.SetView;
 import com.aptisprep.mvc.common.exception.BusinessRuleException;
-import com.aptisprep.service.learning.FlashcardSetService;
+import com.aptisprep.mvc.flashcard.dto.FlashcardSetFormDTO;
+import com.aptisprep.mvc.flashcard.dto.FlashcardViewsDTO.SetView;
+import com.aptisprep.mvc.flashcard.service.FlashcardSetService;
 import com.aptisprep.service.learning.LessonService;
 import jakarta.validation.Valid;
 import java.util.List;
@@ -40,8 +40,8 @@ public class AdminFlashcardController {
 
     @GetMapping("/admin/flashcards/create")
     public String showCreateForm(@RequestParam(required = false) Integer lessonId, Model model) {
-        FlashcardSetForm form = new FlashcardSetForm();
-        form.getRows().add(new FlashcardSetForm.Row());
+        FlashcardSetFormDTO form = new FlashcardSetFormDTO();
+        form.getRows().add(new FlashcardSetFormDTO.Row());
         flashcardSetService.prepareForLesson(form, lessonId);
         model.addAttribute("form", form);
         model.addAttribute("setId", null);
@@ -52,7 +52,7 @@ public class AdminFlashcardController {
 
     @GetMapping("/admin/flashcards/{id}/edit")
     public String showEditForm(@PathVariable Integer id, Model model) {
-        FlashcardSetForm form = flashcardSetService.form(id);
+        FlashcardSetFormDTO form = flashcardSetService.form(id);
         model.addAttribute("form", form);
         model.addAttribute("setId", id);
         model.addAttribute("levels", LessonService.LEVELS);
@@ -62,7 +62,7 @@ public class AdminFlashcardController {
 
     @PostMapping("/admin/flashcards")
     public String createFlashcardSet(
-            @Valid @ModelAttribute("form") FlashcardSetForm form,
+            @Valid @ModelAttribute("form") FlashcardSetFormDTO form,
             BindingResult bindingResult,
             Model model) {
         if (!bindingResult.hasErrors()) {
@@ -83,7 +83,7 @@ public class AdminFlashcardController {
     @PostMapping("/admin/flashcards/{id}")
     public String updateFlashcardSet(
             @PathVariable Integer id,
-            @Valid @ModelAttribute("form") FlashcardSetForm form,
+            @Valid @ModelAttribute("form") FlashcardSetFormDTO form,
             BindingResult bindingResult,
             Model model) {
         if (!bindingResult.hasErrors()) {

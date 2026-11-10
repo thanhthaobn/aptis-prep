@@ -5,6 +5,7 @@ import com.aptisprep.mvc.account.dto.LearningActivityDTO.DayDTO;
 import com.aptisprep.mvc.account.dto.LearningActivityDTO.WeekDTO;
 import com.aptisprep.mvc.account.service.AccountAccessService;
 import com.aptisprep.mvc.account.service.LearningActivityService;
+import com.aptisprep.mvc.flashcard.repository.UserFlashcardProgressRepository;
 import com.aptisprep.repository.*;
 import java.time.*;
 import java.time.format.DateTimeFormatter;

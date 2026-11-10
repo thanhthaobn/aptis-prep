@@ -2,7 +2,7 @@ package com.aptisprep.controller.student;
 
 import com.aptisprep.mvc.common.exception.BusinessRuleException;
 import com.aptisprep.mvc.common.exception.ResourceNotFoundException;
-import com.aptisprep.service.learning.FlashcardSetService;
+import com.aptisprep.mvc.flashcard.service.FlashcardSetService;
 import com.aptisprep.service.learning.LearningPathService;
 import com.aptisprep.service.learning.LessonService;
 import java.security.Principal;

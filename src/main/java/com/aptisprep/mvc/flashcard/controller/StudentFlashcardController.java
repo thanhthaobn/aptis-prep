@@ -1,10 +1,10 @@
-package com.aptisprep.controller.student;
+package com.aptisprep.mvc.flashcard.controller;
 
-import com.aptisprep.dto.form.FlashcardSetForm;
-import com.aptisprep.dto.view.FlashcardViews;
-import com.aptisprep.dto.view.FlashcardViews.SetView;
 import com.aptisprep.mvc.common.exception.BusinessRuleException;
-import com.aptisprep.service.learning.FlashcardSetService;
+import com.aptisprep.mvc.flashcard.dto.FlashcardSetFormDTO;
+import com.aptisprep.mvc.flashcard.dto.FlashcardViewsDTO;
+import com.aptisprep.mvc.flashcard.dto.FlashcardViewsDTO.SetView;
+import com.aptisprep.mvc.flashcard.service.FlashcardSetService;
 import com.aptisprep.service.learning.LessonService;
 import jakarta.validation.Valid;
 import java.security.Principal;
@@ -46,18 +46,18 @@ public class StudentFlashcardController {
                 || !List.of("learning", "newest").contains(sort))
             throw new BusinessRuleException("Bộ lọc bộ thẻ không hợp lệ");
         String query = fold(q);
-        Comparator<FlashcardViews.SetView> order =
+        Comparator<FlashcardViewsDTO.SetView> order =
                 "newest".equals(sort)
-                        ? Comparator.comparing(FlashcardViews.SetView::id).reversed()
+                        ? Comparator.comparing(FlashcardViewsDTO.SetView::id).reversed()
                         : Comparator.comparingInt(
-                                        (FlashcardViews.SetView set) ->
+                                        (FlashcardViewsDTO.SetView set) ->
                                                 set.personal()
                                                         ? LessonService.SKILLS.size()
                                                         : LessonService.SKILLS.indexOf(
                                                                 set.lessonSkill()))
                                 .thenComparingInt(set -> LessonService.LEVELS.indexOf(set.level()))
                                 .thenComparing(set -> fold(set.title()))
-                                .thenComparing(FlashcardViews.SetView::id);
+                                .thenComparing(FlashcardViewsDTO.SetView::id);
         List<SetView> visible =
                 all.stream()
                         .filter(
@@ -91,16 +91,17 @@ public class StudentFlashcardController {
                 "lessonResultCount", visible.stream().filter(set -> !set.personal()).count());
         m.addAttribute(
                 "mineResultCount",
-                visible.stream().filter(FlashcardViews.SetView::personal).count());
+                visible.stream().filter(FlashcardViewsDTO.SetView::personal).count());
         m.addAttribute("lessonBranches", FlashcardSetService.groupBySkillAndLevel(visible));
         m.addAttribute("skills", LessonService.SKILLS);
         m.addAttribute("levels", LessonService.LEVELS);
-        m.addAttribute("totalCards", all.stream().mapToInt(FlashcardViews.SetView::count).sum());
+        m.addAttribute("totalCards", all.stream().mapToInt(FlashcardViewsDTO.SetView::count).sum());
         m.addAttribute(
-                "visibleCards", visible.stream().mapToInt(FlashcardViews.SetView::count).sum());
+                "visibleCards", visible.stream().mapToInt(FlashcardViewsDTO.SetView::count).sum());
         m.addAttribute("selectedSource", source);
         m.addAttribute("totalSets", all.size());
-        m.addAttribute("mineCount", all.stream().filter(FlashcardViews.SetView::personal).count());
+        m.addAttribute(
+                "mineCount", all.stream().filter(FlashcardViewsDTO.SetView::personal).count());
         m.addAttribute(
                 "lessonCount",
                 all.stream().filter(set -> !set.personal() && set.lessonId() != null).count());
@@ -109,8 +110,8 @@ public class StudentFlashcardController {
 
     @GetMapping("/student/flashcards/create")
     public String showCreateForm(Model m) {
-        FlashcardSetForm f = new FlashcardSetForm();
-        f.getRows().add(new FlashcardSetForm.Row());
+        FlashcardSetFormDTO f = new FlashcardSetFormDTO();
+        f.getRows().add(new FlashcardSetFormDTO.Row());
         m.addAttribute("form", f);
         m.addAttribute("setId", null);
         m.addAttribute("levels", LessonService.LEVELS);
@@ -119,7 +120,7 @@ public class StudentFlashcardController {
 
     @GetMapping("/student/flashcards/{id}/edit")
     public String showEditForm(@PathVariable Integer id, Principal p, Model m) {
-        FlashcardSetForm f = service.personalForm(id, p.getName());
+        FlashcardSetFormDTO f = service.personalForm(id, p.getName());
         m.addAttribute("form", f);
         m.addAttribute("setId", id);
         m.addAttribute("levels", LessonService.LEVELS);
@@ -128,7 +129,7 @@ public class StudentFlashcardController {
 
     @PostMapping("/student/flashcards")
     public String createPersonalSet(
-            @Valid @ModelAttribute("form") FlashcardSetForm f,
+            @Valid @ModelAttribute("form") FlashcardSetFormDTO f,
             BindingResult b,
             Principal p,
             Model m) {
@@ -148,7 +149,7 @@ public class StudentFlashcardController {
     @PostMapping("/student/flashcards/{id}")
     public String updatePersonalSet(
             @PathVariable Integer id,
-            @Valid @ModelAttribute("form") FlashcardSetForm f,
+            @Valid @ModelAttribute("form") FlashcardSetFormDTO f,
             BindingResult b,
             Principal p,
             Model m) {

@@ -1,17 +1,21 @@
-package com.aptisprep.service.learning.impl;
+package com.aptisprep.mvc.flashcard.service.impl;
 
-import com.aptisprep.dto.FlashcardEntityDto;
-import com.aptisprep.dto.FlashcardSetEntityDto;
-import com.aptisprep.dto.form.FlashcardSetForm;
-import com.aptisprep.dto.form.FlashcardSetForm.Row;
-import com.aptisprep.dto.view.FlashcardViews.*;
-import com.aptisprep.entity.*;
+import com.aptisprep.entity.Lesson;
 import com.aptisprep.mvc.auth.entity.User;
-import com.aptisprep.mvc.auth.repository.UserRepository;
+import com.aptisprep.mvc.auth.service.UserService;
 import com.aptisprep.mvc.common.enums.*;
 import com.aptisprep.mvc.common.exception.*;
-import com.aptisprep.repository.*;
-import com.aptisprep.service.learning.FlashcardSetService;
+import com.aptisprep.mvc.flashcard.dto.FlashcardEntityDTO;
+import com.aptisprep.mvc.flashcard.dto.FlashcardSetEntityDTO;
+import com.aptisprep.mvc.flashcard.dto.FlashcardSetFormDTO;
+import com.aptisprep.mvc.flashcard.dto.FlashcardSetFormDTO.Row;
+import com.aptisprep.mvc.flashcard.dto.FlashcardViewsDTO.*;
+import com.aptisprep.mvc.flashcard.entity.*;
+import com.aptisprep.mvc.flashcard.repository.FlashcardRepository;
+import com.aptisprep.mvc.flashcard.repository.FlashcardSetRepository;
+import com.aptisprep.mvc.flashcard.repository.UserFlashcardProgressRepository;
+import com.aptisprep.mvc.flashcard.service.FlashcardSetService;
+import com.aptisprep.repository.LessonRepository;
 import com.aptisprep.service.learning.LessonService;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
@@ -24,7 +28,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class FlashcardSetServiceImpl implements FlashcardSetService {
     private final FlashcardSetRepository flashcardSetRepository;
     private final FlashcardRepository flashcardRepository;
-    private final UserRepository userRepository;
+    private final UserService userRepository;
     private final UserFlashcardProgressRepository userFlashcardProgressRepository;
     private final LessonRepository lessonRepository;
     @PersistenceContext private EntityManager em;
@@ -32,7 +36,7 @@ public class FlashcardSetServiceImpl implements FlashcardSetService {
     public FlashcardSetServiceImpl(
             FlashcardSetRepository flashcardSetRepository,
             FlashcardRepository flashcardRepository,
-            UserRepository userRepository,
+            UserService userRepository,
             UserFlashcardProgressRepository userFlashcardProgressRepository,
             LessonRepository lessonRepository) {
         this.flashcardSetRepository = flashcardSetRepository;
@@ -161,17 +165,17 @@ public class FlashcardSetServiceImpl implements FlashcardSetService {
                 && "PUBLISHED".equals(set.getLesson().getStatus());
     }
 
-    public FlashcardSetForm form(Integer id) {
+    public FlashcardSetFormDTO form(Integer id) {
         return toForm(require(id, true));
     }
 
-    private FlashcardSetForm toForm(FlashcardSet s) {
-        FlashcardSetForm f = FlashcardSetEntityDto.convertEntityToDto(s).toForm();
+    private FlashcardSetFormDTO toForm(FlashcardSet s) {
+        FlashcardSetFormDTO f = FlashcardSetEntityDTO.convertEntityToDto(s).toForm();
         for (Flashcard c :
                 flashcardRepository.findBySetIdAndStatusOrderByDisplayOrderAsc(
                         s.getId(), "ACTIVE")) {
-            FlashcardEntityDto card = FlashcardEntityDto.convertEntityToDto(c);
-            FlashcardSetForm.Row row = new FlashcardSetForm.Row();
+            FlashcardEntityDTO card = FlashcardEntityDTO.convertEntityToDto(c);
+            FlashcardSetFormDTO.Row row = new FlashcardSetFormDTO.Row();
             row.setTerm(card.getFrontContent());
             row.setDefinition(card.getBackContent());
             f.getRows().add(row);
@@ -179,7 +183,7 @@ public class FlashcardSetServiceImpl implements FlashcardSetService {
         return f;
     }
 
-    private Integer save(Integer id, FlashcardSetForm f, Lesson lesson, User owner) {
+    private Integer save(Integer id, FlashcardSetFormDTO f, Lesson lesson, User owner) {
         if (!LessonService.LEVELS.contains(f.getCefrLevel())
                 || !LessonService.STATUSES.contains(f.getStatus()))
             throw new BusinessRuleException("Cấp độ hoặc trạng thái không hợp lệ");
@@ -224,7 +228,7 @@ public class FlashcardSetServiceImpl implements FlashcardSetService {
             if (linked != null && !Objects.equals(linked.getId(), id))
                 throw new BusinessRuleException("Bài học này đã có một bộ thẻ");
         }
-        FlashcardSet mapped = FlashcardSetEntityDto.convertDtoToEntity(f, lesson, owner);
+        FlashcardSet mapped = FlashcardSetEntityDTO.convertDtoToEntity(f, lesson, owner);
         set.setTitle(mapped.getTitle());
         set.setDescription(mapped.getDescription());
         set.setCefrLevel(mapped.getCefrLevel());
@@ -241,10 +245,10 @@ public class FlashcardSetServiceImpl implements FlashcardSetService {
         flashcardRepository.flush();
         for (Row row : f.getRows()) {
             Flashcard c = row.getId() == null ? new Flashcard() : byId.get(row.getId());
-            FlashcardEntityDto cardDto =
-                    FlashcardEntityDto.fromValues(
+            FlashcardEntityDTO cardDto =
+                    FlashcardEntityDTO.fromValues(
                             row.getTerm(), row.getDefinition(), f.getCefrLevel(), position++, set);
-            Flashcard mappedCard = FlashcardEntityDto.convertDtoToEntity(cardDto);
+            Flashcard mappedCard = FlashcardEntityDTO.convertDtoToEntity(cardDto);
             c.setSet(mappedCard.getSet());
             c.setFrontContent(mappedCard.getFrontContent());
             c.setBackContent(mappedCard.getBackContent());
@@ -256,7 +260,7 @@ public class FlashcardSetServiceImpl implements FlashcardSetService {
         return set.getId();
     }
 
-    public Integer saveAdmin(Integer id, FlashcardSetForm f) {
+    public Integer saveAdmin(Integer id, FlashcardSetFormDTO f) {
         if (id != null) require(id, true);
         if (f.getLessonId() == null)
             throw new BusinessRuleException("Hãy chọn bài học sử dụng bộ thẻ này");
@@ -281,14 +285,14 @@ public class FlashcardSetServiceImpl implements FlashcardSetService {
         return u;
     }
 
-    public FlashcardSetForm personalForm(Integer id, String email) {
+    public FlashcardSetFormDTO personalForm(Integer id, String email) {
         FlashcardSet set = requireForStudent(id, email);
         if (set.getOwner() == null)
             throw new BusinessRuleException("Không thể sửa bộ thẻ thư viện");
         return toForm(set);
     }
 
-    public Integer savePersonal(Integer id, FlashcardSetForm f, String email) {
+    public Integer savePersonal(Integer id, FlashcardSetFormDTO f, String email) {
         User u = learner(email);
         if (id != null && requireForStudent(id, email).getOwner() == null)
             throw new BusinessRuleException("Không thể sửa bộ thẻ thư viện");
@@ -357,7 +361,7 @@ public class FlashcardSetServiceImpl implements FlashcardSetService {
                 .toList();
     }
 
-    public void prepareForLesson(FlashcardSetForm form, Integer lessonId) {
+    public void prepareForLesson(FlashcardSetFormDTO form, Integer lessonId) {
         if (lessonId == null) return;
         Lesson lesson =
                 lessonRepository

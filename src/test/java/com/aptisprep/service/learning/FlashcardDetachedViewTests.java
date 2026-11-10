@@ -5,12 +5,16 @@ import static org.hamcrest.Matchers.containsString;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-import com.aptisprep.dto.form.FlashcardSetForm;
 import com.aptisprep.entity.Lesson;
 import com.aptisprep.mvc.auth.entity.User;
 import com.aptisprep.mvc.auth.repository.UserRepository;
 import com.aptisprep.mvc.common.enums.Role;
 import com.aptisprep.mvc.common.enums.UserStatus;
+import com.aptisprep.mvc.flashcard.dto.*;
+import com.aptisprep.mvc.flashcard.dto.FlashcardSetFormDTO;
+import com.aptisprep.mvc.flashcard.entity.*;
+import com.aptisprep.mvc.flashcard.repository.*;
+import com.aptisprep.mvc.flashcard.service.FlashcardSetService;
 import com.aptisprep.repository.*;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -51,12 +55,12 @@ class FlashcardDetachedViewTests {
         lesson = lessons.saveAndFlush(lesson);
         Integer libraryId = null, personalId = null;
         try {
-            var form = new FlashcardSetForm();
+            var form = new FlashcardSetFormDTO();
             form.setTitle("Email phrases");
             form.setCefrLevel("B1");
             form.setStatus("PUBLISHED");
             form.setLessonId(lesson.getId());
-            var row = new FlashcardSetForm.Row();
+            var row = new FlashcardSetFormDTO.Row();
             row.setTerm("Kind regards");
             row.setDefinition("Trân trọng");
             form.getRows().add(row);

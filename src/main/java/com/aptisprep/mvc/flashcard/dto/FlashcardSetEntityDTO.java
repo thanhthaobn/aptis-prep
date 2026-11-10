@@ -1,12 +1,11 @@
-package com.aptisprep.dto;
+package com.aptisprep.mvc.flashcard.dto;
 
-import com.aptisprep.dto.form.FlashcardSetForm;
-import com.aptisprep.entity.FlashcardSet;
 import com.aptisprep.entity.Lesson;
 import com.aptisprep.mvc.auth.entity.User;
+import com.aptisprep.mvc.flashcard.entity.FlashcardSet;
 
 /** DTO boundary for a flashcard set entity. */
-public class FlashcardSetEntityDto {
+public class FlashcardSetEntityDTO {
     private String title;
     private String description;
     private String cefrLevel;
@@ -16,9 +15,10 @@ public class FlashcardSetEntityDto {
     private String visibility;
     private Integer lessonId;
 
-    public static FlashcardSetEntityDto fromForm(FlashcardSetForm form, Lesson lesson, User owner) {
+    public static FlashcardSetEntityDTO fromForm(
+            FlashcardSetFormDTO form, Lesson lesson, User owner) {
         if (form == null) return null;
-        FlashcardSetEntityDto dto = new FlashcardSetEntityDto();
+        FlashcardSetEntityDTO dto = new FlashcardSetEntityDTO();
         dto.title = form.getTitle();
         dto.description = form.getDescription();
         dto.cefrLevel = form.getCefrLevel();
@@ -30,7 +30,7 @@ public class FlashcardSetEntityDto {
         return dto;
     }
 
-    public static FlashcardSet convertDtoToEntity(FlashcardSetEntityDto dto) {
+    public static FlashcardSet convertDtoToEntity(FlashcardSetEntityDTO dto) {
         if (dto == null) return null;
         FlashcardSet entity = new FlashcardSet();
         entity.setTitle(trim(dto.title));
@@ -44,13 +44,13 @@ public class FlashcardSetEntityDto {
     }
 
     public static FlashcardSet convertDtoToEntity(
-            FlashcardSetForm form, Lesson lesson, User owner) {
+            FlashcardSetFormDTO form, Lesson lesson, User owner) {
         return convertDtoToEntity(fromForm(form, lesson, owner));
     }
 
-    public static FlashcardSetEntityDto convertEntityToDto(FlashcardSet entity) {
+    public static FlashcardSetEntityDTO convertEntityToDto(FlashcardSet entity) {
         if (entity == null) return null;
-        FlashcardSetEntityDto dto = new FlashcardSetEntityDto();
+        FlashcardSetEntityDTO dto = new FlashcardSetEntityDTO();
         dto.title = entity.getTitle();
         dto.description = entity.getDescription();
         dto.cefrLevel = entity.getCefrLevel();
@@ -62,8 +62,8 @@ public class FlashcardSetEntityDto {
         return dto;
     }
 
-    public FlashcardSetForm toForm() {
-        FlashcardSetForm form = new FlashcardSetForm();
+    public FlashcardSetFormDTO toForm() {
+        FlashcardSetFormDTO form = new FlashcardSetFormDTO();
         form.setTitle(title);
         form.setDescription(description);
         form.setCefrLevel(cefrLevel);

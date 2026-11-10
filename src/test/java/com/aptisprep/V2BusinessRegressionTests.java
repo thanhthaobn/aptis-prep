@@ -17,6 +17,10 @@ import com.aptisprep.mvc.auth.entity.User;
 import com.aptisprep.mvc.auth.repository.UserRepository;
 import com.aptisprep.mvc.common.enums.*;
 import com.aptisprep.mvc.common.exception.BusinessRuleException;
+import com.aptisprep.mvc.flashcard.dto.*;
+import com.aptisprep.mvc.flashcard.entity.*;
+import com.aptisprep.mvc.flashcard.repository.*;
+import com.aptisprep.mvc.flashcard.service.FlashcardSetService;
 import com.aptisprep.mvc.scoring.dto.*;
 import com.aptisprep.mvc.scoring.entity.*;
 import com.aptisprep.mvc.scoring.repository.*;
@@ -25,7 +29,6 @@ import com.aptisprep.repository.*;
 import com.aptisprep.service.admin.CatalogService;
 import com.aptisprep.service.contract.ScoringSchemeUsageContract;
 import com.aptisprep.service.exam.ExamAttemptService;
-import com.aptisprep.service.learning.FlashcardSetService;
 import java.math.BigDecimal;
 import java.util.*;
 import org.junit.jupiter.api.*;
@@ -330,10 +333,10 @@ class V2BusinessRegressionTests {
 
     @Test
     void repeatedStatusIsANewReviewButReplayedKeyIsNot() {
-        var form = new FlashcardSetForm();
+        var form = new FlashcardSetFormDTO();
         form.setTitle("V2 private cards");
         form.setCefrLevel("A1");
-        var row = new FlashcardSetForm.Row();
+        var row = new FlashcardSetFormDTO.Row();
         row.setTerm("test");
         row.setDefinition("kiểm tra");
         form.getRows().add(row);

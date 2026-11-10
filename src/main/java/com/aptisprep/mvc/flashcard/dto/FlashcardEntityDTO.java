@@ -1,10 +1,10 @@
-package com.aptisprep.dto;
+package com.aptisprep.mvc.flashcard.dto;
 
-import com.aptisprep.entity.Flashcard;
-import com.aptisprep.entity.FlashcardSet;
+import com.aptisprep.mvc.flashcard.entity.Flashcard;
+import com.aptisprep.mvc.flashcard.entity.FlashcardSet;
 
 /** DTO boundary for an individual flashcard entity. */
-public class FlashcardEntityDto {
+public class FlashcardEntityDTO {
     private String frontContent;
     private String backContent;
     private String cefrLevel;
@@ -12,13 +12,13 @@ public class FlashcardEntityDto {
     private String status;
     private FlashcardSet set;
 
-    public static FlashcardEntityDto fromValues(
+    public static FlashcardEntityDTO fromValues(
             String frontContent,
             String backContent,
             String cefrLevel,
             Integer displayOrder,
             FlashcardSet set) {
-        FlashcardEntityDto dto = new FlashcardEntityDto();
+        FlashcardEntityDTO dto = new FlashcardEntityDTO();
         dto.frontContent = frontContent;
         dto.backContent = backContent;
         dto.cefrLevel = cefrLevel;
@@ -28,7 +28,7 @@ public class FlashcardEntityDto {
         return dto;
     }
 
-    public static Flashcard convertDtoToEntity(FlashcardEntityDto dto) {
+    public static Flashcard convertDtoToEntity(FlashcardEntityDTO dto) {
         if (dto == null) return null;
         Flashcard entity = new Flashcard();
         entity.setFrontContent(trim(dto.frontContent));
@@ -40,9 +40,9 @@ public class FlashcardEntityDto {
         return entity;
     }
 
-    public static FlashcardEntityDto convertEntityToDto(Flashcard entity) {
+    public static FlashcardEntityDTO convertEntityToDto(Flashcard entity) {
         if (entity == null) return null;
-        FlashcardEntityDto dto = new FlashcardEntityDto();
+        FlashcardEntityDTO dto = new FlashcardEntityDTO();
         dto.frontContent = entity.getFrontContent();
         dto.backContent = entity.getBackContent();
         dto.cefrLevel = entity.getCefrLevel();

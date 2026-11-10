@@ -1,11 +1,11 @@
-package com.aptisprep.dto.view;
+package com.aptisprep.mvc.flashcard.dto;
 
 import java.time.LocalDateTime;
 import java.util.List;
 
 /** Presentation models shared by flashcard services, controllers and templates. */
-public final class FlashcardViews {
-    private FlashcardViews() {}
+public final class FlashcardViewsDTO {
+    private FlashcardViewsDTO() {}
 
     public record SetView(
             Integer id,

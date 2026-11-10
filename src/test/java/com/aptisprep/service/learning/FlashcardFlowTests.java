@@ -5,12 +5,16 @@ import static org.assertj.core.api.Assertions.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-import com.aptisprep.dto.form.FlashcardSetForm;
-import com.aptisprep.dto.view.FlashcardViews;
 import com.aptisprep.entity.Lesson;
 import com.aptisprep.mvc.auth.entity.User;
 import com.aptisprep.mvc.auth.repository.UserRepository;
 import com.aptisprep.mvc.common.enums.*;
+import com.aptisprep.mvc.flashcard.dto.*;
+import com.aptisprep.mvc.flashcard.dto.FlashcardSetFormDTO;
+import com.aptisprep.mvc.flashcard.dto.FlashcardViewsDTO;
+import com.aptisprep.mvc.flashcard.entity.*;
+import com.aptisprep.mvc.flashcard.repository.*;
+import com.aptisprep.mvc.flashcard.service.FlashcardSetService;
 import com.aptisprep.mvc.storage.service.StorageService;
 import com.aptisprep.repository.*;
 import com.aptisprep.support.TestAudio;
@@ -35,13 +39,13 @@ class FlashcardFlowTests {
     @Test
     void sharedTreeOrdersSkillsAndLevelsAndExcludesPersonalSets() {
         var a2 =
-                new FlashcardViews.SetView(
+                new FlashcardViewsDTO.SetView(
                         1, "Reading A2", null, "A2", "DRAFT", 2, false, 1, "Lesson", "Reading");
         var a1 =
-                new FlashcardViews.SetView(
+                new FlashcardViewsDTO.SetView(
                         2, "Reading A1", null, "A1", "PUBLISHED", 3, false, 2, "Lesson", "Reading");
         var grammar =
-                new FlashcardViews.SetView(
+                new FlashcardViewsDTO.SetView(
                         3,
                         "Grammar",
                         null,
@@ -53,15 +57,15 @@ class FlashcardFlowTests {
                         "Lesson",
                         "Grammar & Vocabulary");
         var mine =
-                new FlashcardViews.SetView(
+                new FlashcardViewsDTO.SetView(
                         4, "Private", null, "A1", "PUBLISHED", 1, true, null, null, null);
         var tree =
                 FlashcardSetService.groupBySkillAndLevel(java.util.List.of(a2, mine, a1, grammar));
         assertThat(tree)
-                .extracting(FlashcardViews.SkillSets::skill)
+                .extracting(FlashcardViewsDTO.SkillSets::skill)
                 .containsExactly("Grammar & Vocabulary", "Reading");
         assertThat(tree.get(1).levels())
-                .extracting(FlashcardViews.LevelSets::level)
+                .extracting(FlashcardViewsDTO.LevelSets::level)
                 .containsExactly("A1", "A2");
         assertThat(tree.get(1).count()).isEqualTo(2);
         assertThat(tree.get(1).levels().getFirst().sets()).containsExactly(a1);
@@ -73,7 +77,7 @@ class FlashcardFlowTests {
         var set = sets.findById(id).orElseThrow();
         set.setStatus("DRAFT");
         sets.saveAndFlush(set);
-        var orphan = new com.aptisprep.entity.FlashcardSet();
+        var orphan = new com.aptisprep.mvc.flashcard.entity.FlashcardSet();
         orphan.setTitle("Unassigned legacy draft");
         orphan.setCefrLevel("A1");
         orphan.setStatus("DRAFT");
@@ -111,10 +115,10 @@ class FlashcardFlowTests {
                         .andReturn();
         @SuppressWarnings("unchecked")
         var tree =
-                (java.util.List<FlashcardViews.SkillSets>)
+                (java.util.List<FlashcardViewsDTO.SkillSets>)
                         result.getModelAndView().getModel().get("lessonBranches");
         assertThat(tree.stream().flatMap(s -> s.levels().stream()).flatMap(l -> l.sets().stream()))
-                .extracting(FlashcardViews.SetView::id)
+                .extracting(FlashcardViewsDTO.SetView::id)
                 .contains(id)
                 .doesNotContain(orphan.getId());
         assertThat(result.getResponse().getContentAsString())
@@ -135,10 +139,10 @@ class FlashcardFlowTests {
                                                 org.hamcrest.Matchers.containsString(
                                                         "Bạn chưa có bộ thẻ cá nhân đang hoạt"
                                                                 + " động"))));
-        var f = new FlashcardSetForm();
+        var f = new FlashcardSetFormDTO();
         f.setTitle("Private practice");
         f.setCefrLevel("A1");
-        var row = new FlashcardSetForm.Row();
+        var row = new FlashcardSetFormDTO.Row();
         row.setTerm("learn");
         row.setDefinition("học");
         f.getRows().add(row);
@@ -170,9 +174,9 @@ class FlashcardFlowTests {
                         .andReturn();
         @SuppressWarnings("unchecked")
         var found =
-                (java.util.List<FlashcardViews.SetView>)
+                (java.util.List<FlashcardViewsDTO.SetView>)
                         result.getModelAndView().getModel().get("sets");
-        assertThat(found).extracting(FlashcardViews.SetView::id).containsExactly(id);
+        assertThat(found).extracting(FlashcardViewsDTO.SetView::id).containsExactly(id);
         assertThat(result.getModelAndView().getModel())
                 .containsEntry("totalSets", 1)
                 .containsEntry("totalCards", 1);
@@ -201,9 +205,9 @@ class FlashcardFlowTests {
         var owner = learner("filter-owner@test.local");
         var other = learner("filter-other@test.local");
         create();
-        var f = new FlashcardSetForm();
+        var f = new FlashcardSetFormDTO();
         f.setTitle("My private vocabulary");
-        var row = new FlashcardSetForm.Row();
+        var row = new FlashcardSetFormDTO.Row();
         row.setTerm("study");
         row.setDefinition("học");
         f.getRows().add(row);
@@ -332,12 +336,12 @@ class FlashcardFlowTests {
         lesson.setDisplayOrder((int) (System.nanoTime() % 1000000000));
         lesson.setStatus("PUBLISHED");
         lesson = lessons.saveAndFlush(lesson);
-        var f = new FlashcardSetForm();
+        var f = new FlashcardSetFormDTO();
         f.setTitle("Daily routines");
         f.setCefrLevel("A1");
         f.setStatus("PUBLISHED");
         f.setLessonId(lesson.getId());
-        var row = new FlashcardSetForm.Row();
+        var row = new FlashcardSetFormDTO.Row();
         row.setTerm("get up");
         row.setDefinition("thức dậy");
         f.getRows().add(row);
@@ -361,7 +365,7 @@ class FlashcardFlowTests {
                 .isEqualTo(2);
         var f = service.form(id);
         f.getRows().clear();
-        var row = new FlashcardSetForm.Row();
+        var row = new FlashcardSetFormDTO.Row();
         row.setTerm("breakfast");
         row.setDefinition("bữa sáng");
         f.getRows().add(row);
@@ -431,10 +435,10 @@ class FlashcardFlowTests {
     void learnerCanArchiveOnlyOwnSet() {
         var a = learner("cards-owner@test.local");
         var b = learner("cards-other@test.local");
-        var f = new FlashcardSetForm();
+        var f = new FlashcardSetFormDTO();
         f.setTitle("My words");
         f.setCefrLevel("A1");
-        var row = new FlashcardSetForm.Row();
+        var row = new FlashcardSetFormDTO.Row();
         row.setTerm("focus");
         row.setDefinition("tập trung");
         f.getRows().add(row);

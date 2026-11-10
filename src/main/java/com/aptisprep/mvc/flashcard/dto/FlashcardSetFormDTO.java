@@ -1,9 +1,9 @@
-package com.aptisprep.dto.form;
+package com.aptisprep.mvc.flashcard.dto;
 
 import jakarta.validation.constraints.*;
 import java.util.*;
 
-public class FlashcardSetForm {
+public class FlashcardSetFormDTO {
     @NotBlank
     @Size(max = 255)
     private String title;

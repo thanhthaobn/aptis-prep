@@ -4,7 +4,7 @@ import com.aptisprep.dto.LessonEntityDto;
 import com.aptisprep.entity.Lesson;
 import com.aptisprep.entity.LessonMaterial;
 import com.aptisprep.mvc.common.exception.BusinessRuleException;
-import com.aptisprep.service.learning.FlashcardSetService;
+import com.aptisprep.mvc.flashcard.service.FlashcardSetService;
 import com.aptisprep.service.learning.LessonListeningService;
 import com.aptisprep.service.learning.LessonService;
 import com.aptisprep.service.learning.LessonTeachingService;

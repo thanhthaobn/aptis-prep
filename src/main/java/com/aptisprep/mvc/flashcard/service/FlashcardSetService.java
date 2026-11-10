@@ -1,10 +1,10 @@
-package com.aptisprep.service.learning;
+package com.aptisprep.mvc.flashcard.service;
 
-import com.aptisprep.dto.form.FlashcardSetForm;
-import com.aptisprep.dto.view.FlashcardViews.*;
-import com.aptisprep.entity.FlashcardSet;
 import com.aptisprep.entity.Lesson;
-import com.aptisprep.service.learning.impl.FlashcardSetServiceImpl;
+import com.aptisprep.mvc.flashcard.dto.FlashcardSetFormDTO;
+import com.aptisprep.mvc.flashcard.dto.FlashcardViewsDTO.*;
+import com.aptisprep.mvc.flashcard.entity.FlashcardSet;
+import com.aptisprep.mvc.flashcard.service.impl.FlashcardSetServiceImpl;
 import java.util.List;
 import java.util.Map;
 
@@ -25,13 +25,13 @@ public interface FlashcardSetService {
 
     FlashcardSet requireForStudent(Integer id, String email);
 
-    FlashcardSetForm form(Integer id);
+    FlashcardSetFormDTO form(Integer id);
 
-    Integer saveAdmin(Integer id, FlashcardSetForm form);
+    Integer saveAdmin(Integer id, FlashcardSetFormDTO form);
 
-    FlashcardSetForm personalForm(Integer id, String email);
+    FlashcardSetFormDTO personalForm(Integer id, String email);
 
-    Integer savePersonal(Integer id, FlashcardSetForm form, String email);
+    Integer savePersonal(Integer id, FlashcardSetFormDTO form, String email);
 
     void archivePersonal(Integer id, String email);
 
@@ -43,7 +43,7 @@ public interface FlashcardSetService {
 
     List<Lesson> availableLessons();
 
-    void prepareForLesson(FlashcardSetForm form, Integer lessonId);
+    void prepareForLesson(FlashcardSetFormDTO form, Integer lessonId);
 
     void mark(Integer setId, Integer cardId, String state, String email);
 

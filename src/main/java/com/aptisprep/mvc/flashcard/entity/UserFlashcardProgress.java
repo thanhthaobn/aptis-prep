@@ -1,4 +1,4 @@
-package com.aptisprep.entity;
+package com.aptisprep.mvc.flashcard.entity;
 
 import com.aptisprep.mvc.auth.entity.User;
 import jakarta.persistence.*;

@@ -1,6 +1,6 @@
-package com.aptisprep.repository;
+package com.aptisprep.mvc.flashcard.repository;
 
-import com.aptisprep.entity.Flashcard;
+import com.aptisprep.mvc.flashcard.entity.*;
 import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
 

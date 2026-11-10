@@ -11,6 +11,8 @@ import com.aptisprep.mvc.auth.entity.User;
 import com.aptisprep.mvc.auth.repository.UserRepository;
 import com.aptisprep.mvc.common.enums.*;
 import com.aptisprep.mvc.common.exception.BusinessRuleException;
+import com.aptisprep.mvc.flashcard.entity.FlashcardSet;
+import com.aptisprep.mvc.flashcard.repository.FlashcardSetRepository;
 import com.aptisprep.repository.*;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
