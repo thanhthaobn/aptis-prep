@@ -120,6 +120,55 @@
       .media-play-trigger:disabled {
         cursor: not-allowed;
       }
+      .media-audio.browser-speech-placeholder {
+        display: none;
+      }
+      .media-play-trigger.browser-speech {
+        position: static;
+        width: auto;
+        height: auto;
+        padding: 0.6rem 0.9rem;
+        border: 1px solid #8fb8c8;
+        border-radius: 0.5rem;
+        background: #ffffff;
+        color: #075c78;
+        font-weight: 700;
+      }
+      .media-play-trigger.browser-speech::after {
+        content: '🔊 Nghe lại';
+      }
+      .browser-speech-progress {
+        display: grid;
+        gap: 0.35rem;
+        padding: 0.65rem 0.75rem;
+        border: 1px solid #c8dce5;
+        border-radius: 0.5rem;
+        background: #ffffff;
+      }
+      .browser-speech-progress[hidden] {
+        display: none;
+      }
+      .browser-speech-progress-track {
+        height: 0.45rem;
+        overflow: hidden;
+        border-radius: 999px;
+        background: #dcecf1;
+      }
+      .browser-speech-progress-fill {
+        display: block;
+        width: 0;
+        height: 100%;
+        border-radius: inherit;
+        background: #087a9d;
+        transition: width 0.2s linear;
+      }
+      .browser-speech-time {
+        display: flex;
+        justify-content: space-between;
+        color: #416276;
+        font-size: var(--text-small);
+        font-variant-numeric: tabular-nums;
+      }
       .media-status {
         min-height: 1.1rem;
         font-size: var(--text-small);
@@ -550,6 +599,25 @@
                 >
                   Trình duyệt không hỗ trợ phát audio.
                 </audio>
+                <div
+                  class="browser-speech-progress"
+                  hidden
+                  aria-label="Tiến độ giọng đọc trình duyệt"
+                >
+                  <div
+                    class="browser-speech-progress-track"
+                    role="progressbar"
+                    aria-valuemin="0"
+                    aria-valuemax="100"
+                    aria-valuenow="0"
+                  >
+                    <span class="browser-speech-progress-fill"></span>
+                  </div>
+                  <div class="browser-speech-time" aria-live="off">
+                    <span class="browser-speech-elapsed">0:00</span>
+                    <span class="browser-speech-duration">0:00</span>
+                  </div>
+                </div>
               </div>
               <span class="media-status muted" aria-live="polite">
                 Bấm phát trên thanh âm thanh để nghe.

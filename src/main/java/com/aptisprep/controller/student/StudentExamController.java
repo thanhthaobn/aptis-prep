@@ -190,11 +190,15 @@ public class StudentExamController {
 
     @PostMapping("/student/attempts/{id}/media/{mediaId}/play")
     @ResponseBody
-    public ResponseEntity<ExamAttemptService.MediaPlayResult> playMedia(
+    public ResponseEntity<?> playMedia(
             @PathVariable Integer id, @PathVariable Integer mediaId, Principal principal) {
-        return ResponseEntity.ok(
-                attempts.playMedia(
-                        accounts.requireActiveStudent(principal.getName()), id, mediaId));
+        try {
+            return ResponseEntity.ok(
+                    attempts.playMedia(
+                            accounts.requireActiveStudent(principal.getName()), id, mediaId));
+        } catch (BusinessRuleException exception) {
+            return ResponseEntity.badRequest().body(Map.of("message", exception.getMessage()));
+        }
     }
 
     @GetMapping("/student/attempts/{id}/media/{mediaId}/content")

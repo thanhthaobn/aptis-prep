@@ -3,6 +3,7 @@ package com.aptisprep.service.exam;
 import static com.aptisprep.security.SessionMvcRequests.user;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -598,23 +599,28 @@ class ExamAttemptConcurrencyTests {
 
     @Test
     @org.springframework.transaction.annotation.Transactional
-    void speechOnlyOrMissingAudioCannotCreateANewAttempt() {
+    void speechOnlyOrMissingAudioUsesBrowserSpeechAndKeepsPlayLimit() {
         var f = fixture("speech-not-audio");
         f.media().setMediaUrl("speech://legacy");
         f.media().setTranscript("Secret transcript");
         media.saveAndFlush(f.media());
-        assertThrows(
-                BusinessRuleException.class,
-                () -> attempts.start(f.user().getId(), f.exam().getId(), "speech-only"));
-        org.junit.jupiter.api.Assertions.assertThrows(
-                com.aptisprep.exception.ResourceNotFoundException.class,
-                () -> studentCatalog.entry("exams", f.exam().getId()));
+        int speechAttemptId =
+                attempts.start(f.user().getId(), f.exam().getId(), "speech-only").attemptId();
+        var speechPlayback =
+                attempts.playMedia(f.user().getId(), speechAttemptId, f.media().getId());
+        assertTrue(speechPlayback.browserSpeech());
+        assertNull(speechPlayback.contentToken());
+        assertEquals("Secret transcript", speechPlayback.speechText());
+
         f.media().setMediaUrl("questions/missing-audio.wav");
         media.saveAndFlush(f.media());
-        assertThrows(
-                BusinessRuleException.class,
-                () -> attempts.start(f.user().getId(), f.exam().getId(), "missing-file"));
-        assertEquals(0, attemptRepository.countByUserId(f.user().getId()));
+        int missingAttemptId =
+                attempts.start(f.user().getId(), f.exam().getId(), "missing-file").attemptId();
+        var missingPlayback =
+                attempts.playMedia(f.user().getId(), missingAttemptId, f.media().getId());
+        assertTrue(missingPlayback.browserSpeech());
+        assertEquals("Secret transcript", missingPlayback.speechText());
+        assertEquals(2, attemptRepository.countByUserId(f.user().getId()));
     }
 
     @Test

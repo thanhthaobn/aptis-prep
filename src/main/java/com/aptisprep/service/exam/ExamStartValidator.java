@@ -85,7 +85,9 @@ public class ExamStartValidator {
                     questionMediaRepository.findByQuestionIdOrderByPosition(question.getId())) {
                 if ("AUDIO".equals(audio.getMediaType())) {
                     hasAudio = true;
-                    validateAudio(audio.getMediaUrl());
+                    if ("LISTENING".equals(skill))
+                        validateAudio(audio.getMediaUrl(), audio.getTranscript());
+                    else validateAudio(audio.getMediaUrl());
                 }
             }
             if ("LISTENING".equals(skill) && !hasAudio)
@@ -115,16 +117,30 @@ public class ExamStartValidator {
     }
 
     void validateAudio(String path) {
-        if (path != null && !path.isBlank() && !path.startsWith("speech://")) {
-            try {
-                Resource resource = storage.load(path);
-                if (resource.exists() && resource.isReadable()) return;
-            } catch (RuntimeException ignored) {
-                // A transcript is never a substitute for a missing exam audio file.
-            }
-        }
+        if (isReadableAudio(path)) return;
         throw new BusinessRuleException(
                 "Audio đề thi chưa sẵn sàng. Admin cần tải file âm thanh trước khi mở đề");
+    }
+
+    void validateAudio(String path, String transcript) {
+        if (canUseBrowserSpeech(path, transcript)) return;
+        validateAudio(path);
+    }
+
+    boolean canUseBrowserSpeech(String path, String transcript) {
+        if (transcript == null || transcript.isBlank()) return false;
+        if (path == null || path.isBlank() || path.startsWith("speech://")) return true;
+        return !isReadableAudio(path);
+    }
+
+    private boolean isReadableAudio(String path) {
+        if (path == null || path.isBlank() || path.startsWith("speech://")) return false;
+        try {
+            Resource resource = storage.load(path);
+            return resource.exists() && resource.isReadable();
+        } catch (RuntimeException ignored) {
+            return false;
+        }
     }
 
     static String normalizeSkill(String value) {

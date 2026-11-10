@@ -15,7 +15,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 
 class ExamPublicationReadinessTests {
     @Test
-    void publicationChecksDraftContentAndRejectsMissingListeningAudio() {
+    void publicationChecksDraftContentAndAllowsBrowserSpeechWhenListeningAudioIsMissing() {
         var questions = mock(QuestionRepository.class);
         var sections = mock(MockExamSectionRepository.class);
         var media = mock(QuestionMediaRepository.class);
@@ -48,11 +48,10 @@ class ExamPublicationReadinessTests {
         var audio = new QuestionMediaEntity();
         audio.setMediaType("AUDIO");
         audio.setMediaUrl("questions/missing.wav");
+        audio.setTranscript("This is a browser speech fallback.");
         when(media.findByQuestionIdOrderByPosition(2)).thenReturn(List.of(audio));
         when(storage.load("questions/missing.wav")).thenThrow(new BusinessRuleException("Missing"));
-        assertThrows(
-                BusinessRuleException.class,
-                () -> validator.validateForPublication(exam, List.of(link)));
+        assertDoesNotThrow(() -> validator.validateForPublication(exam, List.of(link)));
         assertEquals("DRAFT", exam.getStatus());
     }
 }
