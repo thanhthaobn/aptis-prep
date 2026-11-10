@@ -107,4 +107,45 @@ class UnavailableExamCatalogTests {
         assertThat(entry.startable()).isFalse();
         assertThat(entry.readinessMessage()).contains("Listening audio");
     }
+
+    @Test
+    void publishedListeningExamWithMissingAudioRemainsVisibleButCannotStart() {
+        var exams = mock(MockExamRepository.class);
+        var sections = mock(MockExamSectionRepository.class);
+        var questions = mock(MockExamQuestionRepository.class);
+        var validator = mock(ExamStartValidator.class);
+
+        var exam = new MockExamEntity();
+        ReflectionTestUtils.setField(exam, "id", 101);
+        exam.setTitle("Published listening practice");
+        exam.setExamType("PRACTICE");
+        exam.setSkill("LISTENING");
+        exam.setTargetLevel("B1");
+        exam.setDurationMinutes(40);
+        exam.setStatus("PUBLISHED");
+
+        var link = new MockExamQuestionEntity();
+        link.setMockExamId(101);
+        link.setQuestionId(501);
+        when(exams.findByStatusOrderByUpdatedAtDesc("PUBLISHED")).thenReturn(List.of(exam));
+        when(exams.findById(101)).thenReturn(Optional.of(exam));
+        when(questions.findByMockExamIdOrderByPosition(101)).thenReturn(List.of(link));
+        doThrow(new BusinessRuleException("Audio đề thi chưa sẵn sàng"))
+                .when(validator)
+                .validate(eq(exam), eq(List.of(link)));
+
+        var catalog =
+                new com.aptisprep.service.student.impl.StudentExamCatalogServiceImpl(
+                        exams, sections, questions, validator);
+
+        var page =
+                catalog.browse("", "LISTENING", "", "", "PRACTICE", "level", PageRequest.of(0, 9));
+
+        assertThat(page.page().getTotalElements()).isEqualTo(1);
+        var entry = page.page().getContent().getFirst();
+        assertThat(entry.skill()).isEqualTo("Listening");
+        assertThat(entry.startable()).isFalse();
+        assertThat(entry.readinessMessage()).contains("Audio");
+        assertThat(catalog.entry("exams", 101).startable()).isFalse();
+    }
 }
