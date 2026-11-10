@@ -6,6 +6,8 @@ import com.aptisprep.entity.UserAnswerDetailEntity;
 import com.aptisprep.entity.UserAnswerEntity;
 import com.aptisprep.mvc.common.exception.BusinessRuleException;
 import com.aptisprep.mvc.common.exception.ResourceNotFoundException;
+import com.aptisprep.mvc.scoring.service.ScoringPolicyService;
+import com.aptisprep.mvc.scoring.service.impl.CheckpointScorePolicy;
 import com.aptisprep.repository.ExamSkillResultRepository;
 import com.aptisprep.repository.UserAnswerDetailRepository;
 import com.aptisprep.repository.UserAnswerRepository;
@@ -13,8 +15,6 @@ import com.aptisprep.service.contract.GradingContextFormatter;
 import com.aptisprep.service.contract.IntegrationModels.LockedAnswer;
 import com.aptisprep.service.contract.IntegrationModels.LockedAttempt;
 import com.aptisprep.service.contract.IntegrationModels.LockedItem;
-import com.aptisprep.service.contract.ScoringPolicyContract;
-import com.aptisprep.service.scoring.CheckpointScorePolicy;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.LinkedHashMap;
@@ -31,13 +31,13 @@ public class ObjectiveGradingService {
     private final UserAnswerRepository userAnswerRepository;
     private final UserAnswerDetailRepository userAnswerDetailRepository;
     private final ExamSkillResultRepository examSkillResultRepository;
-    private final ScoringPolicyContract scoring;
+    private final ScoringPolicyService scoring;
 
     public ObjectiveGradingService(
             UserAnswerRepository userAnswerRepository,
             UserAnswerDetailRepository userAnswerDetailRepository,
             ExamSkillResultRepository examSkillResultRepository,
-            ScoringPolicyContract scoring) {
+            ScoringPolicyService scoring) {
         this.userAnswerRepository = userAnswerRepository;
         this.userAnswerDetailRepository = userAnswerDetailRepository;
         this.examSkillResultRepository = examSkillResultRepository;

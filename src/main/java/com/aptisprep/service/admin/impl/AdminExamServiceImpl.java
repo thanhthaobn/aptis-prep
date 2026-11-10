@@ -9,6 +9,7 @@ import com.aptisprep.entity.*;
 import com.aptisprep.mvc.common.enums.RecordStatus;
 import com.aptisprep.mvc.common.exception.BusinessRuleException;
 import com.aptisprep.mvc.common.exception.ResourceNotFoundException;
+import com.aptisprep.mvc.scoring.repository.CertificateRepository;
 import com.aptisprep.repository.*;
 import com.aptisprep.service.admin.AdminExamService;
 import com.aptisprep.service.admin.ExamDefinitionValidator;

@@ -9,13 +9,16 @@ import com.aptisprep.dto.form.*;
 import com.aptisprep.entity.*;
 import com.aptisprep.mvc.common.enums.*;
 import com.aptisprep.mvc.common.exception.BusinessRuleException;
+import com.aptisprep.mvc.scoring.dto.*;
+import com.aptisprep.mvc.scoring.entity.*;
+import com.aptisprep.mvc.scoring.repository.*;
+import com.aptisprep.mvc.scoring.service.*;
 import com.aptisprep.repository.*;
 import com.aptisprep.service.account.AccountProfileService;
 import com.aptisprep.service.admin.CatalogService;
 import com.aptisprep.service.contract.ScoringSchemeUsageContract;
 import com.aptisprep.service.exam.ExamAttemptService;
 import com.aptisprep.service.learning.FlashcardSetService;
-import com.aptisprep.service.scoring.*;
 import java.math.BigDecimal;
 import java.util.*;
 import org.junit.jupiter.api.*;
@@ -132,7 +135,7 @@ class V2BusinessRegressionTests {
     void realUsageBeanProtectsExistingPolicyAndCopiesConfigurationToANewVersion() {
         var rule = rule();
         scoring.saveScaleRule(admin.getEmail(), scheme.getId(), "READING", rule);
-        var band = new ScoreBandForm();
+        var band = new ScoreBandFormDTO();
         band.setSkill("READING");
         band.setCefrLevel("A1");
         band.setMinScore(BigDecimal.ZERO);
@@ -152,7 +155,7 @@ class V2BusinessRegressionTests {
                                 bands.findBySchemeIdOrderBySkillAscMinScoreAsc(scheme.getId())
                                         .getFirst()
                                         .getId()));
-        var form = new ScoringSchemeForm();
+        var form = new ScoringSchemeFormDTO();
         form.setCertificateId(certificate.getId());
         form.setName("V2 new policy");
         form.setStatus("ACTIVE");
@@ -163,8 +166,8 @@ class V2BusinessRegressionTests {
         assertEquals(1, bands.findBySchemeIdOrderBySkillAscMinScoreAsc(replacement).size());
     }
 
-    private ScoringScaleRuleForm rule() {
-        var f = new ScoringScaleRuleForm();
+    private ScoringScaleRuleFormDTO rule() {
+        var f = new ScoringScaleRuleFormDTO();
         f.setRawMin(BigDecimal.ZERO);
         f.setRawMax(BigDecimal.valueOf(40));
         f.setScaleMin(BigDecimal.ZERO);
@@ -454,7 +457,7 @@ class V2BusinessRegressionTests {
         var narrow = rule();
         narrow.setScaleMax(BigDecimal.valueOf(40));
         scoring.saveScaleRule(admin.getEmail(), scheme.getId(), "READING", narrow);
-        var band = new ScoreBandForm();
+        var band = new ScoreBandFormDTO();
         band.setSkill("READING");
         band.setCefrLevel("A1");
         band.setMinScore(BigDecimal.ZERO);
@@ -488,7 +491,7 @@ class V2BusinessRegressionTests {
 
     private void completeReadingPolicy() {
         scoring.saveScaleRule(admin.getEmail(), scheme.getId(), "READING", rule());
-        var band = new ScoreBandForm();
+        var band = new ScoreBandFormDTO();
         band.setSkill("READING");
         band.setCefrLevel("A1");
         band.setMinScore(BigDecimal.ZERO);

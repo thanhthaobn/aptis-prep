@@ -5,8 +5,9 @@ import static org.mockito.Mockito.*;
 
 import com.aptisprep.entity.*;
 import com.aptisprep.mvc.common.exception.BusinessRuleException;
+import com.aptisprep.mvc.scoring.service.*;
+import com.aptisprep.mvc.scoring.service.CertificateSchemeService;
 import com.aptisprep.repository.*;
-import com.aptisprep.service.contract.CertificateSchemeContract;
 import com.aptisprep.service.storage.StorageService;
 import java.util.List;
 import java.util.Optional;
@@ -22,7 +23,7 @@ class ExamPublicationReadinessTests {
         var storage = mock(StorageService.class);
         var validator =
                 new ExamStartValidator(
-                        questions, sections, media, mock(CertificateSchemeContract.class), storage);
+                        questions, sections, media, mock(CertificateSchemeService.class), storage);
         var exam = new MockExamEntity();
         ReflectionTestUtils.setField(exam, "id", 1);
         exam.setExamType("PRACTICE");

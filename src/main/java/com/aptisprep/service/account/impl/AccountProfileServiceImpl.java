@@ -13,6 +13,8 @@ import com.aptisprep.mvc.common.enums.Skill;
 import com.aptisprep.mvc.common.event.GoalChangedEvent;
 import com.aptisprep.mvc.common.exception.BusinessRuleException;
 import com.aptisprep.mvc.common.exception.ResourceNotFoundException;
+import com.aptisprep.mvc.scoring.entity.Certificate;
+import com.aptisprep.mvc.scoring.repository.CertificateRepository;
 import com.aptisprep.repository.*;
 import com.aptisprep.service.account.AccountAccessService;
 import com.aptisprep.service.account.AccountProfileService;

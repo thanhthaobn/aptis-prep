@@ -4,8 +4,8 @@ import com.aptisprep.entity.*;
 import com.aptisprep.mvc.common.enums.Skill;
 import com.aptisprep.mvc.common.exception.BusinessRuleException;
 import com.aptisprep.mvc.common.exception.ResourceNotFoundException;
+import com.aptisprep.mvc.scoring.service.CertificateSchemeService;
 import com.aptisprep.repository.*;
-import com.aptisprep.service.contract.CertificateSchemeContract;
 import com.aptisprep.service.storage.StorageService;
 import java.util.*;
 import org.springframework.core.io.Resource;
@@ -17,14 +17,14 @@ public class ExamStartValidator {
     private final QuestionRepository questionRepository;
     private final MockExamSectionRepository mockExamSectionRepository;
     private final QuestionMediaRepository questionMediaRepository;
-    private final CertificateSchemeContract schemes;
+    private final CertificateSchemeService schemes;
     private final StorageService storage;
 
     public ExamStartValidator(
             QuestionRepository questionRepository,
             MockExamSectionRepository mockExamSectionRepository,
             QuestionMediaRepository questionMediaRepository,
-            CertificateSchemeContract schemes,
+            CertificateSchemeService schemes,
             StorageService storage) {
         this.questionRepository = questionRepository;
         this.mockExamSectionRepository = mockExamSectionRepository;

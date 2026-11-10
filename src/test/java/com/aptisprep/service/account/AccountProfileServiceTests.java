@@ -6,6 +6,7 @@ import static org.mockito.Mockito.*;
 import com.aptisprep.dto.view.AccountSnapshot;
 import com.aptisprep.entity.*;
 import com.aptisprep.mvc.common.enums.GoalStatus;
+import com.aptisprep.mvc.scoring.repository.*;
 import com.aptisprep.repository.*;
 import java.math.BigDecimal;
 import java.time.LocalDate;

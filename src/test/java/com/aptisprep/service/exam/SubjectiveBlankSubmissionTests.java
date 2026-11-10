@@ -8,6 +8,8 @@ import com.aptisprep.entity.*;
 import com.aptisprep.mvc.common.config.AiProperties;
 import com.aptisprep.mvc.common.enums.*;
 import com.aptisprep.mvc.common.exception.AiGradingException;
+import com.aptisprep.mvc.scoring.entity.*;
+import com.aptisprep.mvc.scoring.repository.*;
 import com.aptisprep.repository.*;
 import com.aptisprep.service.grading.GeminiGradingService;
 import com.aptisprep.service.grading.GradingResult;

@@ -9,6 +9,8 @@ import com.aptisprep.mvc.common.enums.*;
 import com.aptisprep.mvc.common.event.AiAssessmentCompletedEvent;
 import com.aptisprep.mvc.common.exception.AiGradingException;
 import com.aptisprep.mvc.common.exception.BusinessRuleException;
+import com.aptisprep.mvc.scoring.entity.*;
+import com.aptisprep.mvc.scoring.repository.*;
 import com.aptisprep.repository.*;
 import com.aptisprep.service.exam.AttemptOutboxService;
 import java.math.BigDecimal;

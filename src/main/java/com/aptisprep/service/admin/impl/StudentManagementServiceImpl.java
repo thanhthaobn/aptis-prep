@@ -8,6 +8,7 @@ import com.aptisprep.mvc.common.enums.Skill;
 import com.aptisprep.mvc.common.exception.AccessDeniedException;
 import com.aptisprep.mvc.common.exception.BusinessRuleException;
 import com.aptisprep.mvc.common.exception.ResourceNotFoundException;
+import com.aptisprep.mvc.scoring.entity.Certificate;
 import com.aptisprep.repository.*;
 import com.aptisprep.service.admin.StudentManagementService;
 import com.aptisprep.service.contract.ExamAttemptContract;

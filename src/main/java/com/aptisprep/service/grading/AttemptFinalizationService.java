@@ -16,6 +16,9 @@ import com.aptisprep.mvc.common.event.AttemptSubmittedEvent;
 import com.aptisprep.mvc.common.exception.AccessDeniedException;
 import com.aptisprep.mvc.common.exception.BusinessRuleException;
 import com.aptisprep.mvc.common.exception.ResourceNotFoundException;
+import com.aptisprep.mvc.scoring.service.ScoringPolicyService;
+import com.aptisprep.mvc.scoring.service.ScoringPolicyService.SkillScore;
+import com.aptisprep.mvc.scoring.service.impl.CheckpointScorePolicy;
 import com.aptisprep.repository.AiAssessmentJobRepository;
 import com.aptisprep.repository.AiAssessmentRepository;
 import com.aptisprep.repository.ExamAttemptRepository;
@@ -27,10 +30,7 @@ import com.aptisprep.repository.UserAnswerRepository;
 import com.aptisprep.service.contract.AiAssessmentContract;
 import com.aptisprep.service.contract.GradingContextFormatter;
 import com.aptisprep.service.contract.IntegrationModels.LockedAnswer;
-import com.aptisprep.service.contract.ScoringPolicyContract;
-import com.aptisprep.service.contract.ScoringPolicyContract.SkillScore;
 import com.aptisprep.service.exam.AttemptOutboxService;
-import com.aptisprep.service.scoring.CheckpointScorePolicy;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDateTime;
@@ -58,7 +58,7 @@ public class AttemptFinalizationService {
     private final AiAssessmentContract ai;
     private final AiAssessmentJobRepository aiAssessmentJobRepository;
     private final AiAssessmentRepository aiAssessmentRepository;
-    private final ScoringPolicyContract scoring;
+    private final ScoringPolicyService scoring;
     private final AttemptOutboxService outbox;
     private final ApplicationEventPublisher events;
     private final TransactionTemplate transactions;
@@ -73,7 +73,7 @@ public class AttemptFinalizationService {
             AiAssessmentContract ai,
             AiAssessmentJobRepository aiAssessmentJobRepository,
             AiAssessmentRepository aiAssessmentRepository,
-            ScoringPolicyContract scoring,
+            ScoringPolicyService scoring,
             AttemptOutboxService outbox,
             ApplicationEventPublisher events,
             PlatformTransactionManager transactionManager) {

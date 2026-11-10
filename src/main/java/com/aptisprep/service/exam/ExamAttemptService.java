@@ -9,11 +9,11 @@ import com.aptisprep.mvc.common.event.AttemptSubmittedEvent;
 import com.aptisprep.mvc.common.exception.AccessDeniedException;
 import com.aptisprep.mvc.common.exception.BusinessRuleException;
 import com.aptisprep.mvc.common.exception.ResourceNotFoundException;
+import com.aptisprep.mvc.scoring.service.ScoringPolicyService;
 import com.aptisprep.repository.*;
 import com.aptisprep.service.contract.ExamAttemptContract;
 import com.aptisprep.service.contract.GradingContextFormatter;
 import com.aptisprep.service.contract.IntegrationModels.*;
-import com.aptisprep.service.contract.ScoringPolicyContract;
 import com.aptisprep.service.grading.AttemptFinalizationService;
 import com.aptisprep.service.grading.ObjectiveGradingService;
 import com.aptisprep.service.storage.StorageService;
@@ -50,7 +50,7 @@ public class ExamAttemptService implements ExamAttemptContract {
     private final UserAnswerRepository userAnswerRepository;
     private final UserAnswerDetailRepository userAnswerDetailRepository;
     private final ExamSkillResultRepository examSkillResultRepository;
-    private final ScoringPolicyContract scoring;
+    private final ScoringPolicyService scoring;
     private final StorageService storage;
     private final AttemptOutboxService outbox;
     private final AttemptFinalizationService finalization;
@@ -73,7 +73,7 @@ public class ExamAttemptService implements ExamAttemptContract {
             UserAnswerRepository userAnswerRepository,
             UserAnswerDetailRepository userAnswerDetailRepository,
             ExamSkillResultRepository examSkillResultRepository,
-            ScoringPolicyContract scoring,
+            ScoringPolicyService scoring,
             StorageService storage,
             AttemptOutboxService outbox,
             AttemptFinalizationService finalization,

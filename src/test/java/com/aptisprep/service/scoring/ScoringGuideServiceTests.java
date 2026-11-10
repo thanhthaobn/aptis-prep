@@ -4,6 +4,8 @@ import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 import com.aptisprep.entity.*;
+import com.aptisprep.mvc.scoring.entity.*;
+import com.aptisprep.mvc.scoring.repository.*;
 import com.aptisprep.repository.*;
 import com.aptisprep.service.contract.IntegrationModels.*;
 import java.math.BigDecimal;
@@ -19,14 +21,14 @@ class ScoringGuideServiceTests {
         var snapshots = mock(ExamAttemptSnapshotRepository.class);
         var exams = mock(MockExamRepository.class);
         var service =
-                new com.aptisprep.service.scoring.impl.ScoringGuideServiceImpl(
+                new com.aptisprep.mvc.scoring.service.impl.ScoringGuideServiceImpl(
                         schemes, rules, bands, exams, snapshots);
         var snapshot = new ExamAttemptSnapshotEntity();
         snapshot.setScoringSchemeId(7);
         snapshot.setSkill("READING");
         when(snapshots.findByAttemptId(42)).thenReturn(Optional.of(snapshot));
         var scheme = new ScoringScheme();
-        scheme.setCertificate(new com.aptisprep.entity.Certificate());
+        scheme.setCertificate(new com.aptisprep.mvc.scoring.entity.Certificate());
         scheme.setVersion("historical-v1");
         when(schemes.findById(7)).thenReturn(Optional.of(scheme));
         var rule = new ScoringScaleRule();

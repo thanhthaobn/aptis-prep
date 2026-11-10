@@ -7,16 +7,19 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-import com.aptisprep.entity.Certificate;
 import com.aptisprep.entity.MockExamEntity;
-import com.aptisprep.entity.ScoreBand;
-import com.aptisprep.entity.ScoringScheme;
 import com.aptisprep.entity.User;
 import com.aptisprep.mvc.common.enums.RecordStatus;
-import com.aptisprep.repository.CertificateRepository;
+import com.aptisprep.mvc.scoring.entity.*;
+import com.aptisprep.mvc.scoring.entity.Certificate;
+import com.aptisprep.mvc.scoring.entity.ScoreBand;
+import com.aptisprep.mvc.scoring.entity.ScoringScheme;
+import com.aptisprep.mvc.scoring.repository.*;
+import com.aptisprep.mvc.scoring.repository.CertificateRepository;
+import com.aptisprep.mvc.scoring.repository.ScoreBandRepository;
+import com.aptisprep.mvc.scoring.repository.ScoringSchemeRepository;
+import com.aptisprep.mvc.scoring.service.*;
 import com.aptisprep.repository.MockExamRepository;
-import com.aptisprep.repository.ScoreBandRepository;
-import com.aptisprep.repository.ScoringSchemeRepository;
 import com.aptisprep.repository.UserRepository;
 import java.time.LocalDateTime;
 import org.junit.jupiter.api.BeforeEach;
@@ -33,11 +36,11 @@ class AdminScoringPreviewTests {
     @Autowired MockMvc mvc;
     @Autowired CertificateRepository certificates;
     @Autowired MockExamRepository exams;
-    @Autowired com.aptisprep.service.contract.ScoringPolicyContract scoringPolicy;
+    @Autowired com.aptisprep.mvc.scoring.service.ScoringPolicyService scoringPolicy;
     @Autowired ScoringSchemeRepository schemes;
     @Autowired UserRepository users;
     @Autowired ScoreBandRepository bands;
-    @Autowired com.aptisprep.repository.ScoringScaleRuleRepository scaleRules;
+    @Autowired com.aptisprep.mvc.scoring.repository.ScoringScaleRuleRepository scaleRules;
     private Certificate certificate;
     private ScoringScheme scheme;
 

@@ -4,16 +4,20 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
-import com.aptisprep.entity.Certificate;
-import com.aptisprep.entity.ScoreBand;
-import com.aptisprep.entity.ScoringScaleRule;
-import com.aptisprep.entity.ScoringScheme;
 import com.aptisprep.mvc.common.enums.RecordStatus;
 import com.aptisprep.mvc.common.exception.BusinessRuleException;
-import com.aptisprep.repository.ScoreBandRepository;
-import com.aptisprep.repository.ScoringScaleRuleRepository;
-import com.aptisprep.repository.ScoringSchemeRepository;
-import com.aptisprep.service.contract.ScoringPolicyContract.SkillScore;
+import com.aptisprep.mvc.scoring.entity.*;
+import com.aptisprep.mvc.scoring.entity.Certificate;
+import com.aptisprep.mvc.scoring.entity.ScoreBand;
+import com.aptisprep.mvc.scoring.entity.ScoringScaleRule;
+import com.aptisprep.mvc.scoring.entity.ScoringScheme;
+import com.aptisprep.mvc.scoring.repository.*;
+import com.aptisprep.mvc.scoring.repository.ScoreBandRepository;
+import com.aptisprep.mvc.scoring.repository.ScoringScaleRuleRepository;
+import com.aptisprep.mvc.scoring.repository.ScoringSchemeRepository;
+import com.aptisprep.mvc.scoring.service.*;
+import com.aptisprep.mvc.scoring.service.ScoringPolicyService;
+import com.aptisprep.mvc.scoring.service.ScoringPolicyService.SkillScore;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
@@ -44,7 +48,7 @@ class ScoringPolicyServiceTests {
         when(scaleRules.findBySchemeIdAndSkillIgnoreCase(1, "READING"))
                 .thenReturn(Optional.of(rule(50, 50)));
         ScoringPolicyService service =
-                new com.aptisprep.service.scoring.impl.ScoringPolicyServiceImpl(
+                new com.aptisprep.mvc.scoring.service.impl.ScoringPolicyServiceImpl(
                         schemes, bands, scaleRules);
 
         assertEquals(new BigDecimal("10.00"), service.scale(1, "Reading", new BigDecimal("9.995")));
@@ -59,7 +63,7 @@ class ScoringPolicyServiceTests {
         when(scaleRules.findBySchemeIdAndSkillIgnoreCase(1, "GRAMMAR_VOCABULARY"))
                 .thenReturn(Optional.of(rule(50, 50)));
         assertNull(
-                new com.aptisprep.service.scoring.impl.ScoringPolicyServiceImpl(
+                new com.aptisprep.mvc.scoring.service.impl.ScoringPolicyServiceImpl(
                                 schemes, bands, scaleRules)
                         .estimatedLevel(1, "GRAMMAR & VOCABULARY", new BigDecimal("30")));
     }
@@ -74,7 +78,7 @@ class ScoringPolicyServiceTests {
         when(bands.findBySchemeIdAndSkillOrderByMinScoreAsc(1, "READING"))
                 .thenReturn(List.of(first, gap));
         ScoringPolicyService service =
-                new com.aptisprep.service.scoring.impl.ScoringPolicyServiceImpl(
+                new com.aptisprep.mvc.scoring.service.impl.ScoringPolicyServiceImpl(
                         schemes, bands, scaleRules);
 
         assertThrows(BusinessRuleException.class, () -> service.validatePolicy(1, "READING"));
@@ -91,7 +95,7 @@ class ScoringPolicyServiceTests {
         assertThrows(
                 BusinessRuleException.class,
                 () ->
-                        new com.aptisprep.service.scoring.impl.ScoringPolicyServiceImpl(
+                        new com.aptisprep.mvc.scoring.service.impl.ScoringPolicyServiceImpl(
                                         schemes, bands, scaleRules)
                                 .validatePolicy(1, "READING"));
     }
@@ -103,7 +107,7 @@ class ScoringPolicyServiceTests {
         when(scaleRules.findBySchemeIdAndSkillIgnoreCase(1, "READING"))
                 .thenReturn(Optional.of(readingRule));
         ScoringPolicyService service =
-                new com.aptisprep.service.scoring.impl.ScoringPolicyServiceImpl(
+                new com.aptisprep.mvc.scoring.service.impl.ScoringPolicyServiceImpl(
                         schemes, bands, scaleRules);
         assertThrows(
                 BusinessRuleException.class,
@@ -116,7 +120,7 @@ class ScoringPolicyServiceTests {
         when(scaleRules.findBySchemeIdAndSkillIgnoreCase(1, "READING"))
                 .thenReturn(Optional.of(rule(40, 50)));
         ScoringPolicyService service =
-                new com.aptisprep.service.scoring.impl.ScoringPolicyServiceImpl(
+                new com.aptisprep.mvc.scoring.service.impl.ScoringPolicyServiceImpl(
                         schemes, bands, scaleRules);
 
         assertEquals(new BigDecimal("30.00"), service.raw(1, "READING", 3, 4));
@@ -138,7 +142,7 @@ class ScoringPolicyServiceTests {
         when(bands.findBySchemeIdAndSkillOrderByMinScoreAsc(1, "LISTENING"))
                 .thenReturn(List.of(band("40", "50", "B2")));
         ScoringPolicyService service =
-                new com.aptisprep.service.scoring.impl.ScoringPolicyServiceImpl(
+                new com.aptisprep.mvc.scoring.service.impl.ScoringPolicyServiceImpl(
                         schemes, bands, scaleRules);
         var result =
                 service.fullMockScore(
@@ -163,7 +167,7 @@ class ScoringPolicyServiceTests {
         when(scaleRules.findBySchemeIdAndSkillIgnoreCase(eq(1), anyString()))
                 .thenReturn(Optional.of(rule(50, 50)));
         ScoringPolicyService service =
-                new com.aptisprep.service.scoring.impl.ScoringPolicyServiceImpl(
+                new com.aptisprep.mvc.scoring.service.impl.ScoringPolicyServiceImpl(
                         schemes, bands, scaleRules);
 
         var result =
@@ -186,7 +190,7 @@ class ScoringPolicyServiceTests {
         when(scaleRules.findBySchemeIdAndSkillIgnoreCase(eq(1), anyString()))
                 .thenReturn(Optional.of(rule(50, 50)));
         var service =
-                new com.aptisprep.service.scoring.impl.ScoringPolicyServiceImpl(
+                new com.aptisprep.mvc.scoring.service.impl.ScoringPolicyServiceImpl(
                         schemes, bands, scaleRules);
         var result =
                 service.fullMockScore(

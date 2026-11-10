@@ -5,16 +5,20 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
-import com.aptisprep.dto.form.ScoreBandForm;
-import com.aptisprep.dto.form.ScoringScaleRuleForm;
-import com.aptisprep.dto.form.ScoringSchemeForm;
-import com.aptisprep.entity.Certificate;
-import com.aptisprep.entity.ScoringScaleRule;
-import com.aptisprep.entity.ScoringScheme;
 import com.aptisprep.entity.User;
 import com.aptisprep.mvc.common.enums.RecordStatus;
 import com.aptisprep.mvc.common.enums.Role;
 import com.aptisprep.mvc.common.exception.BusinessRuleException;
+import com.aptisprep.mvc.scoring.dto.*;
+import com.aptisprep.mvc.scoring.dto.ScoreBandFormDTO;
+import com.aptisprep.mvc.scoring.dto.ScoringScaleRuleFormDTO;
+import com.aptisprep.mvc.scoring.dto.ScoringSchemeFormDTO;
+import com.aptisprep.mvc.scoring.entity.*;
+import com.aptisprep.mvc.scoring.entity.Certificate;
+import com.aptisprep.mvc.scoring.entity.ScoringScaleRule;
+import com.aptisprep.mvc.scoring.entity.ScoringScheme;
+import com.aptisprep.mvc.scoring.repository.*;
+import com.aptisprep.mvc.scoring.service.*;
 import com.aptisprep.repository.*;
 import com.aptisprep.service.contract.ScoringSchemeUsageContract;
 import java.math.BigDecimal;
@@ -54,9 +58,9 @@ class ScoringAdminServiceTests {
         when(usage.isUsed(20)).thenReturn(true);
 
         ScoringAdminService service =
-                new com.aptisprep.service.scoring.impl.ScoringAdminServiceImpl(
+                new com.aptisprep.mvc.scoring.service.impl.ScoringAdminServiceImpl(
                         certificates, schemes, bands, users, usageProvider, scaleRules);
-        ScoringSchemeForm sameVersion = form("1");
+        ScoringSchemeFormDTO sameVersion = form("1");
         assertThrows(
                 BusinessRuleException.class,
                 () -> service.saveScheme("admin@aptis.local", 20, sameVersion));
@@ -85,9 +89,9 @@ class ScoringAdminServiceTests {
                 .thenReturn(Optional.of(rule));
 
         ScoringAdminService service =
-                new com.aptisprep.service.scoring.impl.ScoringAdminServiceImpl(
+                new com.aptisprep.mvc.scoring.service.impl.ScoringAdminServiceImpl(
                         certificates, schemes, bands, users, usageProvider, scaleRules);
-        ScoringScaleRuleForm scale = new ScoringScaleRuleForm();
+        ScoringScaleRuleFormDTO scale = new ScoringScaleRuleFormDTO();
         scale.setRawMin(BigDecimal.ZERO);
         scale.setRawMax(BigDecimal.valueOf(50));
         scale.setScaleMin(BigDecimal.ONE);
@@ -97,7 +101,7 @@ class ScoringAdminServiceTests {
         assertEquals(new BigDecimal("1.00"), rule.getScaleMin());
         assertEquals(new BigDecimal("60.00"), rule.getScaleMax());
 
-        ScoreBandForm band = new ScoreBandForm();
+        ScoreBandFormDTO band = new ScoreBandFormDTO();
         band.setSkill("SPEAKING");
         band.setCefrLevel("C1");
         band.setMinScore(new BigDecimal("54.25"));
@@ -120,8 +124,8 @@ class ScoringAdminServiceTests {
                 () -> service.saveBand("admin@aptis.local", 20, null, band));
     }
 
-    private ScoringSchemeForm form(String version) {
-        ScoringSchemeForm form = new ScoringSchemeForm();
+    private ScoringSchemeFormDTO form(String version) {
+        ScoringSchemeFormDTO form = new ScoringSchemeFormDTO();
         form.setCertificateId(10);
         form.setName("Aptis scheme");
         form.setVersion(version);

@@ -2,6 +2,7 @@ package com.aptisprep.service.scoring;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.aptisprep.mvc.scoring.service.impl.CheckpointScorePolicy;
 import java.math.BigDecimal;
 import org.junit.jupiter.api.Test;
 

@@ -6,6 +6,7 @@ import static org.mockito.Mockito.*;
 
 import com.aptisprep.controller.student.StudentExamCatalogController;
 import com.aptisprep.mvc.common.exception.BusinessRuleException;
+import com.aptisprep.mvc.scoring.service.*;
 import com.aptisprep.service.account.AccountAccessService;
 import com.aptisprep.service.contract.ExamAttemptContract;
 import com.aptisprep.service.contract.IntegrationModels.*;
@@ -24,7 +25,7 @@ class StudentResultRetryTests {
                         mock(StudentExamCatalogService.class),
                         accounts,
                         attempts,
-                        mock(com.aptisprep.service.scoring.ScoringGuideService.class));
+                        mock(com.aptisprep.mvc.scoring.service.ScoringGuideService.class));
         when(accounts.requireActiveStudent("learner@test.local")).thenReturn(12);
         when(attempts.result(12, 99))
                 .thenReturn(

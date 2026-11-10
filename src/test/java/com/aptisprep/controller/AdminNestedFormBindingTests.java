@@ -7,6 +7,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.aptisprep.entity.*;
 import com.aptisprep.mvc.common.enums.*;
+import com.aptisprep.mvc.scoring.entity.*;
+import com.aptisprep.mvc.scoring.entity.Certificate;
+import com.aptisprep.mvc.scoring.repository.*;
+import com.aptisprep.mvc.scoring.repository.CertificateRepository;
 import com.aptisprep.repository.*;
 import java.util.*;
 import java.util.regex.Pattern;

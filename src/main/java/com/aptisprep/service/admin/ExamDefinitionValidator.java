@@ -2,14 +2,14 @@ package com.aptisprep.service.admin;
 
 import com.aptisprep.dto.form.ExamForm;
 import com.aptisprep.entity.QuestionEntity;
-import com.aptisprep.entity.ScoringScheme;
 import com.aptisprep.mvc.common.enums.CefrLevel;
 import com.aptisprep.mvc.common.enums.Skill;
 import com.aptisprep.mvc.common.exception.BusinessRuleException;
-import com.aptisprep.repository.CertificateRepository;
+import com.aptisprep.mvc.scoring.entity.ScoringScheme;
+import com.aptisprep.mvc.scoring.repository.CertificateRepository;
+import com.aptisprep.mvc.scoring.repository.ScoringSchemeRepository;
+import com.aptisprep.mvc.scoring.service.CertificateSchemeService;
 import com.aptisprep.repository.QuestionRepository;
-import com.aptisprep.repository.ScoringSchemeRepository;
-import com.aptisprep.service.contract.CertificateSchemeContract;
 import java.util.*;
 import java.util.stream.Collectors;
 import org.springframework.stereotype.Component;
@@ -24,13 +24,13 @@ public final class ExamDefinitionValidator {
     private final CertificateRepository certificateRepository;
     private final ScoringSchemeRepository scoringSchemeRepository;
     private final QuestionRepository questionRepository;
-    private final CertificateSchemeContract certificateSchemes;
+    private final CertificateSchemeService certificateSchemes;
 
     public ExamDefinitionValidator(
             CertificateRepository certificateRepository,
             ScoringSchemeRepository scoringSchemeRepository,
             QuestionRepository questionRepository,
-            CertificateSchemeContract certificateSchemes) {
+            CertificateSchemeService certificateSchemes) {
         this.certificateRepository = certificateRepository;
         this.scoringSchemeRepository = scoringSchemeRepository;
         this.questionRepository = questionRepository;

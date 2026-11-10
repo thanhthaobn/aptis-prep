@@ -1,6 +1,7 @@
 package com.aptisprep.entity;
 
 import com.aptisprep.mvc.common.enums.GoalStatus;
+import com.aptisprep.mvc.scoring.entity.Certificate;
 import jakarta.persistence.*;
 import java.time.LocalDate;
 import java.time.LocalDateTime;

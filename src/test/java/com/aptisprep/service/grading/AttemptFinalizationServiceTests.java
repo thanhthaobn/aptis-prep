@@ -20,6 +20,8 @@ import com.aptisprep.entity.UserAnswerEntity;
 import com.aptisprep.mvc.common.enums.AiAssessmentState;
 import com.aptisprep.mvc.common.enums.AiJobState;
 import com.aptisprep.mvc.common.event.AiAssessmentCompletedEvent;
+import com.aptisprep.mvc.scoring.service.*;
+import com.aptisprep.mvc.scoring.service.ScoringPolicyService;
 import com.aptisprep.repository.AiAssessmentJobRepository;
 import com.aptisprep.repository.AiAssessmentRepository;
 import com.aptisprep.repository.ExamAttemptRepository;
@@ -29,7 +31,6 @@ import com.aptisprep.repository.MockExamRepository;
 import com.aptisprep.repository.QuestionRepository;
 import com.aptisprep.repository.UserAnswerRepository;
 import com.aptisprep.service.contract.AiAssessmentContract;
-import com.aptisprep.service.contract.ScoringPolicyContract;
 import com.aptisprep.service.exam.AttemptOutboxService;
 import java.math.BigDecimal;
 import java.util.List;
@@ -55,7 +56,7 @@ class AttemptFinalizationServiceTests {
     @Mock AiAssessmentContract ai;
     @Mock AiAssessmentJobRepository jobs;
     @Mock AiAssessmentRepository assessments;
-    @Mock ScoringPolicyContract scoring;
+    @Mock ScoringPolicyService scoring;
     @Mock AttemptOutboxService outbox;
     @Mock ApplicationEventPublisher events;
 

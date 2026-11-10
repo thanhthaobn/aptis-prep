@@ -1,10 +1,10 @@
 package com.aptisprep.dto;
 
 import com.aptisprep.dto.form.GoalForm;
-import com.aptisprep.entity.Certificate;
 import com.aptisprep.entity.User;
 import com.aptisprep.entity.UserGoal;
 import com.aptisprep.mvc.common.enums.GoalStatus;
+import com.aptisprep.mvc.scoring.entity.Certificate;
 
 /** DTO boundary for the scalar fields of a user-goal entity. */
 public class UserGoalEntityDto {

@@ -12,11 +12,13 @@ import com.aptisprep.entity.MockExamEntity;
 import com.aptisprep.entity.MockExamQuestionEntity;
 import com.aptisprep.entity.QuestionEntity;
 import com.aptisprep.entity.QuestionMediaEntity;
-import com.aptisprep.entity.ScoringScheme;
 import com.aptisprep.entity.User;
 import com.aptisprep.mvc.common.enums.RecordStatus;
 import com.aptisprep.mvc.common.enums.Role;
 import com.aptisprep.mvc.common.enums.UserStatus;
+import com.aptisprep.mvc.scoring.entity.*;
+import com.aptisprep.mvc.scoring.entity.ScoringScheme;
+import com.aptisprep.mvc.scoring.repository.*;
 import com.aptisprep.repository.ExamAttemptRepository;
 import com.aptisprep.repository.UserRepository;
 import com.aptisprep.service.storage.StorageService;
@@ -43,18 +45,18 @@ class StudentContentPreviewTests {
     @Autowired com.aptisprep.repository.MockExamSectionRepository sections;
     @Autowired com.aptisprep.repository.QuestionRepository questions;
     @Autowired com.aptisprep.repository.QuestionMediaRepository media;
-    @Autowired com.aptisprep.repository.CertificateRepository certificates;
-    @Autowired com.aptisprep.repository.ScoringSchemeRepository schemes;
-    @Autowired com.aptisprep.repository.ScoringScaleRuleRepository rules;
+    @Autowired com.aptisprep.mvc.scoring.repository.CertificateRepository certificates;
+    @Autowired com.aptisprep.mvc.scoring.repository.ScoringSchemeRepository schemes;
+    @Autowired com.aptisprep.mvc.scoring.repository.ScoringScaleRuleRepository rules;
     @Autowired StorageService storage;
-    @Autowired com.aptisprep.repository.ScoreBandRepository bands;
+    @Autowired com.aptisprep.mvc.scoring.repository.ScoreBandRepository bands;
     @Autowired ExamAttemptRepository attempts;
     @Autowired UserRepository users;
     private final java.util.List<Integer> examIds = new java.util.ArrayList<>();
 
     @org.junit.jupiter.api.BeforeEach
     void databaseCatalog() {
-        var certificate = new com.aptisprep.entity.Certificate();
+        var certificate = new com.aptisprep.mvc.scoring.entity.Certificate();
         certificate.setCode("STUDENT-UI-" + System.nanoTime());
         certificate.setName("Test certificate");
         certificate.setStatus(com.aptisprep.mvc.common.enums.RecordStatus.ACTIVE);
@@ -508,7 +510,7 @@ class StudentContentPreviewTests {
         scheme.setStatus(RecordStatus.ACTIVE);
         scheme = schemes.saveAndFlush(scheme);
         for (String skill : skillCodes) {
-            var rule = new com.aptisprep.entity.ScoringScaleRule();
+            var rule = new com.aptisprep.mvc.scoring.entity.ScoringScaleRule();
             rule.setScheme(scheme);
             rule.setSkill(skill);
             rule.setRawMin(java.math.BigDecimal.ZERO);
@@ -516,7 +518,7 @@ class StudentContentPreviewTests {
             rule.setScaleMin(java.math.BigDecimal.ZERO);
             rule.setScaleMax(java.math.BigDecimal.TEN);
             rules.saveAndFlush(rule);
-            var band = new com.aptisprep.entity.ScoreBand();
+            var band = new com.aptisprep.mvc.scoring.entity.ScoreBand();
             band.setScheme(scheme);
             band.setSkill(skill);
             band.setCefrLevel("A1");

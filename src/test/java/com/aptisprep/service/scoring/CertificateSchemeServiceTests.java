@@ -3,16 +3,21 @@ package com.aptisprep.service.scoring;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-import com.aptisprep.entity.Certificate;
-import com.aptisprep.entity.ScoreBand;
-import com.aptisprep.entity.ScoringScaleRule;
-import com.aptisprep.entity.ScoringScheme;
 import com.aptisprep.mvc.common.enums.RecordStatus;
 import com.aptisprep.mvc.common.exception.BusinessRuleException;
 import com.aptisprep.mvc.common.exception.ResourceNotFoundException;
-import com.aptisprep.repository.CertificateRepository;
-import com.aptisprep.repository.ScoreBandRepository;
-import com.aptisprep.repository.ScoringSchemeRepository;
+import com.aptisprep.mvc.scoring.entity.*;
+import com.aptisprep.mvc.scoring.entity.Certificate;
+import com.aptisprep.mvc.scoring.entity.ScoreBand;
+import com.aptisprep.mvc.scoring.entity.ScoringScaleRule;
+import com.aptisprep.mvc.scoring.entity.ScoringScheme;
+import com.aptisprep.mvc.scoring.repository.*;
+import com.aptisprep.mvc.scoring.repository.CertificateRepository;
+import com.aptisprep.mvc.scoring.repository.ScoreBandRepository;
+import com.aptisprep.mvc.scoring.repository.ScoringSchemeRepository;
+import com.aptisprep.mvc.scoring.service.*;
+import com.aptisprep.mvc.scoring.service.CertificateSchemeService;
+import com.aptisprep.mvc.scoring.service.impl.CertificateSchemeServiceImpl;
 import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
@@ -26,7 +31,7 @@ class CertificateSchemeServiceTests {
     @Mock CertificateRepository certificates;
     @Mock ScoringSchemeRepository schemes;
     @Mock ScoreBandRepository bands;
-    @Mock com.aptisprep.repository.ScoringScaleRuleRepository scaleRules;
+    @Mock com.aptisprep.mvc.scoring.repository.ScoringScaleRuleRepository scaleRules;
 
     private Certificate certificate;
     private ScoringScheme scheme;
@@ -43,7 +48,7 @@ class CertificateSchemeServiceTests {
         lenient().when(scheme.getStatus()).thenReturn(RecordStatus.ACTIVE);
         lenient().when(scheme.getVersion()).thenReturn("1.0");
         lenient().when(scheme.getName()).thenReturn("Test scheme");
-        service = new CertificateSchemeService(certificates, schemes, bands, scaleRules);
+        service = new CertificateSchemeServiceImpl(certificates, schemes, bands, scaleRules);
     }
 
     @Test

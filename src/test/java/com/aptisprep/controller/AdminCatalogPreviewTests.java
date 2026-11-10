@@ -12,6 +12,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import com.aptisprep.entity.User;
 import com.aptisprep.mvc.common.enums.Role;
 import com.aptisprep.mvc.common.enums.UserStatus;
+import com.aptisprep.mvc.scoring.entity.*;
+import com.aptisprep.mvc.scoring.repository.*;
 import com.aptisprep.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -29,13 +31,13 @@ class AdminCatalogPreviewTests {
     @Autowired UserRepository users;
     @Autowired com.aptisprep.repository.QuestionRepository questions;
     @Autowired com.aptisprep.repository.MockExamRepository exams;
-    @Autowired com.aptisprep.repository.CertificateRepository certificates;
+    @Autowired com.aptisprep.mvc.scoring.repository.CertificateRepository certificates;
     private final java.util.List<Integer> questionIds = new java.util.ArrayList<>();
     private final java.util.List<Integer> examIds = new java.util.ArrayList<>();
 
     @BeforeEach
     void seedDatabaseContent() {
-        var certificate = new com.aptisprep.entity.Certificate();
+        var certificate = new com.aptisprep.mvc.scoring.entity.Certificate();
         certificate.setCode("UI-" + System.nanoTime());
         certificate.setName("Test certificate");
         certificate.setStatus(com.aptisprep.mvc.common.enums.RecordStatus.ACTIVE);

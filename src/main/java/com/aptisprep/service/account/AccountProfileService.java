@@ -3,7 +3,7 @@ package com.aptisprep.service.account;
 import com.aptisprep.dto.form.GoalForm;
 import com.aptisprep.dto.form.ProfileForm;
 import com.aptisprep.dto.view.AccountSnapshot;
-import com.aptisprep.entity.Certificate;
+import com.aptisprep.mvc.scoring.entity.Certificate;
 import java.util.List;
 
 public interface AccountProfileService {
