@@ -56,6 +56,9 @@ public class PlacementExamCatalogService {
                 .filter(exam -> !exam.isDemoOnly())
                 .filter(exam -> "PLACEMENT".equals(exam.getExamType()))
                 .filter(this::isReady)
+                // Prefer the canonical combined exam even when a newer legacy
+                // skill-specific Placement row exists in the catalog.
+                .sorted(Comparator.comparing(exam -> !"FULL_MOCK".equals(exam.getSkill())))
                 .map(this::describe)
                 .limit(1)
                 .toList();
