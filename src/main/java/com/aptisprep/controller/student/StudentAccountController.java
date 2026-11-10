@@ -138,9 +138,6 @@ public class StudentAccountController {
             Principal principal,
             RedirectAttributes redirect) {
         try {
-            // Keep accepting the legacy skill/examId form parameters for bookmarks and
-            // older clients.  The current placement page does not send them and therefore
-            // always starts the single combined placement exam.
             AttemptHandle handle =
                     skill != null || examId != null
                             ? placement.start(principal.getName(), skill, examId)
@@ -164,9 +161,6 @@ public class StudentAccountController {
         model.addAttribute("attemptResult", result);
         model.addAttribute("fromPlacement", true);
         Integer userId = access.requireActiveStudent(principal.getName());
-        // Re-apply completed Placement skills when an older outbox callback was
-        // missed. The operation is idempotent per attempt/skill and lets a retake
-        // fill a previously missing skill before the learning path is opened.
         boolean terminalResult =
                 "COMPLETED".equalsIgnoreCase(result.state())
                         || "EXPIRED".equalsIgnoreCase(result.state())

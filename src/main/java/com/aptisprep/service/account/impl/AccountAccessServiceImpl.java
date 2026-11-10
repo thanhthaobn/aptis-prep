@@ -120,8 +120,6 @@ public class AccountAccessServiceImpl implements AccountAccessService {
         }
         boolean applied = false;
         for (SkillResult skillResult : result.skills()) {
-            // A failed subjective/AI skill must not prevent objective skills from
-            // refreshing the learner profile. It remains retryable on the result page.
             if (!"COMPLETED".equalsIgnoreCase(skillResult.gradingState())
                     || skillResult.scaleScore() == null
                     || skillResult.estimatedLevel() == null) continue;
@@ -148,10 +146,6 @@ public class AccountAccessServiceImpl implements AccountAccessService {
                         user.getId(), attemptId, skill);
         Optional<UserSkillProfile> existingProfile =
                 userSkillProfileRepository.findByUserIdAndSkill(user.getId(), skill);
-        // The application marker is idempotency protection, not the source of
-        // truth for the learner profile. Older callbacks could write the marker
-        // before the profile transaction completed. Repair a missing profile on
-        // replay, while keeping the normal duplicate path side-effect free.
         if (alreadyApplied && existingProfile.isPresent()) {
             return true;
         }
@@ -163,9 +157,6 @@ public class AccountAccessServiceImpl implements AccountAccessService {
                             created.setSkill(skill);
                             return created;
                         });
-        // Placement retakes are only for filling skills that were missing from
-        // the learner profile. Once a skill has a Placement result, a later
-        // retake must not regress it with a lower score.
         if (type.equals("PLACEMENT") && profile.getPlacementLevel() != null) {
             if (!alreadyApplied) saveApplication(user, attemptId, skill);
             return true;
@@ -223,9 +214,6 @@ public class AccountAccessServiceImpl implements AccountAccessService {
             }
         }
         if (type.equals("CHECKPOINT") && !result.passed()) {
-            // A failed first checkpoint is evidence of an attempt, not a CEFR
-            // profile. user_skill_profiles.current_level is NOT NULL, so do
-            // not persist a newly-created empty profile or invent A1.
             if (profile.getId() != null && profile.getCurrentLevel() != null) {
                 userSkillProfileRepository.save(profile);
             }
