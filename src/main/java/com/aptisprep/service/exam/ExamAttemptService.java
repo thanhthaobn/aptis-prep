@@ -1159,13 +1159,6 @@ public class ExamAttemptService implements ExamAttemptContract {
                                 : Objects.requireNonNullElse(
                                         details.get(item.getSourceItemId()).getAnswerText(), "");
                 int words = text.isBlank() ? 0 : text.trim().split("\\s+").length;
-                if (item.getMinWordCount() != null && words < item.getMinWordCount())
-                    throw new BusinessRuleException(
-                            "Bài viết ở mục "
-                                    + item.getPosition()
-                                    + " cần ít nhất "
-                                    + item.getMinWordCount()
-                                    + " từ");
                 if (item.getMaxWordCount() != null && words > item.getMaxWordCount())
                     throw new BusinessRuleException(
                             "Bài viết ở mục "
