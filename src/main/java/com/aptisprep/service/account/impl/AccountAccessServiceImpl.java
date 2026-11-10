@@ -145,25 +145,31 @@ public class AccountAccessServiceImpl implements AccountAccessService {
                 || !"COMPLETED".equalsIgnoreCase(result.gradingState())) {
             throw new BusinessRuleException("Kết quả kỹ năng chưa đủ điều kiện cập nhật hồ sơ");
         }
-        if (profileApplicationRepository.existsByUserIdAndAttemptIdAndSkill(
-                user.getId(), attemptId, skill)) {
+        boolean alreadyApplied =
+                profileApplicationRepository.existsByUserIdAndAttemptIdAndSkill(
+                        user.getId(), attemptId, skill);
+        Optional<UserSkillProfile> existingProfile =
+                userSkillProfileRepository.findByUserIdAndSkill(user.getId(), skill);
+        // The application marker is idempotency protection, not the source of
+        // truth for the learner profile. Older callbacks could write the marker
+        // before the profile transaction completed. Repair a missing profile on
+        // replay, while keeping the normal duplicate path side-effect free.
+        if (alreadyApplied && existingProfile.isPresent()) {
             return true;
         }
         UserSkillProfile profile =
-                userSkillProfileRepository
-                        .findByUserIdAndSkill(user.getId(), skill)
-                        .orElseGet(
-                                () -> {
-                                    UserSkillProfile created = new UserSkillProfile();
-                                    created.setUser(user);
-                                    created.setSkill(skill);
-                                    return created;
-                                });
+                existingProfile.orElseGet(
+                        () -> {
+                            UserSkillProfile created = new UserSkillProfile();
+                            created.setUser(user);
+                            created.setSkill(skill);
+                            return created;
+                        });
         // Placement retakes are only for filling skills that were missing from
         // the learner profile. Once a skill has a Placement result, a later
         // retake must not regress it with a lower score.
         if (type.equals("PLACEMENT") && profile.getPlacementLevel() != null) {
-            saveApplication(user, attemptId, skill);
+            if (!alreadyApplied) saveApplication(user, attemptId, skill);
             return true;
         }
         LocalDateTime submittedAtUtc =
@@ -205,7 +211,7 @@ public class AccountAccessServiceImpl implements AccountAccessService {
             if (profile.getId() != null && profile.getCurrentLevel() != null) {
                 userSkillProfileRepository.save(profile);
             }
-            saveApplication(user, attemptId, skill);
+            if (!alreadyApplied) saveApplication(user, attemptId, skill);
             return true;
         }
         CefrLevel floor = CefrLevel.parse(profile.getCheckpointFloorLevel());
@@ -220,7 +226,7 @@ public class AccountAccessServiceImpl implements AccountAccessService {
             profile.setSourceAttemptId(profile.getCheckpointSourceAttemptId());
         }
         userSkillProfileRepository.save(profile);
-        saveApplication(user, attemptId, skill);
+        if (!alreadyApplied) saveApplication(user, attemptId, skill);
         return true;
     }
 
