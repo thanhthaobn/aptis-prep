@@ -2,6 +2,11 @@ package com.aptisprep.service.learning;
 
 import static org.assertj.core.api.Assertions.*;
 
+import com.aptisprep.mvc.learning.dto.*;
+import com.aptisprep.mvc.learning.entity.*;
+import com.aptisprep.mvc.learning.repository.*;
+import com.aptisprep.mvc.learning.service.*;
+import com.aptisprep.mvc.learning.service.impl.*;
 import org.junit.jupiter.api.Test;
 
 class LearningProgressCalculatorTests {

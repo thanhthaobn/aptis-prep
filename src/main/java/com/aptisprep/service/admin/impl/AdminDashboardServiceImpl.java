@@ -1,7 +1,7 @@
 package com.aptisprep.service.admin.impl;
 
 import com.aptisprep.dto.view.AdminDashboardView;
-import com.aptisprep.repository.LessonRepository;
+import com.aptisprep.mvc.learning.repository.LessonRepository;
 import com.aptisprep.repository.MockExamRepository;
 import com.aptisprep.repository.QuestionRepository;
 import com.aptisprep.service.admin.AdminDashboardService;

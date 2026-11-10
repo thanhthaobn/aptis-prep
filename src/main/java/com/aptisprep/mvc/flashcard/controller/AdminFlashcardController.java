@@ -4,7 +4,7 @@ import com.aptisprep.mvc.common.exception.BusinessRuleException;
 import com.aptisprep.mvc.flashcard.dto.FlashcardSetFormDTO;
 import com.aptisprep.mvc.flashcard.dto.FlashcardViewsDTO.SetView;
 import com.aptisprep.mvc.flashcard.service.FlashcardSetService;
-import com.aptisprep.service.learning.LessonService;
+import com.aptisprep.mvc.learning.service.LessonService;
 import jakarta.validation.Valid;
 import java.util.List;
 import org.springframework.stereotype.Controller;

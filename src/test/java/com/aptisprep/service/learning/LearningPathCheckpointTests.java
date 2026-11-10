@@ -17,6 +17,12 @@ import com.aptisprep.mvc.auth.entity.User;
 import com.aptisprep.mvc.auth.repository.UserRepository;
 import com.aptisprep.mvc.common.enums.*;
 import com.aptisprep.mvc.common.exception.*;
+import com.aptisprep.mvc.learning.dto.*;
+import com.aptisprep.mvc.learning.dto.LearningPathViewsDTO.StageLessonDTO;
+import com.aptisprep.mvc.learning.entity.*;
+import com.aptisprep.mvc.learning.repository.*;
+import com.aptisprep.mvc.learning.service.*;
+import com.aptisprep.mvc.learning.service.impl.*;
 import com.aptisprep.repository.*;
 import com.aptisprep.service.contract.IntegrationModels.*;
 import com.aptisprep.service.exam.ExamAttemptService;
@@ -78,9 +84,7 @@ class LearningPathCheckpointTests {
         assertThat(path.getFromLevel()).isEqualTo("B1");
         assertThat(path.getTargetLevel()).isEqualTo("B2");
         assertThat(path.getGoalSkillId()).isEqualTo(goal.getSkills().getFirst().getId());
-        assertThat(stage.lessons())
-                .extracting(LearningPathService.StageLesson::level)
-                .containsOnly("B2");
+        assertThat(stage.lessons()).extracting(StageLessonDTO::level).containsOnly("B2");
         assertThat(path.getSourceAttemptId()).isNull();
         assertThat(
                         profiles.findByUserIdAndSkill(user.getId(), "READING")
@@ -114,7 +118,7 @@ class LearningPathCheckpointTests {
         assertThat(foundation.getTargetLevel()).isEqualTo("A1");
         assertThat(service.stages(user.getEmail(), "Reading").getFirst().goalLevel()).isNull();
         assertThat(service.stages(user.getEmail(), "Reading").getFirst().lessons())
-                .extracting(LearningPathService.StageLesson::level)
+                .extracting(StageLessonDTO::level)
                 .containsOnly("A1");
         assertThat(service.summary(user.getId(), foundation.getId()).checkpointState())
                 .isEqualTo("locked");
@@ -419,7 +423,7 @@ class LearningPathCheckpointTests {
         service.ensurePaths(user.getId());
         assertThat(current(user).getTargetLevel()).isEqualTo("C1");
         assertThat(service.stages(user.getEmail(), "Reading").getFirst().lessons())
-                .extracting(LearningPathService.StageLesson::level)
+                .extracting(StageLessonDTO::level)
                 .containsOnly("C1");
     }
 

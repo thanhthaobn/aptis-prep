@@ -10,7 +10,7 @@ import static org.mockito.Mockito.when;
 
 import com.aptisprep.mvc.account.service.AccountAccessService;
 import com.aptisprep.mvc.common.event.AttemptCompletedEvent;
-import com.aptisprep.service.contract.LearningPathContract;
+import com.aptisprep.mvc.learning.service.LearningPathService;
 import com.aptisprep.service.exam.AttemptOutboxService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.ObjectProvider;
@@ -21,10 +21,10 @@ class PlacementOrchestrationServiceTests {
     @Test
     void placementUpdatesProfileBeforeLearningPath() {
         AccountAccessService accounts = mock(AccountAccessService.class);
-        LearningPathContract paths = mock(LearningPathContract.class);
+        LearningPathService paths = mock(LearningPathService.class);
         AttemptOutboxService outbox = mock(AttemptOutboxService.class);
         @SuppressWarnings("unchecked")
-        ObjectProvider<LearningPathContract> provider = mock(ObjectProvider.class);
+        ObjectProvider<LearningPathService> provider = mock(ObjectProvider.class);
         PlatformTransactionManager transactionManager = mock(PlatformTransactionManager.class);
         when(transactionManager.getTransaction(any())).thenReturn(mock(TransactionStatus.class));
         org.mockito.Mockito.when(provider.getIfAvailable()).thenReturn(paths);
@@ -45,7 +45,7 @@ class PlacementOrchestrationServiceTests {
         AccountAccessService accounts = mock(AccountAccessService.class);
         AttemptOutboxService outbox = mock(AttemptOutboxService.class);
         @SuppressWarnings("unchecked")
-        ObjectProvider<LearningPathContract> provider = mock(ObjectProvider.class);
+        ObjectProvider<LearningPathService> provider = mock(ObjectProvider.class);
         PlatformTransactionManager transactionManager = mock(PlatformTransactionManager.class);
         when(transactionManager.getTransaction(any())).thenReturn(mock(TransactionStatus.class));
         PlacementOrchestrationService service =
@@ -61,7 +61,7 @@ class PlacementOrchestrationServiceTests {
         AccountAccessService accounts = mock(AccountAccessService.class);
         AttemptOutboxService outbox = mock(AttemptOutboxService.class);
         @SuppressWarnings("unchecked")
-        ObjectProvider<LearningPathContract> provider = mock(ObjectProvider.class);
+        ObjectProvider<LearningPathService> provider = mock(ObjectProvider.class);
         PlatformTransactionManager transactionManager = mock(PlatformTransactionManager.class);
         when(transactionManager.getTransaction(any())).thenReturn(mock(TransactionStatus.class));
         doThrow(new IllegalStateException("profile failure")).when(accounts).applyAssessment(7, 91);

@@ -1,10 +1,10 @@
 package com.aptisprep.mvc.flashcard.service;
 
-import com.aptisprep.entity.Lesson;
 import com.aptisprep.mvc.flashcard.dto.FlashcardSetFormDTO;
 import com.aptisprep.mvc.flashcard.dto.FlashcardViewsDTO.*;
 import com.aptisprep.mvc.flashcard.entity.FlashcardSet;
 import com.aptisprep.mvc.flashcard.service.impl.FlashcardSetServiceImpl;
+import com.aptisprep.mvc.learning.entity.Lesson;
 import java.util.List;
 import java.util.Map;
 

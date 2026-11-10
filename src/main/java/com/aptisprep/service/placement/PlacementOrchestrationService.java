@@ -2,7 +2,7 @@ package com.aptisprep.service.placement;
 
 import com.aptisprep.mvc.account.service.AccountAccessService;
 import com.aptisprep.mvc.common.event.AttemptCompletedEvent;
-import com.aptisprep.service.contract.LearningPathContract;
+import com.aptisprep.mvc.learning.service.LearningPathService;
 import com.aptisprep.service.exam.AttemptOutboxService;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.stereotype.Component;
@@ -16,13 +16,13 @@ import org.springframework.transaction.support.TransactionTemplate;
 @Component
 public class PlacementOrchestrationService {
     private final AccountAccessService accounts;
-    private final ObjectProvider<LearningPathContract> paths;
+    private final ObjectProvider<LearningPathService> paths;
     private final AttemptOutboxService outbox;
     private final TransactionTemplate transactions;
 
     public PlacementOrchestrationService(
             AccountAccessService accounts,
-            ObjectProvider<LearningPathContract> paths,
+            ObjectProvider<LearningPathService> paths,
             AttemptOutboxService outbox,
             PlatformTransactionManager transactionManager) {
         this.accounts = accounts;
@@ -48,8 +48,8 @@ public class PlacementOrchestrationService {
         outbox.markDelivered(event);
     }
 
-    private LearningPathContract requirePath() {
-        LearningPathContract path = paths.getIfAvailable();
+    private LearningPathService requirePath() {
+        LearningPathService path = paths.getIfAvailable();
         if (path == null) throw new IllegalStateException("Learning Path chưa sẵn sàng");
         return path;
     }

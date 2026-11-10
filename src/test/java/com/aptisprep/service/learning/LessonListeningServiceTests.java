@@ -8,6 +8,16 @@ import com.aptisprep.mvc.auth.entity.User;
 import com.aptisprep.mvc.auth.repository.UserRepository;
 import com.aptisprep.mvc.common.enums.*;
 import com.aptisprep.mvc.common.exception.BusinessRuleException;
+import com.aptisprep.mvc.learning.dto.*;
+import com.aptisprep.mvc.learning.dto.LessonPlaybackDTO;
+import com.aptisprep.mvc.learning.entity.*;
+import com.aptisprep.mvc.learning.entity.Lesson;
+import com.aptisprep.mvc.learning.entity.LessonEngagement;
+import com.aptisprep.mvc.learning.repository.*;
+import com.aptisprep.mvc.learning.service.*;
+import com.aptisprep.mvc.learning.service.LessonListeningService;
+import com.aptisprep.mvc.learning.service.impl.*;
+import com.aptisprep.mvc.learning.service.impl.LessonListeningServiceImpl;
 import com.aptisprep.mvc.storage.service.AudioDurationService;
 import com.aptisprep.repository.*;
 import java.time.*;
@@ -46,13 +56,12 @@ class LessonListeningServiceTests {
         progress.setLessonId(2);
         when(engagements.findByUserIdAndLessonId(1, 2)).thenReturn(Optional.of(progress));
         service =
-                new com.aptisprep.service.learning.impl.LessonListeningServiceImpl(
+                new com.aptisprep.mvc.learning.service.impl.LessonListeningServiceImpl(
                         users, lessons, engagements, durations, clock);
         token = service.start(2, "a@test.local", 0).token();
     }
 
-    private LessonListeningService.Playback ping(
-            double position, double elapsed, boolean playing, boolean seek) {
+    private LessonPlaybackDTO ping(double position, double elapsed, boolean playing, boolean seek) {
         clock.advance(elapsed);
         return service.heartbeat(2, "a@test.local", token, ++sequence, position, playing, seek);
     }
@@ -69,7 +78,7 @@ class LessonListeningServiceTests {
     @Test
     void eightyNinePercentIsNotEnoughAndNinetyPercentIsVerified() {
         listenTo(89);
-        assertFalse(LessonListeningService.verified(lesson, progress));
+        assertFalse(LessonListeningServiceImpl.verified(lesson, progress));
         var result = ping(90, 1, false, false);
         assertTrue(result.verified());
         assertEquals(90, result.listened(), .0001);
@@ -153,7 +162,7 @@ class LessonListeningServiceTests {
     void changingTheAudioInvalidatesOldSessionsAndVerification() {
         listenTo(90);
         lesson.setAudioPath("new.wav");
-        assertFalse(LessonListeningService.verified(lesson, progress));
+        assertFalse(LessonListeningServiceImpl.verified(lesson, progress));
         assertThrows(
                 BusinessRuleException.class,
                 () -> service.heartbeat(2, "a@test.local", token, sequence + 1, 91, true, false));
@@ -162,7 +171,7 @@ class LessonListeningServiceTests {
     @Test
     void oldUnverifiedAudioPlayedMarkerDoesNotBypassTheNewGate() {
         progress.setAudioPlayedAt(LocalDateTime.now(clock));
-        assertFalse(LessonListeningService.verified(lesson, progress));
+        assertFalse(LessonListeningServiceImpl.verified(lesson, progress));
     }
 
     @Test

@@ -6,9 +6,14 @@ import static org.hamcrest.Matchers.containsString;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-import com.aptisprep.dto.form.LessonForm;
-import com.aptisprep.entity.Lesson;
-import com.aptisprep.repository.LessonRepository;
+import com.aptisprep.mvc.learning.dto.*;
+import com.aptisprep.mvc.learning.dto.LessonFormDTO;
+import com.aptisprep.mvc.learning.entity.*;
+import com.aptisprep.mvc.learning.entity.Lesson;
+import com.aptisprep.mvc.learning.repository.*;
+import com.aptisprep.mvc.learning.repository.LessonRepository;
+import com.aptisprep.mvc.learning.service.*;
+import com.aptisprep.mvc.learning.service.impl.*;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -56,7 +61,7 @@ class AdminLessonTreeTests {
                         .andExpect(content().string(containsString("data-skill=\"Speaking\"")))
                         .andExpect(content().string(containsString("Đề viết học viên cần nộp")))
                         .andReturn();
-        var form = (LessonForm) result.getModelAndView().getModel().get("form");
+        var form = (LessonFormDTO) result.getModelAndView().getModel().get("form");
         assertThat(form.getSkill()).isEqualTo("Reading");
         assertThat(form.getCefrLevel()).isEqualTo("A2");
         assertThat(form.getDisplayOrder()).isEqualTo(72);

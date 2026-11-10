@@ -9,6 +9,12 @@ import com.aptisprep.mvc.account.repository.UserGoalRepository;
 import com.aptisprep.mvc.auth.entity.User;
 import com.aptisprep.mvc.auth.repository.UserRepository;
 import com.aptisprep.mvc.common.enums.*;
+import com.aptisprep.mvc.learning.dto.*;
+import com.aptisprep.mvc.learning.dto.LearningPathViewsDTO.StageLessonDTO;
+import com.aptisprep.mvc.learning.entity.*;
+import com.aptisprep.mvc.learning.repository.*;
+import com.aptisprep.mvc.learning.service.*;
+import com.aptisprep.mvc.learning.service.impl.*;
 import com.aptisprep.repository.*;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -120,7 +126,7 @@ class LearningPathRefreshTests {
         assertThat(summary.totalLessons()).isEqualTo(1);
         assertThat(summary.completedLessons()).isEqualTo(1);
         assertThat(service.stages(user.getEmail(), "Reading").getFirst().lessons())
-                .extracting(LearningPathService.StageLesson::id)
+                .extracting(StageLessonDTO::id)
                 .containsExactly(kept.getId());
         assertThat(
                         progress.findByUserIdAndLessonId(user.getId(), kept.getId())

@@ -9,6 +9,11 @@ import com.aptisprep.mvc.auth.entity.User;
 import com.aptisprep.mvc.auth.repository.UserRepository;
 import com.aptisprep.mvc.auth.service.impl.PasswordHasher;
 import com.aptisprep.mvc.common.enums.*;
+import com.aptisprep.mvc.learning.dto.*;
+import com.aptisprep.mvc.learning.entity.*;
+import com.aptisprep.mvc.learning.repository.*;
+import com.aptisprep.mvc.learning.service.*;
+import com.aptisprep.mvc.learning.service.impl.*;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -24,9 +29,9 @@ class AccountExperienceTests {
     @Autowired MockMvc mvc;
     @Autowired UserRepository users;
     @Autowired PasswordHasher encoder;
-    @Autowired com.aptisprep.repository.LessonRepository lessons;
+    @Autowired LessonRepository lessons;
     @Autowired com.aptisprep.mvc.account.repository.UserSkillProfileRepository profiles;
-    @Autowired com.aptisprep.service.learning.LearningPathService learning;
+    @Autowired LearningPathService learning;
 
     @Test
     void placementWithoutGoalShowsAssessedLevelAndNextStageSeparately() throws Exception {
@@ -36,7 +41,7 @@ class AccountExperienceTests {
         profile.setSkill("READING");
         profile.setCurrentLevel("A2");
         profiles.saveAndFlush(profile);
-        var lesson = new com.aptisprep.entity.Lesson();
+        var lesson = new Lesson();
         lesson.setTitle("Reading B1 experience");
         lesson.setSkill("Reading");
         lesson.setCefrLevel("B1");

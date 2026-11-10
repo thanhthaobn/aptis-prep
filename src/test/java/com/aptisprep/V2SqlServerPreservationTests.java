@@ -2,11 +2,15 @@ package com.aptisprep;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import com.aptisprep.dto.form.LessonForm;
 import com.aptisprep.mvc.auth.repository.UserRepository;
 import com.aptisprep.mvc.common.exception.BusinessRuleException;
+import com.aptisprep.mvc.learning.dto.*;
+import com.aptisprep.mvc.learning.dto.LessonFormDTO;
+import com.aptisprep.mvc.learning.entity.*;
+import com.aptisprep.mvc.learning.repository.*;
+import com.aptisprep.mvc.learning.service.*;
+import com.aptisprep.mvc.learning.service.impl.*;
 import com.aptisprep.repository.*;
-import com.aptisprep.service.learning.LessonTeachingService;
 import java.nio.file.*;
 import java.sql.*;
 import java.util.*;
@@ -229,9 +233,8 @@ class V2SqlServerPreservationTests {
                     var users = repositories.getRepository(UserRepository.class);
                     var attempts = repositories.getRepository(LessonCheckAttemptRepository.class);
                     var teaching =
-                            new LessonTeachingService(
-                                    new com.aptisprep.service.learning.LessonCheckService(
-                                            checks, lessons, users, attempts),
+                            new LessonTeachingServiceImpl(
+                                    new LessonCheckService(checks, lessons, users, attempts),
                                     lessons,
                                     users,
                                     repositories.getRepository(LessonResponseRepository.class),
@@ -242,7 +245,7 @@ class V2SqlServerPreservationTests {
                                     null,
                                     new com.aptisprep.mvc.common.config.AiProperties());
                     // Storage and AI are intentionally unused by Knowledge Check operations.
-                    var lesson = new com.aptisprep.entity.Lesson();
+                    var lesson = new Lesson();
                     lesson.setTitle("SQL Server Knowledge Check regression");
                     lesson.setSkill("Reading");
                     lesson.setCefrLevel("A1");
@@ -424,11 +427,11 @@ class V2SqlServerPreservationTests {
         return job;
     }
 
-    private static LessonForm checkForm(int count, int correct) {
-        var form = new LessonForm();
+    private static LessonFormDTO checkForm(int count, int correct) {
+        var form = new LessonFormDTO();
         form.setSkill("Reading");
         form.setStatus("PUBLISHED");
-        var check = new LessonForm.CheckForm();
+        var check = new LessonFormDTO.CheckForm();
         check.setPrompt("Choose the last option");
         check.setOptionA("A");
         check.setOptionB("B");

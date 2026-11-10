@@ -5,12 +5,12 @@ import com.aptisprep.mvc.account.dto.AccountSnapshotDTO.SkillViewDTO;
 import com.aptisprep.mvc.account.service.AccountProfileService;
 import com.aptisprep.mvc.account.service.LearningActivityService;
 import com.aptisprep.mvc.common.enums.Skill;
+import com.aptisprep.mvc.learning.dto.LessonRecommendationDTO;
+import com.aptisprep.mvc.learning.dto.PathProgressDTO;
+import com.aptisprep.mvc.learning.service.LearningPathService;
+import com.aptisprep.mvc.learning.service.LessonRecommendationService;
 import com.aptisprep.service.contract.ExamAttemptContract;
 import com.aptisprep.service.contract.IntegrationModels.AttemptResult;
-import com.aptisprep.service.contract.IntegrationModels.PathProgress;
-import com.aptisprep.service.learning.LearningPathService;
-import com.aptisprep.service.learning.LessonRecommendationService;
-import com.aptisprep.service.learning.LessonRecommendationService.Recommendation;
 import java.security.Principal;
 import java.util.ArrayList;
 import java.util.List;
@@ -43,9 +43,9 @@ public class StudentDashboardController {
 
     @GetMapping("/student/dashboard")
     public String dashboard(Principal principal, Model model) {
-        List<PathProgress> paths = learningPaths.ensureAndSummaries(principal.getName());
+        List<PathProgressDTO> paths = learningPaths.ensureAndSummaries(principal.getName());
         boolean hasLearningContent = paths.stream().anyMatch(path -> path.totalLessons() > 0);
-        Recommendation recommendation =
+        LessonRecommendationDTO recommendation =
                 recommendations.recommend(learningPaths.userId(principal.getName()), paths);
         model.addAttribute("email", principal.getName());
         model.addAttribute("paths", paths);

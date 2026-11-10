@@ -16,12 +16,12 @@ import com.aptisprep.mvc.common.enums.Skill;
 import com.aptisprep.mvc.common.exception.AccessDeniedException;
 import com.aptisprep.mvc.common.exception.BusinessRuleException;
 import com.aptisprep.mvc.common.exception.ResourceNotFoundException;
+import com.aptisprep.mvc.learning.service.LearningPathService;
 import com.aptisprep.mvc.scoring.entity.Certificate;
 import com.aptisprep.repository.*;
 import com.aptisprep.service.admin.StudentManagementService;
 import com.aptisprep.service.contract.ExamAttemptContract;
 import com.aptisprep.service.contract.IntegrationModels.*;
-import com.aptisprep.service.contract.LearningPathContract;
 import java.util.*;
 import java.util.stream.Collectors;
 import org.springframework.beans.factory.ObjectProvider;
@@ -37,7 +37,7 @@ public class StudentManagementServiceImpl implements StudentManagementService {
     private final UserGoalRepository userGoalRepository;
     private final UserGoalSkillRepository userGoalSkillRepository;
     private final UserSkillProfileRepository userSkillProfileRepository;
-    private final ObjectProvider<LearningPathContract> paths;
+    private final ObjectProvider<LearningPathService> paths;
     private final ObjectProvider<ExamAttemptContract> attempts;
 
     public StudentManagementServiceImpl(
@@ -45,7 +45,7 @@ public class StudentManagementServiceImpl implements StudentManagementService {
             UserGoalRepository userGoalRepository,
             UserGoalSkillRepository userGoalSkillRepository,
             UserSkillProfileRepository userSkillProfileRepository,
-            ObjectProvider<LearningPathContract> paths,
+            ObjectProvider<LearningPathService> paths,
             ObjectProvider<ExamAttemptContract> attempts) {
         this.userRepository = userRepository;
         this.userGoalRepository = userGoalRepository;
@@ -245,11 +245,11 @@ public class StudentManagementServiceImpl implements StudentManagementService {
     }
 
     private List<AdminStudentView.Progress> progressFor(Integer userId) {
-        LearningPathContract contract = paths.getIfAvailable();
+        LearningPathService contract = paths.getIfAvailable();
         if (contract == null) return List.of();
         AccountSnapshotDTO.GoalViewDTO goal = goalView(userId);
         Map<String, String> targetMap = goal == null ? Map.of() : goal.targets();
-        List<PathProgress> values = contract.summaries(userId);
+        List<com.aptisprep.mvc.learning.dto.PathProgressDTO> values = contract.summaries(userId);
         return values == null
                 ? List.of()
                 : values.stream()

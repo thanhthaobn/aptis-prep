@@ -2,8 +2,10 @@ package com.aptisprep.service.exam;
 
 import com.aptisprep.entity.*;
 import com.aptisprep.mvc.common.exception.BusinessRuleException;
-import com.aptisprep.repository.LearningPathItemRepository;
-import com.aptisprep.repository.LearningPathRepository;
+import com.aptisprep.mvc.learning.entity.LearningPath;
+import com.aptisprep.mvc.learning.entity.LearningPathItem;
+import com.aptisprep.mvc.learning.repository.LearningPathItemRepository;
+import com.aptisprep.mvc.learning.repository.LearningPathRepository;
 import java.util.*;
 import org.springframework.stereotype.Component;
 

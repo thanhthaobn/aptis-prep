@@ -2,15 +2,15 @@ package com.aptisprep.service.account;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import com.aptisprep.entity.LearningPath;
-import com.aptisprep.entity.Lesson;
 import com.aptisprep.mvc.auth.entity.User;
 import com.aptisprep.mvc.auth.repository.UserRepository;
 import com.aptisprep.mvc.common.enums.Role;
 import com.aptisprep.mvc.common.enums.UserStatus;
 import com.aptisprep.mvc.common.event.GoalChangedEvent;
-import com.aptisprep.repository.LearningPathRepository;
-import com.aptisprep.repository.LessonRepository;
+import com.aptisprep.mvc.learning.entity.LearningPath;
+import com.aptisprep.mvc.learning.entity.Lesson;
+import com.aptisprep.mvc.learning.repository.LearningPathRepository;
+import com.aptisprep.mvc.learning.repository.LessonRepository;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;

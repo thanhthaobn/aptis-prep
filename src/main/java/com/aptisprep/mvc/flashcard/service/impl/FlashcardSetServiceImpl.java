@@ -1,6 +1,5 @@
 package com.aptisprep.mvc.flashcard.service.impl;
 
-import com.aptisprep.entity.Lesson;
 import com.aptisprep.mvc.auth.entity.User;
 import com.aptisprep.mvc.auth.service.UserService;
 import com.aptisprep.mvc.common.enums.*;
@@ -15,8 +14,9 @@ import com.aptisprep.mvc.flashcard.repository.FlashcardRepository;
 import com.aptisprep.mvc.flashcard.repository.FlashcardSetRepository;
 import com.aptisprep.mvc.flashcard.repository.UserFlashcardProgressRepository;
 import com.aptisprep.mvc.flashcard.service.FlashcardSetService;
-import com.aptisprep.repository.LessonRepository;
-import com.aptisprep.service.learning.LessonService;
+import com.aptisprep.mvc.learning.entity.Lesson;
+import com.aptisprep.mvc.learning.repository.LessonRepository;
+import com.aptisprep.mvc.learning.service.LessonService;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 import java.util.*;

@@ -5,7 +5,6 @@ import static org.assertj.core.api.Assertions.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-import com.aptisprep.dto.form.LessonForm;
 import com.aptisprep.entity.*;
 import com.aptisprep.mvc.auth.entity.User;
 import com.aptisprep.mvc.auth.repository.UserRepository;
@@ -13,6 +12,18 @@ import com.aptisprep.mvc.common.enums.*;
 import com.aptisprep.mvc.common.exception.BusinessRuleException;
 import com.aptisprep.mvc.flashcard.entity.FlashcardSet;
 import com.aptisprep.mvc.flashcard.repository.FlashcardSetRepository;
+import com.aptisprep.mvc.learning.dto.*;
+import com.aptisprep.mvc.learning.dto.LessonAuthorProfileDTO;
+import com.aptisprep.mvc.learning.dto.LessonFormDTO;
+import com.aptisprep.mvc.learning.entity.*;
+import com.aptisprep.mvc.learning.entity.LessonEngagement;
+import com.aptisprep.mvc.learning.repository.*;
+import com.aptisprep.mvc.learning.repository.LearningPathItemRepository;
+import com.aptisprep.mvc.learning.service.*;
+import com.aptisprep.mvc.learning.service.LearningPathService;
+import com.aptisprep.mvc.learning.service.LessonService;
+import com.aptisprep.mvc.learning.service.LessonTeachingService;
+import com.aptisprep.mvc.learning.service.impl.*;
 import com.aptisprep.repository.*;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -52,7 +63,7 @@ class SimpleLessonRulesTests {
         return users.saveAndFlush(u);
     }
 
-    private LessonForm form(String skill) {
+    private LessonFormDTO form(String skill) {
         var f = lessons.newForm(skill, "A1");
         f.setTitle("Simple " + skill);
         f.setStatus("PUBLISHED");
@@ -61,8 +72,8 @@ class SimpleLessonRulesTests {
         return f;
     }
 
-    private void quiz(LessonForm f) {
-        var q = new LessonForm.CheckForm();
+    private void quiz(LessonFormDTO f) {
+        var q = new LessonFormDTO.CheckForm();
         q.setPrompt("Original question");
         q.setOptionA("One");
         q.setOptionB("Two");
@@ -110,8 +121,8 @@ class SimpleLessonRulesTests {
                             .getContentAsString(java.nio.charset.StandardCharsets.UTF_8);
             assertThat(html)
                     .contains(
-                            LessonAuthorProfile.forSkill(skill).promptLabel(),
-                            LessonAuthorProfile.forSkill(skill).exampleLabel(),
+                            LessonAuthorProfileDTO.forSkill(skill).promptLabel(),
+                            LessonAuthorProfileDTO.forSkill(skill).exampleLabel(),
                             "name=\"image\"",
                             "name=\"video\"",
                             "name=\"audio\"",

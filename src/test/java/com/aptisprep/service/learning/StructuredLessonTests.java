@@ -6,13 +6,24 @@ import static org.hamcrest.Matchers.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-import com.aptisprep.dto.form.LessonForm;
 import com.aptisprep.entity.*;
 import com.aptisprep.mvc.auth.entity.User;
 import com.aptisprep.mvc.auth.repository.UserRepository;
 import com.aptisprep.mvc.common.config.StorageProperties;
 import com.aptisprep.mvc.common.enums.*;
 import com.aptisprep.mvc.common.exception.BusinessRuleException;
+import com.aptisprep.mvc.learning.dto.*;
+import com.aptisprep.mvc.learning.dto.LearningPathViewsDTO.StageLessonDTO;
+import com.aptisprep.mvc.learning.dto.LessonFormDTO;
+import com.aptisprep.mvc.learning.entity.*;
+import com.aptisprep.mvc.learning.entity.Lesson;
+import com.aptisprep.mvc.learning.entity.LessonWorkSubmission;
+import com.aptisprep.mvc.learning.repository.*;
+import com.aptisprep.mvc.learning.service.*;
+import com.aptisprep.mvc.learning.service.LessonService;
+import com.aptisprep.mvc.learning.service.LessonTeachingService;
+import com.aptisprep.mvc.learning.service.impl.*;
+import com.aptisprep.mvc.learning.service.impl.LessonTeachingServiceImpl;
 import com.aptisprep.mvc.storage.service.StorageService;
 import com.aptisprep.repository.*;
 import com.aptisprep.support.TestAudio;
@@ -57,7 +68,7 @@ class StructuredLessonTests {
                         learningPaths.stages(student.getEmail(), "Reading").stream()
                                 .flatMap(stage -> stage.lessons().stream())
                                 .filter(item -> item.id().equals(lesson.getId())))
-                .allMatch(LearningPathService.StageLesson::completed)
+                .allMatch(StageLessonDTO::completed)
                 .hasSize(1);
         mvc.perform(
                         get("/student/lessons")
@@ -405,7 +416,7 @@ class StructuredLessonTests {
         f.setSampleResponse("Model");
         f.setVideoUrl("https://youtu.be/yiwhUC4S5_o");
         f.setSourceUrl("https://www.britishcouncil.org/");
-        var q = new LessonForm.CheckForm();
+        var q = new LessonFormDTO.CheckForm();
         q.setPrompt("Choose the correct strategy");
         q.setOptionA("First");
         q.setOptionB("Second");
@@ -468,15 +479,15 @@ class StructuredLessonTests {
 
     @Test
     void rejectsUnsafeVideoAndSources() {
-        assertThatThrownBy(() -> LessonTeachingService.videoId("javascript:alert(1)"))
+        assertThatThrownBy(() -> LessonTeachingServiceImpl.videoId("javascript:alert(1)"))
                 .isInstanceOf(BusinessRuleException.class);
         assertThatThrownBy(
                         () ->
-                                LessonTeachingService.videoId(
+                                LessonTeachingServiceImpl.videoId(
                                         "https://youtube.com.evil.test/watch?v=yiwhUC4S5_o"))
                 .isInstanceOf(BusinessRuleException.class);
         assertThat(
-                        LessonTeachingService.videoId(
+                        LessonTeachingServiceImpl.videoId(
                                 "https://www.youtube.com/watch?v=yiwhUC4S5_o&feature=share"))
                 .isEqualTo("yiwhUC4S5_o");
     }
@@ -491,13 +502,13 @@ class StructuredLessonTests {
         var f = lessons.newForm("Listening", "A2");
         f.setTitle("Flexible checks");
         f.setStatus("DRAFT");
-        var two = new LessonForm.CheckForm();
+        var two = new LessonFormDTO.CheckForm();
         two.setPrompt("Two choices");
         two.setOptionA("Yes");
         two.setOptionB("No");
         two.setCorrectOption(1);
         two.setExplanation("No is correct");
-        var six = new LessonForm.CheckForm();
+        var six = new LessonFormDTO.CheckForm();
         six.setPrompt("Six choices");
         six.setOptionA("A");
         six.setOptionB("B");

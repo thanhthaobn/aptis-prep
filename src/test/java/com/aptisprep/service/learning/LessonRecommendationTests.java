@@ -7,7 +7,16 @@ import com.aptisprep.mvc.account.dto.LearnerContextDTO;
 import com.aptisprep.mvc.account.dto.SkillLevelDTO;
 import com.aptisprep.mvc.account.dto.SkillTargetDTO;
 import com.aptisprep.mvc.account.service.AccountAccessService;
-import com.aptisprep.repository.LessonProgressRepository;
+import com.aptisprep.mvc.learning.dto.*;
+import com.aptisprep.mvc.learning.dto.PathProgressDTO;
+import com.aptisprep.mvc.learning.entity.*;
+import com.aptisprep.mvc.learning.entity.Lesson;
+import com.aptisprep.mvc.learning.entity.LessonProgress;
+import com.aptisprep.mvc.learning.repository.*;
+import com.aptisprep.mvc.learning.repository.LessonProgressRepository;
+import com.aptisprep.mvc.learning.service.*;
+import com.aptisprep.mvc.learning.service.LessonRecommendationService;
+import com.aptisprep.mvc.learning.service.impl.*;
 import com.aptisprep.service.contract.IntegrationModels.*;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -45,11 +54,11 @@ class LessonRecommendationTests {
                 }
             };
     final LessonRecommendationService service =
-            new com.aptisprep.service.learning.impl.LessonRecommendationServiceImpl(
+            new com.aptisprep.mvc.learning.service.impl.LessonRecommendationServiceImpl(
                     progress, accounts);
 
-    PathProgress path(int id, String skill, int done) {
-        return new PathProgress(
+    PathProgressDTO path(int id, String skill, int done) {
+        return new PathProgressDTO(
                 id,
                 skill,
                 "GOAL",
