@@ -37,6 +37,53 @@ public class PlacementServiceImpl implements PlacementService {
         return catalog.findPublished(skill);
     }
 
+    @Override
+    public List<PlacementExamCatalogService.PlacementExam> available() {
+        return catalog.findPublished();
+    }
+
+    @Override
+    public List<PlacementOption> availableForStudent(String email) {
+        AccountAccessContract account = accounts.getIfAvailable();
+        ExamAttemptContract attempt = attempts.getIfAvailable();
+        Integer userId = account == null ? null : account.requireActiveStudent(email);
+        boolean resumable =
+                userId != null && attempt != null && attempt.hasInProgressPlacement(userId);
+        return available().stream()
+                .map(
+                        exam ->
+                                new PlacementOption(
+                                        exam.id(),
+                                        exam.title(),
+                                        exam.subtitle(),
+                                        exam.durationMinutes(),
+                                        exam.sections(),
+                                        resumable))
+                .toList();
+    }
+
+    @Override
+    public AttemptHandle start(String email) {
+        AccountAccessContract account = accounts.getIfAvailable();
+        ExamAttemptContract attempt = attempts.getIfAvailable();
+        if (account == null || attempt == null)
+            throw new BusinessRuleException(
+                    "Luồng Placement chưa thể bắt đầu vì engine lượt thi của hệ thống chưa sẵn sàng");
+        Integer userId = account.requireActiveStudent(email);
+        PlacementExamCatalogService.PlacementExam exam =
+                available().stream()
+                        .findFirst()
+                        .orElseThrow(
+                                () ->
+                                        new BusinessRuleException(
+                                                "Chưa có đề Placement tổng hợp đã công bố"));
+        examCatalog.publishedExam(userId, exam.id());
+        return attempt.startPlacement(
+                userId,
+                exam.id(),
+                "placement:" + userId + ":" + exam.id() + ":" + UUID.randomUUID());
+    }
+
     public List<PlacementOption> available(String email, String skill) {
         List<PlacementExamCatalogService.PlacementExam> exams = available(skill);
         AccountAccessContract account = accounts.getIfAvailable();
@@ -78,6 +125,15 @@ public class PlacementServiceImpl implements PlacementService {
                                 () ->
                                         new BusinessRuleException(
                                                 "Chưa có đề Placement đã công bố cho kỹ năng này"));
+        // Legacy callers may still select a skill. Keep the old overlap contract for
+        // those requests while the current UI uses start(email) for the single
+        // combined assessment. A different placement cannot be opened while one is
+        // still active, but retrying the same skill resumes its existing attempt.
+        if (attempt.hasInProgressPlacement(userId)
+                && !attempt.hasInProgressPlacement(userId, skill)) {
+            throw new BusinessRuleException(
+                    "Bạn còn một bài kiểm tra đầu vào đang làm. Hãy hoàn tất bài đó trước khi bắt đầu bài mới.");
+        }
         examCatalog.publishedExam(userId, exam.id());
         // A new Placement/Practice run must not reuse the key of a terminal attempt.
         // Repeated clicks in the same request are still protected by the engine's

@@ -146,6 +146,11 @@ public class ExamAnswerWriter {
                                 + GradingTextLimits.MAX_ITEM_CHARS
                                 + " ký tự");
             }
+            Integer maxWords = item.getMaxWordCount();
+            if (maxWords != null && wordCount(value) > maxWords) {
+                throw new BusinessRuleException(
+                        "Bài viết ở mục " + item.getPosition() + " vượt quá " + maxWords + " từ");
+            }
             // The detail row is the source of truth: a question may contain
             // several writing items, so an answer-level field must not replace
             // the text of another item.
@@ -198,6 +203,10 @@ public class ExamAnswerWriter {
         for (ExamOptionSnapshotEntity option : item.getOptions())
             if (option.getSourceOptionId().equals(optionId)) return true;
         return false;
+    }
+
+    private int wordCount(String value) {
+        return value == null || value.isBlank() ? 0 : value.trim().split("\\s+").length;
     }
 
     private boolean usesOptions(String type) {

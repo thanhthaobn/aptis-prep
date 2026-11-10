@@ -123,12 +123,9 @@ public class StudentAccountController {
             @RequestParam(defaultValue = "0") int page,
             Principal principal,
             Model model) {
-        if (skill == null || skill.isBlank()) skill = "FULL_MOCK";
-        if (!placementSkills().contains(skill))
-            throw new BusinessRuleException("Kỹ năng Placement không hợp lệ");
-        model.addAttribute("skill", skill);
+        model.addAttribute("skill", "FULL_MOCK");
         var placementPage =
-                ListPagination.slice(placement.available(principal.getName(), skill), page);
+                ListPagination.slice(placement.availableForStudent(principal.getName()), page);
         model.addAttribute("placementPage", placementPage);
         model.addAttribute("placementExams", placementPage.getContent());
         return "student/account/placement";
@@ -136,12 +133,15 @@ public class StudentAccountController {
 
     @PostMapping("/student/placement/start")
     public String start(
-            @RequestParam String skill,
-            @RequestParam Integer examId,
+            @RequestParam(required = false) String skill,
+            @RequestParam(required = false) Integer examId,
             Principal principal,
             RedirectAttributes redirect) {
         try {
-            AttemptHandle handle = placement.start(principal.getName(), skill, examId);
+            AttemptHandle handle =
+                    skill != null || examId != null
+                            ? placement.start(principal.getName(), skill, examId)
+                            : placement.start(principal.getName());
             return "redirect:/student/attempts/"
                     + handle.attemptId()
                     + ("IN_PROGRESS".equals(handle.state()) ? "" : "/result");
@@ -161,6 +161,13 @@ public class StudentAccountController {
         model.addAttribute("attemptResult", result);
         model.addAttribute("fromPlacement", true);
         Integer userId = access.requireActiveStudent(principal.getName());
+        boolean terminalResult =
+                "COMPLETED".equalsIgnoreCase(result.state())
+                        || "EXPIRED".equalsIgnoreCase(result.state())
+                        || "ERROR".equalsIgnoreCase(result.state());
+        if ("PLACEMENT".equalsIgnoreCase(result.examType()) && terminalResult) {
+            access.applyAssessment(userId, attemptId);
+        }
         if (!"IN_PROGRESS".equals(result.state())
                 && attempts instanceof ExamAttemptService reviewService)
             model.addAttribute("review", reviewService.review(userId, attemptId));

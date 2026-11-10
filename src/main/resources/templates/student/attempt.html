@@ -512,7 +512,7 @@
         >
           <p
             class="eyebrow"
-            th:text="${'Nhóm ' + questionStat.count + ' · ' + (question.skill == 'GRAMMAR_VOCABULARY' ? 'Grammar & Vocabulary' : question.skill)}"
+            th:text="${'Phần ' + questionStat.count + ' · ' + (question.skill == 'GRAMMAR_VOCABULARY' ? 'Grammar & Vocabulary' : question.skill)}"
           ></p>
           <h2 tabindex="-1" th:text="${question.content}"></h2>
           <p
@@ -605,12 +605,19 @@
               </div>
               <div class="field" th:if="${question.type == 'WRITING_TEXT'}">
                 <label th:for="${'answer-' + (item.itemId)}">Câu trả lời</label>
+                <p
+                  class="field-help"
+                  th:if="${item.minWordCount != null or item.maxWordCount != null}"
+                  th:text="${'Giới hạn: ' + (item.minWordCount != null ? item.minWordCount : 0) + '–' + (item.maxWordCount != null ? item.maxWordCount : 'không giới hạn') + ' từ'}"
+                ></p>
                 <textarea
                   th:id="${'answer-' + (item.itemId)}"
                   name="textAnswer"
                   rows="6"
+                  th:attr="data-min-words=${item.minWordCount},data-max-words=${item.maxWordCount}"
                   th:text="${item.textAnswer}"
                 ></textarea>
+                <p class="writing-limit-error alert alert-danger" hidden role="alert"></p>
               </div>
               <span class="autosave-status muted" aria-live="polite"></span>
             </form>
@@ -662,10 +669,10 @@
           aria-label="Điều hướng câu hỏi Full Mock"
         >
           <button id="full-mock-prev" class="button button-secondary" type="button">
-            ← Nhóm trước
+            ← Trang trước
           </button>
-          <span id="full-mock-page-info" class="full-mock-pagination-info">Nhóm 1 / 1</span>
-          <button id="full-mock-next" class="button" type="button">Nhóm tiếp theo →</button>
+          <span id="full-mock-page-info" class="full-mock-pagination-info">Trang 1 / 1</span>
+          <button id="full-mock-next" class="button" type="button">Trang tiếp theo →</button>
         </nav>
       </main>
     </div>

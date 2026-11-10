@@ -71,7 +71,7 @@ public class StudentExamController {
         Integer userId = accounts.requireActiveStudent(principal.getName());
         try {
             attempts.discard(userId, id);
-            redirect.addFlashAttribute("successMessage", "Đã xóa lượt làm  bài chưa hoàn thành.");
+            redirect.addFlashAttribute("successMessage", "Đã loại bỏ lượt thi.");
         } catch (BusinessRuleException exception) {
             redirect.addFlashAttribute("error", exception.getMessage());
         }

@@ -9,6 +9,14 @@ public interface ExamAttemptContract {
         return false;
     }
 
+    default boolean hasInProgressPlacement(Integer userId) {
+        return false;
+    }
+
+    default boolean hasPlacementAttempt(Integer userId) {
+        return false;
+    }
+
     AttemptHandle start(Integer userId, Integer examId, String requestKey);
 
     Integer latestResumableAttemptId(Integer userId, Integer examId);

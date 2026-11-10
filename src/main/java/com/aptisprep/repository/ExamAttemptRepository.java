@@ -108,6 +108,12 @@ public interface ExamAttemptRepository extends JpaRepository<ExamAttemptEntity, 
             @Param("skill") String skill,
             @Param("states") Collection<String> states);
 
+    @Query(
+            "select a from ExamAttemptEntity a join MockExamEntity e on e.id = a.mockExamId"
+                    + " where a.userId = :userId and e.examType = 'PLACEMENT'"
+                    + " and e.demoOnly = false and a.status <> 'CANCELLED' order by a.id asc")
+    List<ExamAttemptEntity> findPlacementAttempts(@Param("userId") Integer userId);
+
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query(
             """

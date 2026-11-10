@@ -1,17 +1,17 @@
 # Quy tắc làm lại kiểm tra đầu vào — đã chốt
 
-Đây là quyết định nghiệp vụ bổ sung cho V2 theo yêu cầu chủ project. **Chưa triển khai trong code**; trang Placement hiện chỉ có GET và nút bắt đầu disabled. Không sửa migration cũ hoặc tự thêm nghiệp vụ khi chỉ cập nhật tài liệu.
+Đây là quyết định nghiệp vụ cho luồng Placement tổng hợp. Học viên chỉ thấy một đề Placement đã công bố; đề chứa các phần/kỹ năng cần thiết và được chấm theo snapshot của chính lượt thi.
 
 ## 1. Số lượt và trạng thái
 
-- Không giới hạn tổng số lượt Placement; chưa đặt cooldown theo ngày.
-- Mỗi học viên chỉ có một lượt Placement chưa kết thúc cho cùng kỹ năng, xét trên mọi đề chứ không chỉ một exam_id. Các kỹ năng khác nhau có thể có lượt riêng.
-- Có lượt đang làm và còn giờ: đưa về lượt đó để tiếp tục, không tạo thêm, không reset deadline.
-- Lượt trước đã hoàn tất hoặc đã hết hạn được xử lý thành trạng thái kết thúc thì có thể tạo lượt mới.
-- Đã nộp, đang chấm/chờ AI: không tạo lượt mới cùng kỹ năng. Hết giờ làm bài không biến lượt đã nộp đang chấm thành lượt hết hạn để vượt giới hạn này.
+- Học viên được làm lại Placement sau khi lượt trước đã kết thúc; không giới hạn số lượt và không đặt cooldown.
+- Tại một thời điểm, mỗi học viên chỉ có một lượt Placement tổng hợp đang làm hoặc chờ chấm.
+- Nếu lượt đang làm hoặc đang chờ chấm, yêu cầu bắt đầu lại sẽ tiếp tục đúng lượt đó, không reset deadline.
+- Lượt đã hoàn tất, hết hạn hoặc hủy vẫn được giữ trong lịch sử; có thể tạo lượt mới bằng request key mới.
+- Đã nộp và đang chấm/chờ AI vẫn được xem là lượt đang hoạt động; không tạo lượt mới cho đến khi có trạng thái kết thúc.
 - Lỗi chấm: giữ bài đã lưu, cho retry phần thất bại trên cùng attempt; không tạo lại bài hoặc bắt học viên trả lời lại. Không gán lỗi chấm thành điểm 0. Khi chưa có kết quả hợp lệ, không áp dụng vào Profile.
 - Bấm bắt đầu hai lần/hai tab/hai request đồng thời phải trả cùng lượt hợp lệ hoặc từ chối rõ ràng. Kiểm tra rồi insert ngoài transaction là chưa đủ; cần transaction/khóa/constraint phù hợp SQL Server và requestKey lưu bền.
-- Placement nhiều kỹ năng nếu được bổ sung phải khóa phạm vi kỹ năng giao nhau theo cùng quy tắc; không để một lượt tổng hợp chạy trùng một lượt đơn kỹ năng.
+- Không lọc đề theo từng kỹ năng ở giao diện học viên; server vẫn giữ các overload cũ để tương thích dữ liệu/API cũ.
 
 ## 2. Kết quả mới nhất và bảo vệ checkpoint
 

@@ -654,8 +654,9 @@ class V2BusinessRegressionTests {
         assertNotNull(result.skills().getFirst().scaleScore());
         assertNotNull(result.skills().getFirst().estimatedLevel());
         assessmentAccounts.applyAssessment(learner.getId(), first);
+        assertEquals("A0", result.skills().getFirst().estimatedLevel());
         var profile = profiles.findByUserIdAndSkill(learner.getId(), "READING").orElseThrow();
-        assertEquals("A1", profile.getCurrentLevel());
+        assertEquals("A0", profile.getCurrentLevel());
         assessmentAccounts.applyAssessment(learner.getId(), first);
         assertEquals(
                 profile.getId(),
