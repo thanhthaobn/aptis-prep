@@ -1,9 +1,7 @@
 package com.aptisprep.controller;
 
 import com.aptisprep.entity.User;
-import com.aptisprep.enums.Role;
-import com.aptisprep.exception.ResourceNotFoundException;
-import com.aptisprep.repository.UserRepository;
+import com.aptisprep.service.auth.UserService;
 import com.aptisprep.service.contract.AiAssessmentContract;
 import java.security.Principal;
 import org.springframework.stereotype.Controller;
@@ -14,56 +12,49 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 @Controller
 public class AiAssessmentController {
     private final AiAssessmentContract assessments;
-    private final UserRepository userRepository;
+    private final UserService users;
 
-    public AiAssessmentController(AiAssessmentContract assessments, UserRepository userRepository) {
+    public AiAssessmentController(AiAssessmentContract assessments, UserService users) {
         this.assessments = assessments;
-        this.userRepository = userRepository;
+        this.users = users;
     }
 
     @GetMapping("/student/assessments/{key}")
     public String showStudentAssessment(
             @PathVariable String key, Principal principal, Model model) {
-        return renderAssessment(key, principal, model);
+        User user = user(principal);
+        model.addAttribute("assessment", assessments.get(key, user.getId(), false));
+        model.addAttribute("assessmentBasePath", "/student/assessments/");
+        return "student/assessment";
     }
 
     @GetMapping("/admin/assessments/{key}")
     public String showAdminAssessment(@PathVariable String key, Principal principal, Model model) {
-        return renderAssessment(key, principal, model);
-    }
-
-    private String renderAssessment(String key, Principal principal, Model model) {
         User user = user(principal);
-        boolean admin = user.getRole() == Role.ADMIN;
-        model.addAttribute("assessment", assessments.get(key, user.getId(), admin));
-        model.addAttribute(
-                "assessmentBasePath", admin ? "/admin/assessments/" : "/student/assessments/");
+        model.addAttribute("assessment", assessments.get(key, user.getId(), true));
+        model.addAttribute("assessmentBasePath", "/admin/assessments/");
         return "student/assessment";
     }
 
     @PostMapping("/student/assessments/{key}/retry")
     public String retryStudentAssessment(
             @PathVariable String key, Principal principal, RedirectAttributes redirect) {
-        return retryAssessment(key, principal, redirect);
+        User user = user(principal);
+        assessments.retry(key, user.getId(), false);
+        redirect.addFlashAttribute("successMessage", "Đã gửi yêu cầu chấm lại phần lỗi.");
+        return "redirect:/student/assessments/" + key;
     }
 
     @PostMapping("/admin/assessments/{key}/retry")
     public String retryAdminAssessment(
             @PathVariable String key, Principal principal, RedirectAttributes redirect) {
-        return retryAssessment(key, principal, redirect);
-    }
-
-    private String retryAssessment(String key, Principal principal, RedirectAttributes redirect) {
         User user = user(principal);
-        boolean admin = user.getRole() == Role.ADMIN;
-        assessments.retry(key, user.getId(), admin);
+        assessments.retry(key, user.getId(), true);
         redirect.addFlashAttribute("successMessage", "Đã gửi yêu cầu chấm lại phần lỗi.");
-        return "redirect:/" + (admin ? "admin" : "student") + "/assessments/" + key;
+        return "redirect:/admin/assessments/" + key;
     }
 
     private User user(Principal principal) {
-        return userRepository
-                .findByEmailIgnoreCase(principal.getName())
-                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy tài khoản"));
+        return users.requireByEmail(principal.getName());
     }
 }

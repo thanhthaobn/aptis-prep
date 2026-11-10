@@ -57,6 +57,8 @@ public class PasswordController {
                 errors.reject("password.failed", exception.getMessage());
             }
         }
-        return form(model);
+        if (!model.containsAttribute("passwordForm"))
+            model.addAttribute("passwordForm", passwordForm);
+        return "auth/password";
     }
 }

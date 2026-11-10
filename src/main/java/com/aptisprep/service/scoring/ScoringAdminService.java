@@ -11,6 +11,8 @@ public interface ScoringAdminService {
 
     List<ScoringViews.SchemeView> schemeViews();
 
+    List<ScoringViews.SchemeExamTypeView> schemeExamTypes();
+
     ScoringViews.CertificateView certificate(Integer id);
 
     ScoringViews.SchemeView scheme(Integer id);

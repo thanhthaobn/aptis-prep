@@ -364,6 +364,111 @@
     let exhausted = false;
     let playbackPosition = 0;
     let restoringPosition = false;
+    let browserSpeechActive = false;
+    const speechProgress = container.querySelector('.browser-speech-progress');
+    const speechProgressBar = speechProgress?.querySelector('[role="progressbar"]');
+    const speechProgressFill = speechProgress?.querySelector('.browser-speech-progress-fill');
+    const speechElapsed = speechProgress?.querySelector('.browser-speech-elapsed');
+    const speechDuration = speechProgress?.querySelector('.browser-speech-duration');
+    let speechProgressTimer = null;
+    let speechStartedAt = 0;
+    let speechDurationSeconds = 0;
+    let speechProgressSeconds = 0;
+    const formatSpeechTime = (seconds) => {
+      const safeSeconds = Math.max(0, Math.floor(Number(seconds) || 0));
+      return `${Math.floor(safeSeconds / 60)}:${String(safeSeconds % 60).padStart(2, '0')}`;
+    };
+    const updateSpeechProgress = (seconds) => {
+      if (!speechProgress || !speechProgressFill || !speechElapsed || !speechDuration) return;
+      const boundedSeconds = Math.max(0, Math.min(speechDurationSeconds, Number(seconds) || 0));
+      speechProgressSeconds = Math.max(speechProgressSeconds, boundedSeconds);
+      const percent = speechDurationSeconds
+        ? Math.round((speechProgressSeconds / speechDurationSeconds) * 100)
+        : 0;
+      speechProgressFill.style.width = `${percent}%`;
+      speechProgressBar?.setAttribute('aria-valuenow', String(percent));
+      speechElapsed.textContent = formatSpeechTime(speechProgressSeconds);
+      speechDuration.textContent = formatSpeechTime(speechDurationSeconds);
+    };
+    const resetSpeechProgress = () => {
+      if (speechProgressTimer !== null) window.clearInterval(speechProgressTimer);
+      speechProgressTimer = null;
+      speechProgressSeconds = 0;
+      speechDurationSeconds = 0;
+      speechStartedAt = 0;
+      if (!speechProgress || !speechProgressFill || !speechElapsed || !speechDuration) return;
+      speechProgress.hidden = true;
+      speechProgressFill.style.width = '0%';
+      speechProgressBar?.setAttribute('aria-valuenow', '0');
+      speechElapsed.textContent = '0:00';
+      speechDuration.textContent = '0:00';
+    };
+    const startSpeechProgress = (text) => {
+      if (!speechProgress || !speechProgressFill || !speechElapsed || !speechDuration) return;
+      const wordCount = text.trim().split(/\s+/).filter(Boolean).length;
+      // SpeechSynthesis does not expose the actual duration, so estimate it
+      // from the transcript and keep it in sync with boundary events when the
+      // browser provides them.
+      speechDurationSeconds = Math.max(2, Math.ceil(((wordCount / 150) * 60) / 0.9));
+      speechStartedAt = Date.now();
+      speechProgressSeconds = 0;
+      speechProgress.hidden = false;
+      updateSpeechProgress(0);
+      speechProgressTimer = window.setInterval(() => {
+        updateSpeechProgress((Date.now() - speechStartedAt) / 1000);
+      }, 250);
+    };
+    const finishSpeechProgress = () => {
+      updateSpeechProgress(speechDurationSeconds);
+      if (speechProgressTimer !== null) window.clearInterval(speechProgressTimer);
+      speechProgressTimer = null;
+    };
+    const showNextPlayback = () => {
+      resetSpeechProgress();
+      tokenReady = false;
+      browserSpeechActive = false;
+      const playCount = Number(player.dataset.playCount || 0);
+      const maxPlayCount = Number(player.dataset.maxPlayCount || 0);
+      exhausted = maxPlayCount > 0 && playCount >= maxPlayCount;
+      playTrigger.hidden = exhausted;
+      playTrigger.disabled = exhausted;
+      if (exhausted) status.textContent = `Đã dùng hết ${maxPlayCount} lượt nghe.`;
+      else status.textContent = `Bạn còn ${Math.max(0, maxPlayCount - playCount)} lượt nghe.`;
+    };
+    const speakWithBrowserVoice = (result) => {
+      if (!window.speechSynthesis || typeof window.SpeechSynthesisUtterance !== 'function') {
+        throw new Error('Trình duyệt không hỗ trợ giọng đọc Listening.');
+      }
+      const utterance = new window.SpeechSynthesisUtterance(result.speechText);
+      utterance.lang = 'en-US';
+      utterance.rate = 0.9;
+      utterance.onboundary = (event) => {
+        if (typeof event.charIndex !== 'number' || !result.speechText.length) return;
+        updateSpeechProgress((event.charIndex / result.speechText.length) * speechDurationSeconds);
+      };
+      utterance.onend = () => {
+        finishSpeechProgress();
+        showNextPlayback();
+      };
+      utterance.onerror = () => {
+        resetSpeechProgress();
+        browserSpeechActive = false;
+        tokenReady = false;
+        playTrigger.hidden = false;
+        status.textContent = 'Không thể phát giọng đọc. Hãy bấm phát lại.';
+      };
+      browserSpeechActive = true;
+      tokenReady = true;
+      player.controls = false;
+      player.classList.add('browser-speech-placeholder');
+      playTrigger.classList.add('browser-speech');
+      playTrigger.setAttribute('aria-label', 'Nghe lại bài nghe');
+      playTrigger.hidden = true;
+      status.textContent = `Đã dùng ${result.playCount}/${result.maxPlayCount} lượt nghe`;
+      startSpeechProgress(result.speechText);
+      window.speechSynthesis.cancel();
+      window.speechSynthesis.speak(utterance);
+    };
     const requestPlayback = async () => {
       if (tokenReady || loading) return;
       if (exhausted) {
@@ -385,7 +490,27 @@
         });
         const contentType = response.headers.get('content-type') || '';
         const result = contentType.includes('application/json') ? await response.json() : {};
-        if (!response.ok) throw new Error(result.message || 'Không thể phát audio');
+        if (!response.ok) {
+          const message = result.message || '';
+          if (message.toLowerCase().includes('hết số lượt nghe')) {
+            exhausted = true;
+            const maxPlayCount = Number(player.dataset.maxPlayCount || 2);
+            playTrigger.hidden = true;
+            playTrigger.disabled = true;
+            status.textContent = maxPlayCount
+              ? `Đã dùng hết ${maxPlayCount} lượt nghe.`
+              : 'Đã dùng hết lượt nghe.';
+            return;
+          }
+          throw new Error(message || 'Không thể phát audio');
+        }
+        player.dataset.playCount = result.playCount;
+        player.dataset.maxPlayCount = result.maxPlayCount;
+        if (result.browserSpeech) {
+          if (!result.speechText?.trim()) throw new Error('Audio chưa có transcript để đọc.');
+          speakWithBrowserVoice(result);
+          return;
+        }
         if (!result.contentToken) throw new Error('Máy chủ chưa cấp quyền phát audio');
         player.src = player.dataset.content + '?token=' + encodeURIComponent(result.contentToken);
         player.load();
@@ -400,10 +525,12 @@
           // The source is still loaded, so the native play control remains usable.
           status.textContent = 'Audio đã sẵn sàng. Bấm nút phát để nghe.';
         }
-        player.dataset.playCount = result.playCount;
-        player.dataset.maxPlayCount = result.maxPlayCount;
       } catch (error) {
+        resetSpeechProgress();
         tokenReady = false;
+        browserSpeechActive = false;
+        player.controls = true;
+        player.classList.remove('browser-speech-placeholder');
         playTrigger.hidden = false;
         status.textContent = error.message || 'Không thể phát audio';
       } finally {
@@ -412,7 +539,7 @@
     };
     playTrigger.addEventListener('click', requestPlayback);
     player.addEventListener('play', () => {
-      if (!tokenReady) {
+      if (!tokenReady && !browserSpeechActive) {
         player.pause();
         requestPlayback();
       }
@@ -430,21 +557,12 @@
       }, 0);
     });
     player.addEventListener('error', () => {
-      if (loading) return;
+      if (loading || browserSpeechActive) return;
       tokenReady = false;
       playTrigger.hidden = false;
       status.textContent = 'Không tải được audio. Hãy bấm phát lại.';
     });
-    player.addEventListener('ended', () => {
-      tokenReady = false;
-      const playCount = Number(player.dataset.playCount || 0);
-      const maxPlayCount = Number(player.dataset.maxPlayCount || 0);
-      exhausted = maxPlayCount > 0 && playCount >= maxPlayCount;
-      playTrigger.hidden = false;
-      playTrigger.disabled = exhausted;
-      if (exhausted) status.textContent = `Đã dùng hết ${maxPlayCount} lượt nghe.`;
-      else status.textContent = `Bạn còn ${Math.max(0, maxPlayCount - playCount)} lượt nghe.`;
-    });
+    player.addEventListener('ended', showNextPlayback);
   });
   document.querySelectorAll('.speaking-recorder').forEach((box) => {
     const start = box.querySelector('.recording-start');

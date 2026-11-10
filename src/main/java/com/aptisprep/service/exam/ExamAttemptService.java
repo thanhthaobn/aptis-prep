@@ -306,7 +306,11 @@ public class ExamAttemptService implements ExamAttemptContract {
                 attempt,
                 examSnapshots.lockedQuestionEntity(
                         attemptId, lockedMedia.getQuestion().getSourceQuestionId()));
-        startValidator.validateAudio(lockedMedia.getMediaUrl());
+        boolean browserSpeech =
+                "LISTENING".equalsIgnoreCase(lockedMedia.getQuestion().getSkill())
+                        && startValidator.canUseBrowserSpeech(
+                                lockedMedia.getMediaUrl(), lockedMedia.getTranscript());
+        if (!browserSpeech) startValidator.validateAudio(lockedMedia.getMediaUrl());
         int limit = Math.min(2, Objects.requireNonNullElse(lockedMedia.getMaxPlayCount(), 2));
         UserMediaActivityEntity activity =
                 userMediaActivityRepository
@@ -317,13 +321,20 @@ public class ExamAttemptService implements ExamAttemptContract {
                                                 "Không thể khởi tạo bộ đếm lượt nghe"));
         if (activity.getPlayCount() >= limit)
             throw new BusinessRuleException("Bạn đã sử dụng hết số lượt nghe cho đoạn audio này");
-        String contentToken = UUID.randomUUID().toString();
+        String contentToken = browserSpeech ? null : UUID.randomUUID().toString();
         activity.setPlayCount(activity.getPlayCount() + 1);
         activity.setLastPlayedAt(LocalDateTime.now());
-        activity.setPlayTokenHash(hashToken(contentToken));
-        activity.setPlayTokenExpiresAt(LocalDateTime.now().plusMinutes(1));
+        activity.setPlayTokenHash(contentToken == null ? null : hashToken(contentToken));
+        activity.setPlayTokenExpiresAt(
+                contentToken == null ? null : LocalDateTime.now().plusMinutes(1));
         userMediaActivityRepository.save(activity);
-        return new MediaPlayResult(mediaId, activity.getPlayCount(), limit, contentToken);
+        return new MediaPlayResult(
+                mediaId,
+                activity.getPlayCount(),
+                limit,
+                contentToken,
+                browserSpeech,
+                browserSpeech ? lockedMedia.getTranscript() : null);
     }
 
     @Transactional
@@ -992,7 +1003,12 @@ public class ExamAttemptService implements ExamAttemptContract {
     public record MediaPage(Integer id, String type, String filename, String contentType) {}
 
     public record MediaPlayResult(
-            Integer mediaId, int playCount, int maxPlayCount, String contentToken) {}
+            Integer mediaId,
+            int playCount,
+            int maxPlayCount,
+            String contentToken,
+            boolean browserSpeech,
+            String speechText) {}
 
     public record MediaResource(Resource resource, String contentType) {}
 

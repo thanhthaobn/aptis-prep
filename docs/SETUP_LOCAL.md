@@ -22,6 +22,14 @@ Chạy [upgrade-scoring-scheme-scope.sql](../database/upgrade-scoring-scheme-sco
 
 **Không xóa/recreate database để vượt lỗi validate.** Sao lưu DB bằng SQL Server Backup và đối chiếu schema trước khi nâng cấp thủ công có kiểm chứng.
 
+Nếu database đã có dữ liệu nhưng còn các cột JSON legacy của snapshot, chạy
+[repair-current-runtime-schema.sql](../database/repair-current-runtime-schema.sql)
+sau khi backup. Script chỉ đổi ba cột legacy sang `NULL`, không xóa hoặc ghi đè
+dữ liệu. Nếu các bảng snapshot quan hệ chưa tồn tại, chạy các script
+`migration-no-json-*` được liệt kê ở đầu file repair trước, rồi chạy các script
+`backfill-no-json-*` để phục hồi snapshot cũ. Khởi động lại ứng dụng sau khi
+hoàn tất bước này.
+
 Ngày 25/10/2026, DB local `aptisprep_db` đã được backup COPY_ONLY/CHECKSUM, restore thử và nâng schema có kiểm chứng. Schema nghiệp vụ hiện khớp source tại commit `0ec2019`; Hibernate validate và DBCC CHECKDB đều đạt. Toàn bộ 1.530 dòng trong 38 bảng cũ được đối chiếu hash trước/sau và giữ nguyên. Xem [báo cáo nâng schema](DATABASE_UPGRADE_2026-10-25.md).
 
 Thông tin này chỉ xác nhận DB local đã kiểm tra trên máy chủ project; các máy khác vẫn phải backup và đối chiếu riêng. Bảng `flyway_schema_history` cũ giữ nguyên để tra cứu, không phải phiên bản schema hiện tại. Ứng dụng không còn dùng Flyway.

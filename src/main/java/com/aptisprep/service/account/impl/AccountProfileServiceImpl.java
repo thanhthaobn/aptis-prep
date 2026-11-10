@@ -1,5 +1,7 @@
 package com.aptisprep.service.account.impl;
 
+import com.aptisprep.dto.UserEntityDto;
+import com.aptisprep.dto.UserGoalEntityDto;
 import com.aptisprep.dto.form.GoalForm;
 import com.aptisprep.dto.form.ProfileForm;
 import com.aptisprep.dto.view.AccountSnapshot;
@@ -106,7 +108,8 @@ public class AccountProfileServiceImpl implements AccountProfileService {
                         .findByIdForUpdate(userId)
                         .orElseThrow(
                                 () -> new ResourceNotFoundException("Không tìm thấy tài khoản"));
-        String name = form.getFullName() == null ? "" : form.getFullName().trim();
+        User mapped = UserEntityDto.convertDtoToEntity(form);
+        String name = mapped.getFullName() == null ? "" : mapped.getFullName().trim();
         if (name.isBlank()) throw new BusinessRuleException("Họ và tên không được để trống");
         user.setFullName(name);
     }
@@ -170,11 +173,7 @@ public class AccountProfileServiceImpl implements AccountProfileService {
         userGoalRepository
                 .findFirstByUserIdAndStatusOrderByCreatedAtDesc(userId, GoalStatus.ACTIVE)
                 .ifPresent(old -> old.setStatus(GoalStatus.ARCHIVED));
-        UserGoal goal = new UserGoal();
-        goal.setUser(user);
-        goal.setCertificate(certificate);
-        goal.setTargetDate(form.getTargetDate());
-        goal.setStatus(GoalStatus.ACTIVE);
+        UserGoal goal = UserGoalEntityDto.convertDtoToEntity(form, user, certificate);
         targets.forEach(
                 (skill, level) -> {
                     UserGoalSkill item = new UserGoalSkill();

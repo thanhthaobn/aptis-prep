@@ -4,11 +4,13 @@ import com.aptisprep.dto.view.StudentCatalogView.*;
 import com.aptisprep.entity.MockExamEntity;
 import com.aptisprep.entity.MockExamQuestionEntity;
 import com.aptisprep.entity.MockExamSectionEntity;
+import com.aptisprep.entity.QuestionMediaEntity;
 import com.aptisprep.exception.BusinessRuleException;
 import com.aptisprep.exception.ResourceNotFoundException;
 import com.aptisprep.repository.MockExamQuestionRepository;
 import com.aptisprep.repository.MockExamRepository;
 import com.aptisprep.repository.MockExamSectionRepository;
+import com.aptisprep.repository.QuestionMediaRepository;
 import com.aptisprep.service.exam.ExamStartValidator;
 import com.aptisprep.service.student.StudentExamCatalogService;
 import java.text.Normalizer;
@@ -38,17 +40,34 @@ public class StudentExamCatalogServiceImpl implements StudentExamCatalogService 
     private final MockExamSectionRepository mockExamSectionRepository;
     private final MockExamQuestionRepository mockExamQuestionRepository;
     private final ExamStartValidator startValidator;
+    private final QuestionMediaRepository questionMediaRepository;
 
     @Autowired
     public StudentExamCatalogServiceImpl(
             MockExamRepository mockExamRepository,
             MockExamSectionRepository mockExamSectionRepository,
             MockExamQuestionRepository mockExamQuestionRepository,
-            ExamStartValidator startValidator) {
+            ExamStartValidator startValidator,
+            QuestionMediaRepository questionMediaRepository) {
         this.mockExamRepository = mockExamRepository;
         this.mockExamSectionRepository = mockExamSectionRepository;
         this.mockExamQuestionRepository = mockExamQuestionRepository;
         this.startValidator = startValidator;
+        this.questionMediaRepository = questionMediaRepository;
+    }
+
+    /** Kept for focused service tests that provide a mocked readiness validator only. */
+    public StudentExamCatalogServiceImpl(
+            MockExamRepository mockExamRepository,
+            MockExamSectionRepository mockExamSectionRepository,
+            MockExamQuestionRepository mockExamQuestionRepository,
+            ExamStartValidator startValidator) {
+        this(
+                mockExamRepository,
+                mockExamSectionRepository,
+                mockExamQuestionRepository,
+                startValidator,
+                null);
     }
 
     /** Kept for lightweight preview tests that do not need readiness validation. */
@@ -157,7 +176,11 @@ public class StudentExamCatalogServiceImpl implements StudentExamCatalogService 
                                         || level.isBlank()
                                         || level.equalsIgnoreCase(exam.getTargetLevel()))
                 .filter(exam -> state == null || state.isBlank() || state.equals(exam.getStatus()))
-                .filter(this::eligibleForCatalog)
+                // A published exam with content must remain visible so the learner can see its
+                // format even when a legacy media or scoring record makes it temporarily not
+                // startable. The readiness message on the entry is the source of truth for
+                // whether the learner may begin the attempt. Empty legacy exams remain hidden.
+                .filter(this::visibleInCatalog)
                 .sorted(
                         Comparator.comparing(
                                         MockExamEntity::getUpdatedAt,
@@ -166,25 +189,53 @@ public class StudentExamCatalogServiceImpl implements StudentExamCatalogService 
                 .toList();
     }
 
-    private boolean eligibleForCatalog(MockExamEntity exam) {
+    private boolean visibleInCatalog(MockExamEntity exam) {
+        List<MockExamQuestionEntity> links =
+                mockExamQuestionRepository.findByMockExamIdOrderByPosition(exam.getId());
         if (startValidator == null) return true;
+        if (isCompositeExam(exam)) return true;
+        if (links.isEmpty()) return false;
         try {
-            startValidator.validate(
-                    exam, mockExamQuestionRepository.findByMockExamIdOrderByPosition(exam.getId()));
+            startValidator.validate(exam, links);
             return true;
         } catch (BusinessRuleException exception) {
-            return false;
+            return isPreviewableListeningAudioFailure(exam, links, exception);
         }
+    }
+
+    private boolean isPreviewableListeningAudioFailure(
+            MockExamEntity exam,
+            List<MockExamQuestionEntity> links,
+            BusinessRuleException failure) {
+        if (!"LISTENING".equals(normalizeSkill(exam.getSkill()))) return false;
+        String message = normalize(failure.getMessage());
+        if (!message.contains("audio") && !message.contains("am thanh")) return false;
+        if (questionMediaRepository == null) return true;
+        return links.stream().anyMatch(this::hasFileBackedAudio);
+    }
+
+    private boolean hasFileBackedAudio(MockExamQuestionEntity link) {
+        return questionMediaRepository
+                .findByQuestionIdOrderByPosition(link.getQuestionId())
+                .stream()
+                .filter(media -> "AUDIO".equals(media.getMediaType()))
+                .map(QuestionMediaEntity::getMediaUrl)
+                .anyMatch(url -> url != null && !url.isBlank() && !url.startsWith("speech://"));
     }
 
     private boolean matchesSkill(MockExamEntity exam, String skill) {
         if (normalize(skill).isBlank()) return true;
         String code = normalizeSkill(skill);
-        if ("FULL_MOCK".equals(code) && "FULL_MOCK".equals(exam.getExamType())) return true;
+        if ("FULL_MOCK".equals(code) && isCompositeExam(exam)) return true;
         if (code.equals(normalizeSkill(exam.getSkill()))) return true;
-        return "FULL_MOCK".equals(exam.getSkill())
+        return isCompositeExam(exam)
                 && mockExamSectionRepository.findByMockExamIdOrderById(exam.getId()).stream()
                         .anyMatch(section -> code.equals(normalizeSkill(section.getSkill())));
+    }
+
+    private boolean isCompositeExam(MockExamEntity exam) {
+        return "FULL_MOCK".equals(normalizeSkill(exam.getSkill()))
+                || "FULL_MOCK".equals(normalizeSkill(exam.getExamType()));
     }
 
     public Entry entry(String module, int id) {
@@ -193,7 +244,7 @@ public class StudentExamCatalogServiceImpl implements StudentExamCatalogService 
                 mockExamRepository
                         .findById(id)
                         .filter(exam -> "PUBLISHED".equals(exam.getStatus()) && !exam.isDemoOnly())
-                        .filter(this::eligibleForCatalog)
+                        .filter(this::visibleInCatalog)
                         .orElseThrow(
                                 () ->
                                         new ResourceNotFoundException(

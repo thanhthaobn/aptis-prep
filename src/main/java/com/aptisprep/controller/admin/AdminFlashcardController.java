@@ -43,12 +43,21 @@ public class AdminFlashcardController {
         FlashcardSetForm form = new FlashcardSetForm();
         form.getRows().add(new FlashcardSetForm.Row());
         flashcardSetService.prepareForLesson(form, lessonId);
-        return renderForm(model, form, null);
+        model.addAttribute("form", form);
+        model.addAttribute("setId", null);
+        model.addAttribute("levels", LessonService.LEVELS);
+        model.addAttribute("lessons", flashcardSetService.availableLessons());
+        return "admin/flashcards/form";
     }
 
     @GetMapping("/admin/flashcards/{id}/edit")
     public String showEditForm(@PathVariable Integer id, Model model) {
-        return renderForm(model, flashcardSetService.form(id), id);
+        FlashcardSetForm form = flashcardSetService.form(id);
+        model.addAttribute("form", form);
+        model.addAttribute("setId", id);
+        model.addAttribute("levels", LessonService.LEVELS);
+        model.addAttribute("lessons", flashcardSetService.availableLessons());
+        return "admin/flashcards/form";
     }
 
     @PostMapping("/admin/flashcards")
@@ -56,7 +65,19 @@ public class AdminFlashcardController {
             @Valid @ModelAttribute("form") FlashcardSetForm form,
             BindingResult bindingResult,
             Model model) {
-        return saveFlashcardSet(null, form, bindingResult, model);
+        if (!bindingResult.hasErrors()) {
+            try {
+                flashcardSetService.saveAdmin(null, form);
+                return "redirect:/admin/flashcards";
+            } catch (BusinessRuleException exception) {
+                bindingResult.reject("invalid", exception.getMessage());
+            }
+        }
+        model.addAttribute("form", form);
+        model.addAttribute("setId", null);
+        model.addAttribute("levels", LessonService.LEVELS);
+        model.addAttribute("lessons", flashcardSetService.availableLessons());
+        return "admin/flashcards/form";
     }
 
     @PostMapping("/admin/flashcards/{id}")
@@ -65,11 +86,6 @@ public class AdminFlashcardController {
             @Valid @ModelAttribute("form") FlashcardSetForm form,
             BindingResult bindingResult,
             Model model) {
-        return saveFlashcardSet(id, form, bindingResult, model);
-    }
-
-    private String saveFlashcardSet(
-            Integer id, FlashcardSetForm form, BindingResult bindingResult, Model model) {
         if (!bindingResult.hasErrors()) {
             try {
                 flashcardSetService.saveAdmin(id, form);
@@ -78,10 +94,6 @@ public class AdminFlashcardController {
                 bindingResult.reject("invalid", e.getMessage());
             }
         }
-        return renderForm(model, form, id);
-    }
-
-    private String renderForm(Model model, FlashcardSetForm form, Integer id) {
         model.addAttribute("form", form);
         model.addAttribute("setId", id);
         model.addAttribute("levels", LessonService.LEVELS);

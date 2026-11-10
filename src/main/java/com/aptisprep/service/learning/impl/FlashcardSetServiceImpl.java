@@ -1,5 +1,7 @@
 package com.aptisprep.service.learning.impl;
 
+import com.aptisprep.dto.FlashcardEntityDto;
+import com.aptisprep.dto.FlashcardSetEntityDto;
 import com.aptisprep.dto.form.FlashcardSetForm;
 import com.aptisprep.dto.form.FlashcardSetForm.Row;
 import com.aptisprep.dto.view.FlashcardViews.*;
@@ -162,20 +164,15 @@ public class FlashcardSetServiceImpl implements FlashcardSetService {
     }
 
     private FlashcardSetForm toForm(FlashcardSet s) {
-        FlashcardSetForm f = new FlashcardSetForm();
-        f.setTitle(s.getTitle());
-        f.setDescription(s.getDescription());
-        f.setCefrLevel(s.getCefrLevel());
-        f.setStatus(s.getStatus());
-        f.setLessonId(s.getLesson() == null ? null : s.getLesson().getId());
+        FlashcardSetForm f = FlashcardSetEntityDto.convertEntityToDto(s).toForm();
         for (Flashcard c :
                 flashcardRepository.findBySetIdAndStatusOrderByDisplayOrderAsc(
                         s.getId(), "ACTIVE")) {
-            Row r = new FlashcardSetForm.Row();
-            r.setId(c.getId());
-            r.setTerm(c.getFrontContent());
-            r.setDefinition(c.getBackContent());
-            f.getRows().add(r);
+            FlashcardEntityDto card = FlashcardEntityDto.convertEntityToDto(c);
+            FlashcardSetForm.Row row = new FlashcardSetForm.Row();
+            row.setTerm(card.getFrontContent());
+            row.setDefinition(card.getBackContent());
+            f.getRows().add(row);
         }
         return f;
     }
@@ -225,13 +222,14 @@ public class FlashcardSetServiceImpl implements FlashcardSetService {
             if (linked != null && !Objects.equals(linked.getId(), id))
                 throw new BusinessRuleException("Bài học này đã có một bộ thẻ");
         }
-        set.setTitle(f.getTitle().trim());
-        set.setDescription(f.getDescription());
-        set.setCefrLevel(f.getCefrLevel());
-        set.setStatus(f.getStatus());
-        set.setLesson(lesson);
-        set.setOwner(owner);
-        set.setVisibility(owner == null ? "PUBLIC" : "PRIVATE");
+        FlashcardSet mapped = FlashcardSetEntityDto.convertDtoToEntity(f, lesson, owner);
+        set.setTitle(mapped.getTitle());
+        set.setDescription(mapped.getDescription());
+        set.setCefrLevel(mapped.getCefrLevel());
+        set.setStatus(mapped.getStatus());
+        set.setLesson(mapped.getLesson());
+        set.setOwner(mapped.getOwner());
+        set.setVisibility(mapped.getVisibility());
         flashcardSetRepository.save(set);
         int position = existing.stream().mapToInt(Flashcard::getDisplayOrder).max().orElse(0) + 1;
         for (Flashcard c : existing) {
@@ -241,12 +239,16 @@ public class FlashcardSetServiceImpl implements FlashcardSetService {
         flashcardRepository.flush();
         for (Row row : f.getRows()) {
             Flashcard c = row.getId() == null ? new Flashcard() : byId.get(row.getId());
-            c.setSet(set);
-            c.setFrontContent(row.getTerm().trim());
-            c.setBackContent(row.getDefinition().trim());
-            c.setCefrLevel(f.getCefrLevel());
-            c.setDisplayOrder(position++);
-            c.setStatus("ACTIVE");
+            FlashcardEntityDto cardDto =
+                    FlashcardEntityDto.fromValues(
+                            row.getTerm(), row.getDefinition(), f.getCefrLevel(), position++, set);
+            Flashcard mappedCard = FlashcardEntityDto.convertDtoToEntity(cardDto);
+            c.setSet(mappedCard.getSet());
+            c.setFrontContent(mappedCard.getFrontContent());
+            c.setBackContent(mappedCard.getBackContent());
+            c.setCefrLevel(mappedCard.getCefrLevel());
+            c.setDisplayOrder(mappedCard.getDisplayOrder());
+            c.setStatus(mappedCard.getStatus());
             flashcardRepository.save(c);
         }
         return set.getId();

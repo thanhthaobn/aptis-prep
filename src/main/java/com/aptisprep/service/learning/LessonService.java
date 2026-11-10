@@ -1,5 +1,6 @@
 package com.aptisprep.service.learning;
 
+import com.aptisprep.dto.LessonEntityDto;
 import com.aptisprep.dto.form.LessonForm;
 import com.aptisprep.entity.*;
 import com.aptisprep.enums.CefrLevel;
@@ -15,7 +16,6 @@ import java.time.LocalDateTime;
 import java.util.*;
 import java.util.ArrayList;
 import java.util.stream.IntStream;
-import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -51,10 +51,11 @@ public class LessonService {
         return lessonRepository.findAllByOrderBySkillAscCefrLevelAscDisplayOrderAsc();
     }
 
-    public record LevelBranch(String level, List<Lesson> lessons) {
-        public Map<String, List<Lesson>> topics() {
-            LinkedHashMap<String, List<Lesson>> result = new LinkedHashMap<String, List<Lesson>>();
-            for (Lesson lesson : lessons) {
+    public record LevelBranch(String level, List<LessonEntityDto> lessons) {
+        public Map<String, List<LessonEntityDto>> topics() {
+            LinkedHashMap<String, List<LessonEntityDto>> result =
+                    new LinkedHashMap<String, List<LessonEntityDto>>();
+            for (LessonEntityDto lesson : lessons) {
                 String topic =
                         lesson.getMaterial() == null ? null : lesson.getMaterial().getTopic();
                 if (topic == null || topic.isBlank()) topic = "Bài học độc lập";
@@ -88,6 +89,9 @@ public class LessonService {
                                                                                                                 .equals(
                                                                                                                         l
                                                                                                                                 .getCefrLevel()))
+                                                                                .map(
+                                                                                        LessonEntityDto
+                                                                                                ::convertEntityToDto)
                                                                                 .toList()))
                                                 .toList(),
                                         (int)
@@ -145,18 +149,8 @@ public class LessonService {
 
     public LessonForm form(Integer id) {
         Lesson l = require(id);
-        LessonForm f = new LessonForm();
-        if (l.getMaterial() != null) BeanUtils.copyProperties(l.getMaterial(), f);
+        LessonForm f = LessonEntityDto.convertEntityToDto(l).toForm();
         f.setChecks(new ArrayList<>(teaching.editorQuestions(id)));
-        f.setTitle(l.getTitle());
-        f.setDescription(l.getDescription());
-        f.setSkill(l.getSkill());
-        f.setCefrLevel(l.getCefrLevel());
-        f.setDisplayOrder(l.getDisplayOrder());
-        f.setStatus(l.getStatus());
-        f.setTranscript(l.getTranscript());
-        f.setMinWordCount(l.getMinWordCount());
-        f.setMaxWordCount(l.getMaxWordCount());
         if (f.getTranscriptVisibility() == null) f.setTranscriptVisibility("AFTER_LISTEN");
         if (f.getSampleVisibility() == null) f.setSampleVisibility("AFTER_SUBMIT");
         return f;
@@ -444,16 +438,17 @@ public class LessonService {
     }
 
     private void applyLessonFields(Lesson lesson, LessonForm form) {
-        lesson.setTitle(form.getTitle().trim());
-        lesson.setDescription(trim(form.getDescription()));
-        lesson.setSkill(form.getSkill());
-        lesson.setCefrLevel(form.getCefrLevel());
-        lesson.setDisplayOrder(form.getDisplayOrder());
-        lesson.setStatus(form.getStatus());
-        lesson.setMaterial(form.copy());
-        lesson.setTranscript(trim(form.getTranscript()));
-        lesson.setMinWordCount(form.getMinWordCount());
-        lesson.setMaxWordCount(form.getMaxWordCount());
+        Lesson mapped = LessonEntityDto.convertDtoToEntity(form);
+        lesson.setTitle(mapped.getTitle());
+        lesson.setDescription(mapped.getDescription());
+        lesson.setSkill(mapped.getSkill());
+        lesson.setCefrLevel(mapped.getCefrLevel());
+        lesson.setDisplayOrder(mapped.getDisplayOrder());
+        lesson.setStatus(mapped.getStatus());
+        lesson.setMaterial(mapped.getMaterial());
+        lesson.setTranscript(mapped.getTranscript());
+        lesson.setMinWordCount(mapped.getMinWordCount());
+        lesson.setMaxWordCount(mapped.getMaxWordCount());
     }
 
     private void updateAudio(

@@ -26,6 +26,8 @@ public final class ScoringViews {
             String scopeSkill,
             LocalDateTime effectiveFrom) {}
 
+    public record SchemeExamTypeView(Integer schemeId, String examType) {}
+
     public record BandView(
             Integer id, String skill, String cefrLevel, BigDecimal minScore, BigDecimal maxScore) {}
 }

@@ -5,7 +5,6 @@ import com.aptisprep.dto.form.*;
 import com.aptisprep.enums.CefrLevel;
 import com.aptisprep.enums.Skill;
 import com.aptisprep.exception.BusinessRuleException;
-import com.aptisprep.repository.MockExamRepository;
 import com.aptisprep.service.scoring.ScoringAdminService;
 import com.aptisprep.service.scoring.ScoringViews;
 import jakarta.validation.Valid;
@@ -39,11 +38,9 @@ public class AdminScoringController {
                     "WRITING", "Writing",
                     "SPEAKING", "Speaking");
     private final ScoringAdminService scoring;
-    private final MockExamRepository exams;
 
-    public AdminScoringController(ScoringAdminService scoring, MockExamRepository exams) {
+    public AdminScoringController(ScoringAdminService scoring) {
         this.scoring = scoring;
-        this.exams = exams;
     }
 
     @GetMapping("/admin/settings")
@@ -72,12 +69,12 @@ public class AdminScoringController {
                 && !EXAM_TYPES.contains(normalizedExamType))
             throw new BusinessRuleException("Loại đề không hợp lệ");
         var examTypes =
-                exams.findScoringSchemeExamTypes().stream()
+                scoring.schemeExamTypes().stream()
                         .collect(
                                 Collectors.groupingBy(
-                                        MockExamRepository.SchemeExamType::getSchemeId,
+                                        ScoringViews.SchemeExamTypeView::schemeId,
                                         Collectors.mapping(
-                                                MockExamRepository.SchemeExamType::getExamType,
+                                                ScoringViews.SchemeExamTypeView::examType,
                                                 Collectors.toCollection(TreeSet::new))));
         var schemes =
                 scoring.schemeViews().stream()
@@ -130,7 +127,10 @@ public class AdminScoringController {
 
     @GetMapping("/admin/certificates/{id}/edit")
     public String editCertificate(@PathVariable int id, Model model) {
-        certificate(id, model);
+        ScoringViews.CertificateView value = scoring.certificate(id);
+        model.addAttribute("certificate", value);
+        model.addAttribute("certificateForm", certificateForm(value));
+        model.addAttribute("editing", true);
         model.addAttribute("readOnly", false);
         return "admin/settings/certificate";
     }
@@ -222,7 +222,8 @@ public class AdminScoringController {
             @RequestParam(defaultValue = "Reading") String skill,
             @RequestParam(required = false) Integer bandId,
             Model model) {
-        return loadScheme(id, skill, bandId, true, model);
+        populateScheme(id, skill, bandId, true, model);
+        return "admin/settings/scheme";
     }
 
     @GetMapping("/admin/scoring-schemes/{id}/edit")
@@ -233,7 +234,8 @@ public class AdminScoringController {
             @RequestParam(defaultValue = "false") boolean addBand,
             Model model) {
         model.addAttribute("addBand", addBand);
-        return loadScheme(id, skill, bandId, false, model);
+        populateScheme(id, skill, bandId, false, model);
+        return "admin/settings/scheme";
     }
 
     @PostMapping("/admin/scoring-schemes")
@@ -278,7 +280,8 @@ public class AdminScoringController {
             Model model,
             RedirectAttributes redirect) {
         if (result.hasErrors()) {
-            return loadScheme(id, "Reading", null, false, model);
+            populateScheme(id, "Reading", null, false, model);
+            return "admin/settings/scheme";
         }
         try {
             Integer nextId = scoring.saveSchemeWithScores(principal.getName(), id, form);
@@ -290,7 +293,8 @@ public class AdminScoringController {
             return "redirect:/admin/scoring-schemes/" + nextId;
         } catch (BusinessRuleException exception) {
             result.reject("scheme.invalid", exception.getMessage());
-            return loadScheme(id, "Reading", null, false, model);
+            populateScheme(id, "Reading", null, false, model);
+            return "admin/settings/scheme";
         }
     }
 
@@ -324,7 +328,8 @@ public class AdminScoringController {
             Model model,
             RedirectAttributes redirect) {
         if (result.hasErrors()) {
-            return loadScheme(schemeId, skill, form.getId(), false, model);
+            populateScheme(schemeId, skill, form.getId(), false, model);
+            return "admin/settings/scheme";
         }
         try {
             scoring.saveBand(principal.getName(), schemeId, form.getId(), form);
@@ -332,7 +337,8 @@ public class AdminScoringController {
             return "redirect:/admin/scoring-schemes/" + schemeId + "?skill=" + skill;
         } catch (BusinessRuleException exception) {
             result.reject("band.invalid", exception.getMessage());
-            return loadScheme(schemeId, skill, form.getId(), false, model);
+            populateScheme(schemeId, skill, form.getId(), false, model);
+            return "admin/settings/scheme";
         }
     }
 
@@ -348,7 +354,8 @@ public class AdminScoringController {
         return "redirect:/admin/scoring-schemes/" + schemeId + "?skill=" + skill;
     }
 
-    private String loadScheme(int id, String skill, Integer bandId, boolean readOnly, Model model) {
+    private void populateScheme(
+            int id, String skill, Integer bandId, boolean readOnly, Model model) {
         skill =
                 switch (skill.toUpperCase(Locale.ROOT).replaceAll("[^A-Z0-9]+", "_")) {
                     case "GRAMMAR_VOCABULARY" -> "Grammar & Vocabulary";
@@ -391,7 +398,6 @@ public class AdminScoringController {
             } else bandForm.setSkill(skill);
             model.addAttribute("bandForm", bandForm);
         }
-        return "admin/settings/scheme";
     }
 
     @PostMapping("/admin/scoring-schemes/{schemeId}/scale-rule")
@@ -412,7 +418,8 @@ public class AdminScoringController {
                 result.reject("scale.invalid", exception.getMessage());
             }
         }
-        return loadScheme(schemeId, skill, null, false, model);
+        populateScheme(schemeId, skill, null, false, model);
+        return "admin/settings/scheme";
     }
 
     private void schemeOptions(Model model) {

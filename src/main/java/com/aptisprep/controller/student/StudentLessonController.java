@@ -1,5 +1,6 @@
 package com.aptisprep.controller.student;
 
+import com.aptisprep.dto.LessonEntityDto;
 import com.aptisprep.entity.Lesson;
 import com.aptisprep.entity.LessonMaterial;
 import com.aptisprep.exception.BusinessRuleException;
@@ -47,8 +48,9 @@ public class StudentLessonController {
         if (queryParam.length() > 255 || skillParam.length() > 80 || levelParam.length() > 40)
             throw new BusinessRuleException("Bộ lọc không hợp lệ");
         String query = fold(queryParam);
-        List<Lesson> items =
+        List<LessonEntityDto> items =
                 service.publishedLessons().stream()
+                        .map(LessonEntityDto::convertEntityToDto)
                         .filter(
                                 l ->
                                         query.isBlank()
@@ -65,7 +67,7 @@ public class StudentLessonController {
         m.addAttribute(
                 "lessonStatuses",
                 service.lessonStatuses(
-                        principal.getName(), items.stream().map(Lesson::getId).toList()));
+                        principal.getName(), items.stream().map(LessonEntityDto::getId).toList()));
         m.addAttribute("lessonSets", flashcards.lessonSets());
         m.addAttribute("lessons", items);
         m.addAttribute("q", q);
@@ -83,7 +85,7 @@ public class StudentLessonController {
         m.addAttribute("release", teaching.releaseState(id, p.getName()));
         m.addAttribute("canAssess", teaching.canAssess(id, p.getName()));
         m.addAttribute("aiAvailable", teaching.aiAvailable());
-        m.addAttribute("lesson", l);
+        m.addAttribute("lesson", LessonEntityDto.convertEntityToDto(l));
         m.addAttribute("flashcardSet", flashcards.publishedForLesson(id));
         m.addAttribute("questions", teaching.questions(id));
         m.addAttribute("savedResponse", teaching.response(id, p.getName()));
@@ -213,30 +215,30 @@ public class StudentLessonController {
         return "redirect:/student/lessons/" + id;
     }
 
-    public record TopicBranch(String name, boolean independent, List<Lesson> lessons) {}
+    public record TopicBranch(String name, boolean independent, List<LessonEntityDto> lessons) {}
 
     public record LevelBranch(String level, int count, List<TopicBranch> topics) {}
 
     public record SkillBranch(String skill, int count, List<LevelBranch> levels) {}
 
-    private static String topic(Lesson lesson) {
+    private static String topic(LessonEntityDto lesson) {
         LessonMaterial material = lesson.getMaterial();
         return material == null || material.getTopic() == null ? "" : material.getTopic().trim();
     }
 
-    private static List<SkillBranch> tree(List<Lesson> lessons) {
+    private static List<SkillBranch> tree(List<LessonEntityDto> lessons) {
         ArrayList<SkillBranch> result = new ArrayList<SkillBranch>();
         for (String skill : LessonService.SKILLS) {
-            List<Lesson> skillLessons =
+            List<LessonEntityDto> skillLessons =
                     lessons.stream().filter(l -> skill.equals(l.getSkill())).toList();
             ArrayList<LevelBranch> levels = new ArrayList<LevelBranch>();
             for (String level : LessonService.LEVELS) {
-                List<Lesson> levelLessons =
+                List<LessonEntityDto> levelLessons =
                         skillLessons.stream().filter(l -> level.equals(l.getCefrLevel())).toList();
                 if (levelLessons.isEmpty()) continue;
-                LinkedHashMap<String, List<Lesson>> groups =
-                        new LinkedHashMap<String, List<Lesson>>();
-                for (Lesson lesson : levelLessons)
+                LinkedHashMap<String, List<LessonEntityDto>> groups =
+                        new LinkedHashMap<String, List<LessonEntityDto>>();
+                for (LessonEntityDto lesson : levelLessons)
                     groups.computeIfAbsent(topic(lesson), key -> new ArrayList<>()).add(lesson);
                 List<TopicBranch> topics =
                         groups.entrySet().stream()

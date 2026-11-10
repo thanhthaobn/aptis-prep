@@ -6,5 +6,7 @@ import com.aptisprep.entity.User;
 public interface UserService {
     User getUserByEmailAndPassword(String email, String password);
 
+    User requireByEmail(String email);
+
     User registerStudent(RegisterForm form);
 }
