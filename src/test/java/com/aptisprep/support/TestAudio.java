@@ -1,6 +1,6 @@
 package com.aptisprep.support;
 
-import com.aptisprep.service.storage.StorageService;
+import com.aptisprep.mvc.storage.service.StorageService;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;

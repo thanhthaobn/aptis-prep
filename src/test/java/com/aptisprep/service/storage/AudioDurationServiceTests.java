@@ -4,6 +4,8 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 import com.aptisprep.mvc.common.exception.BusinessRuleException;
+import com.aptisprep.mvc.storage.service.StorageService;
+import com.aptisprep.mvc.storage.service.impl.AudioDurationServiceImpl;
 import com.aptisprep.support.TestAudio;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -21,7 +23,7 @@ class AudioDurationServiceTests {
         var storage = mock(StorageService.class);
         when(storage.load("audio/test.wav")).thenReturn(new FileSystemResource(file));
         double duration =
-                new AudioDurationService(storage, "missing-ffprobe-for-test")
+                new AudioDurationServiceImpl(storage, "missing-ffprobe-for-test")
                         .seconds("audio/test.wav");
         assertEquals(1.0, duration, 0.01);
     }
@@ -32,7 +34,8 @@ class AudioDurationServiceTests {
         var storage = mock(StorageService.class);
         when(storage.load("stream.wav")).thenReturn(new ByteArrayResource(bytes));
         assertTrue(
-                new AudioDurationService(storage, "missing-ffprobe-for-test").seconds("stream.wav")
+                new AudioDurationServiceImpl(storage, "missing-ffprobe-for-test")
+                                .seconds("stream.wav")
                         > 0);
     }
 
@@ -44,7 +47,7 @@ class AudioDurationServiceTests {
         assertThrows(
                 BusinessRuleException.class,
                 () ->
-                        new AudioDurationService(storage, "missing-ffprobe-for-test")
+                        new AudioDurationServiceImpl(storage, "missing-ffprobe-for-test")
                                 .seconds("audio/legacy-recording"));
     }
 
@@ -55,7 +58,7 @@ class AudioDurationServiceTests {
         assertThrows(
                 BusinessRuleException.class,
                 () ->
-                        new AudioDurationService(storage, "missing-ffprobe-for-test")
+                        new AudioDurationServiceImpl(storage, "missing-ffprobe-for-test")
                                 .seconds("invalid.wav"));
     }
 }

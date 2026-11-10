@@ -1,6 +1,8 @@
-package com.aptisprep.service.storage;
+package com.aptisprep.mvc.storage.service.impl;
 
 import com.aptisprep.mvc.common.exception.BusinessRuleException;
+import com.aptisprep.mvc.storage.service.AudioDurationService;
+import com.aptisprep.mvc.storage.service.StorageService;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
@@ -16,16 +18,17 @@ import org.springframework.stereotype.Service;
 
 /** Duration comes from server-side media, never from a learner's request. */
 @Service
-public class AudioDurationService {
+public class AudioDurationServiceImpl implements AudioDurationService {
     private final StorageService storage;
     private final String ffprobe;
 
-    public AudioDurationService(
+    public AudioDurationServiceImpl(
             StorageService storage, @Value("${app.media.ffprobe-path:ffprobe}") String ffprobe) {
         this.storage = storage;
         this.ffprobe = ffprobe;
     }
 
+    @Override
     public double seconds(String relativePath) {
         Resource resource = storage.load(relativePath);
         Path temporary = null;

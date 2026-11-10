@@ -1,8 +1,8 @@
-package com.aptisprep.service.storage.impl;
+package com.aptisprep.mvc.storage.service.impl;
 
 import com.aptisprep.mvc.common.config.StorageProperties;
 import com.aptisprep.mvc.common.exception.BusinessRuleException;
-import com.aptisprep.service.storage.LocalStorageService;
+import com.aptisprep.mvc.storage.service.StorageService;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.MalformedURLException;
@@ -18,7 +18,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 @Service
-public class LocalStorageServiceImpl implements LocalStorageService {
+public class LocalStorageServiceImpl implements StorageService {
 
     private static final Set<String> ALLOWED_EXTENSIONS =
             Set.of(
@@ -88,6 +88,16 @@ public class LocalStorageServiceImpl implements LocalStorageService {
             Files.deleteIfExists(safeResolve(relativePath));
         } catch (IOException exception) {
             throw new BusinessRuleException("Không thể xóa file");
+        }
+    }
+
+    @Override
+    public Path localPath(String relativePath) {
+        try {
+            return load(relativePath).getFile().toPath();
+        } catch (IOException | UnsupportedOperationException exception) {
+            throw new IllegalStateException(
+                    "File lưu trữ không hỗ trợ truy cập local: " + relativePath, exception);
         }
     }
 

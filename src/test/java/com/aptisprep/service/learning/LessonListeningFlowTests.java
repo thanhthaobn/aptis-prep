@@ -8,8 +8,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.aptisprep.entity.*;
 import com.aptisprep.mvc.common.enums.*;
+import com.aptisprep.mvc.storage.service.AudioDurationService;
 import com.aptisprep.repository.*;
-import com.aptisprep.service.storage.AudioDurationService;
 import java.time.Instant;
 import java.util.UUID;
 import org.junit.jupiter.api.*;

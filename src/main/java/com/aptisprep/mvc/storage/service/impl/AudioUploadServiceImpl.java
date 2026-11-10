@@ -1,8 +1,8 @@
-package com.aptisprep.service.storage.impl;
+package com.aptisprep.mvc.storage.service.impl;
 
 import com.aptisprep.mvc.common.exception.BusinessRuleException;
-import com.aptisprep.service.storage.AudioUploadService;
-import com.aptisprep.service.storage.StorageService;
+import com.aptisprep.mvc.storage.service.AudioUploadService;
+import com.aptisprep.mvc.storage.service.StorageService;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Locale;
@@ -22,6 +22,7 @@ public class AudioUploadServiceImpl implements AudioUploadService {
         this.storage = storage;
     }
 
+    @Override
     public String store(MultipartFile file, Integer attemptId) {
         validate(file);
         return storage.store(file, "attempts/" + attemptId + "/audio");

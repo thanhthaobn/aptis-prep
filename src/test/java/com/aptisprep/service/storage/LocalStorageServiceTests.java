@@ -4,6 +4,8 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import com.aptisprep.mvc.common.config.StorageProperties;
 import com.aptisprep.mvc.common.exception.BusinessRuleException;
+import com.aptisprep.mvc.storage.service.StorageService;
+import com.aptisprep.mvc.storage.service.impl.LocalStorageServiceImpl;
 import com.aptisprep.support.TestAudio;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -15,10 +17,10 @@ import org.springframework.mock.web.MockMultipartFile;
 class LocalStorageServiceTests {
     @TempDir Path root;
 
-    private LocalStorageService storage() {
+    private StorageService storage() {
         var properties = new StorageProperties();
         properties.setUploadDir(root);
-        return new com.aptisprep.service.storage.impl.LocalStorageServiceImpl(properties);
+        return new LocalStorageServiceImpl(properties);
     }
 
     @Test
@@ -37,7 +39,7 @@ class LocalStorageServiceTests {
 
     @Test
     void storesGifAcceptedByTheLessonEditor() throws Exception {
-        LocalStorageService storage = storage();
+        StorageService storage = storage();
         byte[] image =
                 Base64.getDecoder().decode("R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==");
         String relativePath =
@@ -93,7 +95,9 @@ class LocalStorageServiceTests {
         assertArrayEquals(expected, storage.load(relativePath).getContentAsByteArray());
         assertEquals(
                 1.0,
-                new AudioDurationService(storage, "missing-ffprobe-for-test").seconds(relativePath),
+                new com.aptisprep.mvc.storage.service.impl.AudioDurationServiceImpl(
+                                storage, "missing-ffprobe-for-test")
+                        .seconds(relativePath),
                 0.01);
 
         storage.delete(relativePath);

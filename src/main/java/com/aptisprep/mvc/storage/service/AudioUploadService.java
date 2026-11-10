@@ -1,4 +1,4 @@
-package com.aptisprep.service.storage;
+package com.aptisprep.mvc.storage.service;
 
 import org.springframework.web.multipart.MultipartFile;
 

@@ -7,6 +7,8 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 
 import com.aptisprep.mvc.common.exception.BusinessRuleException;
+import com.aptisprep.mvc.storage.service.AudioUploadService;
+import com.aptisprep.mvc.storage.service.StorageService;
 import java.nio.charset.StandardCharsets;
 import org.junit.jupiter.api.Test;
 import org.springframework.mock.web.MockMultipartFile;
@@ -14,7 +16,7 @@ import org.springframework.mock.web.MockMultipartFile;
 class AudioUploadServiceTests {
     private final StorageService storage = mock(StorageService.class);
     private final AudioUploadService service =
-            new com.aptisprep.service.storage.impl.AudioUploadServiceImpl(storage);
+            new com.aptisprep.mvc.storage.service.impl.AudioUploadServiceImpl(storage);
 
     @Test
     void rejectsTextDisguisedAsAudio() {
