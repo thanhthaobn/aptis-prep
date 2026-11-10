@@ -1,7 +1,7 @@
 package com.aptisprep.controller.student;
 
+import com.aptisprep.mvc.account.service.AccountAccessService;
 import com.aptisprep.mvc.common.exception.BusinessRuleException;
-import com.aptisprep.service.account.AccountAccessService;
 import com.aptisprep.service.exam.ExamAttemptService;
 import com.aptisprep.service.exam.ExamAttemptService.MediaResource;
 import java.io.IOException;

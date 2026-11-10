@@ -3,6 +3,9 @@ package com.aptisprep.service.learning;
 import static org.assertj.core.api.Assertions.*;
 
 import com.aptisprep.entity.*;
+import com.aptisprep.mvc.account.entity.UserGoal;
+import com.aptisprep.mvc.account.entity.UserGoalSkill;
+import com.aptisprep.mvc.account.repository.UserGoalRepository;
 import com.aptisprep.mvc.auth.entity.User;
 import com.aptisprep.mvc.auth.repository.UserRepository;
 import com.aptisprep.mvc.common.enums.*;

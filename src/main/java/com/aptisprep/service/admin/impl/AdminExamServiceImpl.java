@@ -6,7 +6,6 @@ import com.aptisprep.dto.view.AdminCatalogView.Entry;
 import com.aptisprep.dto.view.AdminCatalogView.Field;
 import com.aptisprep.dto.view.AdminCatalogView.Row;
 import com.aptisprep.entity.*;
-import com.aptisprep.mvc.scoring.repository.CertificateRepository;
 import com.aptisprep.mvc.common.enums.RecordStatus;
 import com.aptisprep.mvc.common.exception.BusinessRuleException;
 import com.aptisprep.mvc.common.exception.ResourceNotFoundException;

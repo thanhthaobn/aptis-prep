@@ -19,4 +19,3 @@ public record AuthResultDTO(
         return new AuthResultDTO(false, true, null, null, lockReason);
     }
 }
-

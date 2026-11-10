@@ -3,8 +3,11 @@ package com.aptisprep.service.learning;
 import static org.junit.jupiter.api.Assertions.*;
 
 import com.aptisprep.entity.*;
+import com.aptisprep.mvc.account.dto.LearnerContextDTO;
+import com.aptisprep.mvc.account.dto.SkillLevelDTO;
+import com.aptisprep.mvc.account.dto.SkillTargetDTO;
+import com.aptisprep.mvc.account.service.AccountAccessService;
 import com.aptisprep.repository.LessonProgressRepository;
-import com.aptisprep.service.contract.AccountAccessContract;
 import com.aptisprep.service.contract.IntegrationModels.*;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -13,7 +16,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 
 class LessonRecommendationTests {
     List<LessonProgress> history = List.of();
-    LearnerContext context;
+    LearnerContextDTO context;
     final LessonProgressRepository progress =
             (LessonProgressRepository)
                     java.lang.reflect.Proxy.newProxyInstance(
@@ -23,18 +26,22 @@ class LessonRecommendationTests {
                                 if (method.getName().equals("findByUserId")) return history;
                                 throw new UnsupportedOperationException(method.getName());
                             });
-    final AccountAccessContract accounts =
-            new AccountAccessContract() {
+    final AccountAccessService accounts =
+            new AccountAccessService() {
                 public Integer requireActiveStudent(String email) {
                     return 1;
                 }
 
-                public LearnerContext context(Integer id) {
+                public LearnerContextDTO context(Integer id) {
                     return context;
                 }
 
                 public void applyAssessment(Integer userId, Integer attemptId) {
                     throw new UnsupportedOperationException();
+                }
+
+                public com.aptisprep.mvc.auth.entity.User requireActiveStudentById(Integer userId) {
+                    return null;
                 }
             };
     final LessonRecommendationService service =
@@ -88,12 +95,14 @@ class LessonRecommendationTests {
     @Test
     void goalAndMeasuredGapComeBeforeStageProgress() {
         context =
-                new LearnerContext(
+                new LearnerContextDTO(
                         1,
-                        List.of(new SkillTarget("WRITING", "B2"), new SkillTarget("READING", "B2")),
                         List.of(
-                                new SkillLevel("WRITING", "A1", 1),
-                                new SkillLevel("READING", "B1", 1)));
+                                new SkillTargetDTO("WRITING", "B2"),
+                                new SkillTargetDTO("READING", "B2")),
+                        List.of(
+                                new SkillLevelDTO("WRITING", "A1", 1),
+                                new SkillLevelDTO("READING", "B1", 1)));
         assertEquals(
                 "Writing",
                 service.recommend(

@@ -1,4 +1,4 @@
-package com.aptisprep.service.account;
+package com.aptisprep.mvc.account.service.impl;
 
 import com.aptisprep.mvc.common.event.GoalChangedEvent;
 import com.aptisprep.service.contract.LearningPathContract;

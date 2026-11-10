@@ -15,4 +15,3 @@ public class PasswordHasher {
                 && BCrypt.verifyer().verify(password.toCharArray(), hash).verified;
     }
 }
-

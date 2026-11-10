@@ -1,11 +1,16 @@
 package com.aptisprep.service.admin.impl;
 
-import com.aptisprep.dto.view.AccountSnapshot;
 import com.aptisprep.dto.view.AdminStudentView;
 import com.aptisprep.entity.*;
+import com.aptisprep.mvc.account.dto.AccountSnapshotDTO;
+import com.aptisprep.mvc.account.entity.UserGoal;
+import com.aptisprep.mvc.account.entity.UserGoalSkill;
+import com.aptisprep.mvc.account.entity.UserSkillProfile;
+import com.aptisprep.mvc.account.repository.UserGoalRepository;
+import com.aptisprep.mvc.account.repository.UserGoalSkillRepository;
+import com.aptisprep.mvc.account.repository.UserSkillProfileRepository;
 import com.aptisprep.mvc.auth.entity.User;
 import com.aptisprep.mvc.auth.repository.UserRepository;
-import com.aptisprep.mvc.scoring.entity.Certificate;
 import com.aptisprep.mvc.common.enums.*;
 import com.aptisprep.mvc.common.enums.Skill;
 import com.aptisprep.mvc.common.exception.AccessDeniedException;
@@ -76,7 +81,7 @@ public class StudentManagementServiceImpl implements StudentManagementService {
         User user = studentsOnly(id);
         int safePage = Math.max(0, attemptPage);
         int safeSize = Math.min(100, Math.max(1, attemptSize));
-        AccountSnapshot.GoalView goal = goalView(user.getId());
+        AccountSnapshotDTO.GoalViewDTO goal = goalView(user.getId());
         Map<String, String> targetMap = goal == null ? Map.of() : goal.targets();
         Map<String, UserSkillProfile> profileMap =
                 userSkillProfileRepository.findByUserIdOrderBySkillAsc(user.getId()).stream()
@@ -206,7 +211,7 @@ public class StudentManagementServiceImpl implements StudentManagementService {
     }
 
     private AdminStudentView.ListItem listItem(User user) {
-        AccountSnapshot.GoalView goal = goalView(user.getId());
+        AccountSnapshotDTO.GoalViewDTO goal = goalView(user.getId());
         String target =
                 goal == null || goal.targets().isEmpty()
                         ? "Chưa đặt mục tiêu"
@@ -221,7 +226,7 @@ public class StudentManagementServiceImpl implements StudentManagementService {
                 target);
     }
 
-    private AccountSnapshot.GoalView goalView(Integer userId) {
+    private AccountSnapshotDTO.GoalViewDTO goalView(Integer userId) {
         UserGoal goal =
                 userGoalRepository
                         .findFirstByUserIdAndStatusOrderByCreatedAtDesc(userId, GoalStatus.ACTIVE)
@@ -232,7 +237,7 @@ public class StudentManagementServiceImpl implements StudentManagementService {
         for (UserGoalSkill skill : userGoalSkillRepository.findByGoalId(goal.getId())) {
             targets.put(skill.getSkill(), Objects.requireNonNull(skill.getTargetLevel()));
         }
-        return new AccountSnapshot.GoalView(
+        return new AccountSnapshotDTO.GoalViewDTO(
                 certificate == null ? null : certificate.getId(),
                 certificate == null ? null : certificate.getName(),
                 goal.getTargetDate(),
@@ -242,7 +247,7 @@ public class StudentManagementServiceImpl implements StudentManagementService {
     private List<AdminStudentView.Progress> progressFor(Integer userId) {
         LearningPathContract contract = paths.getIfAvailable();
         if (contract == null) return List.of();
-        AccountSnapshot.GoalView goal = goalView(userId);
+        AccountSnapshotDTO.GoalViewDTO goal = goalView(userId);
         Map<String, String> targetMap = goal == null ? Map.of() : goal.targets();
         List<PathProgress> values = contract.summaries(userId);
         return values == null

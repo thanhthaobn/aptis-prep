@@ -1,14 +1,22 @@
-package com.aptisprep.service.account.impl;
+package com.aptisprep.mvc.account.service.impl;
 
 import com.aptisprep.entity.*;
+import com.aptisprep.mvc.account.dto.LearnerContextDTO;
+import com.aptisprep.mvc.account.dto.SkillLevelDTO;
+import com.aptisprep.mvc.account.dto.SkillTargetDTO;
+import com.aptisprep.mvc.account.entity.ProfileApplication;
+import com.aptisprep.mvc.account.entity.UserSkillProfile;
+import com.aptisprep.mvc.account.repository.ProfileApplicationRepository;
+import com.aptisprep.mvc.account.repository.UserGoalRepository;
+import com.aptisprep.mvc.account.repository.UserGoalSkillRepository;
+import com.aptisprep.mvc.account.repository.UserSkillProfileRepository;
+import com.aptisprep.mvc.account.service.AccountAccessService;
 import com.aptisprep.mvc.auth.entity.User;
-import com.aptisprep.mvc.auth.repository.UserRepository;
+import com.aptisprep.mvc.auth.service.UserService;
 import com.aptisprep.mvc.common.enums.*;
 import com.aptisprep.mvc.common.exception.AccessDeniedException;
 import com.aptisprep.mvc.common.exception.BusinessRuleException;
 import com.aptisprep.mvc.common.exception.ResourceNotFoundException;
-import com.aptisprep.repository.*;
-import com.aptisprep.service.account.AccountAccessService;
 import com.aptisprep.service.contract.ExamAttemptContract;
 import com.aptisprep.service.contract.IntegrationModels.*;
 import java.math.BigDecimal;
@@ -22,7 +30,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class AccountAccessServiceImpl implements AccountAccessService {
-    private final UserRepository userRepository;
+    private final UserService userRepository;
     private final UserGoalRepository userGoalRepository;
     private final UserGoalSkillRepository userGoalSkillRepository;
     private final UserSkillProfileRepository userSkillProfileRepository;
@@ -30,7 +38,7 @@ public class AccountAccessServiceImpl implements AccountAccessService {
     private final ObjectProvider<ExamAttemptContract> attempts;
 
     public AccountAccessServiceImpl(
-            UserRepository userRepository,
+            UserService userRepository,
             UserGoalRepository userGoalRepository,
             UserGoalSkillRepository userGoalSkillRepository,
             UserSkillProfileRepository userSkillProfileRepository,
@@ -65,9 +73,9 @@ public class AccountAccessServiceImpl implements AccountAccessService {
 
     @Override
     @Transactional(readOnly = true)
-    public LearnerContext context(Integer userId) {
+    public LearnerContextDTO context(Integer userId) {
         User user = activeStudent(userId);
-        List<SkillTarget> targets =
+        List<SkillTargetDTO> targets =
                 userGoalRepository
                         .findFirstByUserIdAndStatusOrderByCreatedAtDesc(
                                 user.getId(), GoalStatus.ACTIVE)
@@ -76,21 +84,21 @@ public class AccountAccessServiceImpl implements AccountAccessService {
                                         userGoalSkillRepository.findByGoalId(goal.getId()).stream()
                                                 .map(
                                                         skill ->
-                                                                new SkillTarget(
+                                                                new SkillTargetDTO(
                                                                         skill.getSkill(),
                                                                         skill.getTargetLevel()))
                                                 .toList())
                         .orElseGet(List::of);
-        List<SkillLevel> levels =
+        List<SkillLevelDTO> levels =
                 userSkillProfileRepository.findByUserIdOrderBySkillAsc(user.getId()).stream()
                         .map(
                                 profile ->
-                                        new SkillLevel(
+                                        new SkillLevelDTO(
                                                 profile.getSkill(),
                                                 profile.getCurrentLevel(),
                                                 profile.getSourceAttemptId()))
                         .toList();
-        return new LearnerContext(user.getId(), targets, levels);
+        return new LearnerContextDTO(user.getId(), targets, levels);
     }
 
     @Override

@@ -1,6 +1,12 @@
 package com.aptisprep.service.learning;
 
 import com.aptisprep.entity.*;
+import com.aptisprep.mvc.account.dto.LearnerContextDTO;
+import com.aptisprep.mvc.account.dto.SkillLevelDTO;
+import com.aptisprep.mvc.account.entity.UserGoal;
+import com.aptisprep.mvc.account.entity.UserGoalSkill;
+import com.aptisprep.mvc.account.repository.UserGoalRepository;
+import com.aptisprep.mvc.account.service.AccountAccessService;
 import com.aptisprep.mvc.auth.entity.User;
 import com.aptisprep.mvc.auth.repository.UserRepository;
 import com.aptisprep.mvc.common.enums.*;
@@ -26,7 +32,7 @@ public class LearningPathService implements LearningPathContract {
     private final UserGoalRepository userGoalRepository;
     private final ObjectProvider<ExamAttemptContract> attempts;
     private final ExamCatalogContract catalog;
-    private final AccountAccessContract accounts;
+    private final AccountAccessService accounts;
     private final CheckpointStatusReader checkpointStatus;
 
     public LearningPathService(
@@ -38,7 +44,7 @@ public class LearningPathService implements LearningPathContract {
             UserGoalRepository userGoalRepository,
             ObjectProvider<ExamAttemptContract> attempts,
             ExamCatalogContract catalog,
-            AccountAccessContract accounts,
+            AccountAccessService accounts,
             CheckpointStatusReader checkpointStatus) {
         this.learningPathRepository = learningPathRepository;
         this.learningPathItemRepository = learningPathItemRepository;
@@ -142,8 +148,8 @@ public class LearningPathService implements LearningPathContract {
     @Transactional(readOnly = true)
     public List<Stage> stages(String email, String skill) {
         User user = active(email);
-        LearnerContext learner = accounts.context(user.getId());
-        List<SkillLevel> assessedLevels =
+        LearnerContextDTO learner = accounts.context(user.getId());
+        List<SkillLevelDTO> assessedLevels =
                 learner == null || learner.levels() == null ? List.of() : learner.levels();
         Map<Integer, String> targets = new HashMap<>();
         userGoalRepository
@@ -216,7 +222,7 @@ public class LearningPathService implements LearningPathContract {
         for (String code : LessonService.SKILLS) {
             if ((skill != null && !skill.equals(code))
                     || result.stream().anyMatch(stage -> stage.skill().equals(code))) continue;
-            SkillLevel assessed = assessedLevel(assessedLevels, code);
+            SkillLevelDTO assessed = assessedLevel(assessedLevels, code);
             String current = assessed == null ? null : assessed.estimatedLevel();
             UserGoalSkill personal = personalGoals.get(codeSkill(code));
             String goal = personal == null ? null : personal.getTargetLevel();
@@ -397,13 +403,13 @@ public class LearningPathService implements LearningPathContract {
                 lessonRepository.findByStatusOrderBySkillAscCefrLevelAscDisplayOrderAsc(
                         "PUBLISHED");
         Map<String, UserGoalSkill> targets = goalTargets(user.getId());
-        LearnerContext context = accounts.context(user.getId());
-        List<SkillLevel> levels =
+        LearnerContextDTO context = accounts.context(user.getId());
+        List<SkillLevelDTO> levels =
                 context == null || context.levels() == null ? List.of() : context.levels();
         int changed = 0;
         for (String skill : LessonService.SKILLS) {
             UserGoalSkill goal = targets.get(codeSkill(skill));
-            SkillLevel assessed = assessedLevel(levels, skill);
+            SkillLevelDTO assessed = assessedLevel(levels, skill);
             String from = assessed == null ? null : validLevel(assessed.estimatedLevel());
             String target = nextLevel(from);
             LearningPath current =
@@ -633,8 +639,8 @@ public class LearningPathService implements LearningPathContract {
         return targets;
     }
 
-    private SkillLevel assessedLevel(List<SkillLevel> levels, String skill) {
-        for (SkillLevel level : levels) {
+    private SkillLevelDTO assessedLevel(List<SkillLevelDTO> levels, String skill) {
+        for (SkillLevelDTO level : levels) {
             if (codeSkill(skill).equals(codeSkill(level.skill()))) return level;
         }
         return null;

@@ -5,9 +5,9 @@ import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 import com.aptisprep.controller.student.StudentExamCatalogController;
+import com.aptisprep.mvc.account.service.AccountAccessService;
 import com.aptisprep.mvc.common.exception.BusinessRuleException;
 import com.aptisprep.mvc.scoring.service.*;
-import com.aptisprep.service.account.AccountAccessService;
 import com.aptisprep.service.contract.ExamAttemptContract;
 import com.aptisprep.service.contract.IntegrationModels.*;
 import com.aptisprep.service.student.StudentExamCatalogService;

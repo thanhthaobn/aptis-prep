@@ -1,7 +1,7 @@
 package com.aptisprep.service.placement.impl;
 
+import com.aptisprep.mvc.account.service.AccountAccessService;
 import com.aptisprep.mvc.common.exception.BusinessRuleException;
-import com.aptisprep.service.contract.AccountAccessContract;
 import com.aptisprep.service.contract.ExamAttemptContract;
 import com.aptisprep.service.contract.ExamCatalogContract;
 import com.aptisprep.service.contract.IntegrationModels.AttemptHandle;
@@ -20,13 +20,13 @@ public class PlacementServiceImpl implements PlacementService {
     private final PlacementExamCatalogService catalog;
     private final ExamCatalogContract examCatalog;
     private final ObjectProvider<ExamAttemptContract> attempts;
-    private final ObjectProvider<AccountAccessContract> accounts;
+    private final ObjectProvider<AccountAccessService> accounts;
 
     public PlacementServiceImpl(
             PlacementExamCatalogService catalog,
             ExamCatalogContract examCatalog,
             ObjectProvider<ExamAttemptContract> attempts,
-            ObjectProvider<AccountAccessContract> accounts) {
+            ObjectProvider<AccountAccessService> accounts) {
         this.catalog = catalog;
         this.examCatalog = examCatalog;
         this.attempts = attempts;
@@ -44,7 +44,7 @@ public class PlacementServiceImpl implements PlacementService {
 
     @Override
     public List<PlacementOption> availableForStudent(String email) {
-        AccountAccessContract account = accounts.getIfAvailable();
+        AccountAccessService account = accounts.getIfAvailable();
         ExamAttemptContract attempt = attempts.getIfAvailable();
         Integer userId = account == null ? null : account.requireActiveStudent(email);
         boolean resumable =
@@ -64,7 +64,7 @@ public class PlacementServiceImpl implements PlacementService {
 
     @Override
     public AttemptHandle start(String email) {
-        AccountAccessContract account = accounts.getIfAvailable();
+        AccountAccessService account = accounts.getIfAvailable();
         ExamAttemptContract attempt = attempts.getIfAvailable();
         if (account == null || attempt == null)
             throw new BusinessRuleException(
@@ -86,7 +86,7 @@ public class PlacementServiceImpl implements PlacementService {
 
     public List<PlacementOption> available(String email, String skill) {
         List<PlacementExamCatalogService.PlacementExam> exams = available(skill);
-        AccountAccessContract account = accounts.getIfAvailable();
+        AccountAccessService account = accounts.getIfAvailable();
         ExamAttemptContract attempt = attempts.getIfAvailable();
         boolean resumable =
                 account != null
@@ -111,7 +111,7 @@ public class PlacementServiceImpl implements PlacementService {
     }
 
     public AttemptHandle start(String email, String skill, Integer examId) {
-        AccountAccessContract account = accounts.getIfAvailable();
+        AccountAccessService account = accounts.getIfAvailable();
         ExamAttemptContract attempt = attempts.getIfAvailable();
         if (account == null || attempt == null)
             throw new BusinessRuleException(
@@ -145,7 +145,7 @@ public class PlacementServiceImpl implements PlacementService {
     }
 
     public AttemptResult result(String email, Integer attemptId) {
-        AccountAccessContract account = accounts.getIfAvailable();
+        AccountAccessService account = accounts.getIfAvailable();
         ExamAttemptContract attempt = attempts.getIfAvailable();
         if (account == null || attempt == null)
             throw new BusinessRuleException("Luồng kết quả Placement chưa sẵn sàng");

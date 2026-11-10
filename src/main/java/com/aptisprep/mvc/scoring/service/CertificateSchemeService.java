@@ -1,6 +1,8 @@
 package com.aptisprep.mvc.scoring.service;
 
+import com.aptisprep.mvc.scoring.entity.Certificate;
 import java.util.List;
+import java.util.Optional;
 
 /** Owner 1 read-only contract for question/exam flows. */
 public interface CertificateSchemeService {
@@ -19,4 +21,12 @@ public interface CertificateSchemeService {
             String name,
             String status,
             List<String> skills) {}
+
+    Optional<Certificate> findCertificateById(Integer id);
+
+    Optional<Certificate> findById(Integer id);
+
+    Optional<Certificate> findByCodeIgnoreCase(String code);
+
+    List<Certificate> findAllActiveCertificates();
 }

@@ -2,9 +2,12 @@ package com.aptisprep.service.learning.impl;
 
 import com.aptisprep.entity.Lesson;
 import com.aptisprep.entity.LessonProgress;
+import com.aptisprep.mvc.account.dto.LearnerContextDTO;
+import com.aptisprep.mvc.account.dto.SkillLevelDTO;
+import com.aptisprep.mvc.account.dto.SkillTargetDTO;
+import com.aptisprep.mvc.account.service.AccountAccessService;
 import com.aptisprep.mvc.common.enums.CefrLevel;
 import com.aptisprep.repository.LessonProgressRepository;
-import com.aptisprep.service.contract.AccountAccessContract;
 import com.aptisprep.service.contract.IntegrationModels.*;
 import com.aptisprep.service.learning.LessonRecommendationService;
 import com.aptisprep.service.learning.LessonRecommendationService.Recommendation;
@@ -17,10 +20,10 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class LessonRecommendationServiceImpl implements LessonRecommendationService {
     private final LessonProgressRepository lessonProgressRepository;
-    private final AccountAccessContract accounts;
+    private final AccountAccessService accounts;
 
     public LessonRecommendationServiceImpl(
-            LessonProgressRepository lessonProgressRepository, AccountAccessContract accounts) {
+            LessonProgressRepository lessonProgressRepository, AccountAccessService accounts) {
         this.lessonProgressRepository = lessonProgressRepository;
         this.accounts = accounts;
     }
@@ -59,10 +62,10 @@ public class LessonRecommendationServiceImpl implements LessonRecommendationServ
                     path,
                     "Tiếp tục bài đang học dở gần nhất");
         }
-        LearnerContext context = accounts.context(userId);
-        List<SkillTarget> targets =
+        LearnerContextDTO context = accounts.context(userId);
+        List<SkillTargetDTO> targets =
                 context == null || context.targets() == null ? List.of() : context.targets();
-        List<SkillLevel> levels =
+        List<SkillLevelDTO> levels =
                 context == null || context.levels() == null ? List.of() : context.levels();
         PathProgress selected =
                 paths.stream()
@@ -109,11 +112,11 @@ public class LessonRecommendationServiceImpl implements LessonRecommendationServ
                 .orElse(LocalDateTime.MIN);
     }
 
-    private boolean hasTarget(PathProgress path, List<SkillTarget> targets) {
+    private boolean hasTarget(PathProgress path, List<SkillTargetDTO> targets) {
         return targets.stream().anyMatch(t -> key(t.skill()).equals(key(path.skill())));
     }
 
-    private int gap(PathProgress path, List<SkillTarget> targets, List<SkillLevel> levels) {
+    private int gap(PathProgress path, List<SkillTargetDTO> targets, List<SkillLevelDTO> levels) {
         int target =
                 targets.stream()
                         .filter(t -> key(t.skill()).equals(key(path.skill())))

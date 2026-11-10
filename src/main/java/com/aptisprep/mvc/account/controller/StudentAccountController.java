@@ -1,15 +1,15 @@
-package com.aptisprep.controller.student;
+package com.aptisprep.mvc.account.controller;
 
-import com.aptisprep.dto.form.GoalForm;
-import com.aptisprep.dto.form.ProfileForm;
-import com.aptisprep.dto.view.AccountSnapshot;
+import com.aptisprep.mvc.account.dto.AccountSnapshotDTO;
+import com.aptisprep.mvc.account.dto.GoalFormDTO;
+import com.aptisprep.mvc.account.dto.ProfileFormDTO;
+import com.aptisprep.mvc.account.service.AccountAccessService;
+import com.aptisprep.mvc.account.service.AccountProfileService;
+import com.aptisprep.mvc.account.service.LearningActivityService;
 import com.aptisprep.mvc.common.enums.Skill;
 import com.aptisprep.mvc.common.exception.BusinessRuleException;
 import com.aptisprep.mvc.common.util.ListPagination;
 import com.aptisprep.mvc.scoring.service.ScoringGuideService;
-import com.aptisprep.service.account.AccountAccessService;
-import com.aptisprep.service.account.AccountProfileService;
-import com.aptisprep.service.account.LearningActivityService;
 import com.aptisprep.service.contract.ExamAttemptContract;
 import com.aptisprep.service.contract.IntegrationModels.AttemptHandle;
 import com.aptisprep.service.exam.ExamAttemptService;
@@ -27,7 +27,6 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 @Controller
 public class StudentAccountController {
     private final ScoringGuideService scoringGuides;
-
     private final PlacementService placement;
     private final AccountProfileService accounts;
     private final LearningActivityService activity;
@@ -51,12 +50,12 @@ public class StudentAccountController {
 
     @GetMapping("/student/profile")
     public String profile(Principal principal, Model model) {
-        AccountSnapshot snapshot = accounts.snapshot(principal.getName());
+        AccountSnapshotDTO snapshot = accounts.snapshot(principal.getName());
         model.addAttribute("account", snapshot);
         model.addAttribute("activity", activity.activity(principal.getName()));
         model.addAttribute("skillCodes", Skill.codes());
         if (!model.containsAttribute("profileForm")) {
-            ProfileForm form = new ProfileForm();
+            ProfileFormDTO form = new ProfileFormDTO();
             form.setFullName(snapshot.fullName());
             model.addAttribute("profileForm", form);
         }
@@ -71,7 +70,7 @@ public class StudentAccountController {
     @PostMapping("/student/profile/edit")
     public String updateProfile(
             Principal principal,
-            @Valid @ModelAttribute("profileForm") ProfileForm profileForm,
+            @Valid @ModelAttribute("profileForm") ProfileFormDTO profileForm,
             BindingResult bindingResult,
             RedirectAttributes redirectAttributes) {
         if (bindingResult.hasErrors()) {
@@ -96,7 +95,7 @@ public class StudentAccountController {
     @PostMapping("/student/goals")
     public String saveGoal(
             Principal principal,
-            @Valid @ModelAttribute("goalForm") GoalForm goalForm,
+            @Valid @ModelAttribute("goalForm") GoalFormDTO goalForm,
             BindingResult bindingResult,
             Model model,
             RedirectAttributes redirectAttributes) {

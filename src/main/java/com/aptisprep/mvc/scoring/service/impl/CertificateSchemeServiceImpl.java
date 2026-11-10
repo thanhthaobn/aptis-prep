@@ -117,4 +117,25 @@ public class CertificateSchemeServiceImpl implements CertificateSchemeService {
                 scheme.getStatus().name(),
                 skills);
     }
+
+    @Override
+    public java.util.Optional<Certificate> findCertificateById(Integer id) {
+        return certificateRepository.findById(id);
+    }
+
+    @Override
+    public List<Certificate> findAllActiveCertificates() {
+        return certificateRepository.findByStatusOrderByNameAsc(
+                com.aptisprep.mvc.common.enums.RecordStatus.ACTIVE);
+    }
+
+    @Override
+    public java.util.Optional<Certificate> findById(Integer id) {
+        return certificateRepository.findById(id);
+    }
+
+    @Override
+    public java.util.Optional<Certificate> findByCodeIgnoreCase(String code) {
+        return certificateRepository.findByCodeIgnoreCase(code);
+    }
 }

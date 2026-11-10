@@ -1,4 +1,4 @@
-package com.aptisprep.entity;
+package com.aptisprep.mvc.account.entity;
 
 import com.aptisprep.mvc.auth.entity.User;
 import com.aptisprep.mvc.common.enums.GoalStatus;

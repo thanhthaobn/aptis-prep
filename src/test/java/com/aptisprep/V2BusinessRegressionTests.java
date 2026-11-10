@@ -7,6 +7,12 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.aptisprep.dto.form.*;
 import com.aptisprep.entity.*;
+import com.aptisprep.mvc.account.dto.GoalFormDTO;
+import com.aptisprep.mvc.account.entity.UserGoal;
+import com.aptisprep.mvc.account.entity.UserGoalSkill;
+import com.aptisprep.mvc.account.repository.UserGoalRepository;
+import com.aptisprep.mvc.account.repository.UserSkillProfileRepository;
+import com.aptisprep.mvc.account.service.AccountProfileService;
 import com.aptisprep.mvc.auth.entity.User;
 import com.aptisprep.mvc.auth.repository.UserRepository;
 import com.aptisprep.mvc.common.enums.*;
@@ -16,7 +22,6 @@ import com.aptisprep.mvc.scoring.entity.*;
 import com.aptisprep.mvc.scoring.repository.*;
 import com.aptisprep.mvc.scoring.service.*;
 import com.aptisprep.repository.*;
-import com.aptisprep.service.account.AccountProfileService;
 import com.aptisprep.service.admin.CatalogService;
 import com.aptisprep.service.contract.ScoringSchemeUsageContract;
 import com.aptisprep.service.exam.ExamAttemptService;
@@ -61,7 +66,7 @@ class V2BusinessRegressionTests {
     @Autowired ExamAttemptRepository attempts;
     @Autowired UserGoalRepository goals;
     @Autowired UserSkillProfileRepository profiles;
-    @Autowired com.aptisprep.service.account.AccountAccessService assessmentAccounts;
+    @Autowired com.aptisprep.mvc.account.service.AccountAccessService assessmentAccounts;
     User admin, learner;
     Certificate certificate;
     ScoringScheme scheme;
@@ -307,7 +312,7 @@ class V2BusinessRegressionTests {
 
     @Test
     void goalsRoundTripTargetScoresAndRejectScoresWithoutATargetLevel() {
-        var form = new GoalForm();
+        var form = new GoalFormDTO();
         form.setReading("B1");
         form.getTargetScores().put("READING", BigDecimal.valueOf(35));
         accounts.saveGoal(learner.getEmail(), form);
@@ -678,7 +683,7 @@ class V2BusinessRegressionTests {
         target.setTargetLevel("C2");
         old.addSkill(target);
         old = goals.saveAndFlush(old);
-        var form = new GoalForm();
+        var form = new GoalFormDTO();
         form.setReading("C2");
         assertThrows(
                 BusinessRuleException.class, () -> accounts.saveGoal(learner.getEmail(), form));

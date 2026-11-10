@@ -25,13 +25,13 @@ class AccountExperienceTests {
     @Autowired UserRepository users;
     @Autowired PasswordHasher encoder;
     @Autowired com.aptisprep.repository.LessonRepository lessons;
-    @Autowired com.aptisprep.repository.UserSkillProfileRepository profiles;
+    @Autowired com.aptisprep.mvc.account.repository.UserSkillProfileRepository profiles;
     @Autowired com.aptisprep.service.learning.LearningPathService learning;
 
     @Test
     void placementWithoutGoalShowsAssessedLevelAndNextStageSeparately() throws Exception {
         User user = student("placement-path-experience@example.com");
-        var profile = new com.aptisprep.entity.UserSkillProfile();
+        var profile = new com.aptisprep.mvc.account.entity.UserSkillProfile();
         profile.setUser(user);
         profile.setSkill("READING");
         profile.setCurrentLevel("A2");

@@ -64,4 +64,3 @@ public class PasswordController {
         return "auth/password";
     }
 }
-

@@ -1,6 +1,6 @@
 package com.aptisprep.mvc.auth.dto;
 
-import com.aptisprep.dto.form.ProfileForm;
+import com.aptisprep.mvc.account.dto.ProfileFormDTO;
 import com.aptisprep.mvc.auth.entity.User;
 
 /** DTO boundary for user fields that are safe for account forms. */
@@ -8,7 +8,7 @@ public class UserEntityDTO {
     private String fullName;
     private String email;
 
-    public static UserEntityDTO fromForm(ProfileForm form) {
+    public static UserEntityDTO fromForm(ProfileFormDTO form) {
         if (form == null) return null;
         UserEntityDTO dto = new UserEntityDTO();
         dto.fullName = form.getFullName();
@@ -31,7 +31,7 @@ public class UserEntityDTO {
         return entity;
     }
 
-    public static User convertDtoToEntity(ProfileForm form) {
+    public static User convertDtoToEntity(ProfileFormDTO form) {
         return convertDtoToEntity(fromForm(form));
     }
 
@@ -47,8 +47,8 @@ public class UserEntityDTO {
         return dto;
     }
 
-    public ProfileForm toProfileForm() {
-        ProfileForm form = new ProfileForm();
+    public ProfileFormDTO toProfileForm() {
+        ProfileFormDTO form = new ProfileFormDTO();
         form.setFullName(fullName);
         return form;
     }
@@ -68,4 +68,3 @@ public class UserEntityDTO {
         return email;
     }
 }
-

@@ -1,10 +1,10 @@
 package com.aptisprep.controller.student;
 
 import com.aptisprep.dto.view.StudentCatalogView.Entry;
+import com.aptisprep.mvc.account.service.AccountAccessService;
 import com.aptisprep.mvc.common.enums.Skill;
 import com.aptisprep.mvc.common.exception.BusinessRuleException;
 import com.aptisprep.mvc.scoring.service.ScoringGuideService;
-import com.aptisprep.service.account.AccountAccessService;
 import com.aptisprep.service.contract.ExamAttemptContract;
 import com.aptisprep.service.contract.IntegrationModels.AttemptResult;
 import com.aptisprep.service.contract.IntegrationModels.HistoryFilter;

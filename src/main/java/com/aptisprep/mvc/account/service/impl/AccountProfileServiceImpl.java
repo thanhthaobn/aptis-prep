@@ -1,27 +1,29 @@
-package com.aptisprep.service.account.impl;
+package com.aptisprep.mvc.account.service.impl;
 
-import com.aptisprep.dto.UserGoalEntityDto;
-import com.aptisprep.dto.form.GoalForm;
-import com.aptisprep.dto.form.ProfileForm;
-import com.aptisprep.dto.view.AccountSnapshot;
-import com.aptisprep.dto.view.AccountSnapshot.GoalView;
-import com.aptisprep.dto.view.AccountSnapshot.SkillView;
 import com.aptisprep.entity.*;
-import com.aptisprep.mvc.auth.dto.UserEntityDTO;
+import com.aptisprep.mvc.account.dto.AccountSnapshotDTO;
+import com.aptisprep.mvc.account.dto.AccountSnapshotDTO.GoalViewDTO;
+import com.aptisprep.mvc.account.dto.AccountSnapshotDTO.SkillViewDTO;
+import com.aptisprep.mvc.account.dto.GoalFormDTO;
+import com.aptisprep.mvc.account.dto.ProfileFormDTO;
+import com.aptisprep.mvc.account.dto.UserGoalEntityDTO;
+import com.aptisprep.mvc.account.entity.UserGoal;
+import com.aptisprep.mvc.account.entity.UserGoalSkill;
+import com.aptisprep.mvc.account.entity.UserSkillProfile;
+import com.aptisprep.mvc.account.repository.UserGoalRepository;
+import com.aptisprep.mvc.account.repository.UserGoalSkillRepository;
+import com.aptisprep.mvc.account.repository.UserSkillProfileRepository;
+import com.aptisprep.mvc.account.service.AccountAccessService;
+import com.aptisprep.mvc.account.service.AccountProfileService;
 import com.aptisprep.mvc.auth.entity.User;
-import com.aptisprep.mvc.auth.repository.UserRepository;
-import com.aptisprep.mvc.scoring.entity.Certificate;
-import com.aptisprep.mvc.scoring.repository.CertificateRepository;
+import com.aptisprep.mvc.auth.service.UserService;
 import com.aptisprep.mvc.common.enums.*;
 import com.aptisprep.mvc.common.enums.Skill;
 import com.aptisprep.mvc.common.event.GoalChangedEvent;
 import com.aptisprep.mvc.common.exception.BusinessRuleException;
 import com.aptisprep.mvc.common.exception.ResourceNotFoundException;
 import com.aptisprep.mvc.scoring.entity.Certificate;
-import com.aptisprep.mvc.scoring.repository.CertificateRepository;
-import com.aptisprep.repository.*;
-import com.aptisprep.service.account.AccountAccessService;
-import com.aptisprep.service.account.AccountProfileService;
+import com.aptisprep.mvc.scoring.service.CertificateSchemeService;
 import java.math.BigDecimal;
 import java.util.*;
 import org.springframework.context.ApplicationEventPublisher;
@@ -31,8 +33,8 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class AccountProfileServiceImpl implements AccountProfileService {
     private static final List<String> SKILLS = Skill.codes();
-    private final UserRepository userRepository;
-    private final CertificateRepository certificateRepository;
+    private final UserService userRepository;
+    private final CertificateSchemeService certificateRepository;
     private final UserGoalRepository userGoalRepository;
     private final UserGoalSkillRepository userGoalSkillRepository;
     private final UserSkillProfileRepository userSkillProfileRepository;
@@ -40,8 +42,8 @@ public class AccountProfileServiceImpl implements AccountProfileService {
     private final ApplicationEventPublisher events;
 
     public AccountProfileServiceImpl(
-            UserRepository userRepository,
-            CertificateRepository certificateRepository,
+            UserService userRepository,
+            CertificateSchemeService certificateRepository,
             UserGoalRepository userGoalRepository,
             UserGoalSkillRepository userGoalSkillRepository,
             UserSkillProfileRepository userSkillProfileRepository,
@@ -57,7 +59,7 @@ public class AccountProfileServiceImpl implements AccountProfileService {
     }
 
     @Transactional(readOnly = true)
-    public AccountSnapshot snapshot(String principalEmail) {
+    public AccountSnapshotDTO snapshot(String principalEmail) {
         Integer userId = access.requireActiveStudent(principalEmail);
         User user =
                 userRepository
@@ -68,12 +70,12 @@ public class AccountProfileServiceImpl implements AccountProfileService {
                 userGoalRepository
                         .findFirstByUserIdAndStatusOrderByCreatedAtDesc(userId, GoalStatus.ACTIVE)
                         .orElse(null);
-        GoalView goal = toGoalView(activeGoal);
-        List<SkillView> currentProfiles = loadSkillViews(userId);
-        return new AccountSnapshot(user.getFullName(), user.getEmail(), goal, currentProfiles);
+        GoalViewDTO goal = toGoalView(activeGoal);
+        List<SkillViewDTO> currentProfiles = loadSkillViews(userId);
+        return new AccountSnapshotDTO(user.getFullName(), user.getEmail(), goal, currentProfiles);
     }
 
-    private GoalView toGoalView(UserGoal goal) {
+    private GoalViewDTO toGoalView(UserGoal goal) {
         if (goal == null) return null;
 
         Certificate certificate = goal.getCertificate();
@@ -88,17 +90,17 @@ public class AccountProfileServiceImpl implements AccountProfileService {
                 targetScores.put(goalSkill.getSkill(), goalSkill.getTargetScore());
             }
         }
-        return new GoalView(
+        return new GoalViewDTO(
                 certificateId, certificateName, goal.getTargetDate(), targets, targetScores);
     }
 
-    private List<SkillView> loadSkillViews(Integer userId) {
-        List<SkillView> result = new ArrayList<>();
+    private List<SkillViewDTO> loadSkillViews(Integer userId) {
+        List<SkillViewDTO> result = new ArrayList<>();
         List<UserSkillProfile> profiles =
                 userSkillProfileRepository.findByUserIdOrderBySkillAsc(userId);
         for (UserSkillProfile profile : profiles) {
             result.add(
-                    new SkillView(
+                    new SkillViewDTO(
                             profile.getSkill(),
                             levelLabel(profile.getCurrentLevel()),
                             profile.getSourceAttemptId()));
@@ -107,21 +109,22 @@ public class AccountProfileServiceImpl implements AccountProfileService {
     }
 
     @Transactional
-    public void updateProfile(String principalEmail, ProfileForm form) {
+    public void updateProfile(String principalEmail, ProfileFormDTO form) {
         Integer userId = access.requireActiveStudent(principalEmail);
         User user =
                 userRepository
                         .findByIdForUpdate(userId)
                         .orElseThrow(
                                 () -> new ResourceNotFoundException("Không tìm thấy tài khoản"));
-        User mapped = UserEntityDTO.convertDtoToEntity(form);
+        User mapped = new User();
+        mapped.setFullName(form.getFullName());
         String name = mapped.getFullName() == null ? "" : mapped.getFullName().trim();
         if (name.isBlank()) throw new BusinessRuleException("Họ và tên không được để trống");
         user.setFullName(name);
     }
 
     @Transactional
-    public void saveGoal(String principalEmail, GoalForm form) {
+    public void saveGoal(String principalEmail, GoalFormDTO form) {
         Integer userId = access.requireActiveStudent(principalEmail);
         User user =
                 userRepository
@@ -179,7 +182,7 @@ public class AccountProfileServiceImpl implements AccountProfileService {
         userGoalRepository
                 .findFirstByUserIdAndStatusOrderByCreatedAtDesc(userId, GoalStatus.ACTIVE)
                 .ifPresent(old -> old.setStatus(GoalStatus.ARCHIVED));
-        UserGoal goal = UserGoalEntityDto.convertDtoToEntity(form, user, certificate);
+        UserGoal goal = UserGoalEntityDTO.convertDtoToEntity(form, user, certificate);
         targets.forEach(
                 (skill, level) -> {
                     UserGoalSkill item = new UserGoalSkill();
@@ -192,8 +195,8 @@ public class AccountProfileServiceImpl implements AccountProfileService {
         events.publishEvent(new GoalChangedEvent(userId));
     }
 
-    public GoalForm formFrom(AccountSnapshot snapshot) {
-        GoalForm form = new GoalForm();
+    public GoalFormDTO formFrom(AccountSnapshotDTO snapshot) {
+        GoalFormDTO form = new GoalFormDTO();
         if (snapshot.goal() == null) return form;
         form.setCertificateId(snapshot.goal().certificateId());
         form.setTargetDate(snapshot.goal().targetDate());
@@ -208,7 +211,7 @@ public class AccountProfileServiceImpl implements AccountProfileService {
 
     @Transactional(readOnly = true)
     public List<Certificate> activeCertificates() {
-        return certificateRepository.findByStatusOrderByNameAsc(RecordStatus.ACTIVE);
+        return certificateRepository.findAllActiveCertificates();
     }
 
     private void addTarget(Map<String, String> targets, String skill, String value) {

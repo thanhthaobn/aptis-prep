@@ -1,10 +1,10 @@
 package com.aptisprep.controller.student;
 
-import com.aptisprep.dto.view.AccountSnapshot;
-import com.aptisprep.dto.view.AccountSnapshot.SkillView;
+import com.aptisprep.mvc.account.dto.AccountSnapshotDTO;
+import com.aptisprep.mvc.account.dto.AccountSnapshotDTO.SkillViewDTO;
+import com.aptisprep.mvc.account.service.AccountProfileService;
+import com.aptisprep.mvc.account.service.LearningActivityService;
 import com.aptisprep.mvc.common.enums.Skill;
-import com.aptisprep.service.account.AccountProfileService;
-import com.aptisprep.service.account.LearningActivityService;
 import com.aptisprep.service.contract.ExamAttemptContract;
 import com.aptisprep.service.contract.IntegrationModels.AttemptResult;
 import com.aptisprep.service.contract.IntegrationModels.PathProgress;
@@ -50,7 +50,7 @@ public class StudentDashboardController {
         model.addAttribute("email", principal.getName());
         model.addAttribute("paths", paths);
         model.addAttribute("hasLearningContent", hasLearningContent);
-        AccountSnapshot account = accounts.snapshot(principal.getName());
+        AccountSnapshotDTO account = accounts.snapshot(principal.getName());
         model.addAttribute("account", account);
         ArrayList<SkillOverview> skillOverview = new ArrayList<SkillOverview>();
         for (Skill skill : Skill.values()) {
@@ -66,7 +66,7 @@ public class StudentDashboardController {
             String current =
                     account.profiles().stream()
                             .filter(profile -> code.equals(profile.skill()))
-                            .map(SkillView::currentLevel)
+                            .map(SkillViewDTO::currentLevel)
                             .filter(Objects::nonNull)
                             .findFirst()
                             .orElse("—");

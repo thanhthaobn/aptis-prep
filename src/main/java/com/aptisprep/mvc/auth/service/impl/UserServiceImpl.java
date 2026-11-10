@@ -103,4 +103,24 @@ public class UserServiceImpl implements UserService {
         return AuthResultDTO.success(
                 user.getRole() == Role.ADMIN ? "/admin/dashboard" : "/student/dashboard");
     }
+
+    @Override
+    public Optional<User> findById(Integer id) {
+        return userRepository.findById(id);
+    }
+
+    @Override
+    public Optional<User> findByIdForUpdate(Integer id) {
+        return userRepository.findByIdForUpdate(id);
+    }
+
+    @Override
+    public Optional<User> findByEmailIgnoreCase(String email) {
+        return userRepository.findByEmailIgnoreCase(email);
+    }
+
+    @Override
+    public User save(User user) {
+        return userRepository.save(user);
+    }
 }

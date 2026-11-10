@@ -1,27 +1,26 @@
-package com.aptisprep.dto;
+package com.aptisprep.mvc.account.dto;
 
-import com.aptisprep.dto.form.GoalForm;
-import com.aptisprep.entity.UserGoal;
+import com.aptisprep.mvc.account.entity.UserGoal;
 import com.aptisprep.mvc.auth.entity.User;
 import com.aptisprep.mvc.common.enums.GoalStatus;
 import com.aptisprep.mvc.scoring.entity.Certificate;
+import java.time.LocalDate;
 
-/** DTO boundary for the scalar fields of a user-goal entity. */
-public class UserGoalEntityDto {
+public class UserGoalEntityDTO {
     private User user;
     private Certificate certificate;
-    private java.time.LocalDate targetDate;
+    private LocalDate targetDate;
 
-    public static UserGoalEntityDto fromForm(GoalForm form, User user, Certificate certificate) {
+    public static UserGoalEntityDTO fromForm(GoalFormDTO form, User user, Certificate certificate) {
         if (form == null) return null;
-        UserGoalEntityDto dto = new UserGoalEntityDto();
+        UserGoalEntityDTO dto = new UserGoalEntityDTO();
         dto.user = user;
         dto.certificate = certificate;
         dto.targetDate = form.getTargetDate();
         return dto;
     }
 
-    public static UserGoal convertDtoToEntity(UserGoalEntityDto dto) {
+    public static UserGoal convertDtoToEntity(UserGoalEntityDTO dto) {
         if (dto == null) return null;
         UserGoal entity = new UserGoal();
         entity.setUser(dto.user);
@@ -31,13 +30,14 @@ public class UserGoalEntityDto {
         return entity;
     }
 
-    public static UserGoal convertDtoToEntity(GoalForm form, User user, Certificate certificate) {
+    public static UserGoal convertDtoToEntity(
+            GoalFormDTO form, User user, Certificate certificate) {
         return convertDtoToEntity(fromForm(form, user, certificate));
     }
 
-    public static UserGoalEntityDto convertEntityToDto(UserGoal entity) {
+    public static UserGoalEntityDTO convertEntityToDto(UserGoal entity) {
         if (entity == null) return null;
-        UserGoalEntityDto dto = new UserGoalEntityDto();
+        UserGoalEntityDTO dto = new UserGoalEntityDTO();
         dto.user = entity.getUser();
         dto.certificate = entity.getCertificate();
         dto.targetDate = entity.getTargetDate();
@@ -52,7 +52,7 @@ public class UserGoalEntityDto {
         return certificate;
     }
 
-    public java.time.LocalDate getTargetDate() {
+    public LocalDate getTargetDate() {
         return targetDate;
     }
 }

@@ -79,7 +79,7 @@ class ExamAttemptConcurrencyTests {
     @Autowired com.aptisprep.service.learning.LessonService lessonService;
     @Autowired com.aptisprep.service.learning.LearningPathService learningPaths;
     @Autowired com.aptisprep.repository.LearningPathRepository learningPathRepository;
-    @Autowired com.aptisprep.repository.UserSkillProfileRepository skillProfiles;
+    @Autowired com.aptisprep.mvc.account.repository.UserSkillProfileRepository skillProfiles;
     @Autowired org.springframework.test.web.servlet.MockMvc mvc;
     @Autowired com.aptisprep.service.student.StudentExamCatalogService studentCatalog;
 

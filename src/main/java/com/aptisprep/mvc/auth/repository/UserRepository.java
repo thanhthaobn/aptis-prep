@@ -44,4 +44,3 @@ public interface UserRepository extends JpaRepository<User, Integer> {
     Page<User> searchStudents(
             @Param("pattern") String pattern, @Param("status") String status, Pageable pageable);
 }
-

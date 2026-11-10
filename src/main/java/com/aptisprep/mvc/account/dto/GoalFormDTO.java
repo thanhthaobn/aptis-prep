@@ -1,4 +1,4 @@
-package com.aptisprep.dto.form;
+package com.aptisprep.mvc.account.dto;
 
 import jakarta.validation.constraints.FutureOrPresent;
 import jakarta.validation.constraints.Pattern;
@@ -9,7 +9,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import org.springframework.format.annotation.DateTimeFormat;
 
-public class GoalForm {
+public class GoalFormDTO {
     private Map<String, BigDecimal> targetScores = new LinkedHashMap<>();
 
     public Map<String, BigDecimal> getTargetScores() {

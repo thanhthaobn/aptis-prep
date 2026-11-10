@@ -3,13 +3,16 @@ package com.aptisprep.service.account;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-import com.aptisprep.dto.view.AccountSnapshot;
-import com.aptisprep.entity.*;
+import com.aptisprep.mvc.account.dto.AccountSnapshotDTO;
+import com.aptisprep.mvc.account.entity.*;
+import com.aptisprep.mvc.account.repository.*;
+import com.aptisprep.mvc.account.service.AccountAccessService;
+import com.aptisprep.mvc.account.service.AccountProfileService;
+import com.aptisprep.mvc.account.service.impl.AccountProfileServiceImpl;
 import com.aptisprep.mvc.auth.entity.User;
-import com.aptisprep.mvc.auth.repository.UserRepository;
+import com.aptisprep.mvc.auth.service.UserService;
 import com.aptisprep.mvc.common.enums.GoalStatus;
-import com.aptisprep.mvc.scoring.repository.*;
-import com.aptisprep.repository.*;
+import com.aptisprep.mvc.scoring.service.CertificateSchemeService;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.*;
@@ -22,8 +25,8 @@ import org.springframework.context.ApplicationEventPublisher;
 
 @ExtendWith(MockitoExtension.class)
 class AccountProfileServiceTests {
-    @Mock UserRepository userRepository;
-    @Mock CertificateRepository certificateRepository;
+    @Mock UserService userService;
+    @Mock CertificateSchemeService certificateSchemeService;
     @Mock UserGoalRepository userGoalRepository;
     @Mock UserGoalSkillRepository userGoalSkillRepository;
     @Mock UserSkillProfileRepository userSkillProfileRepository;
@@ -34,9 +37,9 @@ class AccountProfileServiceTests {
     @BeforeEach
     void setup() {
         service =
-                new com.aptisprep.service.account.impl.AccountProfileServiceImpl(
-                        userRepository,
-                        certificateRepository,
+                new AccountProfileServiceImpl(
+                        userService,
+                        certificateSchemeService,
                         userGoalRepository,
                         userGoalSkillRepository,
                         userSkillProfileRepository,
@@ -46,7 +49,7 @@ class AccountProfileServiceTests {
         user.setFullName("Snapshot learner");
         user.setEmail("snapshot@test.local");
         when(access.requireActiveStudent(user.getEmail())).thenReturn(7);
-        when(userRepository.findById(7)).thenReturn(Optional.of(user));
+        when(userService.findById(7)).thenReturn(Optional.of(user));
     }
 
     @Test
@@ -71,7 +74,7 @@ class AccountProfileServiceTests {
         profile.setSourceAttemptId(23);
         when(userSkillProfileRepository.findByUserIdOrderBySkillAsc(7))
                 .thenReturn(List.of(profile));
-        AccountSnapshot snapshot = service.snapshot("snapshot@test.local");
+        AccountSnapshotDTO snapshot = service.snapshot("snapshot@test.local");
         assertEquals("Snapshot learner", snapshot.fullName());
         assertEquals("snapshot@test.local", snapshot.email());
         assertNull(snapshot.goal().certificateId());
@@ -81,7 +84,8 @@ class AccountProfileServiceTests {
         assertEquals(Map.of("READING", "B2", "WRITING", "C1"), snapshot.goal().targets());
         assertEquals(Map.of("READING", new BigDecimal("35.50")), snapshot.goal().targetScores());
         assertEquals(
-                new AccountSnapshot.SkillView("READING", "A2", 23), snapshot.profiles().getFirst());
+                new AccountSnapshotDTO.SkillViewDTO("READING", "A2", 23),
+                snapshot.profiles().getFirst());
         verify(userGoalSkillRepository, times(1)).findByGoalId(17);
     }
 
@@ -91,7 +95,7 @@ class AccountProfileServiceTests {
                         7, GoalStatus.ACTIVE))
                 .thenReturn(Optional.empty());
         when(userSkillProfileRepository.findByUserIdOrderBySkillAsc(7)).thenReturn(List.of());
-        AccountSnapshot snapshot = service.snapshot("snapshot@test.local");
+        AccountSnapshotDTO snapshot = service.snapshot("snapshot@test.local");
         assertNull(snapshot.goal());
         assertTrue(snapshot.profiles().isEmpty());
         verifyNoInteractions(userGoalSkillRepository);

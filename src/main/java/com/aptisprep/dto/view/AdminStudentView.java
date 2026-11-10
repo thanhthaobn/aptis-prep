@@ -1,5 +1,6 @@
 package com.aptisprep.dto.view;
 
+import com.aptisprep.mvc.account.dto.AccountSnapshotDTO;
 import com.aptisprep.mvc.common.enums.UserStatus;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -61,7 +62,7 @@ public final class AdminStudentView {
             String initials,
             LocalDateTime joinedAt,
             UserStatus status,
-            AccountSnapshot.GoalView goal,
+            AccountSnapshotDTO.GoalViewDTO goal,
             List<Skill> skills,
             List<Progress> progress,
             List<Attempt> attempts,

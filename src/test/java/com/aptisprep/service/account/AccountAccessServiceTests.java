@@ -4,9 +4,11 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
-import com.aptisprep.entity.UserSkillProfile;
+import com.aptisprep.mvc.account.entity.UserSkillProfile;
+import com.aptisprep.mvc.account.repository.*;
+import com.aptisprep.mvc.account.service.AccountAccessService;
 import com.aptisprep.mvc.auth.entity.User;
-import com.aptisprep.mvc.auth.repository.UserRepository;
+import com.aptisprep.mvc.auth.service.UserService;
 import com.aptisprep.mvc.common.enums.Role;
 import com.aptisprep.mvc.common.enums.UserStatus;
 import com.aptisprep.repository.*;
@@ -25,7 +27,7 @@ import org.springframework.beans.factory.ObjectProvider;
 
 @ExtendWith(MockitoExtension.class)
 class AccountAccessServiceTests {
-    @Mock UserRepository users;
+    @Mock UserService users;
     @Mock UserGoalRepository goals;
     @Mock UserGoalSkillRepository goalSkills;
     @Mock UserSkillProfileRepository profiles;
@@ -47,7 +49,7 @@ class AccountAccessServiceTests {
         profile.setUser(student);
         profile.setSkill("READING");
         service =
-                new com.aptisprep.service.account.impl.AccountAccessServiceImpl(
+                new com.aptisprep.mvc.account.service.impl.AccountAccessServiceImpl(
                         users, goals, goalSkills, profiles, applications, attemptProvider);
         lenient().when(users.findById(1)).thenReturn(Optional.of(student));
         when(users.findByIdForUpdate(1)).thenReturn(Optional.of(student));

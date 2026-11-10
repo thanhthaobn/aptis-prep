@@ -8,8 +8,8 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
+import com.aptisprep.mvc.account.service.AccountAccessService;
 import com.aptisprep.mvc.common.event.AttemptCompletedEvent;
-import com.aptisprep.service.account.AccountAccessService;
 import com.aptisprep.service.contract.LearningPathContract;
 import com.aptisprep.service.exam.AttemptOutboxService;
 import org.junit.jupiter.api.Test;

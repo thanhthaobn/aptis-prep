@@ -1,19 +1,19 @@
-package com.aptisprep.dto.view;
+package com.aptisprep.mvc.account.dto;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 
-public record AccountSnapshot(
-        String fullName, String email, GoalView goal, List<SkillView> profiles) {
-    public record GoalView(
+public record AccountSnapshotDTO(
+        String fullName, String email, GoalViewDTO goal, List<SkillViewDTO> profiles) {
+    public record GoalViewDTO(
             Integer certificateId,
             String certificateName,
             LocalDate targetDate,
             Map<String, String> targets,
             Map<String, BigDecimal> targetScores) {
-        public GoalView(
+        public GoalViewDTO(
                 Integer certificateId,
                 String certificateName,
                 LocalDate targetDate,
@@ -22,5 +22,5 @@ public record AccountSnapshot(
         }
     }
 
-    public record SkillView(String skill, String currentLevel, Integer sourceAttemptId) {}
+    public record SkillViewDTO(String skill, String currentLevel, Integer sourceAttemptId) {}
 }

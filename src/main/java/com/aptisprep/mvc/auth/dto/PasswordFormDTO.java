@@ -42,4 +42,3 @@ public class PasswordFormDTO {
         confirmPassword = v;
     }
 }
-

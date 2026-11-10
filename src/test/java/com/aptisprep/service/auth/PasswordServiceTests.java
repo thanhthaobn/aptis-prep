@@ -3,8 +3,6 @@ package com.aptisprep.service.auth;
 import static org.assertj.core.api.Assertions.*;
 
 import com.aptisprep.mvc.auth.service.impl.PasswordHasher;
-import com.aptisprep.mvc.auth.service.impl.PasswordHasher;
-
 import org.junit.jupiter.api.Test;
 
 class PasswordServiceTests {

@@ -1,6 +1,6 @@
-package com.aptisprep.repository;
+package com.aptisprep.mvc.account.repository;
 
-import com.aptisprep.entity.UserSkillProfile;
+import com.aptisprep.mvc.account.entity.UserSkillProfile;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;

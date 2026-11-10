@@ -52,4 +52,3 @@ public class PasswordServiceImpl implements PasswordService {
         return new BusinessRuleException("Không tìm thấy tài khoản hoặc tài khoản không hợp lệ");
     }
 }
-

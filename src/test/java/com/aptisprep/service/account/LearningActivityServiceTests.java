@@ -2,6 +2,7 @@ package com.aptisprep.service.account;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.aptisprep.mvc.account.service.impl.LearningActivityServiceImpl;
 import java.time.LocalDate;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
@@ -11,7 +12,7 @@ class LearningActivityServiceTests {
     void calculatesCurrentAndLongestStreakFromRealActivityDates() {
         LocalDate today = LocalDate.of(2026, 10, 21);
         var result =
-                LearningActivityService.summarize(
+                LearningActivityServiceImpl.summarize(
                         Map.of(
                                 today,
                                 2,
@@ -40,7 +41,7 @@ class LearningActivityServiceTests {
     void keepsYesterdayStreakCurrentUntilLearnerStudiesToday() {
         LocalDate today = LocalDate.of(2026, 10, 21);
         var result =
-                LearningActivityService.summarize(
+                LearningActivityServiceImpl.summarize(
                         Map.of(
                                 today.minusDays(1), 2,
                                 today.minusDays(2), 1),

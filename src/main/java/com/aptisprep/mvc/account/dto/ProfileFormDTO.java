@@ -1,10 +1,10 @@
-package com.aptisprep.dto.form;
+package com.aptisprep.mvc.account.dto;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
-public class ProfileForm {
+public class ProfileFormDTO {
     @NotBlank(message = "Họ và tên không được để trống")
     @Size(max = 255, message = "Họ và tên tối đa 255 ký tự")
     @Pattern(

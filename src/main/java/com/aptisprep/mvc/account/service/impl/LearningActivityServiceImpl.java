@@ -1,11 +1,11 @@
-package com.aptisprep.service.account.impl;
+package com.aptisprep.mvc.account.service.impl;
 
+import com.aptisprep.mvc.account.dto.LearningActivityDTO.ActivityViewDTO;
+import com.aptisprep.mvc.account.dto.LearningActivityDTO.DayDTO;
+import com.aptisprep.mvc.account.dto.LearningActivityDTO.WeekDTO;
+import com.aptisprep.mvc.account.service.AccountAccessService;
+import com.aptisprep.mvc.account.service.LearningActivityService;
 import com.aptisprep.repository.*;
-import com.aptisprep.service.account.AccountAccessService;
-import com.aptisprep.service.account.LearningActivityService;
-import com.aptisprep.service.account.LearningActivityService.ActivityView;
-import com.aptisprep.service.account.LearningActivityService.Day;
-import com.aptisprep.service.account.LearningActivityService.Week;
 import java.time.*;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.TemporalAdjusters;
@@ -69,8 +69,9 @@ public class LearningActivityServiceImpl implements LearningActivityService {
         this.examAttemptRepository = examAttemptRepository;
     }
 
+    @Override
     @Transactional(readOnly = true)
-    public ActivityView activity(String email) {
+    public ActivityViewDTO activity(String email) {
         Integer userId = access.requireActiveStudent(email);
         Map<LocalDate, DailyCount> counts = new HashMap<>();
         lessonProgressRepository
@@ -94,11 +95,15 @@ public class LearningActivityServiceImpl implements LearningActivityService {
         return summarizeDetailed(counts, LocalDate.now());
     }
 
-    private static ActivityView summarizeDetailed(
+    public static ActivityViewDTO summarize(Map<LocalDate, Integer> source, LocalDate today) {
+        return LearningActivitySummarizer.summarize(source, today);
+    }
+
+    private static ActivityViewDTO summarizeDetailed(
             Map<LocalDate, DailyCount> source, LocalDate today) {
         LocalDate start =
                 today.minusWeeks(52).with(TemporalAdjusters.previousOrSame(DayOfWeek.SUNDAY));
-        List<Week> weeks = new ArrayList<>();
+        List<WeekDTO> weeks = new ArrayList<>();
         int total = 0, active = 0, longest = 0, running = 0;
         for (LocalDate date = start; !date.isAfter(today); date = date.plusDays(1)) {
             int count = source.getOrDefault(date, new DailyCount()).total();
@@ -120,14 +125,14 @@ public class LearningActivityServiceImpl implements LearningActivityService {
             cursor = cursor.minusDays(1);
         }
         for (int week = 0; week < 53; week++) {
-            List<Day> days = new ArrayList<>();
+            List<DayDTO> days = new ArrayList<>();
             for (int weekday = 0; weekday < 7; weekday++) {
                 LocalDate date = start.plusDays((long) week * 7 + weekday);
                 boolean future = date.isAfter(today);
                 DailyCount detail = source.getOrDefault(date, new DailyCount());
                 int count = future ? 0 : detail.total();
                 days.add(
-                        new Day(
+                        new DayDTO(
                                 date,
                                 count,
                                 level(count),
@@ -139,9 +144,10 @@ public class LearningActivityServiceImpl implements LearningActivityService {
                                                         ? ": Không có hoạt động"
                                                         : ": " + detail.detail())));
             }
-            weeks.add(new Week(List.copyOf(days)));
+            weeks.add(new WeekDTO(List.copyOf(days)));
         }
-        return new ActivityView(List.copyOf(weeks), current, longest, active, total, start, today);
+        return new ActivityViewDTO(
+                List.copyOf(weeks), current, longest, active, total, start, today);
     }
 
     private static int level(int count) {

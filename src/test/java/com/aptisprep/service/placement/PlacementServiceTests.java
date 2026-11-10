@@ -3,6 +3,7 @@ package com.aptisprep.service.placement;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
+import com.aptisprep.mvc.account.service.AccountAccessService;
 import com.aptisprep.mvc.common.exception.BusinessRuleException;
 import com.aptisprep.service.contract.*;
 import com.aptisprep.service.contract.IntegrationModels.AttemptHandle;
@@ -17,9 +18,9 @@ class PlacementServiceTests {
         var catalog = mock(PlacementExamCatalogService.class);
         var published = mock(ExamCatalogContract.class);
         var engine = mock(ExamAttemptContract.class);
-        var accounts = mock(AccountAccessContract.class);
+        var accounts = mock(AccountAccessService.class);
         ObjectProvider<ExamAttemptContract> engines = mock(ObjectProvider.class);
-        ObjectProvider<AccountAccessContract> access = mock(ObjectProvider.class);
+        ObjectProvider<AccountAccessService> access = mock(ObjectProvider.class);
         when(engines.getIfAvailable()).thenReturn(engine);
         when(access.getIfAvailable()).thenReturn(accounts);
         when(accounts.requireActiveStudent("learner@test.local")).thenReturn(9);
@@ -44,9 +45,9 @@ class PlacementServiceTests {
         var catalog = mock(PlacementExamCatalogService.class);
         var published = mock(ExamCatalogContract.class);
         var engine = mock(ExamAttemptContract.class);
-        var accounts = mock(AccountAccessContract.class);
+        var accounts = mock(AccountAccessService.class);
         ObjectProvider<ExamAttemptContract> engines = mock(ObjectProvider.class);
-        ObjectProvider<AccountAccessContract> access = mock(ObjectProvider.class);
+        ObjectProvider<AccountAccessService> access = mock(ObjectProvider.class);
         when(engines.getIfAvailable()).thenReturn(engine);
         when(access.getIfAvailable()).thenReturn(accounts);
         when(accounts.requireActiveStudent("learner@test.local")).thenReturn(9);
