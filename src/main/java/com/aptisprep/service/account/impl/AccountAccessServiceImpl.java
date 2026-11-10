@@ -159,6 +159,13 @@ public class AccountAccessServiceImpl implements AccountAccessService {
                                     created.setSkill(skill);
                                     return created;
                                 });
+        // Placement retakes are only for filling skills that were missing from
+        // the learner profile. Once a skill has a Placement result, a later
+        // retake must not regress it with a lower score.
+        if (type.equals("PLACEMENT") && profile.getPlacementLevel() != null) {
+            saveApplication(user, attemptId, skill);
+            return true;
+        }
         LocalDateTime submittedAtUtc =
                 submittedAt == null ? null : LocalDateTime.ofInstant(submittedAt, ZoneOffset.UTC);
         if (type.equals("CHECKPOINT")) {
