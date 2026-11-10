@@ -95,6 +95,28 @@ class AccountAccessServiceTests {
     }
 
     @Test
+    void placementRetakeOnlyFillsASkillThatHasNoPlacementResult() {
+        profile.setPlacementLevel("B2");
+        profile.setCurrentLevel("B2");
+        profile.setSourceAttemptId(20);
+        when(attempts.result(eq(1), eq(30)))
+                .thenReturn(
+                        result(
+                                30,
+                                "PLACEMENT",
+                                "A1",
+                                Instant.parse("2026-02-01T00:00:00Z"),
+                                false));
+
+        service.applyAssessment(1, 30);
+
+        assertEquals("B2", profile.getPlacementLevel());
+        assertEquals("B2", profile.getCurrentLevel());
+        assertEquals(20, profile.getSourceAttemptId());
+        verify(applications).save(any());
+    }
+
+    @Test
     void checkpointFloorProtectsLaterPlacementAndFailedCheckpointIsClaimed() {
         when(attempts.result(eq(1), eq(30)))
                 .thenReturn(

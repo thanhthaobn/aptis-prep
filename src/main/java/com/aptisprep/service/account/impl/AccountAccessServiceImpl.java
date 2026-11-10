@@ -106,7 +106,8 @@ public class AccountAccessServiceImpl implements AccountAccessService {
             throw new AccessDeniedException("Không thể xác nhận kết quả bài thi");
         }
         if (!"COMPLETED".equalsIgnoreCase(result.state())
-                && !"EXPIRED".equalsIgnoreCase(result.state())) {
+                && !"EXPIRED".equalsIgnoreCase(result.state())
+                && !"ERROR".equalsIgnoreCase(result.state())) {
             throw new BusinessRuleException("Kết quả bài thi chưa hoàn tất");
         }
         String type = Optional.ofNullable(result.examType()).orElse("").toUpperCase(Locale.ROOT);
@@ -117,38 +118,69 @@ public class AccountAccessServiceImpl implements AccountAccessService {
         if (result.skills() == null || result.skills().isEmpty()) {
             throw new BusinessRuleException("Kết quả chưa có kỹ năng đủ điều kiện");
         }
+        boolean applied = false;
         for (SkillResult skillResult : result.skills()) {
-            if (result.hasFullMockTotal() && "GRAMMAR_VOCABULARY".equals(skillResult.skill()))
-                continue;
-            applySkillResult(user, attemptId, type, result.submittedAt(), skillResult);
+            if (!"COMPLETED".equalsIgnoreCase(skillResult.gradingState())
+                    || skillResult.scaleScore() == null
+                    || skillResult.estimatedLevel() == null) continue;
+            applied |= applySkillResult(user, attemptId, type, result.submittedAt(), skillResult);
         }
+        if (!applied && !"ERROR".equalsIgnoreCase(result.state()))
+            throw new BusinessRuleException("Kết quả chưa có kỹ năng đủ điều kiện");
     }
 
-    private void applySkillResult(
+    private boolean applySkillResult(
             User user, Integer attemptId, String type, Instant submittedAt, SkillResult result) {
         String skill = normalizeSkill(result.skill());
+        boolean belowA1 = CefrLevel.BELOW_A1.equals(result.estimatedLevel());
         CefrLevel level = CefrLevel.parse(result.estimatedLevel());
         if (skill == null
-                || level == null
+                || (!belowA1 && level == null)
                 || result.scaleScore() == null
                 || result.scaleScore().compareTo(BigDecimal.ZERO) < 0
                 || !"COMPLETED".equalsIgnoreCase(result.gradingState())) {
             throw new BusinessRuleException("Kết quả kỹ năng chưa đủ điều kiện cập nhật hồ sơ");
         }
-        if (profileApplicationRepository.existsByUserIdAndAttemptIdAndSkill(
-                user.getId(), attemptId, skill)) {
-            return;
+        boolean alreadyApplied =
+                profileApplicationRepository.existsByUserIdAndAttemptIdAndSkill(
+                        user.getId(), attemptId, skill);
+        Optional<UserSkillProfile> existingProfile =
+                userSkillProfileRepository.findByUserIdAndSkill(user.getId(), skill);
+        if (alreadyApplied && existingProfile.isPresent()) {
+            return true;
         }
         UserSkillProfile profile =
-                userSkillProfileRepository
-                        .findByUserIdAndSkill(user.getId(), skill)
-                        .orElseGet(
-                                () -> {
-                                    UserSkillProfile created = new UserSkillProfile();
-                                    created.setUser(user);
-                                    created.setSkill(skill);
-                                    return created;
-                                });
+                existingProfile.orElseGet(
+                        () -> {
+                            UserSkillProfile created = new UserSkillProfile();
+                            created.setUser(user);
+                            created.setSkill(skill);
+                            return created;
+                        });
+        if (type.equals("PLACEMENT") && profile.getPlacementLevel() != null) {
+            if (!alreadyApplied) saveApplication(user, attemptId, skill);
+            return true;
+        }
+        if (type.equals("PLACEMENT") && belowA1) {
+            LocalDateTime submittedAtUtc =
+                    submittedAt == null
+                            ? null
+                            : LocalDateTime.ofInstant(submittedAt, ZoneOffset.UTC);
+            if (isNewer(
+                    submittedAt,
+                    attemptId,
+                    profile.getPlacementSubmittedAt(),
+                    profile.getSourceAttemptId())) {
+                profile.setPlacementLevel(CefrLevel.BELOW_A1);
+                profile.setPlacementSubmittedAt(submittedAtUtc);
+                profile.setSourceAttemptId(attemptId);
+            }
+            CefrLevel floor = CefrLevel.parse(profile.getCheckpointFloorLevel());
+            profile.setCurrentLevel(floor == null ? CefrLevel.BELOW_A1 : floor.name());
+            userSkillProfileRepository.save(profile);
+            if (!alreadyApplied) saveApplication(user, attemptId, skill);
+            return true;
+        }
         LocalDateTime submittedAtUtc =
                 submittedAt == null ? null : LocalDateTime.ofInstant(submittedAt, ZoneOffset.UTC);
         if (type.equals("CHECKPOINT")) {
@@ -182,14 +214,11 @@ public class AccountAccessServiceImpl implements AccountAccessService {
             }
         }
         if (type.equals("CHECKPOINT") && !result.passed()) {
-            // A failed first checkpoint is evidence of an attempt, not a CEFR
-            // profile. user_skill_profiles.current_level is NOT NULL, so do
-            // not persist a newly-created empty profile or invent A1.
             if (profile.getId() != null && profile.getCurrentLevel() != null) {
                 userSkillProfileRepository.save(profile);
             }
-            saveApplication(user, attemptId, skill);
-            return;
+            if (!alreadyApplied) saveApplication(user, attemptId, skill);
+            return true;
         }
         CefrLevel floor = CefrLevel.parse(profile.getCheckpointFloorLevel());
         CefrLevel placement = CefrLevel.parse(profile.getPlacementLevel());
@@ -203,7 +232,8 @@ public class AccountAccessServiceImpl implements AccountAccessService {
             profile.setSourceAttemptId(profile.getCheckpointSourceAttemptId());
         }
         userSkillProfileRepository.save(profile);
-        saveApplication(user, attemptId, skill);
+        if (!alreadyApplied) saveApplication(user, attemptId, skill);
+        return true;
     }
 
     private void saveApplication(User user, Integer attemptId, String skill) {

@@ -138,9 +138,6 @@ public class StudentAccountController {
             Principal principal,
             RedirectAttributes redirect) {
         try {
-            // Keep accepting the legacy skill/examId form parameters for bookmarks and
-            // older clients.  The current placement page does not send them and therefore
-            // always starts the single combined placement exam.
             AttemptHandle handle =
                     skill != null || examId != null
                             ? placement.start(principal.getName(), skill, examId)
@@ -164,6 +161,13 @@ public class StudentAccountController {
         model.addAttribute("attemptResult", result);
         model.addAttribute("fromPlacement", true);
         Integer userId = access.requireActiveStudent(principal.getName());
+        boolean terminalResult =
+                "COMPLETED".equalsIgnoreCase(result.state())
+                        || "EXPIRED".equalsIgnoreCase(result.state())
+                        || "ERROR".equalsIgnoreCase(result.state());
+        if ("PLACEMENT".equalsIgnoreCase(result.examType()) && terminalResult) {
+            access.applyAssessment(userId, attemptId);
+        }
         if (!"IN_PROGRESS".equals(result.state())
                 && attempts instanceof ExamAttemptService reviewService)
             model.addAttribute("review", reviewService.review(userId, attemptId));

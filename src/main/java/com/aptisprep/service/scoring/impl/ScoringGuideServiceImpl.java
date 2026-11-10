@@ -4,6 +4,7 @@ import com.aptisprep.repository.*;
 import com.aptisprep.service.contract.IntegrationModels.AttemptResult;
 import com.aptisprep.service.contract.IntegrationModels.SkillResult;
 import com.aptisprep.service.scoring.ScoringGuideService;
+import java.math.BigDecimal;
 import java.util.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -102,31 +103,48 @@ public class ScoringGuideServiceImpl implements ScoringGuideService {
                                         r.getScaleMax(),
                                         fullMock && "GRAMMAR_VOCABULARY".equals(r.getSkill())
                                                 ? List.of()
-                                                : bands
-                                                        .findBySchemeIdAndSkillOrderByMinScoreAsc(
-                                                                schemeId, r.getSkill())
-                                                        .stream()
-                                                        .map(
-                                                                b ->
-                                                                        new Band(
-                                                                                b.getMinScore(),
-                                                                                b.getMaxScore(),
-                                                                                scheme.get()
-                                                                                        .getCertificate()
-                                                                                        .scoringLevel(
-                                                                                                b
-                                                                                                        .getCefrLevel()),
-                                                                                scheme.get()
-                                                                                        .getCertificate()
-                                                                                        .scoringLevel(
-                                                                                                b
-                                                                                                        .getCefrLevel())
-                                                                                        .equals(
-                                                                                                levels
-                                                                                                        .get(
-                                                                                                                r
-                                                                                                                        .getSkill()))))
-                                                        .toList()))
+                                                : guideBands(
+                                                        schemeId,
+                                                        r.getSkill(),
+                                                        scheme.get().getCertificate(),
+                                                        levels)))
                 .toList();
+    }
+
+    private List<Band> guideBands(
+            Integer schemeId,
+            String skill,
+            com.aptisprep.entity.Certificate certificate,
+            Map<String, String> levels) {
+        List<Band> configured =
+                bands.findBySchemeIdAndSkillOrderByMinScoreAsc(schemeId, skill).stream()
+                        .map(
+                                b ->
+                                        new Band(
+                                                b.getMinScore(),
+                                                b.getMaxScore(),
+                                                certificate.scoringLevel(b.getCefrLevel()),
+                                                certificate
+                                                        .scoringLevel(b.getCefrLevel())
+                                                        .equals(levels.get(skill))))
+                        .toList();
+        boolean hasBelowA1 = configured.stream().anyMatch(b -> "A0".equals(b.level()));
+        if (hasBelowA1 || configured.stream().noneMatch(b -> "A1".equals(b.level())))
+            return configured;
+        Band a1 = configured.stream().filter(b -> "A1".equals(b.level())).findFirst().orElseThrow();
+        if (a1.min().signum() != 0) return configured;
+        List<Band> adjusted = new ArrayList<>();
+        adjusted.add(new Band(BigDecimal.ZERO, BigDecimal.ZERO, "A0", false));
+        for (Band band : configured) {
+            adjusted.add(
+                    "A1".equals(band.level())
+                            ? new Band(
+                                    new BigDecimal("0.01"),
+                                    band.max(),
+                                    band.level(),
+                                    band.attained())
+                            : band);
+        }
+        return List.copyOf(adjusted);
     }
 }

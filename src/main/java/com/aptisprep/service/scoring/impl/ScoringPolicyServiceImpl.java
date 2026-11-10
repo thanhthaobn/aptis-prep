@@ -92,6 +92,10 @@ public class ScoringPolicyServiceImpl implements ScoringPolicyService {
                 || scaleScore.compareTo(rule.getScaleMax()) > 0) {
             throw new BusinessRuleException("Điểm scale nằm ngoài policy của kỹ năng");
         }
+        // Zero correct answers represent performance below the A1 threshold. Some
+        // legacy schemes start their A1 band at 0, so relying only on the configured
+        // bands would incorrectly report A1 for a completely unanswered skill.
+        if (scaleScore.signum() == 0) return CefrLevel.BELOW_A1;
         return scoreBandRepository
                 .findBySchemeIdAndSkillOrderByMinScoreAsc(schemeId, normalized)
                 .stream()

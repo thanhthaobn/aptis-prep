@@ -13,7 +13,6 @@ import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.*;
 
-/** Owns path/progress only; Profile and attempt state are delegated to the team contracts. */
 @Service
 public class LearningPathService implements LearningPathContract {
     @PersistenceContext private EntityManager entityManager;
@@ -86,8 +85,6 @@ public class LearningPathService implements LearningPathContract {
                                 userId, "ACTIVE"));
         Set<String> shown = new HashSet<>();
         current.forEach(path -> shown.add(path.getSkill()));
-        // Keep the final completed stage visible after reaching the goal or exhausting available
-        // content.
         for (LearningPath path :
                 learningPathRepository.findByUserIdAndStatusOrderBySkillAscCreatedAtDesc(
                         userId, "COMPLETED")) if (shown.add(path.getSkill())) current.add(path);
@@ -305,7 +302,6 @@ public class LearningPathService implements LearningPathContract {
                 previous.stream().filter(checkpointStatus::unfinished).findFirst();
         if (unfinished.isPresent()) return unfinished.get().attemptId();
         int last = previous.stream().mapToInt(AttemptResult::attemptId).max().orElse(0);
-        // One stable start operation, a fresh key after each terminal result.
         return engine.startCheckpoint(
                         userId,
                         checkpoint.examId(),
@@ -322,7 +318,6 @@ public class LearningPathService implements LearningPathContract {
                 + ("IN_PROGRESS".equals(result.state()) ? "" : "/result");
     }
 
-    /** AFTER_COMMIT callbacks need a real new transaction before locks/Profile delegation. */
     @Override
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void applyCheckpoint(Integer userId, Integer attemptId) {
@@ -337,7 +332,6 @@ public class LearningPathService implements LearningPathContract {
                 || !"CHECKPOINT".equals(result.examType())
                 || !checkpointStatus.terminal(result))
             throw new BusinessRuleException("Checkpoint chưa có kết quả hoàn tất hợp lệ");
-        // The start key records the stage whose required lessons authorized this attempt.
         var originPathId = engine.checkpointOriginPathId(userId, attemptId);
         var candidates =
                 originPathId.isPresent()
@@ -613,6 +607,7 @@ public class LearningPathService implements LearningPathContract {
     }
 
     private static String validLevel(String value) {
+        if (CefrLevel.BELOW_A1.equalsIgnoreCase(value)) return CefrLevel.BELOW_A1;
         return rank(value) < 0 ? null : value.toUpperCase(Locale.ROOT);
     }
 

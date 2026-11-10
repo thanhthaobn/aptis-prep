@@ -103,6 +103,7 @@ public class AttemptFinalizationService {
             attempt.setStatus("ERROR");
             attempt.setGradingStatus("ERROR");
             examAttemptRepository.save(attempt);
+            if ("PLACEMENT".equals(exam.getExamType())) publishCompleted(attempt, exam);
             return false;
         }
         if (results.stream().anyMatch(value -> !isComplete(value))) return false;
@@ -214,6 +215,8 @@ public class AttemptFinalizationService {
             attempt.setStatus("ERROR");
             attempt.setGradingStatus("ERROR");
             examAttemptRepository.save(attempt);
+            MockExamEntity failedExam = exam(attempt);
+            if ("PLACEMENT".equals(failedExam.getExamType())) publishCompleted(attempt, failedExam);
             return;
         }
         if (assessment.score() == null
@@ -419,6 +422,8 @@ public class AttemptFinalizationService {
             attempt.setStatus("ERROR");
             attempt.setGradingStatus("ERROR");
             examAttemptRepository.save(attempt);
+            MockExamEntity failedExam = exam(attempt);
+            if ("PLACEMENT".equals(failedExam.getExamType())) publishCompleted(attempt, failedExam);
         }
     }
 
