@@ -3,10 +3,12 @@ package com.aptisprep.service.exam;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-import com.aptisprep.entity.AttemptOutboxEntity;
 import com.aptisprep.mvc.common.event.AttemptCompletedEvent;
-import com.aptisprep.repository.AttemptOutboxRepository;
-import com.aptisprep.repository.ExamAttemptRepository;
+import com.aptisprep.mvc.exam.entity.*;
+import com.aptisprep.mvc.exam.entity.AttemptOutboxEntity;
+import com.aptisprep.mvc.exam.repository.*;
+import com.aptisprep.mvc.exam.repository.AttemptOutboxRepository;
+import com.aptisprep.mvc.exam.repository.ExamAttemptRepository;
 import java.time.LocalDateTime;
 import java.util.List;
 import org.junit.jupiter.api.Test;
@@ -35,7 +37,7 @@ class AttemptOutboxLeaseTests {
                         })
                 .when(publisher)
                 .publishEvent(any(AttemptCompletedEvent.class));
-        new AttemptOutboxService(
+        new com.aptisprep.mvc.exam.service.impl.AttemptOutboxServiceImpl(
                         repository, publisher, mock(ExamAttemptRepository.class), null, null)
                 .recoverPending();
         assertEquals("PROCESSING", row.getStatus());

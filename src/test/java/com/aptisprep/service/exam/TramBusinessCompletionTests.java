@@ -16,6 +16,11 @@ import com.aptisprep.mvc.common.enums.*;
 import com.aptisprep.mvc.common.event.AttemptSubmittedEvent;
 import com.aptisprep.mvc.common.exception.BusinessRuleException;
 import com.aptisprep.mvc.common.exception.ResourceNotFoundException;
+import com.aptisprep.mvc.exam.repository.*;
+import com.aptisprep.mvc.exam.service.AttemptOutboxService;
+import com.aptisprep.mvc.exam.service.ExamAttemptService;
+import com.aptisprep.mvc.exam.service.impl.AttemptGradingOrchestrationListener;
+import com.aptisprep.mvc.exam.service.impl.ExamGradingPayloadFactory;
 import com.aptisprep.mvc.scoring.entity.*;
 import com.aptisprep.mvc.scoring.repository.*;
 import com.aptisprep.repository.*;
@@ -107,7 +112,7 @@ class TramBusinessCompletionTests {
         var config = new AiProperties();
         config.setEnabled(true);
         var orchestration =
-                new AttemptGradingOrchestrationService(
+                new AttemptGradingOrchestrationListener(
                         config, ai, finalization, mock(AttemptOutboxService.class));
         orchestration.onSubmitted(replayed);
         var request = ArgumentCaptor.forClass(AiAssessmentContract.AssessmentRequest.class);

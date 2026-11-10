@@ -14,10 +14,8 @@ import com.aptisprep.mvc.catalog.repository.MockExamSectionRepository;
 import com.aptisprep.mvc.catalog.service.AdminExamService;
 import com.aptisprep.mvc.common.exception.BusinessRuleException;
 import com.aptisprep.mvc.common.exception.ResourceNotFoundException;
+import com.aptisprep.mvc.exam.service.ExamAttemptService;
 import com.aptisprep.mvc.scoring.service.CertificateSchemeService;
-import com.aptisprep.repository.ExamAttemptRepository;
-import com.aptisprep.service.exam.ExamSnapshotService;
-import com.aptisprep.service.exam.ExamStartValidator;
 import java.util.*;
 import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
@@ -30,28 +28,22 @@ public class AdminExamServiceImpl implements AdminExamService {
     private final MockExamSectionRepository mockExamSectionRepository;
     private final MockExamQuestionRepository mockExamQuestionRepository;
     private final CertificateSchemeService certificateSchemes;
-    private final ExamAttemptRepository examAttemptRepository;
+    private final ExamAttemptService examAttemptService;
     private final ExamDefinitionValidator examValidator;
-    private final ExamSnapshotService examSnapshots;
-    private final ExamStartValidator readiness;
 
     public AdminExamServiceImpl(
             MockExamRepository mockExamRepository,
             MockExamSectionRepository mockExamSectionRepository,
             MockExamQuestionRepository mockExamQuestionRepository,
             CertificateSchemeService certificateSchemes,
-            ExamAttemptRepository examAttemptRepository,
-            ExamDefinitionValidator examValidator,
-            ExamSnapshotService examSnapshots,
-            ExamStartValidator readiness) {
+            ExamAttemptService examAttemptService,
+            ExamDefinitionValidator examValidator) {
         this.mockExamRepository = mockExamRepository;
         this.mockExamSectionRepository = mockExamSectionRepository;
         this.mockExamQuestionRepository = mockExamQuestionRepository;
         this.certificateSchemes = certificateSchemes;
-        this.examAttemptRepository = examAttemptRepository;
+        this.examAttemptService = examAttemptService;
         this.examValidator = examValidator;
-        this.examSnapshots = examSnapshots;
-        this.readiness = readiness;
     }
 
     public ExamFormDTO examForm(Integer id) {
@@ -130,13 +122,7 @@ public class AdminExamServiceImpl implements AdminExamService {
             throw new BusinessRuleException("Hãy ngừng công bố trước khi chỉnh sửa đề");
         }
         if (id != null) {
-            var legacyAttempts = examAttemptRepository.findWithoutSnapshot(id);
-            if (!legacyAttempts.isEmpty()) {
-                var links = mockExamQuestionRepository.findByMockExamIdOrderByPosition(id);
-                for (var attempt : legacyAttempts) {
-                    examSnapshots.preserveLegacyAttempt(attempt, exam, links);
-                }
-            }
+            examAttemptService.preserveLegacyAttempts(id);
         }
         applyExamFields(exam, form);
         exam = mockExamRepository.save(exam);
@@ -165,7 +151,7 @@ public class AdminExamServiceImpl implements AdminExamService {
         }
         if (all.isEmpty()) throw new BusinessRuleException("Không thể công bố đề trống");
         exam.setDurationMinutes(form.getDurationMinutes());
-        readiness.validateForPublication(
+        examAttemptService.validateExamForPublication(
                 exam, mockExamQuestionRepository.findByMockExamIdOrderByPosition(id));
         exam.setStatus("PUBLISHED");
         mockExamRepository.save(exam);

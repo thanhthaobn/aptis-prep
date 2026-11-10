@@ -17,7 +17,7 @@ import com.aptisprep.mvc.common.enums.*;
 import com.aptisprep.mvc.common.exception.AccessDeniedException;
 import com.aptisprep.mvc.common.exception.BusinessRuleException;
 import com.aptisprep.mvc.common.exception.ResourceNotFoundException;
-import com.aptisprep.service.contract.ExamAttemptContract;
+import com.aptisprep.mvc.exam.service.ExamAttemptService;
 import com.aptisprep.service.contract.IntegrationModels.*;
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -35,7 +35,7 @@ public class AccountAccessServiceImpl implements AccountAccessService {
     private final UserGoalSkillRepository userGoalSkillRepository;
     private final UserSkillProfileRepository userSkillProfileRepository;
     private final ProfileApplicationRepository profileApplicationRepository;
-    private final ObjectProvider<ExamAttemptContract> attempts;
+    private final ObjectProvider<ExamAttemptService> attempts;
 
     public AccountAccessServiceImpl(
             UserService userRepository,
@@ -43,7 +43,7 @@ public class AccountAccessServiceImpl implements AccountAccessService {
             UserGoalSkillRepository userGoalSkillRepository,
             UserSkillProfileRepository userSkillProfileRepository,
             ProfileApplicationRepository profileApplicationRepository,
-            ObjectProvider<ExamAttemptContract> attempts) {
+            ObjectProvider<ExamAttemptService> attempts) {
         this.userRepository = userRepository;
         this.userGoalRepository = userGoalRepository;
         this.userGoalSkillRepository = userGoalSkillRepository;
@@ -105,7 +105,7 @@ public class AccountAccessServiceImpl implements AccountAccessService {
     @Transactional
     public void applyAssessment(Integer userId, Integer attemptId) {
         User user = activeStudentForUpdate(userId);
-        ExamAttemptContract attemptContract = attempts.getIfAvailable();
+        ExamAttemptService attemptContract = attempts.getIfAvailable();
         if (attemptContract == null) {
             throw new BusinessRuleException("Chưa có dịch vụ kết quả bài thi để xác nhận hồ sơ");
         }

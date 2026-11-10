@@ -5,6 +5,8 @@ import static org.mockito.Mockito.*;
 
 import com.aptisprep.entity.*;
 import com.aptisprep.mvc.catalog.repository.*;
+import com.aptisprep.mvc.exam.entity.*;
+import com.aptisprep.mvc.exam.repository.*;
 import com.aptisprep.mvc.scoring.entity.*;
 import com.aptisprep.mvc.scoring.repository.*;
 import com.aptisprep.repository.*;
@@ -19,15 +21,16 @@ class ScoringGuideServiceTests {
         var schemes = mock(ScoringSchemeRepository.class);
         var rules = mock(ScoringScaleRuleRepository.class);
         var bands = mock(ScoreBandRepository.class);
-        var snapshots = mock(ExamAttemptSnapshotRepository.class);
-        var exams = mock(MockExamRepository.class);
+        var examCatalogService = mock(com.aptisprep.mvc.catalog.service.ExamCatalogService.class);
+        var examAttemptService = mock(com.aptisprep.mvc.exam.service.ExamAttemptService.class);
         var service =
                 new com.aptisprep.mvc.scoring.service.impl.ScoringGuideServiceImpl(
-                        schemes, rules, bands, exams, snapshots);
-        var snapshot = new ExamAttemptSnapshotEntity();
-        snapshot.setScoringSchemeId(7);
-        snapshot.setSkill("READING");
-        when(snapshots.findByAttemptId(42)).thenReturn(Optional.of(snapshot));
+                        schemes, rules, bands, examCatalogService, examAttemptService);
+        when(examAttemptService.findSnapshotSchemeInfo(42))
+                .thenReturn(
+                        Optional.of(
+                                new com.aptisprep.mvc.exam.service.ExamAttemptService
+                                        .SnapshotSchemeInfo(7, "READING")));
         var scheme = new ScoringScheme();
         scheme.setCertificate(new com.aptisprep.mvc.scoring.entity.Certificate());
         scheme.setVersion("historical-v1");
@@ -64,6 +67,6 @@ class ScoringGuideServiceTests {
         assertThat(guide.max()).isEqualByComparingTo("100");
         assertThat(guide.bands().getFirst().attained()).isTrue();
         verify(schemes, never()).findById(99);
-        verifyNoInteractions(exams);
+        verifyNoInteractions(examCatalogService);
     }
 }

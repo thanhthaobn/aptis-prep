@@ -9,7 +9,7 @@ import com.aptisprep.mvc.catalog.repository.MockExamSectionRepository;
 import com.aptisprep.mvc.catalog.service.*;
 import com.aptisprep.mvc.common.enums.Skill;
 import com.aptisprep.mvc.common.exception.BusinessRuleException;
-import com.aptisprep.service.exam.ExamStartValidator;
+import com.aptisprep.mvc.exam.service.impl.ExamStartValidator;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;

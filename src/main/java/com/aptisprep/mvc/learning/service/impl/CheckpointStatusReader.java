@@ -4,8 +4,8 @@ import com.aptisprep.mvc.catalog.service.*;
 import com.aptisprep.mvc.catalog.service.ExamCatalogService;
 import com.aptisprep.mvc.common.exception.BusinessRuleException;
 import com.aptisprep.mvc.common.exception.ResourceNotFoundException;
+import com.aptisprep.mvc.exam.service.ExamAttemptService;
 import com.aptisprep.mvc.learning.entity.LearningPath;
-import com.aptisprep.service.contract.ExamAttemptContract;
 import com.aptisprep.service.contract.IntegrationModels.*;
 import java.time.ZoneId;
 import java.util.*;
@@ -15,17 +15,17 @@ import org.springframework.stereotype.Component;
 /** Checkpoint read/status rules shared by stage summaries and checkpoint commands. */
 @Component
 final class CheckpointStatusReader {
-    private final ObjectProvider<ExamAttemptContract> attempts;
+    private final ObjectProvider<ExamAttemptService> attempts;
     private final ExamCatalogService catalog;
 
     CheckpointStatusReader(
-            ObjectProvider<ExamAttemptContract> attempts, ExamCatalogService catalog) {
+            ObjectProvider<ExamAttemptService> attempts, ExamCatalogService catalog) {
         this.attempts = attempts;
         this.catalog = catalog;
     }
 
     String state(LearningPath path) {
-        ExamAttemptContract engine = attempts.getIfAvailable();
+        ExamAttemptService engine = attempts.getIfAvailable();
         if (engine != null && path.getCheckpointExamId() != null) {
             List<AttemptResult> history = history(path, engine);
             if (!history.isEmpty()) {
@@ -60,7 +60,7 @@ final class CheckpointStatusReader {
         }
     }
 
-    List<AttemptResult> history(LearningPath path, ExamAttemptContract engine) {
+    List<AttemptResult> history(LearningPath path, ExamAttemptService engine) {
         HistoryPage history =
                 engine.history(
                         path.getUser().getId(),

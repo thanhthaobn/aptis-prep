@@ -4,12 +4,12 @@ import static org.assertj.core.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
-import com.aptisprep.controller.student.StudentExamCatalogController;
 import com.aptisprep.mvc.account.service.AccountAccessService;
 import com.aptisprep.mvc.catalog.service.*;
 import com.aptisprep.mvc.common.exception.BusinessRuleException;
+import com.aptisprep.mvc.exam.controller.StudentExamCatalogController;
+import com.aptisprep.mvc.exam.service.ExamAttemptService;
 import com.aptisprep.mvc.scoring.service.*;
-import com.aptisprep.service.contract.ExamAttemptContract;
 import com.aptisprep.service.contract.IntegrationModels.*;
 import com.aptisprep.service.student.StudentExamCatalogService;
 import java.util.List;
@@ -20,7 +20,7 @@ class StudentResultRetryTests {
     @Test
     void retryDelegatesOnlyAnOwnersRetryableErrorToTheExistingGradingContract() {
         var accounts = mock(AccountAccessService.class);
-        var attempts = mock(ExamAttemptContract.class);
+        var attempts = mock(ExamAttemptService.class);
         var controller =
                 new StudentExamCatalogController(
                         mock(StudentExamCatalogService.class),

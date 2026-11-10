@@ -1,30 +1,96 @@
 package com.aptisprep.mvc.catalog.service.impl;
 
-import com.aptisprep.mvc.catalog.entity.MockExamEntity;
-import com.aptisprep.mvc.catalog.repository.MockExamQuestionRepository;
-import com.aptisprep.mvc.catalog.repository.MockExamRepository;
-import com.aptisprep.mvc.catalog.repository.QuestionRepository;
+import com.aptisprep.mvc.catalog.entity.*;
+import com.aptisprep.mvc.catalog.repository.*;
 import com.aptisprep.mvc.catalog.service.ExamCatalogService;
 import com.aptisprep.mvc.common.exception.ResourceNotFoundException;
 import com.aptisprep.service.contract.IntegrationModels.ExamSummary;
 import com.aptisprep.service.contract.IntegrationModels.ExamView;
 import com.aptisprep.service.contract.IntegrationModels.QuestionView;
 import java.util.List;
+import java.util.Optional;
 import org.springframework.stereotype.Service;
 
 @Service
 public class ExamCatalogServiceImpl implements ExamCatalogService {
     private final MockExamRepository mockExamRepository;
     private final MockExamQuestionRepository mockExamQuestionRepository;
+    private final MockExamSectionRepository mockExamSectionRepository;
     private final QuestionRepository questionRepository;
+    private final QuestionItemRepository questionItemRepository;
+    private final QuestionOptionRepository questionOptionRepository;
+    private final QuestionMediaRepository questionMediaRepository;
 
     public ExamCatalogServiceImpl(
             MockExamRepository mockExamRepository,
             MockExamQuestionRepository mockExamQuestionRepository,
-            QuestionRepository questionRepository) {
+            MockExamSectionRepository mockExamSectionRepository,
+            QuestionRepository questionRepository,
+            QuestionItemRepository questionItemRepository,
+            QuestionOptionRepository questionOptionRepository,
+            QuestionMediaRepository questionMediaRepository) {
         this.mockExamRepository = mockExamRepository;
         this.mockExamQuestionRepository = mockExamQuestionRepository;
+        this.mockExamSectionRepository = mockExamSectionRepository;
         this.questionRepository = questionRepository;
+        this.questionItemRepository = questionItemRepository;
+        this.questionOptionRepository = questionOptionRepository;
+        this.questionMediaRepository = questionMediaRepository;
+    }
+
+    @Override
+    public Optional<MockExamEntity> findMockExamById(Integer id) {
+        return id == null ? Optional.empty() : mockExamRepository.findById(id);
+    }
+
+    @Override
+    public Optional<MockExamEntity> findMockExamByIdForUpdate(Integer id) {
+        return id == null ? Optional.empty() : mockExamRepository.findByIdForUpdate(id);
+    }
+
+    @Override
+    public List<MockExamQuestionEntity> findExamQuestions(Integer examId) {
+        return examId == null
+                ? List.of()
+                : mockExamQuestionRepository.findByMockExamIdOrderByPosition(examId);
+    }
+
+    @Override
+    public List<MockExamSectionEntity> findExamSections(Integer examId) {
+        return examId == null
+                ? List.of()
+                : mockExamSectionRepository.findByMockExamIdOrderById(examId);
+    }
+
+    @Override
+    public Optional<QuestionEntity> findQuestionById(Integer id) {
+        return id == null ? Optional.empty() : questionRepository.findById(id);
+    }
+
+    @Override
+    public Optional<QuestionItemEntity> findQuestionItemById(Integer itemId) {
+        return itemId == null ? Optional.empty() : questionItemRepository.findById(itemId);
+    }
+
+    @Override
+    public List<QuestionItemEntity> findQuestionItems(Integer questionId) {
+        return questionId == null
+                ? List.of()
+                : questionItemRepository.findByQuestionIdOrderByPosition(questionId);
+    }
+
+    @Override
+    public List<QuestionOptionEntity> findQuestionOptions(Integer itemId) {
+        return itemId == null
+                ? List.of()
+                : questionOptionRepository.findByQuestionItemIdOrderByPosition(itemId);
+    }
+
+    @Override
+    public List<QuestionMediaEntity> findQuestionMedia(Integer questionId) {
+        return questionId == null
+                ? List.of()
+                : questionMediaRepository.findByQuestionIdOrderByPosition(questionId);
     }
 
     @Override

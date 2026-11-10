@@ -11,8 +11,8 @@ import com.aptisprep.mvc.auth.entity.User;
 import com.aptisprep.mvc.auth.service.UserService;
 import com.aptisprep.mvc.common.enums.Role;
 import com.aptisprep.mvc.common.enums.UserStatus;
+import com.aptisprep.mvc.exam.service.ExamAttemptService;
 import com.aptisprep.repository.*;
-import com.aptisprep.service.contract.ExamAttemptContract;
 import com.aptisprep.service.contract.IntegrationModels.*;
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -32,8 +32,8 @@ class AccountAccessServiceTests {
     @Mock UserGoalSkillRepository goalSkills;
     @Mock UserSkillProfileRepository profiles;
     @Mock ProfileApplicationRepository applications;
-    @Mock ObjectProvider<ExamAttemptContract> attemptProvider;
-    @Mock ExamAttemptContract attempts;
+    @Mock ObjectProvider<ExamAttemptService> attemptProvider;
+    @Mock ExamAttemptService attempts;
 
     private User student;
     private UserSkillProfile profile;

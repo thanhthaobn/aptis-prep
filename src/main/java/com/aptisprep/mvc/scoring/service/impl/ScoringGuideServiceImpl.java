@@ -1,10 +1,11 @@
 package com.aptisprep.mvc.scoring.service.impl;
 
-import com.aptisprep.mvc.catalog.repository.*;
+import com.aptisprep.mvc.catalog.service.ExamCatalogService;
+import com.aptisprep.mvc.exam.service.ExamAttemptService;
+import com.aptisprep.mvc.exam.service.ExamAttemptService.SnapshotSchemeInfo;
 import com.aptisprep.mvc.scoring.entity.*;
 import com.aptisprep.mvc.scoring.repository.*;
 import com.aptisprep.mvc.scoring.service.ScoringGuideService;
-import com.aptisprep.repository.*;
 import com.aptisprep.service.contract.IntegrationModels.AttemptResult;
 import com.aptisprep.service.contract.IntegrationModels.SkillResult;
 import java.math.BigDecimal;
@@ -19,20 +20,20 @@ public class ScoringGuideServiceImpl implements ScoringGuideService {
     private final ScoringSchemeRepository schemes;
     private final ScoringScaleRuleRepository rules;
     private final ScoreBandRepository bands;
-    private final MockExamRepository exams;
-    private final ExamAttemptSnapshotRepository snapshots;
+    private final ExamCatalogService examCatalogService;
+    private final ExamAttemptService examAttemptService;
 
     public ScoringGuideServiceImpl(
             ScoringSchemeRepository schemes,
             ScoringScaleRuleRepository rules,
             ScoreBandRepository bands,
-            MockExamRepository exams,
-            ExamAttemptSnapshotRepository snapshots) {
+            ExamCatalogService examCatalogService,
+            ExamAttemptService examAttemptService) {
         this.schemes = schemes;
         this.rules = rules;
         this.bands = bands;
-        this.exams = exams;
-        this.snapshots = snapshots;
+        this.examCatalogService = examCatalogService;
+        this.examAttemptService = examAttemptService;
     }
 
     public ResultGuideView forResultView(AttemptResult result) {
@@ -48,7 +49,8 @@ public class ScoringGuideServiceImpl implements ScoringGuideService {
     }
 
     public List<Guide> forExam(Integer examId) {
-        return exams.findById(examId)
+        return examCatalogService
+                .findMockExamById(examId)
                 .map(
                         e ->
                                 guides(
@@ -61,8 +63,9 @@ public class ScoringGuideServiceImpl implements ScoringGuideService {
 
     /** Called only after the attempt contract has checked ownership. Uses the original scheme. */
     public List<Guide> forResult(AttemptResult result) {
-        var snapshot = snapshots.findByAttemptId(result.attemptId());
-        Integer scheme = snapshot.map(s -> s.getScoringSchemeId()).orElse(result.scoringSchemeId());
+        var snapshot = examAttemptService.findSnapshotSchemeInfo(result.attemptId());
+        Integer scheme =
+                snapshot.map(SnapshotSchemeInfo::scoringSchemeId).orElse(result.scoringSchemeId());
         Map<String, String> levels = new HashMap<>();
         result.skills()
                 .forEach(
@@ -72,7 +75,7 @@ public class ScoringGuideServiceImpl implements ScoringGuideService {
                         });
         Set<String> skills = new HashSet<>();
         result.skills().forEach(s -> skills.add(s.skill()));
-        String snapshotSkill = snapshot.map(s -> s.getSkill()).orElse(null);
+        String snapshotSkill = snapshot.map(SnapshotSchemeInfo::skill).orElse(null);
         if (skills.isEmpty() && snapshotSkill != null)
             return guides(scheme, snapshotSkill, levels, "FULL_MOCK".equals(snapshotSkill));
         return guides(

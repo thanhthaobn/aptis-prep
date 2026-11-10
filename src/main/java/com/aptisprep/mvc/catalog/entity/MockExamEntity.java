@@ -1,6 +1,6 @@
 package com.aptisprep.mvc.catalog.entity;
 
-import com.aptisprep.entity.ExamAttemptSnapshotEntity;
+import com.aptisprep.mvc.exam.entity.ExamAttemptSnapshotEntity;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 

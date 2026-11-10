@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import com.aptisprep.mvc.auth.repository.UserRepository;
 import com.aptisprep.mvc.common.exception.BusinessRuleException;
+import com.aptisprep.mvc.exam.entity.*;
 import com.aptisprep.mvc.learning.dto.*;
 import com.aptisprep.mvc.learning.dto.LessonFormDTO;
 import com.aptisprep.mvc.learning.entity.*;
@@ -339,7 +340,9 @@ class V2SqlServerPreservationTests {
             int owner) {
         var jobs = repositories.getRepository(AiAssessmentJobRepository.class);
         var answer =
-                em.createQuery("from UserAnswerEntity", com.aptisprep.entity.UserAnswerEntity.class)
+                em.createQuery(
+                                "from UserAnswerEntity",
+                                com.aptisprep.mvc.exam.entity.UserAnswerEntity.class)
                         .getResultList()
                         .getFirst();
         var examJob = sqlJob("sql-recovery-exam", owner, answer, "EXAM_ANSWER");
@@ -392,7 +395,7 @@ class V2SqlServerPreservationTests {
                 jobs.findCompletedWithoutCallback(
                                 org.springframework.data.domain.PageRequest.of(0, 50))
                         .contains(examJob.getAssessmentKey()));
-        var row = new com.aptisprep.entity.AttemptOutboxEntity();
+        var row = new com.aptisprep.mvc.exam.entity.AttemptOutboxEntity();
         row.setEventKey("ai:sql-recovery-exam:v1:COMPLETED");
         row.setEventType("AI_ASSESSMENT_COMPLETED");
         row.setAggregateId(answer.getAttemptId());
@@ -407,7 +410,10 @@ class V2SqlServerPreservationTests {
     }
 
     private static com.aptisprep.entity.AiAssessmentJob sqlJob(
-            String key, int owner, com.aptisprep.entity.UserAnswerEntity answer, String source) {
+            String key,
+            int owner,
+            com.aptisprep.mvc.exam.entity.UserAnswerEntity answer,
+            String source) {
         var job = new com.aptisprep.entity.AiAssessmentJob();
         job.setAssessmentKey(key);
         job.setUserId(owner);

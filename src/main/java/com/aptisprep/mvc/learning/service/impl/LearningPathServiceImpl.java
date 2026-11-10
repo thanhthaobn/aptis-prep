@@ -12,6 +12,7 @@ import com.aptisprep.mvc.catalog.service.*;
 import com.aptisprep.mvc.catalog.service.ExamCatalogService;
 import com.aptisprep.mvc.common.enums.*;
 import com.aptisprep.mvc.common.exception.*;
+import com.aptisprep.mvc.exam.service.ExamAttemptService;
 import com.aptisprep.mvc.learning.dto.LearningPathViewsDTO.StageDTO;
 import com.aptisprep.mvc.learning.dto.LearningPathViewsDTO.StageLessonDTO;
 import com.aptisprep.mvc.learning.dto.PathProgressDTO;
@@ -19,7 +20,6 @@ import com.aptisprep.mvc.learning.entity.*;
 import com.aptisprep.mvc.learning.repository.*;
 import com.aptisprep.mvc.learning.service.LearningPathService;
 import com.aptisprep.mvc.learning.service.LessonService;
-import com.aptisprep.service.contract.ExamAttemptContract;
 import com.aptisprep.service.contract.IntegrationModels.*;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
@@ -37,7 +37,7 @@ public class LearningPathServiceImpl implements LearningPathService {
     private final LessonProgressRepository lessonProgressRepository;
     private final UserRepository userRepository;
     private final UserGoalRepository userGoalRepository;
-    private final ObjectProvider<ExamAttemptContract> attempts;
+    private final ObjectProvider<ExamAttemptService> attempts;
     private final ExamCatalogService catalog;
     private final AccountAccessService accounts;
     private final CheckpointStatusReader checkpointStatus;
@@ -49,7 +49,7 @@ public class LearningPathServiceImpl implements LearningPathService {
             LessonProgressRepository lessonProgressRepository,
             UserRepository userRepository,
             UserGoalRepository userGoalRepository,
-            ObjectProvider<ExamAttemptContract> attempts,
+            ObjectProvider<ExamAttemptService> attempts,
             ExamCatalogService catalog,
             AccountAccessService accounts,
             CheckpointStatusReader checkpointStatus) {
@@ -239,7 +239,7 @@ public class LearningPathServiceImpl implements LearningPathService {
         if (!LessonService.LEVELS.contains(path.getTargetLevel()))
             throw new BusinessRuleException(
                     "Hành trình học chỉ hỗ trợ từ A1 đến C1; chặng cũ được giữ để tra cứu");
-        ExamAttemptContract engine = engine();
+        ExamAttemptService engine = engine();
         if (path.getCheckpointExamId() != null) {
             Optional<AttemptResult> running =
                     checkpointStatus.history(path, engine).stream()
@@ -274,12 +274,50 @@ public class LearningPathServiceImpl implements LearningPathService {
     }
 
     @Override
+    @Transactional(readOnly = true)
+    public void validateCheckpointStart(
+            Integer userId, Integer examId, String targetLevel, String skill, Integer pathId) {
+        if (pathId == null) {
+            throw new BusinessRuleException("Checkpoint cần ngữ cảnh lộ trình học");
+        }
+        LearningPath path =
+                learningPathRepository
+                        .findByIdAndUserId(pathId, userId)
+                        .orElseThrow(
+                                () -> new BusinessRuleException("Lộ trình không thuộc học viên"));
+        String normSkill = skill == null ? "" : skill.trim().toUpperCase(Locale.ROOT);
+        String pathNormSkill =
+                path.getSkill() == null ? "" : path.getSkill().trim().toUpperCase(Locale.ROOT);
+        if (!"ACTIVE".equals(path.getStatus())
+                || !Objects.equals(path.getCheckpointExamId(), examId)
+                || !Objects.equals(path.getTargetLevel(), targetLevel)
+                || !Set.of("A1", "A2", "B1", "B2", "C1")
+                        .contains(Objects.toString(path.getTargetLevel(), ""))
+                || !pathNormSkill.equals(normSkill)) {
+            throw new BusinessRuleException("Checkpoint không khớp chặng học đang hoạt động");
+        }
+        List<LearningPathItem> required =
+                learningPathItemRepository.findByLearningPathIdOrderByPositionAsc(pathId).stream()
+                        .filter(LearningPathItem::isRequired)
+                        .toList();
+        if (required.isEmpty()
+                || required.stream()
+                        .anyMatch(
+                                item ->
+                                        !"COMPLETED".equals(item.getStatus())
+                                                || item.getCompletedAt() == null)) {
+            throw new BusinessRuleException(
+                    "Cần hoàn thành các bài học bắt buộc trước khi thi Checkpoint");
+        }
+    }
+
+    @Override
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void applyCheckpoint(Integer userId, Integer attemptId) {
         User user = lock(active(userId));
         if (learningPathRepository.existsByUserIdAndSourceAttemptIdAndStatus(
                 userId, attemptId, "COMPLETED")) return;
-        ExamAttemptContract engine = engine();
+        ExamAttemptService engine = engine();
         AttemptResult result = engine.result(userId, attemptId);
         if (result == null
                 || !Objects.equals(result.userId(), userId)
@@ -513,8 +551,8 @@ public class LearningPathServiceImpl implements LearningPathService {
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy lộ trình"));
     }
 
-    private ExamAttemptContract engine() {
-        ExamAttemptContract engine = attempts.getIfAvailable();
+    private ExamAttemptService engine() {
+        ExamAttemptService engine = attempts.getIfAvailable();
         if (engine == null) throw new BusinessRuleException("Luồng làm bài chưa sẵn sàng");
         return engine;
     }

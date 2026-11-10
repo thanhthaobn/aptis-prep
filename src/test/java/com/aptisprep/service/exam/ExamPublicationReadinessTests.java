@@ -6,7 +6,9 @@ import static org.mockito.Mockito.*;
 import com.aptisprep.entity.*;
 import com.aptisprep.mvc.catalog.entity.*;
 import com.aptisprep.mvc.catalog.repository.*;
+import com.aptisprep.mvc.catalog.service.ExamCatalogService;
 import com.aptisprep.mvc.common.exception.BusinessRuleException;
+import com.aptisprep.mvc.exam.service.impl.ExamStartValidator;
 import com.aptisprep.mvc.scoring.service.*;
 import com.aptisprep.mvc.scoring.service.CertificateSchemeService;
 import com.aptisprep.mvc.storage.service.StorageService;
@@ -19,13 +21,11 @@ import org.springframework.test.util.ReflectionTestUtils;
 class ExamPublicationReadinessTests {
     @Test
     void publicationChecksDraftContentAndAllowsBrowserSpeechWhenListeningAudioIsMissing() {
-        var questions = mock(QuestionRepository.class);
-        var sections = mock(MockExamSectionRepository.class);
-        var media = mock(QuestionMediaRepository.class);
+        var catalogService = mock(ExamCatalogService.class);
         var storage = mock(StorageService.class);
         var validator =
                 new ExamStartValidator(
-                        questions, sections, media, mock(CertificateSchemeService.class), storage);
+                        catalogService, mock(CertificateSchemeService.class), storage);
         var exam = new MockExamEntity();
         ReflectionTestUtils.setField(exam, "id", 1);
         exam.setExamType("PRACTICE");
@@ -39,7 +39,7 @@ class ExamPublicationReadinessTests {
         var link = new MockExamQuestionEntity();
         link.setMockExamId(1);
         link.setQuestionId(2);
-        when(questions.findById(2)).thenReturn(Optional.of(question));
+        when(catalogService.findQuestionById(2)).thenReturn(Optional.of(question));
 
         assertDoesNotThrow(() -> validator.validateForPublication(exam, List.of(link)));
         exam.setSkill("LISTENING");
@@ -52,7 +52,7 @@ class ExamPublicationReadinessTests {
         audio.setMediaType("AUDIO");
         audio.setMediaUrl("questions/missing.wav");
         audio.setTranscript("This is a browser speech fallback.");
-        when(media.findByQuestionIdOrderByPosition(2)).thenReturn(List.of(audio));
+        when(catalogService.findQuestionMedia(2)).thenReturn(List.of(audio));
         when(storage.load("questions/missing.wav")).thenThrow(new BusinessRuleException("Missing"));
         assertDoesNotThrow(() -> validator.validateForPublication(exam, List.of(link)));
         assertEquals("DRAFT", exam.getStatus());

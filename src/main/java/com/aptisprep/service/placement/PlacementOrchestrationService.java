@@ -2,8 +2,8 @@ package com.aptisprep.service.placement;
 
 import com.aptisprep.mvc.account.service.AccountAccessService;
 import com.aptisprep.mvc.common.event.AttemptCompletedEvent;
+import com.aptisprep.mvc.exam.service.AttemptOutboxService;
 import com.aptisprep.mvc.learning.service.LearningPathService;
-import com.aptisprep.service.exam.AttemptOutboxService;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.PlatformTransactionManager;

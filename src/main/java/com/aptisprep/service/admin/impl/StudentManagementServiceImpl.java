@@ -16,11 +16,11 @@ import com.aptisprep.mvc.common.enums.Skill;
 import com.aptisprep.mvc.common.exception.AccessDeniedException;
 import com.aptisprep.mvc.common.exception.BusinessRuleException;
 import com.aptisprep.mvc.common.exception.ResourceNotFoundException;
+import com.aptisprep.mvc.exam.service.ExamAttemptService;
 import com.aptisprep.mvc.learning.service.LearningPathService;
 import com.aptisprep.mvc.scoring.entity.Certificate;
 import com.aptisprep.repository.*;
 import com.aptisprep.service.admin.StudentManagementService;
-import com.aptisprep.service.contract.ExamAttemptContract;
 import com.aptisprep.service.contract.IntegrationModels.*;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -38,7 +38,7 @@ public class StudentManagementServiceImpl implements StudentManagementService {
     private final UserGoalSkillRepository userGoalSkillRepository;
     private final UserSkillProfileRepository userSkillProfileRepository;
     private final ObjectProvider<LearningPathService> paths;
-    private final ObjectProvider<ExamAttemptContract> attempts;
+    private final ObjectProvider<ExamAttemptService> attempts;
 
     public StudentManagementServiceImpl(
             UserRepository userRepository,
@@ -46,7 +46,7 @@ public class StudentManagementServiceImpl implements StudentManagementService {
             UserGoalSkillRepository userGoalSkillRepository,
             UserSkillProfileRepository userSkillProfileRepository,
             ObjectProvider<LearningPathService> paths,
-            ObjectProvider<ExamAttemptContract> attempts) {
+            ObjectProvider<ExamAttemptService> attempts) {
         this.userRepository = userRepository;
         this.userGoalRepository = userGoalRepository;
         this.userGoalSkillRepository = userGoalSkillRepository;
@@ -272,7 +272,7 @@ public class StudentManagementServiceImpl implements StudentManagementService {
     }
 
     private HistoryPage historyFor(Integer userId, int page, int size) {
-        ExamAttemptContract contract = attempts.getIfAvailable();
+        ExamAttemptService contract = attempts.getIfAvailable();
         if (contract == null) return new HistoryPage(List.of(), page, size, 0);
         HistoryPage value = contract.history(userId, page, size);
         return value == null ? new HistoryPage(List.of(), page, size, 0) : value;

@@ -19,7 +19,7 @@ class PlacementExamCatalogServiceTests {
     void onlyPublishedPlacementExamsWithPublishedQuestionsAreAvailable() {
         MockExamRepository exams = mock(MockExamRepository.class);
         MockExamQuestionRepository examQuestions = mock(MockExamQuestionRepository.class);
-        var validator = mock(com.aptisprep.service.exam.ExamStartValidator.class);
+        var validator = mock(com.aptisprep.mvc.exam.service.impl.ExamStartValidator.class);
         PlacementExamCatalogService service =
                 new PlacementExamCatalogService(
                         exams, examQuestions, mock(MockExamSectionRepository.class), validator);

@@ -4,10 +4,10 @@ import com.aptisprep.dto.view.AdminDashboardView;
 import com.aptisprep.mvc.catalog.repository.*;
 import com.aptisprep.mvc.catalog.repository.MockExamRepository;
 import com.aptisprep.mvc.catalog.repository.QuestionRepository;
+import com.aptisprep.mvc.exam.service.ExamAttemptService;
 import com.aptisprep.mvc.learning.repository.LessonRepository;
 import com.aptisprep.service.admin.AdminDashboardService;
 import com.aptisprep.service.admin.StudentManagementService;
-import com.aptisprep.service.contract.ExamAttemptContract;
 import com.aptisprep.service.contract.IntegrationModels.AdminHistoryFilter;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -21,14 +21,14 @@ public class AdminDashboardServiceImpl implements AdminDashboardService {
     private final LessonRepository lessonRepository;
     private final QuestionRepository questionRepository;
     private final MockExamRepository mockExamRepository;
-    private final ExamAttemptContract attempts;
+    private final ExamAttemptService attempts;
 
     public AdminDashboardServiceImpl(
             StudentManagementService students,
             LessonRepository lessonRepository,
             QuestionRepository questionRepository,
             MockExamRepository mockExamRepository,
-            ExamAttemptContract attempts) {
+            ExamAttemptService attempts) {
         this.students = students;
         this.lessonRepository = lessonRepository;
         this.questionRepository = questionRepository;

@@ -5,10 +5,10 @@ import com.aptisprep.mvc.account.dto.LearningActivityDTO.DayDTO;
 import com.aptisprep.mvc.account.dto.LearningActivityDTO.WeekDTO;
 import com.aptisprep.mvc.account.service.AccountAccessService;
 import com.aptisprep.mvc.account.service.LearningActivityService;
+import com.aptisprep.mvc.exam.service.ExamAttemptService;
 import com.aptisprep.mvc.flashcard.repository.UserFlashcardProgressRepository;
 import com.aptisprep.mvc.learning.repository.LessonCheckAttemptRepository;
 import com.aptisprep.mvc.learning.repository.LessonProgressRepository;
-import com.aptisprep.repository.*;
 import java.time.*;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.TemporalAdjusters;
@@ -57,19 +57,19 @@ public class LearningActivityServiceImpl implements LearningActivityService {
     private final LessonProgressRepository lessonProgressRepository;
     private final LessonCheckAttemptRepository lessonCheckAttemptRepository;
     private final UserFlashcardProgressRepository userFlashcardProgressRepository;
-    private final ExamAttemptRepository examAttemptRepository;
+    private final ExamAttemptService examAttemptService;
 
     public LearningActivityServiceImpl(
             AccountAccessService access,
             LessonProgressRepository lessonProgressRepository,
             LessonCheckAttemptRepository lessonCheckAttemptRepository,
             UserFlashcardProgressRepository userFlashcardProgressRepository,
-            ExamAttemptRepository examAttemptRepository) {
+            ExamAttemptService examAttemptService) {
         this.access = access;
         this.lessonProgressRepository = lessonProgressRepository;
         this.lessonCheckAttemptRepository = lessonCheckAttemptRepository;
         this.userFlashcardProgressRepository = userFlashcardProgressRepository;
-        this.examAttemptRepository = examAttemptRepository;
+        this.examAttemptService = examAttemptService;
     }
 
     @Override
@@ -92,9 +92,9 @@ public class LearningActivityServiceImpl implements LearningActivityService {
         userFlashcardProgressRepository
                 .findByUserId(userId)
                 .forEach(item -> add(counts, item.getLastReviewedAt(), Kind.FLASHCARD));
-        examAttemptRepository
-                .findByUserId(userId)
-                .forEach(item -> add(counts, item.getSubmittedAt(), Kind.EXAM));
+        examAttemptService
+                .findSubmittedDatesByUserId(userId)
+                .forEach(submittedAt -> add(counts, submittedAt, Kind.EXAM));
         return summarizeDetailed(counts, LocalDate.now());
     }
 

@@ -27,6 +27,9 @@ public interface LearningPathService {
 
     String checkpointDestination(String email, Integer attemptId);
 
+    void validateCheckpointStart(
+            Integer userId, Integer examId, String targetLevel, String skill, Integer pathId);
+
     record StageLesson(
             Integer id,
             String title,

@@ -9,11 +9,10 @@ import com.aptisprep.mvc.account.service.LearningActivityService;
 import com.aptisprep.mvc.common.enums.Skill;
 import com.aptisprep.mvc.common.exception.BusinessRuleException;
 import com.aptisprep.mvc.common.util.ListPagination;
+import com.aptisprep.mvc.exam.service.ExamAttemptService;
 import com.aptisprep.mvc.learning.service.LessonService;
 import com.aptisprep.mvc.scoring.service.ScoringGuideService;
-import com.aptisprep.service.contract.ExamAttemptContract;
 import com.aptisprep.service.contract.IntegrationModels.AttemptHandle;
-import com.aptisprep.service.exam.ExamAttemptService;
 import com.aptisprep.service.placement.PlacementService;
 import jakarta.validation.Valid;
 import java.security.Principal;
@@ -30,7 +29,7 @@ public class StudentAccountController {
     private final PlacementService placement;
     private final AccountProfileService accounts;
     private final LearningActivityService activity;
-    private final ExamAttemptContract attempts;
+    private final ExamAttemptService attempts;
     private final AccountAccessService access;
 
     public StudentAccountController(
@@ -38,7 +37,7 @@ public class StudentAccountController {
             AccountProfileService accounts,
             LearningActivityService activity,
             ScoringGuideService scoringGuides,
-            ExamAttemptContract attempts,
+            ExamAttemptService attempts,
             AccountAccessService access) {
         this.placement = placement;
         this.accounts = accounts;

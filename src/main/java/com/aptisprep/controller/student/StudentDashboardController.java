@@ -5,11 +5,11 @@ import com.aptisprep.mvc.account.dto.AccountSnapshotDTO.SkillViewDTO;
 import com.aptisprep.mvc.account.service.AccountProfileService;
 import com.aptisprep.mvc.account.service.LearningActivityService;
 import com.aptisprep.mvc.common.enums.Skill;
+import com.aptisprep.mvc.exam.service.ExamAttemptService;
 import com.aptisprep.mvc.learning.dto.LessonRecommendationDTO;
 import com.aptisprep.mvc.learning.dto.PathProgressDTO;
 import com.aptisprep.mvc.learning.service.LearningPathService;
 import com.aptisprep.mvc.learning.service.LessonRecommendationService;
-import com.aptisprep.service.contract.ExamAttemptContract;
 import com.aptisprep.service.contract.IntegrationModels.AttemptResult;
 import java.security.Principal;
 import java.util.ArrayList;
@@ -23,14 +23,14 @@ import org.springframework.web.bind.annotation.GetMapping;
 @Controller
 public class StudentDashboardController {
     private final LearningPathService learningPaths;
-    private final ObjectProvider<ExamAttemptContract> attempts;
+    private final ObjectProvider<ExamAttemptService> attempts;
     private final AccountProfileService accounts;
     private final LearningActivityService activity;
     private final LessonRecommendationService recommendations;
 
     public StudentDashboardController(
             LearningPathService learningPaths,
-            ObjectProvider<ExamAttemptContract> attempts,
+            ObjectProvider<ExamAttemptService> attempts,
             AccountProfileService accounts,
             LearningActivityService activity,
             LessonRecommendationService recommendations) {
@@ -79,7 +79,7 @@ public class StudentDashboardController {
         model.addAttribute("skillOverview", skillOverview);
         var activityView = activity.activity(principal.getName());
         model.addAttribute("activity", activityView);
-        ExamAttemptContract attemptService = attempts.getIfAvailable();
+        ExamAttemptService attemptService = attempts.getIfAvailable();
         AttemptResult latestResult =
                 attemptService == null
                         ? null

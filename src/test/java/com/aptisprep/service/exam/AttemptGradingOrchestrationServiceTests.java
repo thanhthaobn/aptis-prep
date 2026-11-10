@@ -6,6 +6,8 @@ import static org.mockito.Mockito.*;
 
 import com.aptisprep.mvc.common.config.AiProperties;
 import com.aptisprep.mvc.common.event.AttemptSubmittedEvent;
+import com.aptisprep.mvc.exam.service.AttemptOutboxService;
+import com.aptisprep.mvc.exam.service.impl.AttemptGradingOrchestrationListener;
 import com.aptisprep.service.contract.AiAssessmentContract;
 import com.aptisprep.service.contract.AiAssessmentContract.AssessmentRequest;
 import com.aptisprep.service.contract.IntegrationModels.LockedAnswer;
@@ -17,7 +19,7 @@ import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 
-class AttemptGradingOrchestrationServiceTests {
+class AttemptGradingOrchestrationListenerTests {
     @Test
     void sendsEveryItemPromptAndKeepsEachAnswerWithItsItem() {
         AiProperties properties = new AiProperties();
@@ -25,8 +27,8 @@ class AttemptGradingOrchestrationServiceTests {
         AiAssessmentContract ai = mock(AiAssessmentContract.class);
         AttemptFinalizationService finalization = mock(AttemptFinalizationService.class);
         when(finalization.accepts(any())).thenReturn(true);
-        AttemptGradingOrchestrationService service =
-                new AttemptGradingOrchestrationService(
+        AttemptGradingOrchestrationListener service =
+                new AttemptGradingOrchestrationListener(
                         properties, ai, finalization, mock(AttemptOutboxService.class));
 
         LockedAnswer answer =

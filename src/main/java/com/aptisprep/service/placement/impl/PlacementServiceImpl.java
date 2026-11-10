@@ -4,7 +4,7 @@ import com.aptisprep.mvc.account.service.AccountAccessService;
 import com.aptisprep.mvc.catalog.service.*;
 import com.aptisprep.mvc.catalog.service.ExamCatalogService;
 import com.aptisprep.mvc.common.exception.BusinessRuleException;
-import com.aptisprep.service.contract.ExamAttemptContract;
+import com.aptisprep.mvc.exam.service.ExamAttemptService;
 import com.aptisprep.service.contract.IntegrationModels.AttemptHandle;
 import com.aptisprep.service.contract.IntegrationModels.AttemptResult;
 import com.aptisprep.service.placement.PlacementExamCatalogService;
@@ -20,13 +20,13 @@ import org.springframework.stereotype.Service;
 public class PlacementServiceImpl implements PlacementService {
     private final PlacementExamCatalogService catalog;
     private final ExamCatalogService examCatalog;
-    private final ObjectProvider<ExamAttemptContract> attempts;
+    private final ObjectProvider<ExamAttemptService> attempts;
     private final ObjectProvider<AccountAccessService> accounts;
 
     public PlacementServiceImpl(
             PlacementExamCatalogService catalog,
             ExamCatalogService examCatalog,
-            ObjectProvider<ExamAttemptContract> attempts,
+            ObjectProvider<ExamAttemptService> attempts,
             ObjectProvider<AccountAccessService> accounts) {
         this.catalog = catalog;
         this.examCatalog = examCatalog;
@@ -46,7 +46,7 @@ public class PlacementServiceImpl implements PlacementService {
     @Override
     public List<PlacementOption> availableForStudent(String email) {
         AccountAccessService account = accounts.getIfAvailable();
-        ExamAttemptContract attempt = attempts.getIfAvailable();
+        ExamAttemptService attempt = attempts.getIfAvailable();
         Integer userId = account == null ? null : account.requireActiveStudent(email);
         boolean resumable =
                 userId != null && attempt != null && attempt.hasInProgressPlacement(userId);
@@ -66,7 +66,7 @@ public class PlacementServiceImpl implements PlacementService {
     @Override
     public AttemptHandle start(String email) {
         AccountAccessService account = accounts.getIfAvailable();
-        ExamAttemptContract attempt = attempts.getIfAvailable();
+        ExamAttemptService attempt = attempts.getIfAvailable();
         if (account == null || attempt == null)
             throw new BusinessRuleException(
                     "Luồng Placement chưa thể bắt đầu vì engine lượt thi của hệ thống chưa sẵn sàng");
@@ -88,7 +88,7 @@ public class PlacementServiceImpl implements PlacementService {
     public List<PlacementOption> available(String email, String skill) {
         List<PlacementExamCatalogService.PlacementExam> exams = available(skill);
         AccountAccessService account = accounts.getIfAvailable();
-        ExamAttemptContract attempt = attempts.getIfAvailable();
+        ExamAttemptService attempt = attempts.getIfAvailable();
         boolean resumable =
                 account != null
                         && attempt != null
@@ -113,7 +113,7 @@ public class PlacementServiceImpl implements PlacementService {
 
     public AttemptHandle start(String email, String skill, Integer examId) {
         AccountAccessService account = accounts.getIfAvailable();
-        ExamAttemptContract attempt = attempts.getIfAvailable();
+        ExamAttemptService attempt = attempts.getIfAvailable();
         if (account == null || attempt == null)
             throw new BusinessRuleException(
                     "Luồng Placement chưa thể bắt đầu vì engine lượt thi của hệ thống chưa sẵn sàng");
@@ -147,7 +147,7 @@ public class PlacementServiceImpl implements PlacementService {
 
     public AttemptResult result(String email, Integer attemptId) {
         AccountAccessService account = accounts.getIfAvailable();
-        ExamAttemptContract attempt = attempts.getIfAvailable();
+        ExamAttemptService attempt = attempts.getIfAvailable();
         if (account == null || attempt == null)
             throw new BusinessRuleException("Luồng kết quả Placement chưa sẵn sàng");
         return attempt.result(account.requireActiveStudent(email), attemptId);

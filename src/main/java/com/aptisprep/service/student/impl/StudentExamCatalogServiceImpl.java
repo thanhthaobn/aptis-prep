@@ -14,7 +14,7 @@ import com.aptisprep.mvc.catalog.repository.QuestionMediaRepository;
 import com.aptisprep.mvc.catalog.service.*;
 import com.aptisprep.mvc.common.exception.BusinessRuleException;
 import com.aptisprep.mvc.common.exception.ResourceNotFoundException;
-import com.aptisprep.service.exam.ExamStartValidator;
+import com.aptisprep.mvc.exam.service.impl.ExamStartValidator;
 import com.aptisprep.service.student.StudentExamCatalogService;
 import java.text.Normalizer;
 import java.util.*;

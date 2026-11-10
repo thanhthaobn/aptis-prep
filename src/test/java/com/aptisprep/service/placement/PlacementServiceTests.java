@@ -6,6 +6,7 @@ import static org.mockito.Mockito.*;
 import com.aptisprep.mvc.account.service.AccountAccessService;
 import com.aptisprep.mvc.catalog.service.*;
 import com.aptisprep.mvc.common.exception.BusinessRuleException;
+import com.aptisprep.mvc.exam.service.ExamAttemptService;
 import com.aptisprep.service.contract.*;
 import com.aptisprep.service.contract.IntegrationModels.AttemptHandle;
 import java.util.List;
@@ -18,9 +19,9 @@ class PlacementServiceTests {
     void availableExamsUseAnUnambiguousActionForTheCurrentAttemptState() {
         var catalog = mock(PlacementExamCatalogService.class);
         var published = mock(ExamCatalogService.class);
-        var engine = mock(ExamAttemptContract.class);
+        var engine = mock(ExamAttemptService.class);
         var accounts = mock(AccountAccessService.class);
-        ObjectProvider<ExamAttemptContract> engines = mock(ObjectProvider.class);
+        ObjectProvider<ExamAttemptService> engines = mock(ObjectProvider.class);
         ObjectProvider<AccountAccessService> access = mock(ObjectProvider.class);
         when(engines.getIfAvailable()).thenReturn(engine);
         when(access.getIfAvailable()).thenReturn(accounts);
@@ -45,9 +46,9 @@ class PlacementServiceTests {
     void selectionUsesIntegerValuesBeyondTheJvmCacheAndRejectsOtherIds() {
         var catalog = mock(PlacementExamCatalogService.class);
         var published = mock(ExamCatalogService.class);
-        var engine = mock(ExamAttemptContract.class);
+        var engine = mock(ExamAttemptService.class);
         var accounts = mock(AccountAccessService.class);
-        ObjectProvider<ExamAttemptContract> engines = mock(ObjectProvider.class);
+        ObjectProvider<ExamAttemptService> engines = mock(ObjectProvider.class);
         ObjectProvider<AccountAccessService> access = mock(ObjectProvider.class);
         when(engines.getIfAvailable()).thenReturn(engine);
         when(access.getIfAvailable()).thenReturn(accounts);
