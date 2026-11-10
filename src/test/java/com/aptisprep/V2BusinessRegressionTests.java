@@ -655,9 +655,12 @@ class V2BusinessRegressionTests {
         assertNotNull(result.skills().getFirst().estimatedLevel());
         assessmentAccounts.applyAssessment(learner.getId(), first);
         assertEquals("A0", result.skills().getFirst().estimatedLevel());
-        assertTrue(profiles.findByUserIdAndSkill(learner.getId(), "READING").isEmpty());
+        var profile = profiles.findByUserIdAndSkill(learner.getId(), "READING").orElseThrow();
+        assertEquals("A0", profile.getCurrentLevel());
         assessmentAccounts.applyAssessment(learner.getId(), first);
-        assertTrue(profiles.findByUserIdAndSkill(learner.getId(), "READING").isEmpty());
+        assertEquals(
+                profile.getId(),
+                profiles.findByUserIdAndSkill(learner.getId(), "READING").orElseThrow().getId());
     }
 
     @Test

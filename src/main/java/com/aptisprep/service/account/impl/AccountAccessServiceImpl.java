@@ -134,12 +134,10 @@ public class AccountAccessServiceImpl implements AccountAccessService {
     private boolean applySkillResult(
             User user, Integer attemptId, String type, Instant submittedAt, SkillResult result) {
         String skill = normalizeSkill(result.skill());
-        // A0 is a valid assessed outcome, but it is below the curriculum levels
-        // tracked in learner profiles. Do not turn a zero score into an A1 profile.
-        if (CefrLevel.BELOW_A1.equals(result.estimatedLevel())) return true;
+        boolean belowA1 = CefrLevel.BELOW_A1.equals(result.estimatedLevel());
         CefrLevel level = CefrLevel.parse(result.estimatedLevel());
         if (skill == null
-                || level == null
+                || (!belowA1 && level == null)
                 || result.scaleScore() == null
                 || result.scaleScore().compareTo(BigDecimal.ZERO) < 0
                 || !"COMPLETED".equalsIgnoreCase(result.gradingState())) {
@@ -169,6 +167,26 @@ public class AccountAccessServiceImpl implements AccountAccessService {
         // the learner profile. Once a skill has a Placement result, a later
         // retake must not regress it with a lower score.
         if (type.equals("PLACEMENT") && profile.getPlacementLevel() != null) {
+            if (!alreadyApplied) saveApplication(user, attemptId, skill);
+            return true;
+        }
+        if (type.equals("PLACEMENT") && belowA1) {
+            LocalDateTime submittedAtUtc =
+                    submittedAt == null
+                            ? null
+                            : LocalDateTime.ofInstant(submittedAt, ZoneOffset.UTC);
+            if (isNewer(
+                    submittedAt,
+                    attemptId,
+                    profile.getPlacementSubmittedAt(),
+                    profile.getSourceAttemptId())) {
+                profile.setPlacementLevel(CefrLevel.BELOW_A1);
+                profile.setPlacementSubmittedAt(submittedAtUtc);
+                profile.setSourceAttemptId(attemptId);
+            }
+            CefrLevel floor = CefrLevel.parse(profile.getCheckpointFloorLevel());
+            profile.setCurrentLevel(floor == null ? CefrLevel.BELOW_A1 : floor.name());
+            userSkillProfileRepository.save(profile);
             if (!alreadyApplied) saveApplication(user, attemptId, skill);
             return true;
         }

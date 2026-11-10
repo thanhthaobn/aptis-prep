@@ -613,6 +613,7 @@ public class LearningPathService implements LearningPathContract {
     }
 
     private static String validLevel(String value) {
+        if (CefrLevel.BELOW_A1.equalsIgnoreCase(value)) return CefrLevel.BELOW_A1;
         return rank(value) < 0 ? null : value.toUpperCase(Locale.ROOT);
     }
 
