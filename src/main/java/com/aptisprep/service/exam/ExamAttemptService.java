@@ -656,11 +656,14 @@ public class ExamAttemptService implements ExamAttemptContract {
                         .anyMatch(
                                 window ->
                                         window.end() == sectionEndMinute
-                                                && !now.isBefore(clockStart.plusMinutes(window.start()))
-                                                && !now.isAfter(clockStart.plusMinutes(window.end())));
+                                                && !now.isBefore(
+                                                        clockStart.plusMinutes(window.start()))
+                                                && !now.isAfter(
+                                                        clockStart.plusMinutes(window.end())));
         boolean hasNext = windows.stream().anyMatch(window -> window.start() == sectionEndMinute);
         if (current && hasNext) {
-            Duration remaining = now.isBefore(sectionEnd) ? Duration.between(now, sectionEnd) : Duration.ZERO;
+            Duration remaining =
+                    now.isBefore(sectionEnd) ? Duration.between(now, sectionEnd) : Duration.ZERO;
             examSnapshots.advanceSectionClock(attemptId, remaining);
         }
     }
@@ -1151,7 +1154,8 @@ public class ExamAttemptService implements ExamAttemptContract {
                     userAnswerRepository
                             .findByAttemptIdAndQuestionId(attemptId, question.getSourceQuestionId())
                             .orElse(null);
-            Map<Integer, UserAnswerDetailEntity> details = answerDetails(attemptId, question.getSourceQuestionId());
+            Map<Integer, UserAnswerDetailEntity> details =
+                    answerDetails(attemptId, question.getSourceQuestionId());
             for (ExamItemSnapshotEntity item : question.getItems()) {
                 String text =
                         answer == null || details.get(item.getSourceItemId()) == null

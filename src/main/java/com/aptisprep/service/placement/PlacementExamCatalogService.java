@@ -50,9 +50,7 @@ public class PlacementExamCatalogService {
 
     /** Returns the single combined Placement exam used by the student flow. */
     public List<PlacementExam> findPublished() {
-        return mockExamRepository
-                .findByStatusOrderByUpdatedAtDesc("PUBLISHED")
-                .stream()
+        return mockExamRepository.findByStatusOrderByUpdatedAtDesc("PUBLISHED").stream()
                 .filter(exam -> !exam.isDemoOnly())
                 .filter(exam -> "PLACEMENT".equals(exam.getExamType()))
                 .filter(this::isReady)

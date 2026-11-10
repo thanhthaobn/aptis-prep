@@ -124,7 +124,8 @@ public class StudentAccountController {
             Principal principal,
             Model model) {
         model.addAttribute("skill", "FULL_MOCK");
-        var placementPage = ListPagination.slice(placement.availableForStudent(principal.getName()), page);
+        var placementPage =
+                ListPagination.slice(placement.availableForStudent(principal.getName()), page);
         model.addAttribute("placementPage", placementPage);
         model.addAttribute("placementExams", placementPage.getContent());
         return "student/account/placement";

@@ -524,7 +524,11 @@ public class AttemptFinalizationService {
                             .findExamJobsByAttemptAndState(
                                     attempt.getUserId(), attemptId, AiJobState.ERROR)
                             .stream()
-                            .filter(job -> Objects.equals(job.getAnswerVersion(), attempt.getAnswerVersion()))
+                            .filter(
+                                    job ->
+                                            Objects.equals(
+                                                    job.getAnswerVersion(),
+                                                    attempt.getAnswerVersion()))
                             .filter(job -> isRetryableExamJob(job, attemptId))
                             .toList();
         }
