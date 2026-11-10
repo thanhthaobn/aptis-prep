@@ -8,6 +8,7 @@
   const timers = new Map();
   const inFlight = new Set();
   const failedForms = new Set();
+  const failedRecordings = new Set();
   const submitForm = document.getElementById('submit-attempt-form');
   const submitButton = document.getElementById('submit-attempt');
   const nextSectionForm = document.getElementById('next-section-form');
@@ -31,9 +32,52 @@
     [...item.querySelectorAll('input[type="number"], textarea')].some(
       (input) => input.value.trim() !== '',
     );
+  const wordCount = (value) => (value.trim() ? value.trim().split(/\s+/).length : 0);
+  const writingLimitErrors = () => {
+    const errors = [];
+    for (const textarea of document.querySelectorAll(
+      'textarea[data-min-words], textarea[data-max-words]',
+    )) {
+      const words = wordCount(textarea.value);
+      const min = Number(textarea.dataset.minWords || 0);
+      const max = Number(textarea.dataset.maxWords || 0);
+      if (min > 0 && words < min)
+        errors.push({
+          textarea,
+          message: `Câu trả lời cần ít nhất ${min} từ (hiện có ${words} từ).`,
+        });
+      else if (max > 0 && words > max)
+        errors.push({
+          textarea,
+          message: `Câu trả lời không được vượt quá ${max} từ (hiện có ${words} từ).`,
+        });
+    }
+    return errors;
+  };
+  const clearWritingLimitErrors = () =>
+    document.querySelectorAll('.writing-limit-error').forEach((error) => {
+      error.hidden = true;
+      error.textContent = '';
+    });
+  document
+    .querySelectorAll('textarea[data-min-words], textarea[data-max-words]')
+    .forEach((textarea) => {
+      textarea.addEventListener('input', () => {
+        textarea
+          .closest('.field')
+          ?.querySelector('.writing-limit-error')
+          ?.setAttribute('hidden', '');
+      });
+    });
   const currentQuestion = document.getElementById('exam-current-question');
   const markCurrentQuestion = (item) => {
     if (!item) return;
+    document.querySelectorAll('.media-audio').forEach((player) => {
+      if (!item.contains(player)) {
+        player.pause();
+        player.currentTime = 0;
+      }
+    });
     questionLinks.forEach((link) => {
       const active = link.dataset.itemId === item.dataset.itemId;
       link.classList.toggle('is-current', active);
@@ -144,6 +188,21 @@
     const formToSubmit = nextSection ? nextSectionForm : submitForm;
     const button = nextSection ? nextSectionButton : submitButton;
     const buttonLabel = nextSection ? 'Sang phần tiếp theo' : 'Nộp bài';
+    if (!automatic) {
+      clearWritingLimitErrors();
+      const invalid = writingLimitErrors();
+      invalid.forEach(({ textarea, message }) => {
+        const error = textarea.closest('.field')?.querySelector('.writing-limit-error');
+        if (error) {
+          error.textContent = message;
+          error.hidden = false;
+        }
+      });
+      if (invalid.length) {
+        invalid[0].textarea.focus();
+        return;
+      }
+    }
     if (automatic) {
       deadlineReached = true;
       window.AppDialog.dismiss();
@@ -152,7 +211,9 @@
     if (
       !automatic &&
       [...document.querySelectorAll('.speaking-recorder')].some(
-        (box) => box.dataset.dirty === 'true',
+        (box) =>
+          box.dataset.state === 'recording' ||
+          (box.dataset.dirty === 'true' && box.dataset.state !== 'preview'),
       )
     ) {
       if (submitError) {
@@ -182,6 +243,13 @@
     }
     if (submitError) submitError.hidden = true;
     formToSubmit?.setAttribute('aria-busy', 'true');
+    // A stopped recorder keeps its blob in the preview until it is uploaded.
+    // Persist those previews before navigating to another section or submitting
+    // the attempt, otherwise a page reload would lose the recording.
+    document.querySelectorAll('.speaking-recorder').forEach((box) => {
+      if (box.dataset.state === 'preview' && box.dataset.dirty === 'true')
+        box.querySelector('.recording-save')?.click();
+    });
     forms.forEach((form) => {
       form.inert = true;
     });
@@ -193,7 +261,7 @@
     await Promise.allSettled([...inFlight]);
     // A previously failed autosave must be retried before a manual submission can lock the attempt.
     if (!automatic && !deadlineReached) await Promise.allSettled([...failedForms].map(save));
-    if (!automatic && !deadlineReached && failedForms.size) {
+    if (!automatic && !deadlineReached && (failedForms.size || failedRecordings.size)) {
       submitting = false;
       if (button) {
         button.disabled = false;
@@ -205,8 +273,8 @@
       formToSubmit?.removeAttribute('aria-busy');
       if (submitError) {
         submitError.textContent = nextSection
-          ? 'Chưa lưu được tất cả câu trả lời. Hãy kiểm tra kết nối và thử lại.'
-          : 'Chưa thể lưu đầy đủ đáp án. Bài chưa được nộp. Vui lòng kiểm tra kết nối và thử lại.';
+          ? 'Chưa lưu được tất cả câu trả lời hoặc bản ghi. Hãy kiểm tra kết nối và thử lại.'
+          : 'Chưa thể lưu đầy đủ đáp án hoặc bản ghi. Bài chưa được nộp. Vui lòng kiểm tra kết nối và thử lại.';
         submitError.hidden = false;
         submitError.focus();
       }
@@ -238,7 +306,9 @@
       if (!seconds) {
         if (interval) clearInterval(interval);
         if (timer.dataset.nextSection === 'true') {
-          window.location.reload();
+          // Advance the server-side section clock instead of reloading the same
+          // expired section indefinitely.
+          submit(true, true);
         } else {
           submit(true);
         }
@@ -551,6 +621,7 @@
           throw new Error(result.message || 'Chưa lưu được bản ghi');
         box.dataset.dirty = 'false';
         box.dataset.state = 'saved';
+        failedRecordings.delete(box);
         const item = box.closest('.question-item');
         item.dataset.saved = 'true';
         item.dispatchEvent(new Event('recording-saved'));
@@ -560,6 +631,7 @@
         reset.disabled = false;
         updateExamNavigation();
       } catch (error) {
+        failedRecordings.add(box);
         saveRecording.disabled = false;
         reset.disabled = false;
         start.disabled = false;

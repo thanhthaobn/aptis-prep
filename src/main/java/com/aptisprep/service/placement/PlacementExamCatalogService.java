@@ -41,7 +41,23 @@ public class PlacementExamCatalogService {
                 .filter(exam -> !exam.isDemoOnly())
                 .filter(exam -> "PLACEMENT".equals(exam.getExamType()))
                 .filter(this::isReady)
+                // FULL_MOCK is the canonical combined exam. The fallback keeps
+                // older databases with one legacy Placement exam usable during migration.
+                .sorted(Comparator.comparing(exam -> !"FULL_MOCK".equals(exam.getSkill())))
                 .map(this::describe)
+                .toList();
+    }
+
+    /** Returns the single combined Placement exam used by the student flow. */
+    public List<PlacementExam> findPublished() {
+        return mockExamRepository
+                .findByStatusOrderByUpdatedAtDesc("PUBLISHED")
+                .stream()
+                .filter(exam -> !exam.isDemoOnly())
+                .filter(exam -> "PLACEMENT".equals(exam.getExamType()))
+                .filter(this::isReady)
+                .map(this::describe)
+                .limit(1)
                 .toList();
     }
 

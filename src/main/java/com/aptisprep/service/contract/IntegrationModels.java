@@ -190,7 +190,8 @@ public final class IntegrationModels {
             String overallCefr,
             Instant submittedAt) {
         public boolean canDiscard() {
-            return "EXPIRED".equals(state)
+            return "ERROR".equals(state)
+                    || "EXPIRED".equals(state)
                     || "COMPLETED".equals(state)
                     || ("IN_PROGRESS".equals(state)
                             && submittedAt == null

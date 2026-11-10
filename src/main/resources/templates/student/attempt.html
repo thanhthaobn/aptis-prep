@@ -605,12 +605,19 @@
               </div>
               <div class="field" th:if="${question.type == 'WRITING_TEXT'}">
                 <label th:for="${'answer-' + (item.itemId)}">Câu trả lời</label>
+                <p
+                  class="field-help"
+                  th:if="${item.minWordCount != null or item.maxWordCount != null}"
+                  th:text="${'Giới hạn: ' + (item.minWordCount != null ? item.minWordCount : 0) + '–' + (item.maxWordCount != null ? item.maxWordCount : 'không giới hạn') + ' từ'}"
+                ></p>
                 <textarea
                   th:id="${'answer-' + (item.itemId)}"
                   name="textAnswer"
                   rows="6"
+                  th:attr="data-min-words=${item.minWordCount},data-max-words=${item.maxWordCount}"
                   th:text="${item.textAnswer}"
                 ></textarea>
+                <p class="writing-limit-error alert alert-danger" hidden role="alert"></p>
               </div>
               <span class="autosave-status muted" aria-live="polite"></span>
             </form>

@@ -55,6 +55,20 @@ public interface AiAssessmentJobRepository extends JpaRepository<AiAssessmentJob
 
     @Query(
             """
+            select job from AiAssessmentJob job
+            where job.sourceType = 'EXAM_ANSWER'
+              and job.userId = :userId
+              and job.attemptId = :attemptId
+              and job.state = :state
+            order by job.id asc
+            """)
+    List<AiAssessmentJob> findExamJobsByAttemptAndState(
+            @Param("userId") Integer userId,
+            @Param("attemptId") Integer attemptId,
+            @Param("state") AiJobState state);
+
+    @Query(
+            """
             select job.assessmentKey from AiAssessmentJob job
             where (job.state = :pending and (job.nextRetryAt is null or job.nextRetryAt <= :now))
                or (job.state = :processing and (job.updatedAt is null or job.updatedAt < :cutoff))

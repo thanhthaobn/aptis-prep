@@ -37,6 +37,53 @@ public class PlacementServiceImpl implements PlacementService {
         return catalog.findPublished(skill);
     }
 
+    @Override
+    public List<PlacementExamCatalogService.PlacementExam> available() {
+        return catalog.findPublished();
+    }
+
+    @Override
+    public List<PlacementOption> availableForStudent(String email) {
+        AccountAccessContract account = accounts.getIfAvailable();
+        ExamAttemptContract attempt = attempts.getIfAvailable();
+        Integer userId = account == null ? null : account.requireActiveStudent(email);
+        boolean resumable =
+                userId != null && attempt != null && attempt.hasInProgressPlacement(userId);
+        return available().stream()
+                .map(
+                        exam ->
+                                new PlacementOption(
+                                        exam.id(),
+                                        exam.title(),
+                                        exam.subtitle(),
+                                        exam.durationMinutes(),
+                                        exam.sections(),
+                                        resumable))
+                .toList();
+    }
+
+    @Override
+    public AttemptHandle start(String email) {
+        AccountAccessContract account = accounts.getIfAvailable();
+        ExamAttemptContract attempt = attempts.getIfAvailable();
+        if (account == null || attempt == null)
+            throw new BusinessRuleException(
+                    "Luồng Placement chưa thể bắt đầu vì engine lượt thi của hệ thống chưa sẵn sàng");
+        Integer userId = account.requireActiveStudent(email);
+        PlacementExamCatalogService.PlacementExam exam =
+                available().stream()
+                        .findFirst()
+                        .orElseThrow(
+                                () ->
+                                        new BusinessRuleException(
+                                                "Chưa có đề Placement tổng hợp đã công bố"));
+        examCatalog.publishedExam(userId, exam.id());
+        return attempt.startPlacement(
+                userId,
+                exam.id(),
+                "placement:" + userId + ":" + exam.id() + ":" + UUID.randomUUID());
+    }
+
     public List<PlacementOption> available(String email, String skill) {
         List<PlacementExamCatalogService.PlacementExam> exams = available(skill);
         AccountAccessContract account = accounts.getIfAvailable();

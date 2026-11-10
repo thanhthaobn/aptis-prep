@@ -145,6 +145,21 @@ public class ExamAttemptService implements ExamAttemptContract {
     }
 
     @Override
+    @Transactional(readOnly = true)
+    public boolean hasInProgressPlacement(Integer userId) {
+        activeUser(userId);
+        return examAttemptRepository.findPlacementAttempts(userId).stream()
+                .anyMatch(attempt -> ACTIVE_STATES.contains(attempt.getStatus()));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public boolean hasPlacementAttempt(Integer userId) {
+        activeUser(userId);
+        return !examAttemptRepository.findPlacementAttempts(userId).isEmpty();
+    }
+
+    @Override
     @Transactional
     public AttemptHandle startCheckpoint(
             Integer userId, Integer examId, Integer pathId, String requestKey) {
@@ -202,22 +217,18 @@ public class ExamAttemptService implements ExamAttemptContract {
         }
         startValidator.validate(exam, links);
         if ("PLACEMENT".equals(exam.getExamType())) {
+            // Placement is one combined assessment per learner.  Resume the one
+            // unfinished attempt, regardless of the legacy skill stored on its exam.
+            List<ExamAttemptEntity> placementAttempts =
+                    examAttemptRepository.findPlacementAttempts(userId);
             Optional<ExamAttemptEntity> active =
-                    examAttemptRepository.findActivePlacement(
-                            userId, exam.getSkill(), ACTIVE_STATES);
+                    placementAttempts.stream()
+                            .filter(attempt -> ACTIVE_STATES.contains(attempt.getStatus()))
+                            .findFirst();
             if (active.isPresent()) {
                 MockExamEntity activeExam = examFor(active.get());
                 if (!expireIfNeeded(active.get(), activeExam))
                     return handle(active.get(), activeExam);
-            }
-            for (ExamAttemptEntity overlap :
-                    examAttemptRepository.findOverlappingPlacements(
-                            userId, exam.getSkill(), ACTIVE_STATES)) {
-                if (!expireIfNeeded(overlap, examFor(overlap))) {
-                    throw new BusinessRuleException(
-                            "Bạn còn một bài kiểm tra đầu vào trùng kỹ năng. "
-                                    + "Hãy hoàn tất bài đó trước khi bắt đầu bài mới.");
-                }
             }
         }
         ExamAttemptEntity attempt = new ExamAttemptEntity();
@@ -454,6 +465,7 @@ public class ExamAttemptService implements ExamAttemptContract {
                         : attempt.getRubricVersion());
         attempt.setGradingRequestKey(
                 "attempt:" + attemptId + ":grading:v" + attempt.getAnswerVersion());
+        validateWritingWordLimits(attempt.getId());
         LockedAttempt draftLocked = gradingPayloads.build(attempt);
         gradingPayloads.validate(draftLocked);
         attempt.setSubmittedAt(now);
@@ -495,7 +507,9 @@ public class ExamAttemptService implements ExamAttemptContract {
                                                 "Bạn không có quyền với lượt thi này"));
         if ("CANCELLED".equals(attempt.getStatus())) return;
         boolean terminal =
-                "EXPIRED".equals(attempt.getStatus()) || "COMPLETED".equals(attempt.getStatus());
+                "ERROR".equals(attempt.getStatus())
+                        || "EXPIRED".equals(attempt.getStatus())
+                        || "COMPLETED".equals(attempt.getStatus());
         boolean cleanDraft =
                 "IN_PROGRESS".equals(attempt.getStatus())
                         && attempt.getSubmittedAt() == null
@@ -642,10 +656,12 @@ public class ExamAttemptService implements ExamAttemptContract {
                         .anyMatch(
                                 window ->
                                         window.end() == sectionEndMinute
-                                                && window.contains(clockStart, now));
+                                                && !now.isBefore(clockStart.plusMinutes(window.start()))
+                                                && !now.isAfter(clockStart.plusMinutes(window.end())));
         boolean hasNext = windows.stream().anyMatch(window -> window.start() == sectionEndMinute);
         if (current && hasNext) {
-            examSnapshots.advanceSectionClock(attemptId, Duration.between(now, sectionEnd));
+            Duration remaining = now.isBefore(sectionEnd) ? Duration.between(now, sectionEnd) : Duration.ZERO;
+            examSnapshots.advanceSectionClock(attemptId, remaining);
         }
     }
 
@@ -956,7 +972,9 @@ public class ExamAttemptService implements ExamAttemptContract {
             Integer userPosition,
             @JsonIgnore Integer correctPosition,
             String textAnswer,
-            boolean audioSaved) {
+            boolean audioSaved,
+            Integer minWordCount,
+            Integer maxWordCount) {
         public boolean answered() {
             return selectedOptionId != null
                     || userPosition != null
@@ -1125,6 +1143,40 @@ public class ExamAttemptService implements ExamAttemptContract {
         return detailByItem;
     }
 
+    private void validateWritingWordLimits(Integer attemptId) {
+        ExamAttemptSnapshotEntity snapshot = examSnapshots.require(attemptId);
+        for (ExamQuestionSnapshotEntity question : snapshot.getQuestions()) {
+            if (!"WRITING_TEXT".equals(question.getQuestionType())) continue;
+            UserAnswerEntity answer =
+                    userAnswerRepository
+                            .findByAttemptIdAndQuestionId(attemptId, question.getSourceQuestionId())
+                            .orElse(null);
+            Map<Integer, UserAnswerDetailEntity> details = answerDetails(attemptId, question.getSourceQuestionId());
+            for (ExamItemSnapshotEntity item : question.getItems()) {
+                String text =
+                        answer == null || details.get(item.getSourceItemId()) == null
+                                ? ""
+                                : Objects.requireNonNullElse(
+                                        details.get(item.getSourceItemId()).getAnswerText(), "");
+                int words = text.isBlank() ? 0 : text.trim().split("\\s+").length;
+                if (item.getMinWordCount() != null && words < item.getMinWordCount())
+                    throw new BusinessRuleException(
+                            "Bài viết ở mục "
+                                    + item.getPosition()
+                                    + " cần ít nhất "
+                                    + item.getMinWordCount()
+                                    + " từ");
+                if (item.getMaxWordCount() != null && words > item.getMaxWordCount())
+                    throw new BusinessRuleException(
+                            "Bài viết ở mục "
+                                    + item.getPosition()
+                                    + " không được vượt quá "
+                                    + item.getMaxWordCount()
+                                    + " từ");
+            }
+        }
+    }
+
     private QuestionPage toQuestionPage(
             ExamQuestionSnapshotEntity question,
             Map<Integer, UserAnswerDetailEntity> detailByItem,
@@ -1180,6 +1232,8 @@ public class ExamAttemptService implements ExamAttemptContract {
                 answer == null ? null : answer.getUserPosition(),
                 item.getCorrectPosition(),
                 answer == null ? null : answer.getAnswerText(),
-                answer != null && answer.getAudioPath() != null);
+                answer != null && answer.getAudioPath() != null,
+                item.getMinWordCount(),
+                item.getMaxWordCount());
     }
 }

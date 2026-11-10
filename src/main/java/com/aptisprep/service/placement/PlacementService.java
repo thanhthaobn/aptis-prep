@@ -5,6 +5,18 @@ import com.aptisprep.service.contract.IntegrationModels.AttemptResult;
 import java.util.List;
 
 public interface PlacementService {
+    default List<PlacementExamCatalogService.PlacementExam> available() {
+        return available("FULL_MOCK");
+    }
+
+    default List<PlacementOption> availableForStudent(String email) {
+        return available(email, "FULL_MOCK");
+    }
+
+    default AttemptHandle start(String email) {
+        return start(email, "FULL_MOCK");
+    }
+
     List<PlacementExamCatalogService.PlacementExam> available(String skill);
 
     List<PlacementOption> available(String email, String skill);
