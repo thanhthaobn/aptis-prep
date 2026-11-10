@@ -1,4 +1,4 @@
-package com.aptisprep.service.contract;
+package com.aptisprep.mvc.grading.service.impl;
 
 import com.aptisprep.service.contract.IntegrationModels.LockedAnswer;
 import com.aptisprep.service.contract.IntegrationModels.LockedItem;
@@ -48,6 +48,6 @@ public final class GradingContextFormatter {
     }
 
     private static String blank(String value) {
-        return value == null ? "" : value;
+        return value == null ? "" : value.strip();
     }
 }

@@ -1,4 +1,4 @@
-package com.aptisprep.entity;
+package com.aptisprep.mvc.grading.entity;
 
 import jakarta.persistence.*;
 import java.math.BigDecimal;

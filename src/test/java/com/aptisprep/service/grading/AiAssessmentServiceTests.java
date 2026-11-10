@@ -4,16 +4,19 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
-import com.aptisprep.entity.*;
 import com.aptisprep.mvc.auth.entity.User;
-import com.aptisprep.mvc.auth.repository.UserRepository;
+import com.aptisprep.mvc.auth.service.UserService;
 import com.aptisprep.mvc.common.enums.*;
 import com.aptisprep.mvc.common.event.AiAssessmentCompletedEvent;
 import com.aptisprep.mvc.common.exception.AiGradingException;
 import com.aptisprep.mvc.exam.service.AttemptOutboxService;
+import com.aptisprep.mvc.grading.dto.AiAssessmentDTO.*;
+import com.aptisprep.mvc.grading.dto.GradingResultDTO;
+import com.aptisprep.mvc.grading.entity.*;
+import com.aptisprep.mvc.grading.repository.*;
+import com.aptisprep.mvc.grading.service.*;
+import com.aptisprep.mvc.grading.service.impl.AiAssessmentServiceImpl;
 import com.aptisprep.mvc.storage.service.StorageService;
-import com.aptisprep.repository.*;
-import com.aptisprep.service.contract.AiAssessmentContract.*;
 import java.math.BigDecimal;
 import java.nio.file.Path;
 import java.time.LocalDateTime;
@@ -33,7 +36,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 class AiAssessmentServiceTests {
     @Mock AiAssessmentJobRepository jobs;
     @Mock AiAssessmentRepository assessments;
-    @Mock UserRepository users;
+    @Mock UserService users;
     @Mock WritingGradingService writing;
     @Mock SpeakingGradingService speaking;
     @Mock StorageService storage;
@@ -49,7 +52,7 @@ class AiAssessmentServiceTests {
         DataSource dataSource = new JdbcDataSource();
         ((JdbcDataSource) dataSource).setURL("jdbc:h2:mem:ai_tx;DB_CLOSE_DELAY=-1");
         service =
-                new AiAssessmentService(
+                new AiAssessmentServiceImpl(
                         jobs,
                         assessments,
                         users,
@@ -107,7 +110,7 @@ class AiAssessmentServiceTests {
     void successfulJobIsPersistedAndSecondProcessDoesNotCallProvider() {
         when(writing.grade("Write an email", "Dear team"))
                 .thenReturn(
-                        new GradingResult(
+                        new GradingResultDTO(
                                 new BigDecimal("32.5"),
                                 "B1",
                                 "Gợi ý rõ ràng",
@@ -130,7 +133,7 @@ class AiAssessmentServiceTests {
         when(writing.grade("Write an email", "Dear team"))
                 .thenThrow(new AiGradingException("Dịch vụ chấm tạm thời không khả dụng."))
                 .thenReturn(
-                        new GradingResult(
+                        new GradingResultDTO(
                                 new BigDecimal("30"), "B1", "Feedback", "mock", "test-model"));
 
         AssessmentView failed = service.process("assessment-1");
@@ -167,7 +170,7 @@ class AiAssessmentServiceTests {
         job.setTranscript("I enjoy reading books.");
         when(speaking.gradeTranscript("Talk about hobbies", "I enjoy reading books."))
                 .thenReturn(
-                        new GradingResult(
+                        new GradingResultDTO(
                                 new BigDecimal("30"),
                                 "B1",
                                 "Chưa đánh giá phát âm.",
@@ -196,7 +199,7 @@ class AiAssessmentServiceTests {
         String transcript = "Mục 2:\nI enjoy reading.";
         when(speaking.gradeTranscript("Talk about hobbies", transcript))
                 .thenReturn(
-                        new GradingResult(
+                        new GradingResultDTO(
                                 BigDecimal.TEN,
                                 "A1",
                                 "Feedback",
@@ -220,7 +223,7 @@ class AiAssessmentServiceTests {
         ReflectionTestUtils.setField(job, "updatedAt", LocalDateTime.now().minusMinutes(30));
         when(writing.grade("Write an email", "Dear team"))
                 .thenReturn(
-                        new GradingResult(
+                        new GradingResultDTO(
                                 new BigDecimal("30"), "B1", "Feedback", "mock", "test-model"));
 
         AssessmentView result = service.process("assessment-1");
@@ -348,7 +351,7 @@ class AiAssessmentServiceTests {
         job.setSourceId(3);
         when(writing.grade("Write an email", "Dear team"))
                 .thenReturn(
-                        new GradingResult(
+                        new GradingResultDTO(
                                 new BigDecimal("32.5"), "B1", "Feedback", "mock", "test-model"));
         assertEquals("COMPLETED", service.process("assessment-1").state());
         verifyNoInteractions(events);

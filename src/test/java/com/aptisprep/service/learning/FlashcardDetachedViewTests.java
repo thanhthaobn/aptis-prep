@@ -21,7 +21,6 @@ import com.aptisprep.mvc.learning.repository.*;
 import com.aptisprep.mvc.learning.repository.LessonRepository;
 import com.aptisprep.mvc.learning.service.*;
 import com.aptisprep.mvc.learning.service.impl.*;
-import com.aptisprep.repository.*;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;

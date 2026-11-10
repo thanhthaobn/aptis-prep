@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.aptisprep.mvc.common.config.AiProperties;
+import com.aptisprep.mvc.grading.service.impl.GeminiGradingService;
 import java.math.BigDecimal;
 import java.util.Set;
 import org.junit.jupiter.api.Assumptions;

@@ -1,20 +1,21 @@
-package com.aptisprep.controller;
+package com.aptisprep.mvc.grading.controller;
 
-import com.aptisprep.mvc.auth.entity.User;
 import com.aptisprep.mvc.auth.service.UserService;
-import com.aptisprep.service.contract.AiAssessmentContract;
+import com.aptisprep.mvc.grading.service.AiAssessmentService;
 import java.security.Principal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 @Controller
 public class AiAssessmentController {
-    private final AiAssessmentContract assessments;
+    private final AiAssessmentService assessments;
     private final UserService users;
 
-    public AiAssessmentController(AiAssessmentContract assessments, UserService users) {
+    public AiAssessmentController(AiAssessmentService assessments, UserService users) {
         this.assessments = assessments;
         this.users = users;
     }
@@ -22,16 +23,16 @@ public class AiAssessmentController {
     @GetMapping("/student/assessments/{key}")
     public String showStudentAssessment(
             @PathVariable String key, Principal principal, Model model) {
-        User user = user(principal);
-        model.addAttribute("assessment", assessments.get(key, user.getId(), false));
+        Integer userId = users.getUserIdByEmail(principal.getName());
+        model.addAttribute("assessment", assessments.get(key, userId, false));
         model.addAttribute("assessmentBasePath", "/student/assessments/");
         return "student/assessment";
     }
 
     @GetMapping("/admin/assessments/{key}")
     public String showAdminAssessment(@PathVariable String key, Principal principal, Model model) {
-        User user = user(principal);
-        model.addAttribute("assessment", assessments.get(key, user.getId(), true));
+        Integer userId = users.getUserIdByEmail(principal.getName());
+        model.addAttribute("assessment", assessments.get(key, userId, true));
         model.addAttribute("assessmentBasePath", "/admin/assessments/");
         return "student/assessment";
     }
@@ -39,8 +40,8 @@ public class AiAssessmentController {
     @PostMapping("/student/assessments/{key}/retry")
     public String retryStudentAssessment(
             @PathVariable String key, Principal principal, RedirectAttributes redirect) {
-        User user = user(principal);
-        assessments.retry(key, user.getId(), false);
+        Integer userId = users.getUserIdByEmail(principal.getName());
+        assessments.retry(key, userId, false);
         redirect.addFlashAttribute("successMessage", "Đã gửi yêu cầu chấm lại phần lỗi.");
         return "redirect:/student/assessments/" + key;
     }
@@ -48,13 +49,9 @@ public class AiAssessmentController {
     @PostMapping("/admin/assessments/{key}/retry")
     public String retryAdminAssessment(
             @PathVariable String key, Principal principal, RedirectAttributes redirect) {
-        User user = user(principal);
-        assessments.retry(key, user.getId(), true);
+        Integer userId = users.getUserIdByEmail(principal.getName());
+        assessments.retry(key, userId, true);
         redirect.addFlashAttribute("successMessage", "Đã gửi yêu cầu chấm lại phần lỗi.");
         return "redirect:/admin/assessments/" + key;
-    }
-
-    private User user(Principal principal) {
-        return users.requireByEmail(principal.getName());
     }
 }

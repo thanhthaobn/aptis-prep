@@ -1,6 +1,5 @@
 package com.aptisprep.mvc.account.service.impl;
 
-import com.aptisprep.entity.*;
 import com.aptisprep.mvc.account.dto.LearnerContextDTO;
 import com.aptisprep.mvc.account.dto.SkillLevelDTO;
 import com.aptisprep.mvc.account.dto.SkillTargetDTO;

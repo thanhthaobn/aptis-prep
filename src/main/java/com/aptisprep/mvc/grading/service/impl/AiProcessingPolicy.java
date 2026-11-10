@@ -1,4 +1,4 @@
-package com.aptisprep.service.grading;
+package com.aptisprep.mvc.grading.service.impl;
 
 /** Shared workflow limits, independent of grading scores and learner data. */
 public final class AiProcessingPolicy {

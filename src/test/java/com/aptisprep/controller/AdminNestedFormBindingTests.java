@@ -5,7 +5,6 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-import com.aptisprep.entity.*;
 import com.aptisprep.mvc.auth.entity.User;
 import com.aptisprep.mvc.auth.repository.UserRepository;
 import com.aptisprep.mvc.catalog.entity.*;
@@ -15,7 +14,6 @@ import com.aptisprep.mvc.scoring.entity.*;
 import com.aptisprep.mvc.scoring.entity.Certificate;
 import com.aptisprep.mvc.scoring.repository.*;
 import com.aptisprep.mvc.scoring.repository.CertificateRepository;
-import com.aptisprep.repository.*;
 import java.util.*;
 import java.util.regex.Pattern;
 import org.junit.jupiter.api.BeforeEach;

@@ -1,6 +1,6 @@
-package com.aptisprep.repository;
+package com.aptisprep.mvc.grading.repository;
 
-import com.aptisprep.entity.ExamSkillResultEntity;
+import com.aptisprep.mvc.grading.entity.ExamSkillResultEntity;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;

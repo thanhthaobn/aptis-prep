@@ -22,7 +22,6 @@ import com.aptisprep.mvc.scoring.entity.ScoringScaleRule;
 import com.aptisprep.mvc.scoring.entity.ScoringScheme;
 import com.aptisprep.mvc.scoring.repository.*;
 import com.aptisprep.mvc.scoring.service.*;
-import com.aptisprep.repository.*;
 import java.math.BigDecimal;
 import java.util.Optional;
 import org.junit.jupiter.api.Test;

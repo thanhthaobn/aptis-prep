@@ -10,8 +10,8 @@ import com.aptisprep.mvc.common.exception.*;
 import com.aptisprep.mvc.exam.entity.*;
 import com.aptisprep.mvc.exam.repository.ExamAttemptRepository;
 import com.aptisprep.mvc.exam.repository.UserAnswerRepository;
+import com.aptisprep.mvc.grading.service.GradingResultQueryService;
 import com.aptisprep.mvc.scoring.service.impl.CheckpointScorePolicy;
-import com.aptisprep.repository.ExamSkillResultRepository;
 import com.aptisprep.service.contract.IntegrationModels.*;
 import java.time.*;
 import java.util.*;
@@ -27,7 +27,7 @@ class AttemptResultReader {
     private final ExamCatalogService examCatalogService;
     private final UserService userService;
     private final UserAnswerRepository userAnswerRepository;
-    private final ExamSkillResultRepository examSkillResultRepository;
+    private final GradingResultQueryService gradingResultQueryService;
     private final ExamSnapshotFactory examSnapshots;
 
     AttemptResultReader(
@@ -35,13 +35,13 @@ class AttemptResultReader {
             ExamCatalogService examCatalogService,
             UserService userService,
             UserAnswerRepository userAnswerRepository,
-            ExamSkillResultRepository examSkillResultRepository,
+            GradingResultQueryService gradingResultQueryService,
             ExamSnapshotFactory examSnapshots) {
         this.examAttemptRepository = examAttemptRepository;
         this.examCatalogService = examCatalogService;
         this.userService = userService;
         this.userAnswerRepository = userAnswerRepository;
-        this.examSkillResultRepository = examSkillResultRepository;
+        this.gradingResultQueryService = gradingResultQueryService;
         this.examSnapshots = examSnapshots;
     }
 
@@ -134,7 +134,7 @@ class AttemptResultReader {
 
     AttemptResult view(ExamAttemptEntity attempt, MockExamEntity exam) {
         List<SkillResult> skills =
-                examSkillResultRepository.findByAttemptIdOrderBySkillAsc(attempt.getId()).stream()
+                gradingResultQueryService.findSkillResultsByAttemptId(attempt.getId()).stream()
                         .map(
                                 value -> {
                                     String confirmedLevel =

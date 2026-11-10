@@ -1,4 +1,4 @@
-package com.aptisprep.entity;
+package com.aptisprep.mvc.grading.entity;
 
 import com.aptisprep.mvc.common.enums.AiJobState;
 import jakarta.persistence.*;

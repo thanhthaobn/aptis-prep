@@ -1,18 +1,16 @@
-package com.aptisprep.service.grading;
+package com.aptisprep.mvc.grading.service.impl;
 
-import com.aptisprep.entity.ExamSkillResultEntity;
-import com.aptisprep.mvc.catalog.entity.*;
 import com.aptisprep.mvc.catalog.entity.MockExamEntity;
 import com.aptisprep.mvc.common.exception.BusinessRuleException;
 import com.aptisprep.mvc.common.exception.ResourceNotFoundException;
 import com.aptisprep.mvc.exam.entity.UserAnswerDetailEntity;
 import com.aptisprep.mvc.exam.entity.UserAnswerEntity;
-import com.aptisprep.mvc.exam.repository.UserAnswerDetailRepository;
-import com.aptisprep.mvc.exam.repository.UserAnswerRepository;
+import com.aptisprep.mvc.exam.service.ExamGradingPersistenceService;
+import com.aptisprep.mvc.grading.entity.ExamSkillResultEntity;
+import com.aptisprep.mvc.grading.repository.ExamSkillResultRepository;
+import com.aptisprep.mvc.grading.service.ObjectiveGradingService;
 import com.aptisprep.mvc.scoring.service.ScoringPolicyService;
 import com.aptisprep.mvc.scoring.service.impl.CheckpointScorePolicy;
-import com.aptisprep.repository.ExamSkillResultRepository;
-import com.aptisprep.service.contract.GradingContextFormatter;
 import com.aptisprep.service.contract.IntegrationModels.LockedAnswer;
 import com.aptisprep.service.contract.IntegrationModels.LockedAttempt;
 import com.aptisprep.service.contract.IntegrationModels.LockedItem;
@@ -26,25 +24,22 @@ import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-/** Owner: Thông. Objective grading and raw/scale/CEFR conversion from a server snapshot. */
 @Service
-public class ObjectiveGradingService {
-    private final UserAnswerRepository userAnswerRepository;
-    private final UserAnswerDetailRepository userAnswerDetailRepository;
+public class ObjectiveGradingServiceImpl implements ObjectiveGradingService {
+    private final ExamGradingPersistenceService examGrading;
     private final ExamSkillResultRepository examSkillResultRepository;
     private final ScoringPolicyService scoring;
 
-    public ObjectiveGradingService(
-            UserAnswerRepository userAnswerRepository,
-            UserAnswerDetailRepository userAnswerDetailRepository,
+    public ObjectiveGradingServiceImpl(
+            ExamGradingPersistenceService examGrading,
             ExamSkillResultRepository examSkillResultRepository,
             ScoringPolicyService scoring) {
-        this.userAnswerRepository = userAnswerRepository;
-        this.userAnswerDetailRepository = userAnswerDetailRepository;
+        this.examGrading = examGrading;
         this.examSkillResultRepository = examSkillResultRepository;
         this.scoring = scoring;
     }
 
+    @Override
     @Transactional
     public void gradeObjective(LockedAttempt locked, MockExamEntity exam) {
         if (locked == null || locked.answers() == null) return;
@@ -69,8 +64,8 @@ public class ObjectiveGradingService {
         int emptySubjective = 0;
         for (LockedAnswer lockedAnswer : skillAnswers) {
             UserAnswerEntity answer =
-                    userAnswerRepository
-                            .findByIdAndAttemptId(lockedAnswer.answerId(), locked.attemptId())
+                    examGrading
+                            .findAnswerByIdAndAttemptId(lockedAnswer.answerId(), locked.attemptId())
                             .orElseThrow(
                                     () ->
                                             new ResourceNotFoundException(
@@ -86,7 +81,7 @@ public class ObjectiveGradingService {
                     answer.setAiModel("EMPTY_SUBMISSION");
                     answer.setGradedAt(LocalDateTime.now());
                     answer.setStatus("GRADED");
-                    userAnswerRepository.save(answer);
+                    examGrading.saveAnswer(answer);
                 }
                 continue;
             }
@@ -95,9 +90,7 @@ public class ObjectiveGradingService {
             for (LockedItem item : lockedItems) {
                 total++;
                 UserAnswerDetailEntity detail =
-                        userAnswerDetailRepository
-                                .findByUserAnswerIdAndQuestionItemId(answer.getId(), item.itemId())
-                                .orElse(null);
+                        examGrading.findAnswerDetail(answer.getId(), item.itemId()).orElse(null);
                 if (isCorrect(lockedAnswer.questionType(), item, detail)) correct++;
             }
         }
@@ -154,7 +147,6 @@ public class ObjectiveGradingService {
             result.setTotalItems(total);
             result.setObjectiveRawScore(raw);
             if (subjective) {
-                // Keep the objective component while subjective grading is pending.
                 result.setRawScore(null);
                 result.setScaleScore(null);
                 result.setCefrLevel(null);
@@ -202,8 +194,6 @@ public class ObjectiveGradingService {
                             scoring.estimatedLevel(schemeId, skill, result.getScaleScore())));
         } catch (BusinessRuleException exception) {
             if (!"GRAMMAR_VOCABULARY".equals(skill)) throw exception;
-            // Older schemes may contain the Grammar raw-scale rule but no CEFR bands.
-            // Keep the objective result usable with the approved internal A1-C1 estimate.
             result.setScaleScore(raw.setScale(2, java.math.RoundingMode.HALF_UP));
             result.setCefrLevel(
                     CheckpointScorePolicy.confirmedLevel(

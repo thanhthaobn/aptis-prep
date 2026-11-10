@@ -1,22 +1,12 @@
-package com.aptisprep.service.contract;
+package com.aptisprep.mvc.grading.dto;
 
 import java.math.BigDecimal;
 import java.time.Instant;
 
-/** Owner: Thông. Server-to-server contract; frontend never supplies CEFR, grading context or provider data. */
-public interface AiAssessmentContract {
-    AssessmentView request(AssessmentRequest request);
+public final class AiAssessmentDTO {
+    private AiAssessmentDTO() {}
 
-    AssessmentView process(String assessmentKey);
-
-    AssessmentView retry(String assessmentKey, Integer requesterId, boolean admin);
-
-    AssessmentView get(String assessmentKey, Integer requesterId, boolean admin);
-
-    /** Internal grading callback read; never expose this method from a controller. */
-    AssessmentView getForGrading(String assessmentKey);
-
-    record AssessmentRequest(
+    public record AssessmentRequest(
             String assessmentKey,
             Integer userId,
             Integer attemptId,
@@ -65,7 +55,7 @@ public interface AiAssessmentContract {
         }
     }
 
-    record AssessmentView(
+    public record AssessmentView(
             Integer assessmentId,
             String assessmentKey,
             Integer answerId,

@@ -4,7 +4,6 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
-import com.aptisprep.entity.*;
 import com.aptisprep.mvc.auth.entity.User;
 import com.aptisprep.mvc.auth.repository.UserRepository;
 import com.aptisprep.mvc.catalog.entity.*;
@@ -15,11 +14,13 @@ import com.aptisprep.mvc.common.exception.AiGradingException;
 import com.aptisprep.mvc.exam.entity.*;
 import com.aptisprep.mvc.exam.repository.*;
 import com.aptisprep.mvc.exam.service.ExamAttemptService;
+import com.aptisprep.mvc.grading.dto.GradingResultDTO;
+import com.aptisprep.mvc.grading.entity.ExamSkillResultEntity;
+import com.aptisprep.mvc.grading.repository.AiAssessmentJobRepository;
+import com.aptisprep.mvc.grading.repository.ExamSkillResultRepository;
+import com.aptisprep.mvc.grading.service.impl.GeminiGradingService;
 import com.aptisprep.mvc.scoring.entity.*;
 import com.aptisprep.mvc.scoring.repository.*;
-import com.aptisprep.repository.*;
-import com.aptisprep.service.grading.GeminiGradingService;
-import com.aptisprep.service.grading.GradingResult;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.UUID;
@@ -201,7 +202,7 @@ class SubjectiveBlankSubmissionTests {
         properties.setEnabled(true);
         when(provider.grade(anyString(), anyString()))
                 .thenReturn(
-                        new GradingResult(
+                        new GradingResultDTO(
                                 BigDecimal.valueOf(20),
                                 "A1",
                                 "Test feedback",

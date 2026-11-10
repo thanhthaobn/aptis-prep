@@ -1,8 +1,7 @@
 package com.aptisprep.mvc.exam.service.impl;
 
-import static com.aptisprep.service.contract.GradingContextFormatter.DEFAULT_RUBRIC_VERSION;
+import static com.aptisprep.mvc.grading.service.impl.GradingContextFormatter.DEFAULT_RUBRIC_VERSION;
 
-import com.aptisprep.entity.*;
 import com.aptisprep.mvc.auth.entity.User;
 import com.aptisprep.mvc.auth.service.UserService;
 import com.aptisprep.mvc.catalog.entity.*;
@@ -19,13 +18,14 @@ import com.aptisprep.mvc.exam.repository.*;
 import com.aptisprep.mvc.exam.service.AttemptOutboxService;
 import com.aptisprep.mvc.exam.service.ExamAttemptService;
 import com.aptisprep.mvc.exam.service.ExamAttemptService.*;
+import com.aptisprep.mvc.grading.entity.ExamSkillResultEntity;
+import com.aptisprep.mvc.grading.service.AttemptFinalizationService;
+import com.aptisprep.mvc.grading.service.GradingResultQueryService;
+import com.aptisprep.mvc.grading.service.ObjectiveGradingService;
+import com.aptisprep.mvc.grading.service.impl.GradingContextFormatter;
 import com.aptisprep.mvc.scoring.service.ScoringPolicyService;
 import com.aptisprep.mvc.storage.service.StorageService;
-import com.aptisprep.repository.*;
-import com.aptisprep.service.contract.GradingContextFormatter;
 import com.aptisprep.service.contract.IntegrationModels.*;
-import com.aptisprep.service.grading.AttemptFinalizationService;
-import com.aptisprep.service.grading.ObjectiveGradingService;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -54,7 +54,7 @@ public class ExamAttemptServiceImpl implements ExamAttemptService {
     private final ExamAttemptRepository examAttemptRepository;
     private final UserAnswerRepository userAnswerRepository;
     private final UserAnswerDetailRepository userAnswerDetailRepository;
-    private final ExamSkillResultRepository examSkillResultRepository;
+    private final GradingResultQueryService gradingResultQueryService;
     private final ScoringPolicyService scoring;
     private final StorageService storage;
     private final AttemptOutboxService outbox;
@@ -75,7 +75,7 @@ public class ExamAttemptServiceImpl implements ExamAttemptService {
             ExamAttemptRepository examAttemptRepository,
             UserAnswerRepository userAnswerRepository,
             UserAnswerDetailRepository userAnswerDetailRepository,
-            ExamSkillResultRepository examSkillResultRepository,
+            GradingResultQueryService gradingResultQueryService,
             ScoringPolicyService scoring,
             StorageService storage,
             AttemptOutboxService outbox,
@@ -94,7 +94,7 @@ public class ExamAttemptServiceImpl implements ExamAttemptService {
         this.examAttemptRepository = examAttemptRepository;
         this.userAnswerRepository = userAnswerRepository;
         this.userAnswerDetailRepository = userAnswerDetailRepository;
-        this.examSkillResultRepository = examSkillResultRepository;
+        this.gradingResultQueryService = gradingResultQueryService;
         this.scoring = scoring;
         this.storage = storage;
         this.outbox = outbox;
@@ -485,7 +485,7 @@ public class ExamAttemptServiceImpl implements ExamAttemptService {
         LockedAttempt locked = gradingPayloads.build(attempt);
         objectiveGrading.gradeObjective(locked, exam);
         boolean waiting =
-                examSkillResultRepository.findByAttemptIdOrderBySkillAsc(attempt.getId()).stream()
+                gradingResultQueryService.findSkillResultsByAttemptId(attempt.getId()).stream()
                         .anyMatch(x -> !"COMPLETED".equals(x.getGradingStatus()));
         if (waiting) {
             attempt.setStatus(expired ? "EXPIRED" : "WAITING_GRADING");
@@ -526,7 +526,7 @@ public class ExamAttemptServiceImpl implements ExamAttemptService {
                         && attempt.getSubmittedAt() == null
                         && attempt.getFinalScaleScore() == null
                         && attempt.getEstimatedOverallCefr() == null
-                        && !examSkillResultRepository.existsByAttemptId(attemptId);
+                        && !gradingResultQueryService.existsByAttemptId(attemptId);
         if (!terminal && !cleanDraft)
             throw new BusinessRuleException(
                     "Chỉ có thể loại bỏ lượt thi đang làm, đã hết thời gian hoặc đã hoàn thành.");
@@ -595,7 +595,7 @@ public class ExamAttemptServiceImpl implements ExamAttemptService {
     private boolean canRegradeEmpty(ExamAttemptEntity attempt) {
         if (!"ERROR".equals(attempt.getStatus())) return false;
         List<ExamSkillResultEntity> results =
-                examSkillResultRepository.findByAttemptIdOrderBySkillAsc(attempt.getId());
+                gradingResultQueryService.findSkillResultsByAttemptId(attempt.getId());
         boolean emptyError = false;
         for (ExamSkillResultEntity result : results) {
             if (!"ERROR".equals(result.getGradingStatus())) continue;

@@ -4,11 +4,12 @@ import com.aptisprep.mvc.common.config.AiProperties;
 import com.aptisprep.mvc.common.event.AiAssessmentCompletedEvent;
 import com.aptisprep.mvc.common.event.AttemptSubmittedEvent;
 import com.aptisprep.mvc.exam.service.AttemptOutboxService;
-import com.aptisprep.service.contract.AiAssessmentContract;
-import com.aptisprep.service.contract.GradingContextFormatter;
+import com.aptisprep.mvc.grading.dto.AiAssessmentDTO;
+import com.aptisprep.mvc.grading.service.AiAssessmentService;
+import com.aptisprep.mvc.grading.service.AttemptFinalizationService;
+import com.aptisprep.mvc.grading.service.impl.GradingContextFormatter;
 import com.aptisprep.service.contract.IntegrationModels.LockedAnswer;
 import com.aptisprep.service.contract.IntegrationModels.LockedAttempt;
-import com.aptisprep.service.grading.AttemptFinalizationService;
 import java.math.BigDecimal;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Propagation;
@@ -19,13 +20,13 @@ import org.springframework.transaction.event.TransactionalEventListener;
 @Component
 public class AttemptGradingOrchestrationListener {
     private final AiProperties properties;
-    private final AiAssessmentContract ai;
+    private final AiAssessmentService ai;
     private final AttemptFinalizationService finalization;
     private final AttemptOutboxService outbox;
 
     public AttemptGradingOrchestrationListener(
             AiProperties properties,
-            AiAssessmentContract ai,
+            AiAssessmentService ai,
             AttemptFinalizationService finalization,
             AttemptOutboxService outbox) {
         this.properties = properties;
@@ -64,8 +65,8 @@ public class AttemptGradingOrchestrationListener {
                             + answer.answerId()
                             + ":v"
                             + locked.answerVersion();
-            AiAssessmentContract.AssessmentRequest request =
-                    new AiAssessmentContract.AssessmentRequest(
+            AiAssessmentDTO.AssessmentRequest request =
+                    new AiAssessmentDTO.AssessmentRequest(
                             key,
                             event.userId(),
                             event.attemptId(),

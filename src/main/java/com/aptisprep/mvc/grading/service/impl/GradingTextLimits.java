@@ -1,6 +1,6 @@
-package com.aptisprep.service.contract;
+package com.aptisprep.mvc.grading.service.impl;
 
-/** Shared limits for the Trâm to Thông grading boundary. */
+/** Shared limits for the grading boundary. */
 public final class GradingTextLimits {
     private GradingTextLimits() {}
 

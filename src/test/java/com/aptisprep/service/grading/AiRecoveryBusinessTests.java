@@ -4,11 +4,11 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
-import com.aptisprep.entity.*;
 import com.aptisprep.mvc.account.repository.ProfileApplicationRepository;
 import com.aptisprep.mvc.account.repository.UserSkillProfileRepository;
 import com.aptisprep.mvc.auth.entity.User;
 import com.aptisprep.mvc.auth.repository.UserRepository;
+import com.aptisprep.mvc.auth.service.UserService;
 import com.aptisprep.mvc.catalog.entity.*;
 import com.aptisprep.mvc.catalog.repository.*;
 import com.aptisprep.mvc.common.enums.*;
@@ -18,9 +18,14 @@ import com.aptisprep.mvc.common.exception.BusinessRuleException;
 import com.aptisprep.mvc.exam.entity.*;
 import com.aptisprep.mvc.exam.repository.*;
 import com.aptisprep.mvc.exam.service.AttemptOutboxService;
+import com.aptisprep.mvc.grading.dto.GradingResultDTO;
+import com.aptisprep.mvc.grading.entity.*;
+import com.aptisprep.mvc.grading.repository.*;
+import com.aptisprep.mvc.grading.service.AttemptFinalizationService;
+import com.aptisprep.mvc.grading.service.impl.AiAssessmentServiceImpl;
+import com.aptisprep.mvc.grading.service.impl.GeminiGradingService;
 import com.aptisprep.mvc.scoring.entity.*;
 import com.aptisprep.mvc.scoring.repository.*;
-import com.aptisprep.repository.*;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.*;
@@ -48,12 +53,13 @@ import tools.jackson.databind.json.JsonMapper;
         })
 class AiRecoveryBusinessTests {
     @MockitoBean GeminiGradingService provider;
-    @Autowired AiAssessmentService ai;
+    @Autowired AiAssessmentServiceImpl ai;
     @Autowired AttemptFinalizationService finalization;
     @Autowired AttemptOutboxService delivery;
     @Autowired AiAssessmentJobRepository jobs;
     @Autowired AiAssessmentRepository assessments;
     @Autowired UserRepository users;
+    @Autowired UserService userService;
     @Autowired ExamAttemptRepository attempts;
     @Autowired UserAnswerRepository answers;
     @Autowired QuestionRepository questions;
@@ -229,10 +235,10 @@ class AiRecoveryBusinessTests {
                 .when(repository)
                 .findByAssessmentKeyForUpdate(job.getAssessmentKey());
         var interrupted =
-                new AiAssessmentService(
+                new AiAssessmentServiceImpl(
                         repository,
                         assessments,
-                        users,
+                        userService,
                         provider,
                         provider,
                         mock(com.aptisprep.mvc.storage.service.StorageService.class),
@@ -517,11 +523,11 @@ class AiRecoveryBusinessTests {
                         .count());
     }
 
-    private AiAssessmentService restarted() {
-        return new AiAssessmentService(
+    private AiAssessmentServiceImpl restarted() {
+        return new AiAssessmentServiceImpl(
                 jobs,
                 assessments,
-                users,
+                userService,
                 provider,
                 provider,
                 mock(com.aptisprep.mvc.storage.service.StorageService.class),
@@ -535,8 +541,9 @@ class AiRecoveryBusinessTests {
         return results.findByAttemptIdAndSkill(f.attempt().getId(), "WRITING").orElseThrow();
     }
 
-    private GradingResult grade(int score) {
-        return new GradingResult(BigDecimal.valueOf(score), "A1", "Feedback", "mock", "test-model");
+    private GradingResultDTO grade(int score) {
+        return new GradingResultDTO(
+                BigDecimal.valueOf(score), "A1", "Feedback", "mock", "test-model");
     }
 
     private AiAssessment assessment(AiAssessmentJob job) {

@@ -6,7 +6,6 @@ import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-import com.aptisprep.entity.*;
 import com.aptisprep.mvc.auth.entity.User;
 import com.aptisprep.mvc.auth.repository.UserRepository;
 import com.aptisprep.mvc.common.enums.*;
@@ -16,7 +15,6 @@ import com.aptisprep.mvc.learning.repository.*;
 import com.aptisprep.mvc.learning.service.*;
 import com.aptisprep.mvc.learning.service.impl.*;
 import com.aptisprep.mvc.storage.service.AudioDurationService;
-import com.aptisprep.repository.*;
 import java.time.Instant;
 import java.util.UUID;
 import org.junit.jupiter.api.*;

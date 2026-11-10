@@ -7,7 +7,6 @@ import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-import com.aptisprep.entity.*;
 import com.aptisprep.mvc.account.entity.UserGoal;
 import com.aptisprep.mvc.account.entity.UserGoalSkill;
 import com.aptisprep.mvc.account.entity.UserSkillProfile;
@@ -26,7 +25,6 @@ import com.aptisprep.mvc.learning.entity.*;
 import com.aptisprep.mvc.learning.repository.*;
 import com.aptisprep.mvc.learning.service.*;
 import com.aptisprep.mvc.learning.service.impl.*;
-import com.aptisprep.repository.*;
 import com.aptisprep.service.contract.IntegrationModels.*;
 import java.math.BigDecimal;
 import java.time.Instant;

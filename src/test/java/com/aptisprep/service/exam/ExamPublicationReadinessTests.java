@@ -3,7 +3,6 @@ package com.aptisprep.service.exam;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-import com.aptisprep.entity.*;
 import com.aptisprep.mvc.catalog.entity.*;
 import com.aptisprep.mvc.catalog.repository.*;
 import com.aptisprep.mvc.catalog.service.ExamCatalogService;
@@ -12,7 +11,6 @@ import com.aptisprep.mvc.exam.service.impl.ExamStartValidator;
 import com.aptisprep.mvc.scoring.service.*;
 import com.aptisprep.mvc.scoring.service.CertificateSchemeService;
 import com.aptisprep.mvc.storage.service.StorageService;
-import com.aptisprep.repository.*;
 import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.Test;

@@ -1,6 +1,5 @@
 package com.aptisprep.mvc.account.service.impl;
 
-import com.aptisprep.entity.*;
 import com.aptisprep.mvc.account.dto.AccountSnapshotDTO;
 import com.aptisprep.mvc.account.dto.AccountSnapshotDTO.GoalViewDTO;
 import com.aptisprep.mvc.account.dto.AccountSnapshotDTO.SkillViewDTO;

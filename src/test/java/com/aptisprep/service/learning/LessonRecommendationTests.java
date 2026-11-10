@@ -2,7 +2,6 @@ package com.aptisprep.service.learning;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import com.aptisprep.entity.*;
 import com.aptisprep.mvc.account.dto.LearnerContextDTO;
 import com.aptisprep.mvc.account.dto.SkillLevelDTO;
 import com.aptisprep.mvc.account.dto.SkillTargetDTO;

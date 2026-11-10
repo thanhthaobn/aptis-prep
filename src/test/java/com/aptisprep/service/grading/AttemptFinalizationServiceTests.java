@@ -11,31 +11,26 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
-import com.aptisprep.entity.AiAssessment;
-import com.aptisprep.entity.AiAssessmentJob;
-import com.aptisprep.entity.ExamSkillResultEntity;
-import com.aptisprep.mvc.catalog.entity.*;
 import com.aptisprep.mvc.catalog.entity.QuestionEntity;
-import com.aptisprep.mvc.catalog.repository.*;
-import com.aptisprep.mvc.catalog.repository.MockExamRepository;
-import com.aptisprep.mvc.catalog.repository.QuestionRepository;
+import com.aptisprep.mvc.catalog.service.ExamCatalogService;
 import com.aptisprep.mvc.common.enums.AiAssessmentState;
 import com.aptisprep.mvc.common.enums.AiJobState;
 import com.aptisprep.mvc.common.event.AiAssessmentCompletedEvent;
-import com.aptisprep.mvc.exam.entity.*;
 import com.aptisprep.mvc.exam.entity.ExamAttemptEntity;
 import com.aptisprep.mvc.exam.entity.UserAnswerEntity;
-import com.aptisprep.mvc.exam.repository.*;
-import com.aptisprep.mvc.exam.repository.ExamAttemptRepository;
-import com.aptisprep.mvc.exam.repository.ExamAttemptSnapshotRepository;
-import com.aptisprep.mvc.exam.repository.UserAnswerRepository;
 import com.aptisprep.mvc.exam.service.AttemptOutboxService;
-import com.aptisprep.mvc.scoring.service.*;
+import com.aptisprep.mvc.exam.service.ExamGradingPersistenceService;
+import com.aptisprep.mvc.grading.dto.AiAssessmentDTO;
+import com.aptisprep.mvc.grading.entity.AiAssessment;
+import com.aptisprep.mvc.grading.entity.AiAssessmentJob;
+import com.aptisprep.mvc.grading.entity.ExamSkillResultEntity;
+import com.aptisprep.mvc.grading.repository.AiAssessmentJobRepository;
+import com.aptisprep.mvc.grading.repository.AiAssessmentRepository;
+import com.aptisprep.mvc.grading.repository.ExamSkillResultRepository;
+import com.aptisprep.mvc.grading.service.AiAssessmentService;
+import com.aptisprep.mvc.grading.service.AttemptFinalizationService;
+import com.aptisprep.mvc.grading.service.impl.AttemptFinalizationServiceImpl;
 import com.aptisprep.mvc.scoring.service.ScoringPolicyService;
-import com.aptisprep.repository.AiAssessmentJobRepository;
-import com.aptisprep.repository.AiAssessmentRepository;
-import com.aptisprep.repository.ExamSkillResultRepository;
-import com.aptisprep.service.contract.AiAssessmentContract;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
@@ -51,13 +46,10 @@ import org.springframework.test.util.ReflectionTestUtils;
 
 @ExtendWith(MockitoExtension.class)
 class AttemptFinalizationServiceTests {
-    @Mock ExamAttemptRepository attempts;
+    @Mock ExamGradingPersistenceService examGrading;
     @Mock ExamSkillResultRepository skillResults;
-    @Mock MockExamRepository exams;
-    @Mock UserAnswerRepository answers;
-    @Mock QuestionRepository questions;
-    @Mock ExamAttemptSnapshotRepository snapshots;
-    @Mock AiAssessmentContract ai;
+    @Mock ExamCatalogService examCatalogService;
+    @Mock AiAssessmentService ai;
     @Mock AiAssessmentJobRepository jobs;
     @Mock AiAssessmentRepository assessments;
     @Mock ScoringPolicyService scoring;
@@ -71,13 +63,10 @@ class AttemptFinalizationServiceTests {
         JdbcDataSource dataSource = new JdbcDataSource();
         dataSource.setURL("jdbc:h2:mem:finalization_" + System.nanoTime() + ";DB_CLOSE_DELAY=-1");
         service =
-                new AttemptFinalizationService(
-                        attempts,
+                new AttemptFinalizationServiceImpl(
+                        examGrading,
                         skillResults,
-                        exams,
-                        answers,
-                        questions,
-                        snapshots,
+                        examCatalogService,
                         ai,
                         jobs,
                         assessments,
@@ -113,14 +102,15 @@ class AttemptFinalizationServiceTests {
         AiAssessment successfulAssessment =
                 assessment(successfulJob, AiAssessmentState.COMPLETED, new BigDecimal("35"));
 
-        when(attempts.findByIdAndUserIdForUpdate(1, 2)).thenReturn(Optional.of(attempt));
+        when(examGrading.findAttemptByIdAndUserIdForUpdate(1, 2)).thenReturn(Optional.of(attempt));
         when(jobs.findByAssessmentKey("successful")).thenReturn(Optional.of(successfulJob));
-        when(answers.findByIdAndAttemptId(10, 1)).thenReturn(Optional.of(failedAnswer));
-        when(answers.findByIdAndAttemptId(11, 1)).thenReturn(Optional.of(successfulAnswer));
-        when(answers.findByAttemptIdOrderByQuestionIdAsc(1))
+        when(examGrading.findAnswerByIdAndAttemptId(10, 1)).thenReturn(Optional.of(failedAnswer));
+        when(examGrading.findAnswerByIdAndAttemptId(11, 1))
+                .thenReturn(Optional.of(successfulAnswer));
+        when(examGrading.findAnswersByAttemptId(1))
                 .thenReturn(List.of(failedAnswer, successfulAnswer));
-        when(questions.findById(100)).thenReturn(Optional.of(failedQuestion));
-        when(questions.findById(101)).thenReturn(Optional.of(successfulQuestion));
+        when(examCatalogService.findQuestionById(100)).thenReturn(Optional.of(failedQuestion));
+        when(examCatalogService.findQuestionById(101)).thenReturn(Optional.of(successfulQuestion));
         when(skillResults.findByAttemptIdAndSkill(1, "WRITING")).thenReturn(Optional.of(result));
         when(jobs.findExamJobs(2, 1, 2, "p1", "r1")).thenReturn(List.of(failedJob, successfulJob));
         when(assessments.findFirstByJobIdAndAnswerVersionOrderByIdDesc(20, 2))
@@ -129,7 +119,7 @@ class AttemptFinalizationServiceTests {
                 .thenReturn(Optional.of(successfulAssessment));
         when(ai.getForGrading("successful"))
                 .thenReturn(
-                        new AiAssessmentContract.AssessmentView(
+                        new AiAssessmentDTO.AssessmentView(
                                 31,
                                 "successful",
                                 11,
@@ -165,7 +155,7 @@ class AttemptFinalizationServiceTests {
         service.applyAiAssessment(
                 new AiAssessmentCompletedEvent("lesson", 2, 1, 10, "ERROR", "failed", 2));
 
-        verifyNoInteractions(attempts, skillResults, ai);
+        verifyNoInteractions(examGrading, skillResults, ai);
     }
 
     @Test
@@ -179,7 +169,7 @@ class AttemptFinalizationServiceTests {
         ReflectionTestUtils.setField(attempt, "id", 1);
         AiAssessmentJob lessonJob = job(20, "lesson", AiJobState.ERROR);
         lessonJob.setSourceType("LESSON_SUBMISSION");
-        when(attempts.findByIdAndUserIdForUpdate(1, 2)).thenReturn(Optional.of(attempt));
+        when(examGrading.findAttemptByIdAndUserIdForUpdate(1, 2)).thenReturn(Optional.of(attempt));
         when(jobs.findExamJobsByState(2, 1, 2, "p1", "r1", AiJobState.ERROR))
                 .thenReturn(List.of(lessonJob));
 
@@ -203,7 +193,6 @@ class AttemptFinalizationServiceTests {
         ReflectionTestUtils.setField(question, "id", id);
         question.setSkill("WRITING");
         question.setQuestionType("WRITING_TEXT");
-        question.setContent("Task");
         return question;
     }
 
@@ -213,12 +202,13 @@ class AttemptFinalizationServiceTests {
         job.setAssessmentKey(key);
         job.setUserId(2);
         job.setAttemptId(1);
+        job.setAnswerId(id == 20 ? 10 : 11);
         job.setAnswerVersion(2);
-        job.setAnswerId(id - 10);
-        job.setSourceId(id - 10);
+        job.setSkill("WRITING");
+        job.setSourceType("EXAM_ANSWER");
+        job.setSourceId(id == 20 ? 10 : 11);
         job.setPolicyVersion("p1");
         job.setRubricVersion("r1");
-        job.setSkill("WRITING");
         job.setState(state);
         return job;
     }
@@ -229,11 +219,11 @@ class AttemptFinalizationServiceTests {
         assessment.setJob(job);
         assessment.setAssessmentKey(job.getAssessmentKey());
         assessment.setAnswerId(job.getAnswerId());
-        assessment.setAnswerVersion(2);
-        assessment.setState(state);
-        assessment.setScore(score);
+        assessment.setAnswerVersion(job.getAnswerVersion());
         assessment.setPolicyVersion("p1");
         assessment.setRubricVersion("r1");
+        assessment.setState(state);
+        assessment.setScore(score);
         return assessment;
     }
 }

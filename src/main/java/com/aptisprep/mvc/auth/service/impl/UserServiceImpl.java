@@ -123,4 +123,10 @@ public class UserServiceImpl implements UserService {
     public User save(User user) {
         return userRepository.save(user);
     }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Integer getUserIdByEmail(String email) {
+        return requireByEmail(email).getId();
+    }
 }

@@ -95,6 +95,10 @@ public interface ExamAttemptRepository extends JpaRepository<ExamAttemptEntity, 
     List<ExamAttemptEntity> findWithoutSnapshot(Integer examId);
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("select a from ExamAttemptEntity a where a.id = :id")
+    Optional<ExamAttemptEntity> findByIdForUpdate(@Param("id") Integer id);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("select a from ExamAttemptEntity a where a.id = :id and a.userId = :userId")
     Optional<ExamAttemptEntity> findByIdAndUserIdForUpdate(
             @Param("id") Integer id, @Param("userId") Integer userId);

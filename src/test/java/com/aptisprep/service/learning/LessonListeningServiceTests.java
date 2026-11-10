@@ -3,7 +3,6 @@ package com.aptisprep.service.learning;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-import com.aptisprep.entity.*;
 import com.aptisprep.mvc.auth.entity.User;
 import com.aptisprep.mvc.auth.repository.UserRepository;
 import com.aptisprep.mvc.common.enums.*;
@@ -19,7 +18,6 @@ import com.aptisprep.mvc.learning.service.LessonListeningService;
 import com.aptisprep.mvc.learning.service.impl.*;
 import com.aptisprep.mvc.learning.service.impl.LessonListeningServiceImpl;
 import com.aptisprep.mvc.storage.service.AudioDurationService;
-import com.aptisprep.repository.*;
 import java.time.*;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;

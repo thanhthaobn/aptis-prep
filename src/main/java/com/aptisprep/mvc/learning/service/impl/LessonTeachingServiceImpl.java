@@ -5,6 +5,8 @@ import com.aptisprep.mvc.auth.repository.UserRepository;
 import com.aptisprep.mvc.common.config.AiProperties;
 import com.aptisprep.mvc.common.enums.*;
 import com.aptisprep.mvc.common.exception.*;
+import com.aptisprep.mvc.grading.dto.AiAssessmentDTO.AssessmentRequest;
+import com.aptisprep.mvc.grading.service.AiAssessmentService;
 import com.aptisprep.mvc.learning.dto.LessonFormDTO;
 import com.aptisprep.mvc.learning.dto.LessonMediaResourceDTO;
 import com.aptisprep.mvc.learning.dto.LessonResponseDTO;
@@ -14,8 +16,6 @@ import com.aptisprep.mvc.learning.entity.*;
 import com.aptisprep.mvc.learning.repository.*;
 import com.aptisprep.mvc.learning.service.LessonTeachingService;
 import com.aptisprep.mvc.storage.service.StorageService;
-import com.aptisprep.service.contract.AiAssessmentContract;
-import com.aptisprep.service.contract.AiAssessmentContract.AssessmentRequest;
 import jakarta.persistence.*;
 import java.math.BigDecimal;
 import java.net.URI;
@@ -37,7 +37,7 @@ public class LessonTeachingServiceImpl implements LessonTeachingService {
     private final LessonEngagementRepository lessonEngagementRepository;
     private final StorageService storage;
     private final LessonProgressRepository lessonProgressRepository;
-    private final AiAssessmentContract assessments;
+    private final AiAssessmentService assessments;
     @PersistenceContext private EntityManager em;
     private final AiProperties aiProperties;
 
@@ -50,7 +50,7 @@ public class LessonTeachingServiceImpl implements LessonTeachingService {
             LessonEngagementRepository lessonEngagementRepository,
             StorageService s,
             LessonProgressRepository lessonProgressRepository,
-            AiAssessmentContract ai,
+            AiAssessmentService ai,
             AiProperties aiProperties) {
         checkService = c;
         this.lessonRepository = lessonRepository;
@@ -545,7 +545,7 @@ public class LessonTeachingServiceImpl implements LessonTeachingService {
         String key = "lesson-" + lessonId + "-submission-" + submitted.getId();
         String prompt = has(submitted.getPrompt()) ? submitted.getPrompt() : lesson.getTitle();
         AssessmentRequest request =
-                new AiAssessmentContract.AssessmentRequest(
+                new AssessmentRequest(
                         key,
                         u.getId(),
                         null,

@@ -24,4 +24,6 @@ public interface UserService {
     Optional<User> findByEmailIgnoreCase(String email);
 
     User save(User user);
+
+    Integer getUserIdByEmail(String email);
 }

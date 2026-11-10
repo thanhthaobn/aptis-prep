@@ -1,6 +1,6 @@
-package com.aptisprep.repository;
+package com.aptisprep.mvc.grading.repository;
 
-import com.aptisprep.entity.AiAssessment;
+import com.aptisprep.mvc.grading.entity.AiAssessment;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 

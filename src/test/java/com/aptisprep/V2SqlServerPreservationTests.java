@@ -5,13 +5,14 @@ import static org.junit.jupiter.api.Assertions.*;
 import com.aptisprep.mvc.auth.repository.UserRepository;
 import com.aptisprep.mvc.common.exception.BusinessRuleException;
 import com.aptisprep.mvc.exam.entity.*;
+import com.aptisprep.mvc.grading.entity.AiAssessmentJob;
+import com.aptisprep.mvc.grading.repository.AiAssessmentJobRepository;
 import com.aptisprep.mvc.learning.dto.*;
 import com.aptisprep.mvc.learning.dto.LessonFormDTO;
 import com.aptisprep.mvc.learning.entity.*;
 import com.aptisprep.mvc.learning.repository.*;
 import com.aptisprep.mvc.learning.service.*;
 import com.aptisprep.mvc.learning.service.impl.*;
-import com.aptisprep.repository.*;
 import java.nio.file.*;
 import java.sql.*;
 import java.util.*;
@@ -217,7 +218,7 @@ class V2SqlServerPreservationTests {
         factory.setDataSource(
                 new org.springframework.jdbc.datasource.DriverManagerDataSource(
                         url, login, password));
-        factory.setPackagesToScan("com.aptisprep.entity");
+        factory.setPackagesToScan("com.aptisprep.mvc");
         factory.setJpaVendorAdapter(
                 new org.springframework.orm.jpa.vendor.HibernateJpaVendorAdapter());
         factory.setJpaPropertyMap(Map.of("hibernate.hbm2ddl.auto", "validate"));
@@ -353,7 +354,7 @@ class V2SqlServerPreservationTests {
         assertEquals(
                 List.of(examJob.getAssessmentKey()),
                 jobs.findExamJobs(owner, answer.getAttemptId(), 1, "p1", "r1").stream()
-                        .map(com.aptisprep.entity.AiAssessmentJob::getAssessmentKey)
+                        .map(AiAssessmentJob::getAssessmentKey)
                         .toList());
         assertTrue(
                 jobs.findRecoverableKeys(
@@ -377,10 +378,10 @@ class V2SqlServerPreservationTests {
                                 "r1",
                                 com.aptisprep.mvc.common.enums.AiJobState.ERROR)
                         .stream()
-                        .map(com.aptisprep.entity.AiAssessmentJob::getAssessmentKey)
+                        .map(AiAssessmentJob::getAssessmentKey)
                         .toList());
         examJob.setState(com.aptisprep.mvc.common.enums.AiJobState.COMPLETED);
-        var assessment = new com.aptisprep.entity.AiAssessment();
+        var assessment = new com.aptisprep.mvc.grading.entity.AiAssessment();
         assessment.setJob(examJob);
         assessment.setAssessmentKey(examJob.getAssessmentKey());
         assessment.setAnswerId(answer.getId());
@@ -409,12 +410,12 @@ class V2SqlServerPreservationTests {
                         .contains(examJob.getAssessmentKey()));
     }
 
-    private static com.aptisprep.entity.AiAssessmentJob sqlJob(
+    private static AiAssessmentJob sqlJob(
             String key,
             int owner,
             com.aptisprep.mvc.exam.entity.UserAnswerEntity answer,
             String source) {
-        var job = new com.aptisprep.entity.AiAssessmentJob();
+        var job = new AiAssessmentJob();
         job.setAssessmentKey(key);
         job.setUserId(owner);
         job.setAttemptId(answer.getAttemptId());
@@ -475,7 +476,7 @@ class V2SqlServerPreservationTests {
         factory.setDataSource(
                 new org.springframework.jdbc.datasource.DriverManagerDataSource(
                         url, login, password));
-        factory.setPackagesToScan("com.aptisprep.entity");
+        factory.setPackagesToScan("com.aptisprep.mvc");
         factory.setJpaVendorAdapter(
                 new org.springframework.orm.jpa.vendor.HibernateJpaVendorAdapter());
         factory.setJpaPropertyMap(Map.of("hibernate.hbm2ddl.auto", "validate"));

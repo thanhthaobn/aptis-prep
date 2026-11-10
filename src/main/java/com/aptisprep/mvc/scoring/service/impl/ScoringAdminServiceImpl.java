@@ -1,10 +1,8 @@
 package com.aptisprep.mvc.scoring.service.impl;
 
-import com.aptisprep.entity.*;
 import com.aptisprep.mvc.auth.entity.User;
 import com.aptisprep.mvc.auth.repository.UserRepository;
-import com.aptisprep.mvc.catalog.repository.*;
-import com.aptisprep.mvc.catalog.service.*;
+import com.aptisprep.mvc.catalog.repository.MockExamRepository;
 import com.aptisprep.mvc.catalog.service.ScoringSchemeUsageService;
 import com.aptisprep.mvc.common.enums.*;
 import com.aptisprep.mvc.common.enums.CefrLevel;
@@ -16,7 +14,6 @@ import com.aptisprep.mvc.scoring.dto.*;
 import com.aptisprep.mvc.scoring.entity.*;
 import com.aptisprep.mvc.scoring.repository.*;
 import com.aptisprep.mvc.scoring.service.ScoringAdminService;
-import com.aptisprep.repository.*;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDateTime;

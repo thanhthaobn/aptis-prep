@@ -1,6 +1,5 @@
 package com.aptisprep.mvc.scoring.service.impl;
 
-import com.aptisprep.entity.*;
 import com.aptisprep.mvc.common.enums.RecordStatus;
 import com.aptisprep.mvc.common.enums.Skill;
 import com.aptisprep.mvc.common.exception.BusinessRuleException;

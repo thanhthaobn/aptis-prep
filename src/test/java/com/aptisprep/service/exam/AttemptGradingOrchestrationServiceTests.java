@@ -8,12 +8,12 @@ import com.aptisprep.mvc.common.config.AiProperties;
 import com.aptisprep.mvc.common.event.AttemptSubmittedEvent;
 import com.aptisprep.mvc.exam.service.AttemptOutboxService;
 import com.aptisprep.mvc.exam.service.impl.AttemptGradingOrchestrationListener;
-import com.aptisprep.service.contract.AiAssessmentContract;
-import com.aptisprep.service.contract.AiAssessmentContract.AssessmentRequest;
+import com.aptisprep.mvc.grading.dto.AiAssessmentDTO.AssessmentRequest;
+import com.aptisprep.mvc.grading.service.AiAssessmentService;
+import com.aptisprep.mvc.grading.service.AttemptFinalizationService;
 import com.aptisprep.service.contract.IntegrationModels.LockedAnswer;
 import com.aptisprep.service.contract.IntegrationModels.LockedAttempt;
 import com.aptisprep.service.contract.IntegrationModels.LockedItem;
-import com.aptisprep.service.grading.AttemptFinalizationService;
 import java.time.Instant;
 import java.util.List;
 import org.junit.jupiter.api.Test;
@@ -24,7 +24,7 @@ class AttemptGradingOrchestrationListenerTests {
     void sendsEveryItemPromptAndKeepsEachAnswerWithItsItem() {
         AiProperties properties = new AiProperties();
         properties.setEnabled(true);
-        AiAssessmentContract ai = mock(AiAssessmentContract.class);
+        AiAssessmentService ai = mock(AiAssessmentService.class);
         AttemptFinalizationService finalization = mock(AttemptFinalizationService.class);
         when(finalization.accepts(any())).thenReturn(true);
         AttemptGradingOrchestrationListener service =

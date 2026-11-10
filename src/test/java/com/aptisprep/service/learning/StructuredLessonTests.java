@@ -6,7 +6,6 @@ import static org.hamcrest.Matchers.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-import com.aptisprep.entity.*;
 import com.aptisprep.mvc.auth.entity.User;
 import com.aptisprep.mvc.auth.repository.UserRepository;
 import com.aptisprep.mvc.common.config.StorageProperties;
@@ -25,7 +24,6 @@ import com.aptisprep.mvc.learning.service.LessonTeachingService;
 import com.aptisprep.mvc.learning.service.impl.*;
 import com.aptisprep.mvc.learning.service.impl.LessonTeachingServiceImpl;
 import com.aptisprep.mvc.storage.service.StorageService;
-import com.aptisprep.repository.*;
 import com.aptisprep.support.TestAudio;
 import java.nio.file.Files;
 import java.util.Map;

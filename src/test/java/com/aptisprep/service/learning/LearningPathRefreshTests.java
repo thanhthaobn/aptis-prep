@@ -2,7 +2,6 @@ package com.aptisprep.service.learning;
 
 import static org.assertj.core.api.Assertions.*;
 
-import com.aptisprep.entity.*;
 import com.aptisprep.mvc.account.entity.UserGoal;
 import com.aptisprep.mvc.account.entity.UserGoalSkill;
 import com.aptisprep.mvc.account.repository.UserGoalRepository;
@@ -15,7 +14,6 @@ import com.aptisprep.mvc.learning.entity.*;
 import com.aptisprep.mvc.learning.repository.*;
 import com.aptisprep.mvc.learning.service.*;
 import com.aptisprep.mvc.learning.service.impl.*;
-import com.aptisprep.repository.*;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;

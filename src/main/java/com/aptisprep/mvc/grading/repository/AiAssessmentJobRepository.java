@@ -1,7 +1,7 @@
-package com.aptisprep.repository;
+package com.aptisprep.mvc.grading.repository;
 
-import com.aptisprep.entity.AiAssessmentJob;
 import com.aptisprep.mvc.common.enums.AiJobState;
+import com.aptisprep.mvc.grading.entity.AiAssessmentJob;
 import jakarta.persistence.LockModeType;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -90,7 +90,7 @@ where job.sourceType = 'EXAM_ANSWER'
   and exists (select a.id from AiAssessment a where a.job.id = job.id
       and a.answerVersion = job.answerVersion
       and a.state = com.aptisprep.mvc.common.enums.AiAssessmentState.COMPLETED and a.score is not null)
-  and not exists (select o.id from AttemptOutboxEntity o
+  and not exists (select o.id from com.aptisprep.mvc.exam.entity.AttemptOutboxEntity o
       where o.eventKey = concat('ai:', job.assessmentKey, ':v', cast(job.answerVersion as string), ':COMPLETED'))
 order by job.id
 """)

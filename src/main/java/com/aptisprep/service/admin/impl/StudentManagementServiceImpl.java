@@ -1,7 +1,6 @@
 package com.aptisprep.service.admin.impl;
 
 import com.aptisprep.dto.view.AdminStudentView;
-import com.aptisprep.entity.*;
 import com.aptisprep.mvc.account.dto.AccountSnapshotDTO;
 import com.aptisprep.mvc.account.entity.UserGoal;
 import com.aptisprep.mvc.account.entity.UserGoalSkill;
@@ -19,7 +18,6 @@ import com.aptisprep.mvc.common.exception.ResourceNotFoundException;
 import com.aptisprep.mvc.exam.service.ExamAttemptService;
 import com.aptisprep.mvc.learning.service.LearningPathService;
 import com.aptisprep.mvc.scoring.entity.Certificate;
-import com.aptisprep.repository.*;
 import com.aptisprep.service.admin.StudentManagementService;
 import com.aptisprep.service.contract.IntegrationModels.*;
 import java.util.*;

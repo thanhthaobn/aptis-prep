@@ -1,9 +1,11 @@
-package com.aptisprep.service.grading;
+package com.aptisprep.mvc.grading.service.impl;
 
 import com.aptisprep.mvc.common.config.AiProperties;
 import com.aptisprep.mvc.common.enums.CefrLevel;
 import com.aptisprep.mvc.common.exception.AiGradingException;
-import com.aptisprep.service.contract.GradingTextLimits;
+import com.aptisprep.mvc.grading.dto.GradingResultDTO;
+import com.aptisprep.mvc.grading.service.SpeakingGradingService;
+import com.aptisprep.mvc.grading.service.WritingGradingService;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.nio.file.Files;
@@ -19,13 +21,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.MediaType;
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientResponseException;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
 
-@Service
+@Component
 public class GeminiGradingService implements WritingGradingService, SpeakingGradingService {
     private static final Logger log = LoggerFactory.getLogger(GeminiGradingService.class);
     private static final String PROVIDER = "Gemini";
@@ -81,14 +83,14 @@ For Writing, return an empty transcript string.
     }
 
     @Override
-    public GradingResult grade(String prompt, String answer) {
+    public GradingResultDTO grade(String prompt, String answer) {
         requireConfiguration();
         validatePayload(prompt, answer, "Bài làm");
         return gradeContent("Writing", prompt, answer, null, null, null);
     }
 
     @Override
-    public GradingResult grade(String prompt, Path audioFile) {
+    public GradingResultDTO grade(String prompt, Path audioFile) {
         requireConfiguration();
         validateText(prompt, GradingTextLimits.MAX_AI_TASK_CHARS, "Đề bài");
         String mimeType = validateAudio(audioFile);
@@ -135,13 +137,13 @@ For Writing, return an empty transcript string.
     }
 
     @Override
-    public GradingResult gradeTranscript(String prompt, String transcript) {
+    public GradingResultDTO gradeTranscript(String prompt, String transcript) {
         requireConfiguration();
         validatePayload(prompt, transcript, "Nội dung bản ghi");
         return gradeContent("Speaking transcript", prompt, transcript, null, null, transcript);
     }
 
-    private GradingResult gradeContent(
+    private GradingResultDTO gradeContent(
             String skill,
             String prompt,
             String submission,
@@ -236,7 +238,7 @@ For Writing, return an empty transcript string.
                 .body(String.class);
     }
 
-    private GradingResult parseResult(
+    private GradingResultDTO parseResult(
             JsonNode result, String inputTranscript, boolean audioSubmission) {
         if (result == null
                 || !result.path("score").isNumber()
@@ -259,7 +261,7 @@ For Writing, return an empty transcript string.
                 inputTranscript != null
                         ? inputTranscript
                         : generatedTranscript.isBlank() ? null : generatedTranscript;
-        return new GradingResult(
+        return new GradingResultDTO(
                 score, level, feedback, PROVIDER, properties.getGradingModel(), transcript);
     }
 

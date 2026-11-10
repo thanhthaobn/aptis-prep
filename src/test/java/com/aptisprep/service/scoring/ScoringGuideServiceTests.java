@@ -3,13 +3,11 @@ package com.aptisprep.service.scoring;
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-import com.aptisprep.entity.*;
 import com.aptisprep.mvc.catalog.repository.*;
 import com.aptisprep.mvc.exam.entity.*;
 import com.aptisprep.mvc.exam.repository.*;
 import com.aptisprep.mvc.scoring.entity.*;
 import com.aptisprep.mvc.scoring.repository.*;
-import com.aptisprep.repository.*;
 import com.aptisprep.service.contract.IntegrationModels.*;
 import java.math.BigDecimal;
 import java.util.*;

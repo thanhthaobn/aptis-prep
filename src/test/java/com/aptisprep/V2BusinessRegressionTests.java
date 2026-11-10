@@ -5,7 +5,6 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-import com.aptisprep.entity.*;
 import com.aptisprep.mvc.account.dto.GoalFormDTO;
 import com.aptisprep.mvc.account.entity.UserGoal;
 import com.aptisprep.mvc.account.entity.UserGoalSkill;
@@ -33,7 +32,6 @@ import com.aptisprep.mvc.scoring.dto.*;
 import com.aptisprep.mvc.scoring.entity.*;
 import com.aptisprep.mvc.scoring.repository.*;
 import com.aptisprep.mvc.scoring.service.*;
-import com.aptisprep.repository.*;
 import java.math.BigDecimal;
 import java.util.*;
 import org.junit.jupiter.api.*;

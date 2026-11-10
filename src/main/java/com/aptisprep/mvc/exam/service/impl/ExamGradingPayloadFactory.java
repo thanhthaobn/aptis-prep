@@ -1,12 +1,13 @@
 package com.aptisprep.mvc.exam.service.impl;
 
-import static com.aptisprep.service.contract.GradingContextFormatter.DEFAULT_RUBRIC_VERSION;
+import static com.aptisprep.mvc.grading.service.impl.GradingContextFormatter.DEFAULT_RUBRIC_VERSION;
 
 import com.aptisprep.mvc.common.exception.BusinessRuleException;
 import com.aptisprep.mvc.exam.entity.*;
 import com.aptisprep.mvc.exam.repository.UserAnswerDetailRepository;
 import com.aptisprep.mvc.exam.repository.UserAnswerRepository;
-import com.aptisprep.service.contract.*;
+import com.aptisprep.mvc.grading.service.impl.GradingContextFormatter;
+import com.aptisprep.mvc.grading.service.impl.GradingTextLimits;
 import com.aptisprep.service.contract.IntegrationModels.*;
 import java.time.*;
 import java.util.*;

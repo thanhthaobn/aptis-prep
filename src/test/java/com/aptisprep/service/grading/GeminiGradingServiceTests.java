@@ -6,6 +6,7 @@ import static org.springframework.test.web.client.response.MockRestResponseCreat
 
 import com.aptisprep.mvc.common.config.AiProperties;
 import com.aptisprep.mvc.common.exception.AiGradingException;
+import com.aptisprep.mvc.grading.service.impl.GeminiGradingService;
 import java.math.BigDecimal;
 import java.nio.file.Files;
 import java.nio.file.Path;

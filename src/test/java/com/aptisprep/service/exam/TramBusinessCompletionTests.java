@@ -3,7 +3,6 @@ package com.aptisprep.service.exam;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-import com.aptisprep.entity.*;
 import com.aptisprep.mvc.auth.entity.User;
 import com.aptisprep.mvc.auth.repository.UserRepository;
 import com.aptisprep.mvc.catalog.entity.*;
@@ -16,17 +15,20 @@ import com.aptisprep.mvc.common.enums.*;
 import com.aptisprep.mvc.common.event.AttemptSubmittedEvent;
 import com.aptisprep.mvc.common.exception.BusinessRuleException;
 import com.aptisprep.mvc.common.exception.ResourceNotFoundException;
+import com.aptisprep.mvc.exam.entity.*;
 import com.aptisprep.mvc.exam.repository.*;
 import com.aptisprep.mvc.exam.service.AttemptOutboxService;
 import com.aptisprep.mvc.exam.service.ExamAttemptService;
 import com.aptisprep.mvc.exam.service.impl.AttemptGradingOrchestrationListener;
 import com.aptisprep.mvc.exam.service.impl.ExamGradingPayloadFactory;
+import com.aptisprep.mvc.grading.dto.AiAssessmentDTO;
+import com.aptisprep.mvc.grading.service.AiAssessmentService;
+import com.aptisprep.mvc.grading.service.AttemptFinalizationService;
+import com.aptisprep.mvc.grading.service.impl.GradingContextFormatter;
+import com.aptisprep.mvc.grading.service.impl.GradingTextLimits;
 import com.aptisprep.mvc.scoring.entity.*;
 import com.aptisprep.mvc.scoring.repository.*;
-import com.aptisprep.repository.*;
-import com.aptisprep.service.contract.*;
 import com.aptisprep.service.contract.IntegrationModels.LockedAttempt;
-import com.aptisprep.service.grading.*;
 import com.aptisprep.service.placement.PlacementExamCatalogService;
 import com.aptisprep.service.student.StudentExamCatalogService;
 import java.time.LocalDateTime;
@@ -106,7 +108,7 @@ class TramBusinessCompletionTests {
                         .findFirst()
                         .orElseThrow();
         assertEquals("DISPATCHED", outbox.findById(row.getId()).orElseThrow().getStatus());
-        var ai = mock(AiAssessmentContract.class);
+        var ai = mock(AiAssessmentService.class);
         var finalization = mock(AttemptFinalizationService.class);
         when(finalization.accepts(any())).thenReturn(true);
         var config = new AiProperties();
@@ -115,7 +117,7 @@ class TramBusinessCompletionTests {
                 new AttemptGradingOrchestrationListener(
                         config, ai, finalization, mock(AttemptOutboxService.class));
         orchestration.onSubmitted(replayed);
-        var request = ArgumentCaptor.forClass(AiAssessmentContract.AssessmentRequest.class);
+        var request = ArgumentCaptor.forClass(AiAssessmentDTO.AssessmentRequest.class);
         verify(ai).request(request.capture());
         assertEquals(
                 "Original instructions\nOriginal question\n\nYÊU CẦU THEO TỪNG MỤC:"

@@ -1,8 +1,7 @@
-package com.aptisprep.service.grading;
+package com.aptisprep.mvc.grading.service.impl;
 
-import com.aptisprep.entity.*;
 import com.aptisprep.mvc.auth.entity.User;
-import com.aptisprep.mvc.auth.repository.UserRepository;
+import com.aptisprep.mvc.auth.service.UserService;
 import com.aptisprep.mvc.common.config.AiProperties;
 import com.aptisprep.mvc.common.enums.*;
 import com.aptisprep.mvc.common.enums.CefrLevel;
@@ -12,10 +11,17 @@ import com.aptisprep.mvc.common.exception.AiGradingException;
 import com.aptisprep.mvc.common.exception.BusinessRuleException;
 import com.aptisprep.mvc.common.exception.ResourceNotFoundException;
 import com.aptisprep.mvc.exam.service.AttemptOutboxService;
+import com.aptisprep.mvc.grading.dto.AiAssessmentDTO.AssessmentRequest;
+import com.aptisprep.mvc.grading.dto.AiAssessmentDTO.AssessmentView;
+import com.aptisprep.mvc.grading.dto.GradingResultDTO;
+import com.aptisprep.mvc.grading.entity.AiAssessment;
+import com.aptisprep.mvc.grading.entity.AiAssessmentJob;
+import com.aptisprep.mvc.grading.repository.AiAssessmentJobRepository;
+import com.aptisprep.mvc.grading.repository.AiAssessmentRepository;
+import com.aptisprep.mvc.grading.service.AiAssessmentService;
+import com.aptisprep.mvc.grading.service.SpeakingGradingService;
+import com.aptisprep.mvc.grading.service.WritingGradingService;
 import com.aptisprep.mvc.storage.service.StorageService;
-import com.aptisprep.repository.*;
-import com.aptisprep.service.contract.AiAssessmentContract;
-import com.aptisprep.service.contract.GradingTextLimits;
 import java.math.BigDecimal;
 import java.time.*;
 import java.util.*;
@@ -33,13 +39,13 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
 import org.springframework.transaction.support.TransactionTemplate;
 
 @Service
-public class AiAssessmentService implements AiAssessmentContract {
-    private static final Logger log = LoggerFactory.getLogger(AiAssessmentService.class);
+public class AiAssessmentServiceImpl implements AiAssessmentService {
+    private static final Logger log = LoggerFactory.getLogger(AiAssessmentServiceImpl.class);
     private static final Set<String> SKILLS = Set.of("WRITING", "SPEAKING");
     private static final Set<String> LEVELS = Set.copyOf(CefrLevel.codes());
     private final AiAssessmentJobRepository aiAssessmentJobRepository;
     private final AiAssessmentRepository aiAssessmentRepository;
-    private final UserRepository userRepository;
+    private final UserService userService;
     private final WritingGradingService writing;
     private final SpeakingGradingService speaking;
     private final StorageService storage;
@@ -48,10 +54,10 @@ public class AiAssessmentService implements AiAssessmentContract {
     private final AttemptOutboxService outbox;
     private final AiProperties properties;
 
-    public AiAssessmentService(
+    public AiAssessmentServiceImpl(
             AiAssessmentJobRepository aiAssessmentJobRepository,
             AiAssessmentRepository aiAssessmentRepository,
-            UserRepository userRepository,
+            UserService userService,
             WritingGradingService writing,
             SpeakingGradingService speaking,
             StorageService storage,
@@ -61,7 +67,7 @@ public class AiAssessmentService implements AiAssessmentContract {
             AiProperties properties) {
         this.aiAssessmentJobRepository = aiAssessmentJobRepository;
         this.aiAssessmentRepository = aiAssessmentRepository;
-        this.userRepository = userRepository;
+        this.userService = userService;
         this.writing = writing;
         this.speaking = speaking;
         this.storage = storage;
@@ -90,7 +96,7 @@ public class AiAssessmentService implements AiAssessmentContract {
             }
             return claim.view();
         }
-        GradingResult result;
+        GradingResultDTO result;
         try {
             result =
                     switch (claim.taskType()) {
@@ -258,7 +264,7 @@ public class AiAssessmentService implements AiAssessmentContract {
                 null);
     }
 
-    private AssessmentView succeed(JobSnapshot claim, GradingResult result) {
+    private AssessmentView succeed(JobSnapshot claim, GradingResultDTO result) {
         FinishSnapshot finish =
                 transactions.execute(
                         status -> {
@@ -613,7 +619,7 @@ public class AiAssessmentService implements AiAssessmentContract {
 
     private User activeUser(Integer id) {
         User user =
-                userRepository
+                userService
                         .findById(id)
                         .orElseThrow(
                                 () -> new ResourceNotFoundException("Không tìm thấy tài khoản"));
@@ -637,7 +643,7 @@ public class AiAssessmentService implements AiAssessmentContract {
 
     private void authorize(AiAssessmentJob job, Integer requesterId, boolean admin) {
         User requester =
-                userRepository
+                userService
                         .findById(requesterId)
                         .orElseThrow(
                                 () ->
@@ -666,7 +672,7 @@ public class AiAssessmentService implements AiAssessmentContract {
         return normalized;
     }
 
-    private void validateResult(GradingResult result, BigDecimal max) {
+    private void validateResult(GradingResultDTO result, BigDecimal max) {
         if (result == null
                 || result.estimatedScore() == null
                 || result.estimatedScore().compareTo(BigDecimal.ZERO) < 0

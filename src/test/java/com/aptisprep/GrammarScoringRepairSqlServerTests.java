@@ -3,11 +3,9 @@ package com.aptisprep;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-import com.aptisprep.entity.*;
 import com.aptisprep.mvc.common.enums.RecordStatus;
 import com.aptisprep.mvc.scoring.entity.*;
 import com.aptisprep.mvc.scoring.repository.*;
-import com.aptisprep.repository.*;
 import java.math.BigDecimal;
 import java.nio.file.Files;
 import java.nio.file.Path;
