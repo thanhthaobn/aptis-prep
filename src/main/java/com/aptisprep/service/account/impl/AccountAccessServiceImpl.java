@@ -106,7 +106,8 @@ public class AccountAccessServiceImpl implements AccountAccessService {
             throw new AccessDeniedException("Không thể xác nhận kết quả bài thi");
         }
         if (!"COMPLETED".equalsIgnoreCase(result.state())
-                && !"EXPIRED".equalsIgnoreCase(result.state())) {
+                && !"EXPIRED".equalsIgnoreCase(result.state())
+                && !"ERROR".equalsIgnoreCase(result.state())) {
             throw new BusinessRuleException("Kết quả bài thi chưa hoàn tất");
         }
         String type = Optional.ofNullable(result.examType()).orElse("").toUpperCase(Locale.ROOT);
@@ -117,19 +118,25 @@ public class AccountAccessServiceImpl implements AccountAccessService {
         if (result.skills() == null || result.skills().isEmpty()) {
             throw new BusinessRuleException("Kết quả chưa có kỹ năng đủ điều kiện");
         }
+        boolean applied = false;
         for (SkillResult skillResult : result.skills()) {
-            if (result.hasFullMockTotal() && "GRAMMAR_VOCABULARY".equals(skillResult.skill()))
-                continue;
-            applySkillResult(user, attemptId, type, result.submittedAt(), skillResult);
+            // A failed subjective/AI skill must not prevent objective skills from
+            // refreshing the learner profile. It remains retryable on the result page.
+            if (!"COMPLETED".equalsIgnoreCase(skillResult.gradingState())
+                    || skillResult.scaleScore() == null
+                    || skillResult.estimatedLevel() == null) continue;
+            applied |= applySkillResult(user, attemptId, type, result.submittedAt(), skillResult);
         }
+        if (!applied && !"ERROR".equalsIgnoreCase(result.state()))
+            throw new BusinessRuleException("Kết quả chưa có kỹ năng đủ điều kiện");
     }
 
-    private void applySkillResult(
+    private boolean applySkillResult(
             User user, Integer attemptId, String type, Instant submittedAt, SkillResult result) {
         String skill = normalizeSkill(result.skill());
         // A0 is a valid assessed outcome, but it is below the curriculum levels
         // tracked in learner profiles. Do not turn a zero score into an A1 profile.
-        if (CefrLevel.BELOW_A1.equals(result.estimatedLevel())) return;
+        if (CefrLevel.BELOW_A1.equals(result.estimatedLevel())) return true;
         CefrLevel level = CefrLevel.parse(result.estimatedLevel());
         if (skill == null
                 || level == null
@@ -140,7 +147,7 @@ public class AccountAccessServiceImpl implements AccountAccessService {
         }
         if (profileApplicationRepository.existsByUserIdAndAttemptIdAndSkill(
                 user.getId(), attemptId, skill)) {
-            return;
+            return true;
         }
         UserSkillProfile profile =
                 userSkillProfileRepository
@@ -192,7 +199,7 @@ public class AccountAccessServiceImpl implements AccountAccessService {
                 userSkillProfileRepository.save(profile);
             }
             saveApplication(user, attemptId, skill);
-            return;
+            return true;
         }
         CefrLevel floor = CefrLevel.parse(profile.getCheckpointFloorLevel());
         CefrLevel placement = CefrLevel.parse(profile.getPlacementLevel());
@@ -207,6 +214,7 @@ public class AccountAccessServiceImpl implements AccountAccessService {
         }
         userSkillProfileRepository.save(profile);
         saveApplication(user, attemptId, skill);
+        return true;
     }
 
     private void saveApplication(User user, Integer attemptId, String skill) {
