@@ -164,6 +164,12 @@ public class StudentAccountController {
         model.addAttribute("attemptResult", result);
         model.addAttribute("fromPlacement", true);
         Integer userId = access.requireActiveStudent(principal.getName());
+        // Re-apply completed Placement skills when an older outbox callback was
+        // missed. The operation is idempotent per attempt/skill and lets a retake
+        // fill a previously missing skill before the learning path is opened.
+        if ("PLACEMENT".equalsIgnoreCase(result.examType())) {
+            access.applyAssessment(userId, attemptId);
+        }
         if (!"IN_PROGRESS".equals(result.state())
                 && attempts instanceof ExamAttemptService reviewService)
             model.addAttribute("review", reviewService.review(userId, attemptId));
