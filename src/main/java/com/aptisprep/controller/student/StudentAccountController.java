@@ -167,7 +167,11 @@ public class StudentAccountController {
         // Re-apply completed Placement skills when an older outbox callback was
         // missed. The operation is idempotent per attempt/skill and lets a retake
         // fill a previously missing skill before the learning path is opened.
-        if ("PLACEMENT".equalsIgnoreCase(result.examType())) {
+        boolean terminalResult =
+                "COMPLETED".equalsIgnoreCase(result.state())
+                        || "EXPIRED".equalsIgnoreCase(result.state())
+                        || "ERROR".equalsIgnoreCase(result.state());
+        if ("PLACEMENT".equalsIgnoreCase(result.examType()) && terminalResult) {
             access.applyAssessment(userId, attemptId);
         }
         if (!"IN_PROGRESS".equals(result.state())
