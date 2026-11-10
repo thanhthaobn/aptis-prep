@@ -1,4 +1,4 @@
-package com.aptisprep.service.placement;
+package com.aptisprep.mvc.placement.service.impl;
 
 import com.aptisprep.mvc.account.service.AccountAccessService;
 import com.aptisprep.mvc.common.event.AttemptCompletedEvent;
@@ -14,13 +14,13 @@ import org.springframework.transaction.event.TransactionalEventListener;
 import org.springframework.transaction.support.TransactionTemplate;
 
 @Component
-public class PlacementOrchestrationService {
+public class PlacementOrchestrationListener {
     private final AccountAccessService accounts;
     private final ObjectProvider<LearningPathService> paths;
     private final AttemptOutboxService outbox;
     private final TransactionTemplate transactions;
 
-    public PlacementOrchestrationService(
+    public PlacementOrchestrationListener(
             AccountAccessService accounts,
             ObjectProvider<LearningPathService> paths,
             AttemptOutboxService outbox,
@@ -49,8 +49,9 @@ public class PlacementOrchestrationService {
     }
 
     private LearningPathService requirePath() {
-        LearningPathService path = paths.getIfAvailable();
-        if (path == null) throw new IllegalStateException("Learning Path chưa sẵn sàng");
-        return path;
+        LearningPathService service = paths.getIfAvailable();
+        if (service == null)
+            throw new IllegalStateException("LearningPathService is not available");
+        return service;
     }
 }

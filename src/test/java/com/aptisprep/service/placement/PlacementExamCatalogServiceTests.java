@@ -3,14 +3,14 @@ package com.aptisprep.service.placement;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.*;
 
-import com.aptisprep.mvc.catalog.entity.*;
 import com.aptisprep.mvc.catalog.entity.MockExamEntity;
 import com.aptisprep.mvc.catalog.entity.MockExamQuestionEntity;
-import com.aptisprep.mvc.catalog.repository.*;
 import com.aptisprep.mvc.catalog.repository.MockExamQuestionRepository;
 import com.aptisprep.mvc.catalog.repository.MockExamRepository;
 import com.aptisprep.mvc.catalog.repository.MockExamSectionRepository;
-import com.aptisprep.mvc.catalog.service.*;
+import com.aptisprep.mvc.placement.dto.PlacementDTO;
+import com.aptisprep.mvc.placement.service.PlacementExamCatalogService;
+import com.aptisprep.mvc.placement.service.impl.PlacementExamCatalogServiceImpl;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 
@@ -21,7 +21,7 @@ class PlacementExamCatalogServiceTests {
         MockExamQuestionRepository examQuestions = mock(MockExamQuestionRepository.class);
         var validator = mock(com.aptisprep.mvc.exam.service.impl.ExamStartValidator.class);
         PlacementExamCatalogService service =
-                new PlacementExamCatalogService(
+                new PlacementExamCatalogServiceImpl(
                         exams, examQuestions, mock(MockExamSectionRepository.class), validator);
 
         MockExamEntity placement = exam("placement", "PLACEMENT", 101);
@@ -39,9 +39,7 @@ class PlacementExamCatalogServiceTests {
 
         var available = service.findPublished(" listening ");
 
-        assertEquals(
-                List.of(101),
-                available.stream().map(PlacementExamCatalogService.PlacementExam::id).toList());
+        assertEquals(List.of(101), available.stream().map(PlacementDTO.PlacementExam::id).toList());
         verify(examQuestions, never()).findByMockExamIdOrderByPosition(102);
     }
 

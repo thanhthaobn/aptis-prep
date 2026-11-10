@@ -12,6 +12,7 @@ import com.aptisprep.mvc.account.service.AccountAccessService;
 import com.aptisprep.mvc.common.event.AttemptCompletedEvent;
 import com.aptisprep.mvc.exam.service.AttemptOutboxService;
 import com.aptisprep.mvc.learning.service.LearningPathService;
+import com.aptisprep.mvc.placement.service.impl.PlacementOrchestrationListener;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.transaction.PlatformTransactionManager;
@@ -28,8 +29,8 @@ class PlacementOrchestrationServiceTests {
         PlatformTransactionManager transactionManager = mock(PlatformTransactionManager.class);
         when(transactionManager.getTransaction(any())).thenReturn(mock(TransactionStatus.class));
         org.mockito.Mockito.when(provider.getIfAvailable()).thenReturn(paths);
-        PlacementOrchestrationService service =
-                new PlacementOrchestrationService(accounts, provider, outbox, transactionManager);
+        PlacementOrchestrationListener service =
+                new PlacementOrchestrationListener(accounts, provider, outbox, transactionManager);
 
         service.onCompleted(new AttemptCompletedEvent(7, 91, "PLACEMENT"));
 
@@ -48,8 +49,8 @@ class PlacementOrchestrationServiceTests {
         ObjectProvider<LearningPathService> provider = mock(ObjectProvider.class);
         PlatformTransactionManager transactionManager = mock(PlatformTransactionManager.class);
         when(transactionManager.getTransaction(any())).thenReturn(mock(TransactionStatus.class));
-        PlacementOrchestrationService service =
-                new PlacementOrchestrationService(accounts, provider, outbox, transactionManager);
+        PlacementOrchestrationListener service =
+                new PlacementOrchestrationListener(accounts, provider, outbox, transactionManager);
 
         service.onCompleted(new AttemptCompletedEvent(7, 91, "PRACTICE"));
 
@@ -65,8 +66,8 @@ class PlacementOrchestrationServiceTests {
         PlatformTransactionManager transactionManager = mock(PlatformTransactionManager.class);
         when(transactionManager.getTransaction(any())).thenReturn(mock(TransactionStatus.class));
         doThrow(new IllegalStateException("profile failure")).when(accounts).applyAssessment(7, 91);
-        PlacementOrchestrationService service =
-                new PlacementOrchestrationService(accounts, provider, outbox, transactionManager);
+        PlacementOrchestrationListener service =
+                new PlacementOrchestrationListener(accounts, provider, outbox, transactionManager);
 
         assertThrows(
                 IllegalStateException.class,

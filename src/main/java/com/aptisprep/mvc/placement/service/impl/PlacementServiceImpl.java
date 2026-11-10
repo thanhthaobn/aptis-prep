@@ -1,15 +1,15 @@
-package com.aptisprep.service.placement.impl;
+package com.aptisprep.mvc.placement.service.impl;
 
 import com.aptisprep.mvc.account.service.AccountAccessService;
-import com.aptisprep.mvc.catalog.service.*;
 import com.aptisprep.mvc.catalog.service.ExamCatalogService;
 import com.aptisprep.mvc.common.exception.BusinessRuleException;
 import com.aptisprep.mvc.exam.service.ExamAttemptService;
+import com.aptisprep.mvc.placement.dto.PlacementDTO.PlacementExam;
+import com.aptisprep.mvc.placement.dto.PlacementDTO.PlacementOption;
+import com.aptisprep.mvc.placement.service.PlacementExamCatalogService;
+import com.aptisprep.mvc.placement.service.PlacementService;
 import com.aptisprep.service.contract.IntegrationModels.AttemptHandle;
 import com.aptisprep.service.contract.IntegrationModels.AttemptResult;
-import com.aptisprep.service.placement.PlacementExamCatalogService;
-import com.aptisprep.service.placement.PlacementService;
-import com.aptisprep.service.placement.PlacementService.PlacementOption;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
@@ -34,12 +34,13 @@ public class PlacementServiceImpl implements PlacementService {
         this.accounts = accounts;
     }
 
-    public List<PlacementExamCatalogService.PlacementExam> available(String skill) {
+    @Override
+    public List<PlacementExam> available(String skill) {
         return catalog.findPublished(skill);
     }
 
     @Override
-    public List<PlacementExamCatalogService.PlacementExam> available() {
+    public List<PlacementExam> available() {
         return catalog.findPublished();
     }
 
@@ -71,7 +72,7 @@ public class PlacementServiceImpl implements PlacementService {
             throw new BusinessRuleException(
                     "Luồng Placement chưa thể bắt đầu vì engine lượt thi của hệ thống chưa sẵn sàng");
         Integer userId = account.requireActiveStudent(email);
-        PlacementExamCatalogService.PlacementExam exam =
+        PlacementExam exam =
                 available().stream()
                         .findFirst()
                         .orElseThrow(
@@ -85,8 +86,9 @@ public class PlacementServiceImpl implements PlacementService {
                 "placement:" + userId + ":" + exam.id() + ":" + UUID.randomUUID());
     }
 
+    @Override
     public List<PlacementOption> available(String email, String skill) {
-        List<PlacementExamCatalogService.PlacementExam> exams = available(skill);
+        List<PlacementExam> exams = available(skill);
         AccountAccessService account = accounts.getIfAvailable();
         ExamAttemptService attempt = attempts.getIfAvailable();
         boolean resumable =
@@ -107,10 +109,12 @@ public class PlacementServiceImpl implements PlacementService {
                 .toList();
     }
 
+    @Override
     public AttemptHandle start(String email, String skill) {
         return start(email, skill, null);
     }
 
+    @Override
     public AttemptHandle start(String email, String skill, Integer examId) {
         AccountAccessService account = accounts.getIfAvailable();
         ExamAttemptService attempt = attempts.getIfAvailable();
@@ -118,7 +122,7 @@ public class PlacementServiceImpl implements PlacementService {
             throw new BusinessRuleException(
                     "Luồng Placement chưa thể bắt đầu vì engine lượt thi của hệ thống chưa sẵn sàng");
         Integer userId = account.requireActiveStudent(email);
-        PlacementExamCatalogService.PlacementExam exam =
+        PlacementExam exam =
                 available(skill).stream()
                         .filter(value -> examId == null || Objects.equals(value.id(), examId))
                         .findFirst()
@@ -145,6 +149,7 @@ public class PlacementServiceImpl implements PlacementService {
                 "placement:" + userId + ":" + exam.id() + ":" + UUID.randomUUID());
     }
 
+    @Override
     public AttemptResult result(String email, Integer attemptId) {
         AccountAccessService account = accounts.getIfAvailable();
         ExamAttemptService attempt = attempts.getIfAvailable();

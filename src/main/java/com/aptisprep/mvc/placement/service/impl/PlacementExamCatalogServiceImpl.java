@@ -1,15 +1,15 @@
-package com.aptisprep.service.placement;
+package com.aptisprep.mvc.placement.service.impl;
 
-import com.aptisprep.mvc.catalog.entity.*;
 import com.aptisprep.mvc.catalog.entity.MockExamEntity;
-import com.aptisprep.mvc.catalog.repository.*;
 import com.aptisprep.mvc.catalog.repository.MockExamQuestionRepository;
 import com.aptisprep.mvc.catalog.repository.MockExamRepository;
 import com.aptisprep.mvc.catalog.repository.MockExamSectionRepository;
-import com.aptisprep.mvc.catalog.service.*;
 import com.aptisprep.mvc.common.enums.Skill;
 import com.aptisprep.mvc.common.exception.BusinessRuleException;
 import com.aptisprep.mvc.exam.service.impl.ExamStartValidator;
+import com.aptisprep.mvc.placement.dto.PlacementDTO.PlacementExam;
+import com.aptisprep.mvc.placement.dto.PlacementDTO.Section;
+import com.aptisprep.mvc.placement.service.PlacementExamCatalogService;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
@@ -17,13 +17,13 @@ import org.springframework.stereotype.Service;
 
 /** Read model for Placement only. It deliberately does not expose the admin catalog model. */
 @Service
-public class PlacementExamCatalogService {
+public class PlacementExamCatalogServiceImpl implements PlacementExamCatalogService {
     private final MockExamRepository mockExamRepository;
     private final MockExamQuestionRepository mockExamQuestionRepository;
     private final MockExamSectionRepository sections;
     private final ExamStartValidator startValidator;
 
-    public PlacementExamCatalogService(
+    public PlacementExamCatalogServiceImpl(
             MockExamRepository mockExamRepository,
             MockExamQuestionRepository mockExamQuestionRepository,
             MockExamSectionRepository sections,
@@ -34,6 +34,12 @@ public class PlacementExamCatalogService {
         this.startValidator = startValidator;
     }
 
+    @Override
+    public List<PlacementExam> findPublished() {
+        return findPublished("FULL_MOCK");
+    }
+
+    @Override
     public List<PlacementExam> findPublished(String skill) {
         String normalized = skill == null ? "" : skill.trim().toUpperCase(Locale.ROOT);
         if (!"FULL_MOCK".equals(normalized) && !Skill.codes().contains(normalized))
@@ -48,20 +54,6 @@ public class PlacementExamCatalogService {
                 // older databases with one legacy Placement exam usable during migration.
                 .sorted(Comparator.comparing(exam -> !"FULL_MOCK".equals(exam.getSkill())))
                 .map(this::describe)
-                .toList();
-    }
-
-    /** Returns the single combined Placement exam used by the student flow. */
-    public List<PlacementExam> findPublished() {
-        return mockExamRepository.findByStatusOrderByUpdatedAtDesc("PUBLISHED").stream()
-                .filter(exam -> !exam.isDemoOnly())
-                .filter(exam -> "PLACEMENT".equals(exam.getExamType()))
-                .filter(this::isReady)
-                // Prefer the canonical combined exam even when a newer legacy
-                // skill-specific Placement row exists in the catalog.
-                .sorted(Comparator.comparing(exam -> !"FULL_MOCK".equals(exam.getSkill())))
-                .map(this::describe)
-                .limit(1)
                 .toList();
     }
 
@@ -91,13 +83,4 @@ public class PlacementExamCatalogService {
             return false;
         }
     }
-
-    public record PlacementExam(
-            Integer id,
-            String title,
-            String subtitle,
-            int durationMinutes,
-            List<Section> sections) {}
-
-    public record Section(String skill, int durationMinutes) {}
 }
