@@ -1,13 +1,13 @@
 package com.aptisprep;
 
-import com.aptisprep.config.AiProperties;
-import com.aptisprep.config.StorageProperties;
+import com.aptisprep.mvc.common.config.AiProperties;
+import com.aptisprep.mvc.common.config.StorageProperties;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.scheduling.annotation.EnableScheduling;
 
-@SpringBootApplication
+@SpringBootApplication(scanBasePackages = {"com.aptisprep", "com.aptisprep.mvc"})
 @EnableScheduling
 @EnableConfigurationProperties({StorageProperties.class, AiProperties.class})
 public class AptisPrepApplication {
