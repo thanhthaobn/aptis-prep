@@ -127,6 +127,9 @@ public class AccountAccessServiceImpl implements AccountAccessService {
     private void applySkillResult(
             User user, Integer attemptId, String type, Instant submittedAt, SkillResult result) {
         String skill = normalizeSkill(result.skill());
+        // A0 is a valid assessed outcome, but it is below the curriculum levels
+        // tracked in learner profiles. Do not turn a zero score into an A1 profile.
+        if (CefrLevel.BELOW_A1.equals(result.estimatedLevel())) return;
         CefrLevel level = CefrLevel.parse(result.estimatedLevel());
         if (skill == null
                 || level == null
