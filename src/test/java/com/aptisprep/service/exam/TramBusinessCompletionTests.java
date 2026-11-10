@@ -4,6 +4,8 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 import com.aptisprep.entity.*;
+import com.aptisprep.mvc.auth.entity.User;
+import com.aptisprep.mvc.auth.repository.UserRepository;
 import com.aptisprep.mvc.common.config.AiProperties;
 import com.aptisprep.mvc.common.enums.*;
 import com.aptisprep.mvc.common.event.AttemptSubmittedEvent;

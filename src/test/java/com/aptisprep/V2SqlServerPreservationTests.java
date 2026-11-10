@@ -3,6 +3,7 @@ package com.aptisprep;
 import static org.junit.jupiter.api.Assertions.*;
 
 import com.aptisprep.dto.form.LessonForm;
+import com.aptisprep.mvc.auth.repository.UserRepository;
 import com.aptisprep.mvc.common.exception.BusinessRuleException;
 import com.aptisprep.repository.*;
 import com.aptisprep.service.learning.LessonTeachingService;

@@ -1,10 +1,10 @@
-package com.aptisprep.dto.form;
+package com.aptisprep.mvc.auth.dto;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
-public class PasswordForm {
+public class PasswordFormDTO {
     private String currentPassword;
 
     @NotBlank(message = "Vui lòng nhập mật khẩu mới")
@@ -42,3 +42,4 @@ public class PasswordForm {
         confirmPassword = v;
     }
 }
+

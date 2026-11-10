@@ -14,3 +14,4 @@ public interface StorageService {
 
     Path localPath(String relativePath);
 }
+

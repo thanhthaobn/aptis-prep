@@ -1,4 +1,4 @@
-package com.aptisprep.service.auth;
+package com.aptisprep.mvc.auth.service.impl;
 
 import at.favre.lib.crypto.bcrypt.BCrypt;
 import java.nio.charset.StandardCharsets;
@@ -15,3 +15,4 @@ public class PasswordHasher {
                 && BCrypt.verifyer().verify(password.toCharArray(), hash).verified;
     }
 }
+

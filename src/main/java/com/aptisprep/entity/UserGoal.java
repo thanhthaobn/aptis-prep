@@ -1,5 +1,6 @@
 package com.aptisprep.entity;
 
+import com.aptisprep.mvc.auth.entity.User;
 import com.aptisprep.mvc.common.enums.GoalStatus;
 import com.aptisprep.mvc.scoring.entity.Certificate;
 import jakarta.persistence.*;

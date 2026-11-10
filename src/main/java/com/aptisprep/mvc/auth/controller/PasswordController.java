@@ -1,9 +1,9 @@
-package com.aptisprep.controller.auth;
+package com.aptisprep.mvc.auth.controller;
 
-import com.aptisprep.dto.form.PasswordForm;
+import com.aptisprep.mvc.auth.dto.PasswordFormDTO;
+import com.aptisprep.mvc.auth.service.PasswordService;
 import com.aptisprep.mvc.common.exception.BusinessRuleException;
 import com.aptisprep.mvc.common.security.LoginSession;
-import com.aptisprep.service.auth.PasswordService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import java.security.Principal;
@@ -11,7 +11,9 @@ import java.util.Objects;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 @Controller
@@ -25,13 +27,13 @@ public class PasswordController {
     @GetMapping("/student/password")
     public String form(Model model) {
         if (!model.containsAttribute("passwordForm"))
-            model.addAttribute("passwordForm", new PasswordForm());
+            model.addAttribute("passwordForm", new PasswordFormDTO());
         return "auth/password";
     }
 
     @PostMapping("/student/password")
     public String save(
-            @Valid @ModelAttribute PasswordForm passwordForm,
+            @Valid @ModelAttribute PasswordFormDTO passwordForm,
             BindingResult errors,
             Principal principal,
             HttpServletRequest request,
@@ -62,3 +64,4 @@ public class PasswordController {
         return "auth/password";
     }
 }
+

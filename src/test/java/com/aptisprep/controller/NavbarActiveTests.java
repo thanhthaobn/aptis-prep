@@ -5,10 +5,10 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-import com.aptisprep.entity.User;
+import com.aptisprep.mvc.auth.entity.User;
+import com.aptisprep.mvc.auth.repository.UserRepository;
 import com.aptisprep.mvc.common.enums.Role;
 import com.aptisprep.mvc.common.enums.UserStatus;
-import com.aptisprep.repository.UserRepository;
 import java.nio.charset.StandardCharsets;
 import java.util.regex.Pattern;
 import org.junit.jupiter.api.BeforeEach;

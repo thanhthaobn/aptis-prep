@@ -1,30 +1,29 @@
-package com.aptisprep.dto;
+package com.aptisprep.mvc.auth.dto;
 
 import com.aptisprep.dto.form.ProfileForm;
-import com.aptisprep.dto.form.RegisterForm;
-import com.aptisprep.entity.User;
+import com.aptisprep.mvc.auth.entity.User;
 
 /** DTO boundary for user fields that are safe for account forms. */
-public class UserEntityDto {
+public class UserEntityDTO {
     private String fullName;
     private String email;
 
-    public static UserEntityDto fromForm(ProfileForm form) {
+    public static UserEntityDTO fromForm(ProfileForm form) {
         if (form == null) return null;
-        UserEntityDto dto = new UserEntityDto();
+        UserEntityDTO dto = new UserEntityDTO();
         dto.fullName = form.getFullName();
         return dto;
     }
 
-    public static UserEntityDto fromForm(RegisterForm form) {
+    public static UserEntityDTO fromForm(RegisterFormDTO form) {
         if (form == null) return null;
-        UserEntityDto dto = new UserEntityDto();
+        UserEntityDTO dto = new UserEntityDTO();
         dto.fullName = form.getFullName();
         dto.email = form.getEmail();
         return dto;
     }
 
-    public static User convertDtoToEntity(UserEntityDto dto) {
+    public static User convertDtoToEntity(UserEntityDTO dto) {
         if (dto == null) return null;
         User entity = new User();
         entity.setFullName(dto.fullName);
@@ -36,13 +35,13 @@ public class UserEntityDto {
         return convertDtoToEntity(fromForm(form));
     }
 
-    public static User convertDtoToEntity(RegisterForm form) {
+    public static User convertDtoToEntity(RegisterFormDTO form) {
         return convertDtoToEntity(fromForm(form));
     }
 
-    public static UserEntityDto convertEntityToDto(User entity) {
+    public static UserEntityDTO convertEntityToDto(User entity) {
         if (entity == null) return null;
-        UserEntityDto dto = new UserEntityDto();
+        UserEntityDTO dto = new UserEntityDTO();
         dto.fullName = entity.getFullName();
         dto.email = entity.getEmail();
         return dto;
@@ -54,8 +53,8 @@ public class UserEntityDto {
         return form;
     }
 
-    public RegisterForm toRegisterForm() {
-        RegisterForm form = new RegisterForm();
+    public RegisterFormDTO toRegisterForm() {
+        RegisterFormDTO form = new RegisterFormDTO();
         form.setFullName(fullName);
         form.setEmail(email);
         return form;
@@ -69,3 +68,4 @@ public class UserEntityDto {
         return email;
     }
 }
+

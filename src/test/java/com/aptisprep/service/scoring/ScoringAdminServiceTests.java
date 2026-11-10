@@ -5,7 +5,8 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
-import com.aptisprep.entity.User;
+import com.aptisprep.mvc.auth.entity.User;
+import com.aptisprep.mvc.auth.repository.UserRepository;
 import com.aptisprep.mvc.common.enums.RecordStatus;
 import com.aptisprep.mvc.common.enums.Role;
 import com.aptisprep.mvc.common.exception.BusinessRuleException;

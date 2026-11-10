@@ -1,6 +1,6 @@
 package com.aptisprep.mvc.common.security;
 
-import com.aptisprep.entity.User;
+import com.aptisprep.mvc.auth.entity.User;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 import java.nio.charset.StandardCharsets;

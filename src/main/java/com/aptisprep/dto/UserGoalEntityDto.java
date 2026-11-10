@@ -1,8 +1,8 @@
 package com.aptisprep.dto;
 
 import com.aptisprep.dto.form.GoalForm;
-import com.aptisprep.entity.User;
 import com.aptisprep.entity.UserGoal;
+import com.aptisprep.mvc.auth.entity.User;
 import com.aptisprep.mvc.common.enums.GoalStatus;
 import com.aptisprep.mvc.scoring.entity.Certificate;
 

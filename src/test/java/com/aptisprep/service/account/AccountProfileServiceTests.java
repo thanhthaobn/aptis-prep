@@ -5,6 +5,8 @@ import static org.mockito.Mockito.*;
 
 import com.aptisprep.dto.view.AccountSnapshot;
 import com.aptisprep.entity.*;
+import com.aptisprep.mvc.auth.entity.User;
+import com.aptisprep.mvc.auth.repository.UserRepository;
 import com.aptisprep.mvc.common.enums.GoalStatus;
 import com.aptisprep.mvc.scoring.repository.*;
 import com.aptisprep.repository.*;

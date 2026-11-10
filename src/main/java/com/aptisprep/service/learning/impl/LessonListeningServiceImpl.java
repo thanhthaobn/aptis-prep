@@ -2,7 +2,8 @@ package com.aptisprep.service.learning.impl;
 
 import com.aptisprep.entity.Lesson;
 import com.aptisprep.entity.LessonEngagement;
-import com.aptisprep.entity.User;
+import com.aptisprep.mvc.auth.entity.User;
+import com.aptisprep.mvc.auth.repository.UserRepository;
 import com.aptisprep.mvc.common.enums.Role;
 import com.aptisprep.mvc.common.enums.UserStatus;
 import com.aptisprep.mvc.common.exception.AccessDeniedException;
@@ -11,7 +12,6 @@ import com.aptisprep.mvc.common.exception.ResourceNotFoundException;
 import com.aptisprep.mvc.storage.service.AudioDurationService;
 import com.aptisprep.repository.LessonEngagementRepository;
 import com.aptisprep.repository.LessonRepository;
-import com.aptisprep.repository.UserRepository;
 import com.aptisprep.service.learning.LessonListeningService;
 import com.aptisprep.service.learning.LessonListeningService.Playback;
 import java.nio.charset.StandardCharsets;

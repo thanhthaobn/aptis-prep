@@ -3,7 +3,7 @@ package com.aptisprep.dto;
 import com.aptisprep.dto.form.FlashcardSetForm;
 import com.aptisprep.entity.FlashcardSet;
 import com.aptisprep.entity.Lesson;
-import com.aptisprep.entity.User;
+import com.aptisprep.mvc.auth.entity.User;
 
 /** DTO boundary for a flashcard set entity. */
 public class FlashcardSetEntityDto {

@@ -1,13 +1,11 @@
-package com.aptisprep.controller.auth;
+package com.aptisprep.mvc.auth.controller;
 
-import com.aptisprep.dto.form.RegisterForm;
-import com.aptisprep.entity.User;
-import com.aptisprep.mvc.common.enums.Role;
-import com.aptisprep.mvc.common.enums.UserStatus;
+import com.aptisprep.mvc.auth.dto.AuthResultDTO;
+import com.aptisprep.mvc.auth.dto.RegisterFormDTO;
+import com.aptisprep.mvc.auth.service.UserService;
 import com.aptisprep.mvc.common.exception.BusinessRuleException;
 import com.aptisprep.mvc.common.exception.DuplicateEmailException;
 import com.aptisprep.mvc.common.security.LoginSession;
-import com.aptisprep.service.auth.UserService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import java.security.Principal;
@@ -45,28 +43,20 @@ public class AuthController {
             @RequestParam(name = "password", defaultValue = "") String password,
             HttpServletRequest request,
             RedirectAttributes redirectAttributes) {
-        User user = userService.getUserByEmailAndPassword(email, password);
-        if (user == null) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Email hoặc mật khẩu không đúng.");
-            return "redirect:/login";
-        }
-        if (user.getStatus() == UserStatus.LOCKED) {
-            String reason = user.getLockReason();
+        AuthResultDTO result = userService.login(request, email, password);
+        if (result.locked()) {
             redirectAttributes.addFlashAttribute(
                     "lockReason",
-                    reason == null || reason.isBlank()
+                    result.lockReason() == null || result.lockReason().isBlank()
                             ? "Tài khoản đã bị khóa bởi quản trị viên."
-                            : reason);
+                            : result.lockReason());
             return "redirect:/account-locked";
         }
-        if (user.getStatus() != UserStatus.ACTIVE) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Tài khoản không còn hoạt động.");
+        if (!result.success()) {
+            redirectAttributes.addFlashAttribute("errorMessage", result.errorMessage());
             return "redirect:/login";
         }
-        LoginSession.start(request, user);
-        return user.getRole() == Role.ADMIN
-                ? "redirect:/admin/dashboard"
-                : "redirect:/student/dashboard";
+        return "redirect:" + result.redirectUrl();
     }
 
     @GetMapping("/account-locked")
@@ -84,14 +74,14 @@ public class AuthController {
     @GetMapping("/register")
     public String registerForm(Model model) {
         if (!model.containsAttribute("registerForm")) {
-            model.addAttribute("registerForm", new RegisterForm());
+            model.addAttribute("registerForm", new RegisterFormDTO());
         }
         return "auth/register";
     }
 
     @PostMapping("/register")
     public String register(
-            @Valid @ModelAttribute("registerForm") RegisterForm form,
+            @Valid @ModelAttribute("registerForm") RegisterFormDTO form,
             BindingResult bindingResult,
             RedirectAttributes redirectAttributes) {
 

@@ -1,4 +1,4 @@
-package com.aptisprep.entity;
+package com.aptisprep.mvc.auth.entity;
 
 import com.aptisprep.mvc.common.enums.Role;
 import com.aptisprep.mvc.common.enums.UserStatus;
@@ -124,3 +124,4 @@ public class User {
         return updatedAt;
     }
 }
+

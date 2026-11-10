@@ -1,11 +1,10 @@
-package com.aptisprep.service.auth.impl;
+package com.aptisprep.mvc.auth.service.impl;
 
-import com.aptisprep.entity.User;
+import com.aptisprep.mvc.auth.entity.User;
+import com.aptisprep.mvc.auth.repository.UserRepository;
+import com.aptisprep.mvc.auth.service.PasswordService;
 import com.aptisprep.mvc.common.enums.UserStatus;
 import com.aptisprep.mvc.common.exception.BusinessRuleException;
-import com.aptisprep.repository.UserRepository;
-import com.aptisprep.service.auth.PasswordHasher;
-import com.aptisprep.service.auth.PasswordService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -53,3 +52,4 @@ public class PasswordServiceImpl implements PasswordService {
         return new BusinessRuleException("Không tìm thấy tài khoản hoặc tài khoản không hợp lệ");
     }
 }
+

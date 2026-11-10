@@ -1,6 +1,5 @@
 package com.aptisprep.service.account.impl;
 
-import com.aptisprep.dto.UserEntityDto;
 import com.aptisprep.dto.UserGoalEntityDto;
 import com.aptisprep.dto.form.GoalForm;
 import com.aptisprep.dto.form.ProfileForm;
@@ -8,6 +7,11 @@ import com.aptisprep.dto.view.AccountSnapshot;
 import com.aptisprep.dto.view.AccountSnapshot.GoalView;
 import com.aptisprep.dto.view.AccountSnapshot.SkillView;
 import com.aptisprep.entity.*;
+import com.aptisprep.mvc.auth.dto.UserEntityDTO;
+import com.aptisprep.mvc.auth.entity.User;
+import com.aptisprep.mvc.auth.repository.UserRepository;
+import com.aptisprep.mvc.scoring.entity.Certificate;
+import com.aptisprep.mvc.scoring.repository.CertificateRepository;
 import com.aptisprep.mvc.common.enums.*;
 import com.aptisprep.mvc.common.enums.Skill;
 import com.aptisprep.mvc.common.event.GoalChangedEvent;
@@ -110,7 +114,7 @@ public class AccountProfileServiceImpl implements AccountProfileService {
                         .findByIdForUpdate(userId)
                         .orElseThrow(
                                 () -> new ResourceNotFoundException("Không tìm thấy tài khoản"));
-        User mapped = UserEntityDto.convertDtoToEntity(form);
+        User mapped = UserEntityDTO.convertDtoToEntity(form);
         String name = mapped.getFullName() == null ? "" : mapped.getFullName().trim();
         if (name.isBlank()) throw new BusinessRuleException("Họ và tên không được để trống");
         user.setFullName(name);

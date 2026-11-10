@@ -1,11 +1,11 @@
-package com.aptisprep.dto.form;
+package com.aptisprep.mvc.auth.dto;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
-public class RegisterForm {
+public class RegisterFormDTO {
 
     @NotBlank(message = "Họ tên không được để trống")
     @Size(max = 255, message = "Họ tên không được vượt quá 255 ký tự")
@@ -63,3 +63,4 @@ public class RegisterForm {
         this.confirmPassword = confirmPassword;
     }
 }
+

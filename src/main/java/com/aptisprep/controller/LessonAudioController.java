@@ -2,12 +2,12 @@ package com.aptisprep.controller;
 
 import com.aptisprep.entity.Lesson;
 import com.aptisprep.entity.LessonResponse;
-import com.aptisprep.entity.User;
+import com.aptisprep.mvc.auth.entity.User;
+import com.aptisprep.mvc.auth.repository.UserRepository;
 import com.aptisprep.mvc.common.enums.Role;
 import com.aptisprep.mvc.common.exception.ResourceNotFoundException;
 import com.aptisprep.mvc.storage.service.StorageService;
 import com.aptisprep.repository.LessonResponseRepository;
-import com.aptisprep.repository.UserRepository;
 import com.aptisprep.service.learning.LessonService;
 import com.aptisprep.service.learning.LessonTeachingService;
 import com.aptisprep.service.learning.LessonTeachingService.HistoricalMedia;

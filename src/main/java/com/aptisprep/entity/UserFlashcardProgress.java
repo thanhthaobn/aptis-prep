@@ -1,5 +1,6 @@
 package com.aptisprep.entity;
 
+import com.aptisprep.mvc.auth.entity.User;
 import jakarta.persistence.*;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;

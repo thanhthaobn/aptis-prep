@@ -1,7 +1,7 @@
 package com.aptisprep.controller;
 
-import com.aptisprep.entity.User;
-import com.aptisprep.service.auth.UserService;
+import com.aptisprep.mvc.auth.entity.User;
+import com.aptisprep.mvc.auth.service.UserService;
 import com.aptisprep.service.contract.AiAssessmentContract;
 import java.security.Principal;
 import org.springframework.stereotype.Controller;

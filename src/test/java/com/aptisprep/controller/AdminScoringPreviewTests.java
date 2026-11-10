@@ -8,7 +8,8 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 import com.aptisprep.entity.MockExamEntity;
-import com.aptisprep.entity.User;
+import com.aptisprep.mvc.auth.entity.User;
+import com.aptisprep.mvc.auth.repository.UserRepository;
 import com.aptisprep.mvc.common.enums.RecordStatus;
 import com.aptisprep.mvc.scoring.entity.*;
 import com.aptisprep.mvc.scoring.entity.Certificate;
@@ -20,7 +21,6 @@ import com.aptisprep.mvc.scoring.repository.ScoreBandRepository;
 import com.aptisprep.mvc.scoring.repository.ScoringSchemeRepository;
 import com.aptisprep.mvc.scoring.service.*;
 import com.aptisprep.repository.MockExamRepository;
-import com.aptisprep.repository.UserRepository;
 import java.time.LocalDateTime;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

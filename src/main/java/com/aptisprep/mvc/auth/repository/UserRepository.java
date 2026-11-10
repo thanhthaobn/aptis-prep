@@ -1,6 +1,6 @@
-package com.aptisprep.repository;
+package com.aptisprep.mvc.auth.repository;
 
-import com.aptisprep.entity.User;
+import com.aptisprep.mvc.auth.entity.User;
 import com.aptisprep.mvc.common.enums.Role;
 import com.aptisprep.mvc.common.enums.UserStatus;
 import jakarta.persistence.LockModeType;
@@ -44,3 +44,4 @@ public interface UserRepository extends JpaRepository<User, Integer> {
     Page<User> searchStudents(
             @Param("pattern") String pattern, @Param("status") String status, Pageable pageable);
 }
+

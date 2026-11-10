@@ -3,9 +3,9 @@ package com.aptisprep.controller;
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-import com.aptisprep.controller.auth.AuthController;
-import com.aptisprep.dto.form.RegisterForm;
-import com.aptisprep.service.auth.UserService;
+import com.aptisprep.mvc.auth.controller.AuthController;
+import com.aptisprep.mvc.auth.dto.RegisterFormDTO;
+import com.aptisprep.mvc.auth.service.UserService;
 import org.junit.jupiter.api.Test;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.validation.BeanPropertyBindingResult;
@@ -16,7 +16,7 @@ class RegistrationRaceTests {
     void simultaneousDuplicateIsReturnedAsAnEmailFieldError() {
         var service = mock(UserService.class);
         var controller = new AuthController(service);
-        var form = new RegisterForm();
+        var form = new RegisterFormDTO();
         form.setFullName("Thảo");
         form.setEmail("thao@example.com");
         form.setPassword("Learning-English-2026");

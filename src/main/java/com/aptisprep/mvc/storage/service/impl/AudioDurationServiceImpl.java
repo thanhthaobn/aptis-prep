@@ -129,3 +129,4 @@ public class AudioDurationServiceImpl implements AudioDurationService {
         return Double.isFinite(seconds) && seconds > 0 && seconds <= 86400;
     }
 }
+

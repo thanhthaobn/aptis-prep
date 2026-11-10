@@ -1,9 +1,9 @@
 package com.aptisprep.mvc.common.security;
 
-import com.aptisprep.entity.User;
+import com.aptisprep.mvc.auth.entity.User;
+import com.aptisprep.mvc.auth.repository.UserRepository;
 import com.aptisprep.mvc.common.enums.Role;
 import com.aptisprep.mvc.common.enums.UserStatus;
-import com.aptisprep.repository.UserRepository;
 import org.springframework.test.web.servlet.request.RequestPostProcessor;
 import org.springframework.web.context.support.WebApplicationContextUtils;
 
