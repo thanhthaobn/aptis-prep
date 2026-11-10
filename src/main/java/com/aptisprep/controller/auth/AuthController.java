@@ -3,6 +3,7 @@ package com.aptisprep.controller.auth;
 import com.aptisprep.dto.form.RegisterForm;
 import com.aptisprep.entity.User;
 import com.aptisprep.enums.Role;
+import com.aptisprep.enums.UserStatus;
 import com.aptisprep.exception.BusinessRuleException;
 import com.aptisprep.exception.DuplicateEmailException;
 import com.aptisprep.security.LoginSession;
@@ -49,10 +50,28 @@ public class AuthController {
             redirectAttributes.addFlashAttribute("errorMessage", "Email hoặc mật khẩu không đúng.");
             return "redirect:/login";
         }
+        if (user.getStatus() == UserStatus.LOCKED) {
+            String reason = user.getLockReason();
+            redirectAttributes.addFlashAttribute(
+                    "lockReason",
+                    reason == null || reason.isBlank()
+                            ? "Tài khoản đã bị khóa bởi quản trị viên."
+                            : reason);
+            return "redirect:/account-locked";
+        }
+        if (user.getStatus() != UserStatus.ACTIVE) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Tài khoản không còn hoạt động.");
+            return "redirect:/login";
+        }
         LoginSession.start(request, user);
         return user.getRole() == Role.ADMIN
                 ? "redirect:/admin/dashboard"
                 : "redirect:/student/dashboard";
+    }
+
+    @GetMapping("/account-locked")
+    public String accountLocked() {
+        return "auth/account-locked";
     }
 
     @PostMapping("/logout")

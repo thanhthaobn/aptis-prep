@@ -292,6 +292,18 @@
                 th:action="@{/admin/students/{id}/lock(id=${student.id})}"
                 method="post"
               >
+                <label class="sr-only" th:for="${'lock-reason-' + student.id}">
+                  Lý do khóa tài khoản
+                </label>
+                <textarea
+                  class="form-control"
+                  th:id="${'lock-reason-' + student.id}"
+                  name="reason"
+                  rows="2"
+                  maxlength="1000"
+                  placeholder="Nhập lý do khóa tài khoản"
+                  required
+                ></textarea>
                 <button class="button student-lock-button" type="submit">Khóa tài khoản</button>
               </form>
               <form

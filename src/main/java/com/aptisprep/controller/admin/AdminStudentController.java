@@ -43,9 +43,12 @@ public class AdminStudentController {
 
     @PostMapping("/admin/students/{id}/lock")
     public String lock(
-            @PathVariable int id, Principal principal, RedirectAttributes redirectAttributes) {
+            @PathVariable int id,
+            @RequestParam(name = "reason", defaultValue = "") String reason,
+            Principal principal,
+            RedirectAttributes redirectAttributes) {
         try {
-            students.lock(principal.getName(), id);
+            students.lock(principal.getName(), id, reason);
             redirectAttributes.addFlashAttribute(
                     "successMessage",
                     "Đã khóa tài khoản học viên. Lịch sử và tiến độ được giữ nguyên.");

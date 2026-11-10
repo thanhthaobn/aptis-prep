@@ -115,13 +115,20 @@ public class StudentManagementServiceImpl implements StudentManagementService {
     }
 
     @Transactional
-    public void lock(String adminEmail, Integer id) {
-        changeStatus(adminEmail, id, UserStatus.ACTIVE, UserStatus.LOCKED, "khóa");
+    public void lock(String adminEmail, Integer id, String reason) {
+        String normalizedReason = reason == null ? "" : reason.trim();
+        if (normalizedReason.isBlank())
+            throw new BusinessRuleException("Vui lòng nhập lý do khóa tài khoản");
+        if (normalizedReason.length() > 1000)
+            throw new BusinessRuleException("Lý do khóa tài khoản tối đa 1000 ký tự");
+        User target = changeStatus(adminEmail, id, UserStatus.ACTIVE, UserStatus.LOCKED, "khóa");
+        target.setLockReason(normalizedReason);
     }
 
     @Transactional
     public void unlock(String adminEmail, Integer id) {
-        changeStatus(adminEmail, id, UserStatus.LOCKED, UserStatus.ACTIVE, "mở khóa");
+        User target = changeStatus(adminEmail, id, UserStatus.LOCKED, UserStatus.ACTIVE, "mở khóa");
+        target.setLockReason(null);
     }
 
     @Override
@@ -161,7 +168,7 @@ public class StudentManagementServiceImpl implements StudentManagementService {
         return userRepository.countByRoleAndStatus(Role.STUDENT, UserStatus.LOCKED);
     }
 
-    private void changeStatus(
+    private User changeStatus(
             String adminEmail, Integer id, UserStatus expected, UserStatus next, String action) {
         User admin =
                 userRepository
@@ -186,6 +193,7 @@ public class StudentManagementServiceImpl implements StudentManagementService {
         if (target.getStatus() != expected)
             throw new BusinessRuleException("Trạng thái tài khoản không phù hợp để " + action);
         target.setStatus(next);
+        return target;
     }
 
     private AdminStudentView.ListItem listItem(User user) {
