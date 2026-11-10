@@ -100,7 +100,8 @@ class UnavailableExamCatalogTests {
 
         assertThat(page.page().getTotalElements()).isEqualTo(1);
         var entry = page.page().getContent().getFirst();
-        assertThat(entry.blocks()).extracting(block -> block.title())
+        assertThat(entry.blocks())
+                .extracting(block -> block.title())
                 .containsExactly(
                         "Grammar & Vocabulary", "Reading", "Listening", "Writing", "Speaking");
         assertThat(entry.startable()).isFalse();

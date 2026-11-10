@@ -42,7 +42,8 @@ public class AdminCatalogController {
         if (q.length() > 255 || skill.length() > 80 || status.length() > 40 || kind.length() > 80)
             throw new BusinessRuleException("Bộ lọc không hợp lệ");
         addModule("questions", model);
-        CatalogPage pageData = catalogService.findPage("questions", q, skill, status, kind, page, size);
+        CatalogPage pageData =
+                catalogService.findPage("questions", q, skill, status, kind, page, size);
         model.addAttribute("pageData", pageData);
         model.addAttribute("q", q);
         model.addAttribute("selectedSkill", skill);

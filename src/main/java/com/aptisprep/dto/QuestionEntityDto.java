@@ -98,15 +98,47 @@ public class QuestionEntityDto {
         return trimmed == null || trimmed.isBlank() ? null : trimmed;
     }
 
-    public String getContent() { return content; }
-    public String getInstruction() { return instruction; }
-    public String getReadingPassage() { return readingPassage; }
-    public String getQuestionType() { return questionType; }
-    public String getSkill() { return skill; }
-    public Integer getPartNo() { return partNo; }
-    public String getCefrLevel() { return cefrLevel; }
-    public String getDifficulty() { return difficulty; }
-    public boolean isAllowOptionReuse() { return allowOptionReuse; }
-    public Integer getPreparationSeconds() { return preparationSeconds; }
-    public String getStatus() { return status; }
+    public String getContent() {
+        return content;
+    }
+
+    public String getInstruction() {
+        return instruction;
+    }
+
+    public String getReadingPassage() {
+        return readingPassage;
+    }
+
+    public String getQuestionType() {
+        return questionType;
+    }
+
+    public String getSkill() {
+        return skill;
+    }
+
+    public Integer getPartNo() {
+        return partNo;
+    }
+
+    public String getCefrLevel() {
+        return cefrLevel;
+    }
+
+    public String getDifficulty() {
+        return difficulty;
+    }
+
+    public boolean isAllowOptionReuse() {
+        return allowOptionReuse;
+    }
+
+    public Integer getPreparationSeconds() {
+        return preparationSeconds;
+    }
+
+    public String getStatus() {
+        return status;
+    }
 }

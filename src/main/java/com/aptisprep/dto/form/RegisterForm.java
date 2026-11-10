@@ -31,7 +31,6 @@ public class RegisterForm {
     @Size(max = 72, message = "Mật khẩu xác nhận tối đa 72 ký tự")
     private String confirmPassword;
 
-
     public String getFullName() {
         return fullName;
     }

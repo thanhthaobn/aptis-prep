@@ -92,14 +92,43 @@ public class MockExamEntityDto {
         return trimmed == null || trimmed.isBlank() ? null : trimmed;
     }
 
-    public String getTitle() { return title; }
-    public String getDescription() { return description; }
-    public String getExamType() { return examType; }
-    public String getTargetLevel() { return targetLevel; }
-    public String getSkill() { return skill; }
-    public Integer getDurationMinutes() { return durationMinutes; }
-    public Integer getCertificateId() { return certificateId; }
-    public Integer getScoringSchemeId() { return scoringSchemeId; }
-    public String getStatus() { return status; }
-    public boolean isDemoOnly() { return demoOnly; }
+    public String getTitle() {
+        return title;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public String getExamType() {
+        return examType;
+    }
+
+    public String getTargetLevel() {
+        return targetLevel;
+    }
+
+    public String getSkill() {
+        return skill;
+    }
+
+    public Integer getDurationMinutes() {
+        return durationMinutes;
+    }
+
+    public Integer getCertificateId() {
+        return certificateId;
+    }
+
+    public Integer getScoringSchemeId() {
+        return scoringSchemeId;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public boolean isDemoOnly() {
+        return demoOnly;
+    }
 }

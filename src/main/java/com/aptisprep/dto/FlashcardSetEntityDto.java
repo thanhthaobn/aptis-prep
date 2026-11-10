@@ -16,8 +16,7 @@ public class FlashcardSetEntityDto {
     private String visibility;
     private Integer lessonId;
 
-    public static FlashcardSetEntityDto fromForm(
-            FlashcardSetForm form, Lesson lesson, User owner) {
+    public static FlashcardSetEntityDto fromForm(FlashcardSetForm form, Lesson lesson, User owner) {
         if (form == null) return null;
         FlashcardSetEntityDto dto = new FlashcardSetEntityDto();
         dto.title = form.getTitle();
@@ -73,18 +72,40 @@ public class FlashcardSetEntityDto {
         return form;
     }
 
-    private static String trim(String value) { return value == null ? null : value.trim(); }
+    private static String trim(String value) {
+        return value == null ? null : value.trim();
+    }
 
     private static String blankToNull(String value) {
         String trimmed = trim(value);
         return trimmed == null || trimmed.isBlank() ? null : trimmed;
     }
 
-    public String getTitle() { return title; }
-    public String getDescription() { return description; }
-    public String getCefrLevel() { return cefrLevel; }
-    public String getStatus() { return status; }
-    public Lesson getLesson() { return lesson; }
-    public User getOwner() { return owner; }
-    public String getVisibility() { return visibility; }
+    public String getTitle() {
+        return title;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public String getCefrLevel() {
+        return cefrLevel;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public Lesson getLesson() {
+        return lesson;
+    }
+
+    public User getOwner() {
+        return owner;
+    }
+
+    public String getVisibility() {
+        return visibility;
+    }
 }

@@ -65,10 +65,27 @@ public class ScoringScaleRuleEntityDto {
         return form;
     }
 
-    public String getSkill() { return skill; }
-    public BigDecimal getRawMin() { return rawMin; }
-    public BigDecimal getRawMax() { return rawMax; }
-    public BigDecimal getScaleMin() { return scaleMin; }
-    public BigDecimal getScaleMax() { return scaleMax; }
-    public ScoringScheme getScheme() { return scheme; }
+    public String getSkill() {
+        return skill;
+    }
+
+    public BigDecimal getRawMin() {
+        return rawMin;
+    }
+
+    public BigDecimal getRawMax() {
+        return rawMax;
+    }
+
+    public BigDecimal getScaleMin() {
+        return scaleMin;
+    }
+
+    public BigDecimal getScaleMax() {
+        return scaleMax;
+    }
+
+    public ScoringScheme getScheme() {
+        return scheme;
+    }
 }

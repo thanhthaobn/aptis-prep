@@ -354,7 +354,8 @@ public class AdminScoringController {
         return "redirect:/admin/scoring-schemes/" + schemeId + "?skill=" + skill;
     }
 
-    private void populateScheme(int id, String skill, Integer bandId, boolean readOnly, Model model) {
+    private void populateScheme(
+            int id, String skill, Integer bandId, boolean readOnly, Model model) {
         skill =
                 switch (skill.toUpperCase(Locale.ROOT).replaceAll("[^A-Z0-9]+", "_")) {
                     case "GRAMMAR_VOCABULARY" -> "Grammar & Vocabulary";

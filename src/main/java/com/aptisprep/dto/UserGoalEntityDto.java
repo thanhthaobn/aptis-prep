@@ -12,8 +12,7 @@ public class UserGoalEntityDto {
     private Certificate certificate;
     private java.time.LocalDate targetDate;
 
-    public static UserGoalEntityDto fromForm(
-            GoalForm form, User user, Certificate certificate) {
+    public static UserGoalEntityDto fromForm(GoalForm form, User user, Certificate certificate) {
         if (form == null) return null;
         UserGoalEntityDto dto = new UserGoalEntityDto();
         dto.user = user;
@@ -32,8 +31,7 @@ public class UserGoalEntityDto {
         return entity;
     }
 
-    public static UserGoal convertDtoToEntity(
-            GoalForm form, User user, Certificate certificate) {
+    public static UserGoal convertDtoToEntity(GoalForm form, User user, Certificate certificate) {
         return convertDtoToEntity(fromForm(form, user, certificate));
     }
 
@@ -46,7 +44,15 @@ public class UserGoalEntityDto {
         return dto;
     }
 
-    public User getUser() { return user; }
-    public Certificate getCertificate() { return certificate; }
-    public java.time.LocalDate getTargetDate() { return targetDate; }
+    public User getUser() {
+        return user;
+    }
+
+    public Certificate getCertificate() {
+        return certificate;
+    }
+
+    public java.time.LocalDate getTargetDate() {
+        return targetDate;
+    }
 }

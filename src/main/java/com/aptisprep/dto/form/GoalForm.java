@@ -46,7 +46,6 @@ public class GoalForm {
     @Pattern(regexp = "^(A1|A2|B1|B2|C1)?$", message = "Mục tiêu học tập chỉ hỗ trợ từ A1 đến C1")
     private String speaking;
 
-
     public Integer getCertificateId() {
         return certificateId;
     }

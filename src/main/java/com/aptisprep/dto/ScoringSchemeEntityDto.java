@@ -12,8 +12,7 @@ public class ScoringSchemeEntityDto {
     private String examType;
     private String scopeSkill;
 
-    public static ScoringSchemeEntityDto fromForm(
-            ScoringSchemeForm form, Certificate certificate) {
+    public static ScoringSchemeEntityDto fromForm(ScoringSchemeForm form, Certificate certificate) {
         if (form == null) return null;
         ScoringSchemeEntityDto dto = new ScoringSchemeEntityDto();
         dto.certificate = certificate;
@@ -61,16 +60,32 @@ public class ScoringSchemeEntityDto {
         return form;
     }
 
-    private static String trim(String value) { return value == null ? null : value.trim(); }
+    private static String trim(String value) {
+        return value == null ? null : value.trim();
+    }
 
     private static String blankToNull(String value) {
         String trimmed = trim(value);
         return trimmed == null || trimmed.isBlank() ? null : trimmed;
     }
 
-    public Certificate getCertificate() { return certificate; }
-    public String getName() { return name; }
-    public String getVersion() { return version; }
-    public String getExamType() { return examType; }
-    public String getScopeSkill() { return scopeSkill; }
+    public Certificate getCertificate() {
+        return certificate;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public String getVersion() {
+        return version;
+    }
+
+    public String getExamType() {
+        return examType;
+    }
+
+    public String getScopeSkill() {
+        return scopeSkill;
+    }
 }

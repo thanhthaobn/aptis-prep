@@ -48,13 +48,20 @@ public class CertificateEntityDto {
         return form;
     }
 
-    private static String trim(String value) { return value == null ? null : value.trim(); }
+    private static String trim(String value) {
+        return value == null ? null : value.trim();
+    }
 
     private static String blankToNull(String value) {
         String trimmed = trim(value);
         return trimmed == null || trimmed.isBlank() ? null : trimmed;
     }
 
-    public String getName() { return name; }
-    public String getDescription() { return description; }
+    public String getName() {
+        return name;
+    }
+
+    public String getDescription() {
+        return description;
+    }
 }

@@ -85,11 +85,13 @@ public class LessonService {
                                                                                                                 .equals(
                                                                                                                         l
                                                                                                                                 .getSkill())
-                                                                                                && level
+                                                                                                        && level
                                                                                                                 .equals(
                                                                                                                         l
                                                                                                                                 .getCefrLevel()))
-                                                                                .map(LessonEntityDto::convertEntityToDto)
+                                                                                .map(
+                                                                                        LessonEntityDto
+                                                                                                ::convertEntityToDto)
                                                                                 .toList()))
                                                 .toList(),
                                         (int)

@@ -57,8 +57,8 @@ public class StudentLessonController {
                                                 || fold(l.getTitle()
                                                                 + " "
                                                                 + l.getDescription()
-                                                + " "
-                                                + topic(l))
+                                                                + " "
+                                                                + topic(l))
                                                         .contains(query))
                         .filter(l -> skillParam.isBlank() || l.getSkill().equals(skillParam))
                         .filter(l -> levelParam.isBlank() || l.getCefrLevel().equals(levelParam))

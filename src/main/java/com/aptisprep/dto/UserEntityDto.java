@@ -61,6 +61,11 @@ public class UserEntityDto {
         return form;
     }
 
-    public String getFullName() { return fullName; }
-    public String getEmail() { return email; }
+    public String getFullName() {
+        return fullName;
+    }
+
+    public String getEmail() {
+        return email;
+    }
 }

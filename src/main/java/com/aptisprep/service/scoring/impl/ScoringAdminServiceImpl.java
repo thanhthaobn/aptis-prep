@@ -94,7 +94,10 @@ public class ScoringAdminServiceImpl implements ScoringAdminService {
     public List<ScoringViews.SchemeExamTypeView> schemeExamTypes() {
         if (mockExamRepository == null) return List.of();
         return mockExamRepository.findScoringSchemeExamTypes().stream()
-                .map(value -> new ScoringViews.SchemeExamTypeView(value.getSchemeId(), value.getExamType()))
+                .map(
+                        value ->
+                                new ScoringViews.SchemeExamTypeView(
+                                        value.getSchemeId(), value.getExamType()))
                 .toList();
     }
 

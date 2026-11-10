@@ -52,12 +52,31 @@ public class FlashcardEntityDto {
         return dto;
     }
 
-    private static String trim(String value) { return value == null ? null : value.trim(); }
+    private static String trim(String value) {
+        return value == null ? null : value.trim();
+    }
 
-    public String getFrontContent() { return frontContent; }
-    public String getBackContent() { return backContent; }
-    public String getCefrLevel() { return cefrLevel; }
-    public Integer getDisplayOrder() { return displayOrder; }
-    public String getStatus() { return status; }
-    public FlashcardSet getSet() { return set; }
+    public String getFrontContent() {
+        return frontContent;
+    }
+
+    public String getBackContent() {
+        return backContent;
+    }
+
+    public String getCefrLevel() {
+        return cefrLevel;
+    }
+
+    public Integer getDisplayOrder() {
+        return displayOrder;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public FlashcardSet getSet() {
+        return set;
+    }
 }

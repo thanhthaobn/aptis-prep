@@ -83,8 +83,7 @@ public class AdminDashboardServiceImpl implements AdminDashboardService {
                                         Comparator.nullsLast(Comparator.reverseOrder())))
                         .limit(3)
                         .toList(),
-                attempts
-                        .adminHistory(
+                attempts.adminHistory(
                                 adminEmail,
                                 0,
                                 3,

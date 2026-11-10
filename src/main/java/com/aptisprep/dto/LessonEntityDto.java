@@ -118,20 +118,67 @@ public class LessonEntityDto {
         return value == null ? null : value.trim();
     }
 
-    public String getTitle() { return title; }
-    public Integer getId() { return id; }
-    public String getDescription() { return description; }
-    public String getSkill() { return skill; }
-    public String getCefrLevel() { return cefrLevel; }
-    public Integer getDisplayOrder() { return displayOrder; }
-    public String getStatus() { return status; }
-    public LessonMaterial getMaterial() { return material; }
-    public String getVideoPath() { return videoPath; }
-    public String getAudioPath() { return audioPath; }
-    public String getAudioName() { return audioName; }
-    public String getImagePath() { return imagePath; }
-    public String getImageName() { return imageName; }
-    public String getTranscript() { return transcript; }
-    public Integer getMinWordCount() { return minWordCount; }
-    public Integer getMaxWordCount() { return maxWordCount; }
+    public String getTitle() {
+        return title;
+    }
+
+    public Integer getId() {
+        return id;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public String getSkill() {
+        return skill;
+    }
+
+    public String getCefrLevel() {
+        return cefrLevel;
+    }
+
+    public Integer getDisplayOrder() {
+        return displayOrder;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public LessonMaterial getMaterial() {
+        return material;
+    }
+
+    public String getVideoPath() {
+        return videoPath;
+    }
+
+    public String getAudioPath() {
+        return audioPath;
+    }
+
+    public String getAudioName() {
+        return audioName;
+    }
+
+    public String getImagePath() {
+        return imagePath;
+    }
+
+    public String getImageName() {
+        return imageName;
+    }
+
+    public String getTranscript() {
+        return transcript;
+    }
+
+    public Integer getMinWordCount() {
+        return minWordCount;
+    }
+
+    public Integer getMaxWordCount() {
+        return maxWordCount;
+    }
 }

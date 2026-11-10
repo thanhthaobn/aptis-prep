@@ -59,9 +59,23 @@ public class ScoreBandEntityDto {
         return form;
     }
 
-    public String getSkill() { return skill; }
-    public String getCefrLevel() { return cefrLevel; }
-    public BigDecimal getMinScore() { return minScore; }
-    public BigDecimal getMaxScore() { return maxScore; }
-    public ScoringScheme getScheme() { return scheme; }
+    public String getSkill() {
+        return skill;
+    }
+
+    public String getCefrLevel() {
+        return cefrLevel;
+    }
+
+    public BigDecimal getMinScore() {
+        return minScore;
+    }
+
+    public BigDecimal getMaxScore() {
+        return maxScore;
+    }
+
+    public ScoringScheme getScheme() {
+        return scheme;
+    }
 }
