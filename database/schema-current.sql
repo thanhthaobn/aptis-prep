@@ -86,6 +86,7 @@ CREATE TABLE [dbo].[users](
 	[password_hash] [varchar](255) NOT NULL,
 	[role] [varchar](30) NOT NULL,
 	[status] [varchar](30) NOT NULL,
+	[lock_reason] [nvarchar](1000) NULL,
 	[created_at] [datetime2](7) NOT NULL,
 	[updated_at] [datetime2](7) NOT NULL,
 PRIMARY KEY CLUSTERED

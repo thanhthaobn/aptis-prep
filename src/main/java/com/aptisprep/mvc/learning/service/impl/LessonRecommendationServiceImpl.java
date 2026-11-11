@@ -1,0 +1,145 @@
+package com.aptisprep.mvc.learning.service.impl;
+
+import com.aptisprep.mvc.account.dto.LearnerContextDTO;
+import com.aptisprep.mvc.account.dto.SkillLevelDTO;
+import com.aptisprep.mvc.account.dto.SkillTargetDTO;
+import com.aptisprep.mvc.account.service.AccountAccessService;
+import com.aptisprep.mvc.common.enums.CefrLevel;
+import com.aptisprep.mvc.learning.dto.LessonRecommendationDTO;
+import com.aptisprep.mvc.learning.dto.PathProgressDTO;
+import com.aptisprep.mvc.learning.entity.Lesson;
+import com.aptisprep.mvc.learning.entity.LessonProgress;
+import com.aptisprep.mvc.learning.repository.LessonProgressRepository;
+import com.aptisprep.mvc.learning.service.LessonRecommendationService;
+import java.time.LocalDateTime;
+import java.util.*;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+/** Read-only dashboard selection; never creates progress or changes the learner's goal. */
+@Service
+public class LessonRecommendationServiceImpl implements LessonRecommendationService {
+    private final LessonProgressRepository lessonProgressRepository;
+    private final AccountAccessService accounts;
+
+    public LessonRecommendationServiceImpl(
+            LessonProgressRepository lessonProgressRepository, AccountAccessService accounts) {
+        this.lessonProgressRepository = lessonProgressRepository;
+        this.accounts = accounts;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public LessonRecommendationDTO recommend(Integer userId, List<PathProgressDTO> paths) {
+        List<LessonProgress> history = lessonProgressRepository.findByUserId(userId);
+        Optional<LessonProgress> recent =
+                history.stream()
+                        .filter(
+                                p ->
+                                        "IN_PROGRESS".equals(p.getStatus())
+                                                && p.getCompletedAt() == null)
+                        .filter(p -> "PUBLISHED".equals(p.getLesson().getStatus()))
+                        .max(
+                                Comparator.comparing(
+                                        p ->
+                                                p.getLastAccessedAt() == null
+                                                        ? LocalDateTime.MIN
+                                                        : p.getLastAccessedAt()));
+        if (recent.isPresent()) {
+            Lesson lesson = recent.get().getLesson();
+            PathProgressDTO path =
+                    paths.stream()
+                            .filter(
+                                    p ->
+                                            "ACTIVE".equals(p.pathStatus())
+                                                    && Objects.equals(
+                                                            p.nextLessonId(), lesson.getId()))
+                            .findFirst()
+                            .orElse(null);
+            return new LessonRecommendationDTO(
+                    lesson.getId(),
+                    lesson.getTitle(),
+                    lesson.getSkill(),
+                    path,
+                    "Tiếp tục bài đang học dở gần nhất");
+        }
+        LearnerContextDTO context = accounts.context(userId);
+        List<SkillTargetDTO> targets =
+                context == null || context.targets() == null ? List.of() : context.targets();
+        List<SkillLevelDTO> levels =
+                context == null || context.levels() == null ? List.of() : context.levels();
+        PathProgressDTO selected =
+                paths.stream()
+                        .filter(p -> "ACTIVE".equals(p.pathStatus()) && p.nextLessonId() != null)
+                        .min(
+                                Comparator.<PathProgressDTO>comparingInt(
+                                                p -> hasTarget(p, targets) ? 0 : 1)
+                                        .thenComparing(
+                                                Comparator.comparingInt(
+                                                                (PathProgressDTO p) ->
+                                                                        gap(p, targets, levels))
+                                                        .reversed())
+                                        .thenComparingDouble(
+                                                p ->
+                                                        p.totalLessons() == 0
+                                                                ? 1
+                                                                : (double) p.completedLessons()
+                                                                        / p.totalLessons())
+                                        // Equal priorities rotate toward the skill least recently
+                                        // visited, never skill-name ordering.
+                                        .thenComparing(p -> lastVisit(history, p.skill()))
+                                        .thenComparing(PathProgressDTO::pathId))
+                        .orElse(null);
+        if (selected == null) return null;
+        String reason =
+                hasTarget(selected, targets)
+                        ? "Theo mục tiêu: ưu tiên khoảng cách trình độ lớn hơn, rồi tiến độ chặng"
+                                + " thấp hơn"
+                        : "Theo tiến độ: ưu tiên chặng ít hoàn thành hơn, rồi kỹ năng lâu chưa học";
+        return new LessonRecommendationDTO(
+                selected.nextLessonId(),
+                selected.nextLessonTitle(),
+                selected.skill(),
+                selected,
+                reason);
+    }
+
+    private LocalDateTime lastVisit(List<LessonProgress> history, String skill) {
+        return history.stream()
+                .filter(p -> skill.equals(p.getLesson().getSkill()))
+                .map(LessonProgress::getLastAccessedAt)
+                .filter(Objects::nonNull)
+                .max(Comparator.naturalOrder())
+                .orElse(LocalDateTime.MIN);
+    }
+
+    private boolean hasTarget(PathProgressDTO path, List<SkillTargetDTO> targets) {
+        return targets.stream().anyMatch(t -> key(t.skill()).equals(key(path.skill())));
+    }
+
+    private int gap(
+            PathProgressDTO path, List<SkillTargetDTO> targets, List<SkillLevelDTO> levels) {
+        int target =
+                targets.stream()
+                        .filter(t -> key(t.skill()).equals(key(path.skill())))
+                        .mapToInt(t -> rank(t.targetLevel()))
+                        .findFirst()
+                        .orElse(-1);
+        int current =
+                levels.stream()
+                        .filter(l -> key(l.skill()).equals(key(path.skill())))
+                        .mapToInt(l -> rank(l.estimatedLevel()))
+                        .findFirst()
+                        .orElse(-1);
+        // Unknown proficiency is not invented or treated as a measured weakness.
+        return target < 0 || current < 0 ? 0 : Math.max(0, target - current);
+    }
+
+    private static int rank(String value) {
+        return CefrLevel.codes().indexOf(value == null ? "" : value.toUpperCase(Locale.ROOT));
+    }
+
+    private static String key(String value) {
+        return value == null ? "" : value.toUpperCase(Locale.ROOT).replaceAll("[^A-Z0-9]", "");
+    }
+}

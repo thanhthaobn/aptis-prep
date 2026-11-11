@@ -8,6 +8,9 @@
 SET XACT_ABORT ON;
 BEGIN TRANSACTION;
 
+IF COL_LENGTH(N'dbo.users', N'lock_reason') IS NULL
+    ALTER TABLE dbo.users ADD lock_reason NVARCHAR(1000) NULL;
+
 IF COL_LENGTH(N'dbo.user_flashcard_progress', N'next_review_at') IS NULL
     ALTER TABLE dbo.user_flashcard_progress ADD next_review_at DATETIME2 NULL;
 IF COL_LENGTH(N'dbo.user_flashcard_progress', N'interval_days') IS NULL

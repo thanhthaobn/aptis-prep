@@ -41,6 +41,9 @@
 .student-pagination .pagination-pages { flex-wrap: wrap; align-items: center; }
 .student-pagination .page-link { min-width: 40px; height: 40px; text-decoration: none; }
 .student-pagination .pagination-gap { padding-inline: .25rem; }
+.student-detail-pagination { justify-content: center; flex-wrap: wrap; }
+.student-detail-pagination .pagination-page-label { min-width: 100px; text-align: center; font-weight: 700; }
+.student-detail-pagination .page-link { text-decoration: none; }
 .empty-box { padding: 3.5rem 1.5rem; background: #fff; border: 1px dashed #cbd5e1; border-radius: var(--radius); text-align: center; }
 .empty-box-icon { display: grid; width: 52px; height: 52px; margin: 0 auto .85rem; place-items: center; color: var(--color-primary); background: var(--color-primary-soft); border-radius: 15px; }
 .empty-box-icon svg { width: 25px; height: 25px; }

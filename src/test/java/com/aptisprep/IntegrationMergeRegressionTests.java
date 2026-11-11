@@ -3,14 +3,18 @@ package com.aptisprep;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-import com.aptisprep.dto.form.ExamForm;
-import com.aptisprep.entity.MockExamEntity;
-import com.aptisprep.entity.MockExamQuestionEntity;
-import com.aptisprep.entity.MockExamSectionEntity;
-import com.aptisprep.exception.ResourceNotFoundException;
-import com.aptisprep.repository.MockExamQuestionRepository;
-import com.aptisprep.repository.MockExamRepository;
-import com.aptisprep.repository.MockExamSectionRepository;
+import com.aptisprep.mvc.catalog.dto.*;
+import com.aptisprep.mvc.catalog.dto.ExamFormDTO;
+import com.aptisprep.mvc.catalog.entity.*;
+import com.aptisprep.mvc.catalog.entity.MockExamEntity;
+import com.aptisprep.mvc.catalog.entity.MockExamQuestionEntity;
+import com.aptisprep.mvc.catalog.entity.MockExamSectionEntity;
+import com.aptisprep.mvc.catalog.repository.*;
+import com.aptisprep.mvc.catalog.repository.MockExamQuestionRepository;
+import com.aptisprep.mvc.catalog.repository.MockExamRepository;
+import com.aptisprep.mvc.catalog.repository.MockExamSectionRepository;
+import com.aptisprep.mvc.catalog.service.*;
+import com.aptisprep.mvc.common.exception.ResourceNotFoundException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -52,11 +56,11 @@ class IntegrationMergeRegressionTests {
 
     @Test
     void examFormKeepsLegacyFieldsAndNewSectionsWithNullSafety() {
-        var form = new ExamForm();
+        var form = new ExamFormDTO();
         form.setSectionSkill("READING");
         form.setSectionDurationMinutes(35);
         form.setQuestionIds("1,2");
-        var section = new ExamForm.SectionForm();
+        var section = new ExamFormDTO.SectionForm();
         section.setSkill("LISTENING");
         section.setDurationMinutes(40);
         section.setQuestionIds("3,4");
@@ -94,9 +98,12 @@ class IntegrationMergeRegressionTests {
         var exams = mock(MockExamRepository.class);
         var sections = mock(MockExamSectionRepository.class);
         var questions = mock(MockExamQuestionRepository.class);
+        var catalog =
+                new com.aptisprep.mvc.catalog.service.impl.ExamCatalogServiceImpl(
+                        exams, questions, sections, null, null, null, null);
         var service =
-                new com.aptisprep.service.student.impl.StudentExamCatalogServiceImpl(
-                        exams, sections, questions);
+                new com.aptisprep.mvc.student.service.impl.StudentExamCatalogServiceImpl(
+                        catalog, null);
         var published = new MockExamEntity();
         ReflectionTestUtils.setField(published, "id", 12);
         published.setTitle("Published reading exam");
@@ -119,11 +126,18 @@ class IntegrationMergeRegressionTests {
 
     @Test
     void emptyDatabaseFallbackDoesNotRestoreFakeLessonsOrResults() {
-        var service =
-                new com.aptisprep.service.student.impl.StudentExamCatalogServiceImpl(
+        var catalog =
+                new com.aptisprep.mvc.catalog.service.impl.ExamCatalogServiceImpl(
                         mock(MockExamRepository.class),
+                        mock(MockExamQuestionRepository.class),
                         mock(MockExamSectionRepository.class),
-                        mock(MockExamQuestionRepository.class));
+                        null,
+                        null,
+                        null,
+                        null);
+        var service =
+                new com.aptisprep.mvc.student.service.impl.StudentExamCatalogServiceImpl(
+                        catalog, null);
         assertTrue(service.find("exams", "", "", "", "").isEmpty());
         assertThrows(ResourceNotFoundException.class, () -> service.entry("exams", 7002));
         assertTrue(service.find("lessons", "", "", "", "").isEmpty());

@@ -2,8 +2,8 @@ package com.aptisprep;
 
 import static org.junit.jupiter.api.Assertions.assertSame;
 
-import com.aptisprep.service.exam.AttemptOutboxService;
-import com.aptisprep.service.grading.GeminiGradingService;
+import com.aptisprep.mvc.exam.service.AttemptOutboxService;
+import com.aptisprep.mvc.grading.service.impl.GeminiGradingService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;

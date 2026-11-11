@@ -3,9 +3,9 @@ package com.aptisprep;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-import com.aptisprep.entity.*;
-import com.aptisprep.enums.RecordStatus;
-import com.aptisprep.repository.*;
+import com.aptisprep.mvc.common.enums.RecordStatus;
+import com.aptisprep.mvc.scoring.entity.*;
+import com.aptisprep.mvc.scoring.repository.*;
 import java.math.BigDecimal;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -197,7 +197,7 @@ class GrammarScoringRepairSqlServerTests {
                     .thenReturn(values);
         }
         var service =
-                new com.aptisprep.service.scoring.impl.ScoringPolicyServiceImpl(
+                new com.aptisprep.mvc.scoring.service.impl.ScoringPolicyServiceImpl(
                         schemes, bands, rules);
         for (String skill : SKILLS) service.validatePolicy(schemeId, skill);
         for (String[] boundary :
@@ -223,7 +223,7 @@ class GrammarScoringRepairSqlServerTests {
                 new BigDecimal("30.00"),
                 service.scale(schemeId, "GRAMMAR_VOCABULARY", new BigDecimal("30")));
         assertThrows(
-                com.aptisprep.exception.BusinessRuleException.class,
+                com.aptisprep.mvc.common.exception.BusinessRuleException.class,
                 () ->
                         service.estimatedLevel(
                                 schemeId, "GRAMMAR_VOCABULARY", new BigDecimal("50.01")));
