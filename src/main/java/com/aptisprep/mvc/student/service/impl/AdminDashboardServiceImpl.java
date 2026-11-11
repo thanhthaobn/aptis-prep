@@ -69,6 +69,7 @@ public class AdminDashboardServiceImpl implements AdminDashboardService {
                 lessonService.countLessons(),
                 catalogService.countQuestions(),
                 catalogService.countPublishedExams(),
+                students.pendingUnlockRequests(),
                 content.stream()
                         .sorted(
                                 Comparator.comparing(

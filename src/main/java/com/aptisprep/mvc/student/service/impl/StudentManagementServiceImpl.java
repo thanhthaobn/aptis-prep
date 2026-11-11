@@ -32,16 +32,21 @@ public class StudentManagementServiceImpl implements StudentManagementService {
     private final AccountAccessService accounts;
     private final ObjectProvider<LearningPathService> paths;
     private final ObjectProvider<ExamAttemptService> attempts;
+    private final com.aptisprep.mvc.auth.service.AccountUnlockRequestService
+            accountUnlockRequestService;
 
     public StudentManagementServiceImpl(
             UserService userService,
             AccountAccessService accounts,
             ObjectProvider<LearningPathService> paths,
-            ObjectProvider<ExamAttemptService> attempts) {
+            ObjectProvider<ExamAttemptService> attempts,
+            com.aptisprep.mvc.auth.service.AccountUnlockRequestService
+                    accountUnlockRequestService) {
         this.userService = userService;
         this.accounts = accounts;
         this.paths = paths;
         this.attempts = attempts;
+        this.accountUnlockRequestService = accountUnlockRequestService;
     }
 
     @Transactional(readOnly = true)
@@ -151,7 +156,53 @@ public class StudentManagementServiceImpl implements StudentManagementService {
         if (target.getStatus() != UserStatus.LOCKED)
             throw new BusinessRuleException("Chỉ có thể xóa tài khoản đã khóa");
         target.setStatus(UserStatus.INACTIVE);
-        target.setLockReason(normalizedReason);
+        target.setRemovalReason(normalizedReason);
+    }
+
+    @Transactional
+    public void restore(String adminEmail, Integer id) {
+        User admin =
+                userService
+                        .findByEmailIgnoreCase(adminEmail)
+                        .orElseThrow(
+                                () ->
+                                        new AccessDeniedException(
+                                                "Không có quyền thực hiện thao tác"));
+        if (admin.getRole() != Role.ADMIN)
+            throw new AccessDeniedException("Chỉ quản trị viên mới được quản lý học viên");
+        User target =
+                userService
+                        .findByIdForUpdate(id)
+                        .orElseThrow(
+                                () -> new ResourceNotFoundException("Không tìm thấy học viên"));
+        if (target.getRole() != Role.STUDENT)
+            throw new ResourceNotFoundException("Không tìm thấy học viên");
+        if (target.getStatus() != UserStatus.INACTIVE)
+            throw new BusinessRuleException("Chỉ có thể khôi phục tài khoản ngừng hoạt động");
+        target.setStatus(UserStatus.ACTIVE);
+        target.setRemovalReason(null);
+        target.setLockReason(null);
+    }
+
+    @Transactional(readOnly = true)
+    public List<com.aptisprep.mvc.auth.dto.AccountUnlockRequestDTO> listUnlockRequests(
+            String statusFilter) {
+        return accountUnlockRequestService.list(statusFilter);
+    }
+
+    @Transactional
+    public void approveUnlockRequest(String adminEmail, Integer requestId, String note) {
+        accountUnlockRequestService.approve(adminEmail, requestId, note);
+    }
+
+    @Transactional
+    public void rejectUnlockRequest(String adminEmail, Integer requestId, String note) {
+        accountUnlockRequestService.reject(adminEmail, requestId, note);
+    }
+
+    @Transactional(readOnly = true)
+    public long pendingUnlockRequests() {
+        return accountUnlockRequestService.countPending();
     }
 
     public long totalStudents() {

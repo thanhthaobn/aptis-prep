@@ -337,12 +337,12 @@
                 ></textarea>
                 <button class="button button-danger" type="submit">Xóa tài khoản</button>
               </form>
-              <span
-                th:if="${student.status.name() == 'INACTIVE'}"
-                class="student-status student-status-inactive"
-              >
-                Ngừng hoạt động
-              </span>
+              <div th:if="${student.status.name() == 'INACTIVE'}" class="d-flex align-items-center gap-2">
+                <span class="student-status student-status-inactive">Ngừng hoạt động</span>
+                <form th:action="@{/admin/students/{id}/restore(id=${student.id})}" method="post">
+                  <button class="button button-secondary text-nowrap" type="submit">Khôi phục tài khoản</button>
+                </form>
+              </div>
             </div>
           </div>
           <dl class="student-profile-facts">

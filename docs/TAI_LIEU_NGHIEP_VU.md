@@ -128,11 +128,22 @@ flowchart TD
 #### Các bước xử lý chi tiết:
 1.  **Đăng ký & Đăng nhập**:
     *   Học viên đăng ký tài khoản với Họ tên, Email, Mật khẩu. Hệ thống kiểm tra trùng email không phân biệt hoa thường (`DuplicateEmailException`). Mật khẩu được mã hóa an toàn bằng BCrypt.
-    *   Đăng nhập kiểm tra trạng thái tài khoản: Nếu `ACTIVE` $\rightarrow$ tạo `LoginSession`; nếu `LOCKED` $\rightarrow$ chặn và thông báo lý do khóa do Admin nhập; nếu không hợp lệ $\rightarrow$ báo lỗi.
-2.  **Bảo vệ phiên đăng nhập (`ActiveAccountFilter`)**:
-    *   Mỗi request gửi lên máy chủ đều được `ActiveAccountFilter` kiểm tra trạng thái thời gian thực trong cơ sở dữ liệu.
-    *   Nếu Admin vừa bấm Khóa tài khoản, ngay ở request tiếp theo của học viên, session lập tức bị hủy bỏ và điều hướng về trang thông báo khóa, không chờ session hết hạn.
-3.  **Thiết lập Mục tiêu học tập (Goals)**:
+    *   Khi phát hiện trùng email (bất kể tài khoản hiện ở trạng thái `ACTIVE`, `LOCKED` hay `INACTIVE`), hệ thống trả về thông báo chung: *"Email đã được sử dụng. Nếu đây là tài khoản của bạn, hãy đăng nhập để xem trạng thái hoặc gửi yêu cầu mở khóa."*, tuyệt đối không tiết lộ trạng thái khóa hay ngừng hoạt động của tài khoản (tuân thủ BR-11).
+    *   Đăng nhập kiểm tra trạng thái tài khoản:
+        *   Nếu `ACTIVE` $\rightarrow$ tạo `LoginSession` và điều hướng về trang tương ứng theo vai trò (`/admin/dashboard` hoặc `/student/dashboard`).
+        *   Nếu `LOCKED` $\rightarrow$ chuyển tới `/account-locked` hiển thị lý do khóa (`lock_reason`), trạng thái yêu cầu mở khóa gần nhất (nếu có), và form gửi yêu cầu mở khóa (điền sẵn email, bắt buộc nhập lại mật khẩu).
+        *   Nếu `INACTIVE` $\rightarrow$ chuyển tới biến thể của `/account-locked` hiển thị lý do ngừng hoạt động (`removal_reason`) và cùng form gửi yêu cầu khôi phục tài khoản.
+        *   Nếu sai thông tin đăng nhập $\rightarrow$ trả về thông báo lỗi chung: *"Email hoặc mật khẩu không đúng."*
+2.  **Yêu cầu mở khóa / Khôi phục tài khoản (`/account-unlock-request`)**:
+    *   Học viên bị khóa (`LOCKED`) hoặc ngừng hoạt động (`INACTIVE`) có thể gửi yêu cầu mở khóa trực tiếp từ `/account-locked`.
+    *   Hệ thống xác thực lại email và mật khẩu (qua `UserService`). Nếu sai mật khẩu hoặc không tìm thấy email, trả thông báo chung giống đăng nhập để bảo mật.
+    *   Chỉ chấp nhận gửi yêu cầu khi tài khoản ở trạng thái `LOCKED` hoặc `INACTIVE` (tài khoản `ACTIVE` bị từ chối).
+    *   Mỗi tài khoản chỉ được phép có tối đa một yêu cầu ở trạng thái `PENDING` (chặn gửi trùng).
+    *   Nội dung yêu cầu bắt buộc và tối đa 1000 ký tự. Mọi request gửi lên đều được bảo vệ bởi CSRF token.
+3.  **Bảo vệ phiên đăng nhập (`ActiveAccountFilter` / `SessionAuthenticationFilter`)**:
+    *   Mỗi request gửi lên máy chủ đều được bộ lọc kiểm tra trạng thái thời gian thực trong cơ sở dữ liệu.
+    *   Nếu Admin vừa bấm Khóa hoặc Ngừng hoạt động tài khoản, ngay ở request tiếp theo của học viên, session lập tức bị hủy bỏ và điều hướng về trang thông báo khóa, không chờ session hết hạn.
+4.  **Thiết lập Mục tiêu học tập (Goals)**:
     *   Học viên chọn Chứng chỉ mục tiêu (ví dụ: Aptis General) và Ngày dự thi dự kiến.
     *   Học viên chọn mức CEFR mục tiêu riêng cho từng kỹ năng: Nghe, Nói, Đọc, Viết, Ngữ pháp/Từ vựng (cho phép mục tiêu từ A1 đến C1).
     *   Sau khi lưu mục tiêu thành công, hệ thống phát sự kiện `GoalChangedEvent` qua Spring ApplicationEventPublisher để kích hoạt Người 2 cập nhật lại Lộ trình học (Learning Path).
@@ -326,9 +337,16 @@ flowchart LR
 1.  **Quản lý Học viên (Student Management)**:
     *   Admin xem danh sách toàn bộ học viên, tìm kiếm theo tên/email, lọc theo trạng thái (`ACTIVE`, `LOCKED`, `INACTIVE`).
     *   Xem chi tiết từng học viên: Ngày tham gia, Mục tiêu điểm số, Trình độ CEFR 5 kỹ năng hiện tại, Tỷ lệ hoàn thành bài học, Lịch sử các bài thi đã làm.
-    *   Thực hiện hành động **Khóa tài khoản (`/lock`)**: Admin nhập lý do khóa bắt buộc; tài khoản chuyển sang trạng thái `LOCKED`.
-    *   Thực hiện hành động **Mở khóa tài khoản (`/unlock`)**: Khôi phục trạng thái hoạt động bình thường cho học viên.
-    *   *Ràng buộc*: Không cho phép xóa cứng tài khoản học viên để bảo toàn dữ liệu lịch sử bài làm và điểm số.
+    *   Thực hiện hành động **Khóa tài khoản (`/lock`)**: Admin nhập lý do khóa bắt buộc (tối đa 1000 ký tự); tài khoản chuyển sang trạng thái `LOCKED`.
+    *   Thực hiện hành động **Mở khóa tài khoản (`/unlock`)**: Khôi phục trạng thái hoạt động bình thường (`ACTIVE`) cho học viên và xóa lý do khóa.
+    *   Thực hiện hành động **Xóa mềm tài khoản (`/delete`)**: Chỉ áp dụng cho tài khoản đã bị `LOCKED`. Tài khoản chuyển sang trạng thái `INACTIVE`, ghi lý do xóa vào cột `removal_reason` và bảo toàn nguyên vẹn `lock_reason`.
+    *   Thực hiện hành động **Khôi phục tài khoản (`/restore`)**: Cho phép Admin chuyển tài khoản `INACTIVE` quay trở lại `ACTIVE` tại trang `/admin/students/{id}`, đồng thời xóa `removal_reason` và `lock_reason`.
+    *   **Quản lý Yêu cầu mở khóa (`/admin/unlock-requests`)**:
+        *   Trang danh sách hiển thị các yêu cầu mở khóa từ học viên (hỗ trợ lọc `PENDING` hoặc `ALL`), hiển thị số yêu cầu chờ duyệt trên dashboard và trang quản lý học viên.
+        *   **Duyệt yêu cầu (`/approve`)**: Chuyển học viên về `ACTIVE`, xóa `lock_reason` và `removal_reason`, đánh dấu yêu cầu thành `APPROVED`. Ghi chú admin là tùy chọn (tối đa 1000 ký tự).
+        *   **Từ chối yêu cầu (`/reject`)**: Bắt buộc nhập lý do từ chối (tối đa 1000 ký tự), đánh dấu yêu cầu thành `REJECTED`, học viên giữ nguyên trạng thái khóa/ngừng hoạt động.
+        *   Chống race condition: Thao tác thực hiện trong một `@Transactional`, khóa bi quan bản ghi học viên (`findByIdForUpdate`) để ngăn ngừa trường hợp 2 admin cùng xử lý đồng thời một yêu cầu.
+    *   *Ràng buộc*: Không cho phép xóa cứng tài khoản học viên để bảo toàn dữ liệu lịch sử bài làm và điểm số (tuân thủ BR-01).
 2.  **Quản lý Chứng chỉ & Thang điểm (Scoring Admin)**:
     *   CRUD Chứng chỉ: Đặt tên, mã chứng chỉ duy nhất (Code: `APTIS_GEN`, `APTIS_ADV`), mô tả.
     *   CRUD Bộ chấm điểm (`ScoringScheme`): Gắn với chứng chỉ, phạm vi áp dụng (tất cả kỹ năng hoặc một kỹ năng), phiên bản (Version: 1, 2,...).
@@ -357,6 +375,7 @@ Nhằm đảm bảo tính chính xác và toàn vẹn của hệ thống, toàn 
 | **BR-08** | **Gọi AI ngoài Transaction DB** | Tác vụ gọi Google Gemini API phải được thực hiện ngoài Database Transaction để tránh treo Connection Pool của cơ sở dữ liệu khi mạng chậm hoặc timeout. |
 | **BR-09** | **Phân quyền và CSRF toàn diện** | Toàn bộ các form thay đổi dữ liệu (`POST`, `PUT`, `DELETE`) bắt buộc phải có CSRF Token hợp lệ. Học viên chỉ được xem và thao tác trên bài thi của chính mình (`Ownership Check`). |
 | **BR-10** | **Quy tắc phiên bản Scoring Scheme** | Bộ chấm điểm đã có bài thi tham chiếu sẽ bị khóa sửa. Mọi thay đổi về thang điểm bắt buộc phải tạo Version mới; bài thi cũ vẫn chấm theo đúng version tại thời điểm thi. |
+| **BR-11** | **Email tài khoản LOCKED/INACTIVE & Đường quay lại** | Email của tài khoản `LOCKED`/`INACTIVE` không được đăng ký lại; đường quay lại duy nhất là yêu cầu mở khóa/khôi phục do admin xử lý. Hệ thống giữ nguyên ràng buộc duy nhất trên email (`uq_users_email`), không tiết lộ trạng thái tài khoản khi đăng ký trùng email. |
 
 ---
 
