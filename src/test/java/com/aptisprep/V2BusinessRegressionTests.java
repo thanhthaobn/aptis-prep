@@ -1,21 +1,37 @@
 package com.aptisprep;
 
-import static com.aptisprep.security.SessionMvcRequests.*;
+import static com.aptisprep.mvc.common.security.SessionMvcRequests.*;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-import com.aptisprep.dto.form.*;
-import com.aptisprep.entity.*;
-import com.aptisprep.enums.*;
-import com.aptisprep.exception.BusinessRuleException;
-import com.aptisprep.repository.*;
-import com.aptisprep.service.account.AccountProfileService;
-import com.aptisprep.service.admin.CatalogService;
-import com.aptisprep.service.contract.ScoringSchemeUsageContract;
-import com.aptisprep.service.exam.ExamAttemptService;
-import com.aptisprep.service.learning.FlashcardSetService;
-import com.aptisprep.service.scoring.*;
+import com.aptisprep.mvc.account.dto.GoalFormDTO;
+import com.aptisprep.mvc.account.entity.UserGoal;
+import com.aptisprep.mvc.account.entity.UserGoalSkill;
+import com.aptisprep.mvc.account.repository.UserGoalRepository;
+import com.aptisprep.mvc.account.repository.UserSkillProfileRepository;
+import com.aptisprep.mvc.account.service.AccountProfileService;
+import com.aptisprep.mvc.auth.entity.User;
+import com.aptisprep.mvc.auth.repository.UserRepository;
+import com.aptisprep.mvc.catalog.dto.*;
+import com.aptisprep.mvc.catalog.entity.*;
+import com.aptisprep.mvc.catalog.repository.*;
+import com.aptisprep.mvc.catalog.service.*;
+import com.aptisprep.mvc.catalog.service.CatalogService;
+import com.aptisprep.mvc.catalog.service.ScoringSchemeUsageService;
+import com.aptisprep.mvc.common.enums.*;
+import com.aptisprep.mvc.common.exception.BusinessRuleException;
+import com.aptisprep.mvc.exam.entity.*;
+import com.aptisprep.mvc.exam.repository.*;
+import com.aptisprep.mvc.exam.service.ExamAttemptService;
+import com.aptisprep.mvc.flashcard.dto.*;
+import com.aptisprep.mvc.flashcard.entity.*;
+import com.aptisprep.mvc.flashcard.repository.*;
+import com.aptisprep.mvc.flashcard.service.FlashcardSetService;
+import com.aptisprep.mvc.scoring.dto.*;
+import com.aptisprep.mvc.scoring.entity.*;
+import com.aptisprep.mvc.scoring.repository.*;
+import com.aptisprep.mvc.scoring.service.*;
 import java.math.BigDecimal;
 import java.util.*;
 import org.junit.jupiter.api.*;
@@ -31,7 +47,7 @@ import org.springframework.transaction.annotation.Transactional;
 class V2BusinessRegressionTests {
     @Autowired CatalogService catalog;
     @Autowired ScoringAdminService scoring;
-    @Autowired ScoringSchemeUsageContract usage;
+    @Autowired ScoringSchemeUsageService usage;
     @Autowired CertificateSchemeService available;
     @Autowired AccountProfileService accounts;
     @Autowired ExamAttemptService engine;
@@ -50,13 +66,13 @@ class V2BusinessRegressionTests {
     @Autowired QuestionOptionRepository questionOptions;
     @Autowired UserFlashcardProgressRepository progress;
     @Autowired MockMvc mvc;
-    @Autowired com.aptisprep.service.student.StudentExamCatalogService studentCatalog;
-    @Autowired com.aptisprep.service.placement.PlacementExamCatalogService placementCatalog;
-    @Autowired com.aptisprep.service.placement.PlacementService placement;
+    @Autowired com.aptisprep.mvc.student.service.StudentExamCatalogService studentCatalog;
+    @Autowired com.aptisprep.mvc.placement.service.PlacementExamCatalogService placementCatalog;
+    @Autowired com.aptisprep.mvc.placement.service.PlacementService placement;
     @Autowired ExamAttemptRepository attempts;
     @Autowired UserGoalRepository goals;
     @Autowired UserSkillProfileRepository profiles;
-    @Autowired com.aptisprep.service.account.AccountAccessService assessmentAccounts;
+    @Autowired com.aptisprep.mvc.account.service.AccountAccessService assessmentAccounts;
     User admin, learner;
     Certificate certificate;
     ScoringScheme scheme;
@@ -88,19 +104,19 @@ class V2BusinessRegressionTests {
         return users.saveAndFlush(value);
     }
 
-    private QuestionForm question(String type, String skill) {
-        var form = new QuestionForm();
+    private QuestionFormDTO question(String type, String skill) {
+        var form = new QuestionFormDTO();
         form.setContent("V2 question");
         form.setSkill(skill);
         form.setCefrLevel("A1");
         form.setQuestionType(type);
         form.setStatus("DRAFT");
-        var item = new QuestionForm.ItemForm();
+        var item = new QuestionFormDTO.ItemForm();
         item.setContent("First item");
         item.setCorrectPosition(1);
-        var a = new QuestionForm.OptionForm("A");
+        var a = new QuestionFormDTO.OptionForm("A");
         a.setContent("A");
-        var b = new QuestionForm.OptionForm("B");
+        var b = new QuestionFormDTO.OptionForm("B");
         b.setContent("B");
         item.setOptions(new ArrayList<>(List.of(a, b)));
         form.setItems(new ArrayList<>(List.of(item)));
@@ -132,7 +148,7 @@ class V2BusinessRegressionTests {
     void realUsageBeanProtectsExistingPolicyAndCopiesConfigurationToANewVersion() {
         var rule = rule();
         scoring.saveScaleRule(admin.getEmail(), scheme.getId(), "READING", rule);
-        var band = new ScoreBandForm();
+        var band = new ScoreBandFormDTO();
         band.setSkill("READING");
         band.setCefrLevel("A1");
         band.setMinScore(BigDecimal.ZERO);
@@ -152,7 +168,7 @@ class V2BusinessRegressionTests {
                                 bands.findBySchemeIdOrderBySkillAscMinScoreAsc(scheme.getId())
                                         .getFirst()
                                         .getId()));
-        var form = new ScoringSchemeForm();
+        var form = new ScoringSchemeFormDTO();
         form.setCertificateId(certificate.getId());
         form.setName("V2 new policy");
         form.setStatus("ACTIVE");
@@ -163,8 +179,8 @@ class V2BusinessRegressionTests {
         assertEquals(1, bands.findBySchemeIdOrderBySkillAscMinScoreAsc(replacement).size());
     }
 
-    private ScoringScaleRuleForm rule() {
-        var f = new ScoringScaleRuleForm();
+    private ScoringScaleRuleFormDTO rule() {
+        var f = new ScoringScaleRuleFormDTO();
         f.setRawMin(BigDecimal.ZERO);
         f.setRawMax(BigDecimal.valueOf(40));
         f.setScaleMin(BigDecimal.ZERO);
@@ -198,7 +214,7 @@ class V2BusinessRegressionTests {
     void orderingUsesItemsWithoutOptionsAndRejectsDuplicateOrMissingPositions() {
         var form = question("ORDERING", "READING");
         form.getItems().getFirst().setOptions(new ArrayList<>());
-        var second = new QuestionForm.ItemForm();
+        var second = new QuestionFormDTO.ItemForm();
         second.setContent("Second item");
         second.setCorrectPosition(1);
         second.setOptions(new ArrayList<>());
@@ -253,7 +269,7 @@ class V2BusinessRegressionTests {
     @Test
     void writingKeepsAllItemsInCanonicalAnswerAndDoesNotEraseEarlierItems() {
         var form = question("WRITING_TEXT", "WRITING");
-        var second = new QuestionForm.ItemForm();
+        var second = new QuestionFormDTO.ItemForm();
         second.setContent("Second");
         form.getItems().add(second);
         int questionId = catalog.saveQuestion(null, form, null);
@@ -302,7 +318,7 @@ class V2BusinessRegressionTests {
 
     @Test
     void goalsRoundTripTargetScoresAndRejectScoresWithoutATargetLevel() {
-        var form = new GoalForm();
+        var form = new GoalFormDTO();
         form.setReading("B1");
         form.getTargetScores().put("READING", BigDecimal.valueOf(35));
         accounts.saveGoal(learner.getEmail(), form);
@@ -320,10 +336,10 @@ class V2BusinessRegressionTests {
 
     @Test
     void repeatedStatusIsANewReviewButReplayedKeyIsNot() {
-        var form = new FlashcardSetForm();
+        var form = new FlashcardSetFormDTO();
         form.setTitle("V2 private cards");
         form.setCefrLevel("A1");
-        var row = new FlashcardSetForm.Row();
+        var row = new FlashcardSetFormDTO.Row();
         row.setTerm("test");
         row.setDefinition("kiểm tra");
         form.getRows().add(row);
@@ -357,19 +373,19 @@ class V2BusinessRegressionTests {
 
     @Test
     void fullMockRejectsMissingSkillsAndAcceptsAllFiveSkills() {
-        var form = new ExamForm();
+        var form = new ExamFormDTO();
         form.setTitle("Complete full mock");
         form.setExamType("FULL_MOCK");
         form.setCertificateId(certificate.getId());
         for (String skill : List.of("READING", "LISTENING")) {
-            var section = new ExamForm.SectionForm();
+            var section = new ExamFormDTO.SectionForm();
             section.setSkill(skill);
             section.setDurationMinutes(20);
             form.getSections().add(section);
         }
         assertThrows(BusinessRuleException.class, () -> catalog.saveExam(null, form));
         for (String skill : List.of("GRAMMAR_VOCABULARY", "WRITING", "SPEAKING")) {
-            var section = new ExamForm.SectionForm();
+            var section = new ExamFormDTO.SectionForm();
             section.setSkill(skill);
             section.setDurationMinutes(20);
             form.getSections().add(section);
@@ -385,7 +401,7 @@ class V2BusinessRegressionTests {
     void singleSkillExamCanBePublishedWithoutASchemeTargetOrSection() {
         int questionId = catalog.saveQuestion(null, question("SINGLE_CHOICE", "READING"), null);
         catalog.publishQuestion(questionId);
-        var form = new ExamForm();
+        var form = new ExamFormDTO();
         form.setTitle("Sectionless practice");
         form.setCertificateId(certificate.getId());
         form.setTargetLevel(null);
@@ -454,7 +470,7 @@ class V2BusinessRegressionTests {
         var narrow = rule();
         narrow.setScaleMax(BigDecimal.valueOf(40));
         scoring.saveScaleRule(admin.getEmail(), scheme.getId(), "READING", narrow);
-        var band = new ScoreBandForm();
+        var band = new ScoreBandFormDTO();
         band.setSkill("READING");
         band.setCefrLevel("A1");
         band.setMinScore(BigDecimal.ZERO);
@@ -488,7 +504,7 @@ class V2BusinessRegressionTests {
 
     private void completeReadingPolicy() {
         scoring.saveScaleRule(admin.getEmail(), scheme.getId(), "READING", rule());
-        var band = new ScoreBandForm();
+        var band = new ScoreBandFormDTO();
         band.setSkill("READING");
         band.setCefrLevel("A1");
         band.setMinScore(BigDecimal.ZERO);
@@ -511,7 +527,7 @@ class V2BusinessRegressionTests {
                 .andExpect(status().is3xxRedirection())
                 .andExpect(flash().attributeExists("error"));
         assertThrows(
-                com.aptisprep.exception.ResourceNotFoundException.class,
+                com.aptisprep.mvc.common.exception.ResourceNotFoundException.class,
                 () -> studentCatalog.entry("exams", exam.getId()));
         assertEquals(0, attempts.countByUserId(learner.getId()));
     }
@@ -532,7 +548,7 @@ class V2BusinessRegressionTests {
                 BusinessRuleException.class,
                 () -> engine.start(learner.getId(), exam.getId(), "foreign-section"));
         assertThrows(
-                com.aptisprep.exception.ResourceNotFoundException.class,
+                com.aptisprep.mvc.common.exception.ResourceNotFoundException.class,
                 () -> studentCatalog.entry("exams", exam.getId()));
         assertEquals(0, attempts.countByUserId(learner.getId()));
     }
@@ -559,7 +575,7 @@ class V2BusinessRegressionTests {
                 BusinessRuleException.class,
                 () -> engine.start(learner.getId(), exam.getId(), "wrong-exam-skill"));
         assertThrows(
-                com.aptisprep.exception.ResourceNotFoundException.class,
+                com.aptisprep.mvc.common.exception.ResourceNotFoundException.class,
                 () -> studentCatalog.entry("exams", exam.getId()));
     }
 
@@ -573,7 +589,7 @@ class V2BusinessRegressionTests {
                 BusinessRuleException.class,
                 () -> engine.start(learner.getId(), exam.getId(), "placement:forged"));
         assertThrows(
-                com.aptisprep.exception.ResourceNotFoundException.class,
+                com.aptisprep.mvc.common.exception.ResourceNotFoundException.class,
                 () -> studentCatalog.entry("exams", exam.getId()));
         assertTrue(
                 placementCatalog.findPublished("READING").stream()
@@ -624,7 +640,7 @@ class V2BusinessRegressionTests {
                 BusinessRuleException.class,
                 () -> engine.startPlacement(learner.getId(), exam.getId(), "inactive-policy"));
         assertThrows(
-                com.aptisprep.exception.ResourceNotFoundException.class,
+                com.aptisprep.mvc.common.exception.ResourceNotFoundException.class,
                 () -> studentCatalog.entry("exams", exam.getId()));
         assertEquals(0, attempts.countByUserId(learner.getId()));
     }
@@ -673,7 +689,7 @@ class V2BusinessRegressionTests {
         target.setTargetLevel("C2");
         old.addSkill(target);
         old = goals.saveAndFlush(old);
-        var form = new GoalForm();
+        var form = new GoalFormDTO();
         form.setReading("C2");
         assertThrows(
                 BusinessRuleException.class, () -> accounts.saveGoal(learner.getEmail(), form));

@@ -2,10 +2,17 @@ package com.aptisprep;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import com.aptisprep.dto.form.LessonForm;
-import com.aptisprep.exception.BusinessRuleException;
-import com.aptisprep.repository.*;
-import com.aptisprep.service.learning.LessonTeachingService;
+import com.aptisprep.mvc.auth.repository.UserRepository;
+import com.aptisprep.mvc.common.exception.BusinessRuleException;
+import com.aptisprep.mvc.exam.entity.*;
+import com.aptisprep.mvc.grading.entity.AiAssessmentJob;
+import com.aptisprep.mvc.grading.repository.AiAssessmentJobRepository;
+import com.aptisprep.mvc.learning.dto.*;
+import com.aptisprep.mvc.learning.dto.LessonFormDTO;
+import com.aptisprep.mvc.learning.entity.*;
+import com.aptisprep.mvc.learning.repository.*;
+import com.aptisprep.mvc.learning.service.*;
+import com.aptisprep.mvc.learning.service.impl.*;
 import java.nio.file.*;
 import java.sql.*;
 import java.util.*;
@@ -211,7 +218,7 @@ class V2SqlServerPreservationTests {
         factory.setDataSource(
                 new org.springframework.jdbc.datasource.DriverManagerDataSource(
                         url, login, password));
-        factory.setPackagesToScan("com.aptisprep.entity");
+        factory.setPackagesToScan("com.aptisprep.mvc");
         factory.setJpaVendorAdapter(
                 new org.springframework.orm.jpa.vendor.HibernateJpaVendorAdapter());
         factory.setJpaPropertyMap(Map.of("hibernate.hbm2ddl.auto", "validate"));
@@ -226,22 +233,23 @@ class V2SqlServerPreservationTests {
                     var checks = repositories.getRepository(LessonCheckRepository.class);
                     var lessons = repositories.getRepository(LessonRepository.class);
                     var users = repositories.getRepository(UserRepository.class);
+                    var userService =
+                            new com.aptisprep.mvc.auth.service.impl.UserServiceImpl(users, null);
                     var attempts = repositories.getRepository(LessonCheckAttemptRepository.class);
                     var teaching =
-                            new LessonTeachingService(
-                                    new com.aptisprep.service.learning.LessonCheckService(
-                                            checks, lessons, users, attempts),
+                            new LessonTeachingServiceImpl(
+                                    new LessonCheckService(checks, lessons, userService, attempts),
                                     lessons,
-                                    users,
+                                    userService,
                                     repositories.getRepository(LessonResponseRepository.class),
                                     attempts,
                                     repositories.getRepository(LessonEngagementRepository.class),
                                     null,
                                     repositories.getRepository(LessonProgressRepository.class),
                                     null,
-                                    new com.aptisprep.config.AiProperties());
+                                    new com.aptisprep.mvc.common.config.AiProperties());
                     // Storage and AI are intentionally unused by Knowledge Check operations.
-                    var lesson = new com.aptisprep.entity.Lesson();
+                    var lesson = new Lesson();
                     lesson.setTitle("SQL Server Knowledge Check regression");
                     lesson.setSkill("Reading");
                     lesson.setCefrLevel("A1");
@@ -335,7 +343,9 @@ class V2SqlServerPreservationTests {
             int owner) {
         var jobs = repositories.getRepository(AiAssessmentJobRepository.class);
         var answer =
-                em.createQuery("from UserAnswerEntity", com.aptisprep.entity.UserAnswerEntity.class)
+                em.createQuery(
+                                "from UserAnswerEntity",
+                                com.aptisprep.mvc.exam.entity.UserAnswerEntity.class)
                         .getResultList()
                         .getFirst();
         var examJob = sqlJob("sql-recovery-exam", owner, answer, "EXAM_ANSWER");
@@ -346,18 +356,18 @@ class V2SqlServerPreservationTests {
         assertEquals(
                 List.of(examJob.getAssessmentKey()),
                 jobs.findExamJobs(owner, answer.getAttemptId(), 1, "p1", "r1").stream()
-                        .map(com.aptisprep.entity.AiAssessmentJob::getAssessmentKey)
+                        .map(AiAssessmentJob::getAssessmentKey)
                         .toList());
         assertTrue(
                 jobs.findRecoverableKeys(
-                                com.aptisprep.enums.AiJobState.PENDING,
-                                com.aptisprep.enums.AiJobState.PROCESSING,
+                                com.aptisprep.mvc.common.enums.AiJobState.PENDING,
+                                com.aptisprep.mvc.common.enums.AiJobState.PROCESSING,
                                 java.time.LocalDateTime.now(),
                                 java.time.LocalDateTime.now().minusMinutes(15),
                                 org.springframework.data.domain.PageRequest.of(0, 50))
                         .contains(examJob.getAssessmentKey()));
-        examJob.setState(com.aptisprep.enums.AiJobState.ERROR);
-        lessonJob.setState(com.aptisprep.enums.AiJobState.ERROR);
+        examJob.setState(com.aptisprep.mvc.common.enums.AiJobState.ERROR);
+        lessonJob.setState(com.aptisprep.mvc.common.enums.AiJobState.ERROR);
         em.flush();
         assertEquals(
                 List.of(examJob.getAssessmentKey()),
@@ -368,19 +378,19 @@ class V2SqlServerPreservationTests {
                                 1,
                                 "p1",
                                 "r1",
-                                com.aptisprep.enums.AiJobState.ERROR)
+                                com.aptisprep.mvc.common.enums.AiJobState.ERROR)
                         .stream()
-                        .map(com.aptisprep.entity.AiAssessmentJob::getAssessmentKey)
+                        .map(AiAssessmentJob::getAssessmentKey)
                         .toList());
-        examJob.setState(com.aptisprep.enums.AiJobState.COMPLETED);
-        var assessment = new com.aptisprep.entity.AiAssessment();
+        examJob.setState(com.aptisprep.mvc.common.enums.AiJobState.COMPLETED);
+        var assessment = new com.aptisprep.mvc.grading.entity.AiAssessment();
         assessment.setJob(examJob);
         assessment.setAssessmentKey(examJob.getAssessmentKey());
         assessment.setAnswerId(answer.getId());
         assessment.setAnswerVersion(1);
         assessment.setPolicyVersion("p1");
         assessment.setRubricVersion("r1");
-        assessment.setState(com.aptisprep.enums.AiAssessmentState.COMPLETED);
+        assessment.setState(com.aptisprep.mvc.common.enums.AiAssessmentState.COMPLETED);
         assessment.setScore(java.math.BigDecimal.valueOf(20));
         em.persist(assessment);
         em.flush();
@@ -388,7 +398,7 @@ class V2SqlServerPreservationTests {
                 jobs.findCompletedWithoutCallback(
                                 org.springframework.data.domain.PageRequest.of(0, 50))
                         .contains(examJob.getAssessmentKey()));
-        var row = new com.aptisprep.entity.AttemptOutboxEntity();
+        var row = new com.aptisprep.mvc.exam.entity.AttemptOutboxEntity();
         row.setEventKey("ai:sql-recovery-exam:v1:COMPLETED");
         row.setEventType("AI_ASSESSMENT_COMPLETED");
         row.setAggregateId(answer.getAttemptId());
@@ -402,9 +412,12 @@ class V2SqlServerPreservationTests {
                         .contains(examJob.getAssessmentKey()));
     }
 
-    private static com.aptisprep.entity.AiAssessmentJob sqlJob(
-            String key, int owner, com.aptisprep.entity.UserAnswerEntity answer, String source) {
-        var job = new com.aptisprep.entity.AiAssessmentJob();
+    private static AiAssessmentJob sqlJob(
+            String key,
+            int owner,
+            com.aptisprep.mvc.exam.entity.UserAnswerEntity answer,
+            String source) {
+        var job = new AiAssessmentJob();
         job.setAssessmentKey(key);
         job.setUserId(owner);
         job.setAttemptId(answer.getAttemptId());
@@ -419,15 +432,15 @@ class V2SqlServerPreservationTests {
         job.setTaskContent("SQL regression task");
         job.setLockedContent("Preserved response");
         job.setMaxScore(java.math.BigDecimal.valueOf(50));
-        job.setState(com.aptisprep.enums.AiJobState.PENDING);
+        job.setState(com.aptisprep.mvc.common.enums.AiJobState.PENDING);
         return job;
     }
 
-    private static LessonForm checkForm(int count, int correct) {
-        var form = new LessonForm();
+    private static LessonFormDTO checkForm(int count, int correct) {
+        var form = new LessonFormDTO();
         form.setSkill("Reading");
         form.setStatus("PUBLISHED");
-        var check = new LessonForm.CheckForm();
+        var check = new LessonFormDTO.CheckForm();
         check.setPrompt("Choose the last option");
         check.setOptionA("A");
         check.setOptionB("B");
@@ -465,7 +478,7 @@ class V2SqlServerPreservationTests {
         factory.setDataSource(
                 new org.springframework.jdbc.datasource.DriverManagerDataSource(
                         url, login, password));
-        factory.setPackagesToScan("com.aptisprep.entity");
+        factory.setPackagesToScan("com.aptisprep.mvc");
         factory.setJpaVendorAdapter(
                 new org.springframework.orm.jpa.vendor.HibernateJpaVendorAdapter());
         factory.setJpaPropertyMap(Map.of("hibernate.hbm2ddl.auto", "validate"));
