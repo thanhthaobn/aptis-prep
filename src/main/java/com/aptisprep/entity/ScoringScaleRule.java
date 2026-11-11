@@ -14,14 +14,12 @@ public class ScoringScaleRule {
     public ScoringScaleRule() {}
 
     public ScoringScaleRule(
-            Integer id,
             ScoringScheme scheme,
             String skill,
             BigDecimal rawMin,
             BigDecimal rawMax,
             BigDecimal scaleMin,
             BigDecimal scaleMax) {
-        this.id = id;
         this.scheme = scheme;
         this.skill = skill;
         this.rawMin = rawMin;

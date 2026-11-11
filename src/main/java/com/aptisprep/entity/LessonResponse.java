@@ -11,7 +11,6 @@ public class LessonResponse {
     public LessonResponse() {}
 
     public LessonResponse(
-            Integer id,
             Integer userId,
             Integer lessonId,
             String text,
@@ -20,7 +19,6 @@ public class LessonResponse {
             LocalDateTime updatedAt,
             Integer responseVersion,
             String assessmentKey) {
-        this.id = id;
         this.userId = userId;
         this.lessonId = lessonId;
         this.text = text;

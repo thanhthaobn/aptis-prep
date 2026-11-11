@@ -10,7 +10,6 @@ public class ExamQuestionSnapshotEntity {
     public ExamQuestionSnapshotEntity() {}
 
     public ExamQuestionSnapshotEntity(
-            Integer id,
             ExamAttemptSnapshotEntity snapshot,
             Integer sourceQuestionId,
             Integer position,
@@ -23,7 +22,6 @@ public class ExamQuestionSnapshotEntity {
             Integer sectionEndMinute,
             List<ExamItemSnapshotEntity> items,
             List<ExamMediaSnapshotEntity> media) {
-        this.id = id;
         this.snapshot = snapshot;
         this.sourceQuestionId = sourceQuestionId;
         this.position = position;

@@ -16,7 +16,6 @@ public class UserAnswerEntity {
 
     public UserAnswerEntity(
             String audioManifest,
-            Integer id,
             Integer attemptId,
             Integer questionId,
             String status,
@@ -34,7 +33,6 @@ public class UserAnswerEntity {
             LocalDateTime createdAt,
             LocalDateTime updatedAt) {
         this.audioManifest = audioManifest;
-        this.id = id;
         this.attemptId = attemptId;
         this.questionId = questionId;
         this.status = status;

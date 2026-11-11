@@ -23,7 +23,6 @@ public class LessonEngagement {
             int playbackSequence,
             boolean playbackRunning,
             String verifiedAudioPath,
-            Integer id,
             Integer userId,
             Integer lessonId,
             LocalDateTime audioPlayedAt,
@@ -39,7 +38,6 @@ public class LessonEngagement {
         this.playbackSequence = playbackSequence;
         this.playbackRunning = playbackRunning;
         this.verifiedAudioPath = verifiedAudioPath;
-        this.id = id;
         this.userId = userId;
         this.lessonId = lessonId;
         this.audioPlayedAt = audioPlayedAt;

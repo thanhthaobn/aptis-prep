@@ -14,7 +14,6 @@ public class UserSkillProfile {
     public UserSkillProfile() {}
 
     public UserSkillProfile(
-            Integer id,
             User user,
             String skill,
             String currentLevel,
@@ -26,7 +25,6 @@ public class UserSkillProfile {
             String placementLevel,
             LocalDateTime placementSubmittedAt,
             LocalDateTime updatedAt) {
-        this.id = id;
         this.user = user;
         this.skill = skill;
         this.currentLevel = currentLevel;

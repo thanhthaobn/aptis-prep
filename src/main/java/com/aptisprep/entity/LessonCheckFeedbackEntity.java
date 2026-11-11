@@ -8,7 +8,6 @@ public class LessonCheckFeedbackEntity {
     public LessonCheckFeedbackEntity() {}
 
     public LessonCheckFeedbackEntity(
-            Integer id,
             LessonCheckAttempt attempt,
             String prompt,
             String selected,
@@ -16,7 +15,6 @@ public class LessonCheckFeedbackEntity {
             boolean rightAnswer,
             String explanation,
             String optionsText) {
-        this.id = id;
         this.attempt = attempt;
         this.prompt = prompt;
         this.selected = selected;

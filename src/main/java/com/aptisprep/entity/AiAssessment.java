@@ -16,7 +16,6 @@ public class AiAssessment {
     public AiAssessment() {}
 
     public AiAssessment(
-            Integer id,
             AiAssessmentJob job,
             String assessmentKey,
             Integer answerId,
@@ -33,7 +32,6 @@ public class AiAssessment {
             String errorMessage,
             LocalDateTime createdAt,
             LocalDateTime completedAt) {
-        this.id = id;
         this.job = job;
         this.assessmentKey = assessmentKey;
         this.answerId = answerId;

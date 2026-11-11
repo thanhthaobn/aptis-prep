@@ -8,7 +8,6 @@ public class LessonContextSnapshotEntity {
     public LessonContextSnapshotEntity() {}
 
     public LessonContextSnapshotEntity(
-            Integer id,
             String title,
             String skill,
             String description,
@@ -23,7 +22,6 @@ public class LessonContextSnapshotEntity {
             String videoUrl,
             Integer minWords,
             Integer maxWords) {
-        this.id = id;
         this.title = title;
         this.skill = skill;
         this.description = description;

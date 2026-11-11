@@ -11,13 +11,11 @@ public class LessonProgress {
     public LessonProgress() {}
 
     public LessonProgress(
-            Integer id,
             User user,
             Lesson lesson,
             String status,
             LocalDateTime lastAccessedAt,
             LocalDateTime completedAt) {
-        this.id = id;
         this.user = user;
         this.lesson = lesson;
         this.status = status;

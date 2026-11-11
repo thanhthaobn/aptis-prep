@@ -8,14 +8,12 @@ public class ExamOptionSnapshotEntity {
     public ExamOptionSnapshotEntity() {}
 
     public ExamOptionSnapshotEntity(
-            Integer id,
             ExamItemSnapshotEntity item,
             Integer sourceOptionId,
             String optionCode,
             Integer position,
             String content,
             Boolean correct) {
-        this.id = id;
         this.item = item;
         this.sourceOptionId = sourceOptionId;
         this.optionCode = optionCode;

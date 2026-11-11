@@ -7,7 +7,6 @@ import java.time.LocalDateTime;
 @Table(name = "mock_exams")
 public class MockExamEntity {
     public MockExamEntity(
-            Integer id,
             Integer certificateId,
             Integer scoringSchemeId,
             String title,
@@ -20,7 +19,6 @@ public class MockExamEntity {
             boolean demoOnly,
             LocalDateTime createdAt,
             LocalDateTime updatedAt) {
-        this.id = id;
         this.certificateId = certificateId;
         this.scoringSchemeId = scoringSchemeId;
         this.title = title;

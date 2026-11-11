@@ -13,9 +13,7 @@ import java.math.BigDecimal;
 public class UserGoalSkill {
     public UserGoalSkill() {}
 
-    public UserGoalSkill(
-            Integer id, UserGoal goal, String skill, String targetLevel, BigDecimal targetScore) {
-        this.id = id;
+    public UserGoalSkill(UserGoal goal, String skill, String targetLevel, BigDecimal targetScore) {
         this.goal = goal;
         this.skill = skill;
         this.targetLevel = targetLevel;

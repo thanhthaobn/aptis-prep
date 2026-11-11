@@ -8,7 +8,6 @@ public class ExamMediaSnapshotEntity {
     public ExamMediaSnapshotEntity() {}
 
     public ExamMediaSnapshotEntity(
-            Integer id,
             ExamQuestionSnapshotEntity question,
             Integer sourceMediaId,
             Integer position,
@@ -18,7 +17,6 @@ public class ExamMediaSnapshotEntity {
             String contentType,
             String transcript,
             Integer maxPlayCount) {
-        this.id = id;
         this.question = question;
         this.sourceMediaId = sourceMediaId;
         this.position = position;

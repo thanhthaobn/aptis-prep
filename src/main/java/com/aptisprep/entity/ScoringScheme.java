@@ -15,7 +15,6 @@ public class ScoringScheme {
     public ScoringScheme() {}
 
     public ScoringScheme(
-            Integer id,
             Certificate certificate,
             String name,
             String version,
@@ -24,7 +23,6 @@ public class ScoringScheme {
             RecordStatus status,
             LocalDateTime effectiveFrom,
             LocalDateTime createdAt) {
-        this.id = id;
         this.certificate = certificate;
         this.name = name;
         this.version = version;

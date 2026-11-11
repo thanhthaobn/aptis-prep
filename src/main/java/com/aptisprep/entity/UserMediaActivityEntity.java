@@ -14,14 +14,12 @@ public class UserMediaActivityEntity {
     public UserMediaActivityEntity() {}
 
     public UserMediaActivityEntity(
-            Integer id,
             Integer attemptId,
             Integer mediaId,
             int playCount,
             LocalDateTime lastPlayedAt,
             String playTokenHash,
             LocalDateTime playTokenExpiresAt) {
-        this.id = id;
         this.attemptId = attemptId;
         this.mediaId = mediaId;
         this.playCount = playCount;

@@ -10,7 +10,6 @@ public class Certificate {
     public Certificate() {}
 
     public Certificate(
-            Integer id,
             String name,
             String code,
             String description,
@@ -18,7 +17,6 @@ public class Certificate {
             User createdBy,
             LocalDateTime createdAt,
             LocalDateTime updatedAt) {
-        this.id = id;
         this.name = name;
         this.code = code;
         this.description = description;

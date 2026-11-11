@@ -9,7 +9,6 @@ import java.time.LocalDateTime;
 public class LessonWorkSubmission {
     public LessonWorkSubmission(
             LessonContextSnapshotEntity contextSnapshotEntity,
-            Integer id,
             Integer userId,
             Integer lessonId,
             String skill,
@@ -18,7 +17,6 @@ public class LessonWorkSubmission {
             String audioPath,
             LocalDateTime submittedAt) {
         this.contextSnapshotEntity = contextSnapshotEntity;
-        this.id = id;
         this.userId = userId;
         this.lessonId = lessonId;
         this.skill = skill;
@@ -58,22 +56,6 @@ public class LessonWorkSubmission {
     private LocalDateTime submittedAt;
 
     public LessonWorkSubmission() {}
-
-    public LessonWorkSubmission(
-            Integer userId,
-            Lesson lesson,
-            LessonResponse work,
-            LessonContextSnapshotEntity contextSnapshotEntity) {
-        this.userId = userId;
-        lessonId = lesson.getId();
-        skill = lesson.getSkill();
-        prompt =
-                lesson.getPracticePrompt() == null ? lesson.getTitle() : lesson.getPracticePrompt();
-        this.contextSnapshotEntity = contextSnapshotEntity;
-        text = work.getText();
-        audioPath = work.getAudioPath();
-        submittedAt = LocalDateTime.now();
-    }
 
     public Integer getId() {
         return id;

@@ -13,14 +13,12 @@ public class UserGoal {
     public UserGoal() {}
 
     public UserGoal(
-            Integer id,
             User user,
             Certificate certificate,
             LocalDate targetDate,
             GoalStatus status,
             LocalDateTime createdAt,
             List<UserGoalSkill> skills) {
-        this.id = id;
         this.user = user;
         this.certificate = certificate;
         this.targetDate = targetDate;

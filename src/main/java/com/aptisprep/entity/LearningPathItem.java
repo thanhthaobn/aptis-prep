@@ -14,14 +14,12 @@ public class LearningPathItem {
     public LearningPathItem() {}
 
     public LearningPathItem(
-            Integer id,
             LearningPath learningPath,
             Lesson lesson,
             Integer position,
             boolean required,
             String status,
             LocalDateTime completedAt) {
-        this.id = id;
         this.learningPath = learningPath;
         this.lesson = lesson;
         this.position = position;

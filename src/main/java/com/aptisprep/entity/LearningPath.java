@@ -9,7 +9,6 @@ public class LearningPath {
     public LearningPath() {}
 
     public LearningPath(
-            Integer id,
             User user,
             Integer goalSkillId,
             Integer sourceAttemptId,
@@ -21,7 +20,6 @@ public class LearningPath {
             String status,
             LocalDateTime createdAt,
             LocalDateTime completedAt) {
-        this.id = id;
         this.user = user;
         this.goalSkillId = goalSkillId;
         this.sourceAttemptId = sourceAttemptId;

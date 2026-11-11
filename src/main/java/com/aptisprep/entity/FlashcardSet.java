@@ -8,7 +8,6 @@ public class FlashcardSet {
     public FlashcardSet() {}
 
     public FlashcardSet(
-            Integer id,
             String title,
             String description,
             String cefrLevel,
@@ -16,7 +15,6 @@ public class FlashcardSet {
             Lesson lesson,
             User owner,
             String visibility) {
-        this.id = id;
         this.title = title;
         this.description = description;
         this.cefrLevel = cefrLevel;

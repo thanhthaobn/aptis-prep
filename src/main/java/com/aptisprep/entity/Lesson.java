@@ -9,7 +9,6 @@ public class Lesson {
     public Lesson() {}
 
     public Lesson(
-            Integer id,
             String title,
             String description,
             String transcriptVisibility,
@@ -41,7 +40,6 @@ public class Lesson {
             String status,
             LocalDateTime createdAt,
             LocalDateTime updatedAt) {
-        this.id = id;
         this.title = title;
         this.description = description;
         this.transcriptVisibility = transcriptVisibility;

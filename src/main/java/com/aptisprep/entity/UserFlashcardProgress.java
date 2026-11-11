@@ -12,7 +12,6 @@ public class UserFlashcardProgress {
     public UserFlashcardProgress() {}
 
     public UserFlashcardProgress(
-            Integer id,
             User user,
             Flashcard flashcard,
             String status,
@@ -22,7 +21,6 @@ public class UserFlashcardProgress {
             LocalDateTime nextReviewAt,
             Integer intervalDays,
             BigDecimal easeFactor) {
-        this.id = id;
         this.user = user;
         this.flashcard = flashcard;
         this.status = status;

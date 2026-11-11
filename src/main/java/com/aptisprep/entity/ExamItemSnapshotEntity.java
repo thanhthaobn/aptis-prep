@@ -10,7 +10,6 @@ public class ExamItemSnapshotEntity {
     public ExamItemSnapshotEntity() {}
 
     public ExamItemSnapshotEntity(
-            Integer id,
             ExamQuestionSnapshotEntity question,
             Integer sourceItemId,
             Integer position,
@@ -20,7 +19,6 @@ public class ExamItemSnapshotEntity {
             Integer maxWordCount,
             Integer responseSeconds,
             List<ExamOptionSnapshotEntity> options) {
-        this.id = id;
         this.question = question;
         this.sourceItemId = sourceItemId;
         this.position = position;

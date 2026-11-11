@@ -9,7 +9,6 @@ public class Flashcard {
     public Flashcard() {}
 
     public Flashcard(
-            Integer id,
             FlashcardSet set,
             String status,
             String frontContent,
@@ -18,7 +17,6 @@ public class Flashcard {
             Integer displayOrder,
             LocalDateTime createdAt,
             LocalDateTime updatedAt) {
-        this.id = id;
         this.set = set;
         this.status = status;
         this.frontContent = frontContent;

@@ -21,7 +21,6 @@ public class AccountUnlockRequest {
     public AccountUnlockRequest() {}
 
     public AccountUnlockRequest(
-            Integer id,
             User user,
             String message,
             UnlockRequestStatus status,
@@ -29,7 +28,6 @@ public class AccountUnlockRequest {
             User handledBy,
             LocalDateTime createdAt,
             LocalDateTime handledAt) {
-        this.id = id;
         this.user = user;
         this.message = message;
         this.status = status;
