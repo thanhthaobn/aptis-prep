@@ -79,6 +79,10 @@ public interface ExamAttemptService {
 
     void advanceSection(Integer userId, Integer attemptId, int sectionEndMinute);
 
+    boolean sectionDeadlineReached(Integer userId, Integer attemptId, int sectionEndMinute);
+
+    boolean examDeadlineReached(Integer userId, Integer attemptId);
+
     AttemptReview review(Integer userId, Integer attemptId);
 
     AttemptReview adminReview(String adminEmail, Integer attemptId);

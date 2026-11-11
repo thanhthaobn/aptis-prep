@@ -20,8 +20,13 @@ import com.aptisprep.mvc.learning.repository.LessonCheckRepository;
 import com.aptisprep.mvc.learning.repository.LessonRepository;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Random;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -30,6 +35,9 @@ import org.springframework.transaction.annotation.Transactional;
 @Component
 @Transactional
 public class LessonCheckService {
+    public static final int PASS_PERCENT = 80;
+    private static final int QUESTIONS_PER_ATTEMPT = 5;
+
     private final LessonCheckRepository lessonCheckRepository;
     private final LessonRepository lessonRepository;
     private final UserService userRepository;
@@ -52,7 +60,16 @@ public class LessonCheckService {
 
     public List<CheckViewDTO> questions(Integer id) {
         return lessonCheckRepository.findByLessonIdOrderByPositionAsc(id).stream()
-                .map(q -> new CheckViewDTO(q.getId(), q.getPrompt(), options(q)))
+                .map(q -> view(q, null))
+                .toList();
+    }
+
+    public List<CheckViewDTO> questions(Integer id, String email) {
+        User user = requireLearner(email);
+        List<LessonCheck> questions = questionsForAttempt(id, user);
+        long attemptNumber = attemptNumber(user.getId(), id);
+        return questions.stream()
+                .map(q -> view(q, optionSeed(user.getId(), id, attemptNumber, q.getId())))
                 .toList();
     }
 
@@ -132,18 +149,12 @@ public class LessonCheckService {
     }
 
     public FeedbackDTO grade(Integer id, Map<String, String> answers, String email) {
-        User u =
-                userRepository
-                        .findByEmailIgnoreCase(email)
-                        .orElseThrow(
-                                () -> new ResourceNotFoundException("Không tìm thấy tài khoản"));
-        if (u.getStatus() != UserStatus.ACTIVE || u.getRole() != Role.STUDENT)
-            throw new BusinessRuleException("Tài khoản không được phép học");
+        User u = requireLearner(email);
         lessonRepository
                 .findById(id)
                 .filter(l -> "PUBLISHED".equals(l.getStatus()))
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy bài học"));
-        List<LessonCheck> all = lessonCheckRepository.findByLessonIdOrderByPositionAsc(id);
+        List<LessonCheck> all = questionsForAttempt(id, u);
         if (all.isEmpty()) throw new BusinessRuleException("Bài chưa có câu kiểm tra kiến thức");
         ArrayList<AnswerFeedbackDTO> feedback = new ArrayList<>();
         int score = 0;
@@ -194,6 +205,60 @@ public class LessonCheckService {
         attempt.snapshot(lessonRepository.findById(id).orElseThrow());
         lessonCheckAttemptRepository.save(attempt);
         return new FeedbackDTO(score, all.size(), feedback);
+    }
+
+    public static boolean passed(int score, int total) {
+        return total > 0 && score * 100 >= total * PASS_PERCENT;
+    }
+
+    private User requireLearner(String email) {
+        User user =
+                userRepository
+                        .findByEmailIgnoreCase(email)
+                        .orElseThrow(
+                                () -> new ResourceNotFoundException("Không tìm thấy tài khoản"));
+        if (user.getStatus() != UserStatus.ACTIVE || user.getRole() != Role.STUDENT)
+            throw new BusinessRuleException("Tài khoản không được phép học");
+        return user;
+    }
+
+    private List<LessonCheck> questionsForAttempt(Integer lessonId, User user) {
+        List<LessonCheck> all =
+                new ArrayList<>(lessonCheckRepository.findByLessonIdOrderByPositionAsc(lessonId));
+        if (all.size() <= QUESTIONS_PER_ATTEMPT) return all;
+        Collections.shuffle(
+                all,
+                new Random(
+                        questionSeed(
+                                user.getId(), lessonId, attemptNumber(user.getId(), lessonId))));
+        return List.copyOf(all.subList(0, QUESTIONS_PER_ATTEMPT));
+    }
+
+    private long attemptNumber(Integer userId, Integer lessonId) {
+        return lessonCheckAttemptRepository
+                .findByUserIdAndLessonIdOrderBySubmittedAtDesc(userId, lessonId)
+                .size();
+    }
+
+    private static long questionSeed(Integer userId, Integer lessonId, long attemptNumber) {
+        return Objects.hash(userId, lessonId, attemptNumber, "questions");
+    }
+
+    private static long optionSeed(
+            Integer userId, Integer lessonId, long attemptNumber, Integer questionId) {
+        return Objects.hash(userId, lessonId, attemptNumber, questionId, "options");
+    }
+
+    private static CheckViewDTO view(LessonCheck question, Long seed) {
+        List<String> source = options(question);
+        List<Integer> order =
+                IntStream.range(0, source.size()).boxed().collect(Collectors.toList());
+        if (seed != null) Collections.shuffle(order, new Random(seed));
+        return new CheckViewDTO(
+                question.getId(),
+                question.getPrompt(),
+                order.stream().map(source::get).toList(),
+                List.copyOf(order));
     }
 
     private static List<String> options(LessonCheck q) {

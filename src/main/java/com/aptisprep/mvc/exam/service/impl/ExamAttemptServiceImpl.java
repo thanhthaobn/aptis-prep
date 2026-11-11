@@ -679,6 +679,40 @@ public class ExamAttemptServiceImpl implements ExamAttemptService {
     }
 
     @Transactional
+    @Override
+    public boolean sectionDeadlineReached(Integer userId, Integer attemptId, int sectionEndMinute) {
+        activeUser(userId);
+        ExamAttemptEntity attempt = editableAttempt(userId, attemptId);
+        boolean sectionExists =
+                examSnapshots.lockedQuestionEntities(attemptId).stream()
+                        .anyMatch(
+                                question ->
+                                        Objects.equals(
+                                                question.getSectionEndMinute(), sectionEndMinute));
+        return sectionExists
+                && !LocalDateTime.now()
+                        .isBefore(
+                                examSnapshots
+                                        .sectionClockStart(attempt)
+                                        .plusMinutes(sectionEndMinute));
+    }
+
+    @Transactional
+    @Override
+    public boolean examDeadlineReached(Integer userId, Integer attemptId) {
+        activeUser(userId);
+        ExamAttemptEntity attempt =
+                examAttemptRepository
+                        .findByIdAndUserIdForUpdate(attemptId, userId)
+                        .orElseThrow(
+                                () ->
+                                        new AccessDeniedException(
+                                                "Bạn không có quyền với lượt thi này"));
+        LocalDateTime deadline = examDeadline(attempt, examFor(attempt));
+        return deadline != null && !LocalDateTime.now().isBefore(deadline);
+    }
+
+    @Transactional
     public AttemptReview review(Integer userId, Integer attemptId) {
         ExamAttemptEntity attempt = reviewableAttempt(userId, attemptId);
         return buildReview(attempt);

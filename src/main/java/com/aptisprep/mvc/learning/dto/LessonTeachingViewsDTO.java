@@ -12,7 +12,8 @@ public final class LessonTeachingViewsDTO {
 
     public record HistoricalMediaDTO(String path, String kind) {}
 
-    public record CheckViewDTO(Integer id, String prompt, List<String> options) {}
+    public record CheckViewDTO(
+            Integer id, String prompt, List<String> options, List<Integer> optionValues) {}
 
     public record AnswerFeedbackDTO(
             String prompt,
@@ -22,7 +23,11 @@ public final class LessonTeachingViewsDTO {
             String explanation,
             List<String> options) {}
 
-    public record FeedbackDTO(int score, int total, List<AnswerFeedbackDTO> answers) {}
+    public record FeedbackDTO(int score, int total, List<AnswerFeedbackDTO> answers) {
+        public boolean passed() {
+            return LessonTeachingViewsDTO.passed(score, total);
+        }
+    }
 
     public record AttemptViewDTO(
             Integer id,
@@ -30,7 +35,11 @@ public final class LessonTeachingViewsDTO {
             int total,
             LocalDateTime submittedAt,
             List<AnswerFeedbackDTO> answers,
-            LessonContextSnapshot context) {}
+            LessonContextSnapshot context) {
+        public boolean passed() {
+            return LessonTeachingViewsDTO.passed(score, total);
+        }
+    }
 
     public record LessonStatsDTO(
             long started,
@@ -49,7 +58,7 @@ public final class LessonTeachingViewsDTO {
             boolean eligible) {
         public String message(String skill) {
             if (!checkSubmitted && hasQuestions)
-                return "Hãy đạt ít nhất 60% phần kiểm tra kiến thức";
+                return "Hãy đạt ít nhất 80% phần kiểm tra kiến thức";
             if (needsResponse && !responseSaved)
                 return "Speaking".equals(skill)
                         ? "Hãy ghi âm và lưu bản ghi để hoàn thành bài nói"
@@ -57,5 +66,9 @@ public final class LessonTeachingViewsDTO {
             if (needsAudio && !audioPlayed) return "Hãy nghe ít nhất 90% bài nghe";
             return "Đã đủ điều kiện hoàn thành";
         }
+    }
+
+    private static boolean passed(int score, int total) {
+        return total > 0 && score * 100 >= total * 80;
     }
 }

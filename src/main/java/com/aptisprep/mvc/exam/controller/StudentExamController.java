@@ -272,10 +272,14 @@ public class StudentExamController {
     public String nextSection(
             @PathVariable Integer id,
             @RequestParam(name = "sectionEndMinute") int sectionEndMinute,
+            @RequestParam(name = "automatic", defaultValue = "false") boolean automatic,
             Principal principal,
             RedirectAttributes redirect) {
         Integer userId = accounts.requireActiveStudent(principal.getName());
         try {
+            boolean sectionExpired =
+                    automatic && attempts.sectionDeadlineReached(userId, id, sectionEndMinute);
+            if (!sectionExpired) requireComplete(attempts.page(userId, id), "sang phần tiếp theo");
             attempts.advanceSection(userId, id, sectionEndMinute);
         } catch (BusinessRuleException exception) {
             redirect.addFlashAttribute("error", exception.getMessage());
@@ -285,15 +289,31 @@ public class StudentExamController {
 
     @PostMapping("/student/attempts/{id}/submit")
     public String submit(
-            @PathVariable Integer id, Principal principal, RedirectAttributes redirect) {
+            @PathVariable Integer id,
+            @RequestParam(name = "automatic", defaultValue = "false") boolean automatic,
+            Principal principal,
+            RedirectAttributes redirect) {
         try {
             Integer userId = accounts.requireActiveStudent(principal.getName());
+            boolean examExpired = automatic && attempts.examDeadlineReached(userId, id);
+            if (!examExpired) requireComplete(attempts.page(userId, id), "nộp bài");
             attempts.submit(userId, id, "submit:" + userId + ":" + id);
             return "redirect:/student/attempts/" + id + "/result";
         } catch (BusinessRuleException exception) {
             redirect.addFlashAttribute("error", exception.getMessage());
             return "redirect:/student/attempts/" + id;
         }
+    }
+
+    private void requireComplete(ExamAttemptService.AttemptPage page, String action) {
+        int incomplete = page.totalItems() - page.answeredItems();
+        if (incomplete > 0)
+            throw new BusinessRuleException(
+                    "Bạn còn "
+                            + incomplete
+                            + " câu chưa hoàn thành. Hãy trả lời đầy đủ trước khi "
+                            + action
+                            + ".");
     }
 
     private MediaType resolveType(String value) {

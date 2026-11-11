@@ -85,7 +85,7 @@ public class StudentLessonController {
         m.addAttribute("aiAvailable", teaching.aiAvailable());
         m.addAttribute("lesson", l);
         m.addAttribute("flashcardSet", flashcards.publishedForLesson(id));
-        m.addAttribute("questions", teaching.questions(id));
+        m.addAttribute("questions", teaching.questions(id, p.getName()));
         m.addAttribute("savedResponse", teaching.response(id, p.getName()));
         m.addAttribute("savedWork", teaching.savedWorkDto(id, p.getName()));
         m.addAttribute(

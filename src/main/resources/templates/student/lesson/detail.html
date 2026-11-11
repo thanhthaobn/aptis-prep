@@ -374,8 +374,8 @@
                     <th:block th:if="${questions != null and !questions.isEmpty()}">
                       <h3 th:text="${'' + (heading) + ' (' + (questions.size()) + ' câu)'}"></h3>
                       <p>
-                        Chọn đáp án rồi nộp để xem giải thích. Cần đạt ít nhất 60% để hoàn thành
-                        phần kiểm tra.
+                        Mỗi lượt có thể dùng bộ câu và thứ tự đáp án khác nhau. Cần đạt ít nhất 80%
+                        để xem lời giải và hoàn thành phần kiểm tra.
                       </p>
                     </th:block>
                     <form
@@ -391,7 +391,7 @@
                           <input
                             type="radio"
                             th:name="${'q' + (question.id())}"
-                            th:value="${opt.index}"
+                            th:value="${question.optionValues()[opt.index]}"
                             required
                           />
                           <span th:text="${option}"></span>
@@ -407,8 +407,14 @@
                         <strong th:text="${answer.right()?'Đúng':'Chưa đúng'}"></strong>
                         <p th:text="${answer.prompt()}"></p>
                         <p th:text="${'Bạn chọn: ' + (answer.selected())}"></p>
-                        <p th:text="${'Đáp án: ' + (answer.correct())}"></p>
-                        <p th:text="${answer.explanation()}"></p>
+                        <p
+                          th:if="${feedback.passed()}"
+                          th:text="${'Đáp án: ' + (answer.correct())}"
+                        ></p>
+                        <p th:if="${feedback.passed()}" th:text="${answer.explanation()}"></p>
+                        <p th:unless="${feedback.passed()}">
+                          Hãy xem lại phần kiến thức liên quan trước khi làm lượt mới.
+                        </p>
                       </article>
                     </div>
                     <details
@@ -497,8 +503,14 @@
                             <li th:each="option : ${answer.options}" th:text="${option}"></li>
                           </ol>
                           <p th:text="${'Bạn chọn: ' + (answer.selected)}"></p>
-                          <p th:text="${'Đáp án đúng: ' + (answer.correct)}"></p>
-                          <p th:text="${answer.explanation}"></p>
+                          <p
+                            th:if="${attempt.passed()}"
+                            th:text="${'Đáp án đúng: ' + (answer.correct)}"
+                          ></p>
+                          <p th:if="${attempt.passed()}" th:text="${answer.explanation}"></p>
+                          <p th:unless="${attempt.passed()}">
+                            Lời giải được ẩn vì lượt này chưa đạt 80%.
+                          </p>
                         </article>
                       </details>
                     </details>
@@ -616,8 +628,8 @@
                 <th:block th:if="${questions != null and !questions.isEmpty()}">
                   <h3 th:text="${'' + (heading) + ' (' + (questions.size()) + ' câu)'}"></h3>
                   <p>
-                    Chọn đáp án rồi nộp để xem giải thích. Cần đạt ít nhất 60% để hoàn thành phần
-                    kiểm tra.
+                    Mỗi lượt có thể dùng bộ câu và thứ tự đáp án khác nhau. Cần đạt ít nhất 80% để
+                    xem lời giải và hoàn thành phần kiểm tra.
                   </p>
                 </th:block>
                 <form
@@ -631,7 +643,7 @@
                       <input
                         type="radio"
                         th:name="${'q' + (question.id())}"
-                        th:value="${opt.index}"
+                        th:value="${question.optionValues()[opt.index]}"
                         required
                       />
                       <span th:text="${option}"></span>
@@ -647,8 +659,14 @@
                     <strong th:text="${answer.right()?'Đúng':'Chưa đúng'}"></strong>
                     <p th:text="${answer.prompt()}"></p>
                     <p th:text="${'Bạn chọn: ' + (answer.selected())}"></p>
-                    <p th:text="${'Đáp án: ' + (answer.correct())}"></p>
-                    <p th:text="${answer.explanation()}"></p>
+                    <p
+                      th:if="${feedback.passed()}"
+                      th:text="${'Đáp án: ' + (answer.correct())}"
+                    ></p>
+                    <p th:if="${feedback.passed()}" th:text="${answer.explanation()}"></p>
+                    <p th:unless="${feedback.passed()}">
+                      Hãy xem lại phần kiến thức liên quan trước khi làm lượt mới.
+                    </p>
                   </article>
                 </div>
                 <details
@@ -735,8 +753,14 @@
                         <li th:each="option : ${answer.options}" th:text="${option}"></li>
                       </ol>
                       <p th:text="${'Bạn chọn: ' + (answer.selected)}"></p>
-                      <p th:text="${'Đáp án đúng: ' + (answer.correct)}"></p>
-                      <p th:text="${answer.explanation}"></p>
+                      <p
+                        th:if="${attempt.passed()}"
+                        th:text="${'Đáp án đúng: ' + (answer.correct)}"
+                      ></p>
+                      <p th:if="${attempt.passed()}" th:text="${answer.explanation}"></p>
+                      <p th:unless="${attempt.passed()}">
+                        Lời giải được ẩn vì lượt này chưa đạt 80%.
+                      </p>
                     </article>
                   </details>
                 </details>

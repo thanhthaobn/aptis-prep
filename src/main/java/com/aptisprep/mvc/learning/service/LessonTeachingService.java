@@ -61,6 +61,8 @@ public interface LessonTeachingService {
 
     List<CheckViewDTO> questions(Integer id);
 
+    List<CheckViewDTO> questions(Integer id, String email);
+
     List<LessonFormDTO.CheckForm> editorQuestions(Integer id);
 
     void validate(LessonFormDTO f);

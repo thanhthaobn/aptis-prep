@@ -400,8 +400,7 @@ public class LessonTeachingServiceImpl implements LessonTeachingService {
         for (LessonCheckAttempt attempt :
                 lessonCheckAttemptRepository.findByUserIdAndLessonIdOrderBySubmittedAtDesc(
                         userId, lessonId)) {
-            if (attempt.getTotal() > 0 && attempt.getScore() * 100 >= attempt.getTotal() * 60)
-                return true;
+            if (LessonCheckService.passed(attempt.getScore(), attempt.getTotal())) return true;
         }
         return false;
     }
@@ -569,6 +568,11 @@ public class LessonTeachingServiceImpl implements LessonTeachingService {
     @Override
     public List<CheckViewDTO> questions(Integer id) {
         return checkService.questions(id);
+    }
+
+    @Override
+    public List<CheckViewDTO> questions(Integer id, String email) {
+        return checkService.questions(id, email);
     }
 
     @Override
