@@ -1,7 +1,6 @@
 package com.aptisprep.dto;
 
 import com.aptisprep.entity.MockExamEntity;
-import com.aptisprep.presentation.form.ExamFormDTO;
 
 /** DTO boundary for the scalar fields of a mock exam entity. */
 public class MockExamEntityDTO {
