@@ -146,7 +146,7 @@ class AccountUnlockWebFlowTests {
                         content()
                                 .string(
                                         org.hamcrest.Matchers.containsString(
-                                                "Tài khoản đã bị khóa")))
+                                                "Tài khoản của bạn đang bị khóa")))
                 .andExpect(
                         content()
                                 .string(
@@ -172,7 +172,7 @@ class AccountUnlockWebFlowTests {
                         content()
                                 .string(
                                         org.hamcrest.Matchers.containsString(
-                                                "Tài khoản ngừng hoạt động")))
+                                                "Tài khoản của bạn đã bị xóa")))
                 .andExpect(
                         content()
                                 .string(
@@ -183,6 +183,191 @@ class AccountUnlockWebFlowTests {
                                 .string(
                                         org.hamcrest.Matchers.containsString(
                                                 "Gửi yêu cầu khôi phục")));
+    }
+
+    @Test
+    void accountLocked_whenLockedWithoutRequest_rendersFormAndReason() throws Exception {
+        mockMvc.perform(
+                        get("/account-locked")
+                                .flashAttr("status", "LOCKED")
+                                .flashAttr("lockReason", "Tài khoản gian lận kiểm tra")
+                                .flashAttr("email", "locked-student@example.com"))
+                .andExpect(status().isOk())
+                .andExpect(view().name("auth/account-locked"))
+                .andExpect(
+                        content()
+                                .string(
+                                        org.hamcrest.Matchers.containsString(
+                                                "Tài khoản của bạn đang bị khóa")))
+                .andExpect(
+                        content()
+                                .string(
+                                        org.hamcrest.Matchers.containsString(
+                                                "Lý do từ quản trị viên:")))
+                .andExpect(
+                        content()
+                                .string(
+                                        org.hamcrest.Matchers.containsString(
+                                                "Tài khoản gian lận kiểm tra")))
+                .andExpect(
+                        content()
+                                .string(
+                                        org.hamcrest.Matchers.containsString(
+                                                "Gửi yêu cầu mở khóa")))
+                .andExpect(
+                        content()
+                                .string(
+                                        org.hamcrest.Matchers.containsString(
+                                                "id=\"unlockRequestForm\"")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("id=\"email\"")))
+                .andExpect(
+                        content().string(org.hamcrest.Matchers.containsString("id=\"password\"")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("id=\"message\"")))
+                .andExpect(
+                        content()
+                                .string(
+                                        org.hamcrest.Matchers.containsString(
+                                                "Dùng để xác nhận đây là tài khoản của bạn")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("0/1000")));
+    }
+
+    @Test
+    void accountLocked_whenLockedWithPendingRequest_rendersPendingBannerAndHidesForm()
+            throws Exception {
+        AccountUnlockRequest req = new AccountUnlockRequest();
+        req.setUser(lockedUser);
+        req.setMessage("Đang chờ xét duyệt mở khóa");
+        req.setStatus(UnlockRequestStatus.PENDING);
+        req.setCreatedAt(LocalDateTime.of(2026, 11, 10, 14, 30));
+        unlockRequests.saveAndFlush(req);
+
+        mockMvc.perform(
+                        get("/account-locked")
+                                .param("email", lockedUser.getEmail())
+                                .flashAttr("status", "LOCKED"))
+                .andExpect(status().isOk())
+                .andExpect(view().name("auth/account-locked"))
+                .andExpect(
+                        content()
+                                .string(
+                                        org.hamcrest.Matchers.containsString(
+                                                "Yêu cầu của bạn đang chờ quản trị viên xử lý")))
+                .andExpect(
+                        content().string(org.hamcrest.Matchers.containsString("10/11/2026 14:30")))
+                .andExpect(
+                        content()
+                                .string(
+                                        org.hamcrest.Matchers.not(
+                                                org.hamcrest.Matchers.containsString(
+                                                        "id=\"unlockRequestForm\""))))
+                .andExpect(
+                        content()
+                                .string(
+                                        org.hamcrest.Matchers.not(
+                                                org.hamcrest.Matchers.containsString(
+                                                        "name=\"message\""))))
+                .andExpect(
+                        content()
+                                .string(
+                                        org.hamcrest.Matchers.containsString(
+                                                "Quay lại đăng nhập")));
+    }
+
+    @Test
+    void accountLocked_whenLockedWithRejectedRequest_rendersRejectedNoteAndShowsForm()
+            throws Exception {
+        AccountUnlockRequest req = new AccountUnlockRequest();
+        req.setUser(lockedUser);
+        req.setMessage("Lần gửi trước");
+        req.setStatus(UnlockRequestStatus.REJECTED);
+        req.setAdminNote("Lý do từ chối: Cần bổ sung tài liệu minh chứng");
+        req.setCreatedAt(LocalDateTime.now().minusDays(1));
+        unlockRequests.saveAndFlush(req);
+
+        mockMvc.perform(
+                        get("/account-locked")
+                                .param("email", lockedUser.getEmail())
+                                .flashAttr("status", "LOCKED"))
+                .andExpect(status().isOk())
+                .andExpect(view().name("auth/account-locked"))
+                .andExpect(
+                        content()
+                                .string(
+                                        org.hamcrest.Matchers.containsString(
+                                                "Yêu cầu trước đã bị từ chối")))
+                .andExpect(
+                        content()
+                                .string(
+                                        org.hamcrest.Matchers.containsString(
+                                                "Cần bổ sung tài liệu minh chứng")))
+                .andExpect(
+                        content()
+                                .string(
+                                        org.hamcrest.Matchers.containsString(
+                                                "id=\"unlockRequestForm\"")))
+                .andExpect(
+                        content()
+                                .string(
+                                        org.hamcrest.Matchers.containsString(
+                                                "Gửi yêu cầu mở khóa")));
+    }
+
+    @Test
+    void accountLocked_whenLockedWithApprovedRequest_rendersApprovedBannerAndLoginButton()
+            throws Exception {
+        AccountUnlockRequest req = new AccountUnlockRequest();
+        req.setUser(lockedUser);
+        req.setMessage("Yêu cầu đã được đồng ý");
+        req.setStatus(UnlockRequestStatus.APPROVED);
+        req.setCreatedAt(LocalDateTime.now().minusHours(2));
+        unlockRequests.saveAndFlush(req);
+
+        mockMvc.perform(
+                        get("/account-locked")
+                                .param("email", lockedUser.getEmail())
+                                .flashAttr("status", "LOCKED"))
+                .andExpect(status().isOk())
+                .andExpect(view().name("auth/account-locked"))
+                .andExpect(
+                        content()
+                                .string(
+                                        org.hamcrest.Matchers.containsString(
+                                                "Yêu cầu đã được phê duyệt")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("Đăng nhập")))
+                .andExpect(
+                        content()
+                                .string(
+                                        org.hamcrest.Matchers.not(
+                                                org.hamcrest.Matchers.containsString(
+                                                        "id=\"unlockRequestForm\""))));
+    }
+
+    @Test
+    void accountLocked_whenReasonContainsHtml_escapesHtmlSpecialCharacters() throws Exception {
+        String xssPayload = "<script>alert('xss')</script> & <b>gian lận</b>";
+        mockMvc.perform(
+                        get("/account-locked")
+                                .flashAttr("status", "LOCKED")
+                                .flashAttr("lockReason", xssPayload)
+                                .flashAttr("email", "locked-student@example.com"))
+                .andExpect(status().isOk())
+                .andExpect(view().name("auth/account-locked"))
+                .andExpect(
+                        content()
+                                .string(
+                                        org.hamcrest.Matchers.not(
+                                                org.hamcrest.Matchers.containsString(
+                                                        "<script>alert('xss')</script>"))))
+                .andExpect(
+                        content()
+                                .string(
+                                        org.hamcrest.Matchers.containsString(
+                                                "&lt;script&gt;alert(")))
+                .andExpect(
+                        content()
+                                .string(
+                                        org.hamcrest.Matchers.containsString(
+                                                "&amp; &lt;b&gt;gian lận&lt;/b&gt;")));
     }
 
     @Test
