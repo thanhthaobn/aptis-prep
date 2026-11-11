@@ -1,7 +1,11 @@
 package com.aptisprep.mvc.account.service;
 
+import com.aptisprep.mvc.account.dto.AccountSnapshotDTO;
+import com.aptisprep.mvc.account.dto.GoalSkillDTO;
 import com.aptisprep.mvc.account.dto.LearnerContextDTO;
+import com.aptisprep.mvc.account.dto.SkillLevelDTO;
 import com.aptisprep.mvc.auth.entity.User;
+import java.util.Map;
 
 public interface AccountAccessService {
     Integer requireActiveStudent(String principalEmail);
@@ -12,14 +16,13 @@ public interface AccountAccessService {
 
     User requireActiveStudentById(Integer userId);
 
-    com.aptisprep.mvc.account.dto.AccountSnapshotDTO.GoalViewDTO goalView(Integer userId);
+    AccountSnapshotDTO.GoalViewDTO goalView(Integer userId);
 
-    java.util.Map<String, com.aptisprep.mvc.account.entity.UserSkillProfile> skillProfileMap(
-            Integer userId);
+    Map<String, SkillLevelDTO> skillProfileMap(Integer userId);
 
-    java.util.Map<String, String> activeGoalTargets(Integer userId);
+    Map<String, String> activeGoalTargets(Integer userId);
 
-    java.util.Map<Integer, String> goalSkillTargetsById(Integer userId);
+    Map<Integer, String> goalSkillTargetsById(Integer userId);
 
-    java.util.Map<String, String> activeGoalTargetsBySkill(Integer userId);
+    Map<String, GoalSkillDTO> activeGoalSkillsBySkill(Integer userId);
 }
