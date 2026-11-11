@@ -1,14 +1,14 @@
 package com.aptisprep.service.admin;
 
-import com.aptisprep.dto.form.ExamFormDTO;
-import com.aptisprep.dto.form.QuestionFormDTO;
-import com.aptisprep.dto.view.AdminCatalogViewDTO.CatalogPage;
-import com.aptisprep.dto.view.AdminCatalogViewDTO.Entry;
-import com.aptisprep.dto.view.AdminCatalogViewDTO.Module;
-import com.aptisprep.dto.view.ExamCatalogDTO.CertificateOptionDTO;
-import com.aptisprep.dto.view.ExamCatalogDTO.PublishedQuestionOptionDTO;
-import com.aptisprep.dto.view.ExamCatalogDTO.QuestionMediaDTO;
-import com.aptisprep.dto.view.ExamCatalogDTO.SchemeOptionDTO;
+import com.aptisprep.presentation.AdminCatalogViewDTO.CatalogPage;
+import com.aptisprep.presentation.AdminCatalogViewDTO.Entry;
+import com.aptisprep.presentation.AdminCatalogViewDTO.Module;
+import com.aptisprep.presentation.ExamCatalogDTO.CertificateOptionDTO;
+import com.aptisprep.presentation.ExamCatalogDTO.PublishedQuestionOptionDTO;
+import com.aptisprep.presentation.ExamCatalogDTO.QuestionMediaDTO;
+import com.aptisprep.presentation.ExamCatalogDTO.SchemeOptionDTO;
+import com.aptisprep.presentation.form.ExamFormDTO;
+import com.aptisprep.presentation.form.QuestionFormDTO;
 import java.util.List;
 import org.springframework.core.io.Resource;
 import org.springframework.web.multipart.MultipartFile;

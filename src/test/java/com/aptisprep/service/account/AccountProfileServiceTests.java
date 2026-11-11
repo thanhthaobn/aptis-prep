@@ -3,10 +3,10 @@ package com.aptisprep.service.account;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-import com.aptisprep.dto.view.AccountSnapshotDTO;
 import com.aptisprep.entity.*;
 import com.aptisprep.entity.User;
 import com.aptisprep.enums.GoalStatus;
+import com.aptisprep.presentation.AccountSnapshotDTO;
 import com.aptisprep.repository.*;
 import com.aptisprep.service.account.impl.AccountProfileServiceImpl;
 import com.aptisprep.service.scoring.CertificateSchemeService;

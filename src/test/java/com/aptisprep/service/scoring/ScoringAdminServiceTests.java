@@ -5,11 +5,8 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
-import com.aptisprep.dto.form.*;
-import com.aptisprep.dto.form.ScoreBandFormDTO;
-import com.aptisprep.dto.form.ScoringScaleRuleFormDTO;
-import com.aptisprep.dto.form.ScoringSchemeFormDTO;
-import com.aptisprep.dto.view.*;
+import com.aptisprep.dto.ScoreBandDTO;
+import com.aptisprep.dto.ScoringScaleRuleDTO;
 import com.aptisprep.entity.*;
 import com.aptisprep.entity.Certificate;
 import com.aptisprep.entity.ScoringScaleRule;
@@ -18,6 +15,9 @@ import com.aptisprep.entity.User;
 import com.aptisprep.enums.RecordStatus;
 import com.aptisprep.enums.Role;
 import com.aptisprep.exception.BusinessRuleException;
+import com.aptisprep.presentation.*;
+import com.aptisprep.presentation.form.*;
+import com.aptisprep.presentation.form.ScoringSchemeFormDTO;
 import com.aptisprep.repository.*;
 import com.aptisprep.repository.UserRepository;
 import com.aptisprep.service.admin.*;
@@ -102,7 +102,7 @@ class ScoringAdminServiceTests {
                         new com.aptisprep.service.account.impl.UserServiceImpl(users, null),
                         usageProvider,
                         scaleRules);
-        ScoringScaleRuleFormDTO scale = new ScoringScaleRuleFormDTO();
+        ScoringScaleRuleDTO scale = new ScoringScaleRuleDTO();
         scale.setRawMin(BigDecimal.ZERO);
         scale.setRawMax(BigDecimal.valueOf(50));
         scale.setScaleMin(BigDecimal.ONE);
@@ -112,7 +112,7 @@ class ScoringAdminServiceTests {
         assertEquals(new BigDecimal("1.00"), rule.getScaleMin());
         assertEquals(new BigDecimal("60.00"), rule.getScaleMax());
 
-        ScoreBandFormDTO band = new ScoreBandFormDTO();
+        ScoreBandDTO band = new ScoreBandDTO();
         band.setSkill("SPEAKING");
         band.setCefrLevel("C1");
         band.setMinScore(new BigDecimal("54.25"));

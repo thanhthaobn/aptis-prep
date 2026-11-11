@@ -6,11 +6,11 @@ import static org.hamcrest.Matchers.containsString;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-import com.aptisprep.dto.form.*;
-import com.aptisprep.dto.form.LessonFormDTO;
-import com.aptisprep.dto.view.*;
 import com.aptisprep.entity.*;
 import com.aptisprep.entity.Lesson;
+import com.aptisprep.presentation.*;
+import com.aptisprep.presentation.form.*;
+import com.aptisprep.presentation.form.LessonEditorForm;
 import com.aptisprep.repository.*;
 import com.aptisprep.repository.LessonRepository;
 import com.aptisprep.service.learning.impl.*;
@@ -61,7 +61,7 @@ class AdminLessonTreeTests {
                         .andExpect(content().string(containsString("data-skill=\"Speaking\"")))
                         .andExpect(content().string(containsString("Đề viết học viên cần nộp")))
                         .andReturn();
-        var form = (LessonFormDTO) result.getModelAndView().getModel().get("form");
+        var form = (LessonEditorForm) result.getModelAndView().getModel().get("form");
         assertThat(form.getSkill()).isEqualTo("Reading");
         assertThat(form.getCefrLevel()).isEqualTo("A2");
         assertThat(form.getDisplayOrder()).isEqualTo(72);

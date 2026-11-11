@@ -1,6 +1,5 @@
 package com.aptisprep.service.account.impl;
 
-import com.aptisprep.dto.view.AccountUnlockRequestDTO;
 import com.aptisprep.entity.AccountUnlockRequest;
 import com.aptisprep.entity.User;
 import com.aptisprep.enums.Role;
@@ -9,6 +8,7 @@ import com.aptisprep.enums.UserStatus;
 import com.aptisprep.exception.AccessDeniedException;
 import com.aptisprep.exception.BusinessRuleException;
 import com.aptisprep.exception.ResourceNotFoundException;
+import com.aptisprep.presentation.AccountUnlockRequestDTO;
 import com.aptisprep.repository.AccountUnlockRequestRepository;
 import com.aptisprep.service.account.AccountUnlockRequestService;
 import com.aptisprep.service.account.UserService;

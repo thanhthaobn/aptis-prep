@@ -1,17 +1,17 @@
 package com.aptisprep.service.admin.impl;
 
-import com.aptisprep.dto.view.AccountSnapshotDTO;
-import com.aptisprep.dto.view.AdminStudentViewDTO;
-import com.aptisprep.dto.view.AttemptResultDTO;
-import com.aptisprep.dto.view.HistoryPageDTO;
-import com.aptisprep.dto.view.PathProgressDTO;
-import com.aptisprep.dto.view.SkillLevelDTO;
 import com.aptisprep.entity.User;
 import com.aptisprep.enums.*;
 import com.aptisprep.enums.Skill;
 import com.aptisprep.exception.AccessDeniedException;
 import com.aptisprep.exception.BusinessRuleException;
 import com.aptisprep.exception.ResourceNotFoundException;
+import com.aptisprep.presentation.AccountSnapshotDTO;
+import com.aptisprep.presentation.AdminStudentViewDTO;
+import com.aptisprep.presentation.AttemptResultDTO;
+import com.aptisprep.presentation.HistoryPageDTO;
+import com.aptisprep.presentation.PathProgressDTO;
+import com.aptisprep.presentation.SkillLevelDTO;
 import com.aptisprep.service.account.AccountAccessService;
 import com.aptisprep.service.account.UserService;
 import com.aptisprep.service.admin.StudentManagementService;
@@ -184,7 +184,7 @@ public class StudentManagementServiceImpl implements StudentManagementService {
     }
 
     @Transactional(readOnly = true)
-    public List<com.aptisprep.dto.view.AccountUnlockRequestDTO> listUnlockRequests(
+    public List<com.aptisprep.presentation.AccountUnlockRequestDTO> listUnlockRequests(
             String statusFilter) {
         return accountUnlockRequestService.list(statusFilter);
     }

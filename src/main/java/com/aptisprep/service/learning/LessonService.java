@@ -1,16 +1,16 @@
 package com.aptisprep.service.learning;
 
-import com.aptisprep.dto.form.LessonFormDTO;
-import com.aptisprep.dto.view.LessonActivityDTO;
-import com.aptisprep.dto.view.LessonDTO;
-import com.aptisprep.dto.view.LessonProgressDTO;
-import com.aptisprep.dto.view.LessonTeachingViewsDTO.CheckViewDTO;
-import com.aptisprep.dto.view.LessonTeachingViewsDTO.LessonStatsDTO;
-import com.aptisprep.dto.view.LessonTreeViewsDTO.NeighborsDTO;
-import com.aptisprep.dto.view.LessonTreeViewsDTO.SkillBranchDTO;
+import com.aptisprep.dto.LessonDTO;
 import com.aptisprep.entity.Lesson;
 import com.aptisprep.enums.CefrLevel;
 import com.aptisprep.enums.Skill;
+import com.aptisprep.presentation.LessonActivityDTO;
+import com.aptisprep.presentation.LessonProgressDTO;
+import com.aptisprep.presentation.LessonTeachingViewsDTO.CheckViewDTO;
+import com.aptisprep.presentation.LessonTeachingViewsDTO.LessonStatsDTO;
+import com.aptisprep.presentation.LessonTreeViewsDTO.NeighborsDTO;
+import com.aptisprep.presentation.LessonTreeViewsDTO.SkillBranchDTO;
+import com.aptisprep.presentation.form.LessonEditorForm;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -29,7 +29,7 @@ public interface LessonService {
 
     List<SkillBranchDTO> adminTree(List<Lesson> all);
 
-    LessonFormDTO newForm(String skill, String level);
+    LessonEditorForm newForm(String skill, String level);
 
     List<Lesson> publishedLessons();
 
@@ -47,15 +47,15 @@ public interface LessonService {
 
     LessonStatsDTO stats(Integer lessonId);
 
-    LessonFormDTO form(Integer id);
+    LessonEditorForm form(Integer id);
 
-    Lesson save(Integer id, LessonFormDTO f);
+    Lesson save(Integer id, LessonEditorForm f);
 
-    Lesson save(Integer id, LessonFormDTO f, MultipartFile audio, boolean removeAudio);
+    Lesson save(Integer id, LessonEditorForm f, MultipartFile audio, boolean removeAudio);
 
     Lesson save(
             Integer id,
-            LessonFormDTO f,
+            LessonEditorForm f,
             MultipartFile audio,
             boolean removeAudio,
             MultipartFile image,
@@ -63,7 +63,7 @@ public interface LessonService {
 
     Lesson save(
             Integer id,
-            LessonFormDTO f,
+            LessonEditorForm f,
             MultipartFile audio,
             boolean removeAudio,
             MultipartFile image,
@@ -73,7 +73,7 @@ public interface LessonService {
 
     LessonDTO saveDto(
             Integer id,
-            LessonFormDTO f,
+            LessonEditorForm f,
             MultipartFile audio,
             boolean removeAudio,
             MultipartFile image,

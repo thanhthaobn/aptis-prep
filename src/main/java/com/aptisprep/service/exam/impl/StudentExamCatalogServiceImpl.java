@@ -1,15 +1,15 @@
 package com.aptisprep.service.exam.impl;
 
-import com.aptisprep.dto.view.StudentCatalogViewDTO;
-import com.aptisprep.dto.view.StudentCatalogViewDTO.Block;
-import com.aptisprep.dto.view.StudentCatalogViewDTO.Entry;
-import com.aptisprep.dto.view.StudentCatalogViewDTO.Fact;
 import com.aptisprep.entity.MockExamEntity;
 import com.aptisprep.entity.MockExamQuestionEntity;
 import com.aptisprep.entity.MockExamSectionEntity;
 import com.aptisprep.entity.QuestionMediaEntity;
 import com.aptisprep.exception.BusinessRuleException;
 import com.aptisprep.exception.ResourceNotFoundException;
+import com.aptisprep.presentation.StudentCatalogViewDTO;
+import com.aptisprep.presentation.StudentCatalogViewDTO.Block;
+import com.aptisprep.presentation.StudentCatalogViewDTO.Entry;
+import com.aptisprep.presentation.StudentCatalogViewDTO.Fact;
 import com.aptisprep.service.admin.ExamCatalogService;
 import com.aptisprep.service.exam.StudentExamCatalogService;
 import java.text.Normalizer;

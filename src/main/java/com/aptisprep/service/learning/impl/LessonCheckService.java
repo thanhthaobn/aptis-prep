@@ -1,10 +1,6 @@
 package com.aptisprep.service.learning.impl;
 
-import com.aptisprep.dto.form.LessonFormDTO;
-import com.aptisprep.dto.form.LessonFormDTO.CheckForm;
-import com.aptisprep.dto.view.LessonTeachingViewsDTO.AnswerFeedbackDTO;
-import com.aptisprep.dto.view.LessonTeachingViewsDTO.CheckViewDTO;
-import com.aptisprep.dto.view.LessonTeachingViewsDTO.FeedbackDTO;
+import com.aptisprep.dto.LessonCheckDTO;
 import com.aptisprep.entity.LessonCheck;
 import com.aptisprep.entity.LessonCheckAnswerEntity;
 import com.aptisprep.entity.LessonCheckAttempt;
@@ -14,10 +10,14 @@ import com.aptisprep.enums.Role;
 import com.aptisprep.enums.UserStatus;
 import com.aptisprep.exception.BusinessRuleException;
 import com.aptisprep.exception.ResourceNotFoundException;
+import com.aptisprep.presentation.LessonTeachingViewsDTO.AnswerFeedbackDTO;
+import com.aptisprep.presentation.LessonTeachingViewsDTO.CheckViewDTO;
+import com.aptisprep.presentation.LessonTeachingViewsDTO.FeedbackDTO;
 import com.aptisprep.repository.LessonCheckAttemptRepository;
 import com.aptisprep.repository.LessonCheckRepository;
 import com.aptisprep.repository.LessonRepository;
 import com.aptisprep.service.account.UserService;
+import com.aptisprep.service.learning.LessonContextSnapshotMapper;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -73,11 +73,11 @@ public class LessonCheckService {
                 .toList();
     }
 
-    public List<LessonFormDTO.CheckForm> editorQuestions(Integer id) {
+    public List<LessonCheckDTO> editorQuestions(Integer id) {
         return lessonCheckRepository.findByLessonIdOrderByPositionAsc(id).stream()
                 .map(
                         q -> {
-                            CheckForm f = new LessonFormDTO.CheckForm();
+                            LessonCheckDTO f = new LessonCheckDTO();
                             f.setPrompt(q.getPrompt());
                             f.setOptionA(q.getOptionA());
                             f.setOptionB(q.getOptionB());
@@ -92,10 +92,10 @@ public class LessonCheckService {
                 .toList();
     }
 
-    public void validateChecks(List<LessonFormDTO.CheckForm> forms) {
+    public void validateChecks(List<LessonCheckDTO> forms) {
         if (forms == null || forms.size() > 20)
             throw new BusinessRuleException("Mỗi bài tối đa 20 câu kiểm tra kiến thức");
-        for (CheckForm q : forms) {
+        for (LessonCheckDTO q : forms) {
             if (empty(q)) continue;
             List<String> opts = options(q);
             if (!has(q.getPrompt())
@@ -108,7 +108,7 @@ public class LessonCheckService {
                         "Mỗi câu kiểm tra cần câu hỏi, từ 2 đến 6 lựa chọn liên tiếp, đáp án đúng"
                                 + " và giải thích");
         }
-        for (CheckForm q : forms) {
+        for (LessonCheckDTO q : forms) {
             boolean gap = false;
             for (String option :
                     Arrays.asList(
@@ -126,11 +126,11 @@ public class LessonCheckService {
         }
     }
 
-    public void saveChecks(Integer id, List<LessonFormDTO.CheckForm> forms) {
+    public void saveChecks(Integer id, List<LessonCheckDTO> forms) {
         lessonCheckRepository.deleteByLessonId(id);
         lessonCheckRepository.flush();
         int position = 1;
-        for (CheckForm f : forms) {
+        for (LessonCheckDTO f : forms) {
             if (empty(f)) continue;
             LessonCheck q = new LessonCheck();
             q.setLessonId(id);
@@ -202,7 +202,8 @@ public class LessonCheckService {
             review.setOptionsText(String.join("\u001f", value.options()));
             attempt.addFeedback(review);
         }
-        attempt.snapshot(lessonRepository.findById(id).orElseThrow());
+        attempt.setContextSnapshotEntity(
+                LessonContextSnapshotMapper.capture(lessonRepository.findById(id).orElseThrow()));
         lessonCheckAttemptRepository.save(attempt);
         return new FeedbackDTO(score, all.size(), feedback);
     }
@@ -273,7 +274,7 @@ public class LessonCheckService {
                 .toList();
     }
 
-    private static List<String> options(LessonFormDTO.CheckForm q) {
+    private static List<String> options(LessonCheckDTO q) {
         return Stream.of(
                         q.getOptionA(),
                         q.getOptionB(),
@@ -289,7 +290,7 @@ public class LessonCheckService {
         return has(value) ? value.trim() : null;
     }
 
-    private static boolean empty(LessonFormDTO.CheckForm q) {
+    private static boolean empty(LessonCheckDTO q) {
         return !has(q.getPrompt()) && options(q).isEmpty() && !has(q.getExplanation());
     }
 

@@ -1,9 +1,9 @@
 package com.aptisprep.service.account;
 
-import com.aptisprep.dto.form.GoalFormDTO;
-import com.aptisprep.dto.form.ProfileFormDTO;
-import com.aptisprep.dto.view.AccountSnapshotDTO;
 import com.aptisprep.entity.Certificate;
+import com.aptisprep.presentation.AccountSnapshotDTO;
+import com.aptisprep.presentation.form.GoalFormDTO;
+import com.aptisprep.presentation.form.ProfileFormDTO;
 import java.util.List;
 
 public interface AccountProfileService {

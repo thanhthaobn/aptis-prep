@@ -1,8 +1,8 @@
 package com.aptisprep.service.admin;
 
-import com.aptisprep.dto.form.ExamFormDTO;
-import com.aptisprep.dto.view.AdminCatalogViewDTO.Entry;
 import com.aptisprep.entity.MockExamEntity;
+import com.aptisprep.presentation.AdminCatalogViewDTO.Entry;
+import com.aptisprep.presentation.form.ExamFormDTO;
 
 public interface AdminExamService {
     ExamFormDTO examForm(Integer id);

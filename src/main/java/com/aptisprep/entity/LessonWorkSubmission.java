@@ -1,6 +1,5 @@
 package com.aptisprep.entity;
 
-import com.aptisprep.dto.view.LessonContextSnapshotEntityDTO;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
@@ -52,10 +51,6 @@ public class LessonWorkSubmission {
     @Column(name = "response_text", columnDefinition = "nvarchar(max)")
     private String text;
 
-    public LessonContextSnapshotEntityDTO getContext() {
-        return contextSnapshotEntity == null ? null : contextSnapshotEntity.toRecord();
-    }
-
     @Column(name = "audio_path", length = 500)
     private String audioPath;
 
@@ -64,15 +59,17 @@ public class LessonWorkSubmission {
 
     public LessonWorkSubmission() {}
 
-    public LessonWorkSubmission(Integer userId, Lesson lesson, LessonResponse work) {
+    public LessonWorkSubmission(
+            Integer userId,
+            Lesson lesson,
+            LessonResponse work,
+            LessonContextSnapshotEntity contextSnapshotEntity) {
         this.userId = userId;
         lessonId = lesson.getId();
         skill = lesson.getSkill();
         prompt =
-                lesson.getMaterial() == null
-                        ? lesson.getTitle()
-                        : lesson.getMaterial().getPracticePrompt();
-        contextSnapshotEntity = LessonContextSnapshotEntity.capture(lesson);
+                lesson.getPracticePrompt() == null ? lesson.getTitle() : lesson.getPracticePrompt();
+        this.contextSnapshotEntity = contextSnapshotEntity;
         text = work.getText();
         audioPath = work.getAudioPath();
         submittedAt = LocalDateTime.now();

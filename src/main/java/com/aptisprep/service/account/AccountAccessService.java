@@ -1,10 +1,10 @@
 package com.aptisprep.service.account;
 
-import com.aptisprep.dto.view.AccountSnapshotDTO;
-import com.aptisprep.dto.view.GoalSkillDTO;
-import com.aptisprep.dto.view.LearnerContextDTO;
-import com.aptisprep.dto.view.SkillLevelDTO;
 import com.aptisprep.entity.User;
+import com.aptisprep.presentation.AccountSnapshotDTO;
+import com.aptisprep.presentation.GoalSkillDTO;
+import com.aptisprep.presentation.LearnerContextDTO;
+import com.aptisprep.presentation.SkillLevelDTO;
 import java.util.Map;
 
 public interface AccountAccessService {

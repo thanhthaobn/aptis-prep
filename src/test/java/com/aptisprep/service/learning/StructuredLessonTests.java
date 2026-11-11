@@ -7,16 +7,16 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 import com.aptisprep.config.StorageProperties;
-import com.aptisprep.dto.form.*;
-import com.aptisprep.dto.form.LessonFormDTO;
-import com.aptisprep.dto.view.*;
-import com.aptisprep.dto.view.LearningPathViewsDTO.StageLessonDTO;
+import com.aptisprep.dto.LessonCheckDTO;
 import com.aptisprep.entity.*;
 import com.aptisprep.entity.Lesson;
 import com.aptisprep.entity.LessonWorkSubmission;
 import com.aptisprep.entity.User;
 import com.aptisprep.enums.*;
 import com.aptisprep.exception.BusinessRuleException;
+import com.aptisprep.presentation.*;
+import com.aptisprep.presentation.LearningPathViewsDTO.StageLessonDTO;
+import com.aptisprep.presentation.form.*;
 import com.aptisprep.repository.*;
 import com.aptisprep.repository.UserRepository;
 import com.aptisprep.service.learning.impl.*;
@@ -411,7 +411,7 @@ class StructuredLessonTests {
         f.setSampleResponse("Model");
         f.setVideoUrl("https://youtu.be/yiwhUC4S5_o");
         f.setSourceUrl("https://www.britishcouncil.org/");
-        var q = new LessonFormDTO.CheckForm();
+        var q = new LessonCheckDTO();
         q.setPrompt("Choose the correct strategy");
         q.setOptionA("First");
         q.setOptionB("Second");
@@ -512,13 +512,13 @@ class StructuredLessonTests {
         var f = lessons.newForm("Listening", "A2");
         f.setTitle("Flexible checks");
         f.setStatus("DRAFT");
-        var two = new LessonFormDTO.CheckForm();
+        var two = new LessonCheckDTO();
         two.setPrompt("Two choices");
         two.setOptionA("Yes");
         two.setOptionB("No");
         two.setCorrectOption(1);
         two.setExplanation("No is correct");
-        var six = new LessonFormDTO.CheckForm();
+        var six = new LessonCheckDTO();
         six.setPrompt("Six choices");
         six.setOptionA("A");
         six.setOptionB("B");

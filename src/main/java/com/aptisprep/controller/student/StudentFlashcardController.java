@@ -1,9 +1,9 @@
 package com.aptisprep.controller.student;
 
-import com.aptisprep.dto.form.FlashcardSetFormDTO;
-import com.aptisprep.dto.view.FlashcardViewsDTO;
-import com.aptisprep.dto.view.FlashcardViewsDTO.SetView;
 import com.aptisprep.exception.BusinessRuleException;
+import com.aptisprep.presentation.FlashcardViewsDTO;
+import com.aptisprep.presentation.FlashcardViewsDTO.SetView;
+import com.aptisprep.presentation.form.FlashcardSetFormDTO;
 import com.aptisprep.service.learning.FlashcardSetService;
 import com.aptisprep.service.learning.LessonService;
 import jakarta.validation.Valid;

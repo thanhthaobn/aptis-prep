@@ -1,9 +1,9 @@
 package com.aptisprep.service.exam;
 
-import com.aptisprep.dto.view.AttemptHandleDTO;
-import com.aptisprep.dto.view.AttemptResultDTO;
-import com.aptisprep.dto.view.PlacementDTO.PlacementExam;
-import com.aptisprep.dto.view.PlacementDTO.PlacementOption;
+import com.aptisprep.presentation.AttemptHandleDTO;
+import com.aptisprep.presentation.AttemptResultDTO;
+import com.aptisprep.presentation.PlacementDTO.PlacementExam;
+import com.aptisprep.presentation.PlacementDTO.PlacementOption;
 import java.util.List;
 
 public interface PlacementService {

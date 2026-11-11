@@ -1,6 +1,6 @@
 package com.aptisprep.service.admin.impl;
 
-import com.aptisprep.dto.view.SchemeExamTypeDTO;
+import com.aptisprep.presentation.SchemeExamTypeDTO;
 import com.aptisprep.repository.MockExamRepository;
 import com.aptisprep.service.admin.ScoringSchemeUsageService;
 import com.aptisprep.service.exam.ExamAttemptService;

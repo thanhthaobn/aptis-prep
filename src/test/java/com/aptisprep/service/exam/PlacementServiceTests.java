@@ -3,9 +3,9 @@ package com.aptisprep.service.exam;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-import com.aptisprep.dto.view.AttemptHandleDTO;
-import com.aptisprep.dto.view.PlacementDTO;
 import com.aptisprep.exception.BusinessRuleException;
+import com.aptisprep.presentation.AttemptHandleDTO;
+import com.aptisprep.presentation.PlacementDTO;
 import com.aptisprep.service.account.AccountAccessService;
 import com.aptisprep.service.admin.ExamCatalogService;
 import com.aptisprep.service.exam.impl.PlacementServiceImpl;

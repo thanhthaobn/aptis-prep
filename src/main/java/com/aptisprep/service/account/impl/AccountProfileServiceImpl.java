@@ -1,11 +1,6 @@
 package com.aptisprep.service.account.impl;
 
-import com.aptisprep.dto.form.GoalFormDTO;
-import com.aptisprep.dto.form.ProfileFormDTO;
-import com.aptisprep.dto.view.AccountSnapshotDTO;
-import com.aptisprep.dto.view.AccountSnapshotDTO.GoalViewDTO;
-import com.aptisprep.dto.view.AccountSnapshotDTO.SkillViewDTO;
-import com.aptisprep.dto.view.UserGoalDTO;
+import com.aptisprep.dto.UserGoalDTO;
 import com.aptisprep.entity.Certificate;
 import com.aptisprep.entity.User;
 import com.aptisprep.entity.UserGoal;
@@ -16,6 +11,11 @@ import com.aptisprep.enums.Skill;
 import com.aptisprep.event.GoalChangedEvent;
 import com.aptisprep.exception.BusinessRuleException;
 import com.aptisprep.exception.ResourceNotFoundException;
+import com.aptisprep.presentation.AccountSnapshotDTO;
+import com.aptisprep.presentation.AccountSnapshotDTO.GoalViewDTO;
+import com.aptisprep.presentation.AccountSnapshotDTO.SkillViewDTO;
+import com.aptisprep.presentation.form.GoalFormDTO;
+import com.aptisprep.presentation.form.ProfileFormDTO;
 import com.aptisprep.repository.UserGoalRepository;
 import com.aptisprep.repository.UserGoalSkillRepository;
 import com.aptisprep.repository.UserSkillProfileRepository;

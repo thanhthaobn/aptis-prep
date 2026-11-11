@@ -1,6 +1,6 @@
 package com.aptisprep.service.exam;
 
-import com.aptisprep.dto.view.StudentCatalogViewDTO.Entry;
+import com.aptisprep.presentation.StudentCatalogViewDTO.Entry;
 import java.util.List;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;

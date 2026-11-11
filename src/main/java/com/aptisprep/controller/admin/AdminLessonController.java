@@ -1,9 +1,9 @@
 package com.aptisprep.controller.admin;
 
-import com.aptisprep.dto.form.LessonFormDTO;
-import com.aptisprep.dto.view.LessonAuthorProfileDTO;
-import com.aptisprep.dto.view.LessonDTO;
+import com.aptisprep.dto.LessonDTO;
 import com.aptisprep.exception.BusinessRuleException;
+import com.aptisprep.presentation.LessonAuthorProfileDTO;
+import com.aptisprep.presentation.form.LessonEditorForm;
 import com.aptisprep.service.learning.FlashcardSetService;
 import com.aptisprep.service.learning.LessonService;
 import jakarta.validation.Valid;
@@ -48,7 +48,7 @@ public class AdminLessonController {
             Model m) {
         topic = topic == null ? "" : topic;
         if (topic.length() > 160) throw new BusinessRuleException("Tên chủ đề tối đa 160 ký tự");
-        LessonFormDTO form = service.newForm(skill, level);
+        LessonEditorForm form = service.newForm(skill, level);
         form.setTopic(topic);
         formModel(m, form, false, null);
         return "admin/lesson/form";
@@ -56,7 +56,7 @@ public class AdminLessonController {
 
     @PostMapping("/admin/lessons")
     public String createLesson(
-            @Valid @ModelAttribute("form") LessonFormDTO f,
+            @Valid @ModelAttribute("form") LessonEditorForm f,
             BindingResult b,
             @RequestParam(required = false) MultipartFile audio,
             @RequestParam(required = false) MultipartFile image,
@@ -86,7 +86,7 @@ public class AdminLessonController {
     @PostMapping("/admin/lessons/{id}")
     public String updateLesson(
             @PathVariable Integer id,
-            @Valid @ModelAttribute("form") LessonFormDTO f,
+            @Valid @ModelAttribute("form") LessonEditorForm f,
             BindingResult b,
             @RequestParam(required = false) MultipartFile audio,
             @RequestParam(defaultValue = "false") boolean removeAudio,
@@ -134,7 +134,7 @@ public class AdminLessonController {
         return "redirect:/admin/lessons";
     }
 
-    private void formModel(Model m, LessonFormDTO f, boolean editing, Integer id) {
+    private void formModel(Model m, LessonEditorForm f, boolean editing, Integer id) {
         m.addAttribute("profile", LessonAuthorProfileDTO.forSkill(f.getSkill()));
         LinkedHashMap<String, LessonAuthorProfileDTO> authorProfiles = new LinkedHashMap<>();
         for (String skill : LessonService.SKILLS) {

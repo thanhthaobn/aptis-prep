@@ -1,7 +1,10 @@
 package com.aptisprep.service.scoring;
 
-import com.aptisprep.dto.form.*;
-import com.aptisprep.dto.view.*;
+import com.aptisprep.dto.CertificateDTO;
+import com.aptisprep.dto.ScoreBandDTO;
+import com.aptisprep.dto.ScoringScaleRuleDTO;
+import com.aptisprep.presentation.*;
+import com.aptisprep.presentation.form.*;
 import java.util.List;
 
 public interface ScoringAdminService {
@@ -21,9 +24,9 @@ public interface ScoringAdminService {
 
     List<ScoringViewsDTO.BandView> allBandViews(Integer schemeId);
 
-    Integer createCertificate(String adminEmail, CertificateFormDTO form);
+    Integer createCertificate(String adminEmail, CertificateDTO form);
 
-    void updateCertificate(String adminEmail, Integer id, CertificateFormDTO form);
+    void updateCertificate(String adminEmail, Integer id, CertificateDTO form);
 
     void disableCertificate(String adminEmail, Integer id);
 
@@ -39,12 +42,11 @@ public interface ScoringAdminService {
 
     void disableScheme(String adminEmail, Integer id);
 
-    void saveBand(String adminEmail, Integer schemeId, Integer id, ScoreBandFormDTO form);
+    void saveBand(String adminEmail, Integer schemeId, Integer id, ScoreBandDTO form);
 
     void deleteBand(String adminEmail, Integer schemeId, Integer id);
 
-    ScoringScaleRuleFormDTO scaleRule(Integer schemeId, String skill);
+    ScoringScaleRuleDTO scaleRule(Integer schemeId, String skill);
 
-    void saveScaleRule(
-            String adminEmail, Integer schemeId, String skill, ScoringScaleRuleFormDTO form);
+    void saveScaleRule(String adminEmail, Integer schemeId, String skill, ScoringScaleRuleDTO form);
 }

@@ -5,11 +5,11 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 import com.aptisprep.config.AiProperties;
-import com.aptisprep.dto.view.AiAssessmentDTO.AssessmentRequest;
-import com.aptisprep.dto.view.LockedAnswerDTO;
-import com.aptisprep.dto.view.LockedAttemptDTO;
-import com.aptisprep.dto.view.LockedItemDTO;
 import com.aptisprep.event.AttemptSubmittedEvent;
+import com.aptisprep.presentation.AiAssessmentDTO.AssessmentRequest;
+import com.aptisprep.presentation.LockedAnswerDTO;
+import com.aptisprep.presentation.LockedAttemptDTO;
+import com.aptisprep.presentation.LockedItemDTO;
 import com.aptisprep.service.exam.impl.AttemptGradingOrchestrationListener;
 import com.aptisprep.service.grading.AiAssessmentService;
 import com.aptisprep.service.grading.AttemptFinalizationService;
@@ -85,7 +85,7 @@ class AttemptGradingOrchestrationListenerTests {
     @Test
     void learnerQuestionViewHasNoAnswerKeyFields() {
         var view =
-                new com.aptisprep.dto.view.QuestionViewDTO(
+                new com.aptisprep.presentation.QuestionViewDTO(
                         21, "WRITING", "WRITING_TEXT", 1, "Write a message");
         String serializedShape =
                 view.getClass().getRecordComponents() == null

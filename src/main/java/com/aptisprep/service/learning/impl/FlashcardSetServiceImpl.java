@@ -1,16 +1,16 @@
 package com.aptisprep.service.learning.impl;
 
-import com.aptisprep.dto.form.FlashcardSetFormDTO;
-import com.aptisprep.dto.form.FlashcardSetFormDTO.Row;
-import com.aptisprep.dto.view.FlashcardDTO;
-import com.aptisprep.dto.view.FlashcardSetDTO;
-import com.aptisprep.dto.view.FlashcardViewsDTO.*;
+import com.aptisprep.dto.FlashcardDTO;
+import com.aptisprep.dto.FlashcardSetDTO;
 import com.aptisprep.entity.*;
 import com.aptisprep.entity.Lesson;
 import com.aptisprep.entity.User;
 import com.aptisprep.entity.UserFlashcardProgress;
 import com.aptisprep.enums.*;
 import com.aptisprep.exception.*;
+import com.aptisprep.presentation.FlashcardViewsDTO.*;
+import com.aptisprep.presentation.form.FlashcardSetFormDTO;
+import com.aptisprep.presentation.form.FlashcardSetFormDTO.Row;
 import com.aptisprep.repository.FlashcardRepository;
 import com.aptisprep.repository.FlashcardSetRepository;
 import com.aptisprep.repository.UserFlashcardProgressRepository;

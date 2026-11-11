@@ -1,7 +1,7 @@
 package com.aptisprep.service.grading;
 
-import com.aptisprep.dto.view.AiAssessmentDTO.AssessmentRequest;
-import com.aptisprep.dto.view.AiAssessmentDTO.AssessmentView;
+import com.aptisprep.presentation.AiAssessmentDTO.AssessmentRequest;
+import com.aptisprep.presentation.AiAssessmentDTO.AssessmentView;
 
 /** Server-to-server contract; frontend never supplies CEFR, grading context or provider data. */
 public interface AiAssessmentService {

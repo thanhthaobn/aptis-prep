@@ -1,10 +1,9 @@
 package com.aptisprep.controller.student;
 
-import com.aptisprep.dto.view.LessonDTO;
-import com.aptisprep.dto.view.LessonMaterialDTO;
-import com.aptisprep.dto.view.LessonPlaybackDTO;
-import com.aptisprep.dto.view.LessonTreeViewsDTO.*;
+import com.aptisprep.dto.LessonDTO;
 import com.aptisprep.exception.BusinessRuleException;
+import com.aptisprep.presentation.LessonPlaybackDTO;
+import com.aptisprep.presentation.LessonTreeViewsDTO.*;
 import com.aptisprep.service.learning.FlashcardSetService;
 import com.aptisprep.service.learning.LessonListeningService;
 import com.aptisprep.service.learning.LessonService;
@@ -88,9 +87,7 @@ public class StudentLessonController {
         m.addAttribute("questions", teaching.questions(id, p.getName()));
         m.addAttribute("savedResponse", teaching.response(id, p.getName()));
         m.addAttribute("savedWork", teaching.savedWorkDto(id, p.getName()));
-        m.addAttribute(
-                "videoId",
-                teaching.videoId(l.getMaterial() == null ? null : l.getMaterial().getVideoUrl()));
+        m.addAttribute("videoId", teaching.videoId(l.getVideoUrl()));
         m.addAttribute("progress", service.progress(p.getName(), id));
         m.addAttribute("attempts", teaching.history(id, p.getName()));
         m.addAttribute("submissions", teaching.submissionHistoryDto(id, p.getName()));
@@ -219,8 +216,7 @@ public class StudentLessonController {
     public record SkillBranch(String skill, int count, List<LevelBranch> levels) {}
 
     private static String topic(LessonDTO lesson) {
-        LessonMaterialDTO material = lesson.getMaterial();
-        return material == null || material.getTopic() == null ? "" : material.getTopic().trim();
+        return lesson.getTopic() == null ? "" : lesson.getTopic().trim();
     }
 
     private static List<SkillBranch> tree(List<LessonDTO> lessons) {

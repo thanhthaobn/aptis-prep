@@ -2,14 +2,14 @@ package com.aptisprep.service.learning;
 
 import static org.assertj.core.api.Assertions.*;
 
-import com.aptisprep.dto.form.*;
-import com.aptisprep.dto.view.*;
-import com.aptisprep.dto.view.LearningPathViewsDTO.StageLessonDTO;
 import com.aptisprep.entity.*;
 import com.aptisprep.entity.User;
 import com.aptisprep.entity.UserGoal;
 import com.aptisprep.entity.UserGoalSkill;
 import com.aptisprep.enums.*;
+import com.aptisprep.presentation.*;
+import com.aptisprep.presentation.LearningPathViewsDTO.StageLessonDTO;
+import com.aptisprep.presentation.form.*;
 import com.aptisprep.repository.*;
 import com.aptisprep.repository.UserGoalRepository;
 import com.aptisprep.repository.UserRepository;

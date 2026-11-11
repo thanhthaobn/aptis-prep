@@ -4,13 +4,13 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
-import com.aptisprep.dto.view.AiAssessmentDTO.*;
-import com.aptisprep.dto.view.GradingResultDTO;
 import com.aptisprep.entity.*;
 import com.aptisprep.entity.User;
 import com.aptisprep.enums.*;
 import com.aptisprep.event.AiAssessmentCompletedEvent;
 import com.aptisprep.exception.AiGradingException;
+import com.aptisprep.presentation.AiAssessmentDTO.*;
+import com.aptisprep.presentation.GradingResultDTO;
 import com.aptisprep.repository.*;
 import com.aptisprep.service.account.UserService;
 import com.aptisprep.service.exam.AttemptOutboxService;

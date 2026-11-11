@@ -1,18 +1,18 @@
 package com.aptisprep.service.learning.impl;
 
-import com.aptisprep.dto.view.AttemptResultDTO;
-import com.aptisprep.dto.view.ExamSummaryDTO;
-import com.aptisprep.dto.view.GoalSkillDTO;
-import com.aptisprep.dto.view.LearnerContextDTO;
-import com.aptisprep.dto.view.LearningPathViewsDTO.StageDTO;
-import com.aptisprep.dto.view.LearningPathViewsDTO.StageLessonDTO;
-import com.aptisprep.dto.view.PathProgressDTO;
-import com.aptisprep.dto.view.SkillLevelDTO;
-import com.aptisprep.dto.view.SkillResultDTO;
 import com.aptisprep.entity.*;
 import com.aptisprep.entity.User;
 import com.aptisprep.enums.*;
 import com.aptisprep.exception.*;
+import com.aptisprep.presentation.AttemptResultDTO;
+import com.aptisprep.presentation.ExamSummaryDTO;
+import com.aptisprep.presentation.GoalSkillDTO;
+import com.aptisprep.presentation.LearnerContextDTO;
+import com.aptisprep.presentation.LearningPathViewsDTO.StageDTO;
+import com.aptisprep.presentation.LearningPathViewsDTO.StageLessonDTO;
+import com.aptisprep.presentation.PathProgressDTO;
+import com.aptisprep.presentation.SkillLevelDTO;
+import com.aptisprep.presentation.SkillResultDTO;
 import com.aptisprep.repository.*;
 import com.aptisprep.service.account.AccountAccessService;
 import com.aptisprep.service.account.UserService;
@@ -151,9 +151,7 @@ public class LearningPathServiceImpl implements LearningPathService {
                                     lesson.getCefrLevel(),
                                     done ? "COMPLETED" : "NOT_STARTED",
                                     "PUBLISHED".equals(lesson.getStatus()),
-                                    lesson.getMaterial() == null
-                                            ? null
-                                            : lesson.getMaterial().getTopic(),
+                                    lesson.getTopic(),
                                     lessonItem.isRequired(),
                                     done));
                 }

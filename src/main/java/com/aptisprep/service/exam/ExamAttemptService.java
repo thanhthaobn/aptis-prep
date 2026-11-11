@@ -1,13 +1,13 @@
 package com.aptisprep.service.exam;
 
-import com.aptisprep.dto.form.AdminHistoryFilterDTO;
-import com.aptisprep.dto.form.HistoryFilterDTO;
-import com.aptisprep.dto.view.AdminHistoryPageDTO;
-import com.aptisprep.dto.view.AttemptHandleDTO;
-import com.aptisprep.dto.view.AttemptResultDTO;
-import com.aptisprep.dto.view.HistoryPageDTO;
 import com.aptisprep.entity.MockExamEntity;
 import com.aptisprep.entity.MockExamQuestionEntity;
+import com.aptisprep.presentation.AdminHistoryPageDTO;
+import com.aptisprep.presentation.AttemptHandleDTO;
+import com.aptisprep.presentation.AttemptResultDTO;
+import com.aptisprep.presentation.HistoryPageDTO;
+import com.aptisprep.presentation.form.AdminHistoryFilterDTO;
+import com.aptisprep.presentation.form.HistoryFilterDTO;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.time.Instant;
 import java.util.List;

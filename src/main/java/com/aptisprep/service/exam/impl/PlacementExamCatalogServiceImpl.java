@@ -1,10 +1,10 @@
 package com.aptisprep.service.exam.impl;
 
-import com.aptisprep.dto.view.PlacementDTO.PlacementExam;
-import com.aptisprep.dto.view.PlacementDTO.Section;
 import com.aptisprep.entity.MockExamEntity;
 import com.aptisprep.enums.Skill;
 import com.aptisprep.exception.BusinessRuleException;
+import com.aptisprep.presentation.PlacementDTO.PlacementExam;
+import com.aptisprep.presentation.PlacementDTO.Section;
 import com.aptisprep.service.admin.ExamCatalogService;
 import com.aptisprep.service.exam.PlacementExamCatalogService;
 import java.util.Comparator;

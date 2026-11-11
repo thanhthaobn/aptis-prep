@@ -1,7 +1,9 @@
 package com.aptisprep.service.scoring.impl;
 
-import com.aptisprep.dto.form.*;
-import com.aptisprep.dto.view.*;
+import com.aptisprep.dto.CertificateDTO;
+import com.aptisprep.dto.ScoreBandDTO;
+import com.aptisprep.dto.ScoringScaleRuleDTO;
+import com.aptisprep.dto.ScoringSchemeDTO;
 import com.aptisprep.entity.*;
 import com.aptisprep.entity.User;
 import com.aptisprep.enums.*;
@@ -10,6 +12,8 @@ import com.aptisprep.enums.Skill;
 import com.aptisprep.exception.AccessDeniedException;
 import com.aptisprep.exception.BusinessRuleException;
 import com.aptisprep.exception.ResourceNotFoundException;
+import com.aptisprep.presentation.*;
+import com.aptisprep.presentation.form.*;
 import com.aptisprep.repository.*;
 import com.aptisprep.service.account.UserService;
 import com.aptisprep.service.admin.ScoringSchemeUsageService;
@@ -127,7 +131,7 @@ public class ScoringAdminServiceImpl implements ScoringAdminService {
     }
 
     @Transactional
-    public Integer createCertificate(String adminEmail, CertificateFormDTO form) {
+    public Integer createCertificate(String adminEmail, CertificateDTO form) {
         User admin = requireAdmin(adminEmail);
         String code = normalizeCode(form.getCode());
         if (certificateRepository.existsByCodeIgnoreCase(code))
@@ -146,7 +150,7 @@ public class ScoringAdminServiceImpl implements ScoringAdminService {
     }
 
     @Transactional
-    public void updateCertificate(String adminEmail, Integer id, CertificateFormDTO form) {
+    public void updateCertificate(String adminEmail, Integer id, CertificateDTO form) {
         requireAdmin(adminEmail);
         Certificate value =
                 certificateRepository
@@ -187,9 +191,9 @@ public class ScoringAdminServiceImpl implements ScoringAdminService {
                 scheme.getScopeSkill() == null ? Skill.codes() : List.of(scheme.getScopeSkill());
         if (scheme.getStatus() == RecordStatus.INACTIVE) return savedId;
         for (String skill : skills) {
-            ScoringScaleRuleFormDTO scale = form.getSkillScales().get(skill);
+            ScoringScaleRuleDTO scale = form.getSkillScales().get(skill);
             if (!hasScale(scale)) {
-                scale = new ScoringScaleRuleFormDTO();
+                scale = new ScoringScaleRuleDTO();
                 scale.setRawMin(form.getScale().getRawMin());
                 scale.setRawMax(form.getScale().getRawMax());
                 scale.setScaleMin(form.getScale().getScaleMin());
@@ -239,7 +243,7 @@ public class ScoringAdminServiceImpl implements ScoringAdminService {
                 for (String level : CefrLevel.scoringCodes()) {
                     if (CefrLevel.BELOW_A1.equals(level) && !supportsBelowA1(scheme, skill))
                         continue;
-                    ScoreBandFormDTO band = form.getRanges().get(skill + "_" + level);
+                    ScoreBandDTO band = form.getRanges().get(skill + "_" + level);
                     if (band != null && (band.getMinScore() != null || band.getMaxScore() != null))
                         saveConfiguredBand(
                                 email,
@@ -255,7 +259,7 @@ public class ScoringAdminServiceImpl implements ScoringAdminService {
         return savedId;
     }
 
-    private boolean hasScale(ScoringScaleRuleFormDTO scale) {
+    private boolean hasScale(ScoringScaleRuleDTO scale) {
         return scale != null
                 && (scale.getRawMin() != null
                         || scale.getRawMax() != null
@@ -338,7 +342,7 @@ public class ScoringAdminServiceImpl implements ScoringAdminService {
             String email, Integer id, String skill, String level, BigDecimal min, BigDecimal max) {
         if (blankToNull(level) == null || min == null || max == null)
             throw new BusinessRuleException("Nhập đầy đủ trình độ và khoảng điểm cho " + skill);
-        ScoreBandFormDTO band = new ScoreBandFormDTO();
+        ScoreBandDTO band = new ScoreBandDTO();
         band.setSkill(skill);
         band.setCefrLevel(level);
         band.setMinScore(min);
@@ -359,8 +363,7 @@ public class ScoringAdminServiceImpl implements ScoringAdminService {
         }
         var bands = scoreBandRepository.findBySchemeIdOrderBySkillAscMinScoreAsc(id);
         for (ScoreBand band : bands) {
-            ScoreBandFormDTO field =
-                    form.getRanges().get(band.getSkill() + "_" + band.getCefrLevel());
+            ScoreBandDTO field = form.getRanges().get(band.getSkill() + "_" + band.getCefrLevel());
             if (field != null) {
                 field.setMinScore(band.getMinScore());
                 field.setMaxScore(band.getMaxScore());
@@ -427,7 +430,7 @@ public class ScoringAdminServiceImpl implements ScoringAdminService {
     }
 
     @Transactional
-    public void saveBand(String adminEmail, Integer schemeId, Integer id, ScoreBandFormDTO form) {
+    public void saveBand(String adminEmail, Integer schemeId, Integer id, ScoreBandDTO form) {
         requireAdmin(adminEmail);
         ScoringScheme scheme = requireSchemeForUpdate(schemeId);
         String skill = normalizeSkill(form.getSkill());
@@ -580,9 +583,9 @@ public class ScoringAdminServiceImpl implements ScoringAdminService {
     }
 
     @Transactional(readOnly = true)
-    public ScoringScaleRuleFormDTO scaleRule(Integer schemeId, String skill) {
+    public ScoringScaleRuleDTO scaleRule(Integer schemeId, String skill) {
         requireScheme(schemeId);
-        ScoringScaleRuleFormDTO form = new ScoringScaleRuleFormDTO();
+        ScoringScaleRuleDTO form = new ScoringScaleRuleDTO();
         scoringScaleRuleRepository
                 .findBySchemeIdAndSkillIgnoreCase(schemeId, normalizeSkill(skill))
                 .ifPresent(
@@ -597,7 +600,7 @@ public class ScoringAdminServiceImpl implements ScoringAdminService {
 
     @Transactional
     public void saveScaleRule(
-            String adminEmail, Integer schemeId, String skill, ScoringScaleRuleFormDTO form) {
+            String adminEmail, Integer schemeId, String skill, ScoringScaleRuleDTO form) {
         requireAdmin(adminEmail);
         ScoringScheme scheme = requireSchemeForUpdate(schemeId);
         if (scheme.getStatus() == RecordStatus.INACTIVE || schemeIsUsed(schemeId))

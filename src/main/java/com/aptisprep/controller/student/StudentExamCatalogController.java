@@ -1,12 +1,12 @@
 package com.aptisprep.controller.student;
 
-import com.aptisprep.dto.form.HistoryFilterDTO;
-import com.aptisprep.dto.view.AttemptResultDTO;
-import com.aptisprep.dto.view.HistoryPageDTO;
-import com.aptisprep.dto.view.StudentCatalogViewDTO;
-import com.aptisprep.dto.view.StudentCatalogViewDTO.Entry;
 import com.aptisprep.enums.Skill;
 import com.aptisprep.exception.BusinessRuleException;
+import com.aptisprep.presentation.AttemptResultDTO;
+import com.aptisprep.presentation.HistoryPageDTO;
+import com.aptisprep.presentation.StudentCatalogViewDTO;
+import com.aptisprep.presentation.StudentCatalogViewDTO.Entry;
+import com.aptisprep.presentation.form.HistoryFilterDTO;
 import com.aptisprep.service.account.AccountAccessService;
 import com.aptisprep.service.admin.*;
 import com.aptisprep.service.exam.ExamAttemptService;

@@ -1,10 +1,10 @@
 package com.aptisprep.service.admin.impl;
 
-import com.aptisprep.dto.form.QuestionFormDTO;
 import com.aptisprep.enums.CefrLevel;
 import com.aptisprep.enums.QuestionType;
 import com.aptisprep.enums.Skill;
 import com.aptisprep.exception.BusinessRuleException;
+import com.aptisprep.presentation.form.QuestionFormDTO;
 import java.util.*;
 
 /** Validates a question definition without database writes or Spring state. */

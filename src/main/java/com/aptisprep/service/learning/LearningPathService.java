@@ -1,7 +1,7 @@
 package com.aptisprep.service.learning;
 
-import com.aptisprep.dto.view.LearningPathViewsDTO.StageDTO;
-import com.aptisprep.dto.view.PathProgressDTO;
+import com.aptisprep.presentation.LearningPathViewsDTO.StageDTO;
+import com.aptisprep.presentation.PathProgressDTO;
 import java.util.List;
 
 public interface LearningPathService {

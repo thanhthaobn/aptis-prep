@@ -5,11 +5,11 @@ import static org.assertj.core.api.Assertions.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-import com.aptisprep.dto.form.*;
-import com.aptisprep.dto.view.*;
 import com.aptisprep.entity.*;
 import com.aptisprep.entity.User;
 import com.aptisprep.enums.*;
+import com.aptisprep.presentation.*;
+import com.aptisprep.presentation.form.*;
 import com.aptisprep.repository.*;
 import com.aptisprep.repository.UserRepository;
 import com.aptisprep.service.account.impl.PasswordHasher;

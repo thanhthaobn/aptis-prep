@@ -1,6 +1,6 @@
 package com.aptisprep.service.learning;
 
-import com.aptisprep.dto.view.LessonPlaybackDTO;
+import com.aptisprep.presentation.LessonPlaybackDTO;
 
 public interface LessonListeningService {
     LessonPlaybackDTO start(Integer lessonId, String email, double position);

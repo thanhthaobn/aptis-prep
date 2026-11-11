@@ -1,12 +1,13 @@
 package com.aptisprep.service.learning;
 
-import com.aptisprep.dto.form.LessonFormDTO;
-import com.aptisprep.dto.view.LessonMediaResourceDTO;
-import com.aptisprep.dto.view.LessonResponseDTO;
-import com.aptisprep.dto.view.LessonTeachingViewsDTO.*;
-import com.aptisprep.dto.view.LessonWorkSubmissionDTO;
+import com.aptisprep.dto.LessonCheckDTO;
 import com.aptisprep.entity.LessonResponse;
 import com.aptisprep.entity.LessonWorkSubmission;
+import com.aptisprep.presentation.LessonMediaResourceDTO;
+import com.aptisprep.presentation.LessonResponseDTO;
+import com.aptisprep.presentation.LessonTeachingViewsDTO.*;
+import com.aptisprep.presentation.LessonWorkSubmissionDTO;
+import com.aptisprep.presentation.form.LessonEditorForm;
 import java.util.List;
 import java.util.Map;
 import org.springframework.web.multipart.MultipartFile;
@@ -63,11 +64,11 @@ public interface LessonTeachingService {
 
     List<CheckViewDTO> questions(Integer id, String email);
 
-    List<LessonFormDTO.CheckForm> editorQuestions(Integer id);
+    List<LessonCheckDTO> editorQuestions(Integer id);
 
-    void validate(LessonFormDTO f);
+    void validate(LessonEditorForm f);
 
-    void saveChecks(Integer id, List<LessonFormDTO.CheckForm> forms);
+    void saveChecks(Integer id, List<LessonCheckDTO> forms);
 
     FeedbackDTO grade(Integer id, Map<String, String> answers, String email);
 

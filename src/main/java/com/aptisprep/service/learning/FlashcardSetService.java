@@ -1,9 +1,9 @@
 package com.aptisprep.service.learning;
 
-import com.aptisprep.dto.form.FlashcardSetFormDTO;
-import com.aptisprep.dto.view.FlashcardViewsDTO.*;
 import com.aptisprep.entity.FlashcardSet;
 import com.aptisprep.entity.Lesson;
+import com.aptisprep.presentation.FlashcardViewsDTO.*;
+import com.aptisprep.presentation.form.FlashcardSetFormDTO;
 import java.util.List;
 import java.util.Map;
 

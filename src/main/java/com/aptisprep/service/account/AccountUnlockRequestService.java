@@ -1,6 +1,6 @@
 package com.aptisprep.service.account;
 
-import com.aptisprep.dto.view.AccountUnlockRequestDTO;
+import com.aptisprep.presentation.AccountUnlockRequestDTO;
 import java.util.List;
 import java.util.Optional;
 

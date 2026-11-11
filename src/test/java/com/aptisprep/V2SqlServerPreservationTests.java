@@ -2,12 +2,13 @@ package com.aptisprep;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import com.aptisprep.dto.form.*;
-import com.aptisprep.dto.form.LessonFormDTO;
-import com.aptisprep.dto.view.*;
+import com.aptisprep.dto.LessonCheckDTO;
 import com.aptisprep.entity.*;
 import com.aptisprep.entity.AiAssessmentJob;
 import com.aptisprep.exception.BusinessRuleException;
+import com.aptisprep.presentation.*;
+import com.aptisprep.presentation.form.*;
+import com.aptisprep.presentation.form.LessonEditorForm;
 import com.aptisprep.repository.*;
 import com.aptisprep.repository.AiAssessmentJobRepository;
 import com.aptisprep.repository.UserRepository;
@@ -431,11 +432,11 @@ class V2SqlServerPreservationTests {
         return job;
     }
 
-    private static LessonFormDTO checkForm(int count, int correct) {
-        var form = new LessonFormDTO();
+    private static LessonEditorForm checkForm(int count, int correct) {
+        var form = new LessonEditorForm();
         form.setSkill("Reading");
         form.setStatus("PUBLISHED");
-        var check = new LessonFormDTO.CheckForm();
+        var check = new LessonCheckDTO();
         check.setPrompt("Choose the last option");
         check.setOptionA("A");
         check.setOptionB("B");

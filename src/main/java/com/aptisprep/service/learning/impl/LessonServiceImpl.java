@@ -1,15 +1,6 @@
 package com.aptisprep.service.learning.impl;
 
-import com.aptisprep.dto.form.LessonFormDTO;
-import com.aptisprep.dto.view.LessonActivityDTO;
-import com.aptisprep.dto.view.LessonDTO;
-import com.aptisprep.dto.view.LessonProgressDTO;
-import com.aptisprep.dto.view.LessonTeachingViewsDTO.CheckViewDTO;
-import com.aptisprep.dto.view.LessonTeachingViewsDTO.CompletionStateDTO;
-import com.aptisprep.dto.view.LessonTeachingViewsDTO.LessonStatsDTO;
-import com.aptisprep.dto.view.LessonTreeViewsDTO.LevelBranchDTO;
-import com.aptisprep.dto.view.LessonTreeViewsDTO.NeighborsDTO;
-import com.aptisprep.dto.view.LessonTreeViewsDTO.SkillBranchDTO;
+import com.aptisprep.dto.LessonDTO;
 import com.aptisprep.entity.Lesson;
 import com.aptisprep.entity.LessonCheckAttempt;
 import com.aptisprep.entity.LessonProgress;
@@ -17,6 +8,15 @@ import com.aptisprep.entity.User;
 import com.aptisprep.enums.UserStatus;
 import com.aptisprep.exception.BusinessRuleException;
 import com.aptisprep.exception.ResourceNotFoundException;
+import com.aptisprep.presentation.LessonActivityDTO;
+import com.aptisprep.presentation.LessonProgressDTO;
+import com.aptisprep.presentation.LessonTeachingViewsDTO.CheckViewDTO;
+import com.aptisprep.presentation.LessonTeachingViewsDTO.CompletionStateDTO;
+import com.aptisprep.presentation.LessonTeachingViewsDTO.LessonStatsDTO;
+import com.aptisprep.presentation.LessonTreeViewsDTO.LevelBranchDTO;
+import com.aptisprep.presentation.LessonTreeViewsDTO.NeighborsDTO;
+import com.aptisprep.presentation.LessonTreeViewsDTO.SkillBranchDTO;
+import com.aptisprep.presentation.form.LessonEditorForm;
 import com.aptisprep.repository.LessonCheckAttemptRepository;
 import com.aptisprep.repository.LessonProgressRepository;
 import com.aptisprep.repository.LessonRepository;
@@ -114,7 +114,7 @@ public class LessonServiceImpl implements LessonService {
     }
 
     @Override
-    public LessonFormDTO newForm(String skill, String level) {
+    public LessonEditorForm newForm(String skill, String level) {
         if (!SKILLS.contains(skill) || !LEVELS.contains(level))
             throw new BusinessRuleException("Kỹ năng hoặc cấp độ không hợp lệ");
         int max =
@@ -125,7 +125,7 @@ public class LessonServiceImpl implements LessonService {
                         .orElse(0);
         if (max == Integer.MAX_VALUE)
             throw new BusinessRuleException("Không thể gợi ý thêm thứ tự cho nhánh này");
-        LessonFormDTO form = new LessonFormDTO();
+        LessonEditorForm form = new LessonEditorForm();
         form.setSkill(skill);
         form.setCefrLevel(level);
         form.setDisplayOrder(max + 1);
@@ -181,9 +181,9 @@ public class LessonServiceImpl implements LessonService {
     }
 
     @Override
-    public LessonFormDTO form(Integer id) {
+    public LessonEditorForm form(Integer id) {
         Lesson l = require(id);
-        LessonFormDTO f = LessonDTO.convertEntityToDto(l).toForm();
+        LessonEditorForm f = LessonDTO.convertEntityToDto(l).toForm();
         f.setChecks(new ArrayList<>(teaching.editorQuestions(id)));
         if (f.getTranscriptVisibility() == null) f.setTranscriptVisibility("AFTER_LISTEN");
         if (f.getSampleVisibility() == null) f.setSampleVisibility("AFTER_SUBMIT");
@@ -192,13 +192,13 @@ public class LessonServiceImpl implements LessonService {
 
     @Override
     @Transactional
-    public Lesson save(Integer id, LessonFormDTO f) {
+    public Lesson save(Integer id, LessonEditorForm f) {
         return save(id, f, null, false);
     }
 
     @Override
     @Transactional
-    public Lesson save(Integer id, LessonFormDTO f, MultipartFile audio, boolean removeAudio) {
+    public Lesson save(Integer id, LessonEditorForm f, MultipartFile audio, boolean removeAudio) {
         return save(id, f, audio, removeAudio, null, false);
     }
 
@@ -206,7 +206,7 @@ public class LessonServiceImpl implements LessonService {
     @Transactional
     public Lesson save(
             Integer id,
-            LessonFormDTO f,
+            LessonEditorForm f,
             MultipartFile audio,
             boolean removeAudio,
             MultipartFile image,
@@ -218,7 +218,7 @@ public class LessonServiceImpl implements LessonService {
     @Transactional
     public Lesson save(
             Integer id,
-            LessonFormDTO f,
+            LessonEditorForm f,
             MultipartFile audio,
             boolean removeAudio,
             MultipartFile image,
@@ -243,7 +243,7 @@ public class LessonServiceImpl implements LessonService {
     @Transactional
     public LessonDTO saveDto(
             Integer id,
-            LessonFormDTO f,
+            LessonEditorForm f,
             MultipartFile audio,
             boolean removeAudio,
             MultipartFile image,
@@ -266,7 +266,7 @@ public class LessonServiceImpl implements LessonService {
     @Transactional
     public Lesson duplicate(Integer id) {
         Lesson source = require(id);
-        LessonFormDTO f = form(id);
+        LessonEditorForm f = form(id);
         f.setTitle(source.getTitle() + " — Bản sao");
         f.setStatus("DRAFT");
         f.setDisplayOrder(newForm(source.getSkill(), source.getCefrLevel()).getDisplayOrder());
@@ -410,7 +410,7 @@ public class LessonServiceImpl implements LessonService {
         return require(lessonId).getSkill();
     }
 
-    private void validate(LessonFormDTO f, Integer id) {
+    private void validate(LessonEditorForm f, Integer id) {
         if (!SKILLS.contains(f.getSkill())
                 || !LEVELS.contains(f.getCefrLevel())
                 || !STATUSES.contains(f.getStatus()))
@@ -494,7 +494,7 @@ public class LessonServiceImpl implements LessonService {
     }
 
     private void validateListeningRelease(
-            Integer id, LessonFormDTO form, MultipartFile audio, boolean removeAudio) {
+            Integer id, LessonEditorForm form, MultipartFile audio, boolean removeAudio) {
         if (!"PUBLISHED".equals(form.getStatus()) || !"Listening".equals(form.getSkill())) return;
         boolean available =
                 audio != null && !audio.isEmpty()
@@ -511,7 +511,7 @@ public class LessonServiceImpl implements LessonService {
         }
     }
 
-    private void applyLessonFields(Lesson lesson, LessonFormDTO form) {
+    private void applyLessonFields(Lesson lesson, LessonEditorForm form) {
         Lesson mapped = LessonDTO.convertDtoToEntity(form);
         lesson.setTitle(mapped.getTitle());
         lesson.setDescription(mapped.getDescription());
@@ -519,7 +519,21 @@ public class LessonServiceImpl implements LessonService {
         lesson.setCefrLevel(mapped.getCefrLevel());
         lesson.setDisplayOrder(mapped.getDisplayOrder());
         lesson.setStatus(mapped.getStatus());
-        lesson.setMaterial(mapped.getMaterial());
+        lesson.setTranscriptVisibility(mapped.getTranscriptVisibility());
+        lesson.setSampleVisibility(mapped.getSampleVisibility());
+        lesson.setTopic(mapped.getTopic());
+        lesson.setTaskType(mapped.getTaskType());
+        lesson.setObjectives(mapped.getObjectives());
+        lesson.setStrategy(mapped.getStrategy());
+        lesson.setExampleText(mapped.getExampleText());
+        lesson.setAnalysis(mapped.getAnalysis());
+        lesson.setCommonMistakes(mapped.getCommonMistakes());
+        lesson.setPracticePrompt(mapped.getPracticePrompt());
+        lesson.setSampleResponse(mapped.getSampleResponse());
+        lesson.setChecklist(mapped.getChecklist());
+        lesson.setVideoUrl(mapped.getVideoUrl());
+        lesson.setSourceUrl(mapped.getSourceUrl());
+        lesson.setSourceName(mapped.getSourceName());
         lesson.setTranscript(mapped.getTranscript());
         lesson.setMinWordCount(mapped.getMinWordCount());
         lesson.setMaxWordCount(mapped.getMaxWordCount());

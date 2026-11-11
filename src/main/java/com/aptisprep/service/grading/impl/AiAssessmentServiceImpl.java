@@ -1,9 +1,6 @@
 package com.aptisprep.service.grading.impl;
 
 import com.aptisprep.config.AiProperties;
-import com.aptisprep.dto.view.AiAssessmentDTO.AssessmentRequest;
-import com.aptisprep.dto.view.AiAssessmentDTO.AssessmentView;
-import com.aptisprep.dto.view.GradingResultDTO;
 import com.aptisprep.entity.AiAssessment;
 import com.aptisprep.entity.AiAssessmentJob;
 import com.aptisprep.entity.User;
@@ -14,6 +11,9 @@ import com.aptisprep.exception.AccessDeniedException;
 import com.aptisprep.exception.AiGradingException;
 import com.aptisprep.exception.BusinessRuleException;
 import com.aptisprep.exception.ResourceNotFoundException;
+import com.aptisprep.presentation.AiAssessmentDTO.AssessmentRequest;
+import com.aptisprep.presentation.AiAssessmentDTO.AssessmentView;
+import com.aptisprep.presentation.GradingResultDTO;
 import com.aptisprep.repository.AiAssessmentJobRepository;
 import com.aptisprep.repository.AiAssessmentRepository;
 import com.aptisprep.service.account.UserService;

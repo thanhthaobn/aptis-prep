@@ -1,9 +1,9 @@
 package com.aptisprep.controller.admin;
 
-import com.aptisprep.dto.form.ExamFormDTO;
-import com.aptisprep.dto.form.QuestionFormDTO;
-import com.aptisprep.dto.view.AdminCatalogViewDTO.CatalogPage;
 import com.aptisprep.exception.BusinessRuleException;
+import com.aptisprep.presentation.AdminCatalogViewDTO.CatalogPage;
+import com.aptisprep.presentation.form.ExamFormDTO;
+import com.aptisprep.presentation.form.QuestionFormDTO;
 import com.aptisprep.service.admin.CatalogService;
 import java.util.Map;
 import org.springframework.core.io.Resource;

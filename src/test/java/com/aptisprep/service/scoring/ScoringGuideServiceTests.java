@@ -3,9 +3,9 @@ package com.aptisprep.service.scoring;
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-import com.aptisprep.dto.view.AttemptResultDTO;
-import com.aptisprep.dto.view.SkillResultDTO;
 import com.aptisprep.entity.*;
+import com.aptisprep.presentation.AttemptResultDTO;
+import com.aptisprep.presentation.SkillResultDTO;
 import com.aptisprep.repository.*;
 import java.math.BigDecimal;
 import java.util.*;

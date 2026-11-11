@@ -1,7 +1,7 @@
 package com.aptisprep.service.grading.impl;
 
-import com.aptisprep.dto.view.LockedAnswerDTO;
-import com.aptisprep.dto.view.LockedItemDTO;
+import com.aptisprep.presentation.LockedAnswerDTO;
+import com.aptisprep.presentation.LockedItemDTO;
 
 /** Formats only the immutable snapshot DTO for the AI boundary. */
 public final class GradingContextFormatter {

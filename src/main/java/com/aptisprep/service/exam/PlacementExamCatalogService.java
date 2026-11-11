@@ -1,6 +1,6 @@
 package com.aptisprep.service.exam;
 
-import com.aptisprep.dto.view.PlacementDTO.PlacementExam;
+import com.aptisprep.presentation.PlacementDTO.PlacementExam;
 import java.util.List;
 
 public interface PlacementExamCatalogService {

@@ -1,8 +1,8 @@
 package com.aptisprep.service.account;
 
-import com.aptisprep.dto.form.RegisterFormDTO;
-import com.aptisprep.dto.view.AuthResultDTO;
 import com.aptisprep.entity.User;
+import com.aptisprep.presentation.AuthResultDTO;
+import com.aptisprep.presentation.form.RegisterFormDTO;
 import jakarta.servlet.http.HttpServletRequest;
 import java.util.Optional;
 

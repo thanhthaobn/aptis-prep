@@ -1,11 +1,11 @@
 package com.aptisprep.service.learning.impl;
 
-import com.aptisprep.dto.form.HistoryFilterDTO;
-import com.aptisprep.dto.view.AttemptResultDTO;
-import com.aptisprep.dto.view.HistoryPageDTO;
 import com.aptisprep.entity.LearningPath;
 import com.aptisprep.exception.BusinessRuleException;
 import com.aptisprep.exception.ResourceNotFoundException;
+import com.aptisprep.presentation.AttemptResultDTO;
+import com.aptisprep.presentation.HistoryPageDTO;
+import com.aptisprep.presentation.form.HistoryFilterDTO;
 import com.aptisprep.service.admin.ExamCatalogService;
 import com.aptisprep.service.exam.ExamAttemptService;
 import java.time.ZoneId;

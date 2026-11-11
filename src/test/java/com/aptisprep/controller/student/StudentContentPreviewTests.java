@@ -7,7 +7,6 @@ import static org.hamcrest.Matchers.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-import com.aptisprep.dto.view.StudentCatalogViewDTO.Entry;
 import com.aptisprep.entity.*;
 import com.aptisprep.entity.MockExamEntity;
 import com.aptisprep.entity.MockExamQuestionEntity;
@@ -18,6 +17,7 @@ import com.aptisprep.entity.User;
 import com.aptisprep.enums.RecordStatus;
 import com.aptisprep.enums.Role;
 import com.aptisprep.enums.UserStatus;
+import com.aptisprep.presentation.StudentCatalogViewDTO.Entry;
 import com.aptisprep.repository.*;
 import com.aptisprep.repository.ExamAttemptRepository;
 import com.aptisprep.repository.UserRepository;

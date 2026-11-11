@@ -1,6 +1,5 @@
 package com.aptisprep.entity;
 
-import com.aptisprep.dto.view.LessonContextSnapshotEntityDTO;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -43,14 +42,6 @@ public class LessonCheckAttempt {
     @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true)
     @JoinColumn(name = "context_snapshot_id")
     private LessonContextSnapshotEntity contextSnapshotEntity;
-
-    public LessonContextSnapshotEntityDTO getContext() {
-        return contextSnapshotEntity == null ? null : contextSnapshotEntity.toRecord();
-    }
-
-    public void snapshot(Lesson lesson) {
-        contextSnapshotEntity = LessonContextSnapshotEntity.capture(lesson);
-    }
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

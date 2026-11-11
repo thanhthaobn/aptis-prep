@@ -2,15 +2,15 @@ package com.aptisprep.service.learning;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import com.aptisprep.dto.form.*;
-import com.aptisprep.dto.view.*;
-import com.aptisprep.dto.view.LearnerContextDTO;
-import com.aptisprep.dto.view.PathProgressDTO;
-import com.aptisprep.dto.view.SkillLevelDTO;
-import com.aptisprep.dto.view.SkillTargetDTO;
 import com.aptisprep.entity.*;
 import com.aptisprep.entity.Lesson;
 import com.aptisprep.entity.LessonProgress;
+import com.aptisprep.presentation.*;
+import com.aptisprep.presentation.LearnerContextDTO;
+import com.aptisprep.presentation.PathProgressDTO;
+import com.aptisprep.presentation.SkillLevelDTO;
+import com.aptisprep.presentation.SkillTargetDTO;
+import com.aptisprep.presentation.form.*;
 import com.aptisprep.repository.*;
 import com.aptisprep.repository.LessonProgressRepository;
 import com.aptisprep.service.account.AccountAccessService;
@@ -50,13 +50,13 @@ class LessonRecommendationTests {
                     return null;
                 }
 
-                public com.aptisprep.dto.view.AccountSnapshotDTO.GoalViewDTO goalView(
+                public com.aptisprep.presentation.AccountSnapshotDTO.GoalViewDTO goalView(
                         Integer userId) {
                     return null;
                 }
 
-                public java.util.Map<String, com.aptisprep.dto.view.SkillLevelDTO> skillProfileMap(
-                        Integer userId) {
+                public java.util.Map<String, com.aptisprep.presentation.SkillLevelDTO>
+                        skillProfileMap(Integer userId) {
                     return java.util.Map.of();
                 }
 
@@ -68,7 +68,7 @@ class LessonRecommendationTests {
                     return java.util.Map.of();
                 }
 
-                public java.util.Map<String, com.aptisprep.dto.view.GoalSkillDTO>
+                public java.util.Map<String, com.aptisprep.presentation.GoalSkillDTO>
                         activeGoalSkillsBySkill(Integer userId) {
                     return java.util.Map.of();
                 }

@@ -5,14 +5,14 @@ import static org.hamcrest.Matchers.containsString;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-import com.aptisprep.dto.form.*;
-import com.aptisprep.dto.form.FlashcardSetFormDTO;
-import com.aptisprep.dto.view.*;
 import com.aptisprep.entity.*;
 import com.aptisprep.entity.Lesson;
 import com.aptisprep.entity.User;
 import com.aptisprep.enums.Role;
 import com.aptisprep.enums.UserStatus;
+import com.aptisprep.presentation.*;
+import com.aptisprep.presentation.form.*;
+import com.aptisprep.presentation.form.FlashcardSetFormDTO;
 import com.aptisprep.repository.*;
 import com.aptisprep.repository.LessonRepository;
 import com.aptisprep.repository.UserRepository;

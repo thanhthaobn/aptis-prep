@@ -5,7 +5,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
-import com.aptisprep.dto.view.AccountUnlockRequestDTO;
 import com.aptisprep.entity.AccountUnlockRequest;
 import com.aptisprep.entity.User;
 import com.aptisprep.enums.Role;
@@ -13,6 +12,7 @@ import com.aptisprep.enums.UnlockRequestStatus;
 import com.aptisprep.enums.UserStatus;
 import com.aptisprep.exception.AccessDeniedException;
 import com.aptisprep.exception.BusinessRuleException;
+import com.aptisprep.presentation.AccountUnlockRequestDTO;
 import com.aptisprep.repository.AccountUnlockRequestRepository;
 import com.aptisprep.service.account.impl.AccountUnlockRequestServiceImpl;
 import com.aptisprep.service.admin.StudentManagementService;

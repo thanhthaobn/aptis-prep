@@ -1,8 +1,8 @@
 package com.aptisprep.service.admin;
 
-import com.aptisprep.dto.view.ExamSummaryDTO;
-import com.aptisprep.dto.view.ExamViewDTO;
 import com.aptisprep.entity.*;
+import com.aptisprep.presentation.ExamSummaryDTO;
+import com.aptisprep.presentation.ExamViewDTO;
 import java.util.List;
 import java.util.Optional;
 

@@ -1,8 +1,8 @@
 package com.aptisprep.service.admin;
 
-import com.aptisprep.dto.view.AccountUnlockRequestDTO;
-import com.aptisprep.dto.view.AdminStudentViewDTO;
 import com.aptisprep.enums.UserStatus;
+import com.aptisprep.presentation.AccountUnlockRequestDTO;
+import com.aptisprep.presentation.AdminStudentViewDTO;
 import java.util.List;
 
 public interface StudentManagementService {

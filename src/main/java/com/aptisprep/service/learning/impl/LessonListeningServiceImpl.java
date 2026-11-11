@@ -1,6 +1,5 @@
 package com.aptisprep.service.learning.impl;
 
-import com.aptisprep.dto.view.LessonPlaybackDTO;
 import com.aptisprep.entity.Lesson;
 import com.aptisprep.entity.LessonEngagement;
 import com.aptisprep.entity.User;
@@ -9,6 +8,7 @@ import com.aptisprep.enums.UserStatus;
 import com.aptisprep.exception.AccessDeniedException;
 import com.aptisprep.exception.BusinessRuleException;
 import com.aptisprep.exception.ResourceNotFoundException;
+import com.aptisprep.presentation.LessonPlaybackDTO;
 import com.aptisprep.repository.LessonEngagementRepository;
 import com.aptisprep.repository.LessonRepository;
 import com.aptisprep.service.account.UserService;

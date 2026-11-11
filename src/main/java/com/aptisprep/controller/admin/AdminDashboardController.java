@@ -1,6 +1,6 @@
 package com.aptisprep.controller.admin;
 
-import com.aptisprep.dto.view.AdminDashboardViewDTO;
+import com.aptisprep.presentation.AdminDashboardViewDTO;
 import com.aptisprep.service.admin.AdminDashboardService;
 import java.security.Principal;
 import org.springframework.stereotype.Controller;

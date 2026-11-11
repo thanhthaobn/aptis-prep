@@ -1,20 +1,22 @@
 package com.aptisprep.service.learning.impl;
 
 import com.aptisprep.config.AiProperties;
-import com.aptisprep.dto.form.LessonFormDTO;
-import com.aptisprep.dto.view.AiAssessmentDTO.AssessmentRequest;
-import com.aptisprep.dto.view.LessonContextSnapshotEntityDTO;
-import com.aptisprep.dto.view.LessonMediaResourceDTO;
-import com.aptisprep.dto.view.LessonResponseDTO;
-import com.aptisprep.dto.view.LessonTeachingViewsDTO.*;
-import com.aptisprep.dto.view.LessonWorkSubmissionDTO;
+import com.aptisprep.dto.LessonCheckDTO;
 import com.aptisprep.entity.*;
 import com.aptisprep.entity.User;
 import com.aptisprep.enums.*;
 import com.aptisprep.exception.*;
+import com.aptisprep.presentation.AiAssessmentDTO.AssessmentRequest;
+import com.aptisprep.presentation.LessonContextSnapshot;
+import com.aptisprep.presentation.LessonMediaResourceDTO;
+import com.aptisprep.presentation.LessonResponseDTO;
+import com.aptisprep.presentation.LessonTeachingViewsDTO.*;
+import com.aptisprep.presentation.LessonWorkSubmissionDTO;
+import com.aptisprep.presentation.form.LessonEditorForm;
 import com.aptisprep.repository.*;
 import com.aptisprep.service.account.UserService;
 import com.aptisprep.service.grading.AiAssessmentService;
+import com.aptisprep.service.learning.LessonContextSnapshotMapper;
 import com.aptisprep.service.learning.LessonTeachingService;
 import com.aptisprep.service.storage.StorageService;
 import jakarta.persistence.*;
@@ -69,7 +71,6 @@ public class LessonTeachingServiceImpl implements LessonTeachingService {
     public ReleaseStateDTO releaseState(Integer id, String email) {
         User u = user(email);
         Lesson l = lessonRepository.findById(id).orElseThrow();
-        LessonMaterial m = l.getMaterial();
         boolean completed =
                 lessonProgressRepository
                         .findByUserIdAndLessonId(u.getId(), id)
@@ -88,8 +89,8 @@ public class LessonTeachingServiceImpl implements LessonTeachingService {
                                 .findByUserIdAndLessonIdOrderBySubmittedAtDesc(u.getId(), id)
                                 .isEmpty();
         boolean noSubmission = !productive && !checkService.hasChecks(id);
-        String transcript = policy(m == null ? null : m.getTranscriptVisibility(), "AFTER_LISTEN"),
-                sample = policy(m == null ? null : m.getSampleVisibility(), "AFTER_SUBMIT");
+        String transcript = policy(l.getTranscriptVisibility(), "AFTER_LISTEN"),
+                sample = policy(l.getSampleVisibility(), "AFTER_SUBMIT");
         return new ReleaseStateDTO(
                 released(transcript, submitted, completed, played, noSubmission),
                 released(sample, submitted, completed, played, noSubmission),
@@ -140,7 +141,7 @@ public class LessonTeachingServiceImpl implements LessonTeachingService {
     public HistoricalMediaDTO historicalMedia(
             Integer lessonId, Integer historyId, String kind, String email, boolean quiz) {
         User u = user(email);
-        LessonContextSnapshotEntityDTO snapshot;
+        LessonContextSnapshot snapshot;
         if (quiz) {
             LessonCheckAttempt a =
                     lessonCheckAttemptRepository
@@ -152,7 +153,7 @@ public class LessonTeachingServiceImpl implements LessonTeachingService {
                                                             attempt.getLessonId(), lessonId))
                             .orElseThrow(
                                     () -> new ResourceNotFoundException("Không tìm thấy bài làm"));
-            snapshot = a.getContext();
+            snapshot = LessonContextSnapshotMapper.toPresentation(a.getContextSnapshotEntity());
         } else {
             LessonWorkSubmission s =
                     Optional.ofNullable(em.find(LessonWorkSubmission.class, historyId))
@@ -163,7 +164,7 @@ public class LessonTeachingServiceImpl implements LessonTeachingService {
                                                             submission.getLessonId(), lessonId))
                             .orElseThrow(
                                     () -> new ResourceNotFoundException("Không tìm thấy bài làm"));
-            snapshot = s.getContext();
+            snapshot = LessonContextSnapshotMapper.toPresentation(s.getContextSnapshotEntity());
         }
         if (snapshot == null)
             throw new ResourceNotFoundException("Không tìm thấy thông tin bài lúc làm");
@@ -238,7 +239,9 @@ public class LessonTeachingServiceImpl implements LessonTeachingService {
         r.setAssessmentKey(null);
         r.setUpdatedAt(LocalDateTime.now());
         lessonResponseRepository.save(r);
-        em.persist(new LessonWorkSubmission(u.getId(), lesson, r));
+        em.persist(
+                new LessonWorkSubmission(
+                        u.getId(), lesson, r, LessonContextSnapshotMapper.capture(lesson)));
     }
 
     @Override
@@ -277,7 +280,8 @@ public class LessonTeachingServiceImpl implements LessonTeachingService {
                                                                                                                         "\\u001f"))))
                                                         .toList()
                                                 : List.of(),
-                                        a.getContext()))
+                                        LessonContextSnapshotMapper.toPresentation(
+                                                a.getContextSnapshotEntity())))
                 .toList();
     }
 
@@ -304,7 +308,8 @@ public class LessonTeachingServiceImpl implements LessonTeachingService {
                                         s.getText(),
                                         s.getSkill(),
                                         s.getPrompt(),
-                                        s.getContext(),
+                                        LessonContextSnapshotMapper.toPresentation(
+                                                s.getContextSnapshotEntity()),
                                         s.getAudioPath()))
                 .toList();
     }
@@ -332,7 +337,8 @@ public class LessonTeachingServiceImpl implements LessonTeachingService {
                                         s.getText(),
                                         s.getSkill(),
                                         s.getPrompt(),
-                                        s.getContext(),
+                                        LessonContextSnapshotMapper.toPresentation(
+                                                s.getContextSnapshotEntity()),
                                         s.getAudioPath()))
                 .toList();
     }
@@ -365,7 +371,9 @@ public class LessonTeachingServiceImpl implements LessonTeachingService {
         }
         if ("Speaking".equals(lesson.getSkill()) && !has(work.getAudioPath()))
             throw new BusinessRuleException("Hãy lưu bản ghi trước khi lưu transcript");
-        em.persist(new LessonWorkSubmission(u.getId(), lesson, work));
+        em.persist(
+                new LessonWorkSubmission(
+                        u.getId(), lesson, work, LessonContextSnapshotMapper.capture(lesson)));
     }
 
     @Override
@@ -577,12 +585,12 @@ public class LessonTeachingServiceImpl implements LessonTeachingService {
     }
 
     @Override
-    public List<LessonFormDTO.CheckForm> editorQuestions(Integer id) {
+    public List<LessonCheckDTO> editorQuestions(Integer id) {
         return checkService.editorQuestions(id);
     }
 
     @Override
-    public void validate(LessonFormDTO f) {
+    public void validate(LessonEditorForm f) {
         videoId(f.getVideoUrl());
         safeLink(f.getSourceUrl());
         checkService.validateChecks(f.getChecks());
@@ -602,7 +610,7 @@ public class LessonTeachingServiceImpl implements LessonTeachingService {
     }
 
     @Override
-    public void saveChecks(Integer id, List<LessonFormDTO.CheckForm> forms) {
+    public void saveChecks(Integer id, List<LessonCheckDTO> forms) {
         checkService.saveChecks(id, forms);
     }
 

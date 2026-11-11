@@ -11,6 +11,7 @@ import com.tngtech.archunit.lang.ArchCondition;
 import com.tngtech.archunit.lang.ArchRule;
 import com.tngtech.archunit.lang.ConditionEvents;
 import com.tngtech.archunit.lang.SimpleConditionEvent;
+import jakarta.persistence.Embeddable;
 import jakarta.persistence.Entity;
 import org.springframework.stereotype.Controller;
 import org.springframework.stereotype.Service;
@@ -52,13 +53,40 @@ public class ArchitectureTests {
                     .as("JPA entities must be kept in the entity layer");
 
     @ArchTest
-    static final ArchRule dto_types_must_be_form_or_view_models =
+    static final ArchRule dto_types_must_be_entity_dtos_or_presentation_models =
             classes()
                     .that()
                     .haveSimpleNameEndingWith("DTO")
                     .should()
-                    .resideInAnyPackage("com.aptisprep.dto.form..", "com.aptisprep.dto.view..")
-                    .as("DTOs must be separated into form input and view output models");
+                    .resideInAnyPackage("com.aptisprep.dto..", "com.aptisprep.presentation..")
+                    .as("Entity DTOs belong to dto; page and form models belong to presentation");
+
+    @ArchTest
+    static final ArchRule entities_must_not_depend_on_transfer_or_presentation_models =
+            noClasses()
+                    .that()
+                    .resideInAPackage("..entity..")
+                    .should()
+                    .dependOnClassesThat()
+                    .resideInAnyPackage("..dto..", "..presentation..")
+                    .as("Entities must contain persistence state only");
+
+    @ArchTest
+    static final ArchRule presentation_models_must_not_expose_entities =
+            noClasses()
+                    .that()
+                    .resideInAPackage("..presentation..")
+                    .should()
+                    .dependOnClassesThat()
+                    .resideInAPackage("..entity..")
+                    .as("Presentation models may compose DTOs, but must not expose entities");
+
+    @ArchTest
+    static final ArchRule embeddable_value_objects_must_not_be_used =
+            noClasses()
+                    .should()
+                    .beAnnotatedWith(Embeddable.class)
+                    .as("Lesson material is persisted directly by Lesson, not as an embeddable");
 
     @ArchTest
     static final ArchRule controllers_must_not_depend_on_repositories =
@@ -144,7 +172,8 @@ public class ArchitectureTests {
                     .resideInAPackage("..repository..")
                     .should()
                     .dependOnClassesThat()
-                    .resideInAnyPackage("..controller..", "..service..", "..dto..")
+                    .resideInAnyPackage(
+                            "..controller..", "..service..", "..dto..", "..presentation..")
                     .as("Repositories must only expose persistence types");
 
     @ArchTest

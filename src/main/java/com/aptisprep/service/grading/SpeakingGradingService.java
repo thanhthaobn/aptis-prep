@@ -1,6 +1,6 @@
 package com.aptisprep.service.grading;
 
-import com.aptisprep.dto.view.GradingResultDTO;
+import com.aptisprep.presentation.GradingResultDTO;
 import java.nio.file.Path;
 
 public interface SpeakingGradingService {

@@ -1,7 +1,7 @@
 package com.aptisprep.service.scoring;
 
-import com.aptisprep.dto.view.AttemptResultDTO;
-import com.aptisprep.dto.view.SkillResultDTO;
+import com.aptisprep.presentation.AttemptResultDTO;
+import com.aptisprep.presentation.SkillResultDTO;
 import java.math.BigDecimal;
 import java.util.List;
 

@@ -1,12 +1,12 @@
 package com.aptisprep.controller.student;
 
 import com.aptisprep.controller.ListPagination;
-import com.aptisprep.dto.form.GoalFormDTO;
-import com.aptisprep.dto.form.ProfileFormDTO;
-import com.aptisprep.dto.view.AccountSnapshotDTO;
-import com.aptisprep.dto.view.AttemptHandleDTO;
 import com.aptisprep.enums.Skill;
 import com.aptisprep.exception.BusinessRuleException;
+import com.aptisprep.presentation.AccountSnapshotDTO;
+import com.aptisprep.presentation.AttemptHandleDTO;
+import com.aptisprep.presentation.form.GoalFormDTO;
+import com.aptisprep.presentation.form.ProfileFormDTO;
 import com.aptisprep.service.account.AccountAccessService;
 import com.aptisprep.service.account.AccountProfileService;
 import com.aptisprep.service.account.LearningActivityService;

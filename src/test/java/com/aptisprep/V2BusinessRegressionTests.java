@@ -5,15 +5,17 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-import com.aptisprep.dto.form.*;
-import com.aptisprep.dto.form.GoalFormDTO;
-import com.aptisprep.dto.view.*;
+import com.aptisprep.dto.ScoreBandDTO;
+import com.aptisprep.dto.ScoringScaleRuleDTO;
 import com.aptisprep.entity.*;
 import com.aptisprep.entity.User;
 import com.aptisprep.entity.UserGoal;
 import com.aptisprep.entity.UserGoalSkill;
 import com.aptisprep.enums.*;
 import com.aptisprep.exception.BusinessRuleException;
+import com.aptisprep.presentation.*;
+import com.aptisprep.presentation.form.*;
+import com.aptisprep.presentation.form.GoalFormDTO;
 import com.aptisprep.repository.*;
 import com.aptisprep.repository.UserGoalRepository;
 import com.aptisprep.repository.UserRepository;
@@ -141,7 +143,7 @@ class V2BusinessRegressionTests {
     void realUsageBeanProtectsExistingPolicyAndCopiesConfigurationToANewVersion() {
         var rule = rule();
         scoring.saveScaleRule(admin.getEmail(), scheme.getId(), "READING", rule);
-        var band = new ScoreBandFormDTO();
+        var band = new ScoreBandDTO();
         band.setSkill("READING");
         band.setCefrLevel("A1");
         band.setMinScore(BigDecimal.ZERO);
@@ -172,8 +174,8 @@ class V2BusinessRegressionTests {
         assertEquals(1, bands.findBySchemeIdOrderBySkillAscMinScoreAsc(replacement).size());
     }
 
-    private ScoringScaleRuleFormDTO rule() {
-        var f = new ScoringScaleRuleFormDTO();
+    private ScoringScaleRuleDTO rule() {
+        var f = new ScoringScaleRuleDTO();
         f.setRawMin(BigDecimal.ZERO);
         f.setRawMax(BigDecimal.valueOf(40));
         f.setScaleMin(BigDecimal.ZERO);
@@ -463,7 +465,7 @@ class V2BusinessRegressionTests {
         var narrow = rule();
         narrow.setScaleMax(BigDecimal.valueOf(40));
         scoring.saveScaleRule(admin.getEmail(), scheme.getId(), "READING", narrow);
-        var band = new ScoreBandFormDTO();
+        var band = new ScoreBandDTO();
         band.setSkill("READING");
         band.setCefrLevel("A1");
         band.setMinScore(BigDecimal.ZERO);
@@ -497,7 +499,7 @@ class V2BusinessRegressionTests {
 
     private void completeReadingPolicy() {
         scoring.saveScaleRule(admin.getEmail(), scheme.getId(), "READING", rule());
-        var band = new ScoreBandFormDTO();
+        var band = new ScoreBandDTO();
         band.setSkill("READING");
         band.setCefrLevel("A1");
         band.setMinScore(BigDecimal.ZERO);

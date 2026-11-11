@@ -1,11 +1,14 @@
 package com.aptisprep.controller.admin;
 
 import com.aptisprep.controller.ListPagination;
-import com.aptisprep.dto.form.*;
-import com.aptisprep.dto.view.*;
+import com.aptisprep.dto.CertificateDTO;
+import com.aptisprep.dto.ScoreBandDTO;
+import com.aptisprep.dto.ScoringScaleRuleDTO;
 import com.aptisprep.enums.CefrLevel;
 import com.aptisprep.enums.Skill;
 import com.aptisprep.exception.BusinessRuleException;
+import com.aptisprep.presentation.*;
+import com.aptisprep.presentation.form.*;
 import com.aptisprep.service.scoring.ScoringAdminService;
 import jakarta.validation.Valid;
 import java.security.Principal;
@@ -111,7 +114,7 @@ public class AdminScoringController {
     public String createCertificate(Model model) {
         model.addAttribute("editing", false);
         model.addAttribute("readOnly", false);
-        model.addAttribute("certificateForm", new CertificateFormDTO());
+        model.addAttribute("certificateForm", new CertificateDTO());
         return "admin/settings/certificate";
     }
 
@@ -138,7 +141,7 @@ public class AdminScoringController {
     @PostMapping("/admin/certificates")
     public String saveCertificate(
             Principal principal,
-            @Valid @ModelAttribute("certificateForm") CertificateFormDTO form,
+            @Valid @ModelAttribute("certificateForm") CertificateDTO form,
             BindingResult result,
             Model model,
             RedirectAttributes redirect) {
@@ -165,7 +168,7 @@ public class AdminScoringController {
     public String updateCertificate(
             @PathVariable int id,
             Principal principal,
-            @Valid @ModelAttribute("certificateForm") CertificateFormDTO form,
+            @Valid @ModelAttribute("certificateForm") CertificateDTO form,
             BindingResult result,
             Model model,
             RedirectAttributes redirect) {
@@ -212,7 +215,7 @@ public class AdminScoringController {
         model.addAttribute("schemeForm", new ScoringSchemeFormDTO());
         model.addAttribute("selectedSkill", "Reading");
         model.addAttribute("bands", List.of());
-        model.addAttribute("bandForm", new ScoreBandFormDTO());
+        model.addAttribute("bandForm", new ScoreBandDTO());
         return "admin/settings/scheme";
     }
 
@@ -251,7 +254,7 @@ public class AdminScoringController {
             schemeOptions(model);
             model.addAttribute("editing", false);
             model.addAttribute("readOnly", false);
-            model.addAttribute("bandForm", new ScoreBandFormDTO());
+            model.addAttribute("bandForm", new ScoreBandDTO());
             return "admin/settings/scheme";
         }
         try {
@@ -266,7 +269,7 @@ public class AdminScoringController {
             schemeOptions(model);
             model.addAttribute("editing", false);
             model.addAttribute("readOnly", false);
-            model.addAttribute("bandForm", new ScoreBandFormDTO());
+            model.addAttribute("bandForm", new ScoreBandDTO());
             return "admin/settings/scheme";
         }
     }
@@ -322,7 +325,7 @@ public class AdminScoringController {
     public String saveBand(
             @PathVariable int schemeId,
             Principal principal,
-            @Valid @ModelAttribute("bandForm") ScoreBandFormDTO form,
+            @Valid @ModelAttribute("bandForm") ScoreBandDTO form,
             BindingResult result,
             @RequestParam(defaultValue = "Reading") String skill,
             Model model,
@@ -387,7 +390,7 @@ public class AdminScoringController {
         if (!model.containsAttribute("scaleRuleForm"))
             model.addAttribute("scaleRuleForm", scoring.scaleRule(id, skill));
         if (!model.containsAttribute("bandForm")) {
-            ScoreBandFormDTO bandForm = new ScoreBandFormDTO();
+            ScoreBandDTO bandForm = new ScoreBandDTO();
             if (bandId != null) {
                 ScoringViewsDTO.BandView band = scoring.band(id, bandId);
                 bandForm.setId(band.id());
@@ -405,7 +408,7 @@ public class AdminScoringController {
             @PathVariable int schemeId,
             @RequestParam String skill,
             Principal principal,
-            @Valid @ModelAttribute("scaleRuleForm") ScoringScaleRuleFormDTO form,
+            @Valid @ModelAttribute("scaleRuleForm") ScoringScaleRuleDTO form,
             BindingResult result,
             Model model,
             RedirectAttributes redirect) {
@@ -435,8 +438,8 @@ public class AdminScoringController {
                 List.of("Grammar & Vocabulary", "Reading", "Listening", "Writing", "Speaking"));
     }
 
-    private CertificateFormDTO certificateForm(ScoringViewsDTO.CertificateView value) {
-        CertificateFormDTO form = new CertificateFormDTO();
+    private CertificateDTO certificateForm(ScoringViewsDTO.CertificateView value) {
+        CertificateDTO form = new CertificateDTO();
         form.setName(value.name());
         form.setCode(value.code());
         form.setDescription(value.description());

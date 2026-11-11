@@ -2,8 +2,6 @@ package com.aptisprep.service.exam.impl;
 
 import static com.aptisprep.service.grading.impl.GradingContextFormatter.DEFAULT_RUBRIC_VERSION;
 
-import com.aptisprep.dto.form.*;
-import com.aptisprep.dto.view.*;
 import com.aptisprep.entity.*;
 import com.aptisprep.entity.ExamSkillResultEntity;
 import com.aptisprep.entity.User;
@@ -13,6 +11,8 @@ import com.aptisprep.event.AttemptSubmittedEvent;
 import com.aptisprep.exception.AccessDeniedException;
 import com.aptisprep.exception.BusinessRuleException;
 import com.aptisprep.exception.ResourceNotFoundException;
+import com.aptisprep.presentation.*;
+import com.aptisprep.presentation.form.*;
 import com.aptisprep.repository.*;
 import com.aptisprep.service.account.UserService;
 import com.aptisprep.service.admin.ExamCatalogService;

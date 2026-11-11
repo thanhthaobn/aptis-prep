@@ -9,14 +9,14 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
 
 import com.aptisprep.config.AiProperties;
-import com.aptisprep.dto.view.AiAssessmentDTO;
-import com.aptisprep.dto.view.LockedAttemptDTO;
 import com.aptisprep.entity.*;
 import com.aptisprep.entity.User;
 import com.aptisprep.enums.*;
 import com.aptisprep.event.AttemptSubmittedEvent;
 import com.aptisprep.exception.BusinessRuleException;
 import com.aptisprep.exception.ResourceNotFoundException;
+import com.aptisprep.presentation.AiAssessmentDTO;
+import com.aptisprep.presentation.LockedAttemptDTO;
 import com.aptisprep.repository.*;
 import com.aptisprep.repository.UserRepository;
 import com.aptisprep.service.admin.*;

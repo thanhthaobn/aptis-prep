@@ -5,16 +5,17 @@ import static org.assertj.core.api.Assertions.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-import com.aptisprep.dto.form.*;
-import com.aptisprep.dto.form.LessonFormDTO;
-import com.aptisprep.dto.view.*;
-import com.aptisprep.dto.view.LessonAuthorProfileDTO;
+import com.aptisprep.dto.LessonCheckDTO;
 import com.aptisprep.entity.*;
 import com.aptisprep.entity.FlashcardSet;
 import com.aptisprep.entity.LessonEngagement;
 import com.aptisprep.entity.User;
 import com.aptisprep.enums.*;
 import com.aptisprep.exception.BusinessRuleException;
+import com.aptisprep.presentation.*;
+import com.aptisprep.presentation.LessonAuthorProfileDTO;
+import com.aptisprep.presentation.form.*;
+import com.aptisprep.presentation.form.LessonEditorForm;
 import com.aptisprep.repository.*;
 import com.aptisprep.repository.FlashcardSetRepository;
 import com.aptisprep.repository.LearningPathItemRepository;
@@ -58,7 +59,7 @@ class SimpleLessonRulesTests {
         return users.saveAndFlush(u);
     }
 
-    private LessonFormDTO form(String skill) {
+    private LessonEditorForm form(String skill) {
         var f = lessons.newForm(skill, "A1");
         f.setTitle("Simple " + skill);
         f.setStatus("PUBLISHED");
@@ -67,8 +68,8 @@ class SimpleLessonRulesTests {
         return f;
     }
 
-    private void quiz(LessonFormDTO f) {
-        var q = new LessonFormDTO.CheckForm();
+    private void quiz(LessonEditorForm f) {
+        var q = new LessonCheckDTO();
         q.setPrompt("Original question");
         q.setOptionA("One");
         q.setOptionB("Two");
@@ -132,8 +133,7 @@ class SimpleLessonRulesTests {
         for (var skill : java.util.List.of("Writing", "Speaking")) {
             var f = form(skill);
             f.setExampleText(null);
-            assertThat(lessons.save(null, f).getMaterial().getPracticePrompt())
-                    .isEqualTo("Original task");
+            assertThat(lessons.save(null, f).getPracticePrompt()).isEqualTo("Original task");
             var bad = form(skill);
             bad.setPracticePrompt(null);
             assertThatThrownBy(() -> lessons.save(null, bad))
@@ -279,7 +279,7 @@ class SimpleLessonRulesTests {
         var s = teaching.submissionHistory(l.getId(), u.getEmail()).getFirst();
         assertThat(s.getPrompt()).isEqualTo("Original task");
         assertThat(s.getText()).isEqualTo("My original answer");
-        assertThat(s.getContext().getMinWords()).isEqualTo(2);
+        assertThat(s.getContextSnapshotEntity().getMinWords()).isEqualTo(2);
         mvc.perform(
                         get("/student/lessons/"
                                         + l.getId()

@@ -1,6 +1,5 @@
 package com.aptisprep.entity;
 
-import com.aptisprep.dto.view.LessonContextSnapshotEntityDTO;
 import jakarta.persistence.*;
 
 @Entity
@@ -86,30 +85,6 @@ public class LessonContextSnapshotEntity {
 
     @Column(name = "max_words")
     private Integer maxWords;
-
-    public static LessonContextSnapshotEntity capture(Lesson lesson) {
-        LessonMaterial material = lesson.getMaterial();
-        LessonContextSnapshotEntity value = new LessonContextSnapshotEntity();
-        value.title = lesson.getTitle();
-        value.skill = lesson.getSkill();
-        value.description = lesson.getDescription();
-        value.objectives = material == null ? null : material.getObjectives();
-        value.strategy = material == null ? null : material.getStrategy();
-        value.exampleText = material == null ? null : material.getExampleText();
-        value.analysis = material == null ? null : material.getAnalysis();
-        value.practicePrompt = material == null ? null : material.getPracticePrompt();
-        value.imagePath = lesson.getImagePath();
-        value.audioPath = lesson.getAudioPath();
-        value.videoPath = lesson.getVideoPath();
-        value.videoUrl = material == null ? null : material.getVideoUrl();
-        value.minWords = lesson.getMinWordCount();
-        value.maxWords = lesson.getMaxWordCount();
-        return value;
-    }
-
-    public LessonContextSnapshotEntityDTO toRecord() {
-        return LessonContextSnapshotEntityDTO.convertEntityToDto(this);
-    }
 
     public Integer getId() {
         return id;
