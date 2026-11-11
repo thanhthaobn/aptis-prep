@@ -228,7 +228,11 @@ public class LessonTeachingService {
             int total,
             LocalDateTime submittedAt,
             List<AnswerFeedback> answers,
-            LessonContextSnapshot context) {}
+            LessonContextSnapshot context) {
+        public boolean passed() {
+            return LessonCheckService.passed(score, total);
+        }
+    }
 
     public record CompletionState(
             boolean hasQuestions,
@@ -240,7 +244,7 @@ public class LessonTeachingService {
             boolean eligible) {
         public String message(String skill) {
             if (!checkSubmitted && hasQuestions)
-                return "Hãy đạt ít nhất 60% phần kiểm tra kiến thức";
+                return "Hãy đạt ít nhất 80% phần kiểm tra kiến thức";
             if (needsResponse && !responseSaved)
                 return "Speaking".equals(skill)
                         ? "Hãy ghi âm và lưu bản ghi để hoàn thành bài nói"
@@ -372,8 +376,7 @@ public class LessonTeachingService {
         for (LessonCheckAttempt attempt :
                 lessonCheckAttemptRepository.findByUserIdAndLessonIdOrderBySubmittedAtDesc(
                         userId, lessonId)) {
-            if (attempt.getTotal() > 0 && attempt.getScore() * 100 >= attempt.getTotal() * 60)
-                return true;
+            if (LessonCheckService.passed(attempt.getScore(), attempt.getTotal())) return true;
         }
         return false;
     }
@@ -542,7 +545,8 @@ public class LessonTeachingService {
         return key;
     }
 
-    public record CheckView(Integer id, String prompt, List<String> options) {}
+    public record CheckView(
+            Integer id, String prompt, List<String> options, List<Integer> optionValues) {}
 
     public record AnswerFeedback(
             String prompt,
@@ -552,10 +556,18 @@ public class LessonTeachingService {
             String explanation,
             List<String> options) {}
 
-    public record Feedback(int score, int total, List<AnswerFeedback> answers) {}
+    public record Feedback(int score, int total, List<AnswerFeedback> answers) {
+        public boolean passed() {
+            return LessonCheckService.passed(score, total);
+        }
+    }
 
     public List<CheckView> questions(Integer id) {
         return checkService.questions(id);
+    }
+
+    public List<CheckView> questions(Integer id, String email) {
+        return checkService.questions(id, email);
     }
 
     public List<LessonForm.CheckForm> editorQuestions(Integer id) {

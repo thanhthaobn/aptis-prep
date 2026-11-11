@@ -448,9 +448,21 @@ class StructuredLessonTests {
         var a = learner("author-a@test.local");
         var b = learner("author-b@test.local");
         var l = create("Reading");
-        var q = teaching.questions(l.getId()).getFirst();
+        var q = teaching.questions(l.getId(), a.getEmail()).getFirst();
+        assertThat(q.optionValues()).containsExactlyInAnyOrder(0, 1, 2);
         assertThat(teaching.completion(l.getId(), a.getEmail()).eligible()).isFalse();
-        assertThat(teaching.grade(l.getId(), Map.of("q" + q.id(), "1"), a.getEmail()).score())
+        int correctDisplayIndex = q.optionValues().indexOf(1);
+        assertThat(q.options().get(correctDisplayIndex)).isEqualTo("Second");
+        assertThat(
+                        teaching.grade(
+                                        l.getId(),
+                                        Map.of(
+                                                "q" + q.id(),
+                                                q.optionValues()
+                                                        .get(correctDisplayIndex)
+                                                        .toString()),
+                                        a.getEmail())
+                                .score())
                 .isEqualTo(1);
         assertThat(teaching.grade(l.getId(), Map.of("q" + q.id(), "0"), a.getEmail()).score())
                 .isZero();
@@ -462,6 +474,13 @@ class StructuredLessonTests {
         teaching.saveResponse(writing.getId(), "My work", a.getEmail());
         assertThat(teaching.response(writing.getId(), a.getEmail())).isEqualTo("My work");
         assertThat(teaching.response(writing.getId(), b.getEmail())).isEmpty();
+    }
+
+    @Test
+    void knowledgeCheckUsesEightyPercentPassThreshold() {
+        assertThat(LessonCheckService.passed(4, 5)).isTrue();
+        assertThat(LessonCheckService.passed(3, 5)).isFalse();
+        assertThat(LessonCheckService.passed(0, 0)).isFalse();
     }
 
     @Test

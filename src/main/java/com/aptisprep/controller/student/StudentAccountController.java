@@ -11,7 +11,6 @@ import com.aptisprep.service.account.AccountProfileService;
 import com.aptisprep.service.account.LearningActivityService;
 import com.aptisprep.service.contract.ExamAttemptContract;
 import com.aptisprep.service.contract.IntegrationModels.AttemptHandle;
-import com.aptisprep.service.exam.ExamAttemptService;
 import com.aptisprep.service.learning.LessonService;
 import com.aptisprep.service.placement.PlacementService;
 import com.aptisprep.service.scoring.ScoringGuideService;
@@ -168,9 +167,6 @@ public class StudentAccountController {
         if ("PLACEMENT".equalsIgnoreCase(result.examType()) && terminalResult) {
             access.applyAssessment(userId, attemptId);
         }
-        if (!"IN_PROGRESS".equals(result.state())
-                && attempts instanceof ExamAttemptService reviewService)
-            model.addAttribute("review", reviewService.review(userId, attemptId));
         var scoreGuideView = scoringGuides.forResultView(result);
         model.addAttribute("scoreGuides", scoreGuideView.guides());
         model.addAttribute("feedbackWithoutGuide", scoreGuideView.feedbackWithoutGuide());

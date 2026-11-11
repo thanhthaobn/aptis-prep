@@ -8,7 +8,6 @@ import com.aptisprep.service.contract.ExamAttemptContract;
 import com.aptisprep.service.contract.IntegrationModels.AttemptResult;
 import com.aptisprep.service.contract.IntegrationModels.HistoryFilter;
 import com.aptisprep.service.contract.IntegrationModels.HistoryPage;
-import com.aptisprep.service.exam.ExamAttemptService;
 import com.aptisprep.service.learning.LessonService;
 import com.aptisprep.service.scoring.ScoringGuideService;
 import com.aptisprep.service.student.StudentExamCatalogService;
@@ -161,9 +160,6 @@ public class StudentExamCatalogController {
         model.addAttribute("scoreGuides", scoreGuideView.guides());
         model.addAttribute("feedbackWithoutGuide", scoreGuideView.feedbackWithoutGuide());
         model.addAttribute("canRegradeEmpty", attempts.canRegradeEmpty(userId, id));
-        if (!"IN_PROGRESS".equals(result.state())
-                && attempts instanceof ExamAttemptService reviewService)
-            model.addAttribute("review", reviewService.review(userId, id));
         return "student/attempt-result";
     }
 
