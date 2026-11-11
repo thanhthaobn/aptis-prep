@@ -241,7 +241,13 @@
           <div>
             <a class="button button-secondary" th:href="@{/admin/unlock-requests}">
               Yêu cầu mở khóa
-              <span th:if="${pendingUnlockCount != null and pendingUnlockCount > 0}" class="badge bg-warning text-dark" th:text="${pendingUnlockCount}">0</span>
+              <span
+                th:if="${pendingUnlockCount != null and pendingUnlockCount > 0}"
+                class="badge bg-warning text-dark"
+                th:text="${pendingUnlockCount}"
+              >
+                0
+              </span>
             </a>
           </div>
         </header>

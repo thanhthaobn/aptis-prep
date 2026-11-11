@@ -1,37 +1,30 @@
 package com.aptisprep;
 
-import static com.aptisprep.mvc.common.security.SessionMvcRequests.*;
+import static com.aptisprep.security.SessionMvcRequests.*;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-import com.aptisprep.mvc.account.dto.GoalFormDTO;
-import com.aptisprep.mvc.account.entity.UserGoal;
-import com.aptisprep.mvc.account.entity.UserGoalSkill;
-import com.aptisprep.mvc.account.repository.UserGoalRepository;
-import com.aptisprep.mvc.account.repository.UserSkillProfileRepository;
-import com.aptisprep.mvc.account.service.AccountProfileService;
-import com.aptisprep.mvc.auth.entity.User;
-import com.aptisprep.mvc.auth.repository.UserRepository;
-import com.aptisprep.mvc.catalog.dto.*;
-import com.aptisprep.mvc.catalog.entity.*;
-import com.aptisprep.mvc.catalog.repository.*;
-import com.aptisprep.mvc.catalog.service.*;
-import com.aptisprep.mvc.catalog.service.CatalogService;
-import com.aptisprep.mvc.catalog.service.ScoringSchemeUsageService;
-import com.aptisprep.mvc.common.enums.*;
-import com.aptisprep.mvc.common.exception.BusinessRuleException;
-import com.aptisprep.mvc.exam.entity.*;
-import com.aptisprep.mvc.exam.repository.*;
-import com.aptisprep.mvc.exam.service.ExamAttemptService;
-import com.aptisprep.mvc.flashcard.dto.*;
-import com.aptisprep.mvc.flashcard.entity.*;
-import com.aptisprep.mvc.flashcard.repository.*;
-import com.aptisprep.mvc.flashcard.service.FlashcardSetService;
-import com.aptisprep.mvc.scoring.dto.*;
-import com.aptisprep.mvc.scoring.entity.*;
-import com.aptisprep.mvc.scoring.repository.*;
-import com.aptisprep.mvc.scoring.service.*;
+import com.aptisprep.dto.form.*;
+import com.aptisprep.dto.form.GoalFormDTO;
+import com.aptisprep.dto.view.*;
+import com.aptisprep.entity.*;
+import com.aptisprep.entity.User;
+import com.aptisprep.entity.UserGoal;
+import com.aptisprep.entity.UserGoalSkill;
+import com.aptisprep.enums.*;
+import com.aptisprep.exception.BusinessRuleException;
+import com.aptisprep.repository.*;
+import com.aptisprep.repository.UserGoalRepository;
+import com.aptisprep.repository.UserRepository;
+import com.aptisprep.repository.UserSkillProfileRepository;
+import com.aptisprep.service.account.AccountProfileService;
+import com.aptisprep.service.admin.*;
+import com.aptisprep.service.admin.CatalogService;
+import com.aptisprep.service.admin.ScoringSchemeUsageService;
+import com.aptisprep.service.exam.ExamAttemptService;
+import com.aptisprep.service.learning.FlashcardSetService;
+import com.aptisprep.service.scoring.*;
 import java.math.BigDecimal;
 import java.util.*;
 import org.junit.jupiter.api.*;
@@ -66,13 +59,13 @@ class V2BusinessRegressionTests {
     @Autowired QuestionOptionRepository questionOptions;
     @Autowired UserFlashcardProgressRepository progress;
     @Autowired MockMvc mvc;
-    @Autowired com.aptisprep.mvc.student.service.StudentExamCatalogService studentCatalog;
-    @Autowired com.aptisprep.mvc.placement.service.PlacementExamCatalogService placementCatalog;
-    @Autowired com.aptisprep.mvc.placement.service.PlacementService placement;
+    @Autowired com.aptisprep.service.exam.StudentExamCatalogService studentCatalog;
+    @Autowired com.aptisprep.service.exam.PlacementExamCatalogService placementCatalog;
+    @Autowired com.aptisprep.service.exam.PlacementService placement;
     @Autowired ExamAttemptRepository attempts;
     @Autowired UserGoalRepository goals;
     @Autowired UserSkillProfileRepository profiles;
-    @Autowired com.aptisprep.mvc.account.service.AccountAccessService assessmentAccounts;
+    @Autowired com.aptisprep.service.account.AccountAccessService assessmentAccounts;
     User admin, learner;
     Certificate certificate;
     ScoringScheme scheme;
@@ -527,7 +520,7 @@ class V2BusinessRegressionTests {
                 .andExpect(status().is3xxRedirection())
                 .andExpect(flash().attributeExists("error"));
         assertThrows(
-                com.aptisprep.mvc.common.exception.ResourceNotFoundException.class,
+                com.aptisprep.exception.ResourceNotFoundException.class,
                 () -> studentCatalog.entry("exams", exam.getId()));
         assertEquals(0, attempts.countByUserId(learner.getId()));
     }
@@ -548,7 +541,7 @@ class V2BusinessRegressionTests {
                 BusinessRuleException.class,
                 () -> engine.start(learner.getId(), exam.getId(), "foreign-section"));
         assertThrows(
-                com.aptisprep.mvc.common.exception.ResourceNotFoundException.class,
+                com.aptisprep.exception.ResourceNotFoundException.class,
                 () -> studentCatalog.entry("exams", exam.getId()));
         assertEquals(0, attempts.countByUserId(learner.getId()));
     }
@@ -575,7 +568,7 @@ class V2BusinessRegressionTests {
                 BusinessRuleException.class,
                 () -> engine.start(learner.getId(), exam.getId(), "wrong-exam-skill"));
         assertThrows(
-                com.aptisprep.mvc.common.exception.ResourceNotFoundException.class,
+                com.aptisprep.exception.ResourceNotFoundException.class,
                 () -> studentCatalog.entry("exams", exam.getId()));
     }
 
@@ -589,7 +582,7 @@ class V2BusinessRegressionTests {
                 BusinessRuleException.class,
                 () -> engine.start(learner.getId(), exam.getId(), "placement:forged"));
         assertThrows(
-                com.aptisprep.mvc.common.exception.ResourceNotFoundException.class,
+                com.aptisprep.exception.ResourceNotFoundException.class,
                 () -> studentCatalog.entry("exams", exam.getId()));
         assertTrue(
                 placementCatalog.findPublished("READING").stream()
@@ -640,7 +633,7 @@ class V2BusinessRegressionTests {
                 BusinessRuleException.class,
                 () -> engine.startPlacement(learner.getId(), exam.getId(), "inactive-policy"));
         assertThrows(
-                com.aptisprep.mvc.common.exception.ResourceNotFoundException.class,
+                com.aptisprep.exception.ResourceNotFoundException.class,
                 () -> studentCatalog.entry("exams", exam.getId()));
         assertEquals(0, attempts.countByUserId(learner.getId()));
     }
