@@ -1,5 +1,7 @@
 package com.aptisprep.service.grading.impl;
 
+import com.aptisprep.dto.AiAssessmentDTO.AssessmentView;
+import com.aptisprep.dto.LockedAnswerDTO;
 import com.aptisprep.entity.AiAssessment;
 import com.aptisprep.entity.AiAssessmentJob;
 import com.aptisprep.entity.ExamAttemptEntity;
@@ -16,8 +18,6 @@ import com.aptisprep.event.AttemptSubmittedEvent;
 import com.aptisprep.exception.AccessDeniedException;
 import com.aptisprep.exception.BusinessRuleException;
 import com.aptisprep.exception.ResourceNotFoundException;
-import com.aptisprep.presentation.AiAssessmentDTO.AssessmentView;
-import com.aptisprep.presentation.LockedAnswerDTO;
 import com.aptisprep.repository.AiAssessmentJobRepository;
 import com.aptisprep.repository.AiAssessmentRepository;
 import com.aptisprep.repository.ExamSkillResultRepository;

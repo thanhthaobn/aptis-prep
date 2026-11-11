@@ -6,11 +6,11 @@ import org.springframework.web.multipart.MultipartFile;
 
 public interface StorageService {
 
-    String store(MultipartFile file, String folder);
+    public String store(MultipartFile file, String folder);
 
-    Resource load(String relativePath);
+    public Resource load(String relativePath);
 
-    void delete(String relativePath);
+    public void delete(String relativePath);
 
-    Path localPath(String relativePath);
+    public Path localPath(String relativePath);
 }

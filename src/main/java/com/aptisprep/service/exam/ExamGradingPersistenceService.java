@@ -8,27 +8,29 @@ import java.util.List;
 import java.util.Optional;
 
 public interface ExamGradingPersistenceService {
-    Optional<ExamAttemptEntity> findAttemptById(Integer attemptId);
+    public Optional<ExamAttemptEntity> findAttemptById(Integer attemptId);
 
-    Optional<ExamAttemptEntity> findAttemptByIdAndUserId(Integer attemptId, Integer userId);
+    public Optional<ExamAttemptEntity> findAttemptByIdAndUserId(Integer attemptId, Integer userId);
 
-    Optional<ExamAttemptEntity> findAttemptByIdAndUserIdForUpdate(
+    public Optional<ExamAttemptEntity> findAttemptByIdAndUserIdForUpdate(
             Integer attemptId, Integer userId);
 
-    Optional<ExamAttemptEntity> findAttemptByIdForUpdate(Integer attemptId);
+    public Optional<ExamAttemptEntity> findAttemptByIdForUpdate(Integer attemptId);
 
-    ExamAttemptEntity saveAttempt(ExamAttemptEntity attempt);
+    public ExamAttemptEntity saveAttempt(ExamAttemptEntity attempt);
 
-    Optional<ExamAttemptSnapshotEntity> findSnapshotByAttemptId(Integer attemptId);
+    public Optional<ExamAttemptSnapshotEntity> findSnapshotByAttemptId(Integer attemptId);
 
-    List<UserAnswerEntity> findAnswersByAttemptId(Integer attemptId);
+    public List<UserAnswerEntity> findAnswersByAttemptId(Integer attemptId);
 
-    Optional<UserAnswerEntity> findAnswerByIdAndAttemptId(Integer answerId, Integer attemptId);
+    public Optional<UserAnswerEntity> findAnswerByIdAndAttemptId(
+            Integer answerId, Integer attemptId);
 
-    Optional<UserAnswerEntity> findAnswerByAttemptIdAndQuestionId(
+    public Optional<UserAnswerEntity> findAnswerByAttemptIdAndQuestionId(
             Integer attemptId, Integer questionId);
 
-    UserAnswerEntity saveAnswer(UserAnswerEntity answer);
+    public UserAnswerEntity saveAnswer(UserAnswerEntity answer);
 
-    Optional<UserAnswerDetailEntity> findAnswerDetail(Integer userAnswerId, Integer questionItemId);
+    public Optional<UserAnswerDetailEntity> findAnswerDetail(
+            Integer userAnswerId, Integer questionItemId);
 }

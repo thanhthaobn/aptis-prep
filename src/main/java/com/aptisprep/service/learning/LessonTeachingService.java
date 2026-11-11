@@ -1,84 +1,84 @@
 package com.aptisprep.service.learning;
 
 import com.aptisprep.dto.LessonCheckDTO;
+import com.aptisprep.dto.LessonEditorForm;
+import com.aptisprep.dto.LessonMediaResourceDTO;
+import com.aptisprep.dto.LessonResponseDTO;
+import com.aptisprep.dto.LessonTeachingViewsDTO.*;
+import com.aptisprep.dto.LessonWorkSubmissionDTO;
 import com.aptisprep.entity.LessonResponse;
 import com.aptisprep.entity.LessonWorkSubmission;
-import com.aptisprep.presentation.LessonMediaResourceDTO;
-import com.aptisprep.presentation.LessonResponseDTO;
-import com.aptisprep.presentation.LessonTeachingViewsDTO.*;
-import com.aptisprep.presentation.LessonWorkSubmissionDTO;
-import com.aptisprep.presentation.form.LessonEditorForm;
 import java.util.List;
 import java.util.Map;
 import org.springframework.web.multipart.MultipartFile;
 
 public interface LessonTeachingService {
-    ReleaseStateDTO releaseState(Integer id, String email);
+    public ReleaseStateDTO releaseState(Integer id, String email);
 
-    boolean canAssess(Integer id, String email);
+    public boolean canAssess(Integer id, String email);
 
-    boolean aiAvailable();
+    public boolean aiAvailable();
 
-    HistoricalMediaDTO historicalMedia(
+    public HistoricalMediaDTO historicalMedia(
             Integer lessonId, Integer historyId, String kind, String email, boolean quiz);
 
-    void resetAudioEngagement(Integer id);
+    public void resetAudioEngagement(Integer id);
 
-    LessonResponse savedWork(Integer lessonId, String email);
+    public LessonResponse savedWork(Integer lessonId, String email);
 
-    LessonResponseDTO savedWorkDto(Integer lessonId, String email);
+    public LessonResponseDTO savedWorkDto(Integer lessonId, String email);
 
-    void saveRecording(Integer lessonId, MultipartFile file, String email);
+    public void saveRecording(Integer lessonId, MultipartFile file, String email);
 
-    String message(String skill);
+    public String message(String skill);
 
-    List<AttemptViewDTO> history(Integer lessonId, String email);
+    public List<AttemptViewDTO> history(Integer lessonId, String email);
 
-    List<LessonWorkSubmission> submissionHistory(Integer lessonId, String email);
+    public List<LessonWorkSubmission> submissionHistory(Integer lessonId, String email);
 
-    List<LessonWorkSubmissionDTO> submissionHistoryDto(Integer lessonId, String email);
+    public List<LessonWorkSubmissionDTO> submissionHistoryDto(Integer lessonId, String email);
 
-    List<LessonWorkSubmission> assessableSubmissions(Integer lessonId, String email);
+    public List<LessonWorkSubmission> assessableSubmissions(Integer lessonId, String email);
 
-    List<LessonWorkSubmissionDTO> assessableSubmissionsDto(Integer lessonId, String email);
+    public List<LessonWorkSubmissionDTO> assessableSubmissionsDto(Integer lessonId, String email);
 
-    String submissionAudio(Integer lessonId, Integer submissionId, String email);
+    public String submissionAudio(Integer lessonId, Integer submissionId, String email);
 
-    void submitResponse(Integer lessonId, String text, String email);
+    public void submitResponse(Integer lessonId, String text, String email);
 
-    CompletionStateDTO completion(Integer lessonId, String email);
+    public CompletionStateDTO completion(Integer lessonId, String email);
 
-    void section(Integer lessonId, String section, String email);
+    public void section(Integer lessonId, String section, String email);
 
-    String lastSection(Integer lessonId, String email);
+    public String lastSection(Integer lessonId, String email);
 
-    LessonStatsDTO stats(Integer lessonId);
+    public LessonStatsDTO stats(Integer lessonId);
 
-    String response(Integer lessonId, String email);
+    public String response(Integer lessonId, String email);
 
-    void saveResponse(Integer lessonId, String text, String email);
+    public void saveResponse(Integer lessonId, String text, String email);
 
-    String assess(Integer lessonId, Integer submissionId, String email);
+    public String assess(Integer lessonId, Integer submissionId, String email);
 
-    List<CheckViewDTO> questions(Integer id);
+    public List<CheckViewDTO> questions(Integer id);
 
-    List<CheckViewDTO> questions(Integer id, String email);
+    public List<CheckViewDTO> questions(Integer id, String email);
 
-    List<LessonCheckDTO> editorQuestions(Integer id);
+    public List<LessonCheckDTO> editorQuestions(Integer id);
 
-    void validate(LessonEditorForm f);
+    public void validate(LessonEditorForm f);
 
-    void saveChecks(Integer id, List<LessonCheckDTO> forms);
+    public void saveChecks(Integer id, List<LessonCheckDTO> forms);
 
-    FeedbackDTO grade(Integer id, Map<String, String> answers, String email);
+    public FeedbackDTO grade(Integer id, Map<String, String> answers, String email);
 
-    LessonMediaResourceDTO getLessonAudio(Integer lessonId, String email);
+    public LessonMediaResourceDTO getLessonAudio(Integer lessonId, String email);
 
-    String getStudentRecordingPath(Integer lessonId, String email);
+    public String getStudentRecordingPath(Integer lessonId, String email);
 
-    String getLessonImagePath(Integer lessonId, String email);
+    public String getLessonImagePath(Integer lessonId, String email);
 
-    String getLessonVideoPath(Integer lessonId, String email);
+    public String getLessonVideoPath(Integer lessonId, String email);
 
-    String videoId(String videoUrl);
+    public String videoId(String videoUrl);
 }

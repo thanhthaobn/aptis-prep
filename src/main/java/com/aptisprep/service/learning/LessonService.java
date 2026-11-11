@@ -1,69 +1,93 @@
 package com.aptisprep.service.learning;
 
+import com.aptisprep.dto.LessonActivityDTO;
 import com.aptisprep.dto.LessonDTO;
+import com.aptisprep.dto.LessonEditorForm;
+import com.aptisprep.dto.LessonProgressDTO;
+import com.aptisprep.dto.LessonTeachingViewsDTO.CheckViewDTO;
+import com.aptisprep.dto.LessonTeachingViewsDTO.LessonStatsDTO;
+import com.aptisprep.dto.LessonTreeViewsDTO.NeighborsDTO;
+import com.aptisprep.dto.LessonTreeViewsDTO.SkillBranchDTO;
 import com.aptisprep.entity.Lesson;
-import com.aptisprep.enums.CefrLevel;
-import com.aptisprep.enums.Skill;
-import com.aptisprep.presentation.LessonActivityDTO;
-import com.aptisprep.presentation.LessonProgressDTO;
-import com.aptisprep.presentation.LessonTeachingViewsDTO.CheckViewDTO;
-import com.aptisprep.presentation.LessonTeachingViewsDTO.LessonStatsDTO;
-import com.aptisprep.presentation.LessonTreeViewsDTO.NeighborsDTO;
-import com.aptisprep.presentation.LessonTreeViewsDTO.SkillBranchDTO;
-import com.aptisprep.presentation.form.LessonEditorForm;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import org.springframework.web.multipart.MultipartFile;
 
 public interface LessonService {
-    List<String> SKILLS = Skill.labels();
-    List<String> LEVELS = CefrLevel.curriculumLevels();
-    List<String> STATUSES = List.of("DRAFT", "PUBLISHED", "ARCHIVED");
 
-    List<Lesson> adminLessons();
+    public List<Lesson> getAllAdminLessons();
 
-    List<LessonDTO> adminLessonDTOs();
+    public List<Lesson> adminLessons();
 
-    List<SkillBranchDTO> adminTree();
+    public List<LessonDTO> getAllAdminLessonDTOs();
 
-    List<SkillBranchDTO> adminTree(List<Lesson> all);
+    public List<LessonDTO> adminLessonDTOs();
 
-    LessonEditorForm newForm(String skill, String level);
+    public List<SkillBranchDTO> getAdminTree();
 
-    List<Lesson> publishedLessons();
+    public List<SkillBranchDTO> adminTree();
 
-    List<LessonDTO> publishedLessonDTOs();
+    public List<SkillBranchDTO> getAdminTree(List<Lesson> all);
 
-    Lesson require(Integer id);
+    public List<SkillBranchDTO> adminTree(List<Lesson> all);
 
-    LessonDTO requireDto(Integer id);
+    public LessonEditorForm createNewForm(String skill, String level);
 
-    Lesson requirePublished(Integer id);
+    public LessonEditorForm newForm(String skill, String level);
 
-    LessonDTO requirePublishedDto(Integer id);
+    public List<Lesson> getPublishedLessons();
 
-    List<CheckViewDTO> questions(Integer lessonId);
+    public List<Lesson> publishedLessons();
 
-    LessonStatsDTO stats(Integer lessonId);
+    public List<LessonDTO> getPublishedLessonDTOs();
 
-    LessonEditorForm form(Integer id);
+    public List<LessonDTO> publishedLessonDTOs();
 
-    Lesson save(Integer id, LessonEditorForm f);
+    public Lesson getLessonById(Integer id);
 
-    Lesson save(Integer id, LessonEditorForm f, MultipartFile audio, boolean removeAudio);
+    public Lesson require(Integer id);
 
-    Lesson save(
+    public LessonDTO getLessonDtoById(Integer id);
+
+    public LessonDTO requireDto(Integer id);
+
+    public Lesson getPublishedLessonById(Integer id);
+
+    public Lesson requirePublished(Integer id);
+
+    public LessonDTO getPublishedLessonDtoById(Integer id);
+
+    public LessonDTO requirePublishedDto(Integer id);
+
+    public List<CheckViewDTO> getQuestionsByLessonId(Integer lessonId);
+
+    public List<CheckViewDTO> questions(Integer lessonId);
+
+    public LessonStatsDTO getLessonStatistics(Integer lessonId);
+
+    public LessonStatsDTO stats(Integer lessonId);
+
+    public LessonEditorForm getLessonFormById(Integer id);
+
+    public LessonEditorForm form(Integer id);
+
+    public Lesson save(Integer id, LessonEditorForm lessonForm);
+
+    public Lesson save(
+            Integer id, LessonEditorForm lessonForm, MultipartFile audio, boolean removeAudio);
+
+    public Lesson save(
             Integer id,
-            LessonEditorForm f,
+            LessonEditorForm lessonForm,
             MultipartFile audio,
             boolean removeAudio,
             MultipartFile image,
             boolean removeImage);
 
-    Lesson save(
+    public Lesson save(
             Integer id,
-            LessonEditorForm f,
+            LessonEditorForm lessonForm,
             MultipartFile audio,
             boolean removeAudio,
             MultipartFile image,
@@ -71,9 +95,9 @@ public interface LessonService {
             MultipartFile video,
             boolean removeVideo);
 
-    LessonDTO saveDto(
+    public LessonDTO saveDto(
             Integer id,
-            LessonEditorForm f,
+            LessonEditorForm lessonForm,
             MultipartFile audio,
             boolean removeAudio,
             MultipartFile image,
@@ -81,33 +105,45 @@ public interface LessonService {
             MultipartFile video,
             boolean removeVideo);
 
-    void archive(Integer id);
+    public void archiveLesson(Integer id);
 
-    Lesson duplicate(Integer id);
+    public void archive(Integer id);
 
-    LessonDTO duplicateDto(Integer id);
+    public Lesson duplicateLesson(Integer id);
 
-    void move(Integer id, int direction);
+    public Lesson duplicate(Integer id);
 
-    LessonProgressDTO recordOpen(String email, Integer lessonId);
+    public LessonDTO duplicateLessonDto(Integer id);
 
-    LessonProgressDTO complete(String email, Integer lessonId);
+    public LessonDTO duplicateDto(Integer id);
 
-    LessonProgressDTO progress(String email, Integer lessonId);
+    public void moveLesson(Integer id, int direction);
 
-    Map<Integer, String> lessonStatuses(String email, Collection<Integer> lessonIds);
+    public void move(Integer id, int direction);
 
-    NeighborsDTO neighbors(Integer lessonId);
+    public LessonProgressDTO recordOpen(String email, Integer lessonId);
 
-    NeighborsDTO neighbors(Lesson lesson);
+    public LessonProgressDTO complete(String email, Integer lessonId);
 
-    String getSkill(Integer lessonId);
+    public LessonProgressDTO progress(String email, Integer lessonId);
 
-    List<LessonActivityDTO> findLessonActivitiesByUserId(Integer userId);
+    public Map<Integer, String> lessonStatuses(String email, Collection<Integer> lessonIds);
 
-    List<java.time.LocalDateTime> findPracticeDatesByUserId(Integer userId);
+    public NeighborsDTO getNeighbors(Integer lessonId);
 
-    long countLessons();
+    public NeighborsDTO neighbors(Integer lessonId);
 
-    List<Lesson> findRecentLessons(int limit);
+    public NeighborsDTO getNeighbors(Lesson lesson);
+
+    public NeighborsDTO neighbors(Lesson lesson);
+
+    public String getSkill(Integer lessonId);
+
+    public List<LessonActivityDTO> findLessonActivitiesByUserId(Integer userId);
+
+    public List<java.time.LocalDateTime> findPracticeDatesByUserId(Integer userId);
+
+    public long countLessons();
+
+    public List<Lesson> findRecentLessons(int limit);
 }

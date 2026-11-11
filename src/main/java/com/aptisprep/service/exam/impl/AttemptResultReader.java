@@ -1,12 +1,11 @@
 package com.aptisprep.service.exam.impl;
 
+import com.aptisprep.dto.*;
 import com.aptisprep.entity.*;
 import com.aptisprep.entity.User;
 import com.aptisprep.enums.Role;
 import com.aptisprep.enums.UserStatus;
 import com.aptisprep.exception.*;
-import com.aptisprep.presentation.*;
-import com.aptisprep.presentation.form.*;
 import com.aptisprep.repository.ExamAttemptRepository;
 import com.aptisprep.repository.UserAnswerRepository;
 import com.aptisprep.service.account.UserService;

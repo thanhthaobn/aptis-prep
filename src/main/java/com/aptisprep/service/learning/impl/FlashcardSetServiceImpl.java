@@ -2,15 +2,18 @@ package com.aptisprep.service.learning.impl;
 
 import com.aptisprep.dto.FlashcardDTO;
 import com.aptisprep.dto.FlashcardSetDTO;
+import com.aptisprep.dto.FlashcardSetDTO.Row;
+import com.aptisprep.dto.FlashcardSetFormDTO;
+import com.aptisprep.dto.FlashcardViewsDTO.*;
 import com.aptisprep.entity.*;
 import com.aptisprep.entity.Lesson;
 import com.aptisprep.entity.User;
 import com.aptisprep.entity.UserFlashcardProgress;
 import com.aptisprep.enums.*;
+import com.aptisprep.enums.CefrLevel;
+import com.aptisprep.enums.ContentStatus;
+import com.aptisprep.enums.Skill;
 import com.aptisprep.exception.*;
-import com.aptisprep.presentation.FlashcardViewsDTO.*;
-import com.aptisprep.presentation.form.FlashcardSetFormDTO;
-import com.aptisprep.presentation.form.FlashcardSetFormDTO.Row;
 import com.aptisprep.repository.FlashcardRepository;
 import com.aptisprep.repository.FlashcardSetRepository;
 import com.aptisprep.repository.UserFlashcardProgressRepository;
@@ -49,10 +52,10 @@ public class FlashcardSetServiceImpl implements FlashcardSetService {
     @Override
     public List<SkillSets> groupBySkillAndLevel(List<SetView> values) {
         List<SkillSets> branches = new ArrayList<>();
-        for (String skill : LessonService.SKILLS) {
+        for (String skill : Skill.labels()) {
             List<LevelSets> levels = new ArrayList<>();
             int setCount = 0;
-            for (String level : LessonService.LEVELS) {
+            for (String level : CefrLevel.curriculumLevels()) {
                 List<SetView> grouped = lessonSetsFor(values, skill, level);
                 if (grouped.isEmpty()) continue;
                 levels.add(new LevelSets(level, grouped));
@@ -185,8 +188,8 @@ public class FlashcardSetServiceImpl implements FlashcardSetService {
     }
 
     private Integer save(Integer id, FlashcardSetFormDTO f, Lesson lesson, User owner) {
-        if (!LessonService.LEVELS.contains(f.getCefrLevel())
-                || !LessonService.STATUSES.contains(f.getStatus()))
+        if (!CefrLevel.curriculumLevels().contains(f.getCefrLevel())
+                || !ContentStatus.codes().contains(f.getStatus()))
             throw new BusinessRuleException("Cấp độ hoặc trạng thái không hợp lệ");
         if (f.getRows() == null || f.getRows().isEmpty() || f.getRows().size() > 200)
             throw new BusinessRuleException("Bộ thẻ cần từ 1 đến 200 cặp từ và nghĩa");

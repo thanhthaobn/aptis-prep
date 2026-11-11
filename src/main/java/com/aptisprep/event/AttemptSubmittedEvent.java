@@ -1,6 +1,6 @@
 package com.aptisprep.event;
 
-import com.aptisprep.presentation.LockedAttemptDTO;
+import com.aptisprep.dto.LockedAttemptDTO;
 
 public record AttemptSubmittedEvent(
         Integer userId,

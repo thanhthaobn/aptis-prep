@@ -1,13 +1,13 @@
 package com.aptisprep.service.learning.impl;
 
+import com.aptisprep.dto.LearnerContextDTO;
+import com.aptisprep.dto.LessonRecommendationDTO;
+import com.aptisprep.dto.PathProgressDTO;
+import com.aptisprep.dto.SkillLevelDTO;
+import com.aptisprep.dto.SkillTargetDTO;
 import com.aptisprep.entity.Lesson;
 import com.aptisprep.entity.LessonProgress;
 import com.aptisprep.enums.CefrLevel;
-import com.aptisprep.presentation.LearnerContextDTO;
-import com.aptisprep.presentation.LessonRecommendationDTO;
-import com.aptisprep.presentation.PathProgressDTO;
-import com.aptisprep.presentation.SkillLevelDTO;
-import com.aptisprep.presentation.SkillTargetDTO;
 import com.aptisprep.repository.LessonProgressRepository;
 import com.aptisprep.service.account.AccountAccessService;
 import com.aptisprep.service.learning.LessonRecommendationService;

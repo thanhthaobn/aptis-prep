@@ -1,7 +1,7 @@
 package com.aptisprep.service.account;
 
-import com.aptisprep.presentation.LearningActivityDTO.ActivityViewDTO;
+import com.aptisprep.dto.LearningActivityDTO.ActivityViewDTO;
 
 public interface LearningActivityService {
-    ActivityViewDTO activity(String email);
+    public ActivityViewDTO activity(String email);
 }

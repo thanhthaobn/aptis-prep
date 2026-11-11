@@ -1,15 +1,15 @@
 package com.aptisprep.service.exam.impl;
 
+import com.aptisprep.dto.StudentCatalogViewDTO;
+import com.aptisprep.dto.StudentCatalogViewDTO.Block;
+import com.aptisprep.dto.StudentCatalogViewDTO.Entry;
+import com.aptisprep.dto.StudentCatalogViewDTO.Fact;
 import com.aptisprep.entity.MockExamEntity;
 import com.aptisprep.entity.MockExamQuestionEntity;
 import com.aptisprep.entity.MockExamSectionEntity;
 import com.aptisprep.entity.QuestionMediaEntity;
 import com.aptisprep.exception.BusinessRuleException;
 import com.aptisprep.exception.ResourceNotFoundException;
-import com.aptisprep.presentation.StudentCatalogViewDTO;
-import com.aptisprep.presentation.StudentCatalogViewDTO.Block;
-import com.aptisprep.presentation.StudentCatalogViewDTO.Entry;
-import com.aptisprep.presentation.StudentCatalogViewDTO.Fact;
 import com.aptisprep.service.admin.ExamCatalogService;
 import com.aptisprep.service.exam.StudentExamCatalogService;
 import java.text.Normalizer;
@@ -33,6 +33,9 @@ public class StudentExamCatalogServiceImpl implements StudentExamCatalogService 
                     "WRITING",
                     "SPEAKING",
                     "FULL_MOCK");
+    public static final List<String> SORT_OPTIONS = List.of("level", "newest", "duration");
+    public static final List<String> EXAM_TYPES =
+            List.of("PRACTICE", "FULL_MOCK", "PLACEMENT", "CHECKPOINT");
     private static final List<String> LEVEL_ORDER = List.of("A1", "A2", "B1", "B2", "C1");
 
     private final ExamCatalogService catalogService;
@@ -199,6 +202,11 @@ public class StudentExamCatalogServiceImpl implements StudentExamCatalogService 
     private boolean isCompositeExam(MockExamEntity exam) {
         return "FULL_MOCK".equals(normalizeSkill(exam.getSkill()))
                 || "FULL_MOCK".equals(normalizeSkill(exam.getExamType()));
+    }
+
+    @Override
+    public Entry getExamEntryById(String module, int id) {
+        return entry(module, id);
     }
 
     public Entry entry(String module, int id) {

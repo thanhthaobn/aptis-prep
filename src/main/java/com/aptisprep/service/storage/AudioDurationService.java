@@ -1,5 +1,5 @@
 package com.aptisprep.service.storage;
 
 public interface AudioDurationService {
-    double seconds(String relativePath);
+    public double seconds(String relativePath);
 }

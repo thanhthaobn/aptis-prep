@@ -1,13 +1,13 @@
 package com.aptisprep.service.exam;
 
+import com.aptisprep.dto.AdminHistoryFilterDTO;
+import com.aptisprep.dto.AdminHistoryPageDTO;
+import com.aptisprep.dto.AttemptHandleDTO;
+import com.aptisprep.dto.AttemptResultDTO;
+import com.aptisprep.dto.HistoryFilterDTO;
+import com.aptisprep.dto.HistoryPageDTO;
 import com.aptisprep.entity.MockExamEntity;
 import com.aptisprep.entity.MockExamQuestionEntity;
-import com.aptisprep.presentation.AdminHistoryPageDTO;
-import com.aptisprep.presentation.AttemptHandleDTO;
-import com.aptisprep.presentation.AttemptResultDTO;
-import com.aptisprep.presentation.HistoryPageDTO;
-import com.aptisprep.presentation.form.AdminHistoryFilterDTO;
-import com.aptisprep.presentation.form.HistoryFilterDTO;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.time.Instant;
 import java.util.List;
@@ -17,56 +17,57 @@ import org.springframework.core.io.Resource;
 import org.springframework.web.multipart.MultipartFile;
 
 public interface ExamAttemptService {
-    boolean hasInProgressPlacement(Integer userId, String skill);
+    public boolean hasInProgressPlacement(Integer userId, String skill);
 
-    boolean hasInProgressPlacement(Integer userId);
+    public boolean hasInProgressPlacement(Integer userId);
 
-    boolean hasPlacementAttempt(Integer userId);
+    public boolean hasPlacementAttempt(Integer userId);
 
-    AttemptHandleDTO start(Integer userId, Integer examId, String requestKey);
+    public AttemptHandleDTO start(Integer userId, Integer examId, String requestKey);
 
-    Integer latestResumableAttemptId(Integer userId, Integer examId);
+    public Integer latestResumableAttemptId(Integer userId, Integer examId);
 
-    AttemptHandleDTO startPlacement(Integer userId, Integer examId, String requestKey);
+    public AttemptHandleDTO startPlacement(Integer userId, Integer examId, String requestKey);
 
-    AttemptHandleDTO startCheckpoint(
+    public AttemptHandleDTO startCheckpoint(
             Integer userId, Integer examId, Integer pathId, String requestKey);
 
-    Optional<Integer> checkpointOriginPathId(Integer userId, Integer attemptId);
+    public Optional<Integer> checkpointOriginPathId(Integer userId, Integer attemptId);
 
-    void submit(Integer userId, Integer attemptId, String requestKey);
+    public void submit(Integer userId, Integer attemptId, String requestKey);
 
-    AttemptResultDTO result(Integer userId, Integer attemptId);
+    public AttemptResultDTO result(Integer userId, Integer attemptId);
 
-    HistoryPageDTO history(Integer userId, int page, int size);
+    public HistoryPageDTO history(Integer userId, int page, int size);
 
-    HistoryPageDTO history(Integer userId, int page, int size, HistoryFilterDTO filter);
+    public HistoryPageDTO history(Integer userId, int page, int size, HistoryFilterDTO filter);
 
-    AdminHistoryPageDTO adminHistory(
+    public AdminHistoryPageDTO adminHistory(
             String adminEmail, int page, int size, AdminHistoryFilterDTO filter);
 
-    AttemptResultDTO adminResult(String adminEmail, Integer attemptId);
+    public AttemptResultDTO adminResult(String adminEmail, Integer attemptId);
 
-    void retryFailedGrading(Integer userId, Integer attemptId, String requestKey);
+    public void retryFailedGrading(Integer userId, Integer attemptId, String requestKey);
 
-    boolean canRegradeEmpty(Integer userId, Integer attemptId);
+    public boolean canRegradeEmpty(Integer userId, Integer attemptId);
 
-    void regradeEmpty(Integer userId, Integer attemptId);
+    public void regradeEmpty(Integer userId, Integer attemptId);
 
-    void saveSpeakingAudio(
+    public void saveSpeakingAudio(
             Integer userId,
             Integer attemptId,
             Integer questionId,
             Integer itemId,
             MultipartFile audioFile);
 
-    MediaPlayResult playMedia(Integer userId, Integer attemptId, Integer mediaId);
+    public MediaPlayResult playMedia(Integer userId, Integer attemptId, Integer mediaId);
 
-    MediaResource mediaContent(Integer userId, Integer attemptId, Integer mediaId, String token);
+    public MediaResource mediaContent(
+            Integer userId, Integer attemptId, Integer mediaId, String token);
 
-    MediaResource speakingAudio(Integer userId, Integer attemptId, Integer answerId);
+    public MediaResource speakingAudio(Integer userId, Integer attemptId, Integer answerId);
 
-    void saveAnswer(
+    public void saveAnswer(
             Integer userId,
             Integer attemptId,
             Integer questionId,
@@ -75,44 +76,44 @@ public interface ExamAttemptService {
             Integer userPosition,
             String textAnswer);
 
-    void discard(Integer userId, Integer attemptId);
+    public void discard(Integer userId, Integer attemptId);
 
-    void advanceSection(Integer userId, Integer attemptId, int sectionEndMinute);
+    public void advanceSection(Integer userId, Integer attemptId, int sectionEndMinute);
 
-    boolean sectionDeadlineReached(Integer userId, Integer attemptId, int sectionEndMinute);
+    public boolean sectionDeadlineReached(Integer userId, Integer attemptId, int sectionEndMinute);
 
-    boolean examDeadlineReached(Integer userId, Integer attemptId);
+    public boolean examDeadlineReached(Integer userId, Integer attemptId);
 
-    AttemptReview review(Integer userId, Integer attemptId);
+    public AttemptReview review(Integer userId, Integer attemptId);
 
-    AttemptReview adminReview(String adminEmail, Integer attemptId);
+    public AttemptReview adminReview(String adminEmail, Integer attemptId);
 
-    void adminDiscard(String adminEmail, Integer attemptId);
+    public void adminDiscard(String adminEmail, Integer attemptId);
 
-    MediaResource reviewMedia(Integer userId, Integer attemptId, Integer mediaId);
+    public MediaResource reviewMedia(Integer userId, Integer attemptId, Integer mediaId);
 
-    MediaResource reviewRecording(
+    public MediaResource reviewRecording(
             Integer userId, Integer attemptId, Integer questionId, Integer itemId);
 
-    AttemptPage page(Integer userId, Integer attemptId);
+    public AttemptPage page(Integer userId, Integer attemptId);
 
-    void preserveLegacyAttempts(Integer examId);
+    public void preserveLegacyAttempts(Integer examId);
 
-    void validateExamReady(MockExamEntity exam, List<MockExamQuestionEntity> links);
+    public void validateExamReady(MockExamEntity exam, List<MockExamQuestionEntity> links);
 
-    void validateExamForPublication(MockExamEntity exam, List<MockExamQuestionEntity> links);
+    public void validateExamForPublication(MockExamEntity exam, List<MockExamQuestionEntity> links);
 
-    List<java.time.LocalDateTime> findSubmittedDatesByUserId(Integer userId);
+    public List<java.time.LocalDateTime> findSubmittedDatesByUserId(Integer userId);
 
-    record SnapshotSchemeInfo(Integer scoringSchemeId, String skill) {}
+    public record SnapshotSchemeInfo(Integer scoringSchemeId, String skill) {}
 
-    Optional<SnapshotSchemeInfo> findSnapshotSchemeInfo(Integer attemptId);
+    public Optional<SnapshotSchemeInfo> findSnapshotSchemeInfo(Integer attemptId);
 
-    boolean hasAnswersForQuestion(Integer questionId);
+    public boolean hasAnswersForQuestion(Integer questionId);
 
-    boolean hasAttemptsForScoringScheme(Integer schemeId);
+    public boolean hasAttemptsForScoringScheme(Integer schemeId);
 
-    record SectionPage(
+    public record SectionPage(
             int index,
             String skill,
             int durationMinutes,
@@ -120,7 +121,7 @@ public interface ExamAttemptService {
             String state,
             boolean open) {}
 
-    record AttemptPage(
+    public record AttemptPage(
             Integer attemptId,
             String title,
             String examType,
@@ -195,7 +196,7 @@ public interface ExamAttemptService {
         }
     }
 
-    record QuestionPage(
+    public record QuestionPage(
             Integer questionId,
             String content,
             String instruction,
@@ -206,7 +207,7 @@ public interface ExamAttemptService {
             List<ItemPage> items,
             List<MediaPage> media) {}
 
-    record ItemPage(
+    public record ItemPage(
             Integer itemId,
             int position,
             String content,
@@ -227,11 +228,12 @@ public interface ExamAttemptService {
         }
     }
 
-    record OptionPage(Integer id, String code, String content, @JsonIgnore boolean correct) {}
+    public record OptionPage(
+            Integer id, String code, String content, @JsonIgnore boolean correct) {}
 
-    record MediaPage(Integer id, String type, String filename, String contentType) {}
+    public record MediaPage(Integer id, String type, String filename, String contentType) {}
 
-    record MediaPlayResult(
+    public record MediaPlayResult(
             Integer mediaId,
             int playCount,
             int maxPlayCount,
@@ -239,7 +241,7 @@ public interface ExamAttemptService {
             boolean browserSpeech,
             String speechText) {}
 
-    record MediaResource(Resource resource, String contentType) {}
+    public record MediaResource(Resource resource, String contentType) {}
 
-    record AttemptReview(String title, List<QuestionPage> questions) {}
+    public record AttemptReview(String title, List<QuestionPage> questions) {}
 }

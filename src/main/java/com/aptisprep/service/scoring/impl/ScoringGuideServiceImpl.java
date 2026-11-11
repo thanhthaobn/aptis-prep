@@ -1,8 +1,8 @@
 package com.aptisprep.service.scoring.impl;
 
+import com.aptisprep.dto.AttemptResultDTO;
+import com.aptisprep.dto.SkillResultDTO;
 import com.aptisprep.entity.*;
-import com.aptisprep.presentation.AttemptResultDTO;
-import com.aptisprep.presentation.SkillResultDTO;
 import com.aptisprep.repository.*;
 import com.aptisprep.service.admin.ExamCatalogService;
 import com.aptisprep.service.exam.ExamAttemptService;

@@ -1,10 +1,10 @@
 package com.aptisprep.service.exam.impl;
 
+import com.aptisprep.dto.AttemptHandleDTO;
+import com.aptisprep.dto.AttemptResultDTO;
+import com.aptisprep.dto.PlacementDTO.PlacementExam;
+import com.aptisprep.dto.PlacementDTO.PlacementOption;
 import com.aptisprep.exception.BusinessRuleException;
-import com.aptisprep.presentation.AttemptHandleDTO;
-import com.aptisprep.presentation.AttemptResultDTO;
-import com.aptisprep.presentation.PlacementDTO.PlacementExam;
-import com.aptisprep.presentation.PlacementDTO.PlacementOption;
 import com.aptisprep.service.account.AccountAccessService;
 import com.aptisprep.service.admin.ExamCatalogService;
 import com.aptisprep.service.exam.ExamAttemptService;

@@ -1,7 +1,7 @@
 package com.aptisprep.service.grading;
 
-import com.aptisprep.presentation.GradingResultDTO;
+import com.aptisprep.dto.GradingResultDTO;
 
 public interface WritingGradingService {
-    GradingResultDTO grade(String prompt, String answer);
+    public GradingResultDTO grade(String prompt, String answer);
 }

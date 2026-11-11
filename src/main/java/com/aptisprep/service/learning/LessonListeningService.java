@@ -1,11 +1,11 @@
 package com.aptisprep.service.learning;
 
-import com.aptisprep.presentation.LessonPlaybackDTO;
+import com.aptisprep.dto.LessonPlaybackDTO;
 
 public interface LessonListeningService {
-    LessonPlaybackDTO start(Integer lessonId, String email, double position);
+    public LessonPlaybackDTO start(Integer lessonId, String email, double position);
 
-    LessonPlaybackDTO heartbeat(
+    public LessonPlaybackDTO heartbeat(
             Integer lessonId,
             String email,
             String token,
@@ -14,6 +14,6 @@ public interface LessonListeningService {
             boolean playing,
             boolean discontinuity);
 
-    record Playback(
+    public record Playback(
             String token, int sequence, double duration, double listened, boolean verified) {}
 }

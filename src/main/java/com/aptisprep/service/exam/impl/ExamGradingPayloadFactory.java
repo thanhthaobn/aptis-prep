@@ -2,11 +2,11 @@ package com.aptisprep.service.exam.impl;
 
 import static com.aptisprep.service.grading.impl.GradingContextFormatter.DEFAULT_RUBRIC_VERSION;
 
+import com.aptisprep.dto.LockedAnswerDTO;
+import com.aptisprep.dto.LockedAttemptDTO;
+import com.aptisprep.dto.LockedItemDTO;
 import com.aptisprep.entity.*;
 import com.aptisprep.exception.BusinessRuleException;
-import com.aptisprep.presentation.LockedAnswerDTO;
-import com.aptisprep.presentation.LockedAttemptDTO;
-import com.aptisprep.presentation.LockedItemDTO;
 import com.aptisprep.repository.UserAnswerDetailRepository;
 import com.aptisprep.repository.UserAnswerRepository;
 import com.aptisprep.service.grading.impl.GradingContextFormatter;

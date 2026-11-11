@@ -6,15 +6,15 @@ import com.aptisprep.event.AiAssessmentCompletedEvent;
 import com.aptisprep.event.AttemptSubmittedEvent;
 
 public interface AttemptFinalizationService {
-    boolean finalizeIfReady(ExamAttemptEntity attempt, MockExamEntity exam);
+    public boolean finalizeIfReady(ExamAttemptEntity attempt, MockExamEntity exam);
 
-    void publishCompleted(ExamAttemptEntity attempt, MockExamEntity exam);
+    public void publishCompleted(ExamAttemptEntity attempt, MockExamEntity exam);
 
-    void applyAiAssessment(AiAssessmentCompletedEvent event);
+    public void applyAiAssessment(AiAssessmentCompletedEvent event);
 
-    void markSubjectiveUnavailable(AttemptSubmittedEvent event, String reason);
+    public void markSubjectiveUnavailable(AttemptSubmittedEvent event, String reason);
 
-    boolean accepts(AttemptSubmittedEvent event);
+    public boolean accepts(AttemptSubmittedEvent event);
 
-    void retryFailedGrading(Integer userId, Integer attemptId);
+    public void retryFailedGrading(Integer userId, Integer attemptId);
 }

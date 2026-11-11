@@ -1,10 +1,10 @@
 package com.aptisprep.service.exam;
 
-import com.aptisprep.presentation.PlacementDTO.PlacementExam;
+import com.aptisprep.dto.PlacementDTO.PlacementExam;
 import java.util.List;
 
 public interface PlacementExamCatalogService {
-    List<PlacementExam> findPublished();
+    public List<PlacementExam> findPublished();
 
-    List<PlacementExam> findPublished(String skill);
+    public List<PlacementExam> findPublished(String skill);
 }

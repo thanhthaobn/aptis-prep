@@ -1,5 +1,7 @@
 package com.aptisprep.service.account.impl;
 
+import com.aptisprep.dto.AuthResultDTO;
+import com.aptisprep.dto.RegisterFormDTO;
 import com.aptisprep.dto.UserDTO;
 import com.aptisprep.entity.User;
 import com.aptisprep.enums.Role;
@@ -7,8 +9,6 @@ import com.aptisprep.enums.UserStatus;
 import com.aptisprep.exception.BusinessRuleException;
 import com.aptisprep.exception.DuplicateEmailException;
 import com.aptisprep.exception.ResourceNotFoundException;
-import com.aptisprep.presentation.AuthResultDTO;
-import com.aptisprep.presentation.form.RegisterFormDTO;
 import com.aptisprep.repository.UserRepository;
 import com.aptisprep.security.LoginSession;
 import com.aptisprep.service.account.UserService;

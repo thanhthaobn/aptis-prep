@@ -1,22 +1,25 @@
 package com.aptisprep.service.learning.impl;
 
+import com.aptisprep.dto.LessonActivityDTO;
 import com.aptisprep.dto.LessonDTO;
+import com.aptisprep.dto.LessonEditorForm;
+import com.aptisprep.dto.LessonProgressDTO;
+import com.aptisprep.dto.LessonTeachingViewsDTO.CheckViewDTO;
+import com.aptisprep.dto.LessonTeachingViewsDTO.CompletionStateDTO;
+import com.aptisprep.dto.LessonTeachingViewsDTO.LessonStatsDTO;
+import com.aptisprep.dto.LessonTreeViewsDTO.LevelBranchDTO;
+import com.aptisprep.dto.LessonTreeViewsDTO.NeighborsDTO;
+import com.aptisprep.dto.LessonTreeViewsDTO.SkillBranchDTO;
 import com.aptisprep.entity.Lesson;
 import com.aptisprep.entity.LessonCheckAttempt;
 import com.aptisprep.entity.LessonProgress;
 import com.aptisprep.entity.User;
+import com.aptisprep.enums.CefrLevel;
+import com.aptisprep.enums.ContentStatus;
+import com.aptisprep.enums.Skill;
 import com.aptisprep.enums.UserStatus;
 import com.aptisprep.exception.BusinessRuleException;
 import com.aptisprep.exception.ResourceNotFoundException;
-import com.aptisprep.presentation.LessonActivityDTO;
-import com.aptisprep.presentation.LessonProgressDTO;
-import com.aptisprep.presentation.LessonTeachingViewsDTO.CheckViewDTO;
-import com.aptisprep.presentation.LessonTeachingViewsDTO.CompletionStateDTO;
-import com.aptisprep.presentation.LessonTeachingViewsDTO.LessonStatsDTO;
-import com.aptisprep.presentation.LessonTreeViewsDTO.LevelBranchDTO;
-import com.aptisprep.presentation.LessonTreeViewsDTO.NeighborsDTO;
-import com.aptisprep.presentation.LessonTreeViewsDTO.SkillBranchDTO;
-import com.aptisprep.presentation.form.LessonEditorForm;
 import com.aptisprep.repository.LessonCheckAttemptRepository;
 import com.aptisprep.repository.LessonProgressRepository;
 import com.aptisprep.repository.LessonRepository;
@@ -64,8 +67,18 @@ public class LessonServiceImpl implements LessonService {
     }
 
     @Override
+    public List<Lesson> getAllAdminLessons() {
+        return adminLessons();
+    }
+
+    @Override
     public List<Lesson> adminLessons() {
         return lessonRepository.findAllByOrderBySkillAscCefrLevelAscDisplayOrderAsc();
+    }
+
+    @Override
+    public List<LessonDTO> getAllAdminLessonDTOs() {
+        return adminLessonDTOs();
     }
 
     @Override
@@ -74,18 +87,28 @@ public class LessonServiceImpl implements LessonService {
     }
 
     @Override
+    public List<SkillBranchDTO> getAdminTree() {
+        return adminTree();
+    }
+
+    @Override
     public List<SkillBranchDTO> adminTree() {
         return adminTree(adminLessons());
     }
 
     @Override
+    public List<SkillBranchDTO> getAdminTree(List<Lesson> all) {
+        return adminTree(all);
+    }
+
+    @Override
     public List<SkillBranchDTO> adminTree(List<Lesson> all) {
-        return SKILLS.stream()
+        return Skill.labels().stream()
                 .map(
                         skill ->
                                 new SkillBranchDTO(
                                         skill,
-                                        LEVELS.stream()
+                                        CefrLevel.curriculumLevels().stream()
                                                 .map(
                                                         level ->
                                                                 new LevelBranchDTO(
@@ -114,8 +137,13 @@ public class LessonServiceImpl implements LessonService {
     }
 
     @Override
+    public LessonEditorForm createNewForm(String skill, String level) {
+        return newForm(skill, level);
+    }
+
+    @Override
     public LessonEditorForm newForm(String skill, String level) {
-        if (!SKILLS.contains(skill) || !LEVELS.contains(level))
+        if (!Skill.labels().contains(skill) || !CefrLevel.curriculumLevels().contains(level))
             throw new BusinessRuleException("Kỹ năng hoặc cấp độ không hợp lệ");
         int max =
                 adminLessons().stream()
@@ -136,13 +164,28 @@ public class LessonServiceImpl implements LessonService {
     }
 
     @Override
+    public List<Lesson> getPublishedLessons() {
+        return publishedLessons();
+    }
+
+    @Override
     public List<Lesson> publishedLessons() {
         return lessonRepository.findByStatusOrderBySkillAscCefrLevelAscDisplayOrderAsc("PUBLISHED");
     }
 
     @Override
+    public List<LessonDTO> getPublishedLessonDTOs() {
+        return publishedLessonDTOs();
+    }
+
+    @Override
     public List<LessonDTO> publishedLessonDTOs() {
         return publishedLessons().stream().map(LessonDTO::convertEntityToDto).toList();
+    }
+
+    @Override
+    public Lesson getLessonById(Integer id) {
+        return require(id);
     }
 
     @Override
@@ -153,21 +196,41 @@ public class LessonServiceImpl implements LessonService {
     }
 
     @Override
+    public LessonDTO getLessonDtoById(Integer id) {
+        return requireDto(id);
+    }
+
+    @Override
     public LessonDTO requireDto(Integer id) {
-        return LessonDTO.convertEntityToDto(require(id));
+        return LessonDTO.convertEntityToDto(getLessonById(id));
+    }
+
+    @Override
+    public Lesson getPublishedLessonById(Integer id) {
+        return requirePublished(id);
     }
 
     @Override
     public Lesson requirePublished(Integer id) {
-        Lesson l = require(id);
-        if (!"PUBLISHED".equals(l.getStatus()))
+        Lesson lessonEntity = getLessonById(id);
+        if (!"PUBLISHED".equals(lessonEntity.getStatus()))
             throw new ResourceNotFoundException("Bài học chưa được công bố");
-        return l;
+        return lessonEntity;
+    }
+
+    @Override
+    public LessonDTO getPublishedLessonDtoById(Integer id) {
+        return requirePublishedDto(id);
     }
 
     @Override
     public LessonDTO requirePublishedDto(Integer id) {
-        return LessonDTO.convertEntityToDto(requirePublished(id));
+        return LessonDTO.convertEntityToDto(getPublishedLessonById(id));
+    }
+
+    @Override
+    public List<CheckViewDTO> getQuestionsByLessonId(Integer lessonId) {
+        return questions(lessonId);
     }
 
     @Override
@@ -176,18 +239,60 @@ public class LessonServiceImpl implements LessonService {
     }
 
     @Override
+    public LessonStatsDTO getLessonStatistics(Integer lessonId) {
+        return stats(lessonId);
+    }
+
+    @Override
     public LessonStatsDTO stats(Integer lessonId) {
         return teaching.stats(lessonId);
     }
 
     @Override
+    public LessonEditorForm getLessonFormById(Integer id) {
+        return form(id);
+    }
+
+    @Override
     public LessonEditorForm form(Integer id) {
-        Lesson l = require(id);
-        LessonEditorForm f = LessonDTO.convertEntityToDto(l).toForm();
-        f.setChecks(new ArrayList<>(teaching.editorQuestions(id)));
-        if (f.getTranscriptVisibility() == null) f.setTranscriptVisibility("AFTER_LISTEN");
-        if (f.getSampleVisibility() == null) f.setSampleVisibility("AFTER_SUBMIT");
-        return f;
+        Lesson lessonEntity = getLessonById(id);
+        LessonEditorForm lessonForm = LessonDTO.convertEntityToDto(lessonEntity).toForm();
+        lessonForm.setChecks(new ArrayList<>(teaching.editorQuestions(id)));
+        if (lessonForm.getTranscriptVisibility() == null)
+            lessonForm.setTranscriptVisibility("AFTER_LISTEN");
+        if (lessonForm.getSampleVisibility() == null)
+            lessonForm.setSampleVisibility("AFTER_SUBMIT");
+        return lessonForm;
+    }
+
+    @Override
+    public void archiveLesson(Integer id) {
+        archive(id);
+    }
+
+    @Override
+    public Lesson duplicateLesson(Integer id) {
+        return duplicate(id);
+    }
+
+    @Override
+    public LessonDTO duplicateLessonDto(Integer id) {
+        return duplicateDto(id);
+    }
+
+    @Override
+    public void moveLesson(Integer id, int direction) {
+        move(id, direction);
+    }
+
+    @Override
+    public NeighborsDTO getNeighbors(Integer lessonId) {
+        return neighbors(lessonId);
+    }
+
+    @Override
+    public NeighborsDTO getNeighbors(Lesson lesson) {
+        return neighbors(lesson);
     }
 
     @Override
@@ -410,17 +515,20 @@ public class LessonServiceImpl implements LessonService {
         return require(lessonId).getSkill();
     }
 
-    private void validate(LessonEditorForm f, Integer id) {
-        if (!SKILLS.contains(f.getSkill())
-                || !LEVELS.contains(f.getCefrLevel())
-                || !STATUSES.contains(f.getStatus()))
+    private void validate(LessonEditorForm lessonForm, Integer id) {
+        if (!Skill.labels().contains(lessonForm.getSkill())
+                || !CefrLevel.curriculumLevels().contains(lessonForm.getCefrLevel())
+                || !ContentStatus.codes().contains(lessonForm.getStatus()))
             throw new BusinessRuleException("Kỹ năng, CEFR hoặc trạng thái không hợp lệ");
-        if (f.getMinWordCount() != null
-                && f.getMaxWordCount() != null
-                && f.getMinWordCount() > f.getMaxWordCount())
+        if (lessonForm.getMinWordCount() != null
+                && lessonForm.getMaxWordCount() != null
+                && lessonForm.getMinWordCount() > lessonForm.getMaxWordCount())
             throw new BusinessRuleException("Số từ tối thiểu không được lớn hơn số từ tối đa");
         if (lessonRepository.existsBySkillAndCefrLevelAndDisplayOrderAndIdNot(
-                f.getSkill(), f.getCefrLevel(), f.getDisplayOrder(), id == null ? -1 : id))
+                lessonForm.getSkill(),
+                lessonForm.getCefrLevel(),
+                lessonForm.getDisplayOrder(),
+                id == null ? -1 : id))
             throw new BusinessRuleException(
                     "Thứ tự bài học đã tồn tại trong kỹ năng và cấp độ này");
     }

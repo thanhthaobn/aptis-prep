@@ -1,7 +1,7 @@
 package com.aptisprep.service.admin;
 
-import com.aptisprep.presentation.AdminDashboardViewDTO;
+import com.aptisprep.dto.AdminDashboardViewDTO;
 
 public interface AdminDashboardService {
-    AdminDashboardViewDTO dashboard(String adminEmail);
+    public AdminDashboardViewDTO dashboard(String adminEmail);
 }

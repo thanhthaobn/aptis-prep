@@ -1,8 +1,8 @@
 package com.aptisprep.service.account.impl;
 
-import com.aptisprep.presentation.LearningActivityDTO.ActivityViewDTO;
-import com.aptisprep.presentation.LearningActivityDTO.DayDTO;
-import com.aptisprep.presentation.LearningActivityDTO.WeekDTO;
+import com.aptisprep.dto.LearningActivityDTO.ActivityViewDTO;
+import com.aptisprep.dto.LearningActivityDTO.DayDTO;
+import com.aptisprep.dto.LearningActivityDTO.WeekDTO;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;

@@ -1,9 +1,9 @@
 package com.aptisprep.service.grading.impl;
 
 import com.aptisprep.config.AiProperties;
+import com.aptisprep.dto.GradingResultDTO;
 import com.aptisprep.enums.CefrLevel;
 import com.aptisprep.exception.AiGradingException;
-import com.aptisprep.presentation.GradingResultDTO;
 import com.aptisprep.service.grading.SpeakingGradingService;
 import com.aptisprep.service.grading.WritingGradingService;
 import java.io.IOException;

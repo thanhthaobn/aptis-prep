@@ -7,15 +7,16 @@ import java.util.Optional;
 
 /** Owner 1 read-only contract for question/exam flows. */
 public interface CertificateSchemeService {
-    List<CertificateOption> activeCertificates();
+    public List<CertificateOption> activeCertificates();
 
-    List<SchemeOption> activeSchemes(Integer certificateId);
+    public List<SchemeOption> activeSchemes(Integer certificateId);
 
-    SchemeOption requireAvailableScheme(Integer certificateId, Integer schemeId, String skill);
+    public SchemeOption requireAvailableScheme(
+            Integer certificateId, Integer schemeId, String skill);
 
-    record CertificateOption(Integer id, String code, String name) {}
+    public record CertificateOption(Integer id, String code, String name) {}
 
-    record SchemeOption(
+    public record SchemeOption(
             Integer id,
             Integer certificateId,
             String version,
@@ -23,15 +24,15 @@ public interface CertificateSchemeService {
             String status,
             List<String> skills) {}
 
-    Optional<Certificate> findCertificateById(Integer id);
+    public Optional<Certificate> findCertificateById(Integer id);
 
-    Optional<Certificate> findById(Integer id);
+    public Optional<Certificate> findById(Integer id);
 
-    Optional<Certificate> findByCodeIgnoreCase(String code);
+    public Optional<Certificate> findByCodeIgnoreCase(String code);
 
-    List<Certificate> findAllActiveCertificates();
+    public List<Certificate> findAllActiveCertificates();
 
-    Optional<ScoringScheme> findSchemeById(Integer id);
+    public Optional<ScoringScheme> findSchemeById(Integer id);
 
-    List<ScoringScheme> findAllActiveSchemes();
+    public List<ScoringScheme> findAllActiveSchemes();
 }

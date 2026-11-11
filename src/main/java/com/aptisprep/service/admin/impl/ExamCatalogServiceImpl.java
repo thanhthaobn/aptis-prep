@@ -1,10 +1,10 @@
 package com.aptisprep.service.admin.impl;
 
+import com.aptisprep.dto.ExamSummaryDTO;
+import com.aptisprep.dto.ExamViewDTO;
+import com.aptisprep.dto.QuestionViewDTO;
 import com.aptisprep.entity.*;
 import com.aptisprep.exception.ResourceNotFoundException;
-import com.aptisprep.presentation.ExamSummaryDTO;
-import com.aptisprep.presentation.ExamViewDTO;
-import com.aptisprep.presentation.QuestionViewDTO;
 import com.aptisprep.repository.*;
 import com.aptisprep.service.admin.ExamCatalogService;
 import java.util.List;
