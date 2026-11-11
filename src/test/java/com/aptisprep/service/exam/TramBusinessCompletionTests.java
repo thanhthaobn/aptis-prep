@@ -1,7 +1,12 @@
 package com.aptisprep.service.exam;
 
+import static com.aptisprep.security.SessionMvcRequests.csrf;
+import static com.aptisprep.security.SessionMvcRequests.user;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.flash;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
 
 import com.aptisprep.config.AiProperties;
 import com.aptisprep.entity.*;
@@ -25,13 +30,16 @@ import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.test.context.event.ApplicationEvents;
 import org.springframework.test.context.event.RecordApplicationEvents;
+import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionTemplate;
 import tools.jackson.databind.json.JsonMapper;
 
 @SpringBootTest
+@AutoConfigureMockMvc
 @RecordApplicationEvents
 class TramBusinessCompletionTests {
     @Autowired ExamAttemptService engine;
@@ -56,6 +64,7 @@ class TramBusinessCompletionTests {
     @Autowired ScoringSchemeRepository schemes;
     @Autowired ScoringScaleRuleRepository scaleRules;
     @Autowired ScoreBandRepository bands;
+    @Autowired MockMvc mvc;
     private final JsonMapper json = JsonMapper.builder().build();
 
     @ParameterizedTest
@@ -136,6 +145,28 @@ class TramBusinessCompletionTests {
                         "\"lockedQuestionSnapshot\"")) {
             assertFalse(page.contains(secret), secret);
         }
+    }
+
+    @Test
+    void submitEndpointRejectsBlankAnswersEvenWhenAutomaticFlagIsSpoofed() throws Exception {
+        var f = fixture(2);
+        int id = start(f);
+
+        mvc.perform(
+                        post("/student/attempts/" + id + "/submit")
+                                .param("automatic", "true")
+                                .with(user(f.user().getEmail()).roles("STUDENT"))
+                                .with(csrf()))
+                .andExpect(redirectedUrl("/student/attempts/" + id))
+                .andExpect(
+                        flash().attribute(
+                                        "error",
+                                        org.hamcrest.Matchers.containsString(
+                                                "2 câu chưa hoàn thành")));
+
+        var attempt = attempts.findById(id).orElseThrow();
+        assertEquals("IN_PROGRESS", attempt.getStatus());
+        assertNull(attempt.getSubmittedAt());
     }
 
     @Test

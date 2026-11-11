@@ -507,6 +507,7 @@
             method="post"
             th:action="@{/student/attempts/{id}/next-section(id=${attempt.attemptId})}"
           >
+            <input type="hidden" name="automatic" value="false" />
             <input
               type="hidden"
               name="sectionEndMinute"
@@ -519,6 +520,7 @@
             method="post"
             th:action="@{/student/attempts/{id}/submit(id=${attempt.attemptId})}"
           >
+            <input type="hidden" name="automatic" value="false" />
             <p
               id="attempt-submit-error"
               class="alert alert-danger ap-alert ap-alert-danger"

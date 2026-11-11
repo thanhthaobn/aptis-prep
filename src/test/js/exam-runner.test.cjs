@@ -9,7 +9,7 @@ const source = readFileSync(
 );
 const tick = () => new Promise((resolve) => setImmediate(resolve));
 
-function exam() {
+function exam({ answered = true } = {}) {
   const events = {},
     requests = [],
     confirmations = [],
@@ -29,6 +29,7 @@ function exam() {
     },
   };
   const button = { disabled: false, textContent: 'Nộp bài' };
+  const automaticInput = { value: 'false' };
   const answer = {
     dataset: { autosave: '/answers/autosave' },
     value: 'first answer',
@@ -37,12 +38,24 @@ function exam() {
       events[name] = handler;
     },
   };
+  const item = {
+    dataset: { itemId: '101', saved: String(answered) },
+    addEventListener() {},
+    contains: () => false,
+    focus() {},
+    querySelector: () => null,
+    querySelectorAll: () => [],
+  };
+  const questionPage = {
+    querySelectorAll: (selector) => (selector === '.question-item' ? [item] : []),
+  };
   const submit = {
     addEventListener: (name, handler) => {
       events.submitAttempt = handler;
     },
     setAttribute() {},
     removeAttribute() {},
+    querySelector: (selector) => (selector === 'input[name="automatic"]' ? automaticInput : null),
     submit() {
       submissions++;
     },
@@ -97,7 +110,11 @@ function exam() {
       new Promise((resolve) => requests.push({ url, body: request.body, resolve })),
     document: {
       querySelector: () => ({ content: 'csrf-token' }),
-      querySelectorAll: (selector) => (selector === '.answer-form' ? [answer] : []),
+      querySelectorAll: (selector) => {
+        if (selector === '.answer-form') return [answer];
+        if (selector === '.exam-question-page') return [questionPage];
+        return [];
+      },
       getElementById: (id) => ids[id] || null,
       body: { classList: { contains: () => false } },
     },
@@ -179,6 +196,15 @@ test('cancelling the in-page submit confirmation keeps the attempt editable', as
   assert.equal(page.submissions(), 0);
   assert.equal(page.requests.length, 0);
   assert.equal(page.button.disabled, false);
+});
+
+test('manual submission is blocked while an answer is still blank', () => {
+  const page = exam({ answered: false });
+  page.submit();
+  assert.equal(page.confirmations.length, 0);
+  assert.equal(page.submissions(), 0);
+  assert.equal(page.error.hidden, false);
+  assert.match(page.error.textContent, /1 câu chưa hoàn thành/);
 });
 
 test('confirmed submission saves the last answer before submitting exactly once', async () => {

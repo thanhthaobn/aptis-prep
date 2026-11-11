@@ -189,6 +189,21 @@
     const button = nextSection ? nextSectionButton : submitButton;
     const buttonLabel = nextSection ? 'Sang phần tiếp theo' : 'Nộp bài';
     if (!automatic) {
+      const incomplete = [...answerItems.values()]
+        .map(({ item }) => item)
+        .filter((item) => !itemIsAnswered(item));
+      if (incomplete.length) {
+        if (submitError) {
+          submitError.textContent = `Bạn còn ${incomplete.length} câu chưa hoàn thành. Hãy trả lời đầy đủ trước khi ${nextSection ? 'sang phần tiếp theo' : 'nộp bài'}.`;
+          submitError.hidden = false;
+          submitError.focus();
+        }
+        const firstIncomplete = incomplete[0];
+        questionLinks
+          .find((link) => link.dataset.itemId === firstIncomplete.dataset.itemId)
+          ?.click();
+        return;
+      }
       clearWritingLimitErrors();
       const invalid = writingLimitErrors();
       invalid.forEach(({ textarea, message }) => {
@@ -280,6 +295,8 @@
       }
       return;
     }
+    const automaticInput = formToSubmit?.querySelector('input[name="automatic"]');
+    if (automaticInput) automaticInput.value = String(automatic);
     formToSubmit?.submit();
   };
   submitForm?.addEventListener('submit', (event) => {
