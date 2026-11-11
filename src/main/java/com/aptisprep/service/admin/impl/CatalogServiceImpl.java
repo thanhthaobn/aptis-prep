@@ -471,6 +471,8 @@ public class CatalogServiceImpl implements CatalogService {
                 .toList();
     }
 
+    @Override
+    @Transactional(readOnly = true)
     public List<SchemeOptionDTO> activeSchemes() {
         return certificateSchemes.findAllActiveSchemes().stream()
                 .map(
