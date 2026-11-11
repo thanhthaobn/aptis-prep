@@ -1,11 +1,11 @@
 package com.aptisprep.service.admin.impl;
 
+import com.aptisprep.dto.ExamFormDTO;
 import com.aptisprep.entity.QuestionEntity;
 import com.aptisprep.entity.ScoringScheme;
 import com.aptisprep.enums.CefrLevel;
 import com.aptisprep.enums.Skill;
 import com.aptisprep.exception.BusinessRuleException;
-import com.aptisprep.presentation.form.ExamFormDTO;
 import com.aptisprep.repository.QuestionRepository;
 import com.aptisprep.service.scoring.CertificateSchemeService;
 import java.util.*;

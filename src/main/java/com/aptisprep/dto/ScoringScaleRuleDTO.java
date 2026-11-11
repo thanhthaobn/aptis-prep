@@ -62,21 +62,37 @@ public class ScoringScaleRuleDTO {
                 entity.getScaleMax());
     }
 
-    public static ScoringScaleRule convertDtoToEntity(ScoringScaleRuleDTO dto) {
-        return convertDtoToEntity(dto, schemeReference(dto == null ? null : dto.scoringSchemeId));
+    public ScoringScaleRule convertDtoToEntity() {
+        return convertDtoToEntity(schemeReference(this.scoringSchemeId));
+    }
+
+    public ScoringScaleRule convertDtoToEntity(ScoringScheme scheme) {
+        ScoringScaleRule entity =
+                new ScoringScaleRule(
+                        scheme, this.skill, this.rawMin, this.rawMax, this.scaleMin, this.scaleMax);
+        if (this.id != null) entity.setId(this.id);
+        return entity;
     }
 
     public static ScoringScaleRule convertDtoToEntity(
             ScoringScaleRuleDTO dto, ScoringScheme scheme) {
-        if (dto == null) return null;
-        return new ScoringScaleRule(
-                dto.id, scheme, dto.skill, dto.rawMin, dto.rawMax, dto.scaleMin, dto.scaleMax);
+        return dto == null ? null : dto.convertDtoToEntity(scheme);
     }
 
     public static ScoringScaleRule convertDtoToEntity(
             ScoringScaleRuleDTO dto, ScoringScheme scheme, String skill) {
-        if (dto != null) dto.setSkill(skill);
-        return convertDtoToEntity(dto, scheme);
+        if (dto == null) return null;
+        dto.setSkill(skill);
+        return dto.convertDtoToEntity(scheme);
+    }
+
+    public void updateEntityFromDto(ScoringScaleRule entity) {
+        if (entity == null) return;
+        entity.setSkill(this.skill);
+        entity.setRawMin(this.rawMin);
+        entity.setRawMax(this.rawMax);
+        entity.setScaleMin(this.scaleMin);
+        entity.setScaleMax(this.scaleMax);
     }
 
     private static ScoringScheme schemeReference(Integer id) {

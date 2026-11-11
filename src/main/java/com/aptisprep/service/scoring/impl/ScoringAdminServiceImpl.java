@@ -1,5 +1,6 @@
 package com.aptisprep.service.scoring.impl;
 
+import com.aptisprep.dto.*;
 import com.aptisprep.dto.CertificateDTO;
 import com.aptisprep.dto.ScoreBandDTO;
 import com.aptisprep.dto.ScoringScaleRuleDTO;
@@ -12,8 +13,6 @@ import com.aptisprep.enums.Skill;
 import com.aptisprep.exception.AccessDeniedException;
 import com.aptisprep.exception.BusinessRuleException;
 import com.aptisprep.exception.ResourceNotFoundException;
-import com.aptisprep.presentation.*;
-import com.aptisprep.presentation.form.*;
 import com.aptisprep.repository.*;
 import com.aptisprep.service.account.UserService;
 import com.aptisprep.service.admin.ScoringSchemeUsageService;
@@ -742,6 +741,151 @@ public class ScoringAdminServiceImpl implements ScoringAdminService {
             case INACTIVE -> "Ngừng sử dụng";
             case DRAFT -> "Bản nháp";
         };
+    }
+
+    @Override
+    public List<ScoringViewsDTO.CertificateView> getAllCertificateViews() {
+        return certificateViews();
+    }
+
+    @Override
+    public List<ScoringViewsDTO.SchemeView> getAllSchemeViews() {
+        return schemeViews();
+    }
+
+    @Override
+    public List<ScoringViewsDTO.SchemeExamTypeView> getAllSchemeExamTypes() {
+        return schemeExamTypes();
+    }
+
+    @Override
+    public ScoringViewsDTO.CertificateView getCertificateById(Integer id) {
+        return certificate(id);
+    }
+
+    @Override
+    public ScoringViewsDTO.SchemeView getScoringSchemeById(Integer id) {
+        return scheme(id);
+    }
+
+    @Override
+    public List<ScoringViewsDTO.BandView> getScoreBandViews(Integer schemeId, String skill) {
+        return bandViews(schemeId, skill);
+    }
+
+    @Override
+    public ScoringViewsDTO.BandView getScoreBandById(Integer schemeId, Integer bandId) {
+        return band(schemeId, bandId);
+    }
+
+    @Override
+    public List<ScoringViewsDTO.BandView> getAllScoreBandViews(Integer schemeId) {
+        return allBandViews(schemeId);
+    }
+
+    @Override
+    public ScoringScaleRuleDTO getScaleRule(Integer schemeId, String skill) {
+        return scaleRule(schemeId, skill);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public void populateScoringSchemeModel(
+            int id,
+            String skill,
+            Integer bandId,
+            boolean readOnly,
+            org.springframework.ui.Model model) {
+        skill =
+                switch (skill.toUpperCase(Locale.ROOT).replaceAll("[^A-Z0-9]+", "_")) {
+                    case "GRAMMAR_VOCABULARY" -> "Grammar & Vocabulary";
+                    case "READING" -> "Reading";
+                    case "LISTENING" -> "Listening";
+                    case "WRITING" -> "Writing";
+                    case "SPEAKING" -> "Speaking";
+                    default -> throw new BusinessRuleException("Kỹ năng không hợp lệ");
+                };
+        ScoringViewsDTO.SchemeView value = getScoringSchemeById(id);
+        if (value.scopeSkill() != null) {
+            skill =
+                    switch (value.scopeSkill()
+                            .toUpperCase(Locale.ROOT)
+                            .replaceAll("[^A-Z0-9]+", "_")) {
+                        case "GRAMMAR_VOCABULARY" -> "Grammar & Vocabulary";
+                        case "READING" -> "Reading";
+                        case "LISTENING" -> "Listening";
+                        case "WRITING" -> "Writing";
+                        case "SPEAKING" -> "Speaking";
+                        default -> value.scopeSkill();
+                    };
+        }
+        model.addAttribute("certificates", getAllCertificateViews());
+        model.addAttribute(
+                "examTypes", List.of("PLACEMENT", "PRACTICE", "CHECKPOINT", "FULL_MOCK"));
+        model.addAttribute("scoringLevels", CefrLevel.codes());
+        model.addAttribute("fullMockScoringLevels", CefrLevel.scoringCodes());
+        model.addAttribute("skillCodes", Skill.codes());
+        model.addAttribute(
+                "examTypeLabels",
+                Map.of(
+                        "PLACEMENT", "Kiểm tra đầu vào",
+                        "CHECKPOINT", "Kiểm tra cuối chặng",
+                        "FULL_MOCK", "Thi thử tổng hợp",
+                        "PRACTICE", "Bài luyện tập"));
+        model.addAttribute(
+                "skillLabels",
+                Map.of(
+                        "GRAMMAR_VOCABULARY", "Grammar & Vocabulary",
+                        "READING", "Reading",
+                        "LISTENING", "Listening",
+                        "WRITING", "Writing",
+                        "SPEAKING", "Speaking"));
+        if (value.scopeSkill() != null) {
+            model.addAttribute("skills", List.of(skill));
+        } else {
+            model.addAttribute(
+                    "skills",
+                    List.of("Grammar & Vocabulary", "Reading", "Listening", "Writing", "Speaking"));
+        }
+        model.addAttribute("scheme", value);
+        if (!model.containsAttribute("schemeForm")) {
+            ScoringSchemeFormDTO form = new ScoringSchemeFormDTO();
+            form.setCertificateId(value.certificateId());
+            form.setName(value.name());
+            form.setVersion(value.version());
+            form.setExamType(value.examType());
+            form.setScopeSkill(value.scopeSkill());
+            form.setStatus(value.status());
+            populateScoreConfiguration(id, form);
+            model.addAttribute("schemeForm", form);
+        }
+        model.addAttribute("editing", true);
+        model.addAttribute("readOnly", readOnly);
+        model.addAttribute("selectedSkill", skill);
+        model.addAttribute("bands", getScoreBandViews(id, skill));
+        Object bandErrors =
+                model.getAttribute(
+                        org.springframework.validation.BindingResult.MODEL_KEY_PREFIX + "bandForm");
+        model.addAttribute(
+                "bandFormHasErrors",
+                bandErrors instanceof org.springframework.validation.BindingResult result
+                        && result.hasErrors());
+        if (!model.containsAttribute("scaleRuleForm"))
+            model.addAttribute("scaleRuleForm", getScaleRule(id, skill));
+        if (!model.containsAttribute("bandForm")) {
+            ScoreBandDTO bandForm = new ScoreBandDTO();
+            if (bandId != null) {
+                ScoringViewsDTO.BandView band = getScoreBandById(id, bandId);
+                bandForm.setId(band.id());
+                bandForm.setSkill(band.skill());
+                bandForm.setCefrLevel(band.cefrLevel());
+                bandForm.setMinScore(band.minScore());
+                bandForm.setMaxScore(band.maxScore());
+            } else {
+                bandForm.setSkill(skill);
+            }
+            model.addAttribute("bandForm", bandForm);
+        }
     }
 
     private void copySchemeConfiguration(Integer id, ScoringScheme replacement) {

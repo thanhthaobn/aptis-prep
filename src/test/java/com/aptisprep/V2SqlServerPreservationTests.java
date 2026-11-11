@@ -2,13 +2,12 @@ package com.aptisprep;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import com.aptisprep.dto.*;
 import com.aptisprep.dto.LessonCheckDTO;
+import com.aptisprep.dto.LessonEditorForm;
 import com.aptisprep.entity.*;
 import com.aptisprep.entity.AiAssessmentJob;
 import com.aptisprep.exception.BusinessRuleException;
-import com.aptisprep.presentation.*;
-import com.aptisprep.presentation.form.*;
-import com.aptisprep.presentation.form.LessonEditorForm;
 import com.aptisprep.repository.*;
 import com.aptisprep.repository.AiAssessmentJobRepository;
 import com.aptisprep.repository.UserRepository;

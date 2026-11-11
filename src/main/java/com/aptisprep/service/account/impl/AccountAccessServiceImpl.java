@@ -1,5 +1,11 @@
 package com.aptisprep.service.account.impl;
 
+import com.aptisprep.dto.AttemptResultDTO;
+import com.aptisprep.dto.GoalSkillDTO;
+import com.aptisprep.dto.LearnerContextDTO;
+import com.aptisprep.dto.SkillLevelDTO;
+import com.aptisprep.dto.SkillResultDTO;
+import com.aptisprep.dto.SkillTargetDTO;
 import com.aptisprep.entity.ProfileApplication;
 import com.aptisprep.entity.User;
 import com.aptisprep.entity.UserSkillProfile;
@@ -7,12 +13,6 @@ import com.aptisprep.enums.*;
 import com.aptisprep.exception.AccessDeniedException;
 import com.aptisprep.exception.BusinessRuleException;
 import com.aptisprep.exception.ResourceNotFoundException;
-import com.aptisprep.presentation.AttemptResultDTO;
-import com.aptisprep.presentation.GoalSkillDTO;
-import com.aptisprep.presentation.LearnerContextDTO;
-import com.aptisprep.presentation.SkillLevelDTO;
-import com.aptisprep.presentation.SkillResultDTO;
-import com.aptisprep.presentation.SkillTargetDTO;
 import com.aptisprep.repository.ProfileApplicationRepository;
 import com.aptisprep.repository.UserGoalRepository;
 import com.aptisprep.repository.UserGoalSkillRepository;
@@ -298,7 +298,7 @@ public class AccountAccessServiceImpl implements AccountAccessService {
 
     @Override
     @Transactional(readOnly = true)
-    public com.aptisprep.presentation.AccountSnapshotDTO.GoalViewDTO goalView(Integer userId) {
+    public com.aptisprep.dto.AccountSnapshotDTO.GoalViewDTO goalView(Integer userId) {
         com.aptisprep.entity.UserGoal goal =
                 userGoalRepository
                         .findFirstByUserIdAndStatusOrderByCreatedAtDesc(userId, GoalStatus.ACTIVE)
@@ -309,7 +309,7 @@ public class AccountAccessServiceImpl implements AccountAccessService {
         for (var skill : userGoalSkillRepository.findByGoalId(goal.getId())) {
             targets.put(skill.getSkill(), Objects.requireNonNull(skill.getTargetLevel()));
         }
-        return new com.aptisprep.presentation.AccountSnapshotDTO.GoalViewDTO(
+        return new com.aptisprep.dto.AccountSnapshotDTO.GoalViewDTO(
                 certificate == null ? null : certificate.getId(),
                 certificate == null ? null : certificate.getName(),
                 goal.getTargetDate(),

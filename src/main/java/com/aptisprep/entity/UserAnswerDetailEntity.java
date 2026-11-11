@@ -15,7 +15,6 @@ public class UserAnswerDetailEntity {
     public UserAnswerDetailEntity() {}
 
     public UserAnswerDetailEntity(
-            Integer id,
             Integer userAnswerId,
             Integer questionItemId,
             Integer selectedOptionId,
@@ -30,7 +29,6 @@ public class UserAnswerDetailEntity {
             LocalDateTime gradedAt,
             LocalDateTime createdAt,
             LocalDateTime updatedAt) {
-        this.id = id;
         this.userAnswerId = userAnswerId;
         this.questionItemId = questionItemId;
         this.selectedOptionId = selectedOptionId;

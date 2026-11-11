@@ -6,11 +6,10 @@ import static org.hamcrest.Matchers.containsString;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
+import com.aptisprep.dto.*;
+import com.aptisprep.dto.LessonEditorForm;
 import com.aptisprep.entity.*;
 import com.aptisprep.entity.Lesson;
-import com.aptisprep.presentation.*;
-import com.aptisprep.presentation.form.*;
-import com.aptisprep.presentation.form.LessonEditorForm;
 import com.aptisprep.repository.*;
 import com.aptisprep.repository.LessonRepository;
 import com.aptisprep.service.learning.impl.*;

@@ -1,13 +1,13 @@
 package com.aptisprep.controller.student;
 
+import com.aptisprep.dto.AccountSnapshotDTO;
+import com.aptisprep.dto.AccountSnapshotDTO.SkillViewDTO;
+import com.aptisprep.dto.AttemptResultDTO;
+import com.aptisprep.dto.LessonRecommendationDTO;
+import com.aptisprep.dto.PathProgressDTO;
+import com.aptisprep.dto.StudentDashboardViewDTO.NextAction;
+import com.aptisprep.dto.StudentDashboardViewDTO.SkillOverview;
 import com.aptisprep.enums.Skill;
-import com.aptisprep.presentation.AccountSnapshotDTO;
-import com.aptisprep.presentation.AccountSnapshotDTO.SkillViewDTO;
-import com.aptisprep.presentation.AttemptResultDTO;
-import com.aptisprep.presentation.LessonRecommendationDTO;
-import com.aptisprep.presentation.PathProgressDTO;
-import com.aptisprep.presentation.StudentDashboardViewDTO.NextAction;
-import com.aptisprep.presentation.StudentDashboardViewDTO.SkillOverview;
 import com.aptisprep.service.account.AccountProfileService;
 import com.aptisprep.service.account.LearningActivityService;
 import com.aptisprep.service.exam.ExamAttemptService;

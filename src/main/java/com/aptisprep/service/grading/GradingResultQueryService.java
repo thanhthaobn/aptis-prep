@@ -4,7 +4,7 @@ import com.aptisprep.entity.ExamSkillResultEntity;
 import java.util.List;
 
 public interface GradingResultQueryService {
-    List<ExamSkillResultEntity> findSkillResultsByAttemptId(Integer attemptId);
+    public List<ExamSkillResultEntity> findSkillResultsByAttemptId(Integer attemptId);
 
-    boolean existsByAttemptId(Integer attemptId);
+    public boolean existsByAttemptId(Integer attemptId);
 }

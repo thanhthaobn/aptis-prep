@@ -1,36 +1,36 @@
 package com.aptisprep.service.learning;
 
-import com.aptisprep.presentation.LearningPathViewsDTO.StageDTO;
-import com.aptisprep.presentation.PathProgressDTO;
+import com.aptisprep.dto.LearningPathViewsDTO.StageDTO;
+import com.aptisprep.dto.PathProgressDTO;
 import java.util.List;
 
 public interface LearningPathService {
-    void ensurePaths(Integer userId);
+    public void ensurePaths(Integer userId);
 
-    List<PathProgressDTO> summaries(Integer userId);
+    public List<PathProgressDTO> summaries(Integer userId);
 
-    PathProgressDTO summary(Integer userId, Integer pathId);
+    public PathProgressDTO summary(Integer userId, Integer pathId);
 
-    void completeLesson(Integer userId, Integer lessonId);
+    public void completeLesson(Integer userId, Integer lessonId);
 
-    Integer startCheckpoint(Integer userId, Integer pathId, String requestKey);
+    public Integer startCheckpoint(Integer userId, Integer pathId, String requestKey);
 
-    void applyCheckpoint(Integer userId, Integer attemptId);
+    public void applyCheckpoint(Integer userId, Integer attemptId);
 
-    int refreshPaths(String email);
+    public int refreshPaths(String email);
 
-    List<StageDTO> stages(String email, String skill);
+    public List<StageDTO> stages(String email, String skill);
 
-    List<PathProgressDTO> ensureAndSummaries(String email);
+    public List<PathProgressDTO> ensureAndSummaries(String email);
 
-    Integer userId(String email);
+    public Integer userId(String email);
 
-    String checkpointDestination(String email, Integer attemptId);
+    public String checkpointDestination(String email, Integer attemptId);
 
-    void validateCheckpointStart(
+    public void validateCheckpointStart(
             Integer userId, Integer examId, String targetLevel, String skill, Integer pathId);
 
-    record StageLesson(
+    public record StageLesson(
             Integer id,
             String title,
             String level,

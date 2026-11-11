@@ -1,15 +1,14 @@
 package com.aptisprep.service.learning;
 
+import com.aptisprep.dto.LessonContextSnapshot;
 import com.aptisprep.entity.Lesson;
 import com.aptisprep.entity.LessonContextSnapshotEntity;
-import com.aptisprep.presentation.LessonContextSnapshot;
 
 public final class LessonContextSnapshotMapper {
     private LessonContextSnapshotMapper() {}
 
     public static LessonContextSnapshotEntity capture(Lesson lesson) {
         return new LessonContextSnapshotEntity(
-                null,
                 lesson.getTitle(),
                 lesson.getSkill(),
                 lesson.getDescription(),

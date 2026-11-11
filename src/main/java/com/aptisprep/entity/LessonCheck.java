@@ -8,7 +8,6 @@ public class LessonCheck {
     public LessonCheck() {}
 
     public LessonCheck(
-            Integer id,
             Integer lessonId,
             int position,
             String prompt,
@@ -20,7 +19,6 @@ public class LessonCheck {
             String optionF,
             int correctOption,
             String explanation) {
-        this.id = id;
         this.lessonId = lessonId;
         this.position = position;
         this.prompt = prompt;

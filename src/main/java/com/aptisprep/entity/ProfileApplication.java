@@ -14,8 +14,7 @@ public class ProfileApplication {
     public ProfileApplication() {}
 
     public ProfileApplication(
-            Integer id, Integer userId, Integer attemptId, String skill, LocalDateTime appliedAt) {
-        this.id = id;
+            Integer userId, Integer attemptId, String skill, LocalDateTime appliedAt) {
         this.userId = userId;
         this.attemptId = attemptId;
         this.skill = skill;

@@ -11,6 +11,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
+import com.aptisprep.dto.AiAssessmentDTO;
 import com.aptisprep.entity.AiAssessment;
 import com.aptisprep.entity.AiAssessmentJob;
 import com.aptisprep.entity.ExamAttemptEntity;
@@ -20,7 +21,6 @@ import com.aptisprep.entity.UserAnswerEntity;
 import com.aptisprep.enums.AiAssessmentState;
 import com.aptisprep.enums.AiJobState;
 import com.aptisprep.event.AiAssessmentCompletedEvent;
-import com.aptisprep.presentation.AiAssessmentDTO;
 import com.aptisprep.repository.AiAssessmentJobRepository;
 import com.aptisprep.repository.AiAssessmentRepository;
 import com.aptisprep.repository.ExamSkillResultRepository;

@@ -56,13 +56,27 @@ public class ScoreBandDTO {
                 entity.getMaxScore());
     }
 
-    public static ScoreBand convertDtoToEntity(ScoreBandDTO dto) {
-        return convertDtoToEntity(dto, schemeReference(dto == null ? null : dto.scoringSchemeId));
+    public ScoreBand convertDtoToEntity() {
+        return convertDtoToEntity(schemeReference(this.scoringSchemeId));
+    }
+
+    public ScoreBand convertDtoToEntity(ScoringScheme scheme) {
+        ScoreBand entity =
+                new ScoreBand(scheme, this.skill, this.cefrLevel, this.minScore, this.maxScore);
+        if (this.id != null) entity.setId(this.id);
+        return entity;
     }
 
     public static ScoreBand convertDtoToEntity(ScoreBandDTO dto, ScoringScheme scheme) {
-        if (dto == null) return null;
-        return new ScoreBand(dto.id, scheme, dto.skill, dto.cefrLevel, dto.minScore, dto.maxScore);
+        return dto == null ? null : dto.convertDtoToEntity(scheme);
+    }
+
+    public void updateEntityFromDto(ScoreBand entity) {
+        if (entity == null) return;
+        entity.setSkill(this.skill);
+        entity.setCefrLevel(this.cefrLevel);
+        entity.setMinScore(this.minScore);
+        entity.setMaxScore(this.maxScore);
     }
 
     private static ScoringScheme schemeReference(Integer id) {
@@ -118,5 +132,25 @@ public class ScoreBandDTO {
 
     public void setMaxScore(BigDecimal maxScore) {
         this.maxScore = maxScore;
+    }
+
+    public Integer id() {
+        return getId();
+    }
+
+    public String skill() {
+        return getSkill();
+    }
+
+    public String cefrLevel() {
+        return getCefrLevel();
+    }
+
+    public BigDecimal minScore() {
+        return getMinScore();
+    }
+
+    public BigDecimal maxScore() {
+        return getMaxScore();
     }
 }

@@ -5,12 +5,12 @@ import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 import com.aptisprep.config.AiProperties;
+import com.aptisprep.dto.GradingResultDTO;
 import com.aptisprep.entity.*;
 import com.aptisprep.entity.ExamSkillResultEntity;
 import com.aptisprep.entity.User;
 import com.aptisprep.enums.*;
 import com.aptisprep.exception.AiGradingException;
-import com.aptisprep.presentation.GradingResultDTO;
 import com.aptisprep.repository.*;
 import com.aptisprep.repository.AiAssessmentJobRepository;
 import com.aptisprep.repository.ExamSkillResultRepository;

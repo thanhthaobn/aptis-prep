@@ -1,23 +1,23 @@
 package com.aptisprep.service.admin.impl;
 
+import com.aptisprep.dto.AdminCatalogViewDTO.CatalogPage;
+import com.aptisprep.dto.AdminCatalogViewDTO.Entry;
+import com.aptisprep.dto.AdminCatalogViewDTO.Field;
+import com.aptisprep.dto.AdminCatalogViewDTO.Module;
+import com.aptisprep.dto.AdminCatalogViewDTO.Row;
+import com.aptisprep.dto.ExamCatalogDTO.CertificateOptionDTO;
+import com.aptisprep.dto.ExamCatalogDTO.PublishedQuestionOptionDTO;
+import com.aptisprep.dto.ExamCatalogDTO.SchemeOptionDTO;
+import com.aptisprep.dto.ExamFormDTO;
 import com.aptisprep.dto.QuestionEntityDTO;
+import com.aptisprep.dto.QuestionFormDTO;
+import com.aptisprep.dto.QuestionMediaDTO;
 import com.aptisprep.entity.*;
 import com.aptisprep.enums.CefrLevel;
 import com.aptisprep.enums.QuestionType;
 import com.aptisprep.enums.Skill;
 import com.aptisprep.exception.BusinessRuleException;
 import com.aptisprep.exception.ResourceNotFoundException;
-import com.aptisprep.presentation.AdminCatalogViewDTO.CatalogPage;
-import com.aptisprep.presentation.AdminCatalogViewDTO.Entry;
-import com.aptisprep.presentation.AdminCatalogViewDTO.Field;
-import com.aptisprep.presentation.AdminCatalogViewDTO.Module;
-import com.aptisprep.presentation.AdminCatalogViewDTO.Row;
-import com.aptisprep.presentation.ExamCatalogDTO.CertificateOptionDTO;
-import com.aptisprep.presentation.ExamCatalogDTO.PublishedQuestionOptionDTO;
-import com.aptisprep.presentation.ExamCatalogDTO.QuestionMediaDTO;
-import com.aptisprep.presentation.ExamCatalogDTO.SchemeOptionDTO;
-import com.aptisprep.presentation.form.ExamFormDTO;
-import com.aptisprep.presentation.form.QuestionFormDTO;
 import com.aptisprep.repository.*;
 import com.aptisprep.service.admin.AdminExamService;
 import com.aptisprep.service.admin.CatalogService;
@@ -141,6 +141,11 @@ public class CatalogServiceImpl implements CatalogService {
         return new CatalogPage(all.subList(from, to), safePage, safeSize, totalItems, totalPages);
     }
 
+    @Override
+    public Entry getCatalogEntryById(String key, int id) {
+        return entry(key, id);
+    }
+
     public Entry entry(String key, int id) {
         if ("questions".equals(key))
             return questionEntry(
@@ -157,14 +162,19 @@ public class CatalogServiceImpl implements CatalogService {
         throw new ResourceNotFoundException("Không tìm thấy nội dung");
     }
 
+    @Override
+    public QuestionFormDTO getQuestionById(Integer id) {
+        return questionForm(id);
+    }
+
     public QuestionFormDTO questionForm(Integer id) {
         QuestionFormDTO form = new QuestionFormDTO();
         if (id == null) return form;
-        QuestionEntity q =
+        QuestionEntity questionEntity =
                 questionRepository
                         .findById(id)
                         .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy câu hỏi"));
-        form = QuestionEntityDTO.convertEntityToDto(q).toForm();
+        form = QuestionEntityDTO.convertEntityToDto(questionEntity).toForm();
         List<QuestionFormDTO.ItemForm> values = new ArrayList<>();
         for (QuestionItemEntity item : questionItemRepository.findByQuestionIdOrderByPosition(id)) {
             QuestionFormDTO.ItemForm itemForm = new QuestionFormDTO.ItemForm();
@@ -173,20 +183,22 @@ public class CatalogServiceImpl implements CatalogService {
             itemForm.setMinWordCount(item.getMinWordCount());
             itemForm.setMaxWordCount(item.getMaxWordCount());
             itemForm.setResponseSeconds(item.getResponseSeconds());
-            List<QuestionFormDTO.OptionForm> os =
+            List<QuestionFormDTO.OptionForm> optionDtos =
                     questionOptionRepository
                             .findByQuestionItemIdOrderByPosition(item.getId())
                             .stream()
                             .map(
-                                    o -> {
-                                        QuestionFormDTO.OptionForm f =
-                                                new QuestionFormDTO.OptionForm(o.getOptionCode());
-                                        f.setContent(o.getContent());
-                                        f.setCorrect(Boolean.TRUE.equals(o.getCorrect()));
-                                        return f;
+                                    optionEntity -> {
+                                        QuestionFormDTO.OptionForm optionDto =
+                                                new QuestionFormDTO.OptionForm(
+                                                        optionEntity.getOptionCode());
+                                        optionDto.setContent(optionEntity.getContent());
+                                        optionDto.setCorrect(
+                                                Boolean.TRUE.equals(optionEntity.getCorrect()));
+                                        return optionDto;
                                     })
                             .collect(Collectors.toCollection(ArrayList::new));
-            if (!os.isEmpty()) itemForm.setOptions(os);
+            if (!optionDtos.isEmpty()) itemForm.setOptions(optionDtos);
             values.add(itemForm);
         }
         if (!values.isEmpty()) form.setItems(values);
@@ -223,14 +235,19 @@ public class CatalogServiceImpl implements CatalogService {
 
     @Transactional
     public void publishQuestion(Integer id) {
-        QuestionEntity q =
+        QuestionEntity questionEntity =
                 questionRepository
                         .findById(id)
                         .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy câu hỏi"));
         QuestionFormDTO form = questionForm(id);
         QuestionDefinitionValidator.validate(form);
-        q.setStatus("PUBLISHED");
-        questionRepository.save(q);
+        questionEntity.setStatus("PUBLISHED");
+        questionRepository.save(questionEntity);
+    }
+
+    @Override
+    public ExamFormDTO getExamFormById(Integer id) {
+        return examForm(id);
     }
 
     public ExamFormDTO examForm(Integer id) {
@@ -471,6 +488,8 @@ public class CatalogServiceImpl implements CatalogService {
                 .toList();
     }
 
+    @Override
+    @Transactional(readOnly = true)
     public List<SchemeOptionDTO> activeSchemes() {
         return certificateSchemes.findAllActiveSchemes().stream()
                 .map(
@@ -513,24 +532,45 @@ public class CatalogServiceImpl implements CatalogService {
                 .toList();
     }
 
+    @Override
+    public List<String> getAvailableSkills() {
+        return skills();
+    }
+
     public List<String> skills() {
         return SKILLS;
+    }
+
+    @Override
+    public List<String> getAvailableLevels() {
+        return levels();
     }
 
     public List<String> levels() {
         return LEVELS;
     }
 
+    @Override
+    public List<String> getAvailableQuestionTypes() {
+        return questionTypes();
+    }
+
     public List<String> questionTypes() {
         return TYPES;
+    }
+
+    @Override
+    public List<String> getAvailableExamTypes() {
+        return examTypes();
     }
 
     public List<String> examTypes() {
         return EXAM_TYPES;
     }
 
-    private void saveMedia(QuestionEntity q, MultipartFile file) {
-        new QuestionMediaWriter(questionMediaRepository, storage).save(q.getId(), file);
+    private void saveMedia(QuestionEntity questionEntity, MultipartFile file) {
+        new QuestionMediaWriter(questionMediaRepository, storage)
+                .save(questionEntity.getId(), file);
     }
 
     private void assertQuestionNotAnswered(Integer questionId) {
@@ -557,10 +597,10 @@ public class CatalogServiceImpl implements CatalogService {
         return value == null || value.isBlank() ? null : value.trim();
     }
 
-    private Entry questionEntry(QuestionEntity q) {
+    private Entry questionEntry(QuestionEntity questionEntity) {
         List<Row> rows = new ArrayList<>();
-        if ("READING".equals(q.getSkill())) {
-            String passage = q.getReadingPassage();
+        if ("READING".equals(questionEntity.getSkill())) {
+            String passage = questionEntity.getReadingPassage();
             rows.add(
                     new Row(
                             "ĐOẠN VĂN",
@@ -570,7 +610,7 @@ public class CatalogServiceImpl implements CatalogService {
                             "Văn bản nguồn"));
         }
         for (QuestionItemEntity item :
-                questionItemRepository.findByQuestionIdOrderByPosition(q.getId())) {
+                questionItemRepository.findByQuestionIdOrderByPosition(questionEntity.getId())) {
             rows.add(
                     new Row(
                             String.valueOf(item.getPosition()),
@@ -581,40 +621,42 @@ public class CatalogServiceImpl implements CatalogService {
             questionOptionRepository
                     .findByQuestionItemIdOrderByPosition(item.getId())
                     .forEach(
-                            o ->
+                            optionEntity ->
                                     rows.add(
                                             new Row(
-                                                    o.getOptionCode(),
-                                                    o.getContent(),
-                                                    Boolean.TRUE.equals(o.getCorrect())
+                                                    optionEntity.getOptionCode(),
+                                                    optionEntity.getContent(),
+                                                    Boolean.TRUE.equals(optionEntity.getCorrect())
                                                             ? "Đáp án đúng"
                                                             : "")));
         }
         questionMediaRepository
-                .findByQuestionIdOrderByPosition(q.getId())
+                .findByQuestionIdOrderByPosition(questionEntity.getId())
                 .forEach(
-                        m ->
+                        mediaEntity ->
                                 rows.add(
                                         new Row(
-                                                "MEDIA #" + m.getId(),
-                                                m.getOriginalFilename(),
-                                                m.getMediaType()
+                                                "MEDIA #" + mediaEntity.getId(),
+                                                mediaEntity.getOriginalFilename(),
+                                                mediaEntity.getMediaType()
                                                         + " · "
-                                                        + m.getFileSize()
+                                                        + mediaEntity.getFileSize()
                                                         + " bytes")));
         return new Entry(
-                q.getId(),
-                q.getContent(),
-                q.getContent(),
-                q.getSkill(),
-                q.getCefrLevel(),
-                q.getQuestionType(),
-                q.getStatus(),
-                statusLabel(q.getStatus()),
-                q.getUpdatedAt() == null ? "" : q.getUpdatedAt().toLocalDate().toString(),
+                questionEntity.getId(),
+                questionEntity.getContent(),
+                questionEntity.getContent(),
+                questionEntity.getSkill(),
+                questionEntity.getCefrLevel(),
+                questionEntity.getQuestionType(),
+                questionEntity.getStatus(),
+                statusLabel(questionEntity.getStatus()),
+                questionEntity.getUpdatedAt() == null
+                        ? ""
+                        : questionEntity.getUpdatedAt().toLocalDate().toString(),
                 List.of(
-                        new Field("Phần thi", String.valueOf(q.getPartNo())),
-                        new Field("Độ khó", String.valueOf(q.getDifficulty()))),
+                        new Field("Phần thi", String.valueOf(questionEntity.getPartNo())),
+                        new Field("Độ khó", String.valueOf(questionEntity.getDifficulty()))),
                 rows);
     }
 

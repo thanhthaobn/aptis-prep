@@ -8,8 +8,7 @@ public class LessonPlaybackRangeEntity {
     public LessonPlaybackRangeEntity() {}
 
     public LessonPlaybackRangeEntity(
-            Integer id, LessonEngagement engagement, double startSeconds, double endSeconds) {
-        this.id = id;
+            LessonEngagement engagement, double startSeconds, double endSeconds) {
         this.engagement = engagement;
         this.startSeconds = startSeconds;
         this.endSeconds = endSeconds;

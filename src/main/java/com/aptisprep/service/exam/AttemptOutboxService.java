@@ -5,19 +5,19 @@ import com.aptisprep.event.AttemptCompletedEvent;
 import com.aptisprep.event.AttemptSubmittedEvent;
 
 public interface AttemptOutboxService {
-    void enqueueSubmitted(AttemptSubmittedEvent event);
+    public void enqueueSubmitted(AttemptSubmittedEvent event);
 
-    void enqueueCompleted(AttemptCompletedEvent event);
+    public void enqueueCompleted(AttemptCompletedEvent event);
 
-    void enqueueAiAssessmentCompleted(AiAssessmentCompletedEvent event);
+    public void enqueueAiAssessmentCompleted(AiAssessmentCompletedEvent event);
 
-    void ensureAiAssessmentCompleted(AiAssessmentCompletedEvent event);
+    public void ensureAiAssessmentCompleted(AiAssessmentCompletedEvent event);
 
-    void recoverPending();
+    public void recoverPending();
 
-    void markDelivered(AttemptSubmittedEvent event);
+    public void markDelivered(AttemptSubmittedEvent event);
 
-    void markDelivered(AttemptCompletedEvent event);
+    public void markDelivered(AttemptCompletedEvent event);
 
-    void markDelivered(AiAssessmentCompletedEvent event);
+    public void markDelivered(AiAssessmentCompletedEvent event);
 }

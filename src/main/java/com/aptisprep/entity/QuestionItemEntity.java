@@ -6,7 +6,6 @@ import jakarta.persistence.*;
 @Table(name = "question_items")
 public class QuestionItemEntity {
     public QuestionItemEntity(
-            Integer id,
             Integer questionId,
             String content,
             Integer correctPosition,
@@ -14,7 +13,6 @@ public class QuestionItemEntity {
             Integer minWordCount,
             Integer maxWordCount,
             Integer responseSeconds) {
-        this.id = id;
         this.questionId = questionId;
         this.content = content;
         this.correctPosition = correctPosition;

@@ -3,14 +3,13 @@ package com.aptisprep;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
+import com.aptisprep.dto.*;
+import com.aptisprep.dto.ExamFormDTO;
 import com.aptisprep.entity.*;
 import com.aptisprep.entity.MockExamEntity;
 import com.aptisprep.entity.MockExamQuestionEntity;
 import com.aptisprep.entity.MockExamSectionEntity;
 import com.aptisprep.exception.ResourceNotFoundException;
-import com.aptisprep.presentation.*;
-import com.aptisprep.presentation.form.*;
-import com.aptisprep.presentation.form.ExamFormDTO;
 import com.aptisprep.repository.*;
 import com.aptisprep.repository.MockExamQuestionRepository;
 import com.aptisprep.repository.MockExamRepository;

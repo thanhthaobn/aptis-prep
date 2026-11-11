@@ -144,6 +144,7 @@ public class CertificateSchemeServiceImpl implements CertificateSchemeService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<ScoringScheme> findAllActiveSchemes() {
         return scoringSchemeRepository.findByStatusOrderByName(RecordStatus.ACTIVE);
     }

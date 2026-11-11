@@ -24,6 +24,7 @@ public class CertificateDTO {
     @NotBlank(message = "Trạng thái không được để trống")
     private String status = "DRAFT";
 
+    private String statusLabel;
     private Integer createdById;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
@@ -47,6 +48,7 @@ public class CertificateDTO {
         this.createdById = createdById;
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
+        this.statusLabel = "ACTIVE".equalsIgnoreCase(status) ? "Đang áp dụng" : "Ngừng áp dụng";
     }
 
     public static CertificateDTO convertEntityToDto(Certificate entity) {
@@ -62,20 +64,31 @@ public class CertificateDTO {
                 entity.getUpdatedAt());
     }
 
-    public static Certificate convertDtoToEntity(CertificateDTO dto) {
-        if (dto == null) return null;
+    public Certificate convertDtoToEntity() {
         Certificate entity = new Certificate();
-        entity.setId(dto.id);
-        entity.setName(trim(dto.name));
-        entity.setCode(trim(dto.code));
-        entity.setDescription(blankToNull(dto.description));
-        entity.setStatus(
-                dto.status == null || dto.status.isBlank()
-                        ? RecordStatus.DRAFT
-                        : RecordStatus.valueOf(dto.status.trim().toUpperCase(Locale.ROOT)));
-        entity.setCreatedAt(dto.createdAt);
-        entity.setUpdatedAt(dto.updatedAt);
+        entity.setName(trim(this.name));
+        entity.setCode(trim(this.code));
+        entity.setDescription(blankToNull(this.description));
+        entity.setStatus(parseStatus(this.status));
+        entity.setCreatedAt(this.createdAt);
+        entity.setUpdatedAt(this.updatedAt);
+        if (this.id != null) entity.setId(this.id);
         return entity;
+    }
+
+    public static Certificate convertDtoToEntity(CertificateDTO dto) {
+        return dto == null ? null : dto.convertDtoToEntity();
+    }
+
+    public void updateEntityFromDto(Certificate entity) {
+        if (entity == null) return;
+        entity.setName(trim(this.name));
+        entity.setCode(trim(this.code));
+        entity.setDescription(blankToNull(this.description));
+        if (this.status != null && !this.status.isBlank()) {
+            entity.setStatus(parseStatus(this.status));
+        }
+        entity.setUpdatedAt(LocalDateTime.now());
     }
 
     private static String trim(String value) {
@@ -85,6 +98,15 @@ public class CertificateDTO {
     private static String blankToNull(String value) {
         String trimmed = trim(value);
         return trimmed == null || trimmed.isBlank() ? null : trimmed;
+    }
+
+    private static RecordStatus parseStatus(String s) {
+        if (s == null || s.isBlank()) return RecordStatus.DRAFT;
+        try {
+            return RecordStatus.valueOf(s.trim().toUpperCase(Locale.ROOT));
+        } catch (Exception e) {
+            return RecordStatus.DRAFT;
+        }
     }
 
     public Integer getId() {
@@ -125,6 +147,17 @@ public class CertificateDTO {
 
     public void setStatus(String status) {
         this.status = status;
+        this.statusLabel = "ACTIVE".equalsIgnoreCase(status) ? "Đang áp dụng" : "Ngừng áp dụng";
+    }
+
+    public String getStatusLabel() {
+        return statusLabel != null
+                ? statusLabel
+                : ("ACTIVE".equalsIgnoreCase(status) ? "Đang áp dụng" : "Ngừng áp dụng");
+    }
+
+    public void setStatusLabel(String statusLabel) {
+        this.statusLabel = statusLabel;
     }
 
     public Integer getCreatedById() {
@@ -149,5 +182,29 @@ public class CertificateDTO {
 
     public void setUpdatedAt(LocalDateTime updatedAt) {
         this.updatedAt = updatedAt;
+    }
+
+    public Integer id() {
+        return getId();
+    }
+
+    public String name() {
+        return getName();
+    }
+
+    public String code() {
+        return getCode();
+    }
+
+    public String description() {
+        return getDescription();
+    }
+
+    public String status() {
+        return getStatus();
+    }
+
+    public String statusLabel() {
+        return getStatusLabel();
     }
 }

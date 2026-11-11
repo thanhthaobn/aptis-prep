@@ -1,15 +1,15 @@
 package com.aptisprep.service.admin.impl;
 
+import com.aptisprep.dto.AdminCatalogViewDTO.Entry;
+import com.aptisprep.dto.AdminCatalogViewDTO.Field;
+import com.aptisprep.dto.AdminCatalogViewDTO.Row;
+import com.aptisprep.dto.ExamFormDTO;
 import com.aptisprep.dto.MockExamEntityDTO;
 import com.aptisprep.entity.MockExamEntity;
 import com.aptisprep.entity.MockExamQuestionEntity;
 import com.aptisprep.entity.MockExamSectionEntity;
 import com.aptisprep.exception.BusinessRuleException;
 import com.aptisprep.exception.ResourceNotFoundException;
-import com.aptisprep.presentation.AdminCatalogViewDTO.Entry;
-import com.aptisprep.presentation.AdminCatalogViewDTO.Field;
-import com.aptisprep.presentation.AdminCatalogViewDTO.Row;
-import com.aptisprep.presentation.form.ExamFormDTO;
 import com.aptisprep.repository.MockExamQuestionRepository;
 import com.aptisprep.repository.MockExamRepository;
 import com.aptisprep.repository.MockExamSectionRepository;

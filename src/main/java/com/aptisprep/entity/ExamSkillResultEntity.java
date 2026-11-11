@@ -15,7 +15,6 @@ public class ExamSkillResultEntity {
     public ExamSkillResultEntity() {}
 
     public ExamSkillResultEntity(
-            Integer id,
             Integer attemptId,
             String skill,
             Integer correctCount,
@@ -28,7 +27,6 @@ public class ExamSkillResultEntity {
             BigDecimal objectiveRawScore,
             BigDecimal subjectiveRawScore,
             LocalDateTime createdAt) {
-        this.id = id;
         this.attemptId = attemptId;
         this.skill = skill;
         this.correctCount = correctCount;

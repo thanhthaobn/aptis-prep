@@ -1,18 +1,20 @@
 package com.aptisprep.service.learning.impl;
 
+import com.aptisprep.dto.AttemptResultDTO;
+import com.aptisprep.dto.ExamSummaryDTO;
+import com.aptisprep.dto.GoalSkillDTO;
+import com.aptisprep.dto.LearnerContextDTO;
+import com.aptisprep.dto.LearningPathViewsDTO.StageDTO;
+import com.aptisprep.dto.LearningPathViewsDTO.StageLessonDTO;
+import com.aptisprep.dto.PathProgressDTO;
+import com.aptisprep.dto.SkillLevelDTO;
+import com.aptisprep.dto.SkillResultDTO;
 import com.aptisprep.entity.*;
 import com.aptisprep.entity.User;
 import com.aptisprep.enums.*;
+import com.aptisprep.enums.CefrLevel;
+import com.aptisprep.enums.Skill;
 import com.aptisprep.exception.*;
-import com.aptisprep.presentation.AttemptResultDTO;
-import com.aptisprep.presentation.ExamSummaryDTO;
-import com.aptisprep.presentation.GoalSkillDTO;
-import com.aptisprep.presentation.LearnerContextDTO;
-import com.aptisprep.presentation.LearningPathViewsDTO.StageDTO;
-import com.aptisprep.presentation.LearningPathViewsDTO.StageLessonDTO;
-import com.aptisprep.presentation.PathProgressDTO;
-import com.aptisprep.presentation.SkillLevelDTO;
-import com.aptisprep.presentation.SkillResultDTO;
 import com.aptisprep.repository.*;
 import com.aptisprep.service.account.AccountAccessService;
 import com.aptisprep.service.account.UserService;
@@ -20,7 +22,6 @@ import com.aptisprep.service.admin.*;
 import com.aptisprep.service.admin.ExamCatalogService;
 import com.aptisprep.service.exam.ExamAttemptService;
 import com.aptisprep.service.learning.LearningPathService;
-import com.aptisprep.service.learning.LessonService;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 import java.util.*;
@@ -127,7 +128,7 @@ public class LearningPathServiceImpl implements LearningPathService {
                 learningPathRepository.findByUserIdAndStatusOrderBySkillAscCreatedAtDesc(
                         user.getId(), "ACTIVE");
         ArrayList<StageDTO> result = new ArrayList<>();
-        for (String item : LessonService.SKILLS) {
+        for (String item : Skill.labels()) {
             if (skill != null && !skill.equalsIgnoreCase(item)) continue;
             LearningPath path =
                     paths.stream().filter(p -> p.getSkill().equals(item)).findFirst().orElse(null);
@@ -221,7 +222,7 @@ public class LearningPathServiceImpl implements LearningPathService {
         if (path.getTargetLevel() == null)
             throw new BusinessRuleException(
                     "Hãy đặt mục tiêu hoặc làm Placement để có chặng kiểm tra phù hợp");
-        if (!LessonService.LEVELS.contains(path.getTargetLevel()))
+        if (!CefrLevel.curriculumLevels().contains(path.getTargetLevel()))
             throw new BusinessRuleException(
                     "Hành trình học chỉ hỗ trợ từ A1 đến C1; chặng cũ được giữ để tra cứu");
         ExamAttemptService engine = engine();
@@ -377,7 +378,7 @@ public class LearningPathServiceImpl implements LearningPathService {
         List<SkillLevelDTO> levels =
                 context == null || context.levels() == null ? List.of() : context.levels();
         int changed = 0;
-        for (String skill : LessonService.SKILLS) {
+        for (String skill : Skill.labels()) {
             GoalSkillDTO goal = targets.get(codeSkill(skill));
             String finalGoal = goal == null ? null : goal.targetLevel();
             SkillLevelDTO assessed = assessedLevel(levels, skill);
@@ -591,7 +592,7 @@ public class LearningPathServiceImpl implements LearningPathService {
 
     private static String nextLevel(String value) {
         int next = rank(value) + 1;
-        List<String> levels = LessonService.LEVELS;
+        List<String> levels = CefrLevel.curriculumLevels();
         return next < levels.size() ? levels.get(next) : null;
     }
 

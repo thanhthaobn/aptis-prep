@@ -3,50 +3,74 @@ package com.aptisprep.service.scoring;
 import com.aptisprep.dto.CertificateDTO;
 import com.aptisprep.dto.ScoreBandDTO;
 import com.aptisprep.dto.ScoringScaleRuleDTO;
-import com.aptisprep.presentation.*;
-import com.aptisprep.presentation.form.*;
+import com.aptisprep.dto.ScoringSchemeFormDTO;
+import com.aptisprep.dto.ScoringViewsDTO;
 import java.util.List;
+import org.springframework.ui.Model;
 
 public interface ScoringAdminService {
-    List<ScoringViewsDTO.CertificateView> certificateViews();
 
-    List<ScoringViewsDTO.SchemeView> schemeViews();
+    public List<ScoringViewsDTO.CertificateView> getAllCertificateViews();
 
-    List<ScoringViewsDTO.SchemeExamTypeView> schemeExamTypes();
+    public List<ScoringViewsDTO.CertificateView> certificateViews();
 
-    ScoringViewsDTO.CertificateView certificate(Integer id);
+    public List<ScoringViewsDTO.SchemeView> getAllSchemeViews();
 
-    ScoringViewsDTO.SchemeView scheme(Integer id);
+    public List<ScoringViewsDTO.SchemeView> schemeViews();
 
-    List<ScoringViewsDTO.BandView> bandViews(Integer schemeId, String skill);
+    public List<ScoringViewsDTO.SchemeExamTypeView> getAllSchemeExamTypes();
 
-    ScoringViewsDTO.BandView band(Integer schemeId, Integer bandId);
+    public List<ScoringViewsDTO.SchemeExamTypeView> schemeExamTypes();
 
-    List<ScoringViewsDTO.BandView> allBandViews(Integer schemeId);
+    public ScoringViewsDTO.CertificateView getCertificateById(Integer id);
 
-    Integer createCertificate(String adminEmail, CertificateDTO form);
+    public ScoringViewsDTO.CertificateView certificate(Integer id);
 
-    void updateCertificate(String adminEmail, Integer id, CertificateDTO form);
+    public ScoringViewsDTO.SchemeView getScoringSchemeById(Integer id);
 
-    void disableCertificate(String adminEmail, Integer id);
+    public ScoringViewsDTO.SchemeView scheme(Integer id);
 
-    Integer saveSchemeWithScores(String email, Integer id, ScoringSchemeFormDTO form);
+    public List<ScoringViewsDTO.BandView> getScoreBandViews(Integer schemeId, String skill);
 
-    void activateScheme(String email, Integer id);
+    public List<ScoringViewsDTO.BandView> bandViews(Integer schemeId, String skill);
 
-    void activateCertificate(String email, Integer id);
+    public ScoringViewsDTO.BandView getScoreBandById(Integer schemeId, Integer bandId);
 
-    void populateScoreConfiguration(Integer id, ScoringSchemeFormDTO form);
+    public ScoringViewsDTO.BandView band(Integer schemeId, Integer bandId);
 
-    Integer saveScheme(String adminEmail, Integer id, ScoringSchemeFormDTO form);
+    public List<ScoringViewsDTO.BandView> getAllScoreBandViews(Integer schemeId);
 
-    void disableScheme(String adminEmail, Integer id);
+    public List<ScoringViewsDTO.BandView> allBandViews(Integer schemeId);
 
-    void saveBand(String adminEmail, Integer schemeId, Integer id, ScoreBandDTO form);
+    public Integer createCertificate(String adminEmail, CertificateDTO form);
 
-    void deleteBand(String adminEmail, Integer schemeId, Integer id);
+    public void updateCertificate(String adminEmail, Integer id, CertificateDTO form);
 
-    ScoringScaleRuleDTO scaleRule(Integer schemeId, String skill);
+    public void disableCertificate(String adminEmail, Integer id);
 
-    void saveScaleRule(String adminEmail, Integer schemeId, String skill, ScoringScaleRuleDTO form);
+    public Integer saveSchemeWithScores(String email, Integer id, ScoringSchemeFormDTO form);
+
+    public void activateScheme(String email, Integer id);
+
+    public void activateCertificate(String email, Integer id);
+
+    public void populateScoreConfiguration(Integer id, ScoringSchemeFormDTO form);
+
+    public Integer saveScheme(String adminEmail, Integer id, ScoringSchemeFormDTO form);
+
+    public void disableScheme(String adminEmail, Integer id);
+
+    public void saveBand(String adminEmail, Integer schemeId, Integer id, ScoreBandDTO form);
+
+    public void deleteBand(String adminEmail, Integer schemeId, Integer id);
+
+    public ScoringScaleRuleDTO getScaleRule(Integer schemeId, String skill);
+
+    public ScoringScaleRuleDTO scaleRule(Integer schemeId, String skill);
+
+    public void saveScaleRule(
+            String adminEmail, Integer schemeId, String skill, ScoringScaleRuleDTO form);
+
+    public void populateScoringSchemeModel(
+            int id, String skill, Integer bandId, boolean readOnly, Model model);
 }

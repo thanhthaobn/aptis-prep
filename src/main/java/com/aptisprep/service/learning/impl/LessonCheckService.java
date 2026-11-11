@@ -1,6 +1,9 @@
 package com.aptisprep.service.learning.impl;
 
 import com.aptisprep.dto.LessonCheckDTO;
+import com.aptisprep.dto.LessonTeachingViewsDTO.AnswerFeedbackDTO;
+import com.aptisprep.dto.LessonTeachingViewsDTO.CheckViewDTO;
+import com.aptisprep.dto.LessonTeachingViewsDTO.FeedbackDTO;
 import com.aptisprep.entity.LessonCheck;
 import com.aptisprep.entity.LessonCheckAnswerEntity;
 import com.aptisprep.entity.LessonCheckAttempt;
@@ -10,9 +13,6 @@ import com.aptisprep.enums.Role;
 import com.aptisprep.enums.UserStatus;
 import com.aptisprep.exception.BusinessRuleException;
 import com.aptisprep.exception.ResourceNotFoundException;
-import com.aptisprep.presentation.LessonTeachingViewsDTO.AnswerFeedbackDTO;
-import com.aptisprep.presentation.LessonTeachingViewsDTO.CheckViewDTO;
-import com.aptisprep.presentation.LessonTeachingViewsDTO.FeedbackDTO;
 import com.aptisprep.repository.LessonCheckAttemptRepository;
 import com.aptisprep.repository.LessonCheckRepository;
 import com.aptisprep.repository.LessonRepository;

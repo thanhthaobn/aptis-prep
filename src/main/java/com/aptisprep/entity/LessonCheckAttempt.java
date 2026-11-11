@@ -14,7 +14,6 @@ public class LessonCheckAttempt {
             List<LessonCheckAnswerEntity> answers,
             List<LessonCheckFeedbackEntity> feedback,
             LessonContextSnapshotEntity contextSnapshotEntity,
-            Integer id,
             Integer userId,
             Integer lessonId,
             int score,
@@ -23,7 +22,6 @@ public class LessonCheckAttempt {
         this.answers = answers;
         this.feedback = feedback;
         this.contextSnapshotEntity = contextSnapshotEntity;
-        this.id = id;
         this.userId = userId;
         this.lessonId = lessonId;
         this.score = score;

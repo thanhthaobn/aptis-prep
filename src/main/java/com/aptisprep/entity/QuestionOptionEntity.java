@@ -6,13 +6,11 @@ import jakarta.persistence.*;
 @Table(name = "question_options")
 public class QuestionOptionEntity {
     public QuestionOptionEntity(
-            Integer id,
             Integer questionItemId,
             String content,
             String optionCode,
             Boolean correct,
             int position) {
-        this.id = id;
         this.questionItemId = questionItemId;
         this.content = content;
         this.optionCode = optionCode;

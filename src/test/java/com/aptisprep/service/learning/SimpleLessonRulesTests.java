@@ -5,17 +5,17 @@ import static org.assertj.core.api.Assertions.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
+import com.aptisprep.dto.*;
+import com.aptisprep.dto.LessonAuthorProfileDTO;
 import com.aptisprep.dto.LessonCheckDTO;
+import com.aptisprep.dto.LessonEditorForm;
 import com.aptisprep.entity.*;
 import com.aptisprep.entity.FlashcardSet;
 import com.aptisprep.entity.LessonEngagement;
 import com.aptisprep.entity.User;
 import com.aptisprep.enums.*;
+import com.aptisprep.enums.Skill;
 import com.aptisprep.exception.BusinessRuleException;
-import com.aptisprep.presentation.*;
-import com.aptisprep.presentation.LessonAuthorProfileDTO;
-import com.aptisprep.presentation.form.*;
-import com.aptisprep.presentation.form.LessonEditorForm;
 import com.aptisprep.repository.*;
 import com.aptisprep.repository.FlashcardSetRepository;
 import com.aptisprep.repository.LearningPathItemRepository;
@@ -104,7 +104,7 @@ class SimpleLessonRulesTests {
 
     @Test
     void simpleEditorHasSkillLabelsUploadInputsAndReleaseSettings() throws Exception {
-        for (var skill : LessonService.SKILLS) {
+        for (var skill : Skill.labels()) {
             var result =
                     mvc.perform(
                                     get("/admin/lessons/create")
@@ -294,7 +294,7 @@ class SimpleLessonRulesTests {
     @Test
     void mediaAppearsExactlyOnceAtTheSkillPracticePositionAndIsProtected() throws Exception {
         var u = learner("simple-media-position@test.local");
-        for (var skill : LessonService.SKILLS) {
+        for (var skill : Skill.labels()) {
             var f = form(skill);
             var l =
                     lessons.save(

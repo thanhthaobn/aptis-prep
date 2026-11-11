@@ -15,7 +15,6 @@ public class ExamAttemptEntity {
     public ExamAttemptEntity() {}
 
     public ExamAttemptEntity(
-            Integer id,
             Integer userId,
             Integer mockExamId,
             String status,
@@ -32,7 +31,6 @@ public class ExamAttemptEntity {
             String estimatedOverallCefr,
             String requestKey,
             LocalDateTime createdAt) {
-        this.id = id;
         this.userId = userId;
         this.mockExamId = mockExamId;
         this.status = status;

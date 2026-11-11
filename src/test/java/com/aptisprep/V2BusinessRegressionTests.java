@@ -5,6 +5,8 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
+import com.aptisprep.dto.*;
+import com.aptisprep.dto.GoalFormDTO;
 import com.aptisprep.dto.ScoreBandDTO;
 import com.aptisprep.dto.ScoringScaleRuleDTO;
 import com.aptisprep.entity.*;
@@ -13,9 +15,6 @@ import com.aptisprep.entity.UserGoal;
 import com.aptisprep.entity.UserGoalSkill;
 import com.aptisprep.enums.*;
 import com.aptisprep.exception.BusinessRuleException;
-import com.aptisprep.presentation.*;
-import com.aptisprep.presentation.form.*;
-import com.aptisprep.presentation.form.GoalFormDTO;
 import com.aptisprep.repository.*;
 import com.aptisprep.repository.UserGoalRepository;
 import com.aptisprep.repository.UserRepository;

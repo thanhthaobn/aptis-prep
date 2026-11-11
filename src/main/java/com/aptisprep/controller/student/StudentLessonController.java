@@ -1,9 +1,11 @@
 package com.aptisprep.controller.student;
 
 import com.aptisprep.dto.LessonDTO;
+import com.aptisprep.dto.LessonPlaybackDTO;
+import com.aptisprep.dto.LessonTreeViewsDTO.*;
+import com.aptisprep.enums.CefrLevel;
+import com.aptisprep.enums.Skill;
 import com.aptisprep.exception.BusinessRuleException;
-import com.aptisprep.presentation.LessonPlaybackDTO;
-import com.aptisprep.presentation.LessonTreeViewsDTO.*;
 import com.aptisprep.service.learning.FlashcardSetService;
 import com.aptisprep.service.learning.LessonListeningService;
 import com.aptisprep.service.learning.LessonService;
@@ -70,8 +72,8 @@ public class StudentLessonController {
         m.addAttribute("q", q);
         m.addAttribute("selectedSkill", skill);
         m.addAttribute("selectedLevel", level);
-        m.addAttribute("skills", LessonService.SKILLS);
-        m.addAttribute("levels", LessonService.LEVELS);
+        m.addAttribute("skills", Skill.labels());
+        m.addAttribute("levels", CefrLevel.curriculumLevels());
         return "student/lesson/list";
     }
 
@@ -221,11 +223,11 @@ public class StudentLessonController {
 
     private static List<SkillBranch> tree(List<LessonDTO> lessons) {
         ArrayList<SkillBranch> result = new ArrayList<>();
-        for (String skill : LessonService.SKILLS) {
+        for (String skill : Skill.labels()) {
             List<LessonDTO> skillLessons =
                     lessons.stream().filter(l -> skill.equals(l.getSkill())).toList();
             ArrayList<LevelBranch> levels = new ArrayList<>();
-            for (String level : LessonService.LEVELS) {
+            for (String level : CefrLevel.curriculumLevels()) {
                 List<LessonDTO> levelLessons =
                         skillLessons.stream().filter(l -> level.equals(l.getCefrLevel())).toList();
                 if (levelLessons.isEmpty()) continue;

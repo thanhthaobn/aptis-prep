@@ -7,8 +7,8 @@ import com.aptisprep.dto.ScoringScaleRuleDTO;
 import com.aptisprep.enums.CefrLevel;
 import com.aptisprep.enums.Skill;
 import com.aptisprep.exception.BusinessRuleException;
-import com.aptisprep.presentation.*;
-import com.aptisprep.presentation.form.*;
+import com.aptisprep.dto.*;
+import com.aptisprep.dto.*;
 import com.aptisprep.service.scoring.ScoringAdminService;
 import jakarta.validation.Valid;
 import java.security.Principal;
@@ -225,7 +225,7 @@ public class AdminScoringController {
             @RequestParam(defaultValue = "Reading") String skill,
             @RequestParam(required = false) Integer bandId,
             Model model) {
-        populateScheme(id, skill, bandId, true, model);
+        populateScoringSchemeModel(id, skill, bandId, true, model);
         return "admin/settings/scheme";
     }
 
@@ -237,7 +237,7 @@ public class AdminScoringController {
             @RequestParam(defaultValue = "false") boolean addBand,
             Model model) {
         model.addAttribute("addBand", addBand);
-        populateScheme(id, skill, bandId, false, model);
+        populateScoringSchemeModel(id, skill, bandId, false, model);
         return "admin/settings/scheme";
     }
 
@@ -283,7 +283,7 @@ public class AdminScoringController {
             Model model,
             RedirectAttributes redirect) {
         if (result.hasErrors()) {
-            populateScheme(id, "Reading", null, false, model);
+            populateScoringSchemeModel(id, "Reading", null, false, model);
             return "admin/settings/scheme";
         }
         try {
@@ -296,7 +296,7 @@ public class AdminScoringController {
             return "redirect:/admin/scoring-schemes/" + nextId;
         } catch (BusinessRuleException exception) {
             result.reject("scheme.invalid", exception.getMessage());
-            populateScheme(id, "Reading", null, false, model);
+            populateScoringSchemeModel(id, "Reading", null, false, model);
             return "admin/settings/scheme";
         }
     }
@@ -331,7 +331,7 @@ public class AdminScoringController {
             Model model,
             RedirectAttributes redirect) {
         if (result.hasErrors()) {
-            populateScheme(schemeId, skill, form.getId(), false, model);
+            populateScoringSchemeModel(schemeId, skill, form.getId(), false, model);
             return "admin/settings/scheme";
         }
         try {
@@ -340,7 +340,7 @@ public class AdminScoringController {
             return "redirect:/admin/scoring-schemes/" + schemeId + "?skill=" + skill;
         } catch (BusinessRuleException exception) {
             result.reject("band.invalid", exception.getMessage());
-            populateScheme(schemeId, skill, form.getId(), false, model);
+            populateScoringSchemeModel(schemeId, skill, form.getId(), false, model);
             return "admin/settings/scheme";
         }
     }
@@ -357,50 +357,9 @@ public class AdminScoringController {
         return "redirect:/admin/scoring-schemes/" + schemeId + "?skill=" + skill;
     }
 
-    private void populateScheme(
+    private void populateScoringSchemeModel(
             int id, String skill, Integer bandId, boolean readOnly, Model model) {
-        skill =
-                switch (skill.toUpperCase(Locale.ROOT).replaceAll("[^A-Z0-9]+", "_")) {
-                    case "GRAMMAR_VOCABULARY" -> "Grammar & Vocabulary";
-                    case "READING" -> "Reading";
-                    case "LISTENING" -> "Listening";
-                    case "WRITING" -> "Writing";
-                    case "SPEAKING" -> "Speaking";
-                    default -> throw new BusinessRuleException("Kỹ năng không hợp lệ");
-                };
-        ScoringViewsDTO.SchemeView value = scoring.scheme(id);
-        if (value.scopeSkill() != null)
-            skill = SKILL_LABELS.getOrDefault(value.scopeSkill(), value.scopeSkill());
-        schemeOptions(model);
-        if (value.scopeSkill() != null) model.addAttribute("skills", List.of(skill));
-        model.addAttribute("scheme", value);
-        if (!model.containsAttribute("schemeForm")) {
-            ScoringSchemeFormDTO form = schemeForm(value);
-            scoring.populateScoreConfiguration(id, form);
-            model.addAttribute("schemeForm", form);
-        }
-        model.addAttribute("editing", true);
-        model.addAttribute("readOnly", readOnly);
-        model.addAttribute("selectedSkill", skill);
-        model.addAttribute("bands", scoring.bandViews(id, skill));
-        Object bandErrors = model.getAttribute(BindingResult.MODEL_KEY_PREFIX + "bandForm");
-        model.addAttribute(
-                "bandFormHasErrors",
-                bandErrors instanceof BindingResult result && result.hasErrors());
-        if (!model.containsAttribute("scaleRuleForm"))
-            model.addAttribute("scaleRuleForm", scoring.scaleRule(id, skill));
-        if (!model.containsAttribute("bandForm")) {
-            ScoreBandDTO bandForm = new ScoreBandDTO();
-            if (bandId != null) {
-                ScoringViewsDTO.BandView band = scoring.band(id, bandId);
-                bandForm.setId(band.id());
-                bandForm.setSkill(band.skill());
-                bandForm.setCefrLevel(band.cefrLevel());
-                bandForm.setMinScore(band.minScore());
-                bandForm.setMaxScore(band.maxScore());
-            } else bandForm.setSkill(skill);
-            model.addAttribute("bandForm", bandForm);
-        }
+        scoring.populateScoringSchemeModel(id, skill, bandId, readOnly, model);
     }
 
     @PostMapping("/admin/scoring-schemes/{schemeId}/scale-rule")
@@ -421,7 +380,7 @@ public class AdminScoringController {
                 result.reject("scale.invalid", exception.getMessage());
             }
         }
-        populateScheme(schemeId, skill, null, false, model);
+        populateScoringSchemeModel(schemeId, skill, null, false, model);
         return "admin/settings/scheme";
     }
 

@@ -12,7 +12,6 @@ public class AttemptOutboxEntity {
     public AttemptOutboxEntity() {}
 
     public AttemptOutboxEntity(
-            Long id,
             String eventKey,
             String eventType,
             Integer aggregateId,
@@ -23,7 +22,6 @@ public class AttemptOutboxEntity {
             String lastError,
             LocalDateTime createdAt,
             LocalDateTime processedAt) {
-        this.id = id;
         this.eventKey = eventKey;
         this.eventType = eventType;
         this.aggregateId = aggregateId;

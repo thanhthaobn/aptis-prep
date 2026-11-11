@@ -7,16 +7,16 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 import com.aptisprep.config.StorageProperties;
+import com.aptisprep.dto.*;
+import com.aptisprep.dto.LearningPathViewsDTO.StageLessonDTO;
 import com.aptisprep.dto.LessonCheckDTO;
 import com.aptisprep.entity.*;
 import com.aptisprep.entity.Lesson;
 import com.aptisprep.entity.LessonWorkSubmission;
 import com.aptisprep.entity.User;
 import com.aptisprep.enums.*;
+import com.aptisprep.enums.Skill;
 import com.aptisprep.exception.BusinessRuleException;
-import com.aptisprep.presentation.*;
-import com.aptisprep.presentation.LearningPathViewsDTO.StageLessonDTO;
-import com.aptisprep.presentation.form.*;
 import com.aptisprep.repository.*;
 import com.aptisprep.repository.UserRepository;
 import com.aptisprep.service.learning.impl.*;
@@ -293,7 +293,7 @@ class StructuredLessonTests {
     @Test
     void practiceWorkspacesMatchTheSkillAndListeningKeepsAudioWithQuestions() throws Exception {
         var u = learner("practice-layout@test.local");
-        for (String skill : LessonService.SKILLS) {
+        for (String skill : Skill.labels()) {
             var lesson = create(skill);
             if (skill.equals("Listening")) {
                 lesson.setAudioPath(TestAudio.store(storage));
@@ -425,7 +425,7 @@ class StructuredLessonTests {
     @Test
     void allSkillViewsAndEditorRenderWithoutDisclosingKeys() throws Exception {
         var u = learner("structured@test.local");
-        for (String skill : LessonService.SKILLS) {
+        for (String skill : Skill.labels()) {
             var l = create(skill);
             mvc.perform(
                             get("/student/lessons/" + l.getId())

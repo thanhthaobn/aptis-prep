@@ -6,13 +6,11 @@ import jakarta.persistence.*;
 @Table(name = "mock_exam_sections")
 public class MockExamSectionEntity {
     public MockExamSectionEntity(
-            Integer id,
             Integer mockExamId,
             String skill,
             int displayOrder,
             int durationMinutes,
             String status) {
-        this.id = id;
         this.mockExamId = mockExamId;
         this.skill = skill;
         this.displayOrder = displayOrder;

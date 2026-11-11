@@ -1,9 +1,9 @@
 package com.aptisprep.controller.auth;
 
+import com.aptisprep.dto.AuthResultDTO;
+import com.aptisprep.dto.RegisterFormDTO;
 import com.aptisprep.exception.BusinessRuleException;
 import com.aptisprep.exception.DuplicateEmailException;
-import com.aptisprep.presentation.AuthResultDTO;
-import com.aptisprep.presentation.form.RegisterFormDTO;
 import com.aptisprep.security.LoginSession;
 import com.aptisprep.service.account.UserService;
 import jakarta.servlet.http.HttpServletRequest;

@@ -7,7 +7,6 @@ import java.time.LocalDateTime;
 @Table(name = "questions")
 public class QuestionEntity {
     public QuestionEntity(
-            Integer id,
             String content,
             String instruction,
             String readingPassage,
@@ -21,7 +20,6 @@ public class QuestionEntity {
             String status,
             LocalDateTime createdAt,
             LocalDateTime updatedAt) {
-        this.id = id;
         this.content = content;
         this.instruction = instruction;
         this.readingPassage = readingPassage;

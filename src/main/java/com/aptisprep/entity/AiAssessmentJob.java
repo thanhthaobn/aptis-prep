@@ -16,7 +16,6 @@ public class AiAssessmentJob {
     public AiAssessmentJob() {}
 
     public AiAssessmentJob(
-            Integer id,
             String assessmentKey,
             Integer userId,
             Integer attemptId,
@@ -39,7 +38,6 @@ public class AiAssessmentJob {
             LocalDateTime updatedAt,
             LocalDateTime nextRetryAt,
             String processingToken) {
-        this.id = id;
         this.assessmentKey = assessmentKey;
         this.userId = userId;
         this.attemptId = attemptId;

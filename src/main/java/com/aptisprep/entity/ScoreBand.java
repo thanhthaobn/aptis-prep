@@ -14,13 +14,11 @@ public class ScoreBand {
     public ScoreBand() {}
 
     public ScoreBand(
-            Integer id,
             ScoringScheme scheme,
             String skill,
             String cefrLevel,
             BigDecimal minScore,
             BigDecimal maxScore) {
-        this.id = id;
         this.scheme = scheme;
         this.skill = skill;
         this.cefrLevel = cefrLevel;

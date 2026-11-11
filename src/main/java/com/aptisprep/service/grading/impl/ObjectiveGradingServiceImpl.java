@@ -1,14 +1,14 @@
 package com.aptisprep.service.grading.impl;
 
+import com.aptisprep.dto.LockedAnswerDTO;
+import com.aptisprep.dto.LockedAttemptDTO;
+import com.aptisprep.dto.LockedItemDTO;
 import com.aptisprep.entity.ExamSkillResultEntity;
 import com.aptisprep.entity.MockExamEntity;
 import com.aptisprep.entity.UserAnswerDetailEntity;
 import com.aptisprep.entity.UserAnswerEntity;
 import com.aptisprep.exception.BusinessRuleException;
 import com.aptisprep.exception.ResourceNotFoundException;
-import com.aptisprep.presentation.LockedAnswerDTO;
-import com.aptisprep.presentation.LockedAttemptDTO;
-import com.aptisprep.presentation.LockedItemDTO;
 import com.aptisprep.repository.ExamSkillResultRepository;
 import com.aptisprep.service.exam.ExamGradingPersistenceService;
 import com.aptisprep.service.grading.ObjectiveGradingService;

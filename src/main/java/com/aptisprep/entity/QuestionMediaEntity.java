@@ -7,7 +7,6 @@ import java.time.LocalDateTime;
 @Table(name = "question_media")
 public class QuestionMediaEntity {
     public QuestionMediaEntity(
-            Integer id,
             Integer questionId,
             String mediaType,
             String mediaUrl,
@@ -19,7 +18,6 @@ public class QuestionMediaEntity {
             String altText,
             String transcript,
             LocalDateTime createdAt) {
-        this.id = id;
         this.questionId = questionId;
         this.mediaType = mediaType;
         this.mediaUrl = mediaUrl;

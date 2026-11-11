@@ -1,11 +1,11 @@
 package com.aptisprep.service.exam.impl;
 
 import com.aptisprep.config.AiProperties;
+import com.aptisprep.dto.AiAssessmentDTO;
+import com.aptisprep.dto.LockedAnswerDTO;
+import com.aptisprep.dto.LockedAttemptDTO;
 import com.aptisprep.event.AiAssessmentCompletedEvent;
 import com.aptisprep.event.AttemptSubmittedEvent;
-import com.aptisprep.presentation.AiAssessmentDTO;
-import com.aptisprep.presentation.LockedAnswerDTO;
-import com.aptisprep.presentation.LockedAttemptDTO;
 import com.aptisprep.service.exam.AttemptOutboxService;
 import com.aptisprep.service.grading.AiAssessmentService;
 import com.aptisprep.service.grading.AttemptFinalizationService;

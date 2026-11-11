@@ -8,8 +8,7 @@ public class LessonCheckAnswerEntity {
     public LessonCheckAnswerEntity() {}
 
     public LessonCheckAnswerEntity(
-            Integer id, LessonCheckAttempt attempt, Integer questionId, Integer selectedOption) {
-        this.id = id;
+            LessonCheckAttempt attempt, Integer questionId, Integer selectedOption) {
         this.attempt = attempt;
         this.questionId = questionId;
         this.selectedOption = selectedOption;

@@ -1,7 +1,6 @@
 package com.aptisprep.dto;
 
 import com.aptisprep.entity.QuestionEntity;
-import com.aptisprep.presentation.form.QuestionFormDTO;
 
 /** DTO boundary for the scalar fields of a question entity. */
 public class QuestionEntityDTO {

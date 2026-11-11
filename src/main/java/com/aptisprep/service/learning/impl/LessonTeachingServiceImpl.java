@@ -1,18 +1,18 @@
 package com.aptisprep.service.learning.impl;
 
 import com.aptisprep.config.AiProperties;
+import com.aptisprep.dto.AiAssessmentDTO.AssessmentRequest;
 import com.aptisprep.dto.LessonCheckDTO;
+import com.aptisprep.dto.LessonContextSnapshot;
+import com.aptisprep.dto.LessonEditorForm;
+import com.aptisprep.dto.LessonMediaResourceDTO;
+import com.aptisprep.dto.LessonResponseDTO;
+import com.aptisprep.dto.LessonTeachingViewsDTO.*;
+import com.aptisprep.dto.LessonWorkSubmissionDTO;
 import com.aptisprep.entity.*;
 import com.aptisprep.entity.User;
 import com.aptisprep.enums.*;
 import com.aptisprep.exception.*;
-import com.aptisprep.presentation.AiAssessmentDTO.AssessmentRequest;
-import com.aptisprep.presentation.LessonContextSnapshot;
-import com.aptisprep.presentation.LessonMediaResourceDTO;
-import com.aptisprep.presentation.LessonResponseDTO;
-import com.aptisprep.presentation.LessonTeachingViewsDTO.*;
-import com.aptisprep.presentation.LessonWorkSubmissionDTO;
-import com.aptisprep.presentation.form.LessonEditorForm;
 import com.aptisprep.repository.*;
 import com.aptisprep.service.account.UserService;
 import com.aptisprep.service.grading.AiAssessmentService;
@@ -241,7 +241,16 @@ public class LessonTeachingServiceImpl implements LessonTeachingService {
         lessonResponseRepository.save(r);
         em.persist(
                 new LessonWorkSubmission(
-                        u.getId(), lesson, r, LessonContextSnapshotMapper.capture(lesson)));
+                        LessonContextSnapshotMapper.capture(lesson),
+                        u.getId(),
+                        lesson.getId(),
+                        lesson.getSkill(),
+                        lesson.getPracticePrompt() == null
+                                ? lesson.getTitle()
+                                : lesson.getPracticePrompt(),
+                        r.getText(),
+                        r.getAudioPath(),
+                        LocalDateTime.now()));
     }
 
     @Override
@@ -373,7 +382,16 @@ public class LessonTeachingServiceImpl implements LessonTeachingService {
             throw new BusinessRuleException("Hãy lưu bản ghi trước khi lưu transcript");
         em.persist(
                 new LessonWorkSubmission(
-                        u.getId(), lesson, work, LessonContextSnapshotMapper.capture(lesson)));
+                        LessonContextSnapshotMapper.capture(lesson),
+                        u.getId(),
+                        lesson.getId(),
+                        lesson.getSkill(),
+                        lesson.getPracticePrompt() == null
+                                ? lesson.getTitle()
+                                : lesson.getPracticePrompt(),
+                        work.getText(),
+                        work.getAudioPath(),
+                        LocalDateTime.now()));
     }
 
     @Override

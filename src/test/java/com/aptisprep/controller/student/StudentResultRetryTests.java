@@ -4,9 +4,9 @@ import static org.assertj.core.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
+import com.aptisprep.dto.AttemptResultDTO;
+import com.aptisprep.dto.SkillResultDTO;
 import com.aptisprep.exception.BusinessRuleException;
-import com.aptisprep.presentation.AttemptResultDTO;
-import com.aptisprep.presentation.SkillResultDTO;
 import com.aptisprep.service.account.AccountAccessService;
 import com.aptisprep.service.admin.*;
 import com.aptisprep.service.exam.ExamAttemptService;

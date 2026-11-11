@@ -1,9 +1,9 @@
 package com.aptisprep.controller.admin;
 
 import com.aptisprep.exception.BusinessRuleException;
-import com.aptisprep.presentation.AdminCatalogViewDTO.CatalogPage;
-import com.aptisprep.presentation.form.ExamFormDTO;
-import com.aptisprep.presentation.form.QuestionFormDTO;
+import com.aptisprep.dto.AdminCatalogViewDTO.CatalogPage;
+import com.aptisprep.dto.ExamFormDTO;
+import com.aptisprep.dto.QuestionFormDTO;
 import com.aptisprep.service.admin.CatalogService;
 import java.util.Map;
 import org.springframework.core.io.Resource;
@@ -78,7 +78,7 @@ public class AdminCatalogController {
     @GetMapping("/admin/questions/{id}")
     public String question(@PathVariable int id, Model model) {
         addModule("questions", model);
-        model.addAttribute("entry", catalogService.entry("questions", id));
+        model.addAttribute("entry", catalogService.getCatalogEntryById("questions", id));
         model.addAttribute("mediaItems", catalogService.mediaItems(id));
         return "admin/catalog/detail";
     }
@@ -86,7 +86,7 @@ public class AdminCatalogController {
     @GetMapping("/admin/exams/{id}")
     public String exam(@PathVariable int id, Model model) {
         addModule("exams", model);
-        model.addAttribute("entry", catalogService.entry("exams", id));
+        model.addAttribute("entry", catalogService.getCatalogEntryById("exams", id));
         model.addAttribute("examPreview", catalogService.examPreview(id));
         return "admin/catalog/detail";
     }
@@ -95,7 +95,7 @@ public class AdminCatalogController {
     public String createQuestion(Model model) {
         addModule("questions", model);
         model.addAttribute("editing", false);
-        model.addAttribute("questionForm", catalogService.questionForm(null));
+        model.addAttribute("questionForm", catalogService.getQuestionById(null));
         return "admin/catalog/form";
     }
 
@@ -103,7 +103,7 @@ public class AdminCatalogController {
     public String createExam(Model model) {
         addModule("exams", model);
         model.addAttribute("editing", false);
-        prepareExamFormDTO(model, catalogService.examForm(null));
+        prepareExamFormDTO(model, catalogService.getExamFormById(null));
         return "admin/catalog/form";
     }
 
@@ -111,8 +111,8 @@ public class AdminCatalogController {
     public String editQuestion(@PathVariable int id, Model model) {
         addModule("questions", model);
         model.addAttribute("editing", true);
-        model.addAttribute("entry", catalogService.entry("questions", id));
-        model.addAttribute("questionForm", catalogService.questionForm(id));
+        model.addAttribute("entry", catalogService.getCatalogEntryById("questions", id));
+        model.addAttribute("questionForm", catalogService.getQuestionById(id));
         return "admin/catalog/form";
     }
 
@@ -120,8 +120,8 @@ public class AdminCatalogController {
     public String editExam(@PathVariable int id, Model model) {
         addModule("exams", model);
         model.addAttribute("editing", true);
-        model.addAttribute("entry", catalogService.entry("exams", id));
-        prepareExamFormDTO(model, catalogService.examForm(id));
+        model.addAttribute("entry", catalogService.getCatalogEntryById("exams", id));
+        prepareExamFormDTO(model, catalogService.getExamFormById(id));
         return "admin/catalog/form";
     }
 
@@ -251,7 +251,7 @@ public class AdminCatalogController {
         }
         addModule("exams", model);
         model.addAttribute("editing", true);
-        model.addAttribute("entry", catalogService.entry("exams", id));
+        model.addAttribute("entry", catalogService.getCatalogEntryById("exams", id));
         model.addAttribute("examError", error);
         prepareExamFormDTO(model, form);
         return "admin/catalog/form";
@@ -276,8 +276,8 @@ public class AdminCatalogController {
 
     private void addModule(String key, Model model) {
         model.addAttribute("catalog", catalogService.module(key));
-        model.addAttribute("skills", catalogService.skills());
-        model.addAttribute("levels", catalogService.levels());
+        model.addAttribute("skills", catalogService.getAvailableSkills());
+        model.addAttribute("levels", catalogService.getAvailableLevels());
     }
 
     private void prepareExamFormDTO(Model model, ExamFormDTO form) {
@@ -285,7 +285,7 @@ public class AdminCatalogController {
         model.addAttribute("certificates", catalogService.activeCertificates());
         model.addAttribute("schemes", catalogService.activeSchemes());
         model.addAttribute("publishedQuestions", catalogService.publishedQuestions());
-        model.addAttribute("examTypes", catalogService.examTypes());
+        model.addAttribute("examTypes", catalogService.getAvailableExamTypes());
     }
 
     private void prepareQuestionError(
@@ -294,6 +294,6 @@ public class AdminCatalogController {
         model.addAttribute("editing", editing);
         model.addAttribute("questionForm", form);
         model.addAttribute("formError", message);
-        if (id != null) model.addAttribute("entry", catalogService.entry("questions", id));
+        if (id != null) model.addAttribute("entry", catalogService.getCatalogEntryById("questions", id));
     }
 }

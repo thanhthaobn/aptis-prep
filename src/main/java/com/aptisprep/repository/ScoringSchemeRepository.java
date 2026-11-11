@@ -5,6 +5,7 @@ import com.aptisprep.enums.RecordStatus;
 import jakarta.persistence.LockModeType;
 import java.util.List;
 import java.util.Optional;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
@@ -15,6 +16,7 @@ public interface ScoringSchemeRepository extends JpaRepository<ScoringScheme, In
     @Query("select s from ScoringScheme s where s.id = :id")
     Optional<ScoringScheme> findByIdForUpdate(@Param("id") Integer id);
 
+    @EntityGraph(attributePaths = {"certificate"})
     List<ScoringScheme> findByStatusOrderByName(RecordStatus status);
 
     List<ScoringScheme> findByCertificateIdAndStatusOrderByVersionDesc(

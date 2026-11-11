@@ -1,8 +1,8 @@
 package com.aptisprep.service.account.impl;
 
-import com.aptisprep.presentation.LearningActivityDTO.ActivityViewDTO;
-import com.aptisprep.presentation.LearningActivityDTO.DayDTO;
-import com.aptisprep.presentation.LearningActivityDTO.WeekDTO;
+import com.aptisprep.dto.LearningActivityDTO.ActivityViewDTO;
+import com.aptisprep.dto.LearningActivityDTO.DayDTO;
+import com.aptisprep.dto.LearningActivityDTO.WeekDTO;
 import com.aptisprep.service.account.AccountAccessService;
 import com.aptisprep.service.account.LearningActivityService;
 import com.aptisprep.service.exam.ExamAttemptService;

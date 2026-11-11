@@ -1,7 +1,7 @@
 package com.aptisprep.service.admin.impl;
 
-import com.aptisprep.presentation.AdminDashboardViewDTO;
-import com.aptisprep.presentation.form.AdminHistoryFilterDTO;
+import com.aptisprep.dto.AdminDashboardViewDTO;
+import com.aptisprep.dto.AdminHistoryFilterDTO;
 import com.aptisprep.service.admin.AdminDashboardService;
 import com.aptisprep.service.admin.CatalogService;
 import com.aptisprep.service.admin.StudentManagementService;

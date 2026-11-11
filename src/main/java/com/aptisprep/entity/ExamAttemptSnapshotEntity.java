@@ -16,7 +16,6 @@ public class ExamAttemptSnapshotEntity {
     public ExamAttemptSnapshotEntity() {}
 
     public ExamAttemptSnapshotEntity(
-            Integer id,
             Integer attemptId,
             Integer examId,
             Integer certificateId,
@@ -31,7 +30,6 @@ public class ExamAttemptSnapshotEntity {
             Long sectionAdvanceMillis,
             List<ExamQuestionSnapshotEntity> questions,
             LocalDateTime createdAt) {
-        this.id = id;
         this.attemptId = attemptId;
         this.examId = examId;
         this.certificateId = certificateId;
