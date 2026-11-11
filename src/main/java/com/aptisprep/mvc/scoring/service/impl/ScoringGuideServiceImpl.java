@@ -140,7 +140,8 @@ public class ScoringGuideServiceImpl implements ScoringGuideService {
         Band a1 = configured.stream().filter(b -> "A1".equals(b.level())).findFirst().orElseThrow();
         if (a1.min().signum() != 0) return configured;
         List<Band> adjusted = new ArrayList<>();
-        adjusted.add(new Band(BigDecimal.ZERO, BigDecimal.ZERO, "A0", false));
+        adjusted.add(
+                new Band(BigDecimal.ZERO, BigDecimal.ZERO, "A0", "A0".equals(levels.get(skill))));
         for (Band band : configured) {
             adjusted.add(
                     "A1".equals(band.level())
