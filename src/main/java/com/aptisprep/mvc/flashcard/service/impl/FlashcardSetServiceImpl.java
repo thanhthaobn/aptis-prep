@@ -46,7 +46,8 @@ public class FlashcardSetServiceImpl implements FlashcardSetService {
         this.lessonService = lessonService;
     }
 
-    public static List<SkillSets> groupBySkillAndLevel(List<SetView> values) {
+    @Override
+    public List<SkillSets> groupBySkillAndLevel(List<SetView> values) {
         List<SkillSets> branches = new ArrayList<>();
         for (String skill : LessonService.SKILLS) {
             List<LevelSets> levels = new ArrayList<>();
