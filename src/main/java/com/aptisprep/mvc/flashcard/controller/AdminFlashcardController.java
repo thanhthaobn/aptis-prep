@@ -24,7 +24,7 @@ public class AdminFlashcardController {
     public String showFlashcardList(Model model) {
         List<SetView> sets = flashcardSetService.list(true);
         model.addAttribute("sets", sets);
-        model.addAttribute("lessonBranches", FlashcardSetService.groupBySkillAndLevel(sets));
+        model.addAttribute("lessonBranches", flashcardSetService.groupBySkillAndLevel(sets));
         model.addAttribute(
                 "unclassifiedSets",
                 sets.stream()

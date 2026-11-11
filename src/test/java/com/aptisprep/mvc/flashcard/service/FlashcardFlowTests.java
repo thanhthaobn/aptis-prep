@@ -63,8 +63,7 @@ class FlashcardFlowTests {
         var mine =
                 new FlashcardViewsDTO.SetView(
                         4, "Private", null, "A1", "PUBLISHED", 1, true, null, null, null);
-        var tree =
-                FlashcardSetService.groupBySkillAndLevel(java.util.List.of(a2, mine, a1, grammar));
+        var tree = service.groupBySkillAndLevel(java.util.List.of(a2, mine, a1, grammar));
         assertThat(tree)
                 .extracting(FlashcardViewsDTO.SkillSets::skill)
                 .containsExactly("Grammar & Vocabulary", "Reading");

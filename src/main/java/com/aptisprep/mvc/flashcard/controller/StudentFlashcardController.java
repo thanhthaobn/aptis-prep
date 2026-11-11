@@ -92,7 +92,7 @@ public class StudentFlashcardController {
         m.addAttribute(
                 "mineResultCount",
                 visible.stream().filter(FlashcardViewsDTO.SetView::personal).count());
-        m.addAttribute("lessonBranches", FlashcardSetService.groupBySkillAndLevel(visible));
+        m.addAttribute("lessonBranches", service.groupBySkillAndLevel(visible));
         m.addAttribute("skills", LessonService.SKILLS);
         m.addAttribute("levels", LessonService.LEVELS);
         m.addAttribute("totalCards", all.stream().mapToInt(FlashcardViewsDTO.SetView::count).sum());
