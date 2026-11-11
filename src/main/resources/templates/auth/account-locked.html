@@ -3,7 +3,11 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title th:text="${status == 'INACTIVE' ? 'Tài khoản ngừng hoạt động | AptisPrep' : 'Tài khoản bị khóa | AptisPrep'}">Tài khoản bị khóa | AptisPrep</title>
+    <title
+      th:text="${status == 'INACTIVE' ? 'Tài khoản ngừng hoạt động | AptisPrep' : 'Tài khoản bị khóa | AptisPrep'}"
+    >
+      Tài khoản bị khóa | AptisPrep
+    </title>
     <link rel="stylesheet" th:href="@{/css/variables.css}" />
     <link rel="stylesheet" th:href="@{/css/base.css}" />
     <link rel="stylesheet" th:href="@{/css/layout.css}" />
@@ -14,37 +18,80 @@
     <main class="container ap-container auth-page">
       <section class="form-card" role="region" aria-labelledby="lockedHeading">
         <p class="eyebrow">TÀI KHOẢN</p>
-        <h1 id="lockedHeading" th:text="${status == 'INACTIVE' ? 'Tài khoản ngừng hoạt động' : 'Tài khoản đã bị khóa'}">Tài khoản đã bị khóa</h1>
-        <p th:text="${status == 'INACTIVE' ? 'Tài khoản của bạn đã bị ngừng hoạt động bởi quản trị viên.' : 'Quản trị viên đã khóa tài khoản của bạn.'}">
+        <h1
+          id="lockedHeading"
+          th:text="${status == 'INACTIVE' ? 'Tài khoản ngừng hoạt động' : 'Tài khoản đã bị khóa'}"
+        >
+          Tài khoản đã bị khóa
+        </h1>
+        <p
+          th:text="${status == 'INACTIVE' ? 'Tài khoản của bạn đã bị ngừng hoạt động bởi quản trị viên.' : 'Quản trị viên đã khóa tài khoản của bạn.'}"
+        >
           Quản trị viên đã khóa tài khoản của bạn.
         </p>
 
         <div class="alert alert-danger ap-alert ap-alert-danger" role="alert">
-          <strong th:text="${status == 'INACTIVE' ? 'Lý do ngừng hoạt động:' : 'Lý do:'}">Lý do:</strong>
-          <span th:if="${status == 'INACTIVE'}" th:text="${removalReason ?: reason ?: 'Tài khoản của bạn đã bị ngừng hoạt động.'}"></span>
-          <span th:unless="${status == 'INACTIVE'}" th:text="${lockReason ?: reason ?: 'Tài khoản đã bị khóa bởi quản trị viên.'}"></span>
+          <strong th:text="${status == 'INACTIVE' ? 'Lý do ngừng hoạt động:' : 'Lý do:'}">
+            Lý do:
+          </strong>
+          <span
+            th:if="${status == 'INACTIVE'}"
+            th:text="${removalReason ?: reason ?: 'Tài khoản của bạn đã bị ngừng hoạt động.'}"
+          ></span>
+          <span
+            th:unless="${status == 'INACTIVE'}"
+            th:text="${lockReason ?: reason ?: 'Tài khoản đã bị khóa bởi quản trị viên.'}"
+          ></span>
         </div>
 
-        <div th:if="${successMessage}" class="alert alert-success ap-alert ap-alert-success" role="status" th:text="${successMessage}"></div>
-        <div th:if="${errorMessage}" class="alert alert-danger ap-alert ap-alert-danger" role="alert" th:text="${errorMessage}"></div>
+        <div
+          th:if="${successMessage}"
+          class="alert alert-success ap-alert ap-alert-success"
+          role="status"
+          th:text="${successMessage}"
+        ></div>
+        <div
+          th:if="${errorMessage}"
+          class="alert alert-danger ap-alert ap-alert-danger"
+          role="alert"
+          th:text="${errorMessage}"
+        ></div>
 
         <div th:if="${latestRequest != null}" class="latest-request-status">
-          <div th:if="${latestRequest.status.name() == 'PENDING'}" class="alert alert-warning ap-alert ap-alert-warning" role="status">
+          <div
+            th:if="${latestRequest.status.name() == 'PENDING'}"
+            class="alert alert-warning ap-alert ap-alert-warning"
+            role="status"
+          >
             <strong>Trạng thái yêu cầu:</strong>
             <span>Yêu cầu mở khóa của bạn đang chờ quản trị viên xem xét.</span>
           </div>
-          <div th:if="${latestRequest.status.name() == 'REJECTED'}" class="alert alert-danger ap-alert ap-alert-danger" role="alert">
+          <div
+            th:if="${latestRequest.status.name() == 'REJECTED'}"
+            class="alert alert-danger ap-alert ap-alert-danger"
+            role="alert"
+          >
             <strong>Yêu cầu gần nhất đã bị từ chối:</strong>
             <span th:text="${latestRequest.adminNote}"></span>
           </div>
-          <div th:if="${latestRequest.status.name() == 'APPROVED'}" class="alert alert-success ap-alert ap-alert-success" role="status">
+          <div
+            th:if="${latestRequest.status.name() == 'APPROVED'}"
+            class="alert alert-success ap-alert ap-alert-success"
+            role="status"
+          >
             <strong>Yêu cầu đã được duyệt:</strong>
             <span>Tài khoản của bạn đã được mở khóa. Hãy quay lại đăng nhập.</span>
           </div>
         </div>
 
-        <div th:if="${latestRequest == null or latestRequest.status.name() != 'PENDING'}" class="unlock-request-section">
-          <h2 class="form-title" th:text="${status == 'INACTIVE' ? 'Gửi yêu cầu khôi phục tài khoản' : 'Gửi yêu cầu mở khóa tài khoản'}">
+        <div
+          th:if="${latestRequest == null or latestRequest.status.name() != 'PENDING'}"
+          class="unlock-request-section"
+        >
+          <h2
+            class="form-title"
+            th:text="${status == 'INACTIVE' ? 'Gửi yêu cầu khôi phục tài khoản' : 'Gửi yêu cầu mở khóa tài khoản'}"
+          >
             Gửi yêu cầu mở khóa tài khoản
           </h2>
           <form th:action="@{/account-unlock-request}" method="post">
@@ -92,7 +139,7 @@
           </form>
         </div>
 
-        <div class="form-footer" style="margin-top: 1rem;">
+        <div class="form-footer" style="margin-top: 1rem">
           <a class="button button-secondary button-block" th:href="@{/login}">Quay lại đăng nhập</a>
         </div>
       </section>

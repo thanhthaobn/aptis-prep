@@ -2,9 +2,9 @@ package com.aptisprep;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import com.aptisprep.mvc.common.enums.CefrLevel;
-import com.aptisprep.mvc.common.enums.Skill;
-import com.aptisprep.mvc.learning.service.LessonService;
+import com.aptisprep.enums.CefrLevel;
+import com.aptisprep.enums.Skill;
+import com.aptisprep.service.learning.LessonService;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 

@@ -96,8 +96,18 @@
 
       <main id="main-content" tabindex="-1" class="app-main">
         <div class="messages-container" aria-live="polite">
-          <div th:if="${successMessage}" class="alert alert-success ap-alert ap-alert-success" role="status" th:text="${successMessage}"></div>
-          <div th:if="${errorMessage}" class="alert alert-danger ap-alert ap-alert-danger" role="alert" th:text="${errorMessage}"></div>
+          <div
+            th:if="${successMessage}"
+            class="alert alert-success ap-alert ap-alert-success"
+            role="status"
+            th:text="${successMessage}"
+          ></div>
+          <div
+            th:if="${errorMessage}"
+            class="alert alert-danger ap-alert ap-alert-danger"
+            role="alert"
+            th:text="${errorMessage}"
+          ></div>
         </div>
 
         <header class="page-header d-flex justify-content-between align-items-center">
@@ -117,7 +127,11 @@
             th:classappend="${selectedStatus == 'PENDING'} ? 'button-primary' : 'button-secondary'"
           >
             Chờ xử lý
-            <span th:if="${pendingCount != null and pendingCount > 0}" class="badge bg-warning text-dark" th:text="${pendingCount}"></span>
+            <span
+              th:if="${pendingCount != null and pendingCount > 0}"
+              class="badge bg-warning text-dark"
+              th:text="${pendingCount}"
+            ></span>
           </a>
           <a
             th:href="@{/admin/unlock-requests(status='ALL')}"
@@ -151,41 +165,92 @@
                     <strong th:text="${req.userFullName}"></strong>
                   </div>
                   <div>
-                    <a th:if="${req.userId != null}" th:href="@{/admin/students/{id}(id=${req.userId})}" class="small text-muted" th:text="${req.userEmail}"></a>
-                    <span th:unless="${req.userId != null}" class="small text-muted" th:text="${req.userEmail}"></span>
+                    <a
+                      th:if="${req.userId != null}"
+                      th:href="@{/admin/students/{id}(id=${req.userId})}"
+                      class="small text-muted"
+                      th:text="${req.userEmail}"
+                    ></a>
+                    <span
+                      th:unless="${req.userId != null}"
+                      class="small text-muted"
+                      th:text="${req.userEmail}"
+                    ></span>
                   </div>
                 </td>
                 <td>
-                  <span th:if="${req.userStatus == 'LOCKED'}" class="badge bg-warning text-dark">LOCKED</span>
-                  <span th:if="${req.userStatus == 'INACTIVE'}" class="badge bg-secondary">INACTIVE</span>
+                  <span th:if="${req.userStatus == 'LOCKED'}" class="badge bg-warning text-dark">
+                    LOCKED
+                  </span>
+                  <span th:if="${req.userStatus == 'INACTIVE'}" class="badge bg-secondary">
+                    INACTIVE
+                  </span>
                   <span th:if="${req.userStatus == 'ACTIVE'}" class="badge bg-success">ACTIVE</span>
                 </td>
-                <td style="max-width: 280px; word-break: break-word;">
+                <td style="max-width: 280px; word-break: break-word">
                   <span th:text="${req.message}"></span>
                 </td>
                 <td>
                   <span th:text="${#temporals.format(req.createdAt, 'dd/MM/yyyy HH:mm')}"></span>
                 </td>
                 <td>
-                  <span th:if="${req.status.name() == 'PENDING'}" class="badge bg-primary">Chờ xử lý</span>
-                  <span th:if="${req.status.name() == 'APPROVED'}" class="badge bg-success">Đã duyệt</span>
-                  <span th:if="${req.status.name() == 'REJECTED'}" class="badge bg-danger">Đã từ chối</span>
-                  <div th:if="${req.adminNote != null and !req.adminNote.isEmpty()}" class="small text-muted mt-1">
-                    <em>Ghi chú: <span th:text="${req.adminNote}"></span></em>
+                  <span th:if="${req.status.name() == 'PENDING'}" class="badge bg-primary">
+                    Chờ xử lý
+                  </span>
+                  <span th:if="${req.status.name() == 'APPROVED'}" class="badge bg-success">
+                    Đã duyệt
+                  </span>
+                  <span th:if="${req.status.name() == 'REJECTED'}" class="badge bg-danger">
+                    Đã từ chối
+                  </span>
+                  <div
+                    th:if="${req.adminNote != null and !req.adminNote.isEmpty()}"
+                    class="small text-muted mt-1"
+                  >
+                    <em>
+                      Ghi chú:
+                      <span th:text="${req.adminNote}"></span>
+                    </em>
                   </div>
                   <div th:if="${req.handledByEmail != null}" class="small text-muted">
-                    Bởi: <span th:text="${req.handledByEmail}"></span>
+                    Bởi:
+                    <span th:text="${req.handledByEmail}"></span>
                   </div>
                 </td>
                 <td>
                   <div th:if="${req.status.name() == 'PENDING'}" class="d-flex flex-column gap-2">
-                    <form th:action="@{/admin/unlock-requests/{id}/approve(id=${req.id})}" method="post" class="d-flex gap-1">
-                      <input type="text" name="adminNote" placeholder="Ghi chú (tùy chọn)" maxlength="1000" class="form-control form-control-sm" style="max-width: 150px;" />
+                    <form
+                      th:action="@{/admin/unlock-requests/{id}/approve(id=${req.id})}"
+                      method="post"
+                      class="d-flex gap-1"
+                    >
+                      <input
+                        type="text"
+                        name="adminNote"
+                        placeholder="Ghi chú (tùy chọn)"
+                        maxlength="1000"
+                        class="form-control form-control-sm"
+                        style="max-width: 150px"
+                      />
                       <button type="submit" class="button button-small text-nowrap">Duyệt</button>
                     </form>
-                    <form th:action="@{/admin/unlock-requests/{id}/reject(id=${req.id})}" method="post" class="d-flex gap-1">
-                      <input type="text" name="adminNote" placeholder="Lý do từ chối (bắt buộc)" maxlength="1000" required class="form-control form-control-sm" style="max-width: 150px;" />
-                      <button type="submit" class="button button-danger button-small text-nowrap">Từ chối</button>
+                    <form
+                      th:action="@{/admin/unlock-requests/{id}/reject(id=${req.id})}"
+                      method="post"
+                      class="d-flex gap-1"
+                    >
+                      <input
+                        type="text"
+                        name="adminNote"
+                        placeholder="Lý do từ chối (bắt buộc)"
+                        maxlength="1000"
+                        required
+                        class="form-control form-control-sm"
+                        style="max-width: 150px"
+                      />
+                      <button type="submit" class="button button-danger button-small text-nowrap">
+                        Từ chối
+                      </button>
                     </form>
                   </div>
                   <div th:unless="${req.status.name() == 'PENDING'}">
@@ -200,4 +265,3 @@
     </div>
   </body>
 </html>
-

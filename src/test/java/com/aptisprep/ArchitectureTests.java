@@ -2,7 +2,6 @@ package com.aptisprep;
 
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.*;
 
-import com.tngtech.archunit.core.domain.JavaClass;
 import com.tngtech.archunit.core.domain.JavaMethod;
 import com.tngtech.archunit.core.domain.JavaModifier;
 import com.tngtech.archunit.core.importer.ImportOption;
@@ -12,13 +11,82 @@ import com.tngtech.archunit.lang.ArchCondition;
 import com.tngtech.archunit.lang.ArchRule;
 import com.tngtech.archunit.lang.ConditionEvents;
 import com.tngtech.archunit.lang.SimpleConditionEvent;
+import jakarta.persistence.Embeddable;
+import jakarta.persistence.Entity;
+import org.springframework.stereotype.Controller;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.RestController;
 
 @AnalyzeClasses(
-        packages = "com.aptisprep.mvc",
+        packages = "com.aptisprep",
         importOptions = {ImportOption.DoNotIncludeTests.class})
 public class ArchitectureTests {
+
+    @ArchTest
+    static final ArchRule mvc_packages_must_not_return =
+            noClasses()
+                    .should()
+                    .resideInAPackage("..mvc..")
+                    .as("The legacy feature-first mvc package must remain removed");
+
+    @ArchTest
+    static final ArchRule page_controllers_must_be_grouped_by_actor =
+            classes()
+                    .that()
+                    .areAnnotatedWith(Controller.class)
+                    .should()
+                    .resideInAnyPackage(
+                            "com.aptisprep.controller",
+                            "com.aptisprep.controller.auth..",
+                            "com.aptisprep.controller.admin..",
+                            "com.aptisprep.controller.student..")
+                    .as(
+                            "Page controllers must be grouped by the actor whose views they coordinate");
+
+    @ArchTest
+    static final ArchRule jpa_entities_must_be_in_entity_package =
+            classes()
+                    .that()
+                    .areAnnotatedWith(Entity.class)
+                    .should()
+                    .resideInAPackage("com.aptisprep.entity..")
+                    .as("JPA entities must be kept in the entity layer");
+
+    @ArchTest
+    static final ArchRule dto_types_must_be_entity_dtos_or_presentation_models =
+            classes()
+                    .that()
+                    .haveSimpleNameEndingWith("DTO")
+                    .should()
+                    .resideInAnyPackage("com.aptisprep.dto..", "com.aptisprep.presentation..")
+                    .as("Entity DTOs belong to dto; page and form models belong to presentation");
+
+    @ArchTest
+    static final ArchRule entities_must_not_depend_on_transfer_or_presentation_models =
+            noClasses()
+                    .that()
+                    .resideInAPackage("..entity..")
+                    .should()
+                    .dependOnClassesThat()
+                    .resideInAnyPackage("..dto..", "..presentation..")
+                    .as("Entities must contain persistence state only");
+
+    @ArchTest
+    static final ArchRule presentation_models_must_not_expose_entities =
+            noClasses()
+                    .that()
+                    .resideInAPackage("..presentation..")
+                    .should()
+                    .dependOnClassesThat()
+                    .resideInAPackage("..entity..")
+                    .as("Presentation models may compose DTOs, but must not expose entities");
+
+    @ArchTest
+    static final ArchRule embeddable_value_objects_must_not_be_used =
+            noClasses()
+                    .should()
+                    .beAnnotatedWith(Embeddable.class)
+                    .as("Lesson material is persisted directly by Lesson, not as an embeddable");
 
     @ArchTest
     static final ArchRule controllers_must_not_depend_on_repositories =
@@ -58,15 +126,16 @@ public class ArchitectureTests {
                     .should()
                     .haveSimpleNameEndingWith("ServiceImpl")
                     .andShould()
-                    .resideInAPackage("..service.impl..")
-                    .as("@Service must only be placed on *ServiceImpl classes in ..service.impl..");
+                    .resideInAPackage("..service..impl..")
+                    .as(
+                            "@Service must only be placed on *ServiceImpl classes in a service impl package");
 
     @ArchTest
     static final ArchRule service_interfaces_must_have_no_default_methods =
             methods()
                     .that()
                     .areDeclaredInClassesThat()
-                    .resideInAPackage("..service")
+                    .resideInAPackage("..service..")
                     .and()
                     .areDeclaredInClassesThat()
                     .areInterfaces()
@@ -97,65 +166,23 @@ public class ArchitectureTests {
                     .as("No class should be annotated with @RestController");
 
     @ArchTest
-    static final ArchRule feature_repository_isolation =
-            classes()
+    static final ArchRule repositories_must_not_depend_on_upper_layers =
+            noClasses()
                     .that()
-                    .resideInAPackage("com.aptisprep.mvc..")
-                    .should(
-                            new ArchCondition<JavaClass>(
-                                    "not depend on repositories of other features") {
-                                @Override
-                                public void check(JavaClass javaClass, ConditionEvents events) {
-                                    String className = javaClass.getName();
-                                    if (!className.startsWith("com.aptisprep.mvc.")) return;
-                                    String sub = className.substring("com.aptisprep.mvc.".length());
-                                    int dot = sub.indexOf('.');
-                                    if (dot < 0) return;
-                                    String currentFeature = sub.substring(0, dot);
-                                    if ("common".equals(currentFeature)) return;
+                    .resideInAPackage("..repository..")
+                    .should()
+                    .dependOnClassesThat()
+                    .resideInAnyPackage(
+                            "..controller..", "..service..", "..dto..", "..presentation..")
+                    .as("Repositories must only expose persistence types");
 
-                                    javaClass
-                                            .getDirectDependenciesFromSelf()
-                                            .forEach(
-                                                    dep -> {
-                                                        JavaClass target = dep.getTargetClass();
-                                                        String targetPkg = target.getPackageName();
-                                                        if (targetPkg.startsWith(
-                                                                        "com.aptisprep.mvc.")
-                                                                && targetPkg.contains(
-                                                                        ".repository")) {
-                                                            String targetSub =
-                                                                    targetPkg.substring(
-                                                                            "com.aptisprep.mvc."
-                                                                                    .length());
-                                                            int targetDot = targetSub.indexOf('.');
-                                                            if (targetDot > 0) {
-                                                                String targetFeature =
-                                                                        targetSub.substring(
-                                                                                0, targetDot);
-                                                                if (!targetFeature.equals(
-                                                                                currentFeature)
-                                                                        && !"common"
-                                                                                .equals(
-                                                                                        targetFeature)) {
-                                                                    events.add(
-                                                                            SimpleConditionEvent
-                                                                                    .violated(
-                                                                                            javaClass,
-                                                                                            className
-                                                                                                    + " in feature '"
-                                                                                                    + currentFeature
-                                                                                                    + "' depends on repository "
-                                                                                                    + target
-                                                                                                            .getName()
-                                                                                                    + " in feature '"
-                                                                                                    + targetFeature
-                                                                                                    + "'"));
-                                                                }
-                                                            }
-                                                        }
-                                                    });
-                                }
-                            })
-                    .as("Classes in one feature must not depend on repositories of other features");
+    @ArchTest
+    static final ArchRule services_must_not_depend_on_controllers =
+            noClasses()
+                    .that()
+                    .resideInAPackage("..service..")
+                    .should()
+                    .dependOnClassesThat()
+                    .resideInAPackage("..controller..")
+                    .as("Services must not depend on the web layer");
 }
