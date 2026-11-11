@@ -3,7 +3,7 @@ package com.aptisprep.controller.auth;
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-import com.aptisprep.presentation.form.RegisterFormDTO;
+import com.aptisprep.dto.RegisterFormDTO;
 import com.aptisprep.service.account.UserService;
 import org.junit.jupiter.api.Test;
 import org.springframework.dao.DataIntegrityViolationException;

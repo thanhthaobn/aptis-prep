@@ -4,12 +4,12 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
+import com.aptisprep.dto.AttemptResultDTO;
+import com.aptisprep.dto.SkillResultDTO;
 import com.aptisprep.entity.User;
 import com.aptisprep.entity.UserSkillProfile;
 import com.aptisprep.enums.Role;
 import com.aptisprep.enums.UserStatus;
-import com.aptisprep.presentation.AttemptResultDTO;
-import com.aptisprep.presentation.SkillResultDTO;
 import com.aptisprep.repository.*;
 import com.aptisprep.service.exam.ExamAttemptService;
 import java.math.BigDecimal;

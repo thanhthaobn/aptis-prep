@@ -53,13 +53,20 @@ public class ArchitectureTests {
                     .as("JPA entities must be kept in the entity layer");
 
     @ArchTest
-    static final ArchRule dto_types_must_be_entity_dtos_or_presentation_models =
+    static final ArchRule presentation_package_must_remain_removed =
+            noClasses()
+                    .should()
+                    .resideInAPackage("..presentation..")
+                    .as("The presentation package must remain completely removed");
+
+    @ArchTest
+    static final ArchRule all_dtos_must_reside_in_dto_package =
             classes()
                     .that()
                     .haveSimpleNameEndingWith("DTO")
                     .should()
-                    .resideInAnyPackage("com.aptisprep.dto..", "com.aptisprep.presentation..")
-                    .as("Entity DTOs belong to dto; page and form models belong to presentation");
+                    .resideInAPackage("com.aptisprep.dto..")
+                    .as("All DTOs must reside in com.aptisprep.dto..");
 
     @ArchTest
     static final ArchRule entities_must_not_depend_on_transfer_or_presentation_models =
@@ -70,16 +77,6 @@ public class ArchitectureTests {
                     .dependOnClassesThat()
                     .resideInAnyPackage("..dto..", "..presentation..")
                     .as("Entities must contain persistence state only");
-
-    @ArchTest
-    static final ArchRule presentation_models_must_not_expose_entities =
-            noClasses()
-                    .that()
-                    .resideInAPackage("..presentation..")
-                    .should()
-                    .dependOnClassesThat()
-                    .resideInAPackage("..entity..")
-                    .as("Presentation models may compose DTOs, but must not expose entities");
 
     @ArchTest
     static final ArchRule embeddable_value_objects_must_not_be_used =

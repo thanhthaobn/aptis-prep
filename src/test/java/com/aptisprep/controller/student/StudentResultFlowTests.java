@@ -9,13 +9,13 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
+import com.aptisprep.dto.HistoryPageDTO;
 import com.aptisprep.entity.ExamAttemptEntity;
 import com.aptisprep.entity.ExamSkillResultEntity;
 import com.aptisprep.entity.MockExamEntity;
 import com.aptisprep.entity.User;
 import com.aptisprep.enums.Role;
 import com.aptisprep.enums.UserStatus;
-import com.aptisprep.presentation.HistoryPageDTO;
 import com.aptisprep.repository.ExamAttemptRepository;
 import com.aptisprep.repository.ExamSkillResultRepository;
 import com.aptisprep.repository.MockExamRepository;

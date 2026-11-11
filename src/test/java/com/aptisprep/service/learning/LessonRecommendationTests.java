@@ -2,15 +2,14 @@ package com.aptisprep.service.learning;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import com.aptisprep.dto.*;
+import com.aptisprep.dto.LearnerContextDTO;
+import com.aptisprep.dto.PathProgressDTO;
+import com.aptisprep.dto.SkillLevelDTO;
+import com.aptisprep.dto.SkillTargetDTO;
 import com.aptisprep.entity.*;
 import com.aptisprep.entity.Lesson;
 import com.aptisprep.entity.LessonProgress;
-import com.aptisprep.presentation.*;
-import com.aptisprep.presentation.LearnerContextDTO;
-import com.aptisprep.presentation.PathProgressDTO;
-import com.aptisprep.presentation.SkillLevelDTO;
-import com.aptisprep.presentation.SkillTargetDTO;
-import com.aptisprep.presentation.form.*;
 import com.aptisprep.repository.*;
 import com.aptisprep.repository.LessonProgressRepository;
 import com.aptisprep.service.account.AccountAccessService;
@@ -50,13 +49,12 @@ class LessonRecommendationTests {
                     return null;
                 }
 
-                public com.aptisprep.presentation.AccountSnapshotDTO.GoalViewDTO goalView(
-                        Integer userId) {
+                public com.aptisprep.dto.AccountSnapshotDTO.GoalViewDTO goalView(Integer userId) {
                     return null;
                 }
 
-                public java.util.Map<String, com.aptisprep.presentation.SkillLevelDTO>
-                        skillProfileMap(Integer userId) {
+                public java.util.Map<String, com.aptisprep.dto.SkillLevelDTO> skillProfileMap(
+                        Integer userId) {
                     return java.util.Map.of();
                 }
 
@@ -68,7 +66,7 @@ class LessonRecommendationTests {
                     return java.util.Map.of();
                 }
 
-                public java.util.Map<String, com.aptisprep.presentation.GoalSkillDTO>
+                public java.util.Map<String, com.aptisprep.dto.GoalSkillDTO>
                         activeGoalSkillsBySkill(Integer userId) {
                     return java.util.Map.of();
                 }

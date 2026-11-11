@@ -220,8 +220,7 @@ class AccountUnlockWebFlowTests {
                                         org.hamcrest.Matchers.containsString(
                                                 "id=\"unlockRequestForm\"")))
                 .andExpect(content().string(org.hamcrest.Matchers.containsString("id=\"email\"")))
-                .andExpect(
-                        content().string(org.hamcrest.Matchers.containsString("id=\"password\"")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("id=\"password\"")))
                 .andExpect(content().string(org.hamcrest.Matchers.containsString("id=\"message\"")))
                 .andExpect(
                         content()
@@ -253,7 +252,10 @@ class AccountUnlockWebFlowTests {
                                         org.hamcrest.Matchers.containsString(
                                                 "Yêu cầu của bạn đang chờ quản trị viên xử lý")))
                 .andExpect(
-                        content().string(org.hamcrest.Matchers.containsString("10/11/2026 14:30")))
+                        content()
+                                .string(
+                                        org.hamcrest.Matchers.containsString(
+                                                "10/11/2026 14:30")))
                 .andExpect(
                         content()
                                 .string(
@@ -333,7 +335,11 @@ class AccountUnlockWebFlowTests {
                                 .string(
                                         org.hamcrest.Matchers.containsString(
                                                 "Yêu cầu đã được phê duyệt")))
-                .andExpect(content().string(org.hamcrest.Matchers.containsString("Đăng nhập")))
+                .andExpect(
+                        content()
+                                .string(
+                                        org.hamcrest.Matchers.containsString(
+                                                "Đăng nhập")))
                 .andExpect(
                         content()
                                 .string(

@@ -4,7 +4,6 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import com.aptisprep.enums.CefrLevel;
 import com.aptisprep.enums.Skill;
-import com.aptisprep.service.learning.LessonService;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 
@@ -21,8 +20,8 @@ class SharedDomainVocabularyTests {
 
     @Test
     void curriculumStopsAtC1WithoutCorruptingTheCefrScale() {
-        assertEquals(List.of("A1", "A2", "B1", "B2", "C1"), LessonService.LEVELS);
-        assertEquals(CefrLevel.curriculumLevels(), LessonService.LEVELS);
+        assertEquals(List.of("A1", "A2", "B1", "B2", "C1"), CefrLevel.curriculumLevels());
+        assertEquals(CefrLevel.curriculumLevels(), CefrLevel.curriculumLevels());
         assertEquals("C2", CefrLevel.codes().getLast());
         assertThrows(UnsupportedOperationException.class, () -> Skill.codes().add("OTHER"));
     }

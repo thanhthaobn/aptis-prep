@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import com.aptisprep.dto.*;
 import com.aptisprep.entity.*;
 import com.aptisprep.entity.Certificate;
 import com.aptisprep.entity.MockExamEntity;
@@ -25,8 +26,6 @@ import com.aptisprep.enums.Role;
 import com.aptisprep.enums.UserStatus;
 import com.aptisprep.exception.AccessDeniedException;
 import com.aptisprep.exception.BusinessRuleException;
-import com.aptisprep.presentation.*;
-import com.aptisprep.presentation.form.*;
 import com.aptisprep.repository.*;
 import com.aptisprep.repository.AttemptOutboxRepository;
 import com.aptisprep.repository.CertificateRepository;

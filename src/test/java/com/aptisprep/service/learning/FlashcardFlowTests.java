@@ -5,14 +5,13 @@ import static org.assertj.core.api.Assertions.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
+import com.aptisprep.dto.*;
+import com.aptisprep.dto.FlashcardSetFormDTO;
+import com.aptisprep.dto.FlashcardViewsDTO;
 import com.aptisprep.entity.*;
 import com.aptisprep.entity.Lesson;
 import com.aptisprep.entity.User;
 import com.aptisprep.enums.*;
-import com.aptisprep.presentation.*;
-import com.aptisprep.presentation.FlashcardViewsDTO;
-import com.aptisprep.presentation.form.*;
-import com.aptisprep.presentation.form.FlashcardSetFormDTO;
 import com.aptisprep.repository.*;
 import com.aptisprep.repository.LessonRepository;
 import com.aptisprep.repository.UserRepository;
