@@ -19,9 +19,17 @@ class PlacementExamCatalogServiceTests {
         MockExamRepository exams = mock(MockExamRepository.class);
         MockExamQuestionRepository examQuestions = mock(MockExamQuestionRepository.class);
         var validator = mock(com.aptisprep.mvc.exam.service.impl.ExamStartValidator.class);
+        var catalogService =
+                new com.aptisprep.mvc.catalog.service.impl.ExamCatalogServiceImpl(
+                        exams,
+                        examQuestions,
+                        mock(MockExamSectionRepository.class),
+                        null,
+                        null,
+                        null,
+                        null);
         PlacementExamCatalogService service =
-                new PlacementExamCatalogServiceImpl(
-                        exams, examQuestions, mock(MockExamSectionRepository.class), validator);
+                new PlacementExamCatalogServiceImpl(catalogService, validator);
 
         MockExamEntity placement = exam("placement", "PLACEMENT", 101);
         MockExamEntity practice = exam("practice", "PRACTICE", 102);

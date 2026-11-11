@@ -106,4 +106,14 @@ public interface CatalogService {
             boolean browserSpeech) {}
 
     record MediaContent(Resource resource, String contentType) {}
+
+    long countExams();
+
+    long countPublishedExams();
+
+    long countQuestions();
+
+    List<com.aptisprep.mvc.catalog.entity.MockExamEntity> findRecentExams(int limit);
+
+    List<com.aptisprep.mvc.catalog.entity.QuestionEntity> findRecentQuestions(int limit);
 }

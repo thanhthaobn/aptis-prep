@@ -53,7 +53,11 @@ class LessonListeningServiceTests {
         when(engagements.findByUserIdAndLessonId(1, 2)).thenReturn(Optional.of(progress));
         service =
                 new com.aptisprep.mvc.learning.service.impl.LessonListeningServiceImpl(
-                        users, lessons, engagements, durations, clock);
+                        new com.aptisprep.mvc.auth.service.impl.UserServiceImpl(users, null),
+                        lessons,
+                        engagements,
+                        durations,
+                        clock);
         token = service.start(2, "a@test.local", 0).token();
     }
 

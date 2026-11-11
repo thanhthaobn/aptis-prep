@@ -233,12 +233,14 @@ class V2SqlServerPreservationTests {
                     var checks = repositories.getRepository(LessonCheckRepository.class);
                     var lessons = repositories.getRepository(LessonRepository.class);
                     var users = repositories.getRepository(UserRepository.class);
+                    var userService =
+                            new com.aptisprep.mvc.auth.service.impl.UserServiceImpl(users, null);
                     var attempts = repositories.getRepository(LessonCheckAttemptRepository.class);
                     var teaching =
                             new LessonTeachingServiceImpl(
-                                    new LessonCheckService(checks, lessons, users, attempts),
+                                    new LessonCheckService(checks, lessons, userService, attempts),
                                     lessons,
-                                    users,
+                                    userService,
                                     repositories.getRepository(LessonResponseRepository.class),
                                     attempts,
                                     repositories.getRepository(LessonEngagementRepository.class),

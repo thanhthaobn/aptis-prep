@@ -1,14 +1,10 @@
 package com.aptisprep.mvc.student.service.impl;
 
 import com.aptisprep.mvc.account.dto.AccountSnapshotDTO;
-import com.aptisprep.mvc.account.entity.UserGoal;
-import com.aptisprep.mvc.account.entity.UserGoalSkill;
-import com.aptisprep.mvc.account.entity.UserSkillProfile;
-import com.aptisprep.mvc.account.repository.UserGoalRepository;
-import com.aptisprep.mvc.account.repository.UserGoalSkillRepository;
-import com.aptisprep.mvc.account.repository.UserSkillProfileRepository;
+import com.aptisprep.mvc.account.dto.SkillLevelDTO;
+import com.aptisprep.mvc.account.service.AccountAccessService;
 import com.aptisprep.mvc.auth.entity.User;
-import com.aptisprep.mvc.auth.repository.UserRepository;
+import com.aptisprep.mvc.auth.service.UserService;
 import com.aptisprep.mvc.common.enums.*;
 import com.aptisprep.mvc.common.enums.Skill;
 import com.aptisprep.mvc.common.exception.AccessDeniedException;
@@ -17,8 +13,8 @@ import com.aptisprep.mvc.common.exception.ResourceNotFoundException;
 import com.aptisprep.mvc.exam.dto.AttemptResultDTO;
 import com.aptisprep.mvc.exam.dto.HistoryPageDTO;
 import com.aptisprep.mvc.exam.service.ExamAttemptService;
+import com.aptisprep.mvc.learning.dto.PathProgressDTO;
 import com.aptisprep.mvc.learning.service.LearningPathService;
-import com.aptisprep.mvc.scoring.entity.Certificate;
 import com.aptisprep.mvc.student.dto.AdminStudentViewDTO;
 import com.aptisprep.mvc.student.service.StudentManagementService;
 import java.util.*;
@@ -32,24 +28,18 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class StudentManagementServiceImpl implements StudentManagementService {
     private static final List<String> SKILLS = Skill.codes();
-    private final UserRepository userRepository;
-    private final UserGoalRepository userGoalRepository;
-    private final UserGoalSkillRepository userGoalSkillRepository;
-    private final UserSkillProfileRepository userSkillProfileRepository;
+    private final UserService userService;
+    private final AccountAccessService accounts;
     private final ObjectProvider<LearningPathService> paths;
     private final ObjectProvider<ExamAttemptService> attempts;
 
     public StudentManagementServiceImpl(
-            UserRepository userRepository,
-            UserGoalRepository userGoalRepository,
-            UserGoalSkillRepository userGoalSkillRepository,
-            UserSkillProfileRepository userSkillProfileRepository,
+            UserService userService,
+            AccountAccessService accounts,
             ObjectProvider<LearningPathService> paths,
             ObjectProvider<ExamAttemptService> attempts) {
-        this.userRepository = userRepository;
-        this.userGoalRepository = userGoalRepository;
-        this.userGoalSkillRepository = userGoalSkillRepository;
-        this.userSkillProfileRepository = userSkillProfileRepository;
+        this.userService = userService;
+        this.accounts = accounts;
         this.paths = paths;
         this.attempts = attempts;
     }
@@ -64,7 +54,7 @@ public class StudentManagementServiceImpl implements StudentManagementService {
         String pattern =
                 term.isBlank() ? "%" : "%" + escapeLike(term.toLowerCase(Locale.ROOT)) + "%";
         Page<User> result =
-                userRepository.searchStudents(
+                userService.searchStudents(
                         pattern,
                         status == null ? null : status.name(),
                         PageRequest.of(safePage, safeSize));
@@ -80,32 +70,24 @@ public class StudentManagementServiceImpl implements StudentManagementService {
         User user = studentsOnly(id);
         int safePage = Math.max(0, attemptPage);
         int safeSize = Math.min(100, Math.max(1, attemptSize));
-        AccountSnapshotDTO.GoalViewDTO goal = goalView(user.getId());
+        AccountSnapshotDTO.GoalViewDTO goal = accounts.goalView(user.getId());
         Map<String, String> targetMap = goal == null ? Map.of() : goal.targets();
-        Map<String, UserSkillProfile> profileMap =
-                userSkillProfileRepository.findByUserIdOrderBySkillAsc(user.getId()).stream()
-                        .collect(
-                                Collectors.toMap(
-                                        UserSkillProfile::getSkill,
-                                        value -> value,
-                                        (left, right) -> right));
+        Map<String, SkillLevelDTO> profileMap = accounts.skillProfileMap(user.getId());
         List<AdminStudentViewDTO.Skill> skillViews =
                 SKILLS.stream()
                         .map(
                                 skill -> {
-                                    UserSkillProfile profile = profileMap.get(skill);
+                                    SkillLevelDTO profile = profileMap.get(skill);
                                     return new AdminStudentViewDTO.Skill(
                                             skillLabel(skill),
                                             profile == null
                                                     ? "Chưa đánh giá"
-                                                    : levelLabel(profile.getCurrentLevel()),
+                                                    : levelLabel(profile.estimatedLevel()),
                                             targetMap.getOrDefault(skill, "Chưa đặt"));
                                 })
                         .toList();
         List<AdminStudentViewDTO.Progress> progress = progressFor(user.getId());
         HistoryPageDTO history = historyFor(user.getId(), safePage, safeSize);
-        List<AdminStudentViewDTO.Attempt> attempts =
-                history.items().stream().map(this::attemptView).toList();
         return new AdminStudentViewDTO.Detail(
                 user.getId(),
                 user.getFullName(),
@@ -116,30 +98,33 @@ public class StudentManagementServiceImpl implements StudentManagementService {
                 goal,
                 skillViews,
                 progress,
-                attempts,
-                safePage,
-                safeSize,
+                history.items().stream().map(this::attemptView).toList(),
+                history.page(),
+                history.size(),
                 history.totalItems());
     }
 
     @Transactional
     public void lock(String adminEmail, Integer id, String reason) {
-        String normalizedReason = reason == null ? "" : reason.trim();
+        var normalizedReason = reason == null ? "" : reason.trim();
         if (normalizedReason.isBlank())
             throw new BusinessRuleException("Vui lòng nhập lý do khóa tài khoản");
         if (normalizedReason.length() > 1000)
             throw new BusinessRuleException("Lý do khóa tài khoản tối đa 1000 ký tự");
-        User target = changeStatus(adminEmail, id, UserStatus.ACTIVE, UserStatus.LOCKED, "khóa");
-        target.setLockReason(normalizedReason);
+        User user =
+                changeStatus(
+                        adminEmail, id, UserStatus.ACTIVE, UserStatus.LOCKED, "khóa tài khoản");
+        user.setLockReason(normalizedReason);
     }
 
     @Transactional
     public void unlock(String adminEmail, Integer id) {
-        User target = changeStatus(adminEmail, id, UserStatus.LOCKED, UserStatus.ACTIVE, "mở khóa");
-        target.setLockReason(null);
+        User user =
+                changeStatus(
+                        adminEmail, id, UserStatus.LOCKED, UserStatus.ACTIVE, "mở khóa tài khoản");
+        user.setLockReason(null);
     }
 
-    @Override
     @Transactional
     public void remove(String adminEmail, Integer id, String reason) {
         var normalizedReason = reason == null ? "" : reason.trim();
@@ -148,7 +133,7 @@ public class StudentManagementServiceImpl implements StudentManagementService {
         if (normalizedReason.length() > 1000)
             throw new BusinessRuleException("Lý do xóa tài khoản tối đa 1000 ký tự");
         User admin =
-                userRepository
+                userService
                         .findByEmailIgnoreCase(adminEmail)
                         .orElseThrow(
                                 () ->
@@ -157,7 +142,7 @@ public class StudentManagementServiceImpl implements StudentManagementService {
         if (admin.getRole() != Role.ADMIN)
             throw new AccessDeniedException("Chỉ quản trị viên mới được quản lý học viên");
         User target =
-                userRepository
+                userService
                         .findByIdForUpdate(id)
                         .orElseThrow(
                                 () -> new ResourceNotFoundException("Không tìm thấy học viên"));
@@ -170,21 +155,21 @@ public class StudentManagementServiceImpl implements StudentManagementService {
     }
 
     public long totalStudents() {
-        return userRepository.countByRole(Role.STUDENT);
+        return userService.countByRole(Role.STUDENT);
     }
 
     public long activeStudents() {
-        return userRepository.countByRoleAndStatus(Role.STUDENT, UserStatus.ACTIVE);
+        return userService.countByRoleAndStatus(Role.STUDENT, UserStatus.ACTIVE);
     }
 
     public long lockedStudents() {
-        return userRepository.countByRoleAndStatus(Role.STUDENT, UserStatus.LOCKED);
+        return userService.countByRoleAndStatus(Role.STUDENT, UserStatus.LOCKED);
     }
 
     private User changeStatus(
             String adminEmail, Integer id, UserStatus expected, UserStatus next, String action) {
         User admin =
-                userRepository
+                userService
                         .findByEmailIgnoreCase(adminEmail)
                         .orElseThrow(
                                 () ->
@@ -193,7 +178,7 @@ public class StudentManagementServiceImpl implements StudentManagementService {
         if (admin.getRole() != Role.ADMIN)
             throw new AccessDeniedException("Chỉ quản trị viên mới được quản lý học viên");
         User target =
-                userRepository
+                userService
                         .findByIdForUpdate(id)
                         .orElseThrow(
                                 () -> new ResourceNotFoundException("Không tìm thấy học viên"));
@@ -204,17 +189,19 @@ public class StudentManagementServiceImpl implements StudentManagementService {
         if (target.getStatus() == UserStatus.INACTIVE)
             throw new BusinessRuleException("Tài khoản ngừng hoạt động không thể " + action);
         if (target.getStatus() != expected)
-            throw new BusinessRuleException("Trạng thái tài khoản không phù hợp để " + action);
+            throw new BusinessRuleException("Trạng thái tài khoản không hợp lệ để " + action);
         target.setStatus(next);
         return target;
     }
 
     private AdminStudentViewDTO.ListItem listItem(User user) {
-        AccountSnapshotDTO.GoalViewDTO goal = goalView(user.getId());
+        AccountSnapshotDTO.GoalViewDTO goal = accounts.goalView(user.getId());
         String target =
                 goal == null || goal.targets().isEmpty()
                         ? "Chưa đặt mục tiêu"
-                        : goal.targets().values().stream().collect(Collectors.joining(", "));
+                        : goal.targets().entrySet().stream()
+                                .map(entry -> skillLabel(entry.getKey()) + ": " + entry.getValue())
+                                .collect(Collectors.joining(" · "));
         return new AdminStudentViewDTO.ListItem(
                 user.getId(),
                 user.getFullName(),
@@ -225,30 +212,12 @@ public class StudentManagementServiceImpl implements StudentManagementService {
                 target);
     }
 
-    private AccountSnapshotDTO.GoalViewDTO goalView(Integer userId) {
-        UserGoal goal =
-                userGoalRepository
-                        .findFirstByUserIdAndStatusOrderByCreatedAtDesc(userId, GoalStatus.ACTIVE)
-                        .orElse(null);
-        if (goal == null) return null;
-        Certificate certificate = goal.getCertificate();
-        Map<String, String> targets = new LinkedHashMap<>();
-        for (UserGoalSkill skill : userGoalSkillRepository.findByGoalId(goal.getId())) {
-            targets.put(skill.getSkill(), Objects.requireNonNull(skill.getTargetLevel()));
-        }
-        return new AccountSnapshotDTO.GoalViewDTO(
-                certificate == null ? null : certificate.getId(),
-                certificate == null ? null : certificate.getName(),
-                goal.getTargetDate(),
-                targets);
-    }
-
     private List<AdminStudentViewDTO.Progress> progressFor(Integer userId) {
         LearningPathService contract = paths.getIfAvailable();
         if (contract == null) return List.of();
-        AccountSnapshotDTO.GoalViewDTO goal = goalView(userId);
+        AccountSnapshotDTO.GoalViewDTO goal = accounts.goalView(userId);
         Map<String, String> targetMap = goal == null ? Map.of() : goal.targets();
-        List<com.aptisprep.mvc.learning.dto.PathProgressDTO> values = contract.summaries(userId);
+        List<PathProgressDTO> values = contract.summaries(userId);
         return values == null
                 ? List.of()
                 : values.stream()
@@ -302,7 +271,7 @@ public class StudentManagementServiceImpl implements StudentManagementService {
 
     private User studentsOnly(Integer id) {
         User user =
-                userRepository
+                userService
                         .findById(id)
                         .orElseThrow(
                                 () -> new ResourceNotFoundException("Không tìm thấy học viên"));

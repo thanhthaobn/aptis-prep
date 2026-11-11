@@ -1,5 +1,6 @@
 package com.aptisprep.mvc.account.service.impl;
 
+import com.aptisprep.mvc.account.dto.GoalSkillDTO;
 import com.aptisprep.mvc.account.dto.LearnerContextDTO;
 import com.aptisprep.mvc.account.dto.SkillLevelDTO;
 import com.aptisprep.mvc.account.dto.SkillTargetDTO;
@@ -293,6 +294,110 @@ public class AccountAccessServiceImpl implements AccountAccessService {
             throw new AccessDeniedException("Tài khoản không còn được phép truy cập");
         }
         return user;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public com.aptisprep.mvc.account.dto.AccountSnapshotDTO.GoalViewDTO goalView(Integer userId) {
+        com.aptisprep.mvc.account.entity.UserGoal goal =
+                userGoalRepository
+                        .findFirstByUserIdAndStatusOrderByCreatedAtDesc(userId, GoalStatus.ACTIVE)
+                        .orElse(null);
+        if (goal == null) return null;
+        var certificate = goal.getCertificate();
+        Map<String, String> targets = new HashMap<>();
+        for (var skill : userGoalSkillRepository.findByGoalId(goal.getId())) {
+            targets.put(skill.getSkill(), Objects.requireNonNull(skill.getTargetLevel()));
+        }
+        return new com.aptisprep.mvc.account.dto.AccountSnapshotDTO.GoalViewDTO(
+                certificate == null ? null : certificate.getId(),
+                certificate == null ? null : certificate.getName(),
+                goal.getTargetDate(),
+                targets);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Map<String, SkillLevelDTO> skillProfileMap(Integer userId) {
+        return userSkillProfileRepository.findByUserIdOrderBySkillAsc(userId).stream()
+                .collect(
+                        java.util.stream.Collectors.toMap(
+                                UserSkillProfile::getSkill,
+                                p ->
+                                        new SkillLevelDTO(
+                                                p.getSkill(),
+                                                p.getCurrentLevel(),
+                                                p.getSourceAttemptId()),
+                                (a, b) -> a));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Map<String, String> activeGoalTargets(Integer userId) {
+        return userGoalRepository
+                .findFirstByUserIdAndStatusOrderByCreatedAtDesc(userId, GoalStatus.ACTIVE)
+                .map(
+                        goal ->
+                                userGoalSkillRepository.findByGoalId(goal.getId()).stream()
+                                        .collect(
+                                                java.util.stream.Collectors.toMap(
+                                                        com.aptisprep.mvc.account.entity
+                                                                        .UserGoalSkill
+                                                                ::getSkill,
+                                                        com.aptisprep.mvc.account.entity
+                                                                        .UserGoalSkill
+                                                                ::getTargetLevel,
+                                                        (a, b) -> a)))
+                .orElseGet(Map::of);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Map<Integer, String> goalSkillTargetsById(Integer userId) {
+        return userGoalRepository
+                .findFirstByUserIdAndStatusOrderByCreatedAtDesc(userId, GoalStatus.ACTIVE)
+                .map(
+                        goal ->
+                                userGoalSkillRepository.findByGoalId(goal.getId()).stream()
+                                        .collect(
+                                                java.util.stream.Collectors.toMap(
+                                                        com.aptisprep.mvc.account.entity
+                                                                        .UserGoalSkill
+                                                                ::getId,
+                                                        com.aptisprep.mvc.account.entity
+                                                                        .UserGoalSkill
+                                                                ::getTargetLevel,
+                                                        (a, b) -> a)))
+                .orElseGet(Map::of);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Map<String, GoalSkillDTO> activeGoalSkillsBySkill(Integer userId) {
+        return userGoalRepository
+                .findFirstByUserIdAndStatusOrderByCreatedAtDesc(userId, GoalStatus.ACTIVE)
+                .map(
+                        goal ->
+                                userGoalSkillRepository.findByGoalId(goal.getId()).stream()
+                                        .collect(
+                                                java.util.stream.Collectors.toMap(
+                                                        s ->
+                                                                s.getSkill() == null
+                                                                        ? ""
+                                                                        : s.getSkill()
+                                                                                .trim()
+                                                                                .toUpperCase(
+                                                                                        Locale.ROOT)
+                                                                                .replaceAll(
+                                                                                        "[^A-Z0-9]+",
+                                                                                        "_"),
+                                                        s ->
+                                                                new GoalSkillDTO(
+                                                                        s.getId(),
+                                                                        s.getSkill(),
+                                                                        s.getTargetLevel()),
+                                                        (a, b) -> a)))
+                .orElseGet(Map::of);
     }
 
     private String normalizeEmail(String email) {

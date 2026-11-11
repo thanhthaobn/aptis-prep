@@ -26,4 +26,13 @@ public interface UserService {
     User save(User user);
 
     Integer getUserIdByEmail(String email);
+
+    long countByRole(com.aptisprep.mvc.common.enums.Role role);
+
+    long countByRoleAndStatus(
+            com.aptisprep.mvc.common.enums.Role role,
+            com.aptisprep.mvc.common.enums.UserStatus status);
+
+    org.springframework.data.domain.Page<User> searchStudents(
+            String pattern, String status, org.springframework.data.domain.Pageable pageable);
 }

@@ -48,6 +48,29 @@ class LessonRecommendationTests {
                 public com.aptisprep.mvc.auth.entity.User requireActiveStudentById(Integer userId) {
                     return null;
                 }
+
+                public com.aptisprep.mvc.account.dto.AccountSnapshotDTO.GoalViewDTO goalView(
+                        Integer userId) {
+                    return null;
+                }
+
+                public java.util.Map<String, com.aptisprep.mvc.account.dto.SkillLevelDTO>
+                        skillProfileMap(Integer userId) {
+                    return java.util.Map.of();
+                }
+
+                public java.util.Map<String, String> activeGoalTargets(Integer userId) {
+                    return java.util.Map.of();
+                }
+
+                public java.util.Map<Integer, String> goalSkillTargetsById(Integer userId) {
+                    return java.util.Map.of();
+                }
+
+                public java.util.Map<String, com.aptisprep.mvc.account.dto.GoalSkillDTO>
+                        activeGoalSkillsBySkill(Integer userId) {
+                    return java.util.Map.of();
+                }
             };
     final LessonRecommendationService service =
             new com.aptisprep.mvc.learning.service.impl.LessonRecommendationServiceImpl(

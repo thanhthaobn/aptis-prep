@@ -48,4 +48,6 @@ public interface FlashcardSetService {
     void mark(Integer setId, Integer cardId, String state, String email);
 
     void mark(Integer setId, Integer cardId, String state, String email, String reviewKey);
+
+    List<java.time.LocalDateTime> findReviewedDatesByUserId(Integer userId);
 }

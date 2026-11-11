@@ -29,4 +29,8 @@ public interface ExamCatalogService {
     List<QuestionOptionEntity> findQuestionOptions(Integer itemId);
 
     List<QuestionMediaEntity> findQuestionMedia(Integer questionId);
+
+    List<MockExamEntity> findPublishedExamsBySkill(String skill);
+
+    List<MockExamEntity> findAllPublishedExams();
 }

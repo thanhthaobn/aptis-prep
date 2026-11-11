@@ -59,7 +59,12 @@ class ScoringAdminServiceTests {
 
         ScoringAdminService service =
                 new com.aptisprep.mvc.scoring.service.impl.ScoringAdminServiceImpl(
-                        certificates, schemes, bands, users, usageProvider, scaleRules);
+                        certificates,
+                        schemes,
+                        bands,
+                        new com.aptisprep.mvc.auth.service.impl.UserServiceImpl(users, null),
+                        usageProvider,
+                        scaleRules);
         ScoringSchemeFormDTO sameVersion = form("1");
         assertThrows(
                 BusinessRuleException.class,
@@ -90,7 +95,12 @@ class ScoringAdminServiceTests {
 
         ScoringAdminService service =
                 new com.aptisprep.mvc.scoring.service.impl.ScoringAdminServiceImpl(
-                        certificates, schemes, bands, users, usageProvider, scaleRules);
+                        certificates,
+                        schemes,
+                        bands,
+                        new com.aptisprep.mvc.auth.service.impl.UserServiceImpl(users, null),
+                        usageProvider,
+                        scaleRules);
         ScoringScaleRuleFormDTO scale = new ScoringScaleRuleFormDTO();
         scale.setRawMin(BigDecimal.ZERO);
         scale.setRawMax(BigDecimal.valueOf(50));

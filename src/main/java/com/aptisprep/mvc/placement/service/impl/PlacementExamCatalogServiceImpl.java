@@ -1,9 +1,7 @@
 package com.aptisprep.mvc.placement.service.impl;
 
 import com.aptisprep.mvc.catalog.entity.MockExamEntity;
-import com.aptisprep.mvc.catalog.repository.MockExamQuestionRepository;
-import com.aptisprep.mvc.catalog.repository.MockExamRepository;
-import com.aptisprep.mvc.catalog.repository.MockExamSectionRepository;
+import com.aptisprep.mvc.catalog.service.ExamCatalogService;
 import com.aptisprep.mvc.common.enums.Skill;
 import com.aptisprep.mvc.common.exception.BusinessRuleException;
 import com.aptisprep.mvc.exam.service.impl.ExamStartValidator;
@@ -18,19 +16,12 @@ import org.springframework.stereotype.Service;
 /** Read model for Placement only. It deliberately does not expose the admin catalog model. */
 @Service
 public class PlacementExamCatalogServiceImpl implements PlacementExamCatalogService {
-    private final MockExamRepository mockExamRepository;
-    private final MockExamQuestionRepository mockExamQuestionRepository;
-    private final MockExamSectionRepository sections;
+    private final ExamCatalogService catalogService;
     private final ExamStartValidator startValidator;
 
     public PlacementExamCatalogServiceImpl(
-            MockExamRepository mockExamRepository,
-            MockExamQuestionRepository mockExamQuestionRepository,
-            MockExamSectionRepository sections,
-            ExamStartValidator startValidator) {
-        this.mockExamRepository = mockExamRepository;
-        this.mockExamQuestionRepository = mockExamQuestionRepository;
-        this.sections = sections;
+            ExamCatalogService catalogService, ExamStartValidator startValidator) {
+        this.catalogService = catalogService;
         this.startValidator = startValidator;
     }
 
@@ -44,9 +35,7 @@ public class PlacementExamCatalogServiceImpl implements PlacementExamCatalogServ
         String normalized = skill == null ? "" : skill.trim().toUpperCase(Locale.ROOT);
         if (!"FULL_MOCK".equals(normalized) && !Skill.codes().contains(normalized))
             throw new BusinessRuleException("Kỹ năng Placement không hợp lệ");
-        return mockExamRepository
-                .findBySkillAndStatusOrderByUpdatedAtDesc(normalized, "PUBLISHED")
-                .stream()
+        return catalogService.findPublishedExamsBySkill(normalized).stream()
                 .filter(exam -> !exam.isDemoOnly())
                 .filter(exam -> "PLACEMENT".equals(exam.getExamType()))
                 .filter(this::isReady)
@@ -59,7 +48,7 @@ public class PlacementExamCatalogServiceImpl implements PlacementExamCatalogServ
 
     private PlacementExam describe(MockExamEntity exam) {
         List<Section> schedule =
-                sections.findByMockExamIdOrderById(exam.getId()).stream()
+                catalogService.findExamSections(exam.getId()).stream()
                         .sorted(Comparator.comparingInt(section -> section.getDisplayOrder()))
                         .map(
                                 section ->
@@ -76,8 +65,7 @@ public class PlacementExamCatalogServiceImpl implements PlacementExamCatalogServ
 
     private boolean isReady(MockExamEntity exam) {
         try {
-            startValidator.validate(
-                    exam, mockExamQuestionRepository.findByMockExamIdOrderByPosition(exam.getId()));
+            startValidator.validate(exam, catalogService.findExamQuestions(exam.getId()));
             return true;
         } catch (BusinessRuleException exception) {
             return false;

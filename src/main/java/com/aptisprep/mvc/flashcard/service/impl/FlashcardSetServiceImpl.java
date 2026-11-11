@@ -10,12 +10,12 @@ import com.aptisprep.mvc.flashcard.dto.FlashcardSetFormDTO;
 import com.aptisprep.mvc.flashcard.dto.FlashcardSetFormDTO.Row;
 import com.aptisprep.mvc.flashcard.dto.FlashcardViewsDTO.*;
 import com.aptisprep.mvc.flashcard.entity.*;
+import com.aptisprep.mvc.flashcard.entity.UserFlashcardProgress;
 import com.aptisprep.mvc.flashcard.repository.FlashcardRepository;
 import com.aptisprep.mvc.flashcard.repository.FlashcardSetRepository;
 import com.aptisprep.mvc.flashcard.repository.UserFlashcardProgressRepository;
 import com.aptisprep.mvc.flashcard.service.FlashcardSetService;
 import com.aptisprep.mvc.learning.entity.Lesson;
-import com.aptisprep.mvc.learning.repository.LessonRepository;
 import com.aptisprep.mvc.learning.service.LessonService;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
@@ -30,7 +30,7 @@ public class FlashcardSetServiceImpl implements FlashcardSetService {
     private final FlashcardRepository flashcardRepository;
     private final UserService userRepository;
     private final UserFlashcardProgressRepository userFlashcardProgressRepository;
-    private final LessonRepository lessonRepository;
+    private final LessonService lessonService;
     @PersistenceContext private EntityManager em;
 
     public FlashcardSetServiceImpl(
@@ -38,12 +38,12 @@ public class FlashcardSetServiceImpl implements FlashcardSetService {
             FlashcardRepository flashcardRepository,
             UserService userRepository,
             UserFlashcardProgressRepository userFlashcardProgressRepository,
-            LessonRepository lessonRepository) {
+            LessonService lessonService) {
         this.flashcardSetRepository = flashcardSetRepository;
         this.flashcardRepository = flashcardRepository;
         this.userRepository = userRepository;
         this.userFlashcardProgressRepository = userFlashcardProgressRepository;
-        this.lessonRepository = lessonRepository;
+        this.lessonService = lessonService;
     }
 
     public static List<SkillSets> groupBySkillAndLevel(List<SetView> values) {
@@ -264,11 +264,9 @@ public class FlashcardSetServiceImpl implements FlashcardSetService {
         if (id != null) require(id, true);
         if (f.getLessonId() == null)
             throw new BusinessRuleException("Hãy chọn bài học sử dụng bộ thẻ này");
-        Lesson lesson =
-                lessonRepository
-                        .findById(f.getLessonId())
-                        .filter(l -> !"ARCHIVED".equals(l.getStatus()))
-                        .orElseThrow(() -> new BusinessRuleException("Bài học không còn khả dụng"));
+        Lesson lesson = lessonService.require(f.getLessonId());
+        if ("ARCHIVED".equals(lesson.getStatus()))
+            throw new BusinessRuleException("Bài học không còn khả dụng");
         if (!lesson.getCefrLevel().equals(f.getCefrLevel()))
             throw new BusinessRuleException("Cấp độ bộ thẻ phải trùng với cấp độ bài học");
         return save(id, f, lesson, null);
@@ -356,20 +354,27 @@ public class FlashcardSetServiceImpl implements FlashcardSetService {
     }
 
     public List<Lesson> availableLessons() {
-        return lessonRepository.findAllByOrderBySkillAscCefrLevelAscDisplayOrderAsc().stream()
+        return lessonService.adminLessons().stream()
                 .filter(l -> !"ARCHIVED".equals(l.getStatus()))
                 .toList();
     }
 
     public void prepareForLesson(FlashcardSetFormDTO form, Integer lessonId) {
         if (lessonId == null) return;
-        Lesson lesson =
-                lessonRepository
-                        .findById(lessonId)
-                        .filter(l -> !"ARCHIVED".equals(l.getStatus()))
-                        .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy bài học"));
+        Lesson lesson = lessonService.require(lessonId);
+        if ("ARCHIVED".equals(lesson.getStatus()))
+            throw new ResourceNotFoundException("Không tìm thấy bài học");
         form.setLessonId(lesson.getId());
         form.setCefrLevel(lesson.getCefrLevel());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<LocalDateTime> findReviewedDatesByUserId(Integer userId) {
+        return userFlashcardProgressRepository.findByUserId(userId).stream()
+                .map(UserFlashcardProgress::getLastReviewedAt)
+                .filter(Objects::nonNull)
+                .toList();
     }
 
     public void mark(Integer setId, Integer cardId, String state, String email) {

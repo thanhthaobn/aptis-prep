@@ -8,6 +8,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.aptisprep.mvc.auth.entity.User;
 import com.aptisprep.mvc.auth.repository.UserRepository;
+import com.aptisprep.mvc.auth.service.UserService;
 import com.aptisprep.mvc.common.enums.*;
 import com.aptisprep.mvc.learning.dto.*;
 import com.aptisprep.mvc.learning.entity.*;
@@ -41,7 +42,7 @@ class LessonListeningFlowTests {
         @Bean
         @Primary
         LessonListeningService controlledListening(
-                UserRepository users,
+                UserService users,
                 LessonRepository lessons,
                 LessonEngagementRepository engagements,
                 AudioDurationService durations,

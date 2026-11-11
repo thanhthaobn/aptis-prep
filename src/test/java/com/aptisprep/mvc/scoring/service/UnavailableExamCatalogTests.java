@@ -37,9 +37,18 @@ class UnavailableExamCatalogTests {
         doThrow(new BusinessRuleException("Missing questions"))
                 .when(validator)
                 .validate(eq(old), anyList());
+        var media = mock(com.aptisprep.mvc.catalog.repository.QuestionMediaRepository.class);
+        var audioMedia = new com.aptisprep.mvc.catalog.entity.QuestionMediaEntity();
+        audioMedia.setMediaType("AUDIO");
+        audioMedia.setMediaUrl("audio/listening-101.mp3");
+        when(media.findByQuestionIdOrderByPosition(501)).thenReturn(List.of(audioMedia));
+
+        var catalogService =
+                new com.aptisprep.mvc.catalog.service.impl.ExamCatalogServiceImpl(
+                        exams, questions, sections, null, null, null, media);
         var catalog =
                 new com.aptisprep.mvc.student.service.impl.StudentExamCatalogServiceImpl(
-                        exams, sections, questions, validator);
+                        catalogService, validator);
         var result = catalog.browse("", "", "", "", "PRACTICE", "level", PageRequest.of(0, 9));
         assertThat(result.page().getTotalElements()).isZero();
         assertThat(result.categories()).allMatch(category -> category.count() == 0);
@@ -94,9 +103,18 @@ class UnavailableExamCatalogTests {
                 .when(validator)
                 .validate(eq(exam), eq(links));
 
+        var media = mock(com.aptisprep.mvc.catalog.repository.QuestionMediaRepository.class);
+        var audioMedia = new com.aptisprep.mvc.catalog.entity.QuestionMediaEntity();
+        audioMedia.setMediaType("AUDIO");
+        audioMedia.setMediaUrl("audio/listening-101.mp3");
+        when(media.findByQuestionIdOrderByPosition(501)).thenReturn(List.of(audioMedia));
+
+        var catalogService =
+                new com.aptisprep.mvc.catalog.service.impl.ExamCatalogServiceImpl(
+                        exams, questions, sections, null, null, null, media);
         var catalog =
                 new com.aptisprep.mvc.student.service.impl.StudentExamCatalogServiceImpl(
-                        exams, sections, questions, validator);
+                        catalogService, validator);
 
         var page = catalog.browse("", "", "", "", "FULL_MOCK", "level", PageRequest.of(0, 9));
 
@@ -136,9 +154,18 @@ class UnavailableExamCatalogTests {
                 .when(validator)
                 .validate(eq(exam), eq(List.of(link)));
 
+        var media = mock(com.aptisprep.mvc.catalog.repository.QuestionMediaRepository.class);
+        var audioMedia = new com.aptisprep.mvc.catalog.entity.QuestionMediaEntity();
+        audioMedia.setMediaType("AUDIO");
+        audioMedia.setMediaUrl("audio/listening-101.mp3");
+        when(media.findByQuestionIdOrderByPosition(501)).thenReturn(List.of(audioMedia));
+
+        var catalogService =
+                new com.aptisprep.mvc.catalog.service.impl.ExamCatalogServiceImpl(
+                        exams, questions, sections, null, null, null, media);
         var catalog =
                 new com.aptisprep.mvc.student.service.impl.StudentExamCatalogServiceImpl(
-                        exams, sections, questions, validator);
+                        catalogService, validator);
 
         var page =
                 catalog.browse("", "LISTENING", "", "", "PRACTICE", "level", PageRequest.of(0, 9));

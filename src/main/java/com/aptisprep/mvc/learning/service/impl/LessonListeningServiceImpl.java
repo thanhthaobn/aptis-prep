@@ -1,7 +1,7 @@
 package com.aptisprep.mvc.learning.service.impl;
 
 import com.aptisprep.mvc.auth.entity.User;
-import com.aptisprep.mvc.auth.repository.UserRepository;
+import com.aptisprep.mvc.auth.service.UserService;
 import com.aptisprep.mvc.common.enums.Role;
 import com.aptisprep.mvc.common.enums.UserStatus;
 import com.aptisprep.mvc.common.exception.AccessDeniedException;
@@ -29,7 +29,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 @Transactional
 public class LessonListeningServiceImpl implements LessonListeningService {
-    private final UserRepository userRepository;
+    private final UserService userRepository;
     private final LessonRepository lessonRepository;
     private final LessonEngagementRepository lessonEngagementRepository;
     private final AudioDurationService durations;
@@ -37,7 +37,7 @@ public class LessonListeningServiceImpl implements LessonListeningService {
 
     @Autowired
     public LessonListeningServiceImpl(
-            UserRepository userRepository,
+            UserService userRepository,
             LessonRepository lessonRepository,
             LessonEngagementRepository lessonEngagementRepository,
             AudioDurationService durations) {
@@ -50,7 +50,7 @@ public class LessonListeningServiceImpl implements LessonListeningService {
     }
 
     public LessonListeningServiceImpl(
-            UserRepository userRepository,
+            UserService userRepository,
             LessonRepository lessonRepository,
             LessonEngagementRepository lessonEngagementRepository,
             AudioDurationService durations,

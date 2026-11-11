@@ -10,6 +10,7 @@ import com.aptisprep.mvc.common.exception.ResourceNotFoundException;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class ExamCatalogServiceImpl implements ExamCatalogService {
@@ -40,55 +41,63 @@ public class ExamCatalogServiceImpl implements ExamCatalogService {
 
     @Override
     public Optional<MockExamEntity> findMockExamById(Integer id) {
-        return id == null ? Optional.empty() : mockExamRepository.findById(id);
+        return id == null || mockExamRepository == null
+                ? Optional.empty()
+                : mockExamRepository.findById(id);
     }
 
     @Override
     public Optional<MockExamEntity> findMockExamByIdForUpdate(Integer id) {
-        return id == null ? Optional.empty() : mockExamRepository.findByIdForUpdate(id);
+        return id == null || mockExamRepository == null
+                ? Optional.empty()
+                : mockExamRepository.findByIdForUpdate(id);
     }
 
     @Override
     public List<MockExamQuestionEntity> findExamQuestions(Integer examId) {
-        return examId == null
+        return examId == null || mockExamQuestionRepository == null
                 ? List.of()
                 : mockExamQuestionRepository.findByMockExamIdOrderByPosition(examId);
     }
 
     @Override
     public List<MockExamSectionEntity> findExamSections(Integer examId) {
-        return examId == null
+        return examId == null || mockExamSectionRepository == null
                 ? List.of()
                 : mockExamSectionRepository.findByMockExamIdOrderById(examId);
     }
 
     @Override
     public Optional<QuestionEntity> findQuestionById(Integer id) {
-        return id == null ? Optional.empty() : questionRepository.findById(id);
+        return id == null || questionRepository == null
+                ? Optional.empty()
+                : questionRepository.findById(id);
     }
 
     @Override
     public Optional<QuestionItemEntity> findQuestionItemById(Integer itemId) {
-        return itemId == null ? Optional.empty() : questionItemRepository.findById(itemId);
+        return itemId == null || questionItemRepository == null
+                ? Optional.empty()
+                : questionItemRepository.findById(itemId);
     }
 
     @Override
     public List<QuestionItemEntity> findQuestionItems(Integer questionId) {
-        return questionId == null
+        return questionId == null || questionItemRepository == null
                 ? List.of()
                 : questionItemRepository.findByQuestionIdOrderByPosition(questionId);
     }
 
     @Override
     public List<QuestionOptionEntity> findQuestionOptions(Integer itemId) {
-        return itemId == null
+        return itemId == null || questionOptionRepository == null
                 ? List.of()
                 : questionOptionRepository.findByQuestionItemIdOrderByPosition(itemId);
     }
 
     @Override
     public List<QuestionMediaEntity> findQuestionMedia(Integer questionId) {
-        return questionId == null
+        return questionId == null || questionMediaRepository == null
                 ? List.of()
                 : questionMediaRepository.findByQuestionIdOrderByPosition(questionId);
     }
@@ -156,5 +165,17 @@ public class ExamCatalogServiceImpl implements ExamCatalogService {
                 x.getTargetLevel(),
                 x.getDurationMinutes(),
                 x.getScoringSchemeId());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<MockExamEntity> findPublishedExamsBySkill(String skill) {
+        return mockExamRepository.findBySkillAndStatusOrderByUpdatedAtDesc(skill, "PUBLISHED");
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<MockExamEntity> findAllPublishedExams() {
+        return mockExamRepository.findByStatusOrderByUpdatedAtDesc("PUBLISHED");
     }
 }

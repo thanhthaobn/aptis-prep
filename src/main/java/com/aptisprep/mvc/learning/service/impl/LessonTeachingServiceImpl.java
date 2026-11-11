@@ -1,7 +1,7 @@
 package com.aptisprep.mvc.learning.service.impl;
 
 import com.aptisprep.mvc.auth.entity.User;
-import com.aptisprep.mvc.auth.repository.UserRepository;
+import com.aptisprep.mvc.auth.service.UserService;
 import com.aptisprep.mvc.common.config.AiProperties;
 import com.aptisprep.mvc.common.enums.*;
 import com.aptisprep.mvc.common.exception.*;
@@ -31,7 +31,7 @@ import org.springframework.web.multipart.MultipartFile;
 public class LessonTeachingServiceImpl implements LessonTeachingService {
     private final LessonCheckService checkService;
     private final LessonRepository lessonRepository;
-    private final UserRepository userRepository;
+    private final UserService userRepository;
     private final LessonResponseRepository lessonResponseRepository;
     private final LessonCheckAttemptRepository lessonCheckAttemptRepository;
     private final LessonEngagementRepository lessonEngagementRepository;
@@ -44,7 +44,7 @@ public class LessonTeachingServiceImpl implements LessonTeachingService {
     public LessonTeachingServiceImpl(
             LessonCheckService c,
             LessonRepository lessonRepository,
-            UserRepository userRepository,
+            UserService userRepository,
             LessonResponseRepository lessonResponseRepository,
             LessonCheckAttemptRepository lessonCheckAttemptRepository,
             LessonEngagementRepository lessonEngagementRepository,
@@ -665,7 +665,8 @@ public class LessonTeachingServiceImpl implements LessonTeachingService {
         return lesson.getVideoPath();
     }
 
-    public static String videoId(String url) {
+    @Override
+    public String videoId(String url) {
         if (!has(url)) return null;
         try {
             URI uri = URI.create(url.trim());

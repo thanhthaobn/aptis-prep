@@ -4,10 +4,7 @@ import com.aptisprep.mvc.catalog.entity.MockExamEntity;
 import com.aptisprep.mvc.catalog.entity.MockExamQuestionEntity;
 import com.aptisprep.mvc.catalog.entity.MockExamSectionEntity;
 import com.aptisprep.mvc.catalog.entity.QuestionMediaEntity;
-import com.aptisprep.mvc.catalog.repository.MockExamQuestionRepository;
-import com.aptisprep.mvc.catalog.repository.MockExamRepository;
-import com.aptisprep.mvc.catalog.repository.MockExamSectionRepository;
-import com.aptisprep.mvc.catalog.repository.QuestionMediaRepository;
+import com.aptisprep.mvc.catalog.service.ExamCatalogService;
 import com.aptisprep.mvc.common.exception.BusinessRuleException;
 import com.aptisprep.mvc.common.exception.ResourceNotFoundException;
 import com.aptisprep.mvc.exam.service.impl.ExamStartValidator;
@@ -39,46 +36,14 @@ public class StudentExamCatalogServiceImpl implements StudentExamCatalogService 
                     "FULL_MOCK");
     private static final List<String> LEVEL_ORDER = List.of("A1", "A2", "B1", "B2", "C1");
 
-    private final MockExamRepository mockExamRepository;
-    private final MockExamSectionRepository mockExamSectionRepository;
-    private final MockExamQuestionRepository mockExamQuestionRepository;
+    private final ExamCatalogService catalogService;
     private final ExamStartValidator startValidator;
-    private final QuestionMediaRepository questionMediaRepository;
 
     @Autowired
     public StudentExamCatalogServiceImpl(
-            MockExamRepository mockExamRepository,
-            MockExamSectionRepository mockExamSectionRepository,
-            MockExamQuestionRepository mockExamQuestionRepository,
-            ExamStartValidator startValidator,
-            QuestionMediaRepository questionMediaRepository) {
-        this.mockExamRepository = mockExamRepository;
-        this.mockExamSectionRepository = mockExamSectionRepository;
-        this.mockExamQuestionRepository = mockExamQuestionRepository;
+            ExamCatalogService catalogService, ExamStartValidator startValidator) {
+        this.catalogService = catalogService;
         this.startValidator = startValidator;
-        this.questionMediaRepository = questionMediaRepository;
-    }
-
-    /** Kept for focused service tests that provide a mocked readiness validator only. */
-    public StudentExamCatalogServiceImpl(
-            MockExamRepository mockExamRepository,
-            MockExamSectionRepository mockExamSectionRepository,
-            MockExamQuestionRepository mockExamQuestionRepository,
-            ExamStartValidator startValidator) {
-        this(
-                mockExamRepository,
-                mockExamSectionRepository,
-                mockExamQuestionRepository,
-                startValidator,
-                null);
-    }
-
-    /** Kept for lightweight preview tests that do not need readiness validation. */
-    public StudentExamCatalogServiceImpl(
-            MockExamRepository mockExamRepository,
-            MockExamSectionRepository mockExamSectionRepository,
-            MockExamQuestionRepository mockExamQuestionRepository) {
-        this(mockExamRepository, mockExamSectionRepository, mockExamQuestionRepository, null);
     }
 
     public List<Entry> find(String module, String query, String skill, String level, String state) {
@@ -162,7 +127,7 @@ public class StudentExamCatalogServiceImpl implements StudentExamCatalogService 
     private List<MockExamEntity> filteredExams(
             String query, String skill, String level, String state) {
         String term = normalize(query);
-        return mockExamRepository.findByStatusOrderByUpdatedAtDesc("PUBLISHED").stream()
+        return catalogService.findAllPublishedExams().stream()
                 .filter(exam -> !exam.isDemoOnly())
                 .filter(
                         exam ->
@@ -193,8 +158,7 @@ public class StudentExamCatalogServiceImpl implements StudentExamCatalogService 
     }
 
     private boolean visibleInCatalog(MockExamEntity exam) {
-        List<MockExamQuestionEntity> links =
-                mockExamQuestionRepository.findByMockExamIdOrderByPosition(exam.getId());
+        List<MockExamQuestionEntity> links = catalogService.findExamQuestions(exam.getId());
         if (startValidator == null) return true;
         if (isCompositeExam(exam)) return true;
         if (links.isEmpty()) return false;
@@ -213,14 +177,11 @@ public class StudentExamCatalogServiceImpl implements StudentExamCatalogService 
         if (!"LISTENING".equals(normalizeSkill(exam.getSkill()))) return false;
         String message = normalize(failure.getMessage());
         if (!message.contains("audio") && !message.contains("am thanh")) return false;
-        if (questionMediaRepository == null) return true;
         return links.stream().anyMatch(this::hasFileBackedAudio);
     }
 
     private boolean hasFileBackedAudio(MockExamQuestionEntity link) {
-        return questionMediaRepository
-                .findByQuestionIdOrderByPosition(link.getQuestionId())
-                .stream()
+        return catalogService.findQuestionMedia(link.getQuestionId()).stream()
                 .filter(media -> "AUDIO".equals(media.getMediaType()))
                 .map(QuestionMediaEntity::getMediaUrl)
                 .anyMatch(url -> url != null && !url.isBlank() && !url.startsWith("speech://"));
@@ -232,7 +193,7 @@ public class StudentExamCatalogServiceImpl implements StudentExamCatalogService 
         if ("FULL_MOCK".equals(code) && isCompositeExam(exam)) return true;
         if (code.equals(normalizeSkill(exam.getSkill()))) return true;
         return isCompositeExam(exam)
-                && mockExamSectionRepository.findByMockExamIdOrderById(exam.getId()).stream()
+                && catalogService.findExamSections(exam.getId()).stream()
                         .anyMatch(section -> code.equals(normalizeSkill(section.getSkill())));
     }
 
@@ -244,8 +205,8 @@ public class StudentExamCatalogServiceImpl implements StudentExamCatalogService 
     public Entry entry(String module, int id) {
         if (!"exams".equals(module)) throw new ResourceNotFoundException("Không tìm thấy nội dung");
         return entry(
-                mockExamRepository
-                        .findById(id)
+                catalogService
+                        .findMockExamById(id)
                         .filter(exam -> "PUBLISHED".equals(exam.getStatus()) && !exam.isDemoOnly())
                         .filter(this::visibleInCatalog)
                         .orElseThrow(
@@ -256,10 +217,8 @@ public class StudentExamCatalogServiceImpl implements StudentExamCatalogService 
 
     private Entry entry(MockExamEntity exam) {
         List<Block> blocks = new ArrayList<>();
-        List<MockExamQuestionEntity> links =
-                mockExamQuestionRepository.findByMockExamIdOrderByPosition(exam.getId());
-        List<MockExamSectionEntity> examSections =
-                mockExamSectionRepository.findByMockExamIdOrderById(exam.getId());
+        List<MockExamQuestionEntity> links = catalogService.findExamQuestions(exam.getId());
+        List<MockExamSectionEntity> examSections = catalogService.findExamSections(exam.getId());
         examSections.stream()
                 .sorted(Comparator.comparingInt(section -> section.getDisplayOrder()))
                 .forEach(

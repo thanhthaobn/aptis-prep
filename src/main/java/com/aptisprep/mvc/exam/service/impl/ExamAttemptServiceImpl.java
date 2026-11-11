@@ -5,7 +5,6 @@ import static com.aptisprep.mvc.grading.service.impl.GradingContextFormatter.DEF
 import com.aptisprep.mvc.auth.entity.User;
 import com.aptisprep.mvc.auth.service.UserService;
 import com.aptisprep.mvc.catalog.entity.*;
-import com.aptisprep.mvc.catalog.repository.*;
 import com.aptisprep.mvc.catalog.service.ExamCatalogService;
 import com.aptisprep.mvc.common.enums.Role;
 import com.aptisprep.mvc.common.enums.UserStatus;
@@ -1167,5 +1166,17 @@ public class ExamAttemptServiceImpl implements ExamAttemptService {
                 answer != null && answer.getAudioPath() != null,
                 item.getMinWordCount(),
                 item.getMaxWordCount());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public boolean hasAnswersForQuestion(Integer questionId) {
+        return userAnswerRepository.existsByQuestionId(questionId);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public boolean hasAttemptsForScoringScheme(Integer schemeId) {
+        return examAttemptRepository.existsByScoringSchemeId(schemeId);
     }
 }

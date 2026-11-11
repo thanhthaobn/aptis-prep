@@ -19,7 +19,6 @@ import com.aptisprep.mvc.learning.entity.Lesson;
 import com.aptisprep.mvc.learning.entity.LessonWorkSubmission;
 import com.aptisprep.mvc.learning.repository.*;
 import com.aptisprep.mvc.learning.service.impl.*;
-import com.aptisprep.mvc.learning.service.impl.LessonTeachingServiceImpl;
 import com.aptisprep.mvc.storage.service.StorageService;
 import com.aptisprep.mvc.storage.support.TestAudio;
 import java.nio.file.Files;
@@ -474,16 +473,12 @@ class StructuredLessonTests {
 
     @Test
     void rejectsUnsafeVideoAndSources() {
-        assertThatThrownBy(() -> LessonTeachingServiceImpl.videoId("javascript:alert(1)"))
+        assertThatThrownBy(() -> teaching.videoId("javascript:alert(1)"))
                 .isInstanceOf(BusinessRuleException.class);
         assertThatThrownBy(
-                        () ->
-                                LessonTeachingServiceImpl.videoId(
-                                        "https://youtube.com.evil.test/watch?v=yiwhUC4S5_o"))
+                        () -> teaching.videoId("https://youtube.com.evil.test/watch?v=yiwhUC4S5_o"))
                 .isInstanceOf(BusinessRuleException.class);
-        assertThat(
-                        LessonTeachingServiceImpl.videoId(
-                                "https://www.youtube.com/watch?v=yiwhUC4S5_o&feature=share"))
+        assertThat(teaching.videoId("https://www.youtube.com/watch?v=yiwhUC4S5_o&feature=share"))
                 .isEqualTo("yiwhUC4S5_o");
     }
 

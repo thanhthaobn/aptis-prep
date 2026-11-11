@@ -104,6 +104,10 @@ public interface ExamAttemptService {
 
     Optional<SnapshotSchemeInfo> findSnapshotSchemeInfo(Integer attemptId);
 
+    boolean hasAnswersForQuestion(Integer questionId);
+
+    boolean hasAttemptsForScoringScheme(Integer schemeId);
+
     record SectionPage(
             int index,
             String skill,

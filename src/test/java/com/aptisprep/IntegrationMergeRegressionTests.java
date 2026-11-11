@@ -98,9 +98,12 @@ class IntegrationMergeRegressionTests {
         var exams = mock(MockExamRepository.class);
         var sections = mock(MockExamSectionRepository.class);
         var questions = mock(MockExamQuestionRepository.class);
+        var catalog =
+                new com.aptisprep.mvc.catalog.service.impl.ExamCatalogServiceImpl(
+                        exams, questions, sections, null, null, null, null);
         var service =
                 new com.aptisprep.mvc.student.service.impl.StudentExamCatalogServiceImpl(
-                        exams, sections, questions);
+                        catalog, null);
         var published = new MockExamEntity();
         ReflectionTestUtils.setField(published, "id", 12);
         published.setTitle("Published reading exam");
@@ -123,11 +126,18 @@ class IntegrationMergeRegressionTests {
 
     @Test
     void emptyDatabaseFallbackDoesNotRestoreFakeLessonsOrResults() {
+        var catalog =
+                new com.aptisprep.mvc.catalog.service.impl.ExamCatalogServiceImpl(
+                        mock(MockExamRepository.class),
+                        mock(MockExamQuestionRepository.class),
+                        mock(MockExamSectionRepository.class),
+                        null,
+                        null,
+                        null,
+                        null);
         var service =
                 new com.aptisprep.mvc.student.service.impl.StudentExamCatalogServiceImpl(
-                        mock(MockExamRepository.class),
-                        mock(MockExamSectionRepository.class),
-                        mock(MockExamQuestionRepository.class));
+                        catalog, null);
         assertTrue(service.find("exams", "", "", "", "").isEmpty());
         assertThrows(ResourceNotFoundException.class, () -> service.entry("exams", 7002));
         assertTrue(service.find("lessons", "", "", "", "").isEmpty());

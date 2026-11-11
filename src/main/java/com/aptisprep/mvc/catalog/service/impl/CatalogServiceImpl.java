@@ -21,7 +21,7 @@ import com.aptisprep.mvc.common.enums.QuestionType;
 import com.aptisprep.mvc.common.enums.Skill;
 import com.aptisprep.mvc.common.exception.BusinessRuleException;
 import com.aptisprep.mvc.common.exception.ResourceNotFoundException;
-import com.aptisprep.mvc.exam.repository.UserAnswerRepository;
+import com.aptisprep.mvc.exam.service.ExamAttemptService;
 import com.aptisprep.mvc.scoring.service.CertificateSchemeService;
 import com.aptisprep.mvc.storage.service.StorageService;
 import java.util.*;
@@ -43,7 +43,7 @@ public class CatalogServiceImpl implements CatalogService {
     private final QuestionMediaRepository questionMediaRepository;
     private final MockExamRepository mockExamRepository;
     private final CertificateSchemeService certificateSchemes;
-    private final UserAnswerRepository userAnswerRepository;
+    private final ExamAttemptService examAttempts;
     private final StorageService storage;
     private final AdminExamService examCatalog;
 
@@ -54,7 +54,7 @@ public class CatalogServiceImpl implements CatalogService {
             QuestionMediaRepository questionMediaRepository,
             MockExamRepository mockExamRepository,
             CertificateSchemeService certificateSchemes,
-            UserAnswerRepository userAnswerRepository,
+            ExamAttemptService examAttempts,
             StorageService storage,
             AdminExamService examCatalog) {
         this.questionRepository = questionRepository;
@@ -63,7 +63,7 @@ public class CatalogServiceImpl implements CatalogService {
         this.questionMediaRepository = questionMediaRepository;
         this.mockExamRepository = mockExamRepository;
         this.certificateSchemes = certificateSchemes;
-        this.userAnswerRepository = userAnswerRepository;
+        this.examAttempts = examAttempts;
         this.storage = storage;
         this.examCatalog = examCatalog;
     }
@@ -207,7 +207,7 @@ public class CatalogServiceImpl implements CatalogService {
                                         () ->
                                                 new ResourceNotFoundException(
                                                         "Không tìm thấy câu hỏi"));
-        if (id != null && userAnswerRepository.existsByQuestionId(id)) {
+        if (id != null && examAttempts.hasAnswersForQuestion(id)) {
             throw new BusinessRuleException(
                     "Câu hỏi đã có trong lịch sử làm bài. Hãy lưu trữ và tạo phiên bản câu hỏi mới");
         }
@@ -534,7 +534,7 @@ public class CatalogServiceImpl implements CatalogService {
     }
 
     private void assertQuestionNotAnswered(Integer questionId) {
-        if (userAnswerRepository.existsByQuestionId(questionId)) {
+        if (examAttempts.hasAnswersForQuestion(questionId)) {
             throw new BusinessRuleException(
                     "Câu hỏi đã có trong lịch sử làm bài. Hãy lưu trữ và tạo phiên bản câu hỏi"
                             + " mới");
@@ -707,5 +707,53 @@ public class CatalogServiceImpl implements CatalogService {
             option.setPosition(index + 1);
             questionOptionRepository.save(option);
         }
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public long countExams() {
+        return mockExamRepository.count();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public long countPublishedExams() {
+        return mockExamRepository.countByStatus("PUBLISHED");
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public long countQuestions() {
+        return questionRepository.count();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<QuestionEntity> findRecentQuestions(int limit) {
+        return questionRepository
+                .findAll(
+                        org.springframework.data.domain.PageRequest.of(
+                                0,
+                                limit,
+                                org.springframework.data.domain.Sort.by(
+                                        org.springframework.data.domain.Sort.Direction.DESC,
+                                        "updatedAt",
+                                        "id")))
+                .getContent();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<MockExamEntity> findRecentExams(int limit) {
+        return mockExamRepository
+                .findAll(
+                        org.springframework.data.domain.PageRequest.of(
+                                0,
+                                limit,
+                                org.springframework.data.domain.Sort.by(
+                                        org.springframework.data.domain.Sort.Direction.DESC,
+                                        "updatedAt",
+                                        "id")))
+                .getContent();
     }
 }

@@ -11,4 +11,15 @@ public interface AccountAccessService {
     void applyAssessment(Integer userId, Integer attemptId);
 
     User requireActiveStudentById(Integer userId);
+
+    com.aptisprep.mvc.account.dto.AccountSnapshotDTO.GoalViewDTO goalView(Integer userId);
+
+    java.util.Map<String, com.aptisprep.mvc.account.entity.UserSkillProfile> skillProfileMap(
+            Integer userId);
+
+    java.util.Map<String, String> activeGoalTargets(Integer userId);
+
+    java.util.Map<Integer, String> goalSkillTargetsById(Integer userId);
+
+    java.util.Map<String, String> activeGoalTargetsBySkill(Integer userId);
 }

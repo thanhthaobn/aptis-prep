@@ -1,7 +1,7 @@
 package com.aptisprep.mvc.learning.service.impl;
 
 import com.aptisprep.mvc.auth.entity.User;
-import com.aptisprep.mvc.auth.repository.UserRepository;
+import com.aptisprep.mvc.auth.service.UserService;
 import com.aptisprep.mvc.common.enums.Role;
 import com.aptisprep.mvc.common.enums.UserStatus;
 import com.aptisprep.mvc.common.exception.BusinessRuleException;
@@ -32,13 +32,13 @@ import org.springframework.transaction.annotation.Transactional;
 public class LessonCheckService {
     private final LessonCheckRepository lessonCheckRepository;
     private final LessonRepository lessonRepository;
-    private final UserRepository userRepository;
+    private final UserService userRepository;
     private final LessonCheckAttemptRepository lessonCheckAttemptRepository;
 
     public LessonCheckService(
             LessonCheckRepository lessonCheckRepository,
             LessonRepository lessonRepository,
-            UserRepository userRepository,
+            UserService userRepository,
             LessonCheckAttemptRepository lessonCheckAttemptRepository) {
         this.lessonCheckRepository = lessonCheckRepository;
         this.lessonRepository = lessonRepository;

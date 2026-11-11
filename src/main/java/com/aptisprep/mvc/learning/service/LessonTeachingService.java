@@ -76,4 +76,6 @@ public interface LessonTeachingService {
     String getLessonImagePath(Integer lessonId, String email);
 
     String getLessonVideoPath(Integer lessonId, String email);
+
+    String videoId(String videoUrl);
 }

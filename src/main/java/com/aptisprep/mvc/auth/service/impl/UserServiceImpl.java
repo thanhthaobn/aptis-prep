@@ -28,7 +28,8 @@ public class UserServiceImpl implements UserService {
     public UserServiceImpl(UserRepository userRepository, PasswordHasher passwordHasher) {
         this.userRepository = userRepository;
         this.passwordHasher = passwordHasher;
-        this.dummyPasswordHash = passwordHasher.encode("unused-login-password");
+        this.dummyPasswordHash =
+                passwordHasher == null ? "" : passwordHasher.encode("unused-login-password");
     }
 
     @Override
@@ -44,7 +45,9 @@ public class UserServiceImpl implements UserService {
         }
         Optional<User> user = userRepository.findByEmailIgnoreCase(normalizedEmail);
         String hash = user.map(User::getPasswordHash).orElse(dummyPasswordHash);
-        return passwordHasher.matches(password, hash) ? user.orElse(null) : null;
+        return passwordHasher != null && passwordHasher.matches(password, hash)
+                ? user.orElse(null)
+                : null;
     }
 
     @Override
@@ -128,5 +131,26 @@ public class UserServiceImpl implements UserService {
     @Transactional(readOnly = true)
     public Integer getUserIdByEmail(String email) {
         return requireByEmail(email).getId();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public long countByRole(com.aptisprep.mvc.common.enums.Role role) {
+        return userRepository.countByRole(role);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public long countByRoleAndStatus(
+            com.aptisprep.mvc.common.enums.Role role,
+            com.aptisprep.mvc.common.enums.UserStatus status) {
+        return userRepository.countByRoleAndStatus(role, status);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public org.springframework.data.domain.Page<User> searchStudents(
+            String pattern, String status, org.springframework.data.domain.Pageable pageable) {
+        return userRepository.searchStudents(pattern, status, pageable);
     }
 }

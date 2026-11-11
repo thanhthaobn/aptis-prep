@@ -101,4 +101,15 @@ public interface LessonService {
     NeighborsDTO neighbors(Lesson lesson);
 
     String getSkill(Integer lessonId);
+
+    record LessonActivityDTO(
+            java.time.LocalDateTime lastAccessedAt, java.time.LocalDateTime completedAt) {}
+
+    List<LessonActivityDTO> findLessonActivitiesByUserId(Integer userId);
+
+    List<java.time.LocalDateTime> findPracticeDatesByUserId(Integer userId);
+
+    long countLessons();
+
+    List<Lesson> findRecentLessons(int limit);
 }

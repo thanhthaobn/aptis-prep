@@ -1,7 +1,7 @@
 package com.aptisprep.mvc.learning.service.impl;
 
 import com.aptisprep.mvc.auth.entity.User;
-import com.aptisprep.mvc.auth.repository.UserRepository;
+import com.aptisprep.mvc.auth.service.UserService;
 import com.aptisprep.mvc.common.enums.UserStatus;
 import com.aptisprep.mvc.common.exception.BusinessRuleException;
 import com.aptisprep.mvc.common.exception.ResourceNotFoundException;
@@ -15,7 +15,9 @@ import com.aptisprep.mvc.learning.dto.LessonTreeViewsDTO.LevelBranchDTO;
 import com.aptisprep.mvc.learning.dto.LessonTreeViewsDTO.NeighborsDTO;
 import com.aptisprep.mvc.learning.dto.LessonTreeViewsDTO.SkillBranchDTO;
 import com.aptisprep.mvc.learning.entity.Lesson;
+import com.aptisprep.mvc.learning.entity.LessonCheckAttempt;
 import com.aptisprep.mvc.learning.entity.LessonProgress;
+import com.aptisprep.mvc.learning.repository.LessonCheckAttemptRepository;
 import com.aptisprep.mvc.learning.repository.LessonProgressRepository;
 import com.aptisprep.mvc.learning.repository.LessonRepository;
 import com.aptisprep.mvc.learning.service.LearningPathService;
@@ -27,6 +29,8 @@ import java.io.InputStream;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.IntStream;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -35,7 +39,8 @@ import org.springframework.web.multipart.MultipartFile;
 public class LessonServiceImpl implements LessonService {
     private final LessonRepository lessonRepository;
     private final LessonProgressRepository lessonProgressRepository;
-    private final UserRepository userRepository;
+    private final LessonCheckAttemptRepository lessonCheckAttemptRepository;
+    private final UserService userRepository;
     private final LearningPathService learningPaths;
     private final LessonTeachingService teaching;
     private final StorageService storage;
@@ -43,12 +48,14 @@ public class LessonServiceImpl implements LessonService {
     public LessonServiceImpl(
             LessonRepository lessonRepository,
             LessonProgressRepository lessonProgressRepository,
-            UserRepository userRepository,
+            LessonCheckAttemptRepository lessonCheckAttemptRepository,
+            UserService userRepository,
             LearningPathService lp,
             LessonTeachingService t,
             StorageService s) {
         this.lessonRepository = lessonRepository;
         this.lessonProgressRepository = lessonProgressRepository;
+        this.lessonCheckAttemptRepository = lessonCheckAttemptRepository;
         this.userRepository = userRepository;
         learningPaths = lp;
         teaching = t;
@@ -553,5 +560,36 @@ public class LessonServiceImpl implements LessonService {
 
     private static boolean has(String s) {
         return s != null && !s.isBlank();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<LessonActivityDTO> findLessonActivitiesByUserId(Integer userId) {
+        return lessonProgressRepository.findByUserId(userId).stream()
+                .map(p -> new LessonActivityDTO(p.getLastAccessedAt(), p.getCompletedAt()))
+                .toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<LocalDateTime> findPracticeDatesByUserId(Integer userId) {
+        return lessonCheckAttemptRepository.findByUserId(userId).stream()
+                .map(LessonCheckAttempt::getSubmittedAt)
+                .filter(Objects::nonNull)
+                .toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public long countLessons() {
+        return lessonRepository.count();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<Lesson> findRecentLessons(int limit) {
+        return lessonRepository
+                .findAll(PageRequest.of(0, limit, Sort.by(Sort.Direction.DESC, "updatedAt", "id")))
+                .getContent();
     }
 }

@@ -1,13 +1,11 @@
 package com.aptisprep.mvc.learning.service.impl;
 
+import com.aptisprep.mvc.account.dto.GoalSkillDTO;
 import com.aptisprep.mvc.account.dto.LearnerContextDTO;
 import com.aptisprep.mvc.account.dto.SkillLevelDTO;
-import com.aptisprep.mvc.account.entity.UserGoal;
-import com.aptisprep.mvc.account.entity.UserGoalSkill;
-import com.aptisprep.mvc.account.repository.UserGoalRepository;
 import com.aptisprep.mvc.account.service.AccountAccessService;
 import com.aptisprep.mvc.auth.entity.User;
-import com.aptisprep.mvc.auth.repository.UserRepository;
+import com.aptisprep.mvc.auth.service.UserService;
 import com.aptisprep.mvc.catalog.dto.ExamSummaryDTO;
 import com.aptisprep.mvc.catalog.service.*;
 import com.aptisprep.mvc.catalog.service.ExamCatalogService;
@@ -37,8 +35,7 @@ public class LearningPathServiceImpl implements LearningPathService {
     private final LearningPathItemRepository learningPathItemRepository;
     private final LessonRepository lessonRepository;
     private final LessonProgressRepository lessonProgressRepository;
-    private final UserRepository userRepository;
-    private final UserGoalRepository userGoalRepository;
+    private final UserService userRepository;
     private final ObjectProvider<ExamAttemptService> attempts;
     private final ExamCatalogService catalog;
     private final AccountAccessService accounts;
@@ -49,8 +46,7 @@ public class LearningPathServiceImpl implements LearningPathService {
             LearningPathItemRepository learningPathItemRepository,
             LessonRepository lessonRepository,
             LessonProgressRepository lessonProgressRepository,
-            UserRepository userRepository,
-            UserGoalRepository userGoalRepository,
+            UserService userRepository,
             ObjectProvider<ExamAttemptService> attempts,
             ExamCatalogService catalog,
             AccountAccessService accounts,
@@ -60,7 +56,6 @@ public class LearningPathServiceImpl implements LearningPathService {
         this.lessonRepository = lessonRepository;
         this.lessonProgressRepository = lessonProgressRepository;
         this.userRepository = userRepository;
-        this.userGoalRepository = userGoalRepository;
         this.attempts = attempts;
         this.catalog = catalog;
         this.accounts = accounts;
@@ -127,17 +122,7 @@ public class LearningPathServiceImpl implements LearningPathService {
         LearnerContextDTO learner = accounts.context(user.getId());
         List<SkillLevelDTO> assessedLevels =
                 learner == null || learner.levels() == null ? List.of() : learner.levels();
-        Map<Integer, String> targets = new HashMap<>();
-        userGoalRepository
-                .findFirstByUserIdAndStatusOrderByCreatedAtDesc(user.getId(), GoalStatus.ACTIVE)
-                .ifPresent(
-                        goal ->
-                                goal.getSkills()
-                                        .forEach(
-                                                target ->
-                                                        targets.put(
-                                                                target.getId(),
-                                                                target.getTargetLevel())));
+        Map<Integer, String> targets = accounts.goalSkillTargetsById(user.getId());
         List<LearningPath> paths =
                 learningPathRepository.findByUserIdAndStatusOrderBySkillAscCreatedAtDesc(
                         user.getId(), "ACTIVE");
@@ -389,13 +374,14 @@ public class LearningPathServiceImpl implements LearningPathService {
         List<Lesson> published =
                 lessonRepository.findByStatusOrderBySkillAscCefrLevelAscDisplayOrderAsc(
                         "PUBLISHED");
-        Map<String, UserGoalSkill> targets = goalTargets(user.getId());
+        Map<String, GoalSkillDTO> targets = accounts.activeGoalSkillsBySkill(user.getId());
         LearnerContextDTO context = accounts.context(user.getId());
         List<SkillLevelDTO> levels =
                 context == null || context.levels() == null ? List.of() : context.levels();
         int changed = 0;
         for (String skill : LessonService.SKILLS) {
-            UserGoalSkill goal = targets.get(codeSkill(skill));
+            GoalSkillDTO goal = targets.get(codeSkill(skill));
+            String finalGoal = goal == null ? null : goal.targetLevel();
             SkillLevelDTO assessed = assessedLevel(levels, skill);
             String from = assessed == null ? null : validLevel(assessed.estimatedLevel());
             String target = nextLevel(from);
@@ -404,7 +390,6 @@ public class LearningPathServiceImpl implements LearningPathService {
                             .findFirstByUserIdAndSkillAndStatusOrderByCreatedAtDesc(
                                     user.getId(), skill, "ACTIVE")
                             .orElse(null);
-            String finalGoal = goal == null ? null : goal.getTargetLevel();
             boolean goalReached =
                     finalGoal != null && from != null && rank(from) >= rank(finalGoal);
             if (goalReached || target == null) {
@@ -425,7 +410,7 @@ public class LearningPathServiceImpl implements LearningPathService {
                     new Desired(
                             skill,
                             goal != null ? "GOAL" : from == null ? "DEFAULT" : "PLACEMENT",
-                            goal == null ? null : goal.getId(),
+                            goal == null ? null : goal.id(),
                             from,
                             target,
                             assessed == null ? null : assessed.sourceAttemptId(),
@@ -610,20 +595,6 @@ public class LearningPathServiceImpl implements LearningPathService {
         int next = rank(value) + 1;
         List<String> levels = LessonService.LEVELS;
         return next < levels.size() ? levels.get(next) : null;
-    }
-
-    private Map<String, UserGoalSkill> goalTargets(Integer userId) {
-        Map<String, UserGoalSkill> targets = new HashMap<>();
-        UserGoal goal =
-                userGoalRepository
-                        .findFirstByUserIdAndStatusOrderByCreatedAtDesc(userId, GoalStatus.ACTIVE)
-                        .orElse(null);
-        if (goal != null) {
-            for (UserGoalSkill target : goal.getSkills()) {
-                targets.put(codeSkill(target.getSkill()), target);
-            }
-        }
-        return targets;
     }
 
     private SkillLevelDTO assessedLevel(List<SkillLevelDTO> levels, String skill) {

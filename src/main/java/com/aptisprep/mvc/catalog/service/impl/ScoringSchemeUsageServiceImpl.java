@@ -2,7 +2,7 @@ package com.aptisprep.mvc.catalog.service.impl;
 
 import com.aptisprep.mvc.catalog.repository.MockExamRepository;
 import com.aptisprep.mvc.catalog.service.ScoringSchemeUsageService;
-import com.aptisprep.mvc.exam.repository.ExamAttemptRepository;
+import com.aptisprep.mvc.exam.service.ExamAttemptService;
 import java.util.List;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -11,19 +11,19 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class ScoringSchemeUsageServiceImpl implements ScoringSchemeUsageService {
     private final MockExamRepository mockExamRepository;
-    private final ExamAttemptRepository examAttemptRepository;
+    private final ExamAttemptService examAttemptService;
 
     public ScoringSchemeUsageServiceImpl(
-            MockExamRepository mockExamRepository, ExamAttemptRepository examAttemptRepository) {
+            MockExamRepository mockExamRepository, ExamAttemptService examAttemptService) {
         this.mockExamRepository = mockExamRepository;
-        this.examAttemptRepository = examAttemptRepository;
+        this.examAttemptService = examAttemptService;
     }
 
     @Override
     @Transactional(readOnly = true)
     public boolean isUsed(Integer schemeId) {
         return mockExamRepository.existsByScoringSchemeId(schemeId)
-                || examAttemptRepository.existsByScoringSchemeId(schemeId);
+                || examAttemptService.hasAttemptsForScoringScheme(schemeId);
     }
 
     @Override

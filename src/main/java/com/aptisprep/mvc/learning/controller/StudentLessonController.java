@@ -9,7 +9,6 @@ import com.aptisprep.mvc.learning.dto.LessonTreeViewsDTO.*;
 import com.aptisprep.mvc.learning.service.LessonListeningService;
 import com.aptisprep.mvc.learning.service.LessonService;
 import com.aptisprep.mvc.learning.service.LessonTeachingService;
-import com.aptisprep.mvc.learning.service.impl.LessonTeachingServiceImpl;
 import java.security.Principal;
 import java.text.Normalizer;
 import java.util.*;
@@ -91,8 +90,7 @@ public class StudentLessonController {
         m.addAttribute("savedWork", teaching.savedWorkDto(id, p.getName()));
         m.addAttribute(
                 "videoId",
-                LessonTeachingServiceImpl.videoId(
-                        l.getMaterial() == null ? null : l.getMaterial().getVideoUrl()));
+                teaching.videoId(l.getMaterial() == null ? null : l.getMaterial().getVideoUrl()));
         m.addAttribute("progress", service.progress(p.getName(), id));
         m.addAttribute("attempts", teaching.history(id, p.getName()));
         m.addAttribute("submissions", teaching.submissionHistoryDto(id, p.getName()));

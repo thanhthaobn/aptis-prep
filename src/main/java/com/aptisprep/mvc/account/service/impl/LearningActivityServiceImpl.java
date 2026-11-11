@@ -6,9 +6,8 @@ import com.aptisprep.mvc.account.dto.LearningActivityDTO.WeekDTO;
 import com.aptisprep.mvc.account.service.AccountAccessService;
 import com.aptisprep.mvc.account.service.LearningActivityService;
 import com.aptisprep.mvc.exam.service.ExamAttemptService;
-import com.aptisprep.mvc.flashcard.repository.UserFlashcardProgressRepository;
-import com.aptisprep.mvc.learning.repository.LessonCheckAttemptRepository;
-import com.aptisprep.mvc.learning.repository.LessonProgressRepository;
+import com.aptisprep.mvc.flashcard.service.FlashcardSetService;
+import com.aptisprep.mvc.learning.service.LessonService;
 import java.time.*;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.TemporalAdjusters;
@@ -54,21 +53,18 @@ public class LearningActivityServiceImpl implements LearningActivityService {
     }
 
     private final AccountAccessService access;
-    private final LessonProgressRepository lessonProgressRepository;
-    private final LessonCheckAttemptRepository lessonCheckAttemptRepository;
-    private final UserFlashcardProgressRepository userFlashcardProgressRepository;
+    private final LessonService lessonService;
+    private final FlashcardSetService flashcardService;
     private final ExamAttemptService examAttemptService;
 
     public LearningActivityServiceImpl(
             AccountAccessService access,
-            LessonProgressRepository lessonProgressRepository,
-            LessonCheckAttemptRepository lessonCheckAttemptRepository,
-            UserFlashcardProgressRepository userFlashcardProgressRepository,
+            LessonService lessonService,
+            FlashcardSetService flashcardService,
             ExamAttemptService examAttemptService) {
         this.access = access;
-        this.lessonProgressRepository = lessonProgressRepository;
-        this.lessonCheckAttemptRepository = lessonCheckAttemptRepository;
-        this.userFlashcardProgressRepository = userFlashcardProgressRepository;
+        this.lessonService = lessonService;
+        this.flashcardService = flashcardService;
         this.examAttemptService = examAttemptService;
     }
 
@@ -77,21 +73,21 @@ public class LearningActivityServiceImpl implements LearningActivityService {
     public ActivityViewDTO activity(String email) {
         Integer userId = access.requireActiveStudent(email);
         Map<LocalDate, DailyCount> counts = new HashMap<>();
-        lessonProgressRepository
-                .findByUserId(userId)
+        lessonService
+                .findLessonActivitiesByUserId(userId)
                 .forEach(
                         item -> {
-                            add(counts, item.getLastAccessedAt(), Kind.LESSON);
-                            if (item.getCompletedAt() != null
-                                    && !sameDay(item.getCompletedAt(), item.getLastAccessedAt()))
-                                add(counts, item.getCompletedAt(), Kind.LESSON);
+                            add(counts, item.lastAccessedAt(), Kind.LESSON);
+                            if (item.completedAt() != null
+                                    && !sameDay(item.completedAt(), item.lastAccessedAt()))
+                                add(counts, item.completedAt(), Kind.LESSON);
                         });
-        lessonCheckAttemptRepository
-                .findByUserId(userId)
-                .forEach(item -> add(counts, item.getSubmittedAt(), Kind.PRACTICE));
-        userFlashcardProgressRepository
-                .findByUserId(userId)
-                .forEach(item -> add(counts, item.getLastReviewedAt(), Kind.FLASHCARD));
+        lessonService
+                .findPracticeDatesByUserId(userId)
+                .forEach(item -> add(counts, item, Kind.PRACTICE));
+        flashcardService
+                .findReviewedDatesByUserId(userId)
+                .forEach(item -> add(counts, item, Kind.FLASHCARD));
         examAttemptService
                 .findSubmittedDatesByUserId(userId)
                 .forEach(submittedAt -> add(counts, submittedAt, Kind.EXAM));

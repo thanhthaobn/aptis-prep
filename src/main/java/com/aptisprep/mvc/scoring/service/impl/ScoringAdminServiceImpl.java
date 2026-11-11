@@ -1,8 +1,7 @@
 package com.aptisprep.mvc.scoring.service.impl;
 
 import com.aptisprep.mvc.auth.entity.User;
-import com.aptisprep.mvc.auth.repository.UserRepository;
-import com.aptisprep.mvc.catalog.repository.MockExamRepository;
+import com.aptisprep.mvc.auth.service.UserService;
 import com.aptisprep.mvc.catalog.service.ScoringSchemeUsageService;
 import com.aptisprep.mvc.common.enums.*;
 import com.aptisprep.mvc.common.enums.CefrLevel;
@@ -20,7 +19,6 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.*;
 import org.springframework.beans.factory.ObjectProvider;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -33,44 +31,23 @@ public class ScoringAdminServiceImpl implements ScoringAdminService {
     private final CertificateRepository certificateRepository;
     private final ScoringSchemeRepository scoringSchemeRepository;
     private final ScoreBandRepository scoreBandRepository;
-    private final UserRepository userRepository;
+    private final UserService userService;
     private final ObjectProvider<ScoringSchemeUsageService> usage;
     private final ScoringScaleRuleRepository scoringScaleRuleRepository;
-    private final MockExamRepository mockExamRepository;
 
     public ScoringAdminServiceImpl(
             CertificateRepository certificateRepository,
             ScoringSchemeRepository scoringSchemeRepository,
             ScoreBandRepository scoreBandRepository,
-            UserRepository userRepository,
+            UserService userService,
             ObjectProvider<ScoringSchemeUsageService> usage,
             ScoringScaleRuleRepository scoringScaleRuleRepository) {
-        this(
-                certificateRepository,
-                scoringSchemeRepository,
-                scoreBandRepository,
-                userRepository,
-                usage,
-                scoringScaleRuleRepository,
-                null);
-    }
-
-    @Autowired
-    public ScoringAdminServiceImpl(
-            CertificateRepository certificateRepository,
-            ScoringSchemeRepository scoringSchemeRepository,
-            ScoreBandRepository scoreBandRepository,
-            UserRepository userRepository,
-            ObjectProvider<ScoringSchemeUsageService> usage,
-            ScoringScaleRuleRepository scoringScaleRuleRepository,
-            MockExamRepository mockExamRepository) {
         this.certificateRepository = certificateRepository;
         this.scoringSchemeRepository = scoringSchemeRepository;
         this.scoreBandRepository = scoreBandRepository;
-        this.userRepository = userRepository;
+        this.userService = userService;
         this.usage = usage;
         this.scoringScaleRuleRepository = scoringScaleRuleRepository;
-        this.mockExamRepository = mockExamRepository;
     }
 
     @Transactional(readOnly = true)
@@ -89,12 +66,13 @@ public class ScoringAdminServiceImpl implements ScoringAdminService {
 
     @Transactional(readOnly = true)
     public List<ScoringViewsDTO.SchemeExamTypeView> schemeExamTypes() {
-        if (mockExamRepository == null) return List.of();
-        return mockExamRepository.findScoringSchemeExamTypes().stream()
+        var contract = usage == null ? null : usage.getIfAvailable();
+        if (contract == null) return List.of();
+        return contract.findScoringSchemeExamTypes().stream()
                 .map(
                         value ->
                                 new ScoringViewsDTO.SchemeExamTypeView(
-                                        value.getSchemeId(), value.getExamType()))
+                                        value.schemeId(), value.examType()))
                 .toList();
     }
 
@@ -570,7 +548,7 @@ public class ScoringAdminServiceImpl implements ScoringAdminService {
 
     private User requireAdmin(String email) {
         User user =
-                userRepository
+                userService
                         .findByEmailIgnoreCase(email)
                         .orElseThrow(
                                 () ->
