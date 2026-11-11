@@ -14,7 +14,7 @@
   const nextSectionForm = document.getElementById('next-section-form');
   const nextSectionButton = document.getElementById('next-section');
   const submitError = document.getElementById('attempt-submit-error');
-  const questionSections = [...document.querySelectorAll('.full-mock-question')];
+  const questionSections = [...document.querySelectorAll('.exam-question-page')];
   const questionLinks = [...document.querySelectorAll('.exam-question-link')];
   const answerItems = new Map();
   questionSections.forEach((section, index) => {
@@ -175,7 +175,7 @@
     });
     if (confirmed && !submitting && !deadlineReached) exitForm.submit();
   });
-  if (!document.body.classList.contains('full-mock-exam')) {
+  if (!document.body.classList.contains('paginated-exam')) {
     questionLinks.forEach((link) => {
       link.addEventListener('click', () => {
         const target = answerItems.get(link.dataset.itemId);
@@ -317,12 +317,12 @@
     tick();
     interval = setInterval(tick, 500);
   }
-  const fullMock = document.body.classList.contains('full-mock-exam');
-  if (fullMock) {
-    const pages = [...document.querySelectorAll('.full-mock-question')];
-    const pageInfo = document.getElementById('full-mock-page-info');
-    const previous = document.getElementById('full-mock-prev');
-    const next = document.getElementById('full-mock-next');
+  const paginatedExam = document.body.classList.contains('paginated-exam');
+  if (paginatedExam) {
+    const pages = [...document.querySelectorAll('.exam-question-page')];
+    const pageInfo = document.getElementById('exam-page-info');
+    const previous = document.getElementById('exam-page-prev');
+    const next = document.getElementById('exam-page-next');
     let currentPage = 0;
     const showPage = (index, item) => {
       if (!pages.length) return;
@@ -333,7 +333,7 @@
         page.setAttribute('aria-hidden', String(!active));
       });
       markCurrentQuestion(item || pages[currentPage].querySelector('.question-item'));
-      if (pageInfo) pageInfo.textContent = `Nhóm ${currentPage + 1} / ${pages.length}`;
+      if (pageInfo) pageInfo.textContent = `Phần ${currentPage + 1} / ${pages.length}`;
       if (previous) previous.disabled = currentPage === 0;
       if (next) next.disabled = currentPage === pages.length - 1;
       if (item) {

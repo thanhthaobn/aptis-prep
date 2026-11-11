@@ -43,7 +43,7 @@
   </head>
   <body
     class="student-theme exam-page"
-    th:classappend="${(attempt.examType == 'FULL_MOCK' or (attempt.examType == 'PLACEMENT' and attempt.sectionSkill != null))} ? ' full-mock-exam'"
+    th:classappend="${attempt.questions != null and attempt.questions.size() > 1} ? ' paginated-exam'"
   >
     <noscript>
       <style>
@@ -333,13 +333,13 @@
         display: block;
         width: 100%;
       }
-      .full-mock-exam.pagination-ready .full-mock-question:not(.is-active) {
+      .paginated-exam.pagination-ready .exam-question-page:not(.is-active) {
         display: none;
       }
-      .full-mock-question {
+      .exam-question-page {
         scroll-margin-top: 7.5rem;
       }
-      .full-mock-pagination {
+      .exam-pagination {
         display: flex;
         justify-content: space-between;
         align-items: center;
@@ -347,7 +347,7 @@
         margin-top: 1.25rem;
         padding: 0.9rem 0;
       }
-      .full-mock-pagination-info {
+      .exam-pagination-info {
         color: #58708f;
         font-size: var(--text-small);
         font-weight: 700;
@@ -555,7 +555,7 @@
 
         <div class="alert alert-error" th:if="${error}" th:text="${error}"></div>
         <section
-          class="dashboard-panel dashboard-section full-mock-question"
+          class="dashboard-panel dashboard-section exam-question-page"
           th:each="question, questionStat : ${attempt.questions}"
           th:attr="data-question-page=${questionStat.index}"
         >
@@ -732,15 +732,17 @@
           </div>
         </section>
         <nav
-          class="full-mock-pagination"
-          th:if="${(attempt.examType == 'FULL_MOCK' or (attempt.examType == 'PLACEMENT' and attempt.sectionSkill != null))}"
-          aria-label="Điều hướng câu hỏi Full Mock"
+          class="exam-pagination"
+          th:if="${attempt.questions != null and attempt.questions.size() > 1}"
+          aria-label="Điều hướng các phần của đề thi"
         >
-          <button id="full-mock-prev" class="button button-secondary" type="button">
+          <button id="exam-page-prev" class="button button-secondary" type="button">
             ← Trang trước
           </button>
-          <span id="full-mock-page-info" class="full-mock-pagination-info">Trang 1 / 1</span>
-          <button id="full-mock-next" class="button" type="button">Trang tiếp theo →</button>
+          <span id="exam-page-info" class="exam-pagination-info" aria-live="polite">
+            Phần 1 / 1
+          </span>
+          <button id="exam-page-next" class="button" type="button">Trang tiếp theo →</button>
         </nav>
       </main>
     </div>
