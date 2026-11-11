@@ -1,18 +1,20 @@
 package com.aptisprep.controller.student;
 
+import com.aptisprep.dto.AttemptResultDTO;
+import com.aptisprep.dto.HistoryFilterDTO;
+import com.aptisprep.dto.HistoryPageDTO;
+import com.aptisprep.dto.StudentCatalogViewDTO;
+import com.aptisprep.dto.StudentCatalogViewDTO.Entry;
+import com.aptisprep.enums.CefrLevel;
+import com.aptisprep.enums.ExamType;
 import com.aptisprep.enums.Skill;
 import com.aptisprep.exception.BusinessRuleException;
-import com.aptisprep.presentation.AttemptResultDTO;
-import com.aptisprep.presentation.HistoryPageDTO;
-import com.aptisprep.presentation.StudentCatalogViewDTO;
-import com.aptisprep.presentation.StudentCatalogViewDTO.Entry;
-import com.aptisprep.presentation.form.HistoryFilterDTO;
 import com.aptisprep.service.account.AccountAccessService;
 import com.aptisprep.service.admin.*;
 import com.aptisprep.service.exam.ExamAttemptService;
 import com.aptisprep.service.exam.StudentExamCatalogService;
 import com.aptisprep.service.exam.StudentExamCatalogService.Catalog;
-import com.aptisprep.service.learning.LessonService;
+import com.aptisprep.service.exam.impl.StudentExamCatalogServiceImpl;
 import com.aptisprep.service.scoring.ScoringGuideService;
 import java.security.Principal;
 import java.util.ArrayList;
@@ -61,8 +63,8 @@ public class StudentExamCatalogController {
             throw new BusinessRuleException("Phân trang không hợp lệ");
         if (q.length() > 255 || skill.length() > 80 || level.length() > 40 || state.length() > 40)
             throw new BusinessRuleException("Bộ lọc không hợp lệ");
-        if (!StudentExamCatalogService.EXAM_TYPES.contains(examType)
-                || !StudentExamCatalogService.SORT_OPTIONS.contains(sort))
+        if (!ExamType.codes().contains(examType)
+                || !StudentExamCatalogServiceImpl.SORT_OPTIONS.contains(sort))
             throw new BusinessRuleException("Phân loại hoặc sắp xếp đề thi không hợp lệ");
         Catalog content =
                 catalog.browse(q, skill, level, state, examType, sort, PageRequest.of(page, size));
@@ -89,7 +91,7 @@ public class StudentExamCatalogController {
         model.addAttribute("selectedLevel", level);
         model.addAttribute("selectedState", state);
         model.addAttribute("skillCodes", Skill.codes());
-        model.addAttribute("learningLevels", LessonService.LEVELS);
+        model.addAttribute("learningLevels", CefrLevel.curriculumLevels());
         return "student/exams/exam-list";
     }
 

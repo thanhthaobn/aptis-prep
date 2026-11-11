@@ -1,7 +1,7 @@
 package com.aptisprep.controller.admin;
 
+import com.aptisprep.dto.AdminHistoryFilterDTO;
 import com.aptisprep.exception.BusinessRuleException;
-import com.aptisprep.presentation.form.AdminHistoryFilterDTO;
 import com.aptisprep.service.exam.ExamAttemptService;
 import java.security.Principal;
 import java.time.*;

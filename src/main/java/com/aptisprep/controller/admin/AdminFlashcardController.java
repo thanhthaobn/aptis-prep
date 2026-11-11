@@ -1,10 +1,11 @@
 package com.aptisprep.controller.admin;
 
+import com.aptisprep.dto.FlashcardSetFormDTO;
+import com.aptisprep.dto.FlashcardViewsDTO.SetView;
+import com.aptisprep.enums.CefrLevel;
+import com.aptisprep.enums.Skill;
 import com.aptisprep.exception.BusinessRuleException;
-import com.aptisprep.presentation.FlashcardViewsDTO.SetView;
-import com.aptisprep.presentation.form.FlashcardSetFormDTO;
 import com.aptisprep.service.learning.FlashcardSetService;
-import com.aptisprep.service.learning.LessonService;
 import jakarta.validation.Valid;
 import java.util.List;
 import org.springframework.stereotype.Controller;
@@ -32,8 +33,9 @@ public class AdminFlashcardController {
                                 s ->
                                         s.lessonSkill() == null
                                                 || s.level() == null
-                                                || !LessonService.SKILLS.contains(s.lessonSkill())
-                                                || !LessonService.LEVELS.contains(s.level()))
+                                                || !Skill.labels().contains(s.lessonSkill())
+                                                || !CefrLevel.curriculumLevels()
+                                                        .contains(s.level()))
                         .toList());
         return "admin/flashcards/list";
     }
@@ -45,7 +47,7 @@ public class AdminFlashcardController {
         flashcardSetService.prepareForLesson(form, lessonId);
         model.addAttribute("form", form);
         model.addAttribute("setId", null);
-        model.addAttribute("levels", LessonService.LEVELS);
+        model.addAttribute("levels", CefrLevel.curriculumLevels());
         model.addAttribute("lessons", flashcardSetService.availableLessons());
         return "admin/flashcards/form";
     }
@@ -55,7 +57,7 @@ public class AdminFlashcardController {
         FlashcardSetFormDTO form = flashcardSetService.form(id);
         model.addAttribute("form", form);
         model.addAttribute("setId", id);
-        model.addAttribute("levels", LessonService.LEVELS);
+        model.addAttribute("levels", CefrLevel.curriculumLevels());
         model.addAttribute("lessons", flashcardSetService.availableLessons());
         return "admin/flashcards/form";
     }
@@ -75,7 +77,7 @@ public class AdminFlashcardController {
         }
         model.addAttribute("form", form);
         model.addAttribute("setId", null);
-        model.addAttribute("levels", LessonService.LEVELS);
+        model.addAttribute("levels", CefrLevel.curriculumLevels());
         model.addAttribute("lessons", flashcardSetService.availableLessons());
         return "admin/flashcards/form";
     }
@@ -96,7 +98,7 @@ public class AdminFlashcardController {
         }
         model.addAttribute("form", form);
         model.addAttribute("setId", id);
-        model.addAttribute("levels", LessonService.LEVELS);
+        model.addAttribute("levels", CefrLevel.curriculumLevels());
         model.addAttribute("lessons", flashcardSetService.availableLessons());
         return "admin/flashcards/form";
     }

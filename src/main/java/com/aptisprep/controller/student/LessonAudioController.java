@@ -1,8 +1,8 @@
 package com.aptisprep.controller.student;
 
+import com.aptisprep.dto.LessonMediaResourceDTO;
+import com.aptisprep.dto.LessonTeachingViewsDTO.HistoricalMediaDTO;
 import com.aptisprep.exception.ResourceNotFoundException;
-import com.aptisprep.presentation.LessonMediaResourceDTO;
-import com.aptisprep.presentation.LessonTeachingViewsDTO.HistoricalMediaDTO;
 import com.aptisprep.service.learning.LessonTeachingService;
 import com.aptisprep.service.storage.StorageService;
 import java.security.Principal;

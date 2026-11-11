@@ -1,11 +1,12 @@
 package com.aptisprep.controller.student;
 
+import com.aptisprep.dto.FlashcardSetFormDTO;
+import com.aptisprep.dto.FlashcardViewsDTO;
+import com.aptisprep.dto.FlashcardViewsDTO.SetView;
+import com.aptisprep.enums.CefrLevel;
+import com.aptisprep.enums.Skill;
 import com.aptisprep.exception.BusinessRuleException;
-import com.aptisprep.presentation.FlashcardViewsDTO;
-import com.aptisprep.presentation.FlashcardViewsDTO.SetView;
-import com.aptisprep.presentation.form.FlashcardSetFormDTO;
 import com.aptisprep.service.learning.FlashcardSetService;
-import com.aptisprep.service.learning.LessonService;
 import jakarta.validation.Valid;
 import java.security.Principal;
 import java.text.Normalizer;
@@ -41,8 +42,8 @@ public class StudentFlashcardController {
             throw new BusinessRuleException("Bộ lọc bộ thẻ không hợp lệ");
         List<SetView> all = service.listForStudent(p.getName());
         if (q.length() > 255
-                || (!skill.isBlank() && !LessonService.SKILLS.contains(skill))
-                || (!level.isBlank() && !LessonService.LEVELS.contains(level))
+                || (!skill.isBlank() && !Skill.labels().contains(skill))
+                || (!level.isBlank() && !CefrLevel.curriculumLevels().contains(level))
                 || !List.of("learning", "newest").contains(sort))
             throw new BusinessRuleException("Bộ lọc bộ thẻ không hợp lệ");
         String query = fold(q);
@@ -52,10 +53,10 @@ public class StudentFlashcardController {
                         : Comparator.comparingInt(
                                         (FlashcardViewsDTO.SetView set) ->
                                                 set.personal()
-                                                        ? LessonService.SKILLS.size()
-                                                        : LessonService.SKILLS.indexOf(
-                                                                set.lessonSkill()))
-                                .thenComparingInt(set -> LessonService.LEVELS.indexOf(set.level()))
+                                                        ? Skill.labels().size()
+                                                        : Skill.labels().indexOf(set.lessonSkill()))
+                                .thenComparingInt(
+                                        set -> CefrLevel.curriculumLevels().indexOf(set.level()))
                                 .thenComparing(set -> fold(set.title()))
                                 .thenComparing(FlashcardViewsDTO.SetView::id);
         List<SetView> visible =
@@ -93,8 +94,8 @@ public class StudentFlashcardController {
                 "mineResultCount",
                 visible.stream().filter(FlashcardViewsDTO.SetView::personal).count());
         m.addAttribute("lessonBranches", service.groupBySkillAndLevel(visible));
-        m.addAttribute("skills", LessonService.SKILLS);
-        m.addAttribute("levels", LessonService.LEVELS);
+        m.addAttribute("skills", Skill.labels());
+        m.addAttribute("levels", CefrLevel.curriculumLevels());
         m.addAttribute("totalCards", all.stream().mapToInt(FlashcardViewsDTO.SetView::count).sum());
         m.addAttribute(
                 "visibleCards", visible.stream().mapToInt(FlashcardViewsDTO.SetView::count).sum());
@@ -114,7 +115,7 @@ public class StudentFlashcardController {
         f.getRows().add(new FlashcardSetFormDTO.Row());
         m.addAttribute("form", f);
         m.addAttribute("setId", null);
-        m.addAttribute("levels", LessonService.LEVELS);
+        m.addAttribute("levels", CefrLevel.curriculumLevels());
         return "student/flashcards/form";
     }
 
@@ -123,7 +124,7 @@ public class StudentFlashcardController {
         FlashcardSetFormDTO f = service.personalForm(id, p.getName());
         m.addAttribute("form", f);
         m.addAttribute("setId", id);
-        m.addAttribute("levels", LessonService.LEVELS);
+        m.addAttribute("levels", CefrLevel.curriculumLevels());
         return "student/flashcards/form";
     }
 
@@ -142,7 +143,7 @@ public class StudentFlashcardController {
             }
         m.addAttribute("form", f);
         m.addAttribute("setId", null);
-        m.addAttribute("levels", LessonService.LEVELS);
+        m.addAttribute("levels", CefrLevel.curriculumLevels());
         return "student/flashcards/form";
     }
 
@@ -162,7 +163,7 @@ public class StudentFlashcardController {
             }
         m.addAttribute("form", f);
         m.addAttribute("setId", id);
-        m.addAttribute("levels", LessonService.LEVELS);
+        m.addAttribute("levels", CefrLevel.curriculumLevels());
         return "student/flashcards/form";
     }
 

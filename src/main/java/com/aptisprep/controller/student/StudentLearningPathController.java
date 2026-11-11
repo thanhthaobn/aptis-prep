@@ -1,5 +1,7 @@
 package com.aptisprep.controller.student;
 
+import com.aptisprep.enums.CefrLevel;
+import com.aptisprep.enums.Skill;
 import com.aptisprep.exception.BusinessRuleException;
 import com.aptisprep.exception.ResourceNotFoundException;
 import com.aptisprep.service.learning.FlashcardSetService;
@@ -42,14 +44,14 @@ public class StudentLearningPathController {
         boolean hasAssessment = stages.stream().anyMatch(stage -> stage.currentLevel() != null);
         model.addAttribute("stages", stages);
         model.addAttribute("hasAssessment", hasAssessment);
-        model.addAttribute("learningLevels", LessonService.LEVELS);
+        model.addAttribute("learningLevels", CefrLevel.curriculumLevels());
         return "student/learning/path";
     }
 
     @GetMapping("/student/learning-path/{skill}")
     public String skill(@PathVariable String skill, Principal principal, Model model) {
         String selected =
-                LessonService.SKILLS.stream()
+                Skill.labels().stream()
                         .filter(value -> value.equalsIgnoreCase(skill))
                         .findFirst()
                         .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy kỹ năng"));
@@ -61,7 +63,7 @@ public class StudentLearningPathController {
                         .filter(path -> path.skill().equals(selected))
                         .toList());
         model.addAttribute("stages", service.stages(principal.getName(), selected));
-        model.addAttribute("learningLevels", LessonService.LEVELS);
+        model.addAttribute("learningLevels", CefrLevel.curriculumLevels());
         return "student/learning/skill";
     }
 

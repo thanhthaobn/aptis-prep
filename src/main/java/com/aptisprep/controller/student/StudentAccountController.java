@@ -1,18 +1,18 @@
 package com.aptisprep.controller.student;
 
 import com.aptisprep.controller.ListPagination;
+import com.aptisprep.dto.AccountSnapshotDTO;
+import com.aptisprep.dto.AttemptHandleDTO;
+import com.aptisprep.dto.GoalFormDTO;
+import com.aptisprep.dto.ProfileFormDTO;
+import com.aptisprep.enums.CefrLevel;
 import com.aptisprep.enums.Skill;
 import com.aptisprep.exception.BusinessRuleException;
-import com.aptisprep.presentation.AccountSnapshotDTO;
-import com.aptisprep.presentation.AttemptHandleDTO;
-import com.aptisprep.presentation.form.GoalFormDTO;
-import com.aptisprep.presentation.form.ProfileFormDTO;
 import com.aptisprep.service.account.AccountAccessService;
 import com.aptisprep.service.account.AccountProfileService;
 import com.aptisprep.service.account.LearningActivityService;
 import com.aptisprep.service.exam.ExamAttemptService;
 import com.aptisprep.service.exam.PlacementService;
-import com.aptisprep.service.learning.LessonService;
 import com.aptisprep.service.scoring.ScoringGuideService;
 import jakarta.validation.Valid;
 import java.security.Principal;
@@ -84,7 +84,7 @@ public class StudentAccountController {
 
     @GetMapping("/student/goals")
     public String goals(Principal principal, Model model) {
-        model.addAttribute("learningLevels", LessonService.LEVELS);
+        model.addAttribute("learningLevels", CefrLevel.curriculumLevels());
         if (!model.containsAttribute("goalForm"))
             model.addAttribute(
                     "goalForm", accounts.formFrom(accounts.snapshot(principal.getName())));
@@ -99,14 +99,14 @@ public class StudentAccountController {
             Model model,
             RedirectAttributes redirectAttributes) {
         if (bindingResult.hasErrors()) {
-            model.addAttribute("learningLevels", LessonService.LEVELS);
+            model.addAttribute("learningLevels", CefrLevel.curriculumLevels());
             return "student/account/goals";
         }
         try {
             accounts.saveGoal(principal.getName(), goalForm);
         } catch (BusinessRuleException exception) {
             bindingResult.reject("goal.invalid", exception.getMessage());
-            model.addAttribute("learningLevels", LessonService.LEVELS);
+            model.addAttribute("learningLevels", CefrLevel.curriculumLevels());
             return "student/account/goals";
         }
         redirectAttributes.addFlashAttribute(
