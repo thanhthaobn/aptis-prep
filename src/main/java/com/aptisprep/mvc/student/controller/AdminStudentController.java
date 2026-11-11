@@ -28,6 +28,7 @@ public class AdminStudentController {
         model.addAttribute("pageData", students.list(q, filter, page, size));
         model.addAttribute("q", q == null ? "" : q.trim());
         model.addAttribute("selectedStatus", status == null ? "" : status);
+        model.addAttribute("pendingUnlockCount", students.pendingUnlockRequests());
         return "admin/student/list";
     }
 
@@ -85,6 +86,60 @@ public class AdminStudentController {
             redirectAttributes.addFlashAttribute("errorMessage", exception.getMessage());
         }
         return "redirect:/admin/students";
+    }
+
+    @PostMapping("/admin/students/{id}/restore")
+    public String restore(
+            @PathVariable int id, Principal principal, RedirectAttributes redirectAttributes) {
+        try {
+            students.restore(principal.getName(), id);
+            redirectAttributes.addFlashAttribute(
+                    "successMessage", "Đã khôi phục tài khoản học viên.");
+        } catch (BusinessRuleException exception) {
+            redirectAttributes.addFlashAttribute("errorMessage", exception.getMessage());
+        }
+        return "redirect:/admin/students/" + id;
+    }
+
+    @GetMapping({"/admin/unlock-requests", "/admin/students/unlock-requests"})
+    public String unlockRequests(
+            @RequestParam(name = "status", defaultValue = "PENDING") String status, Model model) {
+        model.addAttribute("requests", students.listUnlockRequests(status));
+        model.addAttribute("selectedStatus", status);
+        model.addAttribute("pendingCount", students.pendingUnlockRequests());
+        return "admin/unlock-requests";
+    }
+
+    @PostMapping("/admin/unlock-requests/{id}/approve")
+    public String approveUnlockRequest(
+            @PathVariable int id,
+            @RequestParam(name = "adminNote", defaultValue = "") String adminNote,
+            Principal principal,
+            RedirectAttributes redirectAttributes) {
+        try {
+            students.approveUnlockRequest(principal.getName(), id, adminNote);
+            redirectAttributes.addFlashAttribute(
+                    "successMessage", "Đã duyệt yêu cầu mở khóa tài khoản.");
+        } catch (BusinessRuleException exception) {
+            redirectAttributes.addFlashAttribute("errorMessage", exception.getMessage());
+        }
+        return "redirect:/admin/unlock-requests";
+    }
+
+    @PostMapping("/admin/unlock-requests/{id}/reject")
+    public String rejectUnlockRequest(
+            @PathVariable int id,
+            @RequestParam(name = "adminNote", defaultValue = "") String adminNote,
+            Principal principal,
+            RedirectAttributes redirectAttributes) {
+        try {
+            students.rejectUnlockRequest(principal.getName(), id, adminNote);
+            redirectAttributes.addFlashAttribute(
+                    "successMessage", "Đã từ chối yêu cầu mở khóa tài khoản.");
+        } catch (BusinessRuleException exception) {
+            redirectAttributes.addFlashAttribute("errorMessage", exception.getMessage());
+        }
+        return "redirect:/admin/unlock-requests";
     }
 
     private UserStatus parseStatus(String value) {

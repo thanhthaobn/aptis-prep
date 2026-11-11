@@ -95,8 +95,17 @@ public class UserServiceImpl implements UserService {
         if (user.getStatus() == UserStatus.LOCKED) {
             String reason = user.getLockReason();
             return AuthResultDTO.locked(
+                    user.getEmail(),
                     reason == null || reason.isBlank()
                             ? "Tài khoản đã bị khóa bởi quản trị viên."
+                            : reason);
+        }
+        if (user.getStatus() == UserStatus.INACTIVE) {
+            String reason = user.getRemovalReason();
+            return AuthResultDTO.inactive(
+                    user.getEmail(),
+                    reason == null || reason.isBlank()
+                            ? "Tài khoản của bạn đã bị ngừng hoạt động."
                             : reason);
         }
         if (user.getStatus() != UserStatus.ACTIVE) {

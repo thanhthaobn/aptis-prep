@@ -42,6 +42,9 @@ public class User {
     @Column(name = "lock_reason", length = 1000)
     private String lockReason;
 
+    @Column(name = "removal_reason", length = 1000)
+    private String removalReason;
+
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 
@@ -114,6 +117,14 @@ public class User {
 
     public void setLockReason(String lockReason) {
         this.lockReason = lockReason;
+    }
+
+    public String getRemovalReason() {
+        return removalReason;
+    }
+
+    public void setRemovalReason(String removalReason) {
+        this.removalReason = removalReason;
     }
 
     public LocalDateTime getCreatedAt() {

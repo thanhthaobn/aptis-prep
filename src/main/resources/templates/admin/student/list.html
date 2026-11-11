@@ -138,6 +138,17 @@
             </a>
             <a
               class="sidebar-link"
+              th:classappend="${activePage == 'unlockRequests'} ? 'active'"
+              th:href="@{/admin/unlock-requests}"
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                <path d="M7 11V7a5 5 0 0 1 9.9-1" />
+              </svg>
+              Yêu cầu mở khóa
+            </a>
+            <a
+              class="sidebar-link"
               th:classappend="${activePage == 'lessons'} ? 'active'"
               th:href="@{/admin/lessons}"
             >
@@ -225,8 +236,14 @@
         </div>
       </aside>
       <main id="main-content" tabindex="-1" class="app-main student-management">
-        <header class="page-header">
+        <header class="page-header d-flex justify-content-between align-items-center">
           <div><h1>Học viên</h1></div>
+          <div>
+            <a class="button button-secondary" th:href="@{/admin/unlock-requests}">
+              Yêu cầu mở khóa
+              <span th:if="${pendingUnlockCount != null and pendingUnlockCount > 0}" class="badge bg-warning text-dark" th:text="${pendingUnlockCount}">0</span>
+            </a>
+          </div>
         </header>
         <form
           class="toolbar student-toolbar"

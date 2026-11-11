@@ -24,9 +24,20 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 public class AuthController {
 
     private final UserService userService;
+    private final com.aptisprep.mvc.auth.service.AccountUnlockRequestService
+            accountUnlockRequestService;
 
     public AuthController(UserService userService) {
+        this(userService, null);
+    }
+
+    @org.springframework.beans.factory.annotation.Autowired
+    public AuthController(
+            UserService userService,
+            com.aptisprep.mvc.auth.service.AccountUnlockRequestService
+                    accountUnlockRequestService) {
         this.userService = userService;
+        this.accountUnlockRequestService = accountUnlockRequestService;
     }
 
     @GetMapping("/login")
@@ -46,10 +57,24 @@ public class AuthController {
         AuthResultDTO result = userService.login(request, email, password);
         if (result.locked()) {
             redirectAttributes.addFlashAttribute(
+                    "email", result.email() != null ? result.email() : email);
+            redirectAttributes.addFlashAttribute("status", "LOCKED");
+            redirectAttributes.addFlashAttribute(
                     "lockReason",
                     result.lockReason() == null || result.lockReason().isBlank()
                             ? "Tài khoản đã bị khóa bởi quản trị viên."
                             : result.lockReason());
+            return "redirect:/account-locked";
+        }
+        if (result.inactive()) {
+            redirectAttributes.addFlashAttribute(
+                    "email", result.email() != null ? result.email() : email);
+            redirectAttributes.addFlashAttribute("status", "INACTIVE");
+            redirectAttributes.addFlashAttribute(
+                    "removalReason",
+                    result.removalReason() == null || result.removalReason().isBlank()
+                            ? "Tài khoản của bạn đã bị ngừng hoạt động."
+                            : result.removalReason());
             return "redirect:/account-locked";
         }
         if (!result.success()) {
@@ -60,8 +85,38 @@ public class AuthController {
     }
 
     @GetMapping("/account-locked")
-    public String accountLocked() {
+    public String accountLocked(
+            @RequestParam(name = "email", required = false) String paramEmail, Model model) {
+        String email = (String) model.getAttribute("email");
+        if ((email == null || email.isBlank()) && paramEmail != null) {
+            email = paramEmail.trim();
+            model.addAttribute("email", email);
+        }
+        if (email != null && !email.isBlank()) {
+            accountUnlockRequestService
+                    .findLatestByEmail(email)
+                    .ifPresent(req -> model.addAttribute("latestRequest", req));
+        }
         return "auth/account-locked";
+    }
+
+    @PostMapping({"/account-unlock-request", "/account-locked"})
+    public String submitUnlockRequest(
+            @RequestParam(name = "email", defaultValue = "") String email,
+            @RequestParam(name = "password", defaultValue = "") String password,
+            @RequestParam(name = "message", defaultValue = "") String message,
+            RedirectAttributes redirectAttributes) {
+        String normalizedEmail = email == null ? "" : email.trim();
+        try {
+            accountUnlockRequestService.submit(normalizedEmail, password, message);
+            redirectAttributes.addFlashAttribute(
+                    "successMessage",
+                    "Yêu cầu mở khóa đã được gửi thành công. Vui lòng chờ quản trị viên xem xét.");
+        } catch (BusinessRuleException exception) {
+            redirectAttributes.addFlashAttribute("errorMessage", exception.getMessage());
+        }
+        redirectAttributes.addFlashAttribute("email", normalizedEmail);
+        return "redirect:/account-locked";
     }
 
     @PostMapping("/logout")

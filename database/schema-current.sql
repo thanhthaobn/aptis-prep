@@ -87,6 +87,7 @@ CREATE TABLE [dbo].[users](
 	[role] [varchar](30) NOT NULL,
 	[status] [varchar](30) NOT NULL,
 	[lock_reason] [nvarchar](1000) NULL,
+	[removal_reason] [nvarchar](1000) NULL,
 	[created_at] [datetime2](7) NOT NULL,
 	[updated_at] [datetime2](7) NOT NULL,
 PRIMARY KEY CLUSTERED
@@ -1036,6 +1037,29 @@ CREATE NONCLUSTERED INDEX [ix_user_answers_attempt] ON [dbo].[user_answers]
 (
 	[exam_attempt_id] ASC
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+SET ANSI_NULLS ON
+SET QUOTED_IDENTIFIER ON
+CREATE TABLE [dbo].[account_unlock_requests](
+	[id] [int] IDENTITY(1,1) NOT NULL,
+	[user_id] [int] NOT NULL,
+	[message] [nvarchar](1000) NOT NULL,
+	[status] [varchar](30) NOT NULL,
+	[admin_note] [nvarchar](1000) NULL,
+	[handled_by] [int] NULL,
+	[created_at] [datetime2](7) NOT NULL,
+	[handled_at] [datetime2](7) NULL,
+PRIMARY KEY CLUSTERED
+(
+	[id] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+) ON [PRIMARY]
+CREATE UNIQUE NONCLUSTERED INDEX [uq_account_unlock_requests_pending_user] ON [dbo].[account_unlock_requests]
+(
+	[user_id] ASC
+)
+WHERE ([status]='PENDING')
+WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, IGNORE_DUP_KEY = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+
 ALTER TABLE [dbo].[attempt_outbox] ADD  DEFAULT ((0)) FOR [attempts]
 ALTER TABLE [dbo].[attempt_outbox] ADD  DEFAULT (sysdatetime()) FOR [next_attempt_at]
 ALTER TABLE [dbo].[attempt_outbox] ADD  DEFAULT (sysdatetime()) FOR [created_at]
@@ -1337,4 +1361,12 @@ ALTER TABLE [dbo].[user_answer_details]  WITH CHECK ADD  CONSTRAINT [ck_answer_d
 ALTER TABLE [dbo].[user_answer_details] CHECK CONSTRAINT [ck_answer_details_score]
 ALTER TABLE [dbo].[learning_path_items]  WITH CHECK ADD  CONSTRAINT [ck_path_items_order] CHECK  (([position]>(0)))
 ALTER TABLE [dbo].[learning_path_items] CHECK CONSTRAINT [ck_path_items_order]
+ALTER TABLE [dbo].[account_unlock_requests]  WITH CHECK ADD  CONSTRAINT [fk_account_unlock_requests_user] FOREIGN KEY([user_id])
+REFERENCES [dbo].[users] ([id])
+ALTER TABLE [dbo].[account_unlock_requests] CHECK CONSTRAINT [fk_account_unlock_requests_user]
+ALTER TABLE [dbo].[account_unlock_requests]  WITH CHECK ADD  CONSTRAINT [fk_account_unlock_requests_handled_by] FOREIGN KEY([handled_by])
+REFERENCES [dbo].[users] ([id])
+ALTER TABLE [dbo].[account_unlock_requests] CHECK CONSTRAINT [fk_account_unlock_requests_handled_by]
+ALTER TABLE [dbo].[account_unlock_requests]  WITH CHECK ADD  CONSTRAINT [ck_account_unlock_requests_status] CHECK  (([status]='PENDING' OR [status]='APPROVED' OR [status]='REJECTED'))
+ALTER TABLE [dbo].[account_unlock_requests] CHECK CONSTRAINT [ck_account_unlock_requests_status]
 COMMIT TRANSACTION;

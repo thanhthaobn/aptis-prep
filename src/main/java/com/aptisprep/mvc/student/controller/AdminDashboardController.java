@@ -23,6 +23,7 @@ public class AdminDashboardController {
         model.addAttribute("lessonCount", page.lessonCount());
         model.addAttribute("questionCount", page.questionCount());
         model.addAttribute("publishedExamCount", page.publishedExamCount());
+        model.addAttribute("pendingUnlockRequestsCount", page.pendingUnlockRequestsCount());
         model.addAttribute("recentContent", page.recentContent());
         model.addAttribute("recentAttempts", page.recentAttempts());
         return "admin/dashboard";
