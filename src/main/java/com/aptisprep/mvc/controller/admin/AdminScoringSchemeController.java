@@ -43,19 +43,16 @@ public class AdminScoringSchemeController {
     public String showScoringSchemes(
             @RequestParam(defaultValue = "0") int schemePage,
             @RequestParam(name = "examType", defaultValue = "") String examType,
-            @RequestParam(required = false) Integer certificateId,
             Model model) {
         String normalizedExamType = examType == null ? "" : examType;
         if (!normalizedExamType.isBlank()
                 && !"UNASSIGNED".equals(normalizedExamType)
                 && !EXAM_TYPES.contains(normalizedExamType))
             throw new BusinessRuleException("Loại đề không hợp lệ");
-        var catalog = scoring.filteredSchemes(certificateId, normalizedExamType);
+        var catalog = scoring.filteredSchemes(null, normalizedExamType);
         model.addAttribute("schemePage", ListPagination.slice(catalog.schemes(), schemePage));
         model.addAttribute("schemeExamTypes", catalog.examTypesByScheme());
         model.addAttribute("examType", normalizedExamType);
-        model.addAttribute("certificateId", certificateId);
-        model.addAttribute("certificates", scoring.certificateViews());
         model.addAttribute("examTypes", EXAM_TYPES);
         model.addAttribute("examTypeLabels", EXAM_TYPE_LABELS);
         model.addAttribute("skillLabels", SKILL_LABELS);

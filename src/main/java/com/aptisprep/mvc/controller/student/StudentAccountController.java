@@ -177,6 +177,7 @@ public class StudentAccountController {
         }
         var scoreGuideView = scoringGuideService.forResultView(result);
         model.addAttribute("scoreGuides", scoreGuideView.guides());
+        model.addAttribute("overallScaleMax", scoreGuideView.combinedScaleMax());
         model.addAttribute("feedbackWithoutGuide", scoreGuideView.feedbackWithoutGuide());
         return "student/attempt/result";
     }

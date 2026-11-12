@@ -355,6 +355,10 @@
               value=""
             />
             <div id="scheme-combined-ranges">
+              <div class="alert alert-info" th:if="${schemeForm.examType == 'CHECKPOINT'}">
+                <strong>Ngưỡng đạt Checkpoint: 80%</strong>
+                <span>Học viên đạt từ 40/50 điểm quy đổi trở lên. Checkpoint đã gắn với một cấp độ mục tiêu nên không chia theo các khoảng CEFR.</span>
+              </div>
               <fieldset
                 class="catalog-form-section"
                 th:each="skill : ${skillCodes}"
@@ -371,7 +375,7 @@
                   <input type="hidden" th:name="|skillScales[${skill}].rawMax|" value="50" />
                   <input type="hidden" th:name="|skillScales[${skill}].scaleMin|" value="0" />
                 </div>
-                <div class="table-wrap">
+                <div class="table-wrap" th:unless="${schemeForm.examType == 'CHECKPOINT'}">
                   <table class="data-table">
                     <thead>
                       <tr>

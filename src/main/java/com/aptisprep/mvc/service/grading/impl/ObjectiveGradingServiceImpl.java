@@ -215,7 +215,8 @@ public class ObjectiveGradingServiceImpl implements ObjectiveGradingService {
                     CheckpointScorePolicy.confirmedLevel(
                             exam.getExamType(),
                             exam.getTargetLevel(),
-                            scoring.estimatedLevel(schemeId, skill, result.getScaleScore())));
+                            scoring.estimatedLevel(schemeId, skill, result.getScaleScore()),
+                            result.getScaleScore()));
         } catch (BusinessRuleException exception) {
             if (!"GRAMMAR_VOCABULARY".equals(skill)) throw exception;
             // Scheme cũ có thể có rule raw-scale cho Grammar nhưng chưa có CEFR band.
@@ -225,7 +226,8 @@ public class ObjectiveGradingServiceImpl implements ObjectiveGradingService {
                     CheckpointScorePolicy.confirmedLevel(
                             exam.getExamType(),
                             exam.getTargetLevel(),
-                            grammarLevel(result.getScaleScore())));
+                            grammarLevel(result.getScaleScore()),
+                            result.getScaleScore()));
         }
     }
 

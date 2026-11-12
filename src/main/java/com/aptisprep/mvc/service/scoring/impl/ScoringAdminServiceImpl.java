@@ -205,9 +205,20 @@ public class ScoringAdminServiceImpl implements ScoringAdminService {
         List<String> skills =
                 scheme.getScopeSkill() == null ? Skill.codes() : List.of(scheme.getScopeSkill());
         if (scheme.getStatus() == RecordStatus.INACTIVE) return savedId;
+        boolean fixedCheckpointThreshold =
+                "CHECKPOINT".equals(scheme.getExamType())
+                        && skills.size() == 1
+                        && blankToNull(form.getTargetLevel()) == null
+                        && form.getPassingScore() == null
+                        && !hasBandInput(form, skills.getFirst());
         for (String skill : skills) {
-            ScoringScaleRuleDTO scale = form.getSkillScales().get(skill);
+            ScoringScaleRuleDTO scale =
+                    form.getSkillScales() == null ? null : form.getSkillScales().get(skill);
             if (scale == null) scale = new ScoringScaleRuleDTO();
+            if (fixedCheckpointThreshold) {
+                configureCheckpointThreshold(email, savedId, skill, scale);
+                continue;
+            }
             List<String> requiredLevels = requiredScoringLevels(scheme, skill);
             for (String level : requiredLevels) {
                 ScoreBandDTO band = form.getRanges().get(skill + "_" + level);
@@ -234,6 +245,31 @@ public class ScoringAdminServiceImpl implements ScoringAdminService {
         }
         if (scheme.getStatus() == RecordStatus.ACTIVE) requireReady(scheme);
         return savedId;
+    }
+
+    private boolean hasBandInput(ScoringSchemeDTO form, String skill) {
+        if (form.getRanges() == null) return false;
+        return form.getRanges().entrySet().stream()
+                .filter(entry -> entry.getKey().startsWith(skill + "_"))
+                .map(Map.Entry::getValue)
+                .anyMatch(
+                        band ->
+                                band != null
+                                        && (band.getMinScore() != null
+                                                || band.getMaxScore() != null));
+    }
+
+    private void configureCheckpointThreshold(
+            String email, Integer schemeId, String skill, ScoringScaleRuleDTO scale) {
+        scale.setRawMin(BigDecimal.ZERO);
+        scale.setRawMax(BigDecimal.valueOf(50));
+        scale.setScaleMin(BigDecimal.ZERO);
+        scale.setScaleMax(BigDecimal.valueOf(50));
+        var previousBands =
+                scoreBandRepository.findBySchemeIdAndSkillOrderByMinScoreAsc(schemeId, skill);
+        scoreBandRepository.deleteAll(previousBands);
+        scoreBandRepository.flush();
+        saveScaleRule(email, schemeId, skill, scale);
     }
 
     private List<String> requiredScoringLevels(ScoringScheme scheme, String skill) {
@@ -295,12 +331,14 @@ public class ScoringAdminServiceImpl implements ScoringAdminService {
                     && (rule.getRawMin().signum() != 0
                             || rule.getRawMax().compareTo(BigDecimal.valueOf(50)) != 0))
                 throw new BusinessRuleException("Writing và Speaking cần thang điểm thô 0–50");
-            if (scheme.getScopeSkill() == null
-                    && scheme.getExamType() != null
-                    && (rule.getScaleMin().signum() != 0
-                            || rule.getScaleMax().compareTo(BigDecimal.valueOf(50)) != 0))
-                throw new BusinessRuleException(
-                        "Đề tổng hợp cần điểm quy đổi 0–50 cho từng kỹ năng");
+            if ("CHECKPOINT".equals(scheme.getExamType())) {
+                if (rule.getRawMin().signum() != 0
+                        || rule.getRawMax().compareTo(BigDecimal.valueOf(50)) != 0
+                        || rule.getScaleMin().signum() != 0
+                        || rule.getScaleMax().compareTo(BigDecimal.valueOf(50)) != 0)
+                    throw new BusinessRuleException("Checkpoint cần thang điểm cố định 0–50");
+                continue;
+            }
             var bands =
                     scoreBandRepository.findBySchemeIdAndSkillOrderByMinScoreAsc(
                             scheme.getId(), skill);
@@ -578,6 +616,12 @@ public class ScoringAdminServiceImpl implements ScoringAdminService {
                 || scaleMax.compareTo(new BigDecimal("999.99")) > 0)
             throw new BusinessRuleException(
                     "Khoảng raw/scale không hợp lệ; scale phải nằm trong 0–999.99");
+        if ("CHECKPOINT".equals(scheme.getExamType())
+                && (rawMin.signum() != 0
+                        || rawMax.compareTo(BigDecimal.valueOf(50)) != 0
+                        || scaleMin.signum() != 0
+                        || scaleMax.compareTo(BigDecimal.valueOf(50)) != 0))
+            throw new BusinessRuleException("Checkpoint cần thang điểm cố định 0–50");
         if (scoreBandRepository
                 .findBySchemeIdAndSkillOrderByMinScoreAsc(schemeId, normalized)
                 .stream()

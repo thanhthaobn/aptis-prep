@@ -241,7 +241,7 @@
               <div th:if="${res.overallScaleScore != null}">
                 <dt th:text="${res.hasFullMockTotal() ? 'Tổng điểm bốn kỹ năng' : 'Điểm'}"></dt>
                 <dd
-                  th:text="${res.hasFullMockTotal() ? res.overallScaleScore + '/200' : res.overallScaleScore}"
+                  th:text="${res.hasFullMockTotal() ? res.overallScaleScore + '/' + overallScaleMax.stripTrailingZeros().toPlainString() : res.overallScaleScore}"
                 ></dd>
               </div>
             </dl>

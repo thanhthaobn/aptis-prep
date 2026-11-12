@@ -135,10 +135,7 @@ public class AttemptFinalizationServiceImpl implements AttemptFinalizationServic
                         .toList();
         BigDecimal total = null;
         String overall = null;
-        if (schemeId != null
-                && ("FULL_MOCK".equals(exam.getExamType())
-                        || ("PLACEMENT".equals(exam.getExamType())
-                                && "FULL_MOCK".equals(exam.getSkill())))) {
+        if (schemeId != null && isCombinedAptisAttempt(exam, results)) {
             var summary = scoring.fullMockScore(schemeId, scores);
             total = summary.getFinalScaleScore();
             overall = summary.getEstimatedOverallCefr();
@@ -159,6 +156,25 @@ public class AttemptFinalizationServiceImpl implements AttemptFinalizationServic
         attempt.setStatus("EXPIRED".equals(attempt.getStatus()) ? "EXPIRED" : "COMPLETED");
         examAttemptRepository.save(attempt);
         return true;
+    }
+
+    /**
+     * Full Mock và Placement tổng hợp cộng điểm quy đổi của bốn kỹ năng Reading, Listening,
+     * Writing và Speaking. Grammar & Vocabulary vẫn được chấm riêng để hỗ trợ xét CEFR sát
+     * ngưỡng và không được cộng vào tổng.
+     *
+     * <p>Kiểm tra cả tập skill thực tế để các attempt Placement cũ, được lưu trước khi exam.skill
+     * được chuẩn hóa thành FULL_MOCK, vẫn được tổng hợp đúng.
+     */
+    private boolean isCombinedAptisAttempt(MockExam exam, List<ExamSkillResult> results) {
+        if ("FULL_MOCK".equals(exam.getExamType())) return true;
+        if (!"PLACEMENT".equals(exam.getExamType())) return false;
+        if ("FULL_MOCK".equals(exam.getSkill())) return true;
+        Set<String> skills =
+                results.stream()
+                        .map(ExamSkillResult::getSkill)
+                        .collect(java.util.stream.Collectors.toSet());
+        return skills.containsAll(com.aptisprep.mvc.enums.Skill.codes());
     }
 
     public void publishCompleted(ExamAttempt attempt, MockExam exam) {
@@ -395,7 +411,8 @@ public class AttemptFinalizationServiceImpl implements AttemptFinalizationServic
                         exam(attempt).getExamType(),
                         exam(attempt).getTargetLevel(),
                         scoring.estimatedLevel(
-                                schemeId, question.getSkill(), result.getScaleScore())));
+                                schemeId, question.getSkill(), result.getScaleScore()),
+                        result.getScaleScore()));
         if (result.getCefrLevel() == null
                 && scoring.belowConfiguredTarget(
                         schemeId, question.getSkill(), result.getScaleScore())) {
