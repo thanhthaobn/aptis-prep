@@ -590,7 +590,8 @@ public class AttemptFinalizationServiceImpl implements AttemptFinalizationServic
     }
 
     private BigDecimal subjectiveRawMax(Integer attemptId, String skill) {
-        return examAttemptSnapshotRepository
+        BigDecimal snapshotMax =
+                examAttemptSnapshotRepository
                 .findByAttemptId(attemptId)
                 .map(
                         snapshot ->
@@ -609,6 +610,13 @@ public class AttemptFinalizationServiceImpl implements AttemptFinalizationServic
                                                                 : item.getPoints())
                                         .reduce(BigDecimal.ZERO, BigDecimal::add))
                 .orElse(BigDecimal.ZERO);
+        if (snapshotMax.signum() > 0) return snapshotMax;
+        return aiAssessmentJobRepository.findByAttemptIdAndSourceType(attemptId, "EXAM_ANSWER")
+                .stream()
+                .filter(job -> skill.equalsIgnoreCase(job.getSkill()))
+                .map(AiAssessmentJob::getMaxScore)
+                .filter(Objects::nonNull)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 
     private long subjectiveAnswers(Integer attemptId, String skill) {

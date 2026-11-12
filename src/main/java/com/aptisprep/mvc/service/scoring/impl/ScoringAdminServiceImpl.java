@@ -396,12 +396,20 @@ public class ScoringAdminServiceImpl implements ScoringAdminService {
     @Transactional
     public Integer saveScheme(String adminEmail, Integer id, ScoringSchemeDTO form) {
         requireAdmin(adminEmail);
-        Certificate certificate =
-                certificateRepository
-                        .findByCodeIgnoreCase("APTIS_GENERAL")
-                        .orElseThrow(
-                                () -> new ResourceNotFoundException(
-                                        "Chưa cấu hình chứng chỉ Aptis ESOL General"));
+        ScoringScheme current = id == null ? null : requireSchemeForUpdate(id);
+        Certificate certificate;
+        if (current != null) {
+            certificate = current.getCertificate();
+        } else {
+            certificate =
+                    (form.getCertificateId() == null
+                                    ? certificateRepository.findByCodeIgnoreCase("APTIS_GENERAL")
+                                    : certificateRepository.findById(form.getCertificateId()))
+                            .orElseThrow(
+                                    () ->
+                                            new ResourceNotFoundException(
+                                                    "Chưa cấu hình chứng chỉ Aptis ESOL General"));
+        }
         form.setCertificateId(certificate.getId());
         if (status(form.getStatus()) == RecordStatus.ACTIVE
                 && certificate.getStatus() != RecordStatus.ACTIVE)
@@ -413,7 +421,6 @@ public class ScoringAdminServiceImpl implements ScoringAdminService {
             setScheme(value, certificate, form, version);
             return scoringSchemeRepository.save(value).getId();
         }
-        ScoringScheme current = requireSchemeForUpdate(id);
         if (!current.getCertificate().getId().equals(certificate.getId())
                 || !current.getVersion().equalsIgnoreCase(version)) {
             ensureSchemeVersion(certificate.getId(), version, null);

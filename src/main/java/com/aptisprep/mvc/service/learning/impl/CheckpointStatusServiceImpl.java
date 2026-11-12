@@ -4,7 +4,7 @@ import com.aptisprep.mvc.entity.LearningPath;
 import com.aptisprep.mvc.exception.BusinessRuleException;
 import com.aptisprep.mvc.exception.ResourceNotFoundException;
 import com.aptisprep.mvc.service.catalog.PublishedExamCatalogService;
-import com.aptisprep.mvc.service.exam.ExamAttemptQueryService;
+import com.aptisprep.mvc.service.exam.ExamAttemptService;
 import com.aptisprep.mvc.service.learning.CheckpointStatusService;
 import com.aptisprep.mvc.support.contract.IntegrationModels.*;
 import java.time.ZoneId;
@@ -15,11 +15,11 @@ import org.springframework.stereotype.Service;
 
 @Service
 public class CheckpointStatusServiceImpl implements CheckpointStatusService {
-    private ExamAttemptQueryService attempts;
+    private ExamAttemptService attempts;
     private PublishedExamCatalogService catalog;
 
     public CheckpointStatusServiceImpl(
-            ExamAttemptQueryService attempts, PublishedExamCatalogService catalog) {
+            ExamAttemptService attempts, PublishedExamCatalogService catalog) {
         this.attempts = attempts;
         this.catalog = catalog;
     }

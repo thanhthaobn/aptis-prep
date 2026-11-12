@@ -7,6 +7,7 @@ import com.aptisprep.mvc.dto.MockExamDTO;
 import com.aptisprep.mvc.service.account.AccountAccessService;
 import com.aptisprep.mvc.service.catalog.PublishedExamCatalogService;
 import com.aptisprep.mvc.service.exam.ExamAttemptCommandService;
+import com.aptisprep.mvc.service.exam.ExamAttemptService;
 import com.aptisprep.mvc.service.exam.ExamAttemptQueryService;
 import com.aptisprep.mvc.enums.*;
 import com.aptisprep.mvc.exception.*;
@@ -38,7 +39,7 @@ public class LearningPathServiceImpl implements LearningPathService {
     private UserRepository userRepository;
     private UserGoalRepository userGoalRepository;
     private ExamAttemptCommandService attempts;
-    private ExamAttemptQueryService attemptQueries;
+    private ExamAttemptService attemptQueries;
     private PublishedExamCatalogService catalog;
     private AccountAccessService accounts;
     private CheckpointStatusService checkpointStatus;
@@ -51,7 +52,7 @@ public class LearningPathServiceImpl implements LearningPathService {
             UserRepository userRepository,
             UserGoalRepository userGoalRepository,
             ExamAttemptCommandService attempts,
-            ExamAttemptQueryService attemptQueries,
+            ExamAttemptService attemptQueries,
             PublishedExamCatalogService catalog,
             AccountAccessService accounts,
             CheckpointStatusService checkpointStatus) {

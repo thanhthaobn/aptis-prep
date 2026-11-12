@@ -15,6 +15,8 @@ import org.springframework.data.repository.query.Param;
 public interface AiAssessmentJobRepository extends JpaRepository<AiAssessmentJob, Integer> {
     Optional<AiAssessmentJob> findByAssessmentKey(String assessmentKey);
 
+    List<AiAssessmentJob> findByAttemptIdAndSourceType(Integer attemptId, String sourceType);
+
     @Query(
             """
             select job from AiAssessmentJob job

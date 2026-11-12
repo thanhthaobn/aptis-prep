@@ -297,11 +297,12 @@ public class AdminExamServiceImpl implements AdminExamService {
         form.setDurationMinutes((int) duration);
 
         var certificate =
-                certificateRepository.findByCodeIgnoreCase("APTIS_GENERAL")
+                (form.getCertificateId() == null
+                                ? certificateRepository.findByCodeIgnoreCase("APTIS_GENERAL")
+                                : certificateRepository.findById(form.getCertificateId()))
                         .filter(value -> value.getStatus() == RecordStatus.ACTIVE)
                         .orElse(null);
         if (certificate == null) throw new BusinessRuleException("Chứng chỉ không hợp lệ");
-        form.setCertificateId(certificate.getId());
         if (certificate.isAptisGeneral()
                 && com.aptisprep.mvc.enums.CefrLevel.C2.name().equals(form.getTargetLevel()))
             throw new BusinessRuleException("Aptis ESOL General chỉ có mức tối đa C1");

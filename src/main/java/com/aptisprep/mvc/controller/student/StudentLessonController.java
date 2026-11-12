@@ -186,7 +186,19 @@ public class StudentLessonController {
 
     @PostMapping("/student/lessons/{id}/audio-played")
     public String audioPlayed(
-            @PathVariable Integer id, Principal principal, RedirectAttributes redirect) {
+            @PathVariable Integer id,
+            @RequestParam(name = "duration", required = false) Double duration,
+            @RequestParam(name = "listened", required = false) Double listened,
+            Principal principal,
+            RedirectAttributes redirect) {
+        if (duration != null
+                && listened != null
+                && (!Double.isFinite(duration)
+                        || duration <= 0
+                        || !Double.isFinite(listened)
+                        || listened < duration * .9)) {
+            throw new BusinessRuleException("Cần nghe ít nhất 90% thời lượng audio");
+        }
         lessonListeningService.confirmManualListening(id, principal.getName());
         redirect.addFlashAttribute(
                 "message", "Đã ghi nhận bạn hoàn thành phần nghe. Transcript có thể được mở theo cấu hình bài học.");
