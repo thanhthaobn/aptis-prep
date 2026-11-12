@@ -282,6 +282,19 @@
         font-weight: 700;
         text-align: center;
       }
+      .attempt-pagination {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 1rem;
+        margin-top: 1.5rem;
+        padding: 1rem 0 0;
+        border-top: 1px solid var(--color-border);
+      }
+      .attempt-pagination .button[aria-disabled='true'] {
+        opacity: .45;
+        pointer-events: none;
+      }
       @media (max-width: 560px) {
         .question-item {
           padding: 1rem;
@@ -394,11 +407,11 @@
             câu đã làm
           </span>
           <div class="exam-question-grid">
-            <th:block th:each="question : ${attempt.questions}">
+            <th:block th:each="question, questionStat : ${attempt.questions}">
               <a
                 th:each="item : ${question.items}"
                 class="exam-question-link"
-                th:href="${'#item-' + item.itemId}"
+                th:href="@{/student/attempts/{id}(id=${attempt.attemptId},page=${questionStat.index})} + '#item-' + ${item.itemId}"
                 th:text="${item.position}"
                 th:classappend="${item.answered()} ? 'is-answered'"
                 th:attr="data-item-id=${item.itemId},aria-label=${'Câu ' + item.position}"
@@ -463,6 +476,7 @@
         <section
           class="dashboard-panel dashboard-section full-mock-question"
           th:each="question, questionStat : ${attempt.questions}"
+          th:if="${questionStat.index == currentPage}"
           th:attr="data-question-page=${questionStat.index}"
         >
           <p
@@ -525,6 +539,7 @@
             >
               <input type="hidden" name="questionId" th:value="${question.questionId}" />
               <input type="hidden" name="itemId" th:value="${item.itemId}" />
+              <input type="hidden" name="page" th:value="${currentPage}" />
               <div th:if="${question.type == 'ORDERING'}" class="field">
                 <label th:for="${'position-' + (item.itemId)}">Vị trí trong thứ tự</label>
                 <input
@@ -577,6 +592,7 @@
             >
               <input type="hidden" name="questionId" th:value="${question.questionId}" />
               <input type="hidden" name="itemId" th:value="${item.itemId}" />
+              <input type="hidden" name="page" th:value="${currentPage}" />
               <span class="speaking-recorder-label">Câu trả lời của bạn</span>
               <input type="file" name="audioFile" accept="audio/*" required />
               <small class="muted">Hãy tải lên file audio đã ghi.</small>
@@ -588,6 +604,26 @@
             </form>
           </div>
         </section>
+        <nav
+          class="attempt-pagination"
+          th:if="${totalPages > 1}"
+          aria-label="Chuyển phần bài thi"
+        >
+          <a
+            class="button button-secondary"
+            th:href="@{/student/attempts/{id}(id=${attempt.attemptId},page=${currentPage - 1})}"
+            th:attr="aria-disabled=${currentPage == 0}"
+          >← Phần trước</a>
+          <span
+            class="full-mock-pagination-info"
+            th:text="${'Phần ' + (currentPage + 1) + ' / ' + totalPages}"
+          ></span>
+          <a
+            class="button"
+            th:href="@{/student/attempts/{id}(id=${attempt.attemptId},page=${currentPage + 1})}"
+            th:attr="aria-disabled=${currentPage == totalPages - 1}"
+          >Phần tiếp theo →</a>
+        </nav>
       </main>
     </div>
     <footer class="site-footer">

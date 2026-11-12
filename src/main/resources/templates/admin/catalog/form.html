@@ -382,11 +382,17 @@
               </div>
             </div>
             <aside class="catalog-guided-help">
-              <span th:if="${questionForm.questionType == 'SINGLE_CHOICE'}">Mỗi mục có một đáp án đúng.</span>
-              <span th:if="${questionForm.questionType == 'MATCHING'}">Mỗi mục có một vị trí ghép đúng.</span>
-              <span th:if="${questionForm.questionType == 'ORDERING'}">Các mục phải có vị trí đúng duy nhất.</span>
-              <span th:if="${questionForm.questionType == 'WRITING_TEXT'}">Mỗi mục là một yêu cầu viết.</span>
-              <span th:if="${questionForm.questionType == 'SPEAKING_AUDIO'}">Mỗi mục là một yêu cầu nói.</span>
+              <span
+                th:text="${questionForm.questionType == 'MATCHING'
+                  ? 'Mỗi mục có một vị trí ghép đúng.'
+                  : questionForm.questionType == 'ORDERING'
+                    ? 'Các mục phải có vị trí đúng duy nhất.'
+                    : questionForm.questionType == 'WRITING_TEXT'
+                      ? 'Mỗi mục là một yêu cầu viết.'
+                      : questionForm.questionType == 'SPEAKING_AUDIO'
+                        ? 'Mỗi mục là một yêu cầu nói.'
+                        : 'Mỗi mục có một đáp án đúng.'}"
+              >Mỗi mục có một đáp án đúng.</span>
             </aside>
             <section class="catalog-form-section">
               <div class="catalog-form-intro catalog-form-intro-small">
@@ -516,13 +522,29 @@
                   </div>
                   <fieldset
                     class="catalog-option-fields conditional-field"
-                    th:if="${questionForm.questionType == 'SINGLE_CHOICE' or questionForm.questionType == 'MATCHING'}"
+                    th:hidden="${questionForm.questionType != 'SINGLE_CHOICE' and questionForm.questionType != 'MATCHING'}"
                   >
                     <legend>Phương án trả lời</legend>
-                    <p class="field-help">
+                    <p class="field-help option-help-single" th:if="${questionForm.questionType == 'SINGLE_CHOICE'}">
                       Nhập phương án liên tục từ A trở đi rồi chọn đúng một đáp án đúng.
                     </p>
+                    <p class="field-help option-help-matching" th:if="${questionForm.questionType == 'MATCHING'}">
+                      Nhập các phương án ghép nối liên tục từ A trở đi rồi chọn vị trí ghép đúng cho mục này.
+                    </p>
+                    <div class="option-actions">
+                      <button
+                        class="button button-secondary button-small"
+                        type="submit"
+                        name="formAction"
+                        formnovalidate
+                        data-option-add
+                        th:value="${'ADD_OPTION_' + itemStat.index}"
+                      >
+                        Thêm phương án
+                      </button>
+                    </div>
                     <div
+                      class="option-row"
                       th:each="option, optionStat : ${item.options}"
                       th:with="optionPath=${itemPath + '.options[' + optionStat.index + ']'}"
                     >
@@ -545,13 +567,24 @@
                           th:value="${optionStat.index + 1}"
                           th:checked="${item.correctPosition == optionStat.index + 1}"
                         />
-                        <span class="option-correct-text">Đáp án đúng</span>
+                        <span class="option-correct-text" th:if="${questionForm.questionType == 'SINGLE_CHOICE'}">Đáp án đúng</span>
+                        <span class="option-correct-text" th:if="${questionForm.questionType == 'MATCHING'}">Vị trí ghép đúng</span>
                       </label>
                       <input
                         type="hidden"
                         th:name="${optionPath + '.code'}"
                         th:value="${option.optionCode}"
                       />
+                      <button
+                        class="button button-secondary button-small"
+                        type="submit"
+                        name="formAction"
+                        formnovalidate
+                        data-option-remove
+                        th:value="${'REMOVE_OPTION_' + optionStat.index + '_' + itemStat.index}"
+                      >
+                        Xóa
+                      </button>
                     </div>
                   </fieldset>
                 </div>
