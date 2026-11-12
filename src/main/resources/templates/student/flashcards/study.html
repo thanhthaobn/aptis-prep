@@ -31,13 +31,6 @@
     <link rel="stylesheet" th:href="@{/css/catalog-compact.css}" />
     <link rel="stylesheet" th:href="@{/css/admin-overview.css}" />
     <link rel="stylesheet" th:href="@{/css/typography.css}" />
-    <script th:src="@{/js/app-dialog.js}" defer></script>
-    <script
-      src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"
-      integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI"
-      crossorigin="anonymous"
-      defer
-    ></script>
   </head>
   <body class="student-theme flashcard-page">
     <header class="site-header">
@@ -53,28 +46,6 @@
           </span>
           <span>AptisPrep</span>
         </a>
-
-        <button
-          class="nav-toggle"
-          id="navToggle"
-          type="button"
-          aria-label="Mở menu điều hướng"
-          aria-expanded="false"
-          aria-controls="primaryNav"
-        >
-          <svg
-            class="hamburger-icon"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-            aria-hidden="true"
-          >
-            <line x1="3" y1="6" x2="21" y2="6" />
-            <line x1="3" y1="12" x2="21" y2="12" />
-            <line x1="3" y1="18" x2="21" y2="18" />
-          </svg>
-        </button>
 
         <nav class="nav-links" id="primaryNav" aria-label="Điều hướng chính">
           <a th:href="@{/}">Trang chủ</a>
@@ -96,23 +67,10 @@
           </form>
         </nav>
       </div>
-
-      <script th:src="@{/js/navigation.js}" defer></script>
     </header>
     <div class="container ap-container app-shell">
       <aside th:with="activePage='flashcards'" class="app-sidebar">
-        <button
-          class="sidebar-toggle collapsed"
-          type="button"
-          data-bs-toggle="collapse"
-          data-bs-target="#student-sidebar-content"
-          aria-expanded="false"
-          aria-controls="student-sidebar-content"
-        >
-          <span>Menu học tập</span>
-          <span class="sidebar-toggle-icon" aria-hidden="true">⌄</span>
-        </button>
-        <div class="sidebar-content collapse d-lg-block" id="student-sidebar-content">
+        <div class="sidebar-content" id="student-sidebar-content">
           <span class="sidebar-label">HỌC TẬP</span>
           <nav class="sidebar-nav" aria-label="Điều hướng học tập">
             <a
@@ -259,124 +217,85 @@
           ></span>
         </header>
         <div class="toolbar flashcard-options d-flex flex-wrap align-items-center gap-3">
-          <label class="flashcard-toggle">
-            <input id="reverse" type="checkbox" />
-            Hiện nghĩa trước
-          </label>
-          <label class="flashcard-toggle">
-            <input id="unlearned" type="checkbox" />
-            Chỉ thẻ cần học lại
-          </label>
-          <button class="button button-secondary" id="shuffle" type="button">Trộn thẻ</button>
-        </div>
-        <div class="study-summary d-flex align-items-center justify-content-between gap-3">
-          <p id="study-stats" role="status"></p>
-          <span id="position" aria-live="polite"></span>
-        </div>
-        <section id="study-session">
-          <div class="flashcard-stage" id="card-stage">
-            <button
-              type="button"
-              class="flashcard-3d"
-              id="flip"
-              aria-label="Lật thẻ"
-              aria-pressed="false"
-            >
-              <span class="flashcard-inner">
-                <span class="flashcard-side flashcard-front">
-                  <span class="face-label" id="front-label">THUẬT NGỮ</span>
-                  <strong class="face-content" id="front-content"></strong>
-                  <small>Bấm hoặc nhấn Space để lật</small>
-                </span>
-                <span class="flashcard-side flashcard-back">
-                  <span class="face-label" id="back-label">ĐỊNH NGHĨA</span>
-                  <strong class="face-content" id="back-content"></strong>
-                  <small>Bấm để quay lại mặt trước</small>
-                </span>
-              </span>
-            </button>
-          </div>
-          <div class="actions flashcard-controls d-flex justify-content-center gap-3">
-            <button type="button" class="button button-secondary" id="previous">← Thẻ trước</button>
-            <button type="button" class="button button-secondary" id="next">Thẻ tiếp →</button>
-          </div>
-          <div
-            class="actions flashcard-controls mastery-controls d-flex justify-content-center gap-3"
+          <a
+            class="button button-secondary"
+            th:href="@{/student/flashcards/{id}(id=${set.id},unlearned=${!unlearnedOnly})}"
+            th:text="${unlearnedOnly ? 'Học lại tất cả' : 'Ôn lại từ chưa thuộc'}"
+          ></a>
+          <a
+            class="button button-secondary"
+            th:href="@{/student/flashcards/{id}(id=${set.id},unlearned=false)}"
+            >Học lại tất cả</a
           >
-            <button type="button" class="button button-secondary" id="learning">Cần học lại</button>
-            <button type="button" class="button" id="mastered">Đã nhớ</button>
-          </div>
-          <p id="save-message" role="status" aria-live="polite"></p>
-          <p class="keyboard-hint">Phím ← → để chuyển thẻ · Space để lật</p>
+        </div>
+        <section class="dashboard-panel flashcard-review-options">
+          <h2 class="h5">Những từ cần học lại</h2>
+          <p class="muted" th:if="${unlearnedOnly}">
+            Đang hiển thị các thẻ chưa được đánh dấu đã nhớ.
+          </p>
+          <p class="muted" th:unless="${unlearnedOnly}">
+            Bạn có thể lọc riêng các thẻ chưa thuộc bằng nút “Ôn lại từ chưa thuộc”.
+          </p>
+          <a
+            class="button button-small"
+            th:href="@{/student/flashcards/{id}(id=${set.id},unlearned=true)}"
+            >Ôn lại từ chưa thuộc</a
+          >
         </section>
-        <section id="study-complete" class="study-complete dashboard-panel" hidden>
-          <figure class="navi navi-celebrate">
-            <svg
-              viewBox="0 0 160 130"
-              role="img"
-              aria-label="Navi chúc mừng bạn đã hoàn thành một lượt ôn tập"
-            >
-              <path
-                class="navi-shadow"
-                d="M36 118c0-8 21-14 46-14s46 6 46 14-21 10-46 10-46-2-46-10Z"
-              ></path>
-              <path
-                class="navi-body"
-                d="M43 68c0-29 17-48 40-48s42 19 42 48c0 32-13 48-42 48S43 100 43 68Z"
-              ></path>
-              <path class="navi-antenna" d="M82 21V9m0 0 9-5"></path>
-              <circle class="navi-eye" cx="67" cy="63" r="5"></circle>
-              <circle class="navi-eye" cx="99" cy="63" r="5"></circle>
-              <path class="navi-mouth" d="M72 79c6 6 15 6 22 0"></path>
-              <path class="navi-arm navi-arm-left" d="M46 73 25 61"></path>
-              <path class="navi-arm navi-arm-right" d="m122 73 19-17"></path>
-              <g aria-hidden="true">
-                <path class="confetti" d="m25 24 5 7m99-10-6 8M44 9l2 8m75 27 8 2"></path>
-              </g>
-            </svg>
-            <figcaption>Navi chúc mừng bạn đã hoàn thành một lượt ôn tập</figcaption>
-          </figure>
-          <p class="eyebrow">TỔNG KẾT LƯỢT HỌC</p>
-          <h2>Bạn đã xem hết các thẻ</h2>
-          <div class="flashcard-result-grid">
-            <article class="flashcard-result is-mastered">
-              <strong id="mastered-count">0</strong>
-              <span>Đã nhớ</span>
-            </article>
-            <article class="flashcard-result is-learning">
-              <strong id="learning-count">0</strong>
-              <span>Cần học lại</span>
-            </article>
+        <div class="study-summary d-flex align-items-center justify-content-between gap-3">
+          <p role="status" th:text="${cards.size() + ' thẻ · ' + (unlearnedOnly ? 'đang lọc thẻ cần học lại' : 'tất cả thẻ')}"></p>
+          <span aria-live="polite" th:text="${studyCards.isEmpty() ? '0 / 0' : (cardIndex + 1) + ' / ' + studyCards.size()}"></span>
+        </div>
+        <section class="dashboard-panel" th:if="${currentCard != null}">
+          <div class="flashcard-side flashcard-front">
+            <span class="face-label">THUẬT NGỮ</span>
+            <strong class="face-content" th:text="${currentCard.frontContent}"></strong>
           </div>
-          <div id="learning-review" class="learning-review" hidden>
-            <h3>Những từ cần học lại</h3>
-            <ul id="learning-terms"></ul>
+          <div class="flashcard-side flashcard-back">
+            <span class="face-label">ĐỊNH NGHĨA</span>
+            <strong class="face-content" th:text="${currentCard.backContent}"></strong>
           </div>
-          <div class="actions completion-actions">
-            <button type="button" class="button" id="review-learning">Ôn lại từ chưa thuộc</button>
-            <button type="button" class="button button-secondary" id="restart-all">
-              Học lại tất cả
-            </button>
+          <p class="muted" th:text="${'Trạng thái: ' + (currentCard.state == 'MASTERED' ? 'Đã nhớ' : 'Cần học lại')}"></p>
+          <div class="actions flashcard-controls d-flex flex-wrap justify-content-center gap-3">
+            <a
+              class="button button-secondary"
+              th:classappend="${previousCard == null ? 'disabled' : ''}"
+              th:if="${previousCard != null}"
+              th:href="@{/student/flashcards/{id}(id=${set.id},card=${previousCard},unlearned=${unlearnedOnly})}"
+            >← Thẻ trước</a>
+            <a
+              class="button button-secondary"
+              th:if="${nextCard != null}"
+              th:href="@{/student/flashcards/{id}(id=${set.id},card=${nextCard},unlearned=${unlearnedOnly})}"
+            >Thẻ tiếp →</a>
+          </div>
+          <div class="actions flashcard-controls mastery-controls d-flex flex-wrap justify-content-center gap-3">
+            <form method="post" th:action="@{/student/flashcards/{setId}/cards/{cardId}/state/page(setId=${set.id},cardId=${currentCard.id})}">
+              <input type="hidden" name="state" value="LEARNING" />
+              <input type="hidden" name="reviewKey" th:value="${reviewKey}" />
+              <input type="hidden" name="nextCard" th:value="${nextCard == null ? 0 : nextCard}" />
+              <input type="hidden" name="unlearned" th:value="${unlearnedOnly}" />
+              <button class="button button-secondary" type="submit">Cần học lại</button>
+            </form>
+            <form method="post" th:action="@{/student/flashcards/{setId}/cards/{cardId}/state/page(setId=${set.id},cardId=${currentCard.id})}">
+              <input type="hidden" name="state" value="MASTERED" />
+              <input type="hidden" name="reviewKey" th:value="${reviewKey}" />
+              <input type="hidden" name="nextCard" th:value="${nextCard == null ? 0 : nextCard}" />
+              <input type="hidden" name="unlearned" th:value="${unlearnedOnly}" />
+              <button class="button" type="submit">Đã nhớ</button>
+            </form>
           </div>
         </section>
-        <form
-          id="csrf-holder"
-          method="post"
-          th:action="@{/student/flashcards/{id}/cards/0/state(id=${set.id})}"
-          hidden
-        ></form>
-        <section id="study-data" hidden>
-          <div th:each="card : ${cards}" th:attr="data-id=${card.id()},data-state=${card.state()}">
-            <span class="term" th:text="${card.term()}"></span>
-            <span class="definition" th:text="${card.definition()}"></span>
-          </div>
+        <section class="dashboard-panel" th:if="${currentCard == null}">
+          <h2>Chưa có thẻ trong lượt học này</h2>
+          <p class="muted">Hãy tạo thêm thuật ngữ hoặc chuyển sang xem tất cả thẻ.</p>
         </section>
         <details class="dashboard-panel dashboard-section term-overview">
           <summary>Xem toàn bộ thuật ngữ</summary>
           <dl class="term-list">
             <div th:each="card : ${cards}">
-              <dt th:text="${card.term()}"></dt>
-              <dd th:text="${card.definition()}"></dd>
+              <dt th:text="${card.frontContent}"></dt>
+              <dd th:text="${card.backContent}"></dd>
               <dd
                 class="muted"
                 th:if="${card.nextReviewAt != null}"
@@ -393,6 +312,5 @@
         <span>Nền tảng học tập và luyện thi Aptis</span>
       </div>
     </footer>
-    <script th:src="@{/js/flashcard-study.js}" defer></script>
   </body>
 </html>

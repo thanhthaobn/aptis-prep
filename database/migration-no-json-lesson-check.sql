@@ -5,7 +5,8 @@ BEGIN
         attempt_id int NOT NULL,
         question_id int NOT NULL,
         selected_option int NOT NULL,
-        CONSTRAINT fk_lesson_check_answer_attempt FOREIGN KEY(attempt_id) REFERENCES dbo.lesson_check_attempts(id));
+        CONSTRAINT fk_lesson_check_answer_attempt FOREIGN KEY(attempt_id) REFERENCES dbo.lesson_check_attempts(id)
+    );
     CREATE INDEX ix_lesson_check_answer_attempt ON dbo.lesson_check_attempt_answers(attempt_id, id);
 END
 IF OBJECT_ID('dbo.lesson_check_attempt_feedback','U') IS NULL

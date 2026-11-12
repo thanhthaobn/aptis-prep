@@ -1,16 +1,6 @@
 /* Run after backing up the database. The old JSON columns stay nullable during the transition. */
-SET XACT_ABORT ON;
-BEGIN TRANSACTION;
+ALTER TABLE dbo.exam_attempt_snapshots ADD section_advance_millis bigint NOT NULL CONSTRAINT df_exam_snapshot_section_advance DEFAULT 0;
 
-IF COL_LENGTH('dbo.exam_attempt_snapshots', 'section_advance_millis') IS NULL
-BEGIN
-    ALTER TABLE dbo.exam_attempt_snapshots
-        ADD section_advance_millis bigint NOT NULL
-            CONSTRAINT df_exam_snapshot_section_advance DEFAULT 0;
-END;
-
-IF OBJECT_ID('dbo.exam_attempt_snapshot_questions', 'U') IS NULL
-BEGIN
 CREATE TABLE dbo.exam_attempt_snapshot_questions (
     id int IDENTITY(1,1) NOT NULL PRIMARY KEY,
     snapshot_id int NOT NULL,
@@ -26,15 +16,13 @@ CREATE TABLE dbo.exam_attempt_snapshot_questions (
     CONSTRAINT fk_exam_snapshot_question_snapshot FOREIGN KEY (snapshot_id) REFERENCES dbo.exam_attempt_snapshots(id)
 );
 CREATE INDEX ix_exam_snapshot_question_snapshot ON dbo.exam_attempt_snapshot_questions(snapshot_id, position);
-END;
 
-IF OBJECT_ID('dbo.exam_attempt_snapshot_items', 'U') IS NULL
-BEGIN
 CREATE TABLE dbo.exam_attempt_snapshot_items (
     id int IDENTITY(1,1) NOT NULL PRIMARY KEY,
     question_snapshot_id int NOT NULL,
     source_item_id int NOT NULL,
     position int NOT NULL,
+    points decimal(6,2) NOT NULL CONSTRAINT df_exam_snapshot_item_points DEFAULT 1,
     content nvarchar(max) NULL,
     correct_position int NULL,
     min_word_count int NULL,
@@ -43,10 +31,7 @@ CREATE TABLE dbo.exam_attempt_snapshot_items (
     CONSTRAINT fk_exam_snapshot_item_question FOREIGN KEY (question_snapshot_id) REFERENCES dbo.exam_attempt_snapshot_questions(id)
 );
 CREATE INDEX ix_exam_snapshot_item_question ON dbo.exam_attempt_snapshot_items(question_snapshot_id, position);
-END;
 
-IF OBJECT_ID('dbo.exam_attempt_snapshot_options', 'U') IS NULL
-BEGIN
 CREATE TABLE dbo.exam_attempt_snapshot_options (
     id int IDENTITY(1,1) NOT NULL PRIMARY KEY,
     item_snapshot_id int NOT NULL,
@@ -58,10 +43,7 @@ CREATE TABLE dbo.exam_attempt_snapshot_options (
     CONSTRAINT fk_exam_snapshot_option_item FOREIGN KEY (item_snapshot_id) REFERENCES dbo.exam_attempt_snapshot_items(id)
 );
 CREATE INDEX ix_exam_snapshot_option_item ON dbo.exam_attempt_snapshot_options(item_snapshot_id, position);
-END;
 
-IF OBJECT_ID('dbo.exam_attempt_snapshot_media', 'U') IS NULL
-BEGIN
 CREATE TABLE dbo.exam_attempt_snapshot_media (
     id int IDENTITY(1,1) NOT NULL PRIMARY KEY,
     question_snapshot_id int NOT NULL,
@@ -76,6 +58,3 @@ CREATE TABLE dbo.exam_attempt_snapshot_media (
     CONSTRAINT fk_exam_snapshot_media_question FOREIGN KEY (question_snapshot_id) REFERENCES dbo.exam_attempt_snapshot_questions(id)
 );
 CREATE INDEX ix_exam_snapshot_media_question ON dbo.exam_attempt_snapshot_media(question_snapshot_id, position);
-END;
-
-COMMIT TRANSACTION;

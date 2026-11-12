@@ -1,0 +1,600 @@
+<!doctype html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="description"
+      content="AptisPrep - Nền tảng luyện thi Aptis chuẩn CEFR (Reading, Listening, Writing, Speaking) với lộ trình cá nhân hóa và chấm điểm thông minh."
+    />
+    <meta th:if="${_csrf != null}" name="_csrf" th:content="${_csrf.token}" />
+    <meta th:if="${_csrf != null}" name="_csrf_header" th:content="${_csrf.headerName}" />
+    <title th:text="${attempt.title} + ' | AptisPrep'">AptisPrep</title>
+    <link
+      rel="icon"
+      type="image/svg+xml"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%230F6E56'/%3E%3Cpath d='M16 6 L24 25 L19.5 25 L17.5 20 L14.5 20 L12.5 25 L8 25 Z M16 12 L15.2 17 L16.8 17 Z' fill='%23ffffff'/%3E%3C/svg%3E"
+    />
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+      integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB"
+      crossorigin="anonymous"
+    />
+    <link rel="stylesheet" th:href="@{/css/variables.css}" />
+    <link rel="stylesheet" th:href="@{/css/base.css}" />
+    <link rel="stylesheet" th:href="@{/css/layout.css}" />
+    <link rel="stylesheet" th:href="@{/css/components.css}" />
+    <link rel="stylesheet" th:href="@{/css/forms.css}" />
+    <link rel="stylesheet" th:href="@{/css/learning-theme.css}" />
+    <link rel="stylesheet" th:href="@{/css/navi.css}" />
+    <link rel="stylesheet" th:href="@{/css/exam.css}" />
+    <link rel="stylesheet" th:href="@{/css/result.css}" />
+    <link rel="stylesheet" th:href="@{/css/catalog-compact.css}" />
+    <link rel="stylesheet" th:href="@{/css/admin-overview.css}" />
+    <link rel="stylesheet" th:href="@{/css/typography.css}" />
+  </head>
+  <body
+    class="student-theme exam-page"
+    th:classappend="${(attempt.examType == 'FULL_MOCK' or (attempt.examType == 'PLACEMENT' and attempt.sectionSkill != null))} ? ' full-mock-exam'"
+  >
+    <style>
+      .question-instruction {
+        margin: 0 0 1.35rem;
+        color: #58708f;
+        font-size: var(--text-base);
+        line-height: 1.7;
+        letter-spacing: normal;
+      }
+      .reading-passage {
+        margin: 1.5rem 0 1.75rem;
+        padding: 1.25rem 1.4rem;
+        border: 1px solid #c8dce5;
+        border-left: 5px solid #087a9d;
+        border-radius: var(--radius);
+        background: #f2fbfd;
+      }
+      .reading-passage h3 {
+        margin: 0 0 0.7rem;
+        color: #075c78;
+        font-size: var(--text-base);
+        line-height: 1.45;
+      }
+      .reading-passage-text {
+        white-space: pre-line;
+        line-height: 1.8;
+        letter-spacing: normal;
+        color: #263b50;
+      }
+      .media-player {
+        display: grid;
+        gap: 0.7rem;
+        margin: 1.25rem 0 1.5rem;
+        padding: 1rem 1.1rem;
+        border: 1px solid #c8dce5;
+        border-radius: var(--radius);
+        background: #f2fbfd;
+      }
+      .media-audio {
+        width: 100%;
+        height: 42px;
+        accent-color: #087a9d;
+      }
+      .media-audio-shell {
+        position: relative;
+      }
+      .media-play-trigger {
+        position: absolute;
+        z-index: 2;
+        top: 0;
+        left: 0;
+        width: 58px;
+        height: 42px;
+        padding: 0;
+        border: 0;
+        background: transparent;
+        cursor: pointer;
+      }
+      .media-play-trigger:disabled {
+        cursor: not-allowed;
+      }
+      .media-status {
+        min-height: 1.1rem;
+        font-size: var(--text-small);
+      }
+      .attempt-media > img {
+        display: block;
+        width: min(100%, 760px);
+        max-height: 420px;
+        margin: 1.25rem 0 1.5rem;
+        object-fit: contain;
+        border: 1px solid #c8dce5;
+        border-radius: var(--radius);
+        background: #f7fbfc;
+        box-shadow: 0 8px 20px rgba(34, 73, 96, 0.08);
+      }
+      .question-item {
+        margin-top: 1.25rem;
+        padding: 1.45rem 1.5rem 1.55rem;
+        border: 1px solid #dbe7ee;
+        border-radius: var(--radius);
+        background: linear-gradient(145deg, #ffffff, #f8fbfd);
+        box-shadow: 0 8px 22px rgba(34, 73, 96, 0.06);
+      }
+      .question-item:first-of-type {
+        margin-top: 1.5rem;
+      }
+      .question-item-header {
+        display: flex;
+        align-items: flex-start;
+        gap: 1rem;
+        margin-bottom: 1.25rem;
+      }
+      .question-item-number {
+        display: grid;
+        flex: 0 0 34px;
+        width: 34px;
+        height: 34px;
+        place-items: center;
+        margin-top: 0.05rem;
+        color: #fff;
+        background: linear-gradient(135deg, #087a9d, #0f8a78);
+        border-radius: 10px;
+        box-shadow: 0 5px 12px rgba(8, 122, 157, 0.2);
+        font-size: var(--text-base);
+        font-weight: 700;
+      }
+      .question-item-prompt {
+        margin: 0.25rem 0 0;
+        color: #20364d;
+        font-size: var(--text-base);
+        font-weight: 700;
+        line-height: 1.7;
+        letter-spacing: normal;
+        word-spacing: 0.035em;
+      }
+      .question-item .field {
+        margin-top: 0;
+      }
+      .question-item .field label {
+        margin-bottom: 0.45rem;
+        color: #50657b;
+        font-size: var(--text-small);
+        font-weight: 700;
+        letter-spacing: 0.02em;
+      }
+      .question-item textarea {
+        min-height: 150px;
+        resize: vertical;
+        border-color: #cbdce5;
+        background: #fff;
+        line-height: 1.65;
+      }
+      .question-item textarea:focus {
+        border-color: #087a9d;
+        box-shadow: 0 0 0 3px rgba(8, 122, 157, 0.12);
+      }
+      .question-item .answer-form {
+        margin: 0;
+      }
+      .question-item .button {
+        margin-top: 0.9rem;
+      }
+      .question-item .autosave-status {
+        display: inline-block;
+        margin-left: 0.65rem;
+        font-size: var(--text-small);
+      }
+      .speaking-recorder {
+        display: block;
+        margin: 0;
+        padding: 1rem;
+        border: 1px solid #dbe7ee;
+        border-radius: var(--radius);
+        background: rgba(255, 255, 255, 0.78);
+      }
+      .speaking-recorder-label {
+        display: block;
+        margin-bottom: 0.65rem;
+        color: #50657b;
+        font-size: var(--text-small);
+        font-weight: 700;
+        letter-spacing: 0.02em;
+      }
+      .speaking-recorder-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.6rem;
+        align-items: center;
+      }
+      .speaking-recorder-actions .button {
+        margin: 0;
+        width: auto;
+        min-width: 84px;
+        min-height: 36px;
+        padding: 0.4rem 0.6rem;
+        font-size: var(--text-small);
+        border-radius: var(--radius);
+        white-space: nowrap;
+      }
+      .speaking-recorder .recording-status {
+        display: block;
+        grid-column: 1 / -1;
+        height: 3em;
+        overflow: auto;
+        margin: 0.15rem 0 0;
+        font-size: var(--text-small);
+      }
+      .recording-meter {
+        grid-column: 1 / -1;
+        display: grid;
+        gap: 0.45rem;
+        flex: 1 1 100%;
+        margin-top: 0.35rem;
+        padding: 0.75rem 0.85rem;
+        border: 1px solid #c8dce5;
+        border-radius: var(--radius);
+        background: #f2fbfd;
+      }
+      .recording-meter-heading {
+        display: flex;
+        justify-content: space-between;
+        gap: 1rem;
+        color: #075c78;
+        font-size: var(--text-small);
+        font-weight: 700;
+      }
+      .recording-meter progress {
+        width: 100%;
+        height: 0.7rem;
+        accent-color: #087a9d;
+      }
+      .speaking-recorder .recording-preview {
+        width: min(100%, 460px);
+        height: 42px;
+        margin-top: 0.85rem;
+      }
+      .recording-preview.is-empty {
+        visibility: hidden;
+        pointer-events: none;
+      }
+      .speaking-recorder .recording-preview {
+        display: block;
+        width: 100%;
+      }
+      .full-mock-exam.pagination-ready .full-mock-question:not(.is-active) {
+        display: none;
+      }
+      .full-mock-question {
+        scroll-margin-top: 7.5rem;
+      }
+      .full-mock-pagination {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 1rem;
+        margin-top: 1.25rem;
+        padding: 0.9rem 0;
+      }
+      .full-mock-pagination-info {
+        color: #58708f;
+        font-size: var(--text-small);
+        font-weight: 700;
+        text-align: center;
+      }
+      @media (max-width: 560px) {
+        .question-item {
+          padding: 1rem;
+        }
+        .question-item-prompt {
+          font-size: var(--text-base);
+        }
+        .question-item .autosave-status {
+          display: block;
+          margin: 0.6rem 0 0;
+        }
+      }
+    </style>
+
+    <header class="site-header">
+      <a href="#main-content" class="ap-skip-link">Bỏ qua điều hướng</a>
+
+      <div class="container ap-container nav-wrap">
+        <a class="brand" th:href="@{/}">
+          <span class="brand-mark" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+              <path d="M5 19V7.5L12 4l7 3.5V19" />
+              <path d="M8.5 10.5 12 12l3.5-1.5M12 12v8" />
+            </svg>
+          </span>
+          <span>AptisPrep</span>
+        </a>
+
+        <nav class="nav-links" id="primaryNav" aria-label="Điều hướng chính">
+          <a th:href="@{/}">Trang chủ</a>
+          <a
+            th:if="${isStudent}"
+            th:href="@{/student/dashboard}"
+            th:classappend="'active'"
+            aria-current="page"
+          >
+            Học tập
+          </a>
+          <a th:if="${isAdmin}" th:href="@{/admin/dashboard}">Quản trị</a>
+          <a th:if="${signedIn != true}" th:href="@{/login}">Đăng nhập</a>
+          <a th:if="${signedIn != true}" class="button button-small" th:href="@{/register}">
+            Đăng ký
+          </a>
+          <form th:if="${signedIn}" th:action="@{/logout}" method="post">
+            <button class="button button-secondary button-small" type="submit">Đăng xuất</button>
+          </form>
+        </nav>
+      </div>
+    </header>
+    <div class="container exam-workspace">
+      <aside class="exam-control-panel" aria-label="Thông tin bài thi">
+        <div
+          class="exam-control-heading"
+          th:text="${attempt.sectionSkill == null ? 'Bài thi' : (attempt.sectionSkill == 'GRAMMAR_VOCABULARY' ? 'Grammar & Vocabulary' : attempt.sectionSkill)}"
+        >
+          Bài thi
+        </div>
+        <div
+          class="exam-timer-badge"
+          id="exam-timer"
+          th:if="${attempt.deadline != null}"
+          th:attr="data-deadline=${attempt.deadline},data-next-section=${attempt.nextSection},data-section-seconds=${attempt.sectionSkill == null ? null : attempt.remainingSeconds}"
+        >
+          Hạn máy chủ:
+          <strong th:text="${#temporals.format(attempt.deadline, 'dd/MM/yyyy HH:mm:ss')}"></strong>
+          <small class="d-block muted">Thời gian được kiểm tra lại khi gửi form.</small>
+        </div>
+        <nav
+          class="exam-section-navigation"
+          th:if="${attempt.sections != null and attempt.sections.size() > 1}"
+          aria-label="Các phần thi"
+        >
+          <h2>Các phần thi</h2>
+          <ol class="exam-section-list">
+            <li
+              th:each="section : ${attempt.sections}"
+              th:classappend="${section.open ? ' is-current' : (section.state == 'COMPLETED' ? ' is-completed' : ' is-upcoming')}"
+            >
+              <div class="exam-section-link">
+                <span>
+                  <strong
+                    th:text="${'Phần ' + (section.index + 1) + ' · ' + (section.skill == 'GRAMMAR_VOCABULARY' ? 'Grammar & Vocabulary' : section.skill)}"
+                  ></strong>
+                  <small
+                    th:text="${section.questionCount + ' câu · ' + section.durationMinutes + ' phút'}"
+                  ></small>
+                </span>
+                <em
+                  th:text="${section.state == 'OPEN' ? 'Đang làm' : (section.state == 'COMPLETED' ? 'Đã hết giờ' : 'Chưa mở')}"
+                ></em>
+              </div>
+            </li>
+          </ol>
+        </nav>
+        <dl class="exam-stats">
+          <div>
+            <dt>Tổng số câu</dt>
+            <dd th:text="${attempt.totalItems()}"></dd>
+          </div>
+          <div>
+            <dt>Đang làm</dt>
+            <dd id="exam-current-question">—</dd>
+          </div>
+        </dl>
+        <nav class="exam-question-navigation" aria-label="Danh sách câu hỏi">
+          <span class="exam-progress-label" id="exam-progress-count">
+            <strong th:text="${attempt.answeredItems()}">0</strong>
+            /
+            <span th:text="${attempt.totalItems()}">0</span>
+            câu đã làm
+          </span>
+          <div class="exam-question-grid">
+            <th:block th:each="question : ${attempt.questions}">
+              <a
+                th:each="item : ${question.items}"
+                class="exam-question-link"
+                th:href="${'#item-' + item.itemId}"
+                th:text="${item.position}"
+                th:classappend="${item.answered()} ? 'is-answered'"
+                th:attr="data-item-id=${item.itemId},aria-label=${'Câu ' + item.position}"
+              ></a>
+            </th:block>
+          </div>
+        </nav>
+        <div class="exam-control-actions">
+          <form
+            th:if="${attempt.nextSection()}"
+            id="next-section-form"
+            method="post"
+            th:action="@{/student/attempts/{id}/next-section(id=${attempt.attemptId})}"
+          >
+            <input
+              type="hidden"
+              name="sectionEndMinute"
+              th:value="${attempt.nextSectionAfterMinute}"
+            />
+            <button id="next-section" class="button" type="submit">Sang phần tiếp theo</button>
+          </form>
+          <form
+            id="submit-attempt-form"
+            method="post"
+            th:action="@{/student/attempts/{id}/submit(id=${attempt.attemptId})}"
+          >
+            <p
+              id="attempt-submit-error"
+              class="alert alert-danger ap-alert ap-alert-danger"
+              role="alert"
+              tabindex="-1"
+              hidden
+            ></p>
+            <button
+              id="submit-attempt"
+              class="button"
+              th:classappend="${attempt.nextSection()} ? 'button-secondary'"
+              type="submit"
+            >
+              Nộp bài
+            </button>
+          </form>
+          <form
+            id="exit-attempt-form"
+            method="post"
+            th:action="@{/student/attempts/{id}/exit(id=${attempt.attemptId})}"
+          >
+            <button class="button button-secondary exam-exit-button" type="submit">
+              ← Thoát bài thi
+            </button>
+          </form>
+        </div>
+      </aside>
+      <main class="app-main student-content" id="main-content" tabindex="-1">
+        <header class="page-header">
+          <div>
+            <h1 th:text="${attempt.title}"></h1>
+          </div>
+        </header>
+
+        <div class="alert alert-error" th:if="${error}" th:text="${error}"></div>
+        <section
+          class="dashboard-panel dashboard-section full-mock-question"
+          th:each="question, questionStat : ${attempt.questions}"
+          th:attr="data-question-page=${questionStat.index}"
+        >
+          <p
+            class="eyebrow"
+            th:text="${'Phần ' + questionStat.count + ' · ' + (question.skill == 'GRAMMAR_VOCABULARY' ? 'Grammar & Vocabulary' : question.skill)}"
+          ></p>
+          <h2 tabindex="-1" th:text="${question.content}"></h2>
+          <p
+            class="question-instruction"
+            th:if="${question.skill == 'READING' and (question.instruction != null and !question.instruction.isBlank())}"
+            th:text="${question.instruction}"
+          ></p>
+          <article
+            class="reading-passage"
+            th:if="${question.skill == 'READING' and (question.readingPassage != null and !question.readingPassage.isBlank())}"
+          >
+            <h3>Đoạn văn</h3>
+            <div class="reading-passage-text" th:text="${question.readingPassage}"></div>
+          </article>
+          <div class="attempt-media" th:each="media : ${question.media}">
+            <img
+              th:if="${media.type == 'IMAGE'}"
+              th:src="@{/student/attempts/{id}/media/{mediaId}/content(id=${attempt.attemptId},mediaId=${media.id})}"
+              th:alt="${media.filename}"
+            />
+            <div th:if="${media.type == 'AUDIO'}" class="media-player">
+              <audio
+                class="media-audio"
+                controls
+                controlsList="nodownload noplaybackrate"
+                disablepictureinpicture
+                preload="metadata"
+                th:src="@{/student/attempts/{id}/media/{mediaId}/listen(id=${attempt.attemptId},mediaId=${media.id})}"
+              >
+                Trình duyệt không hỗ trợ phát audio.
+              </audio>
+              <span class="media-status muted">Audio được cấp quyền bởi máy chủ khi mở.</span>
+            </div>
+          </div>
+          <div
+            th:each="item : ${question.items}"
+            class="question-item"
+            tabindex="-1"
+            th:id="${'item-' + item.itemId}"
+            th:attr="data-saved=${item.audioSaved},data-item-id=${item.itemId}"
+          >
+            <div class="question-item-header">
+              <span
+                class="question-item-number"
+                th:text="${item.position}"
+                aria-hidden="true"
+              ></span>
+              <p class="question-item-prompt" th:text="${item.content}"></p>
+            </div>
+            <form
+              class="answer-form"
+              method="post"
+              th:action="@{/student/attempts/{id}/answers(id=${attempt.attemptId})}"
+              th:id="${'answer-form-' + item.itemId}"
+            >
+              <input type="hidden" name="questionId" th:value="${question.questionId}" />
+              <input type="hidden" name="itemId" th:value="${item.itemId}" />
+              <div th:if="${question.type == 'ORDERING'}" class="field">
+                <label th:for="${'position-' + (item.itemId)}">Vị trí trong thứ tự</label>
+                <input
+                  type="number"
+                  min="1"
+                  th:max="${question.items.size()}"
+                  name="userPosition"
+                  th:id="${'position-' + (item.itemId)}"
+                  th:value="${item.userPosition}"
+                />
+              </div>
+              <div
+                th:if="${question.type != 'ORDERING' and (item.options != null and !item.options.isEmpty())}"
+                class="catalog-checkbox"
+              >
+                <label th:each="option : ${item.options}">
+                  <input
+                    type="radio"
+                    name="selectedOptionId"
+                    th:value="${option.id}"
+                    th:checked="${item.selectedOptionId == option.id}"
+                  />
+                  <span th:text="${option.code + ' · ' + option.content}"></span>
+                </label>
+              </div>
+              <div class="field" th:if="${question.type == 'WRITING_TEXT'}">
+                <label th:for="${'answer-' + (item.itemId)}">Câu trả lời</label>
+                <p
+                  class="field-help"
+                  th:if="${item.minWordCount != null or item.maxWordCount != null}"
+                  th:text="${'Giới hạn: ' + (item.minWordCount != null ? item.minWordCount : 0) + '–' + (item.maxWordCount != null ? item.maxWordCount : 'không giới hạn') + ' từ'}"
+                ></p>
+                <textarea
+                  th:id="${'answer-' + (item.itemId)}"
+                  name="textAnswer"
+                  rows="6"
+                  th:attr="data-min-words=${item.minWordCount},data-max-words=${item.maxWordCount}"
+                  th:text="${item.textAnswer}"
+                ></textarea>
+                <p class="writing-limit-error alert alert-danger" hidden role="alert"></p>
+              </div>
+              <button class="button button-secondary button-small" type="submit">Lưu đáp án</button>
+            </form>
+            <form
+              th:if="${question.type == 'SPEAKING_AUDIO'}"
+              class="speaking-recorder"
+              method="post"
+              enctype="multipart/form-data"
+              th:action="@{/student/attempts/{id}/answers/audio(id=${attempt.attemptId})}"
+            >
+              <input type="hidden" name="questionId" th:value="${question.questionId}" />
+              <input type="hidden" name="itemId" th:value="${item.itemId}" />
+              <span class="speaking-recorder-label">Câu trả lời của bạn</span>
+              <input type="file" name="audioFile" accept="audio/*" required />
+              <small class="muted">Hãy tải lên file audio đã ghi.</small>
+              <button class="button button-secondary button-small" type="submit">Lưu bản ghi</button>
+              <span
+                class="muted recording-saved"
+                th:text="${item.audioSaved ? 'Đã lưu bản ghi.' : 'Chưa có bản ghi đã lưu.'}"
+              ></span>
+            </form>
+          </div>
+        </section>
+      </main>
+    </div>
+    <footer class="site-footer">
+      <div class="container footer-wrap">
+        <span>© 2026 AptisPrep. Học đúng lộ trình, tiến bộ mỗi ngày.</span>
+        <span>Nền tảng học tập và luyện thi Aptis</span>
+      </div>
+    </footer>
+  </body>
+</html>

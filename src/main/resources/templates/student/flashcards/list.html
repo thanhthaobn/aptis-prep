@@ -31,13 +31,6 @@
     <link rel="stylesheet" th:href="@{/css/catalog-compact.css}" />
     <link rel="stylesheet" th:href="@{/css/admin-overview.css}" />
     <link rel="stylesheet" th:href="@{/css/typography.css}" />
-    <script th:src="@{/js/app-dialog.js}" defer></script>
-    <script
-      src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"
-      integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI"
-      crossorigin="anonymous"
-      defer
-    ></script>
   </head>
   <body class="student-theme flashcard-page">
     <header class="site-header">
@@ -53,28 +46,6 @@
           </span>
           <span>AptisPrep</span>
         </a>
-
-        <button
-          class="nav-toggle"
-          id="navToggle"
-          type="button"
-          aria-label="Mở menu điều hướng"
-          aria-expanded="false"
-          aria-controls="primaryNav"
-        >
-          <svg
-            class="hamburger-icon"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-            aria-hidden="true"
-          >
-            <line x1="3" y1="6" x2="21" y2="6" />
-            <line x1="3" y1="12" x2="21" y2="12" />
-            <line x1="3" y1="18" x2="21" y2="18" />
-          </svg>
-        </button>
 
         <nav class="nav-links" id="primaryNav" aria-label="Điều hướng chính">
           <a th:href="@{/}">Trang chủ</a>
@@ -96,24 +67,11 @@
           </form>
         </nav>
       </div>
-
-      <script th:src="@{/js/navigation.js}" defer></script>
     </header>
     <div class="container ap-container app-shell">
       <div>
         <aside th:with="activePage='flashcards'" class="app-sidebar">
-          <button
-            class="sidebar-toggle collapsed"
-            type="button"
-            data-bs-toggle="collapse"
-            data-bs-target="#student-sidebar-content"
-            aria-expanded="false"
-            aria-controls="student-sidebar-content"
-          >
-            <span>Menu học tập</span>
-            <span class="sidebar-toggle-icon" aria-hidden="true">⌄</span>
-          </button>
-          <div class="sidebar-content collapse d-lg-block" id="student-sidebar-content">
+          <div class="sidebar-content" id="student-sidebar-content">
             <span class="sidebar-label">HỌC TẬP</span>
             <nav class="sidebar-nav" aria-label="Điều hướng học tập">
               <a
@@ -295,8 +253,8 @@
               <article
                 class="flashcard-set-card flashcard-row"
                 th:each="set : ${sets}"
-                th:if="${set.personal()}"
-                th:attr="data-skill=${set.lessonSkill()}"
+                th:if="${set.personal}"
+                th:attr="data-skill=${set.lessonSkill}"
               >
                 <div class="flashcard-set-mark" aria-hidden="true"><span>Aa</span></div>
                 <div class="flashcard-set-content">
@@ -304,40 +262,37 @@
                   <div class="set-badges">
                     <span
                       class="badge"
-                      th:classappend="${set.level() != null ? 'badge-cefr-' + (set.level() == null ? null : set.level().toLowerCase()) : ''}"
-                      th:text="${set.level()}"
+                      th:classappend="${set.level != null ? 'badge-cefr-' + set.level.toLowerCase() : ''}"
+                      th:text="${set.level}"
                     ></span>
                     <span class="badge personal-badge">Riêng tư</span>
                   </div>
-                  <h2 th:text="${set.title()}"></h2>
+                  <h2 th:text="${set.title}"></h2>
                   <a
                     class="set-lesson-source"
-                    th:if="${set.lessonId()!=null}"
-                    th:href="${'/student/lessons/'+set.lessonId()}"
+                    th:if="${set.lessonId!=null}"
+                    th:href="${'/student/lessons/'+set.lessonId}"
                   >
-                    <small th:text="${'' + (set.lessonSkill()) + ' · Bài học nguồn'}"></small>
-                    <span th:text="${'' + (set.lessonTitle()) + ' ↗'}"></span>
+                    <small th:text="${'' + set.lessonSkill + ' · Bài học nguồn'}"></small>
+                    <span th:text="${'' + set.lessonTitle + ' ↗'}"></span>
                   </a>
 
                   <div class="flashcard-set-meta">
                     <span aria-hidden="true">▤</span>
-                    <strong th:text="${'' + (set.count()) + ' thuật ngữ'}"></strong>
+                    <strong th:text="${'' + set.count + ' thuật ngữ'}"></strong>
                   </div>
                 </div>
                 <div class="flashcard-set-actions">
-                  <a class="button" th:href="${'/student/flashcards/'+set.id()}">Ôn bộ thẻ</a>
+                  <a class="button" th:href="${'/student/flashcards/'+set.id}">Ôn bộ thẻ</a>
                   <a
                     class="button button-secondary"
-                    th:href="@{/student/flashcards/{id}/edit(id=${set.id()})}"
+                    th:href="@{/student/flashcards/{id}/edit(id=${set.id})}"
                   >
                     Chỉnh sửa
                   </a>
                   <form
                     method="post"
-                    th:action="@{/student/flashcards/{id}/archive(id=${set.id()})}"
-                    data-confirm-title="Xóa bộ thẻ?"
-                    data-confirm-message="Bộ thẻ sẽ được ẩn khỏi danh sách của bạn. Tiến độ ôn tập vẫn được giữ lại."
-                    data-confirm-button="Xóa bộ thẻ"
+                    th:action="@{/student/flashcards/{id}/archive(id=${set.id})}"
                   >
                     <button class="button button-quiet" type="submit">Xóa thẻ</button>
                   </form>
@@ -357,55 +312,49 @@
             <details
               class="flashcard-skill-branch"
               th:each="branch : ${lessonBranches}"
-              th:attr="data-skill=${branch.skill}"
+              th:attr="data-skill=${branch.key}"
             >
               <summary>
-                <strong th:text="${branch.skill}"></strong>
-                <span th:text="${'' + (branch.count) + ' bộ'}"></span>
+                <strong th:text="${branch.key}"></strong>
+                <span th:text="${'' + (branch.value.size()) + ' bộ'}"></span>
               </summary>
               <div class="flashcard-level-branches">
-                <details class="flashcard-level-branch" th:each="tier : ${branch.levels}">
-                  <summary>
-                    <strong th:text="${tier.level}"></strong>
-                    <span th:text="${'' + (tier.sets.size()) + ' bộ'}"></span>
-                  </summary>
-                  <section class="flashcard-set-grid" aria-label="Danh sách bộ flashcard">
+                <section class="flashcard-set-grid" aria-label="Danh sách bộ flashcard">
                     <article
                       class="flashcard-set-card flashcard-row"
-                      th:each="set : ${tier.sets}"
-                      th:attr="data-skill=${set.lessonSkill()}"
+                      th:each="set : ${branch.value}"
+                      th:attr="data-skill=${set.lessonSkill}"
                     >
                       <div class="flashcard-set-mark" aria-hidden="true"><span>Aa</span></div>
                       <div class="flashcard-set-content">
-                        <span class="flashcard-skill-label" th:text="${set.lessonSkill()}"></span>
+                        <span class="flashcard-skill-label" th:text="${set.lessonSkill}"></span>
                         <div class="set-badges">
                           <span
                             class="badge"
-                            th:classappend="${set.level() != null ? 'badge-cefr-' + (set.level() == null ? null : set.level().toLowerCase()) : ''}"
-                            th:text="${set.level()}"
+                            th:classappend="${set.level != null ? 'badge-cefr-' + set.level.toLowerCase() : ''}"
+                            th:text="${set.level}"
                           ></span>
                         </div>
-                        <h2 th:text="${set.title()}"></h2>
+                        <h2 th:text="${set.title}"></h2>
                         <a
                           class="set-lesson-source"
-                          th:if="${set.lessonId()!=null}"
-                          th:href="${'/student/lessons/'+set.lessonId()}"
+                          th:if="${set.lessonId!=null}"
+                          th:href="${'/student/lessons/'+set.lessonId}"
                         >
-                          <small th:text="${'' + (set.lessonSkill()) + ' · Bài học nguồn'}"></small>
-                          <span th:text="${'' + (set.lessonTitle()) + ' ↗'}"></span>
+                          <small th:text="${'' + set.lessonSkill + ' · Bài học nguồn'}"></small>
+                          <span th:text="${'' + set.lessonTitle + ' ↗'}"></span>
                         </a>
 
                         <div class="flashcard-set-meta">
                           <span aria-hidden="true">▤</span>
-                          <strong th:text="${'' + (set.count()) + ' thuật ngữ'}"></strong>
+                          <strong th:text="${'' + set.count + ' thuật ngữ'}"></strong>
                         </div>
                       </div>
                       <div class="flashcard-set-actions">
-                        <a class="button" th:href="${'/student/flashcards/'+set.id()}">Ôn bộ thẻ</a>
+                        <a class="button" th:href="${'/student/flashcards/'+set.id}">Ôn bộ thẻ</a>
                       </div>
                     </article>
-                  </section>
-                </details>
+                </section>
               </div>
             </details>
           </div>

@@ -31,13 +31,6 @@
     <link rel="stylesheet" th:href="@{/css/catalog-compact.css}" />
     <link rel="stylesheet" th:href="@{/css/admin-overview.css}" />
     <link rel="stylesheet" th:href="@{/css/typography.css}" />
-    <script th:src="@{/js/app-dialog.js}" defer></script>
-    <script
-      src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"
-      integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI"
-      crossorigin="anonymous"
-      defer
-    ></script>
   </head>
   <body class="student-theme">
     <header class="site-header">
@@ -53,28 +46,6 @@
           </span>
           <span>AptisPrep</span>
         </a>
-
-        <button
-          class="nav-toggle"
-          id="navToggle"
-          type="button"
-          aria-label="Mở menu điều hướng"
-          aria-expanded="false"
-          aria-controls="primaryNav"
-        >
-          <svg
-            class="hamburger-icon"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-            aria-hidden="true"
-          >
-            <line x1="3" y1="6" x2="21" y2="6" />
-            <line x1="3" y1="12" x2="21" y2="12" />
-            <line x1="3" y1="18" x2="21" y2="18" />
-          </svg>
-        </button>
 
         <nav class="nav-links" id="primaryNav" aria-label="Điều hướng chính">
           <a th:href="@{/}">Trang chủ</a>
@@ -96,23 +67,10 @@
           </form>
         </nav>
       </div>
-
-      <script th:src="@{/js/navigation.js}" defer></script>
     </header>
     <div class="container app-shell">
       <aside th:with="activePage='profile'" class="app-sidebar">
-        <button
-          class="sidebar-toggle collapsed"
-          type="button"
-          data-bs-toggle="collapse"
-          data-bs-target="#student-sidebar-content"
-          aria-expanded="false"
-          aria-controls="student-sidebar-content"
-        >
-          <span>Menu học tập</span>
-          <span class="sidebar-toggle-icon" aria-hidden="true">⌄</span>
-        </button>
-        <div class="sidebar-content collapse d-lg-block" id="student-sidebar-content">
+        <div class="sidebar-content" id="student-sidebar-content">
           <span class="sidebar-label">HỌC TẬP</span>
           <nav class="sidebar-nav" aria-label="Điều hướng học tập">
             <a
@@ -245,8 +203,6 @@
             th:action="@{/student/profile/edit}"
             th:object="${profileForm}"
             method="post"
-            data-account-form
-            data-profile-form
           >
             <div class="field">
               <label for="profileEmail">Email đăng nhập</label>
@@ -269,9 +225,6 @@
                   Họ và tên
                   <span class="required-star">*</span>
                 </label>
-                <span id="nameDirtyHint" class="field-hint-dirty" style="display: none">
-                  Chưa lưu thay đổi
-                </span>
               </div>
               <input
                 id="profileName"
@@ -308,26 +261,26 @@
                 <a
                   class="button button-secondary button-small"
                   th:href="@{/student/placement}"
-                  th:text="${account.profiles != null and !account.profiles.isEmpty() ? 'Kiểm tra lại' : 'Kiểm tra đầu vào'}"
+                  th:text="${profiles != null and !profiles.isEmpty() ? 'Kiểm tra lại' : 'Kiểm tra đầu vào'}"
                 ></a>
               </div>
             </div>
 
-            <div class="goal-summary-banner" th:if="${account.goal != null}">
+            <div class="goal-summary-banner" th:if="${goal != null}">
               <div class="goal-cert-info">
                 <span class="goal-eyebrow">CHỨNG CHỈ HƯỚNG TỚI</span>
                 <strong
-                  th:text="${account.goal.certificateName != null ? account.goal.certificateName : 'Aptis ESOL General'}"
+                  th:text="${goal.certificateName != null and !goal.certificateName.isBlank() ? goal.certificateName : 'Aptis ESOL General'}"
                 ></strong>
               </div>
               <div class="goal-target-date">
                 <span
                   class="goal-eyebrow"
-                  th:text="${account.goal.targetDate != null ? 'HẠN THI: ' + #temporals.format(account.goal.targetDate, 'dd/MM/yyyy') : 'CHƯA ĐẶT NGÀY'}"
+                  th:text="${goal.targetDate != null ? 'HẠN THI: ' + #temporals.format(goal.targetDate, 'dd/MM/yyyy') : 'CHƯA ĐẶT NGÀY'}"
                 ></span>
                 <span
-                  th:if="${account.goal.targetDate != null}"
-                  th:with="daysRemaining=${T(java.time.temporal.ChronoUnit).DAYS.between(T(java.time.LocalDate).now(), account.goal.targetDate)}"
+                  th:if="${goal.targetDate != null}"
+                  th:with="daysRemaining=${T(java.time.temporal.ChronoUnit).DAYS.between(T(java.time.LocalDate).now(), goal.targetDate)}"
                   class="badge"
                   th:classappend="${daysRemaining &lt; 0 ? 'badge-danger' : (daysRemaining &lt;= 30 ? 'badge-warning' : 'badge-success')}"
                 >
@@ -343,7 +296,7 @@
               </div>
             </div>
 
-            <p class="muted" th:if="${account.goal == null}">Chưa đặt mục tiêu học tập.</p>
+            <p class="muted" th:if="${goal == null}">Chưa đặt mục tiêu học tập.</p>
             <div class="skill-compare-table">
               <div class="compare-table-head">
                 <span>Kỹ năng</span>
@@ -356,7 +309,7 @@
                 <li
                   th:each="code : ${skillCodes}"
                   class="compare-item"
-                  th:with="targetLvl=${account.goal != null and account.goal.targets != null ? account.goal.targets.get(code) : null}"
+                  th:with="targetLvl=${goal != null ? goal.targetLevel(code) : null}"
                 >
                   <span
                     class="compare-skill-name"
@@ -365,16 +318,16 @@
                   <div class="compare-cols-right">
                     <span class="current-level-slot">
                       <span
-                        th:if="${account.profiles == null or account.profiles.isEmpty()}"
+                        th:if="${profiles == null or profiles.isEmpty()}"
                         class="cefr-chip cefr-none"
                       >
                         —
                       </span>
                       <th:block
-                        th:unless="${account.profiles == null or account.profiles.isEmpty()}"
+                        th:unless="${profiles == null or profiles.isEmpty()}"
                       >
                         <span
-                          th:each="p : ${account.profiles}"
+                          th:each="p : ${profiles}"
                           th:if="${p.skill == code or (code == 'GRAMMAR_VOCABULARY' and (p.skill == 'Grammar & Vocabulary' or p.skill == 'GRAMMAR_VOCABULARY'))}"
                           class="cefr-chip"
                           th:classappend="${p.currentLevel != null ? 'cefr-' + p.currentLevel.toLowerCase() : 'cefr-none'}"
@@ -394,10 +347,10 @@
           </div>
 
           <div class="panel-bottom-note">
-            <span th:if="${account.profiles != null and !account.profiles.isEmpty()}">
+            <span th:if="${profiles != null and !profiles.isEmpty()}">
               Đã đồng bộ kết quả mới nhất vào hệ thống học tập.
             </span>
-            <span th:if="${account.profiles == null or account.profiles.isEmpty()}">
+            <span th:if="${profiles == null or profiles.isEmpty()}">
               Chưa có kết quả đánh giá. Trình độ sẽ hiển thị sau khi bạn làm bài kiểm tra đầu vào.
             </span>
           </div>
@@ -457,7 +410,7 @@
                     th:each="day : ${week.days}"
                     class="activity-day"
                     th:classappend="${day.future ? ' is-future' : ' activity-level-' + day.level}"
-                    th:attr="aria-label=${day.label},data-activity-tooltip=${day.label}"
+                    th:attr="aria-label=${day.label},title=${day.label}"
                     role="img"
                   ></span>
                 </div>
@@ -482,7 +435,5 @@
         <span>Nền tảng học tập và luyện thi Aptis</span>
       </div>
     </footer>
-    <script th:src="@{/js/account-forms.js}" defer></script>
-    <script th:src="@{/js/profile-activity.js}" defer></script>
   </body>
 </html>

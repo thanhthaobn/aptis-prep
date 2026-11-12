@@ -3,10 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta
-      name="description"
-      content="AptisPrep - Nền tảng luyện thi Aptis chuẩn CEFR (Reading, Listening, Writing, Speaking) với lộ trình cá nhân hóa và chấm điểm thông minh."
-    />
+    <meta name="description" content="Quản lý nội dung bài học AptisPrep." />
     <title>Quản lý bài học | AptisPrep</title>
     <link
       rel="icon"
@@ -31,86 +28,227 @@
     <link rel="stylesheet" th:href="@{/css/catalog-compact.css}" />
     <link rel="stylesheet" th:href="@{/css/admin-overview.css}" />
     <link rel="stylesheet" th:href="@{/css/typography.css}" />
-    <script th:src="@{/js/app-dialog.js}" defer></script>
-    <script
-      src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"
-      integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI"
-      crossorigin="anonymous"
-      defer
-    ></script>
+    <link rel="stylesheet" th:href="@{/css/admin-lesson.css}" />
   </head>
-  <body class="admin-theme">
-    <header th:replace="~{fragments/admin-layout :: adminHeader}"></header>
+  <body class="admin-theme admin-lesson-list">
+    <header class="site-header">
+      <a href="#main-content" class="ap-skip-link">Bỏ qua điều hướng</a>
+      <div class="container ap-container nav-wrap">
+        <a class="brand" th:href="@{/}">
+          <span class="brand-mark" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+              <path d="M5 19V7.5L12 4l7 3.5V19" />
+              <path d="M8.5 10.5 12 12l3.5-1.5M12 12v8" />
+            </svg>
+          </span>
+          <span>AptisPrep</span>
+        </a>
+        <nav class="nav-links" id="primaryNav" aria-label="Điều hướng chính">
+          <a th:href="@{/}">Trang chủ</a>
+          <a th:if="${isStudent}" th:href="@{/student/dashboard}">Học tập</a>
+          <a
+            th:if="${isAdmin}"
+            th:href="@{/admin/dashboard}"
+            class="active"
+            aria-current="page"
+          >Quản trị</a>
+          <a th:if="${signedIn != true}" th:href="@{/login}">Đăng nhập</a>
+          <a th:if="${signedIn != true}" class="button button-small" th:href="@{/register}">Đăng ký</a>
+          <form th:if="${signedIn}" th:action="@{/logout}" method="post">
+            <button class="button button-secondary button-small" type="submit">Đăng xuất</button>
+          </form>
+        </nav>
+      </div>
+    </header>
+
     <div class="container ap-container app-shell">
-      <aside th:replace="~{fragments/admin-sidebar :: adminSidebar('lessons')}"></aside>
-      <main id="main-content" tabindex="-1" class="app-main admin-catalog admin-lesson-tree">
+      <aside class="app-sidebar">
+        <div class="sidebar-content" id="admin-sidebar-content">
+          <span class="sidebar-label">QUẢN TRỊ</span>
+          <nav class="sidebar-nav" aria-label="Điều hướng quản trị">
+            <a class="sidebar-link" th:href="@{/admin/dashboard}">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h6v6H4zm10 0h6v6h-6zM4 14h6v6H4zm10 0h6v6h-6z" /></svg>
+              Tổng quan
+            </a>
+            <a class="sidebar-link" th:href="@{/admin/students}">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="8" r="3" /><path d="M3 20v-2a6 6 0 0 1 12 0v2M16 5a3 3 0 1 1 0 6m2 3a5 5 0 0 1 3 4v2" /></svg>
+              Học viên
+            </a>
+            <a class="sidebar-link" th:href="@{/admin/unlock-requests}">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="10" width="14" height="10" rx="2" /><path d="M8 10V7a4 4 0 0 1 8 0v3" /></svg>
+              Yêu cầu mở khóa
+              <span th:if="${pendingUnlockCount != null and pendingUnlockCount > 0}" class="badge badge-warning" th:text="${pendingUnlockCount}"></span>
+            </a>
+            <a class="sidebar-link active" aria-current="page" th:href="@{/admin/lessons}">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20V4H6.5A2.5 2.5 0 0 0 4 6.5z" /></svg>
+              Bài học
+            </a>
+            <a class="sidebar-link" th:href="@{/admin/questions}">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9" /><path d="M9.5 9a2.5 2.5 0 1 1 3.2 2.4c-.7.3-.7.8-.7 1.6M12 17h.01" /></svg>
+              Ngân hàng câu hỏi
+            </a>
+            <a class="sidebar-link" th:href="@{/admin/exams}">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 3h10v4H7zM5 7h14v14H5z" /></svg>
+              Đề thi
+            </a>
+            <a class="sidebar-link" th:href="@{/admin/results}">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19V5m0 14h16M8 16v-4m4 4V7m4 9v-6" /></svg>
+              Kết quả
+            </a>
+            <a class="sidebar-link" th:href="@{/admin/flashcards}">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="6" y="6" width="15" height="15" rx="3" /><path d="M17 6V3H3v14h3" /></svg>
+              Flashcard
+            </a>
+          </nav>
+          <div class="sidebar-divider"></div>
+          <span class="sidebar-label">HỆ THỐNG</span>
+          <nav class="sidebar-nav">
+            <a class="sidebar-link" th:href="@{/admin/scoring-schemes}">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 19h16M7 16v-5m5 5V5m5 11V8" /></svg>
+              Chấm điểm
+            </a>
+          </nav>
+        </div>
+      </aside>
+
+      <main class="app-main" id="main-content" tabindex="-1">
         <header class="page-header">
           <div>
             <h1>Quản lý bài học</h1>
           </div>
+          <div class="page-actions">
+            <a class="button" th:href="@{/admin/lessons/create}">Thêm bài học</a>
+          </div>
         </header>
-        <section class="curriculum-tree" aria-label="Cây quản lý bài học">
-          <details
-            class="dashboard-panel skill-branch"
-            th:each="branch : ${tree}"
-            th:attr="data-skill=${branch.skill()}"
-          >
-            <summary>
-              <strong th:text="${branch.skill()}"></strong>
-              <span th:text="${'' + (branch.count()) + ' bài học'}"></span>
-            </summary>
-            <details class="level-branch" th:each="level : ${branch.levels()}">
-              <summary>
-                <strong th:text="${level.level()}"></strong>
-                <span th:text="${'' + (level.lessons().size()) + ' bài học'}"></span>
-              </summary>
-              <details class="topic-branch" th:each="topic : ${level.topics()}">
-                <summary th:text="${topic.key}"></summary>
-                <ul class="lesson-leaves">
-                  <li th:each="lesson : ${topic.value}" class="admin-lesson-leaf">
-                    <div class="lesson-leaf-title">
-                      <span class="muted" th:text="${'' + (lesson.displayOrder) + '.'}"></span>
-                      <a
-                        th:href="@{/admin/lessons/{id}(id=${lesson.id})}"
-                        th:text="${lesson.title}"
-                      ></a>
-                      <span
-                        class="badge"
-                        th:classappend="${lesson.status == 'PUBLISHED'} ? 'badge-success'"
-                        th:text="${lesson.status=='PUBLISHED'?'Đã công bố':(lesson.status=='DRAFT'?'Bản nháp':'Đã lưu trữ')}"
-                      ></span>
-                    </div>
-                    <div class="catalog-table-actions lesson-leaf-actions">
-                      <a
-                        class="button button-secondary"
-                        th:href="@{/admin/lessons/{id}(id=${lesson.id})}"
-                      >
-                        Xem trước
-                      </a>
-                      <a class="button" th:href="@{/admin/lessons/{id}/edit(id=${lesson.id})}">
-                        Chỉnh sửa
-                      </a>
-                    </div>
-                  </li>
-                </ul>
-                <a
-                  class="button button-secondary"
-                  th:href="@{/admin/lessons/create(skill=${branch.skill()},level=${level.level()},topic=${topic.key=='Bài học độc lập'?'':topic.key})}"
-                >
-                  + Thêm bài trong chủ đề
-                </a>
-              </details>
-              <p class="muted" th:if="${level.lessons() == null or level.lessons().isEmpty()}">
-                Chưa có bài học ở cấp độ này.
-              </p>
+
+        <form class="toolbar lesson-toolbar" th:action="@{/admin/lessons}" method="get" role="search">
+          <div class="toolbar-search">
+            <label for="lessonQuery">Tìm bài học</label>
+            <input
+              id="lessonQuery"
+              name="q"
+              type="search"
+              maxlength="255"
+              th:value="${q}"
+              placeholder="Nhập tiêu đề, mô tả hoặc chủ đề…"
+            />
+          </div>
+          <div>
+            <label for="lessonSkill">Kỹ năng</label>
+            <select id="lessonSkill" name="skill">
+              <option value="">Tất cả kỹ năng</option>
+              <option
+                th:each="skill : ${skills}"
+                th:value="${skill}"
+                th:text="${skill}"
+                th:selected="${selectedSkill == skill}"
+              >Reading</option>
+            </select>
+          </div>
+          <div>
+            <label for="lessonLevel">Cấp độ</label>
+            <select id="lessonLevel" name="level">
+              <option value="">Tất cả cấp độ</option>
+              <option
+                th:each="level : ${levels}"
+                th:value="${level}"
+                th:text="${level}"
+                th:selected="${selectedLevel == level}"
+              >A1</option>
+            </select>
+          </div>
+          <input type="hidden" name="size" value="10" />
+          <button class="button" type="submit">Tìm kiếm</button>
+          <a class="button button-secondary" th:href="@{/admin/lessons}">Đặt lại</a>
+        </form>
+
+        <div class="section-title-row">
+          <div>
+            <h2>Danh sách bài học</h2>
+            <p class="muted" th:text="${pageData.totalElements + ' bài học'}">0 bài học</p>
+          </div>
+        </div>
+
+        <div class="table-wrap" th:if="${pageData.content != null and !pageData.content.isEmpty()}">
+          <table class="data-table">
+            <caption class="visually-hidden">Danh sách bài học</caption>
+            <thead>
+              <tr>
+                <th scope="col">Tiêu đề</th>
+                <th scope="col">Kỹ năng</th>
+                <th scope="col">Cấp độ</th>
+                <th scope="col">Trạng thái</th>
+                <th scope="col" class="text-end">Thao tác</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr th:each="lesson : ${pageData.content}">
+                <td><strong th:text="${lesson.title}">Tiêu đề bài học</strong></td>
+                <td th:text="${lesson.skill}">Reading</td>
+                <td><span class="badge" th:text="${lesson.cefrLevel}">A1</span></td>
+                <td>
+                  <span
+                    class="status-badge"
+                    th:classappend="${lesson.status == 'PUBLISHED' ? 'status-published' : (lesson.status == 'DRAFT' ? 'status-draft' : 'status-archived')}"
+                    th:text="${lesson.statusLabel}"
+                  >Đã công bố</span>
+                </td>
+                <td>
+                  <div class="table-actions">
+                    <a class="button button-secondary button-small" th:href="@{/admin/lessons/{id}(id=${lesson.id})}">Xem</a>
+                    <a class="button button-small" th:href="@{/admin/lessons/{id}/edit(id=${lesson.id})}">Sửa</a>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="empty-box" th:if="${pageData.content == null or pageData.content.isEmpty()}">
+          <h2>Chưa có bài học</h2>
+          <p th:text="${pageData.totalElements == 0 and (q == null or q.isBlank()) and (selectedSkill == null or selectedSkill.isBlank()) and (selectedLevel == null or selectedLevel.isBlank()) ? 'Chưa có bài học' : 'Không tìm thấy bài học phù hợp'}">Không tìm thấy bài học phù hợp.</p>
+          <a class="button button-secondary" th:href="@{/admin/lessons}">Xóa bộ lọc</a>
+        </div>
+
+        <th:block th:with="currentPage=${pageData.number},totalPages=${pageData.totalPages},totalItems=${pageData.totalElements}">
+          <nav class="pagination student-pagination lesson-pagination" aria-label="Phân trang bài học">
+            <span th:text="${totalItems + ' bài học'}">0 bài học</span>
+            <div class="pagination-pages" th:if="${totalPages > 1}">
               <a
-                class="button button-secondary"
-                th:href="@{/admin/lessons/create(skill=${branch.skill()},level=${level.level()})}"
-                th:text="${'+ Thêm bài vào ' + (branch.skill()) + ' ' + (level.level())}"
-              ></a>
-            </details>
-          </details>
-        </section>
+                class="page-link"
+                th:if="${currentPage > 0}"
+                th:href="@{/admin/lessons(page=${currentPage - 1},size=${pageData.size},q=${q},skill=${selectedSkill},level=${selectedLevel})}"
+                aria-label="Trang trước"
+              >‹</a>
+              <span
+                class="page-link disabled"
+                th:unless="${currentPage > 0}"
+                aria-disabled="true"
+                aria-label="Trang trước"
+              >‹</span>
+              <a
+                class="page-link"
+                th:each="pageNumber : ${#numbers.sequence(0, totalPages - 1)}"
+                th:classappend="${pageNumber == currentPage ? 'active' : ''}"
+                th:href="@{/admin/lessons(page=${pageNumber},size=${pageData.size},q=${q},skill=${selectedSkill},level=${selectedLevel})}"
+                th:attr="aria-current=${pageNumber == currentPage ? 'page' : null}"
+                th:text="${pageNumber + 1}"
+              >1</a>
+              <a
+                class="page-link"
+                th:if="${currentPage + 1 < totalPages}"
+                th:href="@{/admin/lessons(page=${currentPage + 1},size=${pageData.size},q=${q},skill=${selectedSkill},level=${selectedLevel})}"
+                aria-label="Trang sau"
+              >›</a>
+              <span
+                class="page-link disabled"
+                th:unless="${currentPage + 1 < totalPages}"
+                aria-disabled="true"
+                aria-label="Trang sau"
+              >›</span>
+            </div>
+          </nav>
+        </th:block>
       </main>
     </div>
     <footer class="site-footer">

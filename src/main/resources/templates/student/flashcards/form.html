@@ -33,13 +33,6 @@
     <link rel="stylesheet" th:href="@{/css/catalog-compact.css}" />
     <link rel="stylesheet" th:href="@{/css/admin-overview.css}" />
     <link rel="stylesheet" th:href="@{/css/typography.css}" />
-    <script th:src="@{/js/app-dialog.js}" defer></script>
-    <script
-      src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"
-      integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI"
-      crossorigin="anonymous"
-      defer
-    ></script>
   </head>
   <body class="student-theme flashcard-page">
     <header class="site-header">
@@ -55,28 +48,6 @@
           </span>
           <span>AptisPrep</span>
         </a>
-
-        <button
-          class="nav-toggle"
-          id="navToggle"
-          type="button"
-          aria-label="Mở menu điều hướng"
-          aria-expanded="false"
-          aria-controls="primaryNav"
-        >
-          <svg
-            class="hamburger-icon"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-            aria-hidden="true"
-          >
-            <line x1="3" y1="6" x2="21" y2="6" />
-            <line x1="3" y1="12" x2="21" y2="12" />
-            <line x1="3" y1="18" x2="21" y2="18" />
-          </svg>
-        </button>
 
         <nav class="nav-links" id="primaryNav" aria-label="Điều hướng chính">
           <a th:href="@{/}">Trang chủ</a>
@@ -98,24 +69,11 @@
           </form>
         </nav>
       </div>
-
-      <script th:src="@{/js/navigation.js}" defer></script>
     </header>
     <div class="container ap-container app-shell">
       <div>
         <aside th:with="activePage='flashcards'" class="app-sidebar">
-          <button
-            class="sidebar-toggle collapsed"
-            type="button"
-            data-bs-toggle="collapse"
-            data-bs-target="#student-sidebar-content"
-            aria-expanded="false"
-            aria-controls="student-sidebar-content"
-          >
-            <span>Menu học tập</span>
-            <span class="sidebar-toggle-icon" aria-hidden="true">⌄</span>
-          </button>
-          <div class="sidebar-content collapse d-lg-block" id="student-sidebar-content">
+          <div class="sidebar-content" id="student-sidebar-content">
             <span class="sidebar-label">HỌC TẬP</span>
             <nav class="sidebar-nav" aria-label="Điều hướng học tập">
               <a
@@ -290,35 +248,31 @@
               <label for="bulk">Mỗi dòng: thuật ngữ, phím Tab hoặc dấu |, rồi định nghĩa</label>
               <textarea
                 id="bulk"
+                name="bulkImport"
                 rows="6"
                 placeholder="get up | thức dậy&#10;have breakfast | ăn sáng"
               ></textarea>
-              <button type="button" id="import-cards" class="button button-secondary">
+              <button type="submit" name="formAction" value="IMPORT_CARDS" class="button button-secondary">
                 Thêm vào danh sách
               </button>
-              <p id="import-message" role="status"></p>
             </div>
           </details>
           <div class="flashcard-editor-heading">
             <h2>Thuật ngữ</h2>
-            <span id="card-count"></span>
           </div>
-          <p id="editor-message" role="status" aria-live="polite"></p>
           <div id="card-rows">
-            <div class="dashboard-panel card-editor-row" th:each="row, stat : *{rows}">
+            <div class="dashboard-panel card-editor-row" th:each="card, stat : *{flashcards}">
               <span class="card-number" th:text="${stat.count}"></span>
               <input
                 type="hidden"
-                data-name="id"
-                th:name="${'rows[' + (stat.index) + '].id'}"
-                th:value="${row.id}"
+                th:name="${'flashcards[' + (stat.index) + '].id'}"
+                th:value="${card.id}"
               />
               <div class="field">
                 <label>Thuật ngữ</label>
                 <textarea
-                  data-name="term"
-                  th:name="${'rows[' + (stat.index) + '].term'}"
-                  th:text="${row.term}"
+                th:name="${'flashcards[' + (stat.index) + '].frontContent'}"
+                th:text="${card.frontContent}"
                   required
                   maxlength="200"
                   rows="2"
@@ -328,24 +282,30 @@
               <div class="field">
                 <label>Định nghĩa</label>
                 <textarea
-                  data-name="definition"
-                  th:name="${'rows[' + (stat.index) + '].definition'}"
-                  th:text="${row.definition}"
+                th:name="${'flashcards[' + (stat.index) + '].backContent'}"
+                th:text="${card.backContent}"
                   required
                   maxlength="1000"
                   rows="2"
                 ></textarea>
                 <small class="char-count">0/1000</small>
               </div>
-              <button type="button" class="remove-card" aria-label="Xóa thẻ">×</button>
+              <button
+                type="submit"
+                name="formAction"
+                th:value="${'REMOVE_CARD_' + stat.index}"
+                class="button button-secondary button-small"
+                th:disabled="${form.flashcards.size() == 1}"
+              >
+                Xóa thẻ
+              </button>
             </div>
           </div>
           <div class="actions editor-actions">
-            <button type="button" id="undo-remove" class="button button-secondary" hidden>
-              Hoàn tác
+            <button type="submit" name="formAction" value="ADD_CARD" class="button button-secondary">
+              + Thêm thẻ
             </button>
-            <button type="button" id="add-card" class="button button-secondary">+ Thêm thẻ</button>
-            <button type="submit" class="button">Lưu bộ thẻ</button>
+            <button type="submit" name="formAction" value="SAVE" class="button">Lưu bộ thẻ</button>
             <a class="back-link" th:href="${'/student/flashcards'}">
               <svg
                 viewBox="0 0 24 24"
@@ -368,6 +328,5 @@
         <span>Nền tảng học tập và luyện thi Aptis</span>
       </div>
     </footer>
-    <script th:src="@{/js/flashcard-editor.js}" defer></script>
   </body>
 </html>

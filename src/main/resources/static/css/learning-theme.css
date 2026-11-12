@@ -20,21 +20,21 @@ h1,h2,h3 { letter-spacing: -.015em; font-weight: 700; line-height: 1.3; }
 .eyebrow::before { content: none; display: none; }
 .landing-theme,.student-theme { --color-primary: #0f6e56; --color-primary-dark: #094738; --color-primary-soft: #eaf5f2; --color-accent: #43b9d7; }
 .admin-theme {
-    --admin-ink: #0F6E56;
-    --admin-tint: #eaf5f2;
-    --color-primary: #0F6E56;
-    --color-primary-rgb: 15, 110, 86;
-    --color-primary-dark: #094738;
-    --color-primary-dark-rgb: 9, 71, 56;
-    --color-primary-light: #168e70;
-    --color-primary-soft: #eaf5f2;
-    --color-primary-focus: rgba(15, 110, 86, .25);
-    --color-accent: #168e70;
-    --color-accent-soft: #eaf5f2;
-    --color-border: #E5E7EB;
-    --color-border-hover: #D1D5DB;
-    --color-background: #F4F6F5;
-    --shadow-primary: 0 12px 28px rgba(15, 110, 86, 0.22);
+    --admin-ink: #23085a;
+    --admin-tint: #f1edf8;
+    --color-primary: var(--admin-ink);
+    --color-primary-rgb: 35, 8, 90;
+    --color-primary-dark: var(--admin-ink);
+    --color-primary-dark-rgb: 35, 8, 90;
+    --color-primary-light: #573489;
+    --color-primary-soft: var(--admin-tint);
+    --color-primary-focus: rgba(var(--color-primary-rgb), .25);
+    --color-accent: #00dcff;
+    --color-accent-soft: #e7faff;
+    --color-border: #e2dbea;
+    --color-border-hover: #b5a8c7;
+    --color-background: #faf9fd;
+    --shadow-primary: 0 4px 0 var(--color-primary-dark);
     background: var(--color-background);
 }
 .site-header { background: #fff; border-bottom: 2px solid var(--color-border); backdrop-filter: none; }
@@ -58,11 +58,32 @@ h1,h2,h3 { letter-spacing: -.015em; font-weight: 700; line-height: 1.3; }
 .card:hover,.skill-card:hover { box-shadow: 0 5px 0 var(--color-border); transform: translateY(-2px); border-color: var(--color-border); }
 .eyebrow { letter-spacing: .06em; font-size: .82rem; }
 .field input,.field select,.field textarea { border: 2px solid var(--color-border); border-radius: var(--radius-sm); background: #fbfcfa; }
-.site-footer { border-top: 2px solid var(--color-border); }
-.student-theme .app-sidebar { border: 0; background: transparent; box-shadow: none; padding: 0; }
+.site-footer {
+    border-top: 2px solid var(--color-border);
+    transition: background-color .2s ease, color .2s ease, border-color .2s ease;
+}
+.student-theme .site-footer {
+    color: #d8f3eb;
+    background: linear-gradient(135deg, #094738 0%, #0f6e56 58%, #168e70 100%);
+    border-top-color: #43b9d7;
+}
+.student-theme .site-footer span {
+    color: inherit;
+}
+.admin-theme .site-footer {
+    color: #eee7fb;
+    background: linear-gradient(135deg, #23085a 0%, #3c1f78 62%, #573489 100%);
+    border-top-color: #00dcff;
+}
+.admin-theme .site-footer span {
+    color: inherit;
+}
+.app-sidebar { border: 0; background: transparent; box-shadow: none; padding: 0; }
 .sidebar-link { min-height: 48px; font-size: .9rem; font-weight: 700; border: 2px solid transparent; border-radius: var(--radius-sm); }
 .sidebar-link.active { border-color: #a3d9cb; background: var(--color-primary-soft); color: var(--color-primary-dark); }
+.admin-theme .sidebar-link.active { border-color: var(--color-accent); background: var(--color-accent-soft); color: var(--color-primary-dark); }
 .sidebar-link.disabled { color: #a0a9a0; }
+.admin-theme .sidebar-link[href$="/admin/certificates"] { display: none; }
 .student-row-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
 .student-row-actions form { margin: 0; }
 .button-danger { color: #fff; background: #b42318; border-color: #b42318; }

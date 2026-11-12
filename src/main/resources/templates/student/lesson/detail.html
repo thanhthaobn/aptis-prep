@@ -32,13 +32,6 @@
     <link rel="stylesheet" th:href="@{/css/admin-overview.css}" />
     <link th:if="${lesson != null}" rel="stylesheet" th:href="@{/css/lesson-detail.css}" />
     <link rel="stylesheet" th:href="@{/css/typography.css}" />
-    <script th:src="@{/js/app-dialog.js}" defer></script>
-    <script
-      src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"
-      integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI"
-      crossorigin="anonymous"
-      defer
-    ></script>
   </head>
   <body class="student-theme">
     <header class="site-header">
@@ -54,28 +47,6 @@
           </span>
           <span>AptisPrep</span>
         </a>
-
-        <button
-          class="nav-toggle"
-          id="navToggle"
-          type="button"
-          aria-label="Mở menu điều hướng"
-          aria-expanded="false"
-          aria-controls="primaryNav"
-        >
-          <svg
-            class="hamburger-icon"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-            aria-hidden="true"
-          >
-            <line x1="3" y1="6" x2="21" y2="6" />
-            <line x1="3" y1="12" x2="21" y2="12" />
-            <line x1="3" y1="18" x2="21" y2="18" />
-          </svg>
-        </button>
 
         <nav class="nav-links" id="primaryNav" aria-label="Điều hướng chính">
           <a th:href="@{/}">Trang chủ</a>
@@ -97,23 +68,10 @@
           </form>
         </nav>
       </div>
-
-      <script th:src="@{/js/navigation.js}" defer></script>
     </header>
     <div class="container ap-container app-shell">
       <aside th:with="activePage='lessons'" class="app-sidebar">
-        <button
-          class="sidebar-toggle collapsed"
-          type="button"
-          data-bs-toggle="collapse"
-          data-bs-target="#student-sidebar-content"
-          aria-expanded="false"
-          aria-controls="student-sidebar-content"
-        >
-          <span>Menu học tập</span>
-          <span class="sidebar-toggle-icon" aria-hidden="true">⌄</span>
-        </button>
-        <div class="sidebar-content collapse d-lg-block" id="student-sidebar-content">
+        <div class="sidebar-content" id="student-sidebar-content">
           <span class="sidebar-label">HỌC TẬP</span>
           <nav class="sidebar-nav" aria-label="Điều hướng học tập">
             <a
@@ -220,8 +178,7 @@
         th:attr="data-skill=${lesson.skill},data-lesson-id=${lesson.id}"
         th:with="productive=${lesson.skill == 'Writing' or lesson.skill == 'Speaking'},
                  hasQuestions=${questions != null and !questions.isEmpty()},
-                 hasAttempts=${attempts != null and !attempts.isEmpty()},
-                 hasMethodReview=${productive and (hasQuestions or hasAttempts)},
+                 hasMethodReview=${productive and hasQuestions},
                  hasMethod=${(lesson.strategy != null and !lesson.strategy.isBlank()) or hasMethodReview},
                  hasVideo=${videoId != null or lesson.videoPath != null}"
       >
@@ -242,10 +199,7 @@
           <div>
             <p class="eyebrow" th:text="${'' + (lesson.skill) + ' · ' + (lesson.cefrLevel)}"></p>
             <h1 th:text="${lesson.title}"></h1>
-            <p
-              th:if="${lesson.topic!=null and !lesson.topic.isBlank()}"
-              th:text="${lesson.topic}"
-            ></p>
+            <p th:if="${lesson.topic!=null}" th:text="${lesson.topic}"></p>
           </div>
           <span
             class="badge"
@@ -283,7 +237,7 @@
           <a th:if="${hasVideo}" href="#media">Video hướng dẫn</a>
           <a th:if="${hasMethod}" href="#method">Cách làm</a>
           <a
-            th:if="${lesson.skill=='Listening' or (lesson.exampleText != null and !lesson.exampleText.isBlank()) or (lesson.imagePath!=null and (lesson.skill=='Reading' or lesson.skill=='Grammar & Vocabulary'))}"
+            th:if="${lesson.skill=='Listening' or ((lesson.exampleText != null and !lesson.exampleText.isBlank()) or (lesson.imagePath!=null and (lesson.skill=='Reading' or lesson.skill=='Grammar & Vocabulary')))}"
             th:href="${lesson.skill == 'Listening' ? '#listening-preparation' : '#example'}"
             th:text="${lesson.skill=='Listening'?'Trước khi nghe':(lesson.skill=='Reading'?'Bài đọc':'Ví dụ')}"
           ></a>
@@ -301,13 +255,19 @@
         <div class="lesson-intro" th:classappend="${hasVideo ? 'lesson-intro-with-media' : ''}">
           <section id="overview" class="dashboard-panel">
             <h2>Mục tiêu bài học</h2>
+            <img
+              th:if="${lesson.imagePath!=null and (lesson.exampleText==null or lesson.exampleText.isBlank()) and (lesson.skill=='Reading' or lesson.skill=='Grammar & Vocabulary')}"
+              th:src="@{/lesson-media/{id}/image(id=${lesson.id})}"
+              alt="Hình minh họa bài học"
+              class="lesson-hero-image"
+            />
             <p
               class="lesson-prose"
               th:text="${lesson.objectives != null and !lesson.objectives.isBlank()?lesson.objectives:lesson.description}"
             ></p>
             <span
               class="badge"
-              th:if="${lesson.taskType!=null and !lesson.taskType.isBlank()}"
+              th:if="${lesson.taskType!=null}"
               th:text="${lesson.taskType}"
             ></span>
             <a
@@ -366,13 +326,12 @@
                 >
                   <div
                     class="lesson-knowledge-check"
-                    th:if="${(questions != null and !questions.isEmpty()) or (attempts != null and !attempts.isEmpty())}"
+                    th:if="${questions != null and !questions.isEmpty()}"
                   >
                     <th:block th:if="${questions != null and !questions.isEmpty()}">
                       <h3 th:text="${'' + (heading) + ' (' + (questions.size()) + ' câu)'}"></h3>
                       <p>
-                        Mỗi lượt có thể dùng bộ câu và thứ tự đáp án khác nhau. Cần đạt ít nhất 80%
-                        để xem lời giải và hoàn thành phần kiểm tra.
+                        Chọn đáp án rồi nộp. Chỉ hiển thị giải thích sau khi đạt ít nhất 60%.
                       </p>
                     </th:block>
                     <form
@@ -388,7 +347,7 @@
                           <input
                             type="radio"
                             th:name="${'q' + (question.id())}"
-                            th:value="${question.optionValues()[opt.index]}"
+                            th:value="${opt.index}"
                             required
                           />
                           <span th:text="${option}"></span>
@@ -400,117 +359,23 @@
                       <h3
                         th:text="${'Kết quả: ' + (feedback.score()) + '/' + (feedback.total()) + ' câu đúng'}"
                       ></h3>
-                      <article th:each="answer : ${feedback.answers()}">
-                        <strong th:text="${answer.right()?'Đúng':'Chưa đúng'}"></strong>
-                        <p th:text="${answer.prompt()}"></p>
-                        <p th:text="${'Bạn chọn: ' + (answer.selected())}"></p>
-                        <p
-                          th:if="${feedback.passed()}"
-                          th:text="${'Đáp án: ' + (answer.correct())}"
-                        ></p>
-                        <p th:if="${feedback.passed()}" th:text="${answer.explanation()}"></p>
-                        <p th:unless="${feedback.passed()}">
-                          Hãy xem lại phần kiến thức liên quan trước khi làm lượt mới.
-                        </p>
-                      </article>
-                    </div>
-                    <details
-                      class="lesson-attempts"
-                      th:if="${attempts != null and !attempts.isEmpty()}"
-                    >
-                      <summary
-                        th:text="${'Lịch sử làm bài (' + (attempts.size()) + ' lần)'}"
-                      ></summary>
-                      <details class="lesson-work-history" th:each="attempt : ${attempts}">
-                        <summary
-                          th:text="${'' + (#temporals.format(attempt.submittedAt(), 'dd/MM/yyyy HH:mm:ss')) + ' — ' + (attempt.score()) + '/' + (attempt.total()) + ' câu đúng'}"
-                        ></summary>
-                        <th:block
-                          th:with="context=${attempt.context}, mediaPrefix=${'/student/lessons/'+lesson.id+'/history/attempts/'+attempt.id+'/media'}"
-                        >
-                          <details class="lesson-history-context" th:if="${context!=null}">
-                            <summary>Đề bài tại thời điểm nộp</summary>
-                            <h3 th:text="${context.title}"></h3>
-                            <p class="lesson-prose" th:text="${context.description}"></p>
-                            <p
-                              class="lesson-prose"
-                              th:if="${context.objectives!=null}"
-                              th:text="${context.objectives}"
-                            ></p>
-                            <p
-                              class="lesson-prose"
-                              th:if="${context.strategy!=null}"
-                              th:text="${context.strategy}"
-                            ></p>
-                            <blockquote
-                              class="lesson-prose"
-                              th:if="${context.exampleText!=null}"
-                              th:text="${context.exampleText}"
-                            ></blockquote>
-                            <p
-                              class="lesson-prose"
-                              th:if="${context.analysis!=null}"
-                              th:text="${context.analysis}"
-                            ></p>
-                            <p
-                              class="lesson-prose"
-                              th:if="${context.practicePrompt!=null}"
-                              th:text="${context.practicePrompt}"
-                            ></p>
-                            <p
-                              th:if="${context.minWords!=null or context.maxWords!=null}"
-                              th:text="${'Yêu cầu bài viết lúc nộp: ' + (context.minWords!=null?context.minWords:0) + '–' + (context.maxWords!=null?context.maxWords:'không giới hạn') + ' từ'}"
-                            ></p>
-                            <img
-                              th:if="${context.imagePath!=null}"
-                              class="lesson-hero-image"
-                              th:src="${'' + (mediaPrefix) + '/image'}"
-                              alt="Ảnh của đề bài lúc nộp"
-                            />
-                            <audio
-                              th:if="${context.audioPath!=null}"
-                              controls
-                              preload="none"
-                              th:src="${'' + (mediaPrefix) + '/audio'}"
-                            ></audio>
-                            <video
-                              th:if="${context.videoPath!=null}"
-                              class="lesson-video"
-                              controls
-                              preload="none"
-                              th:src="${'' + (mediaPrefix) + '/video'}"
-                            ></video>
-                            <a
-                              th:if="${context.videoPath==null and (context.videoUrl != null and !context.videoUrl.isBlank())}"
-                              th:href="${context.videoUrl}"
-                              target="_blank"
-                              rel="noopener noreferrer"
-                            >
-                              Video hướng dẫn của đề gốc ↗
-                            </a>
-                          </details>
-                        </th:block>
-                        <p th:if="${attempt.answers == null or attempt.answers.isEmpty()}">
-                          Lượt cũ chỉ có điểm và mã đáp án. Chưa lưu nội dung câu hỏi tại thời điểm
-                          làm bài.
-                        </p>
-                        <article th:each="answer : ${attempt.answers}">
-                          <strong th:text="${answer.prompt}"></strong>
-                          <ol type="A" th:if="${answer.options!=null}">
-                            <li th:each="option : ${answer.options}" th:text="${option}"></li>
-                          </ol>
-                          <p th:text="${'Bạn chọn: ' + (answer.selected)}"></p>
-                          <p
-                            th:if="${attempt.passed()}"
-                            th:text="${'Đáp án đúng: ' + (answer.correct)}"
-                          ></p>
-                          <p th:if="${attempt.passed()}" th:text="${answer.explanation}"></p>
-                          <p th:unless="${attempt.passed()}">
-                            Lời giải được ẩn vì lượt này chưa đạt 80%.
-                          </p>
+                      <p
+                        th:if="${feedback.score() * 100 < feedback.total() * 60}"
+                        class="muted"
+                      >
+                        Chưa đạt 60%. Hãy xem lại bài học và thử lại; đáp án đúng chỉ hiển thị sau
+                        khi bạn đạt yêu cầu.
+                      </p>
+                      <th:block th:if="${feedback.score() * 100 >= feedback.total() * 60}">
+                        <article th:each="answer : ${feedback.answers()}">
+                          <strong th:text="${answer.right()?'Đúng':'Chưa đúng'}"></strong>
+                          <p th:text="${answer.prompt()}"></p>
+                          <p th:text="${'Bạn chọn: ' + (answer.selected())}"></p>
+                          <p th:text="${'Đáp án: ' + (answer.correct())}"></p>
+                          <p th:text="${answer.explanation()}"></p>
                         </article>
-                      </details>
-                    </details>
+                      </th:block>
+                    </div>
                   </div>
                 </th:block>
               </div>
@@ -531,7 +396,9 @@
               class="lesson-hero-image"
             />
             <blockquote class="lesson-prose" th:text="${lesson.exampleText}"></blockquote>
-            <th:block th:if="${(lesson.analysis != null and !lesson.analysis.isBlank())}">
+            <th:block
+              th:if="${(lesson.analysis != null and !lesson.analysis.isBlank())}"
+            >
               <h3>Phân tích</h3>
               <p class="lesson-prose" th:text="${lesson.analysis}"></p>
             </th:block>
@@ -583,7 +450,7 @@
           </h2>
           <p
             class="lesson-prose"
-            th:if="${lesson.practicePrompt!=null and !lesson.practicePrompt.isBlank()}"
+            th:if="${lesson.practicePrompt!=null}"
             th:text="${lesson.practicePrompt}"
           ></p>
           <img
@@ -607,10 +474,6 @@
               Trình duyệt không hỗ trợ phát âm thanh.
             </audio>
             <small th:text="${lesson.audioName}"></small>
-            <p id="listening-status" role="status" aria-live="polite">
-              Nghe đủ 90% nội dung ở tốc độ 1x. Đoạn tua qua không được tính; tiến trình được xác
-              nhận phía máy chủ.
-            </p>
           </div>
           <div th:unless="${productive}">
             <th:block
@@ -618,13 +481,12 @@
             >
               <div
                 class="lesson-knowledge-check"
-                th:if="${(questions != null and !questions.isEmpty()) or (attempts != null and !attempts.isEmpty())}"
+                th:if="${questions != null and !questions.isEmpty()}"
               >
                 <th:block th:if="${questions != null and !questions.isEmpty()}">
                   <h3 th:text="${'' + (heading) + ' (' + (questions.size()) + ' câu)'}"></h3>
                   <p>
-                    Mỗi lượt có thể dùng bộ câu và thứ tự đáp án khác nhau. Cần đạt ít nhất 80% để
-                    xem lời giải và hoàn thành phần kiểm tra.
+                    Chọn đáp án rồi nộp. Chỉ hiển thị giải thích sau khi đạt ít nhất 60%.
                   </p>
                 </th:block>
                 <form
@@ -638,7 +500,7 @@
                       <input
                         type="radio"
                         th:name="${'q' + (question.id())}"
-                        th:value="${question.optionValues()[opt.index]}"
+                        th:value="${opt.index}"
                         required
                       />
                       <span th:text="${option}"></span>
@@ -650,115 +512,23 @@
                   <h3
                     th:text="${'Kết quả: ' + (feedback.score()) + '/' + (feedback.total()) + ' câu đúng'}"
                   ></h3>
-                  <article th:each="answer : ${feedback.answers()}">
-                    <strong th:text="${answer.right()?'Đúng':'Chưa đúng'}"></strong>
-                    <p th:text="${answer.prompt()}"></p>
-                    <p th:text="${'Bạn chọn: ' + (answer.selected())}"></p>
-                    <p
-                      th:if="${feedback.passed()}"
-                      th:text="${'Đáp án: ' + (answer.correct())}"
-                    ></p>
-                    <p th:if="${feedback.passed()}" th:text="${answer.explanation()}"></p>
-                    <p th:unless="${feedback.passed()}">
-                      Hãy xem lại phần kiến thức liên quan trước khi làm lượt mới.
-                    </p>
-                  </article>
-                </div>
-                <details
-                  class="lesson-attempts"
-                  th:if="${attempts != null and !attempts.isEmpty()}"
-                >
-                  <summary th:text="${'Lịch sử làm bài (' + (attempts.size()) + ' lần)'}"></summary>
-                  <details class="lesson-work-history" th:each="attempt : ${attempts}">
-                    <summary
-                      th:text="${'' + (#temporals.format(attempt.submittedAt(), 'dd/MM/yyyy HH:mm:ss')) + ' — ' + (attempt.score()) + '/' + (attempt.total()) + ' câu đúng'}"
-                    ></summary>
-                    <th:block
-                      th:with="context=${attempt.context}, mediaPrefix=${'/student/lessons/'+lesson.id+'/history/attempts/'+attempt.id+'/media'}"
-                    >
-                      <details class="lesson-history-context" th:if="${context!=null}">
-                        <summary>Đề bài tại thời điểm nộp</summary>
-                        <h3 th:text="${context.title}"></h3>
-                        <p class="lesson-prose" th:text="${context.description}"></p>
-                        <p
-                          class="lesson-prose"
-                          th:if="${context.objectives!=null}"
-                          th:text="${context.objectives}"
-                        ></p>
-                        <p
-                          class="lesson-prose"
-                          th:if="${context.strategy!=null}"
-                          th:text="${context.strategy}"
-                        ></p>
-                        <blockquote
-                          class="lesson-prose"
-                          th:if="${context.exampleText!=null}"
-                          th:text="${context.exampleText}"
-                        ></blockquote>
-                        <p
-                          class="lesson-prose"
-                          th:if="${context.analysis!=null}"
-                          th:text="${context.analysis}"
-                        ></p>
-                        <p
-                          class="lesson-prose"
-                          th:if="${context.practicePrompt!=null}"
-                          th:text="${context.practicePrompt}"
-                        ></p>
-                        <p
-                          th:if="${context.minWords!=null or context.maxWords!=null}"
-                          th:text="${'Yêu cầu bài viết lúc nộp: ' + (context.minWords!=null?context.minWords:0) + '–' + (context.maxWords!=null?context.maxWords:'không giới hạn') + ' từ'}"
-                        ></p>
-                        <img
-                          th:if="${context.imagePath!=null}"
-                          class="lesson-hero-image"
-                          th:src="${'' + (mediaPrefix) + '/image'}"
-                          alt="Ảnh của đề bài lúc nộp"
-                        />
-                        <audio
-                          th:if="${context.audioPath!=null}"
-                          controls
-                          preload="none"
-                          th:src="${'' + (mediaPrefix) + '/audio'}"
-                        ></audio>
-                        <video
-                          th:if="${context.videoPath!=null}"
-                          class="lesson-video"
-                          controls
-                          preload="none"
-                          th:src="${'' + (mediaPrefix) + '/video'}"
-                        ></video>
-                        <a
-                          th:if="${context.videoPath==null and (context.videoUrl != null and !context.videoUrl.isBlank())}"
-                          th:href="${context.videoUrl}"
-                          target="_blank"
-                          rel="noopener noreferrer"
-                        >
-                          Video hướng dẫn của đề gốc ↗
-                        </a>
-                      </details>
-                    </th:block>
-                    <p th:if="${attempt.answers == null or attempt.answers.isEmpty()}">
-                      Lượt cũ chỉ có điểm và mã đáp án. Chưa lưu nội dung câu hỏi tại thời điểm làm
-                      bài.
-                    </p>
-                    <article th:each="answer : ${attempt.answers}">
-                      <strong th:text="${answer.prompt}"></strong>
-                      <ol type="A" th:if="${answer.options!=null}">
-                        <li th:each="option : ${answer.options}" th:text="${option}"></li>
-                      </ol>
-                      <p th:text="${'Bạn chọn: ' + (answer.selected)}"></p>
-                      <p
-                        th:if="${attempt.passed()}"
-                        th:text="${'Đáp án đúng: ' + (answer.correct)}"
-                      ></p>
-                      <p th:if="${attempt.passed()}" th:text="${answer.explanation}"></p>
-                      <p th:unless="${attempt.passed()}">
-                        Lời giải được ẩn vì lượt này chưa đạt 80%.
-                      </p>
+                  <p
+                    th:if="${feedback.score() * 100 < feedback.total() * 60}"
+                    class="muted"
+                  >
+                    Chưa đạt 60%. Hãy xem lại bài học và thử lại; đáp án đúng chỉ hiển thị sau khi
+                    bạn đạt yêu cầu.
+                  </p>
+                  <th:block th:if="${feedback.score() * 100 >= feedback.total() * 60}">
+                    <article th:each="answer : ${feedback.answers()}">
+                      <strong th:text="${answer.right()?'Đúng':'Chưa đúng'}"></strong>
+                      <p th:text="${answer.prompt()}"></p>
+                      <p th:text="${'Bạn chọn: ' + (answer.selected())}"></p>
+                      <p th:text="${'Đáp án: ' + (answer.correct())}"></p>
+                      <p th:text="${answer.explanation()}"></p>
                     </article>
-                  </details>
-                </details>
+                  </th:block>
+                </div>
               </div>
             </th:block>
           </div>
@@ -776,25 +546,22 @@
             ></p>
           </th:block>
 
-          <div id="speaking-recorder" class="speaking-recorder" th:if="${lesson.skill=='Speaking'}">
+          <div class="speaking-recorder" th:if="${lesson.skill=='Speaking'}">
             <h3>Ghi âm phần trả lời</h3>
-            <p>Bắt buộc lưu bản ghi để hoàn thành bài. Nghe lại trước khi lưu.</p>
-            <div class="actions">
-              <button id="record-start" class="button button-secondary" type="button">
-                Bắt đầu ghi
-              </button>
-              <button id="record-stop" class="button button-secondary" type="button" disabled>
-                Dừng ghi
-              </button>
-              <button id="record-save" class="button" type="button" disabled>Lưu bản ghi</button>
-            </div>
+            <p>Bắt buộc tải lên bản ghi để hoàn thành bài.</p>
+            <form
+              method="post"
+              enctype="multipart/form-data"
+              th:action="@{/student/lessons/{id}/recording(id=${lesson.id})}"
+            >
+              <input type="file" name="recording" accept="audio/*" required />
+              <button class="button button-secondary" type="submit">Lưu bản ghi</button>
+            </form>
             <audio
-              id="record-preview"
               controls
               th:hidden="${savedWork==null or savedWork.audioPath==null}"
               th:src="${savedWork!=null and savedWork.audioPath!=null?'/student/lessons/'+lesson.id+'/recording':null}"
             ></audio>
-            <p id="record-status" aria-live="polite"></p>
           </div>
           <form
             id="lesson-response-form"
@@ -819,7 +586,7 @@
                 th:attr="data-min-words=${lesson.minWordCount},data-max-words=${lesson.maxWordCount}"
                 th:text="${savedResponse}"
               ></textarea>
-              <p id="response-status" class="muted" aria-live="polite"></p>
+            <p class="muted">Bài trả lời được lưu khi bạn bấm nút lưu.</p>
             </div>
             <button
               class="button button-secondary"
@@ -827,9 +594,7 @@
               th:text="${lesson.skill=='Writing'?'Lưu bài viết vào lịch sử':'Lưu transcript vào lịch sử'}"
             ></button>
           </form>
-          <th:block
-            th:if="${(lesson.sampleResponse!=null and !lesson.sampleResponse.isBlank()) or (lesson.checklist!=null and !lesson.checklist.isBlank())}"
-          >
+          <th:block th:if="${lesson!=null}">
             <th:block
               th:if="${(lesson.sampleResponse != null and !lesson.sampleResponse.isBlank())}"
             >
@@ -840,7 +605,9 @@
                 <p class="lesson-prose" th:text="${lesson.sampleResponse}"></p>
               </details>
             </th:block>
-            <div th:if="${(lesson.checklist != null and !lesson.checklist.isBlank())}">
+            <div
+              th:if="${(lesson.checklist != null and !lesson.checklist.isBlank())}"
+            >
               <h3
                 th:text="${lesson.skill=='Writing'?'Tự rà soát bài viết':(lesson.skill=='Speaking'?'Tự đánh giá bài nói':'Tự kiểm tra')}"
               ></h3>
@@ -942,7 +709,7 @@
               th:text="${submission.prompt}"
             ></p>
             <th:block
-              th:with="context=${submission.context}, mediaPrefix=${'/student/lessons/'+lesson.id+'/history/submissions/'+submission.id+'/media'}"
+              th:with="context=${submission.contextSnapshotEntity}, mediaPrefix=${'/student/lessons/'+lesson.id+'/history/submissions/'+submission.id+'/media'}"
             >
               <details class="lesson-history-context" th:if="${context!=null}">
                 <summary>Đề bài tại thời điểm nộp</summary>
@@ -1023,9 +790,9 @@
           <p class="completion-hint" th:text="${completion.message(lesson.skill)}"></p>
           <div class="actions lesson-complete">
             <a
-              th:if="${neighbors.previous()!=null}"
+              th:if="${previousLesson != null}"
               class="button button-secondary"
-              th:href="@{/student/lessons/{id}(id=${neighbors.previous().id})}"
+              th:href="@{/student/lessons/{id}(id=${previousLesson.id})}"
             >
               ← Bài trước
             </a>
@@ -1038,9 +805,9 @@
               ></button>
             </form>
             <a
-              th:if="${neighbors.next()!=null}"
+              th:if="${nextLesson != null}"
               class="button button-secondary"
-              th:href="@{/student/lessons/{id}(id=${neighbors.next().id})}"
+              th:href="@{/student/lessons/{id}(id=${nextLesson.id})}"
             >
               Bài tiếp theo →
             </a>
@@ -1066,6 +833,5 @@
         <span>Nền tảng học tập và luyện thi Aptis</span>
       </div>
     </footer>
-    <script th:src="@{/js/lesson-player.js}" defer></script>
   </body>
 </html>

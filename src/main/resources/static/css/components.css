@@ -52,6 +52,62 @@
 .badge-warning { color: var(--color-warning); background: var(--color-warning-bg); border-color: var(--color-warning-border); }
 .badge-info { color: var(--color-info); background: var(--color-info-bg); border-color: var(--color-info-border); }
 
+/* Unified status badges used in administrative lists */
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: .42rem;
+  min-height: 30px;
+  padding: .32rem .72rem;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  font-size: .78rem;
+  font-weight: 750;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+.status-badge::before {
+  content: "";
+  width: 7px;
+  height: 7px;
+  flex: 0 0 7px;
+  border-radius: 50%;
+  background: currentColor;
+}
+.status-published,
+.status-active,
+.status-approved,
+.status-completed {
+  color: var(--color-success);
+  background: var(--color-success-bg);
+  border-color: var(--color-success-border);
+}
+.status-pending,
+.status-draft,
+.status-grading {
+  color: var(--color-warning);
+  background: var(--color-warning-bg);
+  border-color: var(--color-warning-border);
+}
+.status-archived,
+.status-inactive {
+  color: var(--color-muted);
+  background: var(--color-surface-soft);
+  border-color: var(--color-border);
+}
+.status-locked,
+.status-rejected,
+.status-error {
+  color: var(--color-danger);
+  background: var(--color-danger-bg);
+  border-color: var(--color-danger-border);
+}
+.status-info {
+  color: var(--color-info);
+  background: var(--color-info-bg);
+  border-color: var(--color-info-border);
+}
+
 /* CEFR Badges: A2 slate, B1 steel-blue, B2 teal, C1/C2 emerald-indigo */
 .badge-cefr-a1, .badge-cefr-a2, .badge[data-cefr="A1"], .badge[data-cefr="A2"] { background: var(--cefr-a2-bg); color: var(--cefr-a2-text); border-color: var(--cefr-a2-border); }
 .badge-cefr-b1, .badge[data-cefr="B1"] { background: var(--cefr-b1-bg); color: var(--cefr-b1-text); border-color: var(--cefr-b1-border); }
@@ -285,6 +341,7 @@
 .catalog-preview-form { max-width: 100%; }
 .catalog-preview-form > h2,.catalog-form-section > h2 { font-size: 1.4rem; }
 .catalog-form-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 0 1.5rem; }
+.exam-question-filter-action { align-self: end; }
 .field-help { display: block; margin-top: .35rem; color: var(--color-muted); font-size: .78rem; line-height: 1.5; }
 .catalog-form-intro { display: flex; align-items: flex-start; gap: .8rem; margin-bottom: 1.25rem; }
 .catalog-form-intro h2 { margin: .1rem 0 .25rem; font-size: 1.45rem; }
@@ -336,6 +393,11 @@
 .student-management .student-table { font-size: .95rem; }
 .student-table th { font-size: .78rem; }
 .student-table td { padding-block: 1.15rem; }
+.student-management .student-progress-path { margin-top: .8rem; padding-top: .8rem; border-top: 1px solid var(--color-border); }
+.student-management .panel-heading + .student-progress-path { margin-top: 0; padding-top: 0; border-top: 0; }
+.student-management .student-progress-path > p { margin: .3rem 0; }
+.student-management .student-progress-path .student-target { margin-bottom: .45rem; }
+.student-management .student-progress-path progress { margin-block: .35rem .15rem; height: 8px; }
 .student-identity { display: flex; align-items: center; gap: .85rem; }
 .student-identity strong,.student-identity span:not(.student-avatar) { display: block; }
 .student-identity div > span:not(.student-status) { color: var(--color-muted); font-size: .85rem; overflow-wrap: anywhere; }

@@ -1,0 +1,196 @@
+<!doctype html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="Quản lý yêu cầu mở khóa tài khoản học viên AptisPrep." />
+    <title>Yêu cầu mở khóa | AptisPrep</title>
+    <link
+      rel="icon"
+      type="image/svg+xml"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%230F6E56'/%3E%3Cpath d='M16 6 L24 25 L19.5 25 L17.5 20 L14.5 20 L12.5 25 L8 25 Z M16 12 L15.2 17 L16.8 17 Z' fill='%23ffffff'/%3E%3C/svg%3E"
+    />
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+      integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB"
+      crossorigin="anonymous"
+    />
+    <link rel="stylesheet" th:href="@{/css/variables.css}" />
+    <link rel="stylesheet" th:href="@{/css/base.css}" />
+    <link rel="stylesheet" th:href="@{/css/layout.css}" />
+    <link rel="stylesheet" th:href="@{/css/components.css}" />
+    <link rel="stylesheet" th:href="@{/css/forms.css}" />
+    <link rel="stylesheet" th:href="@{/css/learning-theme.css}" />
+    <link rel="stylesheet" th:href="@{/css/navi.css}" />
+    <link rel="stylesheet" th:href="@{/css/exam.css}" />
+    <link rel="stylesheet" th:href="@{/css/result.css}" />
+    <link rel="stylesheet" th:href="@{/css/catalog-compact.css}" />
+    <link rel="stylesheet" th:href="@{/css/admin-overview.css}" />
+    <link rel="stylesheet" th:href="@{/css/typography.css}" />
+    <link rel="stylesheet" th:href="@{/css/admin-unlock.css}" />
+  </head>
+  <body class="admin-theme">
+    <header class="site-header">
+      <a href="#main-content" class="ap-skip-link">Bỏ qua điều hướng</a>
+      <div class="container ap-container nav-wrap">
+        <a class="brand" th:href="@{/}">
+          <span class="brand-mark" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+              <path d="M5 19V7.5L12 4l7 3.5V19" />
+              <path d="M8.5 10.5 12 12l3.5-1.5M12 12v8" />
+            </svg>
+          </span>
+          <span>AptisPrep</span>
+        </a>
+        <nav class="nav-links" id="primaryNav" aria-label="Điều hướng chính">
+          <a th:href="@{/}">Trang chủ</a>
+          <a th:if="${isStudent}" th:href="@{/student/dashboard}">Học tập</a>
+          <a th:if="${isAdmin}" th:href="@{/admin/dashboard}" class="active" aria-current="page">Quản trị</a>
+          <form th:if="${signedIn}" th:action="@{/logout}" method="post">
+            <button class="button button-secondary button-small" type="submit">Đăng xuất</button>
+          </form>
+        </nav>
+      </div>
+    </header>
+
+    <div class="container ap-container app-shell">
+      <aside class="app-sidebar">
+        <div class="sidebar-content" id="admin-sidebar-content">
+          <span class="sidebar-label">QUẢN TRỊ</span>
+          <nav class="sidebar-nav" aria-label="Điều hướng quản trị">
+            <a class="sidebar-link" th:href="@{/admin/dashboard}">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h6v6H4zm10 0h6v6h-6zM4 14h6v6H4zm10 0h6v6h-6z" /></svg>
+              Tổng quan
+            </a>
+            <a class="sidebar-link" th:href="@{/admin/students}">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="8" r="3" /><path d="M3 20v-2a6 6 0 0 1 12 0v2M16 5a3 3 0 1 1 0 6m2 3a5 5 0 0 1 3 4v2" /></svg>
+              Học viên
+            </a>
+            <a class="sidebar-link active" aria-current="page" th:href="@{/admin/unlock-requests}">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="10" width="14" height="10" rx="2" /><path d="M8 10V7a4 4 0 0 1 8 0v3" /></svg>
+              Yêu cầu mở khóa
+              <span th:if="${pendingCount != null and pendingCount > 0}" class="badge badge-warning" th:text="${pendingCount}">0</span>
+            </a>
+            <a class="sidebar-link" th:href="@{/admin/lessons}">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20V4H6.5A2.5 2.5 0 0 0 4 6.5z" /></svg>
+              Bài học
+            </a>
+            <a class="sidebar-link" th:href="@{/admin/questions}">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9" /><path d="M9.5 9a2.5 2.5 0 1 1 3.2 2.4c-.7.3-.7.8-.7 1.6M12 17h.01" /></svg>
+              Ngân hàng câu hỏi
+            </a>
+            <a class="sidebar-link" th:href="@{/admin/exams}">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 3h10v4H7zM5 7h14v14H5z" /></svg>
+              Đề thi
+            </a>
+            <a class="sidebar-link" th:href="@{/admin/results}">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19V5m0 14h16M8 16v-4m4 4V7m4 9v-6" /></svg>
+              Kết quả
+            </a>
+            <a class="sidebar-link" th:href="@{/admin/flashcards}">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="6" y="6" width="15" height="15" rx="3" /><path d="M17 6V3H3v14h3" /></svg>
+              Flashcard
+            </a>
+          </nav>
+          <div class="sidebar-divider"></div>
+          <span class="sidebar-label">HỆ THỐNG</span>
+          <nav class="sidebar-nav">
+            <a class="sidebar-link" th:href="@{/admin/scoring-schemes}">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 19h16M7 16v-5m5 5V5m5 11V8" /></svg>
+              Chấm điểm
+            </a>
+          </nav>
+        </div>
+      </aside>
+
+      <main class="app-main" id="main-content" tabindex="-1">
+        <div class="messages-container" aria-live="polite">
+          <div th:if="${successMessage}" class="alert alert-success ap-alert ap-alert-success" th:text="${successMessage}"></div>
+          <div th:if="${errorMessage}" class="alert alert-danger ap-alert ap-alert-danger" th:text="${errorMessage}"></div>
+        </div>
+
+        <header class="page-header">
+          <div>
+            <h1>Yêu cầu mở khóa tài khoản</h1>
+          </div>
+        </header>
+
+        <div class="toolbar" aria-label="Lọc yêu cầu mở khóa">
+          <strong>Lọc theo trạng thái</strong>
+          <div class="page-actions">
+            <a
+              class="button button-small"
+              th:classappend="${selectedStatus == 'PENDING'} ? '' : 'button-secondary'"
+              th:href="@{/admin/unlock-requests(status='PENDING')}"
+            >Chờ xử lý<span th:if="${pendingCount != null and pendingCount > 0}" class="badge badge-warning" th:text="${pendingCount}">0</span></a>
+            <a
+              class="button button-small"
+              th:classappend="${selectedStatus == 'ALL'} ? '' : 'button-secondary'"
+              th:href="@{/admin/unlock-requests(status='ALL')}"
+            >Tất cả</a>
+          </div>
+        </div>
+
+        <div class="empty-box" th:if="${requests == null or requests.isEmpty()}">
+          <h2>Không có yêu cầu</h2>
+          <p>Hiện chưa có yêu cầu mở khóa nào phù hợp với bộ lọc.</p>
+        </div>
+
+        <div class="table-wrap" th:if="${requests != null and !requests.isEmpty()}">
+          <table class="data-table">
+            <caption class="visually-hidden">Danh sách yêu cầu mở khóa tài khoản</caption>
+            <thead>
+              <tr>
+                <th scope="col">Học viên</th>
+                <th scope="col">Nội dung</th>
+                <th scope="col">Ngày gửi</th>
+                <th scope="col">Trạng thái</th>
+                <th scope="col">Xử lý</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr th:each="request : ${requests}">
+                <td>
+                  <strong th:text="${request.userFullName}">Họ tên</strong>
+                  <small class="d-block muted" th:text="${request.userEmail}">email@example.com</small>
+                </td>
+                <td class="unlock-request-message" th:text="${request.message}">Nội dung yêu cầu</td>
+                <td th:text="${#temporals.format(request.createdAt, 'dd/MM/yyyy HH:mm')}">12/11/2026 10:00</td>
+                <td>
+                  <span
+                    class="status-badge"
+                    th:classappend="${request.status.name() == 'PENDING' ? 'status-pending' : (request.status.name() == 'APPROVED' ? 'status-approved' : 'status-rejected')}"
+                    th:text="${request.status.name() == 'PENDING' ? 'Chờ xử lý' : (request.status.name() == 'APPROVED' ? 'Đã duyệt' : 'Đã từ chối')}"
+                  >Chờ xử lý</span>
+                  <small class="d-block muted" th:if="${request.adminNote != null and !request.adminNote.isBlank()}" th:text="${request.adminNote}"></small>
+                </td>
+                <td>
+                  <div th:if="${request.status.name() == 'PENDING'}" class="unlock-request-actions">
+                    <form th:action="@{/admin/unlock-requests/{id}/approve(id=${request.id})}" method="post">
+                      <label class="visually-hidden" th:for="${'approve-note-' + request.id}">Ghi chú duyệt</label>
+                      <input th:id="${'approve-note-' + request.id}" class="form-control" name="adminNote" maxlength="1000" placeholder="Ghi chú (tùy chọn)" />
+                      <button class="button button-small" type="submit">Duyệt</button>
+                    </form>
+                    <form th:action="@{/admin/unlock-requests/{id}/reject(id=${request.id})}" method="post">
+                      <label class="visually-hidden" th:for="${'reject-note-' + request.id}">Lý do từ chối</label>
+                      <input th:id="${'reject-note-' + request.id}" class="form-control" name="adminNote" maxlength="1000" placeholder="Lý do từ chối" required />
+                      <button class="button button-danger button-small" type="submit">Từ chối</button>
+                    </form>
+                  </div>
+                  <span th:unless="${request.status.name() == 'PENDING'}" class="muted">Đã xử lý</span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </main>
+    </div>
+    <footer class="site-footer">
+      <div class="container footer-wrap">
+        <span>© 2026 AptisPrep. Học đúng lộ trình, tiến bộ mỗi ngày.</span>
+        <span>Nền tảng học tập và luyện thi Aptis</span>
+      </div>
+    </footer>
+  </body>
+</html>

@@ -3,16 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title
-      th:text="${status == 'INACTIVE' ? 'Tài khoản của bạn đã bị xóa | AptisPrep' : 'Tài khoản của bạn đang bị khóa | AptisPrep'}"
-    >
-      Tài khoản của bạn đang bị khóa | AptisPrep
-    </title>
-    <link
-      rel="icon"
-      type="image/svg+xml"
-      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%230F6E56'/%3E%3Cpath d='M16 6 L24 25 L19.5 25 L17.5 20 L14.5 20 L12.5 25 L8 25 Z M16 12 L15.2 17 L16.8 17 Z' fill='%23ffffff'/%3E%3C/svg%3E"
-    />
+    <title>Tài khoản bị khóa | AptisPrep</title>
     <link rel="stylesheet" th:href="@{/css/variables.css}" />
     <link rel="stylesheet" th:href="@{/css/base.css}" />
     <link rel="stylesheet" th:href="@{/css/layout.css}" />
@@ -21,300 +12,33 @@
   </head>
   <body class="landing-theme">
     <main class="container ap-container auth-page">
-      <section class="form-card account-locked-card" role="region" aria-labelledby="lockedHeading">
-        <!-- 1. Eyebrow nhỏ -->
+      <section class="form-card" role="alert">
         <p class="eyebrow">TÀI KHOẢN</p>
-
-        <!-- 2. Tiêu đề h1 cỡ vừa & mô tả ngắn -->
-        <h1
-          id="lockedHeading"
-          th:text="${status == 'INACTIVE' ? 'Tài khoản của bạn đã bị xóa' : 'Tài khoản của bạn đang bị khóa'}"
-        >
-          Tài khoản của bạn đang bị khóa
-        </h1>
-        <p
-          class="account-locked-desc"
-          th:text="${status == 'INACTIVE' ? 'Tài khoản này đã bị xóa hoặc ngừng hoạt động bởi quản trị viên. Vui lòng xem thông tin bên dưới hoặc gửi yêu cầu để khôi phục.' : 'Tài khoản của bạn tạm thời không thể đăng nhập. Vui lòng xem thông tin bên dưới hoặc gửi yêu cầu để quản trị viên xem xét mở khóa.'}"
-        >
-          Tài khoản của bạn tạm thời không thể đăng nhập. Vui lòng xem thông tin bên dưới hoặc gửi yêu cầu để quản trị viên xem xét mở khóa.
-        </p>
-
-        <!-- 3. Khối lý do (alert cảnh báo nhẹ, có icon, hiển thị bằng th:text) -->
-        <div class="alert alert-warning ap-alert ap-alert-warning account-locked-reason" role="note">
-          <svg class="alert-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-            <path d="M12 9v4m0 4h.01M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
-          </svg>
-          <div class="alert-content">
-            <strong class="reason-label">Lý do từ quản trị viên:</strong>
-            <p
-              class="reason-text"
-              th:if="${status == 'INACTIVE'}"
-              th:text="${removalReason ?: reason ?: 'Tài khoản của bạn đã bị ngừng hoạt động.'}"
-            >
-              Tài khoản của bạn đã bị ngừng hoạt động.
-            </p>
-            <p
-              class="reason-text"
-              th:unless="${status == 'INACTIVE'}"
-              th:text="${lockReason ?: reason ?: 'Tài khoản đã bị khóa bởi quản trị viên.'}"
-            >
-              Tài khoản đã bị khóa bởi quản trị viên.
-            </p>
-          </div>
+        <h1>Tài khoản đã bị khóa</h1>
+        <p>Quản trị viên đã khóa tài khoản của bạn.</p>
+        <div class="alert alert-danger ap-alert ap-alert-danger">
+          <strong>Lý do:</strong>
+          <span th:text="${lockReason ?: 'Tài khoản đã bị khóa bởi quản trị viên.'}"></span>
         </div>
-
-        <!-- 4. Khối trạng thái yêu cầu gần nhất (nếu có) -->
-        <div th:if="${latestRequest != null}" class="latest-request-status">
-          <!-- Trạng thái PENDING: banner thông tin kèm ngày gửi; không cho gửi thêm -->
-          <div
-            th:if="${latestRequest.status.name() == 'PENDING'}"
-            class="alert alert-info ap-alert ap-alert-info request-status-banner"
-            role="status"
-          >
-            <svg class="alert-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-              <circle cx="12" cy="12" r="10"></circle>
-              <polyline points="12 6 12 12 16 14"></polyline>
-            </svg>
-            <div class="alert-content">
-              <strong>Yêu cầu của bạn đang chờ quản trị viên xử lý</strong>
-              <p class="request-time" th:if="${latestRequest.createdAt != null}">
-                Thời gian gửi:
-                <time
-                  th:datetime="${latestRequest.createdAt}"
-                  th:text="${#temporals.format(latestRequest.createdAt, 'dd/MM/yyyy HH:mm')}"
-                ></time>
-              </p>
-              <small class="field-hint">Bạn không thể gửi thêm yêu cầu trong khi yêu cầu trước đang được xử lý.</small>
-            </div>
-          </div>
-
-          <!-- Trạng thái REJECTED: banner nhấn mạnh nhẹ kèm ghi chú admin; cho gửi yêu cầu mới -->
-          <div
-            th:if="${latestRequest.status.name() == 'REJECTED'}"
-            class="alert alert-danger ap-alert ap-alert-danger request-status-banner"
-            role="alert"
-          >
-            <svg class="alert-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-              <circle cx="12" cy="12" r="10"></circle>
-              <line x1="15" y1="9" x2="9" y2="15"></line>
-              <line x1="9" y1="9" x2="15" y2="15"></line>
-            </svg>
-            <div class="alert-content">
-              <strong>Yêu cầu trước đã bị từ chối</strong>
-              <p
-                th:if="${latestRequest.adminNote != null and !#strings.isEmpty(latestRequest.adminNote)}"
-                class="admin-note"
-              >
-                <span>Ghi chú từ quản trị viên: </span><span th:text="${latestRequest.adminNote}"></span>
-              </p>
-              <small class="field-hint">Bạn có thể kiểm tra lại thông tin và gửi yêu cầu mới bên dưới.</small>
-            </div>
-          </div>
-
-          <!-- Trạng thái APPROVED: banner thành công -->
-          <div
-            th:if="${latestRequest.status.name() == 'APPROVED'}"
-            class="alert alert-success ap-alert ap-alert-success request-status-banner"
-            role="status"
-          >
-            <svg class="alert-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-              <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
-              <polyline points="22 4 12 14.01 9 11.01"></polyline>
-            </svg>
-            <div class="alert-content">
-              <strong>Yêu cầu đã được phê duyệt</strong>
-              <p>Tài khoản của bạn đã được mở khóa thành công. Bạn có thể đăng nhập bình thường ngay bây giờ.</p>
-            </div>
-          </div>
+        <div th:if="${successMessage}" class="alert alert-success ap-alert ap-alert-success" th:text="${successMessage}"></div>
+        <div th:if="${errorMessage}" class="alert alert-danger ap-alert ap-alert-danger" th:text="${errorMessage}"></div>
+        <div th:if="${latestRequest != null}" class="alert alert-info ap-alert">
+          Yêu cầu gần nhất: <strong th:text="${latestRequest.status}"></strong>
+          <span th:if="${latestRequest.adminNote != null}"> — <span th:text="${latestRequest.adminNote}"></span></span>
         </div>
-
-        <!-- Khi APPROVED: nút chính "Đăng nhập" thay cho form -->
-        <div th:if="${latestRequest != null and latestRequest.status.name() == 'APPROVED'}" class="form-actions-approved">
-          <a class="button button-block" th:href="@{/login}">Đăng nhập</a>
-        </div>
-
-        <!-- 5. Form (chỉ hiện khi chưa có yêu cầu hoặc yêu cầu trước bị REJECTED) -->
-        <div
-          th:if="${latestRequest == null or latestRequest.status.name() == 'REJECTED'}"
-          class="unlock-request-section"
-        >
-          <h2
-            class="form-section-title"
-            th:text="${status == 'INACTIVE' ? 'Gửi yêu cầu khôi phục' : 'Gửi yêu cầu mở khóa'}"
-          >
-            Gửi yêu cầu mở khóa
-          </h2>
-
-          <!-- 7. Thông báo thành công / lỗi phía trên form -->
-          <div
-            th:if="${successMessage}"
-            class="alert alert-success ap-alert ap-alert-success"
-            role="status"
-            id="success-banner"
-          >
-            <svg class="alert-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-              <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
-              <polyline points="22 4 12 14.01 9 11.01"></polyline>
-            </svg>
-            <div class="alert-content">
-              <span th:text="${successMessage}"></span>
-            </div>
-          </div>
-
-          <div
-            th:if="${errorMessage}"
-            class="alert alert-danger ap-alert ap-alert-danger"
-            role="alert"
-            id="error-banner"
-          >
-            <svg class="alert-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-              <circle cx="12" cy="12" r="10"></circle>
-              <line x1="12" y1="8" x2="12" y2="12"></line>
-              <line x1="12" y1="16" x2="12.01" y2="16"></line>
-            </svg>
-            <div class="alert-content">
-              <span th:text="${errorMessage}"></span>
-            </div>
-          </div>
-
-          <form id="unlockRequestForm" th:action="@{/account-unlock-request}" method="post">
-            <!-- Email (readonly khi đã điền sẵn, kèm liên kết 'Dùng email khác') -->
-            <div class="field">
-              <div class="field-label-row">
-                <label for="email">Email</label>
-                <a
-                  th:if="${email != null and !#strings.isEmpty(email)}"
-                  th:href="@{/account-locked}"
-                  class="field-action-link"
-                >
-                  Dùng email khác
-                </a>
-              </div>
-              <input
-                type="email"
-                id="email"
-                name="email"
-                th:value="${email}"
-                th:readonly="${email != null and !#strings.isEmpty(email)}"
-                autocomplete="username"
-                maxlength="255"
-                required
-                placeholder="Email đăng ký của bạn"
-                aria-describedby="email-error"
-              />
-              <span class="field-error" id="email-error" aria-live="polite"></span>
-            </div>
-
-            <!-- Mật khẩu hiện tại (có nút hiện/ẩn, chú thích) -->
-            <div class="field">
-              <label for="password">Mật khẩu hiện tại</label>
-              <div class="password-input password-input--inline-toggle">
-                <input
-                  type="password"
-                  id="password"
-                  name="password"
-                  autocomplete="current-password"
-                  maxlength="72"
-                  required
-                  placeholder="Nhập mật khẩu để xác thực tài khoản"
-                  aria-describedby="password-hint password-error"
-                />
-                <button
-                  class="password-toggle"
-                  type="button"
-                  data-toggle-password="password"
-                  aria-controls="password"
-                  aria-pressed="false"
-                  aria-label="Hiện mật khẩu"
-                >
-                  Hiện
-                </button>
-              </div>
-              <small class="field-hint" id="password-hint">Dùng để xác nhận đây là tài khoản của bạn</small>
-              <span class="field-error" id="password-error" aria-live="polite"></span>
-            </div>
-
-            <!-- Nội dung yêu cầu (textarea tối thiểu 5 dòng, bộ đếm 0/1000) -->
-            <div class="field">
-              <div class="field-label-row">
-                <label for="message">Nội dung yêu cầu</label>
-                <span class="char-counter" id="message-counter" aria-live="polite">0/1000</span>
-              </div>
-              <textarea
-                id="message"
-                name="message"
-                rows="5"
-                maxlength="1000"
-                required
-                placeholder="Mô tả rõ lý do bạn muốn mở khóa hoặc khôi phục tài khoản, ví dụ: giải thích sự việc hoặc cam kết tuân thủ quy chế..."
-                aria-describedby="message-counter message-error"
-              ></textarea>
-              <span class="field-error" id="message-error" aria-live="polite"></span>
-            </div>
-
-            <!-- 6. Nút chính full-width -->
-            <button
-              id="submitBtn"
-              class="button button-block"
-              type="submit"
-              th:text="${status == 'INACTIVE' ? 'Gửi yêu cầu khôi phục' : 'Gửi yêu cầu mở khóa'}"
-            >
-              Gửi yêu cầu mở khóa
-            </button>
-          </form>
-        </div>
-
-        <!-- 6. Nút phụ quay lại đăng nhập -->
-        <div class="form-footer" style="margin-top: 1.25rem;">
-          <a class="button button-secondary button-block" th:href="@{/login}">Quay lại đăng nhập</a>
-        </div>
+        <form th:action="@{/account-unlock-request}" method="post" class="mt-4">
+          <h2 class="h5">Gửi yêu cầu mở khóa</h2>
+          <p class="text-muted">Nhập lại thông tin đăng nhập và lý do để quản trị viên xem xét.</p>
+          <label class="form-label" for="unlock-email">Email</label>
+          <input id="unlock-email" class="form-control mb-3" type="email" name="email" th:value="${email}" required maxlength="255" />
+          <label class="form-label" for="unlock-password">Mật khẩu</label>
+          <input id="unlock-password" class="form-control mb-3" type="password" name="password" required maxlength="72" />
+          <label class="form-label" for="unlock-message">Lý do</label>
+          <textarea id="unlock-message" class="form-control mb-3" name="message" rows="4" maxlength="1000" required></textarea>
+          <button class="button button-block" type="submit">Gửi yêu cầu</button>
+        </form>
+        <a class="button button-block" th:href="@{/login}">Quay lại đăng nhập</a>
       </section>
     </main>
-
-    <!-- JS nhỏ gọn: hiện/ẩn mật khẩu, đếm ký tự, chống gửi đúp -->
-    <script>
-      (function() {
-        // Hiện / ẩn mật khẩu
-        var toggleBtns = document.querySelectorAll('[data-toggle-password]');
-        toggleBtns.forEach(function(btn) {
-          btn.addEventListener('click', function() {
-            var inputId = btn.getAttribute('data-toggle-password');
-            var input = document.getElementById(inputId);
-            if (!input) return;
-            var isPassword = input.type === 'password';
-            input.type = isPassword ? 'text' : 'password';
-            btn.setAttribute('aria-pressed', String(isPassword));
-            btn.textContent = isPassword ? 'Ẩn' : 'Hiện';
-            btn.setAttribute('aria-label', isPassword ? 'Ẩn mật khẩu' : 'Hiện mật khẩu');
-          });
-        });
-
-        // Bộ đếm ký tự textarea
-        var messageInput = document.getElementById('message');
-        var counter = document.getElementById('message-counter');
-        if (messageInput && counter) {
-          function updateCounter() {
-            counter.textContent = messageInput.value.length + '/1000';
-          }
-          messageInput.addEventListener('input', updateCounter);
-          updateCounter();
-        }
-
-        // Chống gửi đúp khi submit form
-        var form = document.getElementById('unlockRequestForm');
-        var submitBtn = document.getElementById('submitBtn');
-        if (form && submitBtn) {
-          form.addEventListener('submit', function(e) {
-            if (!form.checkValidity()) {
-              return;
-            }
-            setTimeout(function() {
-              submitBtn.disabled = true;
-              submitBtn.textContent = 'Đang gửi...';
-            }, 0);
-          });
-        }
-      })();
-    </script>
   </body>
 </html>

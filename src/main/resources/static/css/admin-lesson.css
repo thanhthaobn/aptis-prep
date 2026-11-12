@@ -1,0 +1,23 @@
+.admin-lesson-list .lesson-pagination {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  justify-content: initial;
+}
+
+.admin-lesson-list .lesson-pagination > span {
+  grid-column: 1;
+}
+
+.admin-lesson-list .lesson-pagination .pagination-pages {
+  grid-column: 2;
+  justify-content: center;
+}
+
+@media (max-width: 620px) {
+  .admin-lesson-list .lesson-pagination {
+    display: flex;
+    align-items: center;
+    flex-direction: column;
+  }
+}
