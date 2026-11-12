@@ -172,9 +172,7 @@ class SecurityFlowTests {
                 .andExpect(redirectedUrl("/account-locked"));
 
         var accountLockedPage =
-                mockMvc.perform(get("/account-locked"))
-                        .andExpect(status().isOk())
-                        .andReturn();
+                mockMvc.perform(get("/account-locked")).andExpect(status().isOk()).andReturn();
         var csrfField =
                 Pattern.compile("name=\\\"_csrf\\\" value=\\\"([^\\\"]+)\\\"")
                         .matcher(accountLockedPage.getResponse().getContentAsString());
@@ -182,13 +180,20 @@ class SecurityFlowTests {
 
         mockMvc.perform(
                         post("/account-unlock-request")
-                                .session((MockHttpSession) accountLockedPage.getRequest().getSession())
+                                .session(
+                                        (MockHttpSession)
+                                                accountLockedPage.getRequest().getSession())
                                 .param("_csrf", csrfField.group(1))
                                 .param("email", student.getEmail())
                                 .param("password", "Unlock-flow-password-42")
-                                .param("message", "Tôi muốn tiếp tục học và xin được xem xét mở khóa."))
+                                .param(
+                                        "message",
+                                        "Tôi muốn tiếp tục học và xin được xem xét mở khóa."))
                 .andExpect(redirectedUrl("/account-locked"))
-                .andExpect(flash().attribute("successMessage", "Yêu cầu mở khóa đã được gửi thành công."));
+                .andExpect(
+                        flash().attribute(
+                                        "successMessage",
+                                        "Yêu cầu mở khóa đã được gửi thành công."));
 
         org.junit.jupiter.api.Assertions.assertEquals(1, unlockRequests.count());
         mockMvc.perform(
@@ -196,8 +201,7 @@ class SecurityFlowTests {
                                 .with(user("admin@aptis.local").roles("ADMIN")))
                 .andExpect(status().isOk())
                 .andExpect(
-                        org.springframework.test.web.servlet.result.MockMvcResultMatchers
-                                .content()
+                        org.springframework.test.web.servlet.result.MockMvcResultMatchers.content()
                                 .string(
                                         org.hamcrest.Matchers.containsString(
                                                 "Tôi muốn tiếp tục học và xin được xem xét mở khóa.")));

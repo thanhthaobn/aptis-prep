@@ -166,7 +166,7 @@
             <a
               class="button button-small"
               th:classappend="${selectedStatus == 'PENDING'} ? '' : 'button-secondary'"
-              th:href="@{/admin/unlock-requests(status='PENDING')}"
+              th:href="@{/admin/unlock-requests(status='PENDING', page=0, size=${pageData.size})}"
             >
               Chờ xử lý
               <span
@@ -180,19 +180,22 @@
             <a
               class="button button-small"
               th:classappend="${selectedStatus == 'ALL'} ? '' : 'button-secondary'"
-              th:href="@{/admin/unlock-requests(status='ALL')}"
+              th:href="@{/admin/unlock-requests(status='ALL', page=0, size=${pageData.size})}"
             >
               Tất cả
             </a>
           </div>
         </div>
 
-        <div class="empty-box" th:if="${requests == null or requests.isEmpty()}">
+        <div class="empty-box" th:if="${pageData.content == null or pageData.content.isEmpty()}">
           <h2>Không có yêu cầu</h2>
           <p>Hiện chưa có yêu cầu mở khóa nào phù hợp với bộ lọc.</p>
         </div>
 
-        <div class="table-wrap" th:if="${requests != null and !requests.isEmpty()}">
+        <div
+          class="table-wrap unlock-request-table-wrap"
+          th:if="${pageData.content != null and !pageData.content.isEmpty()}"
+        >
           <table class="data-table">
             <caption class="visually-hidden">Danh sách yêu cầu mở khóa tài khoản</caption>
             <thead>
@@ -205,7 +208,7 @@
               </tr>
             </thead>
             <tbody>
-              <tr th:each="request : ${requests}">
+              <tr th:each="request : ${pageData.content}">
                 <td>
                   <strong th:text="${request.userFullName}">Họ tên</strong>
                   <small class="d-block muted" th:text="${request.userEmail}">
@@ -273,6 +276,61 @@
             </tbody>
           </table>
         </div>
+
+        <th:block
+          th:with="currentPage=${pageData.number}, totalPages=${pageData.totalPages}, totalItems=${pageData.totalElements}"
+        >
+          <nav
+            class="pagination student-pagination unlock-request-pagination"
+            aria-label="Phân trang yêu cầu mở khóa"
+          >
+            <span th:text="${totalItems + ' yêu cầu'}">0 yêu cầu</span>
+            <div class="pagination-pages" th:if="${totalPages > 1}">
+              <a
+                class="page-link"
+                th:if="${currentPage > 0}"
+                th:href="@{/admin/unlock-requests(page=${currentPage - 1}, size=${pageData.size}, status=${selectedStatus})}"
+                aria-label="Trang trước"
+              >
+                ‹
+              </a>
+              <span
+                class="page-link disabled"
+                th:unless="${currentPage > 0}"
+                aria-disabled="true"
+                aria-label="Trang trước"
+              >
+                ‹
+              </span>
+              <a
+                class="page-link"
+                th:each="pageNumber : ${#numbers.sequence(0, totalPages - 1)}"
+                th:classappend="${pageNumber == currentPage ? 'active' : ''}"
+                th:href="@{/admin/unlock-requests(page=${pageNumber}, size=${pageData.size}, status=${selectedStatus})}"
+                th:attr="aria-current=${pageNumber == currentPage ? 'page' : null}"
+                th:text="${pageNumber + 1}"
+              >
+                1
+              </a>
+              <a
+                class="page-link"
+                th:if="${currentPage + 1 < totalPages}"
+                th:href="@{/admin/unlock-requests(page=${currentPage + 1}, size=${pageData.size}, status=${selectedStatus})}"
+                aria-label="Trang sau"
+              >
+                ›
+              </a>
+              <span
+                class="page-link disabled"
+                th:unless="${currentPage + 1 < totalPages}"
+                aria-disabled="true"
+                aria-label="Trang sau"
+              >
+                ›
+              </span>
+            </div>
+          </nav>
+        </th:block>
       </main>
     </div>
     <footer class="site-footer">

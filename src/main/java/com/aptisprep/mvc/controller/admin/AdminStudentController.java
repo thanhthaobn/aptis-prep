@@ -135,8 +135,11 @@ public class AdminStudentController {
 
     @GetMapping("/admin/unlock-requests")
     public String unlockRequests(
-            @RequestParam(name = "status", defaultValue = "PENDING") String status, Model model) {
-        model.addAttribute("requests", unlockRequestService.list(status));
+            @RequestParam(name = "status", defaultValue = "PENDING") String status,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "5") int size,
+            Model model) {
+        model.addAttribute("pageData", unlockRequestService.page(status, page, size));
         model.addAttribute("selectedStatus", status);
         model.addAttribute("pendingCount", unlockRequestService.countPending());
         return "admin/unlock-requests/list";
