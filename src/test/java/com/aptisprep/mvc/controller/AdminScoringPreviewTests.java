@@ -271,7 +271,7 @@ class AdminScoringPreviewTests {
 
         mvc.perform(get("/admin/scoring-schemes/create").param("examType", "PRACTICE").with(admin))
                 .andExpect(status().isOk())
-                .andExpect(content().string(containsString("Chọn kỹ năng")))
+                .andExpect(content().string(containsString("Kỹ năng áp dụng")))
                 .andExpect(content().string(not(containsString("data-scoring-skill="))));
 
         mvc.perform(
@@ -288,6 +288,58 @@ class AdminScoringPreviewTests {
                         content().string(not(containsString("data-scoring-skill=\"LISTENING\""))))
                 .andExpect(content().string(not(containsString("ranges[READING_A0].minScore"))))
                 .andExpect(content().string(not(containsString("Ngưỡng đạt"))));
+    }
+
+    @Test
+    void scoringModeCanBeChangedInsideTheSameFormWithoutLosingEnteredInformation()
+            throws Exception {
+        var admin = user("admin@aptis.local").roles("ADMIN");
+
+        mvc.perform(
+                        post("/admin/scoring-schemes/create/configure")
+                                .with(admin)
+                                .with(csrf())
+                                .param("name", "Bộ điểm đang nhập")
+                                .param("version", "2.0")
+                                .param("status", "DRAFT")
+                                .param("examType", "PRACTICE")
+                                .param("scopeSkill", "READING"))
+                .andExpect(status().isOk())
+                .andExpect(
+                        model().attribute(
+                                        "schemeForm",
+                                        allOf(
+                                                hasProperty("name", is("Bộ điểm đang nhập")),
+                                                hasProperty("version", is("2.0")),
+                                                hasProperty("examType", is("PRACTICE")),
+                                                hasProperty("scopeSkill", is("READING")))))
+                .andExpect(content().string(containsString("data-scoring-skill=\"READING\"")))
+                .andExpect(
+                        content().string(not(containsString("data-scoring-skill=\"LISTENING\""))));
+
+        mvc.perform(
+                        post("/admin/scoring-schemes/create/configure")
+                                .with(admin)
+                                .with(csrf())
+                                .param("name", "Bộ điểm đang nhập")
+                                .param("version", "2.0")
+                                .param("status", "DRAFT")
+                                .param("examType", "FULL_MOCK")
+                                .param("scopeSkill", "READING"))
+                .andExpect(status().isOk())
+                .andExpect(
+                        model().attribute(
+                                        "schemeForm",
+                                        allOf(
+                                                hasProperty("name", is("Bộ điểm đang nhập")),
+                                                hasProperty("version", is("2.0")),
+                                                hasProperty("examType", is("FULL_MOCK")),
+                                                hasProperty("scopeSkill", nullValue()))))
+                .andExpect(content().string(containsString("Thang điểm theo tất cả kỹ năng")))
+                .andExpect(content().string(containsString("data-scoring-skill=\"READING\"")))
+                .andExpect(content().string(containsString("data-scoring-skill=\"LISTENING\"")))
+                .andExpect(content().string(containsString("data-scoring-skill=\"WRITING\"")))
+                .andExpect(content().string(containsString("data-scoring-skill=\"SPEAKING\"")));
     }
 
     @Test
