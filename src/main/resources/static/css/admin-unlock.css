@@ -1,3 +1,11 @@
+.unlock-request-table-wrap {
+  overflow: visible;
+}
+
+.unlock-request-pagination {
+  align-items: center;
+}
+
 .unlock-request-message {
   min-width: 220px;
   max-width: 360px;

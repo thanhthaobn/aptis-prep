@@ -3,6 +3,7 @@ package com.aptisprep.mvc.controller.admin;
 import com.aptisprep.mvc.enums.ExamType;
 import com.aptisprep.mvc.exception.BusinessRuleException;
 import com.aptisprep.mvc.service.exam.ExamAttemptService;
+import com.aptisprep.mvc.service.scoring.ScoringGuideService;
 import com.aptisprep.mvc.support.contract.*;
 import com.aptisprep.mvc.support.contract.IntegrationModels.AdminHistoryFilter;
 import java.security.Principal;
@@ -21,9 +22,12 @@ public class AdminResultController {
     private static final List<String> RESULT_STATES =
             List.of("IN_PROGRESS", "WAITING_GRADING", "COMPLETED", "ERROR", "EXPIRED");
     private final ExamAttemptService examAttemptService;
+    private final ScoringGuideService scoringGuideService;
 
-    public AdminResultController(ExamAttemptService examAttemptService) {
+    public AdminResultController(
+            ExamAttemptService examAttemptService, ScoringGuideService scoringGuideService) {
         this.examAttemptService = examAttemptService;
+        this.scoringGuideService = scoringGuideService;
     }
 
     @GetMapping("/admin/results")
@@ -86,8 +90,10 @@ public class AdminResultController {
 
     @GetMapping("/admin/results/{id}")
     public String detail(@PathVariable Integer id, Principal principal, Model model) {
+        var result = examAttemptService.adminResult(principal.getName(), id);
+        model.addAttribute("attemptResult", result);
         model.addAttribute(
-                "attemptResult", examAttemptService.adminResult(principal.getName(), id));
+                "overallScaleMax", scoringGuideService.forResultView(result).combinedScaleMax());
         model.addAttribute("review", examAttemptService.adminReview(principal.getName(), id));
         return "admin/result/detail";
     }

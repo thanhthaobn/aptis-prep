@@ -406,7 +406,7 @@ public class LearningPathServiceImpl implements LearningPathService {
         if (required.isEmpty() || required.stream().anyMatch(item -> !completed(item)))
             throw new BusinessRuleException("Chặng học chưa hoàn thành các bài bắt buộc");
         if (skill.estimatedLevel() != null) accounts.applyAssessment(userId, attemptId);
-        if (!skill.passed() || rank(skill.estimatedLevel()) < rank(path.getTargetLevel())) return;
+        if (!skill.passed()) return;
         path.setStatus("COMPLETED");
         path.setCompletedAt(LocalDateTime.now());
         path.setSourceAttemptId(attemptId);
@@ -433,6 +433,12 @@ public class LearningPathServiceImpl implements LearningPathService {
                             .findFirstByUserIdAndSkillAndStatusOrderByCreatedAtDesc(
                                     user.getId(), skill, "ACTIVE")
                             .orElse(null);
+            if (current != null) {
+                Integer previousCheckpoint = current.getCheckpointExamId();
+                assignCheckpointIfAvailable(current);
+                if (previousCheckpoint == null && current.getCheckpointExamId() != null)
+                    learningPathRepository.save(current);
+            }
             String finalGoal = goal == null ? null : goal.getTargetLevel();
             boolean goalReached =
                     finalGoal != null && from != null && rank(from) >= rank(finalGoal);
@@ -502,6 +508,7 @@ public class LearningPathServiceImpl implements LearningPathService {
         path.setTargetLevel(desired.targetLevel());
         path.setSourceAttemptId(desired.sourceAttemptId());
         path.setStatus("ACTIVE");
+        assignCheckpointIfAvailable(path);
         path = learningPathRepository.save(path);
         int position = 1;
         Set<Integer> seen = new HashSet<>();
@@ -523,6 +530,17 @@ public class LearningPathServiceImpl implements LearningPathService {
             item.setStatus(done == null ? "NOT_STARTED" : "COMPLETED");
             item.setCompletedAt(done == null ? null : done.getCompletedAt());
             learningPathItemRepository.save(item);
+        }
+    }
+
+    private void assignCheckpointIfAvailable(LearningPath path) {
+        if (path.getCheckpointExamId() != null || path.getTargetLevel() == null) return;
+        try {
+            MockExamDTO checkpoint =
+                    catalog.checkpoint(codeSkill(path.getSkill()), path.getTargetLevel());
+            if (checkpoint != null && checkpoint.getId() != null)
+                path.setCheckpointExamId(checkpoint.getId());
+        } catch (ResourceNotFoundException | BusinessRuleException ignored) {
         }
     }
 

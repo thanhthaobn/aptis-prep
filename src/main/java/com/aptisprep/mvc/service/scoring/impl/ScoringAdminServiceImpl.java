@@ -196,7 +196,7 @@ public class ScoringAdminServiceImpl implements ScoringAdminService {
     @Transactional
     public Integer saveSchemeWithScores(String email, Integer id, ScoringSchemeDTO form) {
         Integer savedId = saveScheme(email, id, form);
-        if (!form.isConfigureScores() || blankToNull(form.getExamType()) == null) {
+        if (blankToNull(form.getExamType()) == null) {
             if (requireScheme(savedId).getStatus() == RecordStatus.ACTIVE)
                 requireReady(requireScheme(savedId));
             return savedId;
@@ -205,76 +205,78 @@ public class ScoringAdminServiceImpl implements ScoringAdminService {
         List<String> skills =
                 scheme.getScopeSkill() == null ? Skill.codes() : List.of(scheme.getScopeSkill());
         if (scheme.getStatus() == RecordStatus.INACTIVE) return savedId;
+        boolean fixedCheckpointThreshold =
+                "CHECKPOINT".equals(scheme.getExamType())
+                        && skills.size() == 1
+                        && blankToNull(form.getTargetLevel()) == null
+                        && form.getPassingScore() == null
+                        && !hasBandInput(form, skills.getFirst());
         for (String skill : skills) {
-            ScoringScaleRuleDTO scale = form.getSkillScales().get(skill);
-            if (!hasScale(scale)) {
-                scale = new ScoringScaleRuleDTO();
-                scale.setRawMin(form.getScale().getRawMin());
-                scale.setRawMax(form.getScale().getRawMax());
-                scale.setScaleMin(form.getScale().getScaleMin());
-                scale.setScaleMax(form.getScale().getScaleMax());
+            ScoringScaleRuleDTO scale =
+                    form.getSkillScales() == null ? null : form.getSkillScales().get(skill);
+            if (scale == null) scale = new ScoringScaleRuleDTO();
+            if (fixedCheckpointThreshold) {
+                configureCheckpointThreshold(email, savedId, skill, scale);
+                continue;
             }
-            boolean hasBands =
-                    CefrLevel.scoringCodes().stream()
-                            .map(level -> form.getRanges().get(skill + "_" + level))
-                            .anyMatch(
-                                    band ->
-                                            band != null
-                                                    && (band.getMinScore() != null
-                                                            || band.getMaxScore() != null));
-            boolean targetOnly =
-                    scheme.getScopeSkill() != null
-                            && (blankToNull(form.getTargetLevel()) != null
-                                    || form.getPassingScore() != null);
-            if (targetOnly && hasBands)
-                throw new BusinessRuleException(
-                        "Chọn ngưỡng đạt hoặc bảng CEFR đầy đủ, không dùng đồng thời");
-            if (!hasScale(scale) && !hasBands && !targetOnly) continue;
+            List<String> requiredLevels = requiredScoringLevels(scheme, skill);
+            for (String level : requiredLevels) {
+                ScoreBandDTO band = form.getRanges().get(skill + "_" + level);
+                if (band == null || band.getMinScore() == null || band.getMaxScore() == null)
+                    throw new BusinessRuleException("Nhập đầy đủ khoảng điểm CEFR cho " + skill);
+            }
+            ScoreBandDTO c1 = form.getRanges().get(skill + "_C1");
             // Practice mode derives rawMax from the locked exam. The persisted 0–50 raw range is
             // retained only for compatibility with the existing schema and old admin pages.
             if (scale.getRawMin() == null) scale.setRawMin(BigDecimal.ZERO);
             if (scale.getRawMax() == null) scale.setRawMax(BigDecimal.valueOf(50));
-            if (scale.getScaleMin() == null) scale.setScaleMin(BigDecimal.ZERO);
-            if (scale.getScaleMax() == null) scale.setScaleMax(BigDecimal.valueOf(50));
+            scale.setScaleMin(BigDecimal.ZERO);
+            scale.setScaleMax(c1.getMaxScore());
             var previousBands =
                     scoreBandRepository.findBySchemeIdAndSkillOrderByMinScoreAsc(savedId, skill);
             scoreBandRepository.deleteAll(previousBands);
             scoreBandRepository.flush();
             saveScaleRule(email, savedId, skill, scale);
-            if (targetOnly) {
+            for (String level : requiredLevels) {
+                ScoreBandDTO band = form.getRanges().get(skill + "_" + level);
                 saveConfiguredBand(
-                        email,
-                        savedId,
-                        skill,
-                        form.getTargetLevel(),
-                        form.getPassingScore(),
-                        scale.getScaleMax());
-            } else {
-                for (String level : CefrLevel.scoringCodes()) {
-                    if (CefrLevel.BELOW_A1.equals(level) && !supportsBelowA1(scheme, skill))
-                        continue;
-                    ScoreBandDTO band = form.getRanges().get(skill + "_" + level);
-                    if (band != null && (band.getMinScore() != null || band.getMaxScore() != null))
-                        saveConfiguredBand(
-                                email,
-                                savedId,
-                                skill,
-                                level,
-                                band.getMinScore(),
-                                band.getMaxScore());
-                }
+                        email, savedId, skill, level, band.getMinScore(), band.getMaxScore());
             }
         }
         if (scheme.getStatus() == RecordStatus.ACTIVE) requireReady(scheme);
         return savedId;
     }
 
-    private boolean hasScale(ScoringScaleRuleDTO scale) {
-        return scale != null
-                && (scale.getRawMin() != null
-                        || scale.getRawMax() != null
-                        || scale.getScaleMin() != null
-                        || scale.getScaleMax() != null);
+    private boolean hasBandInput(ScoringSchemeDTO form, String skill) {
+        if (form.getRanges() == null) return false;
+        return form.getRanges().entrySet().stream()
+                .filter(entry -> entry.getKey().startsWith(skill + "_"))
+                .map(Map.Entry::getValue)
+                .anyMatch(
+                        band ->
+                                band != null
+                                        && (band.getMinScore() != null
+                                                || band.getMaxScore() != null));
+    }
+
+    private void configureCheckpointThreshold(
+            String email, Integer schemeId, String skill, ScoringScaleRuleDTO scale) {
+        scale.setRawMin(BigDecimal.ZERO);
+        scale.setRawMax(BigDecimal.valueOf(50));
+        scale.setScaleMin(BigDecimal.ZERO);
+        scale.setScaleMax(BigDecimal.valueOf(50));
+        var previousBands =
+                scoreBandRepository.findBySchemeIdAndSkillOrderByMinScoreAsc(schemeId, skill);
+        scoreBandRepository.deleteAll(previousBands);
+        scoreBandRepository.flush();
+        saveScaleRule(email, schemeId, skill, scale);
+    }
+
+    private List<String> requiredScoringLevels(ScoringScheme scheme, String skill) {
+        List<String> levels = new ArrayList<>();
+        if (supportsBelowA1(scheme, skill)) levels.add(CefrLevel.BELOW_A1);
+        levels.addAll(List.of("A1", "A2", "B1", "B2", "C1"));
+        return levels;
     }
 
     @Transactional
@@ -329,12 +331,14 @@ public class ScoringAdminServiceImpl implements ScoringAdminService {
                     && (rule.getRawMin().signum() != 0
                             || rule.getRawMax().compareTo(BigDecimal.valueOf(50)) != 0))
                 throw new BusinessRuleException("Writing và Speaking cần thang điểm thô 0–50");
-            if (scheme.getScopeSkill() == null
-                    && scheme.getExamType() != null
-                    && (rule.getScaleMin().signum() != 0
-                            || rule.getScaleMax().compareTo(BigDecimal.valueOf(50)) != 0))
-                throw new BusinessRuleException(
-                        "Đề tổng hợp cần điểm quy đổi 0–50 cho từng kỹ năng");
+            if ("CHECKPOINT".equals(scheme.getExamType())) {
+                if (rule.getRawMin().signum() != 0
+                        || rule.getRawMax().compareTo(BigDecimal.valueOf(50)) != 0
+                        || rule.getScaleMin().signum() != 0
+                        || rule.getScaleMax().compareTo(BigDecimal.valueOf(50)) != 0)
+                    throw new BusinessRuleException("Checkpoint cần thang điểm cố định 0–50");
+                continue;
+            }
             var bands =
                     scoreBandRepository.findBySchemeIdAndSkillOrderByMinScoreAsc(
                             scheme.getId(), skill);
@@ -377,21 +381,6 @@ public class ScoringAdminServiceImpl implements ScoringAdminService {
             if (field != null) {
                 field.setMinScore(band.getMinScore());
                 field.setMaxScore(band.getMaxScore());
-            }
-        }
-        if (form.getScopeSkill() != null) {
-            var scoped =
-                    bands.stream()
-                            .filter(band -> band.getSkill().equals(form.getScopeSkill()))
-                            .toList();
-            if (scoped.size() == 1) {
-                form.setTargetLevel(scoped.getFirst().getCefrLevel());
-                form.setPassingScore(scoped.getFirst().getMinScore());
-                var field =
-                        form.getRanges()
-                                .get(form.getScopeSkill() + "_" + scoped.getFirst().getCefrLevel());
-                field.setMinScore(null);
-                field.setMaxScore(null);
             }
         }
     }
@@ -614,7 +603,7 @@ public class ScoringAdminServiceImpl implements ScoringAdminService {
         String normalized = normalizeSkill(skill);
         requireScopeSkill(scheme, normalized);
         BigDecimal rawMin = decimal(form.getRawMin()), rawMax = decimal(form.getRawMax());
-        BigDecimal scaleMin = decimal(form.getScaleMin()), scaleMax = decimal(form.getScaleMax());
+        BigDecimal scaleMin = BigDecimal.ZERO, scaleMax = decimal(form.getScaleMax());
         if (rawMin == null
                 || rawMax == null
                 || scaleMin == null
@@ -627,6 +616,12 @@ public class ScoringAdminServiceImpl implements ScoringAdminService {
                 || scaleMax.compareTo(new BigDecimal("999.99")) > 0)
             throw new BusinessRuleException(
                     "Khoảng raw/scale không hợp lệ; scale phải nằm trong 0–999.99");
+        if ("CHECKPOINT".equals(scheme.getExamType())
+                && (rawMin.signum() != 0
+                        || rawMax.compareTo(BigDecimal.valueOf(50)) != 0
+                        || scaleMin.signum() != 0
+                        || scaleMax.compareTo(BigDecimal.valueOf(50)) != 0))
+            throw new BusinessRuleException("Checkpoint cần thang điểm cố định 0–50");
         if (scoreBandRepository
                 .findBySchemeIdAndSkillOrderByMinScoreAsc(schemeId, normalized)
                 .stream()
@@ -730,7 +725,8 @@ public class ScoringAdminServiceImpl implements ScoringAdminService {
     }
 
     private boolean supportsBelowA1(ScoringScheme scheme, String skill) {
-        return "FULL_MOCK".equals(scheme.getExamType())
+        return ("PLACEMENT".equals(scheme.getExamType())
+                        || "FULL_MOCK".equals(scheme.getExamType()))
                 && !Skill.GRAMMAR_VOCABULARY.name().equals(skill);
     }
 

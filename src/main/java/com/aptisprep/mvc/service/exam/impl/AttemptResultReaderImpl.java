@@ -146,7 +146,8 @@ public class AttemptResultReaderImpl implements AttemptResultReader {
                                             CheckpointScorePolicy.confirmedLevel(
                                                     exam.getExamType(),
                                                     exam.getTargetLevel(),
-                                                    value.getCefrLevel());
+                                                    value.getCefrLevel(),
+                                                    value.getScaleScore());
                                     String state = value.getGradingStatus();
                                     if (state == null)
                                         state =

@@ -314,19 +314,29 @@ public class AdminCatalogController {
             try {
                 int itemIndex = Integer.parseInt(action.substring(separator + 1));
                 if (itemIndex >= 0 && itemIndex < form.getItems().size()) {
-                    int optionIndex = action.startsWith("ADD_OPTION_")
-                            ? -1
-                            : Integer.parseInt(action.substring("REMOVE_OPTION_".length(), separator));
+                    int optionIndex =
+                            action.startsWith("ADD_OPTION_")
+                                    ? -1
+                                    : Integer.parseInt(
+                                            action.substring("REMOVE_OPTION_".length(), separator));
                     QuestionItemDTO item = form.getItems().get(itemIndex);
-                    List<QuestionOptionDTO> options = item.getOptions() == null
-                            ? new ArrayList<>() : new ArrayList<>(item.getOptions());
+                    List<QuestionOptionDTO> options =
+                            item.getOptions() == null
+                                    ? new ArrayList<>()
+                                    : new ArrayList<>(item.getOptions());
                     if (action.startsWith("ADD_OPTION_") && options.size() < 26) {
-                        options.add(new QuestionOptionDTO(null, null, null,
-                                String.valueOf((char) ('A' + options.size())), false,
-                                options.size() + 1));
+                        options.add(
+                                new QuestionOptionDTO(
+                                        null,
+                                        null,
+                                        null,
+                                        String.valueOf((char) ('A' + options.size())),
+                                        false,
+                                        options.size() + 1));
                     } else if (action.startsWith("REMOVE_OPTION_")
                             && options.size() > 2
-                            && optionIndex >= 0 && optionIndex < options.size()) {
+                            && optionIndex >= 0
+                            && optionIndex < options.size()) {
                         options.remove(optionIndex);
                         for (int index = 0; index < options.size(); index++) {
                             options.get(index).setOptionCode(String.valueOf((char) ('A' + index)));
