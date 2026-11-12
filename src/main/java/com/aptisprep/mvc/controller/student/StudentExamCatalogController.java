@@ -166,9 +166,6 @@ public class StudentExamCatalogController {
         model.addAttribute("scoreGuides", scoreGuideView.guides());
         model.addAttribute("feedbackWithoutGuide", scoreGuideView.feedbackWithoutGuide());
         model.addAttribute("canRegradeEmpty", examAttemptContract.canRegradeEmpty(userId, id));
-        if (!"IN_PROGRESS".equals(result.state())
-                && examAttemptContract instanceof ExamAttemptService reviewService)
-            model.addAttribute("review", reviewService.review(userId, id));
         return "student/attempt/result";
     }
 
