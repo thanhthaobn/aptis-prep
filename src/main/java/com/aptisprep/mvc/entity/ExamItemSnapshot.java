@@ -24,7 +24,7 @@ public class ExamItemSnapshot {
     @Column(nullable = false)
     private Integer position;
 
-    @Column(nullable = false, precision = 6, scale = 2)
+    @Column(nullable = false, precision = 6, scale = 2, columnDefinition = "decimal(6,2) default 1")
     private BigDecimal points = BigDecimal.ONE;
 
     @Column(columnDefinition = "nvarchar(max)")

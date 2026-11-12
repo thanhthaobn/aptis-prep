@@ -302,36 +302,36 @@
                 <label for="questionType">Dạng câu hỏi</label>
                 <select id="questionType" name="questionType">
                   <option
-                    th:if="${questionForm.skill == 'GRAMMAR_VOCABULARY' or questionForm.skill == 'READING' or questionForm.skill == 'LISTENING'}"
                     value="SINGLE_CHOICE"
+                    data-question-skills="GRAMMAR_VOCABULARY,READING,LISTENING"
                     th:selected="${questionForm.questionType == 'SINGLE_CHOICE'}"
                   >
                     Chọn một đáp án
                   </option>
                   <option
-                    th:if="${questionForm.skill == 'GRAMMAR_VOCABULARY' or questionForm.skill == 'READING' or questionForm.skill == 'LISTENING'}"
                     value="MATCHING"
+                    data-question-skills="GRAMMAR_VOCABULARY,READING,LISTENING"
                     th:selected="${questionForm.questionType == 'MATCHING'}"
                   >
                     Ghép nối
                   </option>
                   <option
-                    th:if="${questionForm.skill == 'GRAMMAR_VOCABULARY' or questionForm.skill == 'READING' or questionForm.skill == 'LISTENING'}"
                     value="ORDERING"
+                    data-question-skills="GRAMMAR_VOCABULARY,READING,LISTENING"
                     th:selected="${questionForm.questionType == 'ORDERING'}"
                   >
                     Sắp xếp
                   </option>
                   <option
-                    th:if="${questionForm.skill == 'WRITING'}"
                     value="WRITING_TEXT"
+                    data-question-skills="WRITING"
                     th:selected="${questionForm.questionType == 'WRITING_TEXT'}"
                   >
                     Trả lời bằng văn bản
                   </option>
                   <option
-                    th:if="${questionForm.skill == 'SPEAKING'}"
                     value="SPEAKING_AUDIO"
+                    data-question-skills="SPEAKING"
                     th:selected="${questionForm.questionType == 'SPEAKING_AUDIO'}"
                   >
                     Trả lời bằng âm thanh
@@ -382,11 +382,17 @@
               </div>
             </div>
             <aside class="catalog-guided-help">
-              <span th:if="${questionForm.questionType == 'SINGLE_CHOICE'}">Mỗi mục có một đáp án đúng.</span>
-              <span th:if="${questionForm.questionType == 'MATCHING'}">Mỗi mục có một vị trí ghép đúng.</span>
-              <span th:if="${questionForm.questionType == 'ORDERING'}">Các mục phải có vị trí đúng duy nhất.</span>
-              <span th:if="${questionForm.questionType == 'WRITING_TEXT'}">Mỗi mục là một yêu cầu viết.</span>
-              <span th:if="${questionForm.questionType == 'SPEAKING_AUDIO'}">Mỗi mục là một yêu cầu nói.</span>
+              <span
+                th:text="${questionForm.questionType == 'MATCHING'
+                  ? 'Mỗi mục có một vị trí ghép đúng.'
+                  : questionForm.questionType == 'ORDERING'
+                    ? 'Các mục phải có vị trí đúng duy nhất.'
+                    : questionForm.questionType == 'WRITING_TEXT'
+                      ? 'Mỗi mục là một yêu cầu viết.'
+                      : questionForm.questionType == 'SPEAKING_AUDIO'
+                        ? 'Mỗi mục là một yêu cầu nói.'
+                        : 'Mỗi mục có một đáp án đúng.'}"
+              >Mỗi mục có một đáp án đúng.</span>
             </aside>
             <section class="catalog-form-section">
               <div class="catalog-form-intro catalog-form-intro-small">
@@ -516,13 +522,27 @@
                   </div>
                   <fieldset
                     class="catalog-option-fields conditional-field"
-                    th:if="${questionForm.questionType == 'SINGLE_CHOICE' or questionForm.questionType == 'MATCHING'}"
+                    th:hidden="${questionForm.questionType != 'SINGLE_CHOICE' and questionForm.questionType != 'MATCHING'}"
                   >
                     <legend>Phương án trả lời</legend>
-                    <p class="field-help">
+                    <p class="field-help option-help-single" th:if="${questionForm.questionType == 'SINGLE_CHOICE'}">
                       Nhập phương án liên tục từ A trở đi rồi chọn đúng một đáp án đúng.
                     </p>
+                    <p class="field-help option-help-matching" th:if="${questionForm.questionType == 'MATCHING'}">
+                      Nhập các phương án ghép nối liên tục từ A trở đi rồi chọn vị trí ghép đúng cho mục này.
+                    </p>
+                    <div class="option-actions">
+                      <button
+                        class="button button-secondary button-small"
+                        type="button"
+                        data-option-add
+                        onclick="return window.addQuestionOption(this);"
+                      >
+                        Thêm phương án
+                      </button>
+                    </div>
                     <div
+                      class="option-row"
                       th:each="option, optionStat : ${item.options}"
                       th:with="optionPath=${itemPath + '.options[' + optionStat.index + ']'}"
                     >
@@ -545,13 +565,22 @@
                           th:value="${optionStat.index + 1}"
                           th:checked="${item.correctPosition == optionStat.index + 1}"
                         />
-                        <span class="option-correct-text">Đáp án đúng</span>
+                        <span class="option-correct-text" th:if="${questionForm.questionType == 'SINGLE_CHOICE'}">Đáp án đúng</span>
+                        <span class="option-correct-text" th:if="${questionForm.questionType == 'MATCHING'}">Vị trí ghép đúng</span>
                       </label>
                       <input
                         type="hidden"
                         th:name="${optionPath + '.code'}"
                         th:value="${option.optionCode}"
                       />
+                      <button
+                        class="button button-secondary button-small"
+                        type="button"
+                        data-option-remove
+                        onclick="return window.removeQuestionOption(this);"
+                      >
+                        Xóa
+                      </button>
                     </div>
                   </fieldset>
                 </div>
@@ -836,5 +865,156 @@
         <span>Nền tảng học tập và luyện thi Aptis</span>
       </div>
     </footer>
+    <script>
+      (() => {
+        const skill = document.getElementById('skill');
+        const type = document.getElementById('questionType');
+        if (!skill || !type) return;
+
+        const updateQuestionTypes = () => {
+          const skillValue = skill.value;
+          const forcedType = skillValue === 'WRITING'
+            ? 'WRITING_TEXT'
+            : skillValue === 'SPEAKING' ? 'SPEAKING_AUDIO' : null;
+          [...type.options].forEach(option => {
+            const supported = (option.dataset.questionSkills || '').split(',');
+            option.hidden = !supported.includes(skillValue);
+            option.disabled = option.hidden;
+          });
+          if (forcedType) type.value = forcedType;
+          else if (type.options[type.selectedIndex]?.disabled) type.value = 'SINGLE_CHOICE';
+          document.querySelectorAll('.catalog-option-fields').forEach(field => {
+            field.hidden = !['SINGLE_CHOICE', 'MATCHING'].includes(type.value);
+          });
+        };
+
+        skill.addEventListener('change', updateQuestionTypes);
+        type.addEventListener('change', updateQuestionTypes);
+        updateQuestionTypes();
+      })();
+    </script>
+    <script>
+      (() => {
+        const optionCode = index => String.fromCharCode(65 + index);
+
+        const renumberOptions = fieldset => {
+          const item = fieldset.closest('.question-item-editor');
+          const itemIndex = item?.dataset.itemIndex;
+          const rows = [...fieldset.querySelectorAll('.option-row')];
+          rows.forEach((row, optionIndex) => {
+            const code = optionCode(optionIndex);
+            const optionPath = `items[${itemIndex}].options[${optionIndex}]`;
+            const content = row.querySelector('input[type="text"]');
+            const radio = row.querySelector('input[type="radio"]');
+            const hidden = row.querySelector('input[type="hidden"]');
+            const label = row.querySelector('.option-code-label');
+            if (label) {
+              label.textContent = `Phương án ${code}`;
+              label.htmlFor = `items-${itemIndex}-options-${optionIndex}-content`;
+            }
+            if (content) {
+              content.name = `${optionPath}.content`;
+              content.id = `items-${itemIndex}-options-${optionIndex}-content`;
+            }
+            if (radio) {
+              radio.name = `items[${itemIndex}].correctPosition`;
+              radio.value = String(optionIndex + 1);
+              radio.id = `items-${itemIndex}-options-${optionIndex}-correct`;
+            }
+            if (hidden) {
+              hidden.name = `${optionPath}.code`;
+              hidden.value = code;
+            }
+            const remove = row.querySelector('[data-option-remove]');
+            if (remove) remove.disabled = rows.length <= 2;
+          });
+        };
+
+        document.addEventListener('click', event => {
+          const addButton = event.target.closest('[data-option-add]');
+          const removeButton = event.target.closest('[data-option-remove]');
+          if (!addButton && !removeButton) return;
+          event.preventDefault();
+          event.stopPropagation();
+          const button = addButton || removeButton;
+          const fieldset = button.closest('fieldset');
+          if (!fieldset) return;
+          if (addButton) {
+            const rows = fieldset?.querySelectorAll('.option-row');
+            if (!fieldset || !rows || rows.length >= 26) return;
+            const clone = rows[rows.length - 1].cloneNode(true);
+            clone.querySelectorAll('input[type="text"]').forEach(input => input.value = '');
+            clone.querySelectorAll('input[type="radio"]').forEach(input => input.checked = false);
+            fieldset.appendChild(clone);
+            renumberOptions(fieldset);
+            return;
+          }
+          if (removeButton) {
+            const row = button.closest('.option-row');
+            const rows = fieldset?.querySelectorAll('.option-row');
+            if (!fieldset || !row || !rows || rows.length <= 2) return;
+            row.remove();
+            renumberOptions(fieldset);
+          }
+        });
+      })();
+    </script>
+    <script>
+      (() => {
+        const renumber = fieldset => {
+          const item = fieldset.closest('.question-item-editor');
+          const itemIndex = item?.dataset.itemIndex;
+          [...fieldset.querySelectorAll('.option-row')].forEach((row, index, rows) => {
+            const code = String.fromCharCode(65 + index);
+            const path = `items[${itemIndex}].options[${index}]`;
+            const text = row.querySelector('input[type="text"]');
+            const radio = row.querySelector('input[type="radio"]');
+            const hidden = row.querySelector('input[type="hidden"]');
+            const label = row.querySelector('.option-code-label');
+            if (label) {
+              label.textContent = `Phương án ${code}`;
+              label.htmlFor = `items-${itemIndex}-options-${index}-content`;
+            }
+            if (text) {
+              text.name = `${path}.content`;
+              text.id = `items-${itemIndex}-options-${index}-content`;
+            }
+            if (radio) {
+              radio.name = `items[${itemIndex}].correctPosition`;
+              radio.value = String(index + 1);
+              radio.id = `items-${itemIndex}-options-${index}-correct`;
+            }
+            if (hidden) {
+              hidden.name = `${path}.code`;
+              hidden.value = code;
+            }
+            const remove = row.querySelector('[data-option-remove]');
+            if (remove) remove.disabled = rows.length <= 2;
+          });
+        };
+
+        window.addQuestionOption = button => {
+          const fieldset = button.closest('fieldset');
+          const rows = fieldset?.querySelectorAll('.option-row');
+          if (!fieldset || !rows || rows.length >= 26) return false;
+          const clone = rows[rows.length - 1].cloneNode(true);
+          clone.querySelectorAll('input[type="text"]').forEach(input => input.value = '');
+          clone.querySelectorAll('input[type="radio"]').forEach(input => input.checked = false);
+          fieldset.appendChild(clone);
+          renumber(fieldset);
+          return false;
+        };
+
+        window.removeQuestionOption = button => {
+          const fieldset = button.closest('fieldset');
+          const row = button.closest('.option-row');
+          const rows = fieldset?.querySelectorAll('.option-row');
+          if (!fieldset || !row || !rows || rows.length <= 2) return false;
+          row.remove();
+          renumber(fieldset);
+          return false;
+        };
+      })();
+    </script>
   </body>
 </html>

@@ -22,7 +22,7 @@ public class QuestionItem {
     @Column(nullable = false)
     private int position;
 
-    @Column(nullable = false, precision = 6, scale = 2)
+    @Column(nullable = false, precision = 6, scale = 2, columnDefinition = "decimal(6,2) default 1")
     private BigDecimal points = BigDecimal.ONE;
 
     @Column(name = "min_word_count")
