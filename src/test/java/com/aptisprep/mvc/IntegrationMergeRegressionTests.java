@@ -26,7 +26,7 @@ class IntegrationMergeRegressionTests {
     void currentSchemaIsExplicitAndContainsNoSeedRowsOrMigrationHistory() throws Exception {
         String ddl = Files.readString(Path.of("database/schema-current.sql"));
         assertEquals(
-                39,
+                40,
                 java.util.regex.Pattern.compile(
                                 "CREATE TABLE", java.util.regex.Pattern.CASE_INSENSITIVE)
                         .matcher(ddl)

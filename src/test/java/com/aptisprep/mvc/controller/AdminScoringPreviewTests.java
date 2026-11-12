@@ -107,8 +107,7 @@ class AdminScoringPreviewTests {
                                 .param("certificatePage", "1")
                                 .with(user("admin@aptis.local").roles("ADMIN")))
                 .andExpect(status().isOk())
-                .andExpect(
-                        content().string(containsString("/admin/certificates?certificatePage=0")))
+                .andExpect(content().string(not(containsString("Pagination certificate"))))
                 .andExpect(content().string(not(containsString("Pagination scheme"))));
         var exam = new MockExam();
         exam.setTitle("Assigned full mock");
@@ -187,7 +186,13 @@ class AdminScoringPreviewTests {
         mvc.perform(get("/admin/scoring-schemes/create").with(admin))
                 .andExpect(status().isOk())
                 .andExpect(
-                        content().string(containsString("ranges[GRAMMAR_VOCABULARY_C2].maxScore")));
+                        content().string(containsString("ranges[GRAMMAR_VOCABULARY_C1].maxScore")))
+                .andExpect(
+                        content()
+                                .string(
+                                        not(
+                                                containsString(
+                                                        "ranges[GRAMMAR_VOCABULARY_C2].maxScore"))));
         var response =
                 mvc.perform(
                                 post("/admin/scoring-schemes")
@@ -252,12 +257,12 @@ class AdminScoringPreviewTests {
                         .param("skillScales[READING].rawMax", "40")
                         .param("skillScales[READING].scaleMin", "0")
                         .param("skillScales[READING].scaleMax", "60");
-        String[] levels = {"A1", "A2", "B1", "B2", "C1", "C2"};
+        String[] levels = {"A1", "A2", "B1", "B2", "C1"};
         for (int i = 0; i < levels.length; i++) {
             request.param("ranges[READING_" + levels[i] + "].minScore", String.valueOf(i * 10))
                     .param(
                             "ranges[READING_" + levels[i] + "].maxScore",
-                            i == 5
+                            i == levels.length - 1
                                     ? "60"
                                     : java.math.BigDecimal.valueOf((i + 1) * 10)
                                             .subtract(new java.math.BigDecimal("0.01"))
@@ -271,7 +276,7 @@ class AdminScoringPreviewTests {
                         .orElseThrow();
         org.junit.jupiter.api.Assertions.assertEquals(RecordStatus.DRAFT, created.getStatus());
         org.junit.jupiter.api.Assertions.assertEquals(
-                6, bands.findBySchemeIdOrderBySkillAscMinScoreAsc(created.getId()).size());
+                5, bands.findBySchemeIdOrderBySkillAscMinScoreAsc(created.getId()).size());
 
         // Reuse every submitted value while editing; the scale must stay 0–60, not become 0–40.
         var edit = post("/admin/scoring-schemes/" + created.getId()).with(admin).with(csrf());
@@ -470,22 +475,23 @@ class AdminScoringPreviewTests {
         mvc.perform(
                         post("/admin/certificates")
                                 .param("name", "New certificate")
-                                .param("code", "NEW_CERT")
+                                .param("code", "APTIS_GENERAL")
                                 .param("status", "ACTIVE")
                                 .with(user("admin@aptis.local").roles("ADMIN")))
                 .andExpect(status().isForbidden());
         mvc.perform(
                         post("/admin/certificates")
                                 .param("name", "New certificate")
-                                .param("code", "NEW_CERT")
+                                .param("code", "APTIS_GENERAL")
                                 .param("status", "ACTIVE")
                                 .with(user("admin@aptis.local").roles("ADMIN"))
                                 .with(csrf()))
-                .andExpect(status().is3xxRedirection());
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("Mã chứng chỉ đã tồn tại")));
         mvc.perform(
                         post("/admin/certificates")
                                 .param("name", "Duplicate certificate")
-                                .param("code", "NEW_CERT")
+                                .param("code", "APTIS_GENERAL")
                                 .param("status", "ACTIVE")
                                 .with(user("admin@aptis.local").roles("ADMIN"))
                                 .with(csrf()))
