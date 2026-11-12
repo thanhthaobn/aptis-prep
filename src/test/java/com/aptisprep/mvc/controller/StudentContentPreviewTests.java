@@ -53,11 +53,17 @@ class StudentContentPreviewTests {
 
     @org.junit.jupiter.api.BeforeEach
     void databaseCatalog() {
-        var certificate = new com.aptisprep.mvc.entity.Certificate();
-        certificate.setCode("STUDENT-UI-" + System.nanoTime());
-        certificate.setName("Test certificate");
-        certificate.setStatus(com.aptisprep.mvc.enums.RecordStatus.ACTIVE);
-        certificate = certificates.saveAndFlush(certificate);
+        var certificate =
+                certificates
+                        .findByCodeIgnoreCase("APTIS_GENERAL")
+                        .orElseGet(
+                                () -> {
+                                    var value = new com.aptisprep.mvc.entity.Certificate();
+                                    value.setCode("APTIS_GENERAL");
+                                    value.setName("Aptis ESOL General");
+                                    value.setStatus(com.aptisprep.mvc.enums.RecordStatus.ACTIVE);
+                                    return certificates.saveAndFlush(value);
+                                });
         String[] skills = {"FULL_MOCK", "READING", "WRITING"};
         String[] titles = {"Thi thử tổng hợp số 01", "Luyện tập Reading", "Luyện tập Writing"};
         for (int i = 0; i < skills.length; i++) {
@@ -299,13 +305,19 @@ class StudentContentPreviewTests {
                                                 containsString(
                                                         "class=\"back-link\" href=\"/student/placement?skill=READING\"")));
             }
-            mvc.perform(
+            var legacyList =
+                    mvc.perform(
                             get("/student/exams")
                                     .param("examType", type)
                                     .param("q", "Categorized")
-                                    .with(user("student").roles("STUDENT")))
-                    .andExpect(status().isOk())
-                    .andExpect(content().string(containsString("Categorized " + type)));
+                                    .with(user("student").roles("STUDENT")));
+            if ("CHECKPOINT".equals(type)) {
+                legacyList.andExpect(redirectedUrl("/student/learning-path"));
+            } else {
+                legacyList
+                        .andExpect(status().isOk())
+                        .andExpect(content().string(containsString("Categorized " + type)));
+            }
         }
     }
 

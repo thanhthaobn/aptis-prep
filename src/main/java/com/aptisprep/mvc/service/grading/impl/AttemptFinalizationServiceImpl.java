@@ -41,7 +41,9 @@ import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -262,18 +264,27 @@ public class AttemptFinalizationServiceImpl implements AttemptFinalizationServic
                                         isSubjectiveAnswerJob(
                                                 job, attempt.getId(), question.getSkill()))
                         .toList();
-        List<BigDecimal> subjectiveScores =
-                new ArrayList<>(
-                        skillJobs.stream()
-                                .map(job -> acceptedAssessment(job).orElse(null))
-                                .filter(streamValue -> Objects.nonNull(streamValue))
-                                .filter(
-                                        value ->
-                                                value.getState() == AiAssessmentState.COMPLETED
-                                                        && value.getScore() != null)
-                                .map(streamValue -> streamValue.getScore())
-                                .toList());
-        BigDecimal subjectiveRawMax = subjectiveRawMax(attempt.getId(), question.getSkill());
+        Map<Integer, BigDecimal> scoresByAnswer = new LinkedHashMap<>();
+        for (AiAssessmentJob job : skillJobs) {
+            acceptedAssessment(job)
+                    .filter(
+                            value ->
+                                    value.getState() == AiAssessmentState.COMPLETED
+                                            && value.getScore() != null)
+                    .ifPresent(
+                            value ->
+                                    scoresByAnswer.putIfAbsent(
+                                            job.getAnswerId(), value.getScore()));
+        }
+        BigDecimal subjectiveRawMax =
+                skillJobs.isEmpty()
+                        ? subjectiveRawMax(attempt.getId(), question.getSkill())
+                        : BigDecimal.valueOf(50);
+        long expected = subjectiveAnswers(attempt.getId(), question.getSkill());
+        if (skillJobs.isEmpty() && expected > 0) {
+            subjectiveRawMax =
+                    subjectiveRawMax.divide(BigDecimal.valueOf(expected), 2, RoundingMode.HALF_UP);
+        }
         for (UserAnswer saved :
                 userAnswerRepository.findByAttemptIdOrderByQuestionIdAsc(attempt.getId())) {
             if (!"GRADED".equals(saved.getStatus())
@@ -286,7 +297,7 @@ public class AttemptFinalizationServiceImpl implements AttemptFinalizationServic
                             value ->
                                     "WRITING_TEXT".equals(value.getQuestionType())
                                             || "SPEAKING_AUDIO".equals(value.getQuestionType()))
-                    .ifPresent(value -> subjectiveScores.add(BigDecimal.ZERO));
+                    .ifPresent(value -> scoresByAnswer.putIfAbsent(value.getId(), BigDecimal.ZERO));
         }
         // Sau khi restart có thể mất một số callback dù kết quả chấm đã được lưu.
         // Đồng bộ lại mọi answer hợp lệ trước khi hoàn tất aggregate, không chỉ answer của event
@@ -317,7 +328,7 @@ public class AttemptFinalizationServiceImpl implements AttemptFinalizationServic
                                                         userAnswerRepository.save(saved);
                                                     }));
         }
-        long expected = subjectiveAnswers(attempt.getId(), question.getSkill());
+        List<BigDecimal> subjectiveScores = new ArrayList<>(scoresByAnswer.values());
         if (subjectiveScores.size() < expected) {
             boolean failedAssessment =
                     skillJobs.stream()
@@ -355,7 +366,10 @@ public class AttemptFinalizationServiceImpl implements AttemptFinalizationServic
         BigDecimal subjective =
                 subjectiveScores.stream()
                         .reduce(BigDecimal.ZERO, BigDecimal::add)
-                        .setScale(2, RoundingMode.HALF_UP);
+                        .divide(
+                                BigDecimal.valueOf(subjectiveScores.size()),
+                                2,
+                                RoundingMode.HALF_UP);
         result.setSubjectiveRawScore(subjective);
         BigDecimal objectiveRawMax =
                 result.getRawMax() == null ? BigDecimal.ZERO : result.getRawMax();

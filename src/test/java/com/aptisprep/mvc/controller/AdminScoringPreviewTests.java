@@ -335,15 +335,14 @@ class AdminScoringPreviewTests {
                                 .param("name", "Draft certificate")
                                 .param("code", "DRAFT_CREATE_TEST")
                                 .param("status", "ACTIVE"))
-                .andExpect(status().is3xxRedirection());
-        var draft = certificates.findByCodeIgnoreCase("DRAFT_CREATE_TEST").orElseThrow();
-        org.junit.jupiter.api.Assertions.assertEquals(RecordStatus.DRAFT, draft.getStatus());
-        mvc.perform(
-                        post("/admin/certificates/{id}/activate", draft.getId())
-                                .with(admin)
-                                .with(csrf()))
-                .andExpect(status().is3xxRedirection());
-        org.junit.jupiter.api.Assertions.assertEquals(RecordStatus.ACTIVE, draft.getStatus());
+                .andExpect(status().isOk())
+                .andExpect(
+                        content()
+                                .string(
+                                        containsString(
+                                                "Hệ thống chỉ phục vụ chứng chỉ Aptis ESOL General")));
+        org.junit.jupiter.api.Assertions.assertTrue(
+                certificates.findByCodeIgnoreCase("DRAFT_CREATE_TEST").isEmpty());
     }
 
     @Test

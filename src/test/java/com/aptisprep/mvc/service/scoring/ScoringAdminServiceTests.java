@@ -48,7 +48,6 @@ class ScoringAdminServiceTests {
         when(current.getCertificate()).thenReturn(certificate);
         when(current.getVersion()).thenReturn("1");
         when(schemes.findByIdForUpdate(20)).thenReturn(Optional.of(current));
-        when(certificates.findById(10)).thenReturn(Optional.of(certificate));
         when(users.findByEmailIgnoreCase("admin@aptis.local")).thenReturn(Optional.of(admin));
         when(usage.isUsed(20)).thenReturn(true);
 

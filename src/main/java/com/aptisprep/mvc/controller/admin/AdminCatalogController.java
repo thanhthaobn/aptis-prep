@@ -356,14 +356,14 @@ public class AdminCatalogController {
     private void normalizeExamQuestionIds(MockExamDTO form) {
         if (form.getSections() == null) return;
         for (MockExamSectionDTO section : form.getSections()) {
+            if (section.getSelectedQuestionIds() == null
+                    || section.getSelectedQuestionIds().isEmpty()) continue;
             section.setQuestionIds(
-                    section.getSelectedQuestionIds() == null
-                            ? ""
-                            : section.getSelectedQuestionIds().stream()
-                                    .filter(java.util.Objects::nonNull)
-                                    .map(String::valueOf)
-                                    .distinct()
-                                    .collect(java.util.stream.Collectors.joining(",")));
+                    section.getSelectedQuestionIds().stream()
+                            .filter(java.util.Objects::nonNull)
+                            .map(String::valueOf)
+                            .distinct()
+                            .collect(java.util.stream.Collectors.joining(",")));
         }
     }
 

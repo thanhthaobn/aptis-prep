@@ -119,7 +119,7 @@ class AiAssessmentServiceTests {
         AiAssessmentDTO second = service.process("assessment-1");
 
         assertEquals("COMPLETED", first.getState().name());
-        assertEquals(new BigDecimal("32.5"), first.getScore());
+        assertEquals(0, first.getScore().compareTo(new BigDecimal("32.5")));
         assertEquals("B1", first.getEstimatedCefr());
         assertEquals(first.getState(), second.getState());
         verify(writing, times(1)).grade("Write an email", "Dear team");
@@ -145,7 +145,7 @@ class AiAssessmentServiceTests {
 
         AiAssessmentDTO retried = service.retry("assessment-1", 1, false);
         assertEquals("COMPLETED", retried.getState().name());
-        assertEquals(new BigDecimal("30"), retried.getScore());
+        assertEquals(0, retried.getScore().compareTo(new BigDecimal("30")));
         verify(writing, times(2)).grade("Write an email", "Dear team");
         var retriedEvents = org.mockito.ArgumentCaptor.forClass(AiAssessmentCompletedEvent.class);
         verify(events, times(2)).publishEvent(retriedEvents.capture());

@@ -822,7 +822,7 @@ class ExamAttemptConcurrencyTests {
         ScoringScheme scheme = new ScoringScheme();
         scheme.setCertificate(certificate);
         scheme.setName("Test scheme");
-        scheme.setVersion("v1-" + suffix + "-" + System.nanoTime());
+        scheme.setVersion("v1-" + Long.toUnsignedString(System.nanoTime()));
         scheme.setStatus(RecordStatus.ACTIVE);
         scheme = schemes.saveAndFlush(scheme);
         ScoreBand band = new ScoreBand();

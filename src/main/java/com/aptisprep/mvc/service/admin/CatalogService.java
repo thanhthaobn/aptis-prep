@@ -103,6 +103,7 @@ public interface CatalogService {
     record ExamPreviewItem(
             int position,
             String content,
+            java.math.BigDecimal points,
             Integer responseSeconds,
             Integer minWordCount,
             Integer maxWordCount,

@@ -327,7 +327,7 @@ class TramBusinessCompletionTests {
         var scheme = new ScoringScheme();
         scheme.setCertificate(certificate);
         scheme.setName("Placement regression policy");
-        scheme.setVersion("test-" + UUID.randomUUID());
+        scheme.setVersion("test-" + UUID.randomUUID().toString().substring(0, 8));
         scheme.setStatus(RecordStatus.ACTIVE);
         scheme = schemes.saveAndFlush(scheme);
         var rule = new ScoringScaleRule();
