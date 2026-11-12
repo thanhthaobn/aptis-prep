@@ -370,12 +370,6 @@
                   <input type="hidden" th:name="|skillScales[${skill}].rawMin|" value="0" />
                   <input type="hidden" th:name="|skillScales[${skill}].rawMax|" value="50" />
                   <div class="field">
-                    <label>Điểm raw</label>
-                    <div class="field-help">
-                      Tự tính từ tổng điểm các câu/rubric trong đề; không nhập cố định.
-                    </div>
-                  </div>
-                  <div class="field">
                     <label th:for="|${skill}-scale-min|">Điểm quy đổi thấp nhất</label>
                     <input
                       th:id="|${skill}-scale-min|"
@@ -577,12 +571,6 @@
               <div class="catalog-form-grid">
                 <input type="hidden" th:field="*{rawMin}" value="0" />
                 <input type="hidden" th:field="*{rawMax}" value="50" />
-                <div class="field">
-                  <label>Điểm raw</label>
-                  <div class="field-help">
-                    Tự tính từ tổng điểm câu/rubric của đề, không nhập cố định.
-                  </div>
-                </div>
                 <div class="field">
                   <label for="scaleMin">Scale thấp nhất</label>
                   <input
