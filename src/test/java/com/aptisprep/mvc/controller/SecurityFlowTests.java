@@ -17,6 +17,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import com.aptisprep.mvc.entity.User;
 import com.aptisprep.mvc.enums.Role;
 import com.aptisprep.mvc.enums.UserStatus;
+import com.aptisprep.mvc.repository.AccountUnlockRequestRepository;
 import com.aptisprep.mvc.repository.UserRepository;
 import com.aptisprep.mvc.support.auth.*;
 import com.aptisprep.mvc.support.auth.PasswordHasher;
@@ -36,6 +37,7 @@ class SecurityFlowTests {
     @Autowired private MockMvc mockMvc;
 
     @Autowired private UserRepository users;
+    @Autowired private AccountUnlockRequestRepository unlockRequests;
     @Autowired private PasswordHasher passwords;
 
     @Test
@@ -149,6 +151,56 @@ class SecurityFlowTests {
                 .andExpect(flash().attribute("lockReason", "Tài khoản vi phạm quy định"));
 
         mockMvc.perform(get("/account-locked")).andExpect(status().isOk());
+    }
+
+    @Test
+    void lockedStudentCanSubmitUnlockRequestAndAdminCanSeeIt() throws Exception {
+        User student = new User();
+        student.setFullName("Unlock Flow Student");
+        student.setEmail("unlock-flow@example.com");
+        student.setRole(Role.STUDENT);
+        student.setStatus(UserStatus.LOCKED);
+        student.setLockReason("Cần xác minh tài khoản");
+        student.setPasswordHash(passwords.encode("Unlock-flow-password-42"));
+        users.saveAndFlush(student);
+
+        mockMvc.perform(
+                        post("/login")
+                                .with(csrf())
+                                .param("email", student.getEmail())
+                                .param("password", "Unlock-flow-password-42"))
+                .andExpect(redirectedUrl("/account-locked"));
+
+        var accountLockedPage =
+                mockMvc.perform(get("/account-locked"))
+                        .andExpect(status().isOk())
+                        .andReturn();
+        var csrfField =
+                Pattern.compile("name=\\\"_csrf\\\" value=\\\"([^\\\"]+)\\\"")
+                        .matcher(accountLockedPage.getResponse().getContentAsString());
+        assertTrue(csrfField.find(), "The unlock form must render a CSRF field");
+
+        mockMvc.perform(
+                        post("/account-unlock-request")
+                                .session((MockHttpSession) accountLockedPage.getRequest().getSession())
+                                .param("_csrf", csrfField.group(1))
+                                .param("email", student.getEmail())
+                                .param("password", "Unlock-flow-password-42")
+                                .param("message", "Tôi muốn tiếp tục học và xin được xem xét mở khóa."))
+                .andExpect(redirectedUrl("/account-locked"))
+                .andExpect(flash().attribute("successMessage", "Yêu cầu mở khóa đã được gửi thành công."));
+
+        org.junit.jupiter.api.Assertions.assertEquals(1, unlockRequests.count());
+        mockMvc.perform(
+                        get("/admin/unlock-requests")
+                                .with(user("admin@aptis.local").roles("ADMIN")))
+                .andExpect(status().isOk())
+                .andExpect(
+                        org.springframework.test.web.servlet.result.MockMvcResultMatchers
+                                .content()
+                                .string(
+                                        org.hamcrest.Matchers.containsString(
+                                                "Tôi muốn tiếp tục học và xin được xem xét mở khóa.")));
     }
 
     @Test
