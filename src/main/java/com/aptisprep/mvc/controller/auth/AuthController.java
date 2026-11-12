@@ -69,11 +69,19 @@ public class AuthController {
                             ? "Tài khoản đã bị khóa bởi quản trị viên."
                             : reason);
             redirectAttributes.addFlashAttribute("email", account.getEmail());
+            redirectAttributes.addFlashAttribute("accountStatus", UserStatus.LOCKED.name());
             return "redirect:/account-locked";
         }
         if (accountStatus != UserStatus.ACTIVE) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Tài khoản không còn hoạt động.");
-            return "redirect:/login";
+            String reason = account.getLockReason();
+            redirectAttributes.addFlashAttribute(
+                    "lockReason",
+                    reason == null || reason.isBlank()
+                            ? "Tài khoản đã được xóa khỏi hệ thống."
+                            : reason);
+            redirectAttributes.addFlashAttribute("email", account.getEmail());
+            redirectAttributes.addFlashAttribute("accountStatus", accountStatus.name());
+            return "redirect:/account-locked";
         }
         LoginSession.start(request, account);
         return account.getRole() == Role.ADMIN
@@ -84,14 +92,21 @@ public class AuthController {
     @GetMapping("/account-locked")
     public String accountLocked(
             @RequestParam(name = "email", required = false) String email, Model model) {
-        if (email != null && !email.isBlank()) {
-            model.addAttribute("email", email.trim());
+        String resolvedEmail = email;
+        if (resolvedEmail == null || resolvedEmail.isBlank()) {
+            Object flashedEmail = model.asMap().get("email");
+            resolvedEmail = flashedEmail == null ? null : flashedEmail.toString();
+        }
+        if (resolvedEmail != null && !resolvedEmail.isBlank()) {
+            model.addAttribute("email", resolvedEmail.trim());
             if (unlockRequestService != null) {
                 unlockRequestService
-                        .findLatestByEmail(email)
+                        .findLatestByEmail(resolvedEmail)
                         .ifPresent(value -> model.addAttribute("latestRequest", value));
             }
         }
+        if (!model.containsAttribute("accountStatus"))
+            model.addAttribute("accountStatus", UserStatus.LOCKED.name());
         return "auth/account-locked";
     }
 
@@ -104,9 +119,10 @@ public class AuthController {
         try {
             if (unlockRequestService == null)
                 throw new BusinessRuleException("Chức năng mở khóa chưa sẵn sàng.");
-            unlockRequestService.submit(email, password, message);
+            var request = unlockRequestService.submit(email, password, message);
             redirectAttributes.addFlashAttribute(
                     "successMessage", "Yêu cầu mở khóa đã được gửi thành công.");
+            redirectAttributes.addFlashAttribute("accountStatus", request.getUserStatus());
         } catch (BusinessRuleException exception) {
             redirectAttributes.addFlashAttribute("errorMessage", exception.getMessage());
         }

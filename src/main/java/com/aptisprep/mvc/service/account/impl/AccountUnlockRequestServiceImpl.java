@@ -59,7 +59,7 @@ public class AccountUnlockRequestServiceImpl implements AccountUnlockRequestServ
         request.setMessage(normalizedMessage);
         request.setStatus(UnlockRequestStatus.PENDING);
         request.setCreatedAt(LocalDateTime.now());
-        return toDto(requestRepository.save(request));
+        return toDto(requestRepository.saveAndFlush(request));
     }
 
     @Override
