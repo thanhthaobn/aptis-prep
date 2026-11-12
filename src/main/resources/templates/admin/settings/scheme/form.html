@@ -443,20 +443,6 @@
             </a>
           </div>
         </form>
-        <form
-          th:if="${editing and scheme.status != 'ACTIVE'}"
-          th:action="@{/admin/scoring-schemes/{id}/activate(id=${scheme.id})}"
-          method="post"
-        >
-          <button class="button" type="submit">Kiểm tra và kích hoạt</button>
-        </form>
-        <form
-          th:if="${editing and scheme.status == 'ACTIVE'}"
-          th:action="@{/admin/scoring-schemes/{id}/disable(id=${scheme.id})}"
-          method="post"
-        >
-          <button class="button button-secondary" type="submit">Ngừng sử dụng</button>
-        </form>
         <section
           id="cefr-bands"
           class="dashboard-panel dashboard-section"
