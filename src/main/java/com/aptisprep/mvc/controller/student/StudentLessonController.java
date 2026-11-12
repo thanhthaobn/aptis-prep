@@ -48,19 +48,45 @@ public class StudentLessonController {
             throw new BusinessRuleException("Bộ lọc không hợp lệ");
         List<LessonDTO> items =
                 lessonService.filterPublishedLessonDtos(queryParam, skillParam, levelParam);
-        Map<String, List<LessonDTO>> lessonGroups = new LinkedHashMap<>();
+        List<LessonSkillGroup> lessonTree = new ArrayList<>();
         Map<Integer, Integer> lessonNumbers = new HashMap<>();
         for (int index = 0; index < items.size(); index++) {
-            LessonDTO lesson = items.get(index);
-            String topic =
-                    lesson.getTopic() == null || lesson.getTopic().isBlank()
-                            ? "Bài học độc lập"
-                            : lesson.getTopic();
-            lessonGroups.computeIfAbsent(topic, key -> new ArrayList<>()).add(lesson);
-            lessonNumbers.put(lesson.getId(), index + 1);
+            lessonNumbers.put(items.get(index).getId(), index + 1);
+        }
+        Map<String, Map<String, List<LessonDTO>>> grouped = new LinkedHashMap<>();
+        for (String skillName : lessonService.getSkills()) {
+            grouped.put(skillName, new LinkedHashMap<>());
+        }
+        for (LessonDTO lesson : items) {
+            grouped.computeIfAbsent(lesson.getSkill(), ignored -> new LinkedHashMap<>())
+                    .computeIfAbsent(lesson.getCefrLevel(), ignored -> new ArrayList<>())
+                    .add(lesson);
+        }
+        for (Map.Entry<String, Map<String, List<LessonDTO>>> skillEntry : grouped.entrySet()) {
+            List<LessonLevelGroup> levels = new ArrayList<>();
+            for (String levelName : lessonService.getLevels()) {
+                List<LessonDTO> lessonsAtLevel = skillEntry.getValue().get(levelName);
+                if (lessonsAtLevel != null && !lessonsAtLevel.isEmpty()) {
+                    levels.add(new LessonLevelGroup(levelName, lessonsAtLevel));
+                }
+            }
+            skillEntry
+                    .getValue()
+                    .forEach(
+                            (levelName, lessonsAtLevel) -> {
+                                if (levels.stream()
+                                        .noneMatch(
+                                                levelGroup ->
+                                                        levelGroup.level().equals(levelName))) {
+                                    levels.add(new LessonLevelGroup(levelName, lessonsAtLevel));
+                                }
+                            });
+            if (!levels.isEmpty()) {
+                lessonTree.add(new LessonSkillGroup(skillEntry.getKey(), levels));
+            }
         }
         model.addAttribute("lessons", items);
-        model.addAttribute("lessonGroups", lessonGroups);
+        model.addAttribute("lessonTree", lessonTree);
         model.addAttribute("lessonNumbers", lessonNumbers);
         model.addAttribute(
                 "lessonStatuses",
@@ -68,7 +94,6 @@ public class StudentLessonController {
                         principal.getName(),
                         items.stream().map(streamValue -> streamValue.getId()).toList()));
         model.addAttribute("lessonSets", flashcardSetService.lessonSets());
-        model.addAttribute("lessons", items);
         model.addAttribute("q", q);
         model.addAttribute("selectedSkill", skill);
         model.addAttribute("selectedLevel", level);
@@ -76,6 +101,14 @@ public class StudentLessonController {
         model.addAttribute("levels", lessonService.getLevels());
         return "student/lesson/list";
     }
+
+    public record LessonSkillGroup(String skill, List<LessonLevelGroup> levels) {
+        public int lessonCount() {
+            return levels.stream().mapToInt(level -> level.lessons().size()).sum();
+        }
+    }
+
+    public record LessonLevelGroup(String level, List<LessonDTO> lessons) {}
 
     @GetMapping("/student/lessons/{id}")
     public String detail(@PathVariable Integer id, Principal principal, Model model) {

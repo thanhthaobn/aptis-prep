@@ -315,18 +315,24 @@
 .lesson-library-page .toolbar :is(input,select) { font-size: .84rem; }
 .lesson-library-page .toolbar .button { min-height: 40px; padding: 6px 12px; font-size: .82rem; }
 .library-skill { min-width: 0; background: #fff; border: 1px solid var(--skill-border,var(--color-border)); border-radius: var(--radius); overflow: hidden; }
+.library-skill[data-skill="Grammar & Vocabulary"] { --library-skill-color: #7c3aed; --library-skill-tint: #f5f3ff; --library-skill-line: #ddd6fe; }
+.library-skill[data-skill="Reading"] { --library-skill-color: #0369a1; --library-skill-tint: #f0f9ff; --library-skill-line: #bae6fd; }
+.library-skill[data-skill="Listening"] { --library-skill-color: #c2410c; --library-skill-tint: #fff7ed; --library-skill-line: #fed7aa; }
+.library-skill[data-skill="Writing"] { --library-skill-color: #be185d; --library-skill-tint: #fdf2f8; --library-skill-line: #fbcfe8; }
+.library-skill[data-skill="Speaking"] { --library-skill-color: #b45309; --library-skill-tint: #fffbeb; --library-skill-line: #fde68a; }
+.library-skill[data-skill] { border-top: 3px solid var(--library-skill-color); }
 .library-skill > summary,.library-level > summary { display: flex; align-items: center; gap: 12px; cursor: pointer; list-style: none; }
-.library-skill > summary { padding: 14px 18px; background: var(--skill-tint,#f4faf8); }
+.library-skill > summary { padding: 14px 18px; background: var(--library-skill-tint,var(--skill-tint,#f4faf8)); }
 .library-skill > summary::-webkit-details-marker,.library-level > summary::-webkit-details-marker { display: none; }
 .library-skill > summary::before,.library-level > summary::before { content: '›'; font-size: 1.3rem; line-height: 1; transition: transform .15s; }
 .library-skill[open] > summary::before,.library-level[open] > summary::before { transform: rotate(90deg); }
 .library-skill summary:focus-visible { outline: 3px solid var(--color-primary); outline-offset: -3px; border-radius: 10px; }
-.library-skill-name { flex: 1; font-weight: 700; color: var(--color-primary-dark); }
-.library-levels { padding: 8px 20px 16px; }
+.library-skill-name { flex: 1; font-weight: 700; color: var(--library-skill-color,var(--color-primary-dark)); }
+.library-levels { margin-left: 18px; padding: 8px 20px 16px; border-left: 1px solid var(--library-skill-line,var(--skill-border,#dceee8)); }
 .library-level + .library-level { border-top: 1px solid var(--color-border); }
 .library-level > summary { padding: 10px 0; font-size: .88rem; font-weight: 650; }
 .library-level > summary > .library-count { margin-left: auto; }
-.library-level-badge { display: inline-grid; place-items: center; min-width: 36px; width: auto; height: 32px; padding-inline: 10px; border-radius: 8px; background: var(--skill-tint,#eaf5f2); color: var(--color-primary-dark); white-space: nowrap; }
+.library-level-badge { display: inline-grid; place-items: center; min-width: 36px; width: auto; height: 32px; padding-inline: 10px; border-radius: 8px; background: var(--library-skill-tint,var(--skill-tint,#eaf5f2)); color: var(--library-skill-color,var(--color-primary-dark)); white-space: nowrap; }
 .library-topics { margin: 0 0 8px 12px; padding-left: 16px; border-left: 1px solid var(--skill-border,#dceee8); }
 .library-topic { padding: 8px 0; }
 .library-topic > header { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 0 0 8px; }
@@ -334,8 +340,9 @@
 .library-lessons { list-style: none; margin: 0; padding: 0; }
 .library-lessons > li { display: grid; grid-template-columns: 26px minmax(0,1fr) auto; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid #edf1ef; }
 .library-lessons > li:last-child { border-bottom: 0; }
-.library-lesson-number { display: grid; place-items: center; flex: 0 0 26px; height: 26px; border: 1px solid var(--color-border); border-radius: 50%; color: var(--color-muted); font-size: .72rem; }
+.library-lesson-number { display: grid; place-items: center; flex: 0 0 26px; height: 26px; border: 1px solid var(--library-skill-line,var(--color-border)); border-radius: 50%; color: var(--library-skill-color,var(--color-muted)); font-size: .72rem; }
 .library-lesson-body { min-width: 0; }
+.library-lesson-topic { display: block; margin-top: 2px; color: var(--color-muted); font-size: .75rem; }
 .library-lesson-heading { display: flex; align-items: center; flex-wrap: wrap; gap: 6px 12px; }
 .library-learning-status { display:flex; flex-wrap:wrap; flex-shrink: 0; gap:6px; margin:0; font-size:.72rem; }
 .library-learning-status .badge { font-size: .7rem; }
@@ -346,7 +353,7 @@
 .library-open { flex-shrink: 0; min-height: 38px; padding: 6px 10px; font-size: .78rem; }
 @media(max-width:600px) {
     .library-skill > summary { padding: 14px; }
-    .library-levels { padding-inline: 12px; }
+    .library-levels { margin-left: 12px; padding-inline: 12px; }
     .library-topics { margin-left: 8px; padding-left: 12px; }
     .library-lessons > li { grid-template-columns: 24px minmax(0,1fr); gap: 8px; }
     .library-lesson-actions { grid-column: 2; flex-wrap: wrap; justify-content: flex-end; gap: 10px; }

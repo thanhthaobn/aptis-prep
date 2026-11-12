@@ -3,10 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta
-      name="description"
-      content="Danh sách bài học AptisPrep theo kỹ năng và cấp độ CEFR."
-    />
+    <meta name="description" content="Danh sách bài học AptisPrep theo kỹ năng và cấp độ CEFR." />
     <title>Bài học | AptisPrep</title>
     <link
       rel="icon"
@@ -49,10 +46,14 @@
             class="active"
             aria-current="page"
             th:href="@{/student/dashboard}"
-          >Học tập</a>
+          >
+            Học tập
+          </a>
           <a th:if="${isAdmin}" th:href="@{/admin/dashboard}">Quản trị</a>
           <a th:if="${signedIn != true}" th:href="@{/login}">Đăng nhập</a>
-          <a th:if="${signedIn != true}" class="button button-small" th:href="@{/register}">Đăng ký</a>
+          <a th:if="${signedIn != true}" class="button button-small" th:href="@{/register}">
+            Đăng ký
+          </a>
           <form th:if="${signedIn}" th:action="@{/logout}" method="post">
             <button class="button button-secondary button-small" type="submit">Đăng xuất</button>
           </form>
@@ -65,40 +66,91 @@
         <div class="sidebar-content">
           <span class="sidebar-label">HỌC TẬP</span>
           <nav class="sidebar-nav" aria-label="Điều hướng học tập">
-            <a class="sidebar-link" th:classappend="${activePage == 'dashboard'} ? 'active'" th:href="@{/student/dashboard}">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h6v6H4zm10 0h6v6h-6zM4 14h6v6H4zm10 0h6v6h-6z" /></svg>
+            <a
+              class="sidebar-link"
+              th:classappend="${activePage == 'dashboard'} ? 'active'"
+              th:href="@{/student/dashboard}"
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M4 4h6v6H4zm10 0h6v6h-6zM4 14h6v6H4zm10 0h6v6h-6z" />
+              </svg>
               Tổng quan
             </a>
-            <a class="sidebar-link" th:classappend="${activePage == 'learning-path'} ? 'active'" th:href="@{/student/learning-path}">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 5h4v4H5zM15 15h4v4h-4zM9 7h3a5 5 0 0 1 5 5v3" /></svg>
+            <a
+              class="sidebar-link"
+              th:classappend="${activePage == 'learning-path'} ? 'active'"
+              th:href="@{/student/learning-path}"
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M5 5h4v4H5zM15 15h4v4h-4zM9 7h3a5 5 0 0 1 5 5v3" />
+              </svg>
               Lộ trình của tôi
             </a>
-            <a class="sidebar-link" th:classappend="${activePage == 'lessons'} ? 'active'" th:href="@{/student/lessons}">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20V4H6.5A2.5 2.5 0 0 0 4 6.5z" /></svg>
+            <a
+              class="sidebar-link"
+              th:classappend="${activePage == 'lessons'} ? 'active'"
+              th:href="@{/student/lessons}"
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20V4H6.5A2.5 2.5 0 0 0 4 6.5z" />
+              </svg>
               Bài học
             </a>
-            <a class="sidebar-link" th:classappend="${activePage == 'exams'} ? 'active'" th:href="@{/student/exams}">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 3h10v4H7zM5 7h14v14H5z" /></svg>
+            <a
+              class="sidebar-link"
+              th:classappend="${activePage == 'exams'} ? 'active'"
+              th:href="@{/student/exams}"
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M7 3h10v4H7zM5 7h14v14H5z" />
+              </svg>
               Đề thi
             </a>
-            <a class="sidebar-link" th:classappend="${activePage == 'results'} ? 'active'" th:href="@{/student/results}">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19V5m0 14h16M8 16v-4m4 4V7m4 9v-6" /></svg>
+            <a
+              class="sidebar-link"
+              th:classappend="${activePage == 'results'} ? 'active'"
+              th:href="@{/student/results}"
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M4 19V5m0 14h16M8 16v-4m4 4V7m4 9v-6" />
+              </svg>
               Kết quả
             </a>
-            <a class="sidebar-link" th:classappend="${activePage == 'flashcards'} ? 'active'" th:href="@{/student/flashcards}">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="6" y="6" width="15" height="15" rx="3" /><path d="M17 6V3H3v14h3" /></svg>
+            <a
+              class="sidebar-link"
+              th:classappend="${activePage == 'flashcards'} ? 'active'"
+              th:href="@{/student/flashcards}"
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="6" y="6" width="15" height="15" rx="3" />
+                <path d="M17 6V3H3v14h3" />
+              </svg>
               Flashcard
             </a>
           </nav>
           <div class="sidebar-divider"></div>
           <span class="sidebar-label">TÀI KHOẢN</span>
           <nav class="sidebar-nav" aria-label="Điều hướng tài khoản">
-            <a class="sidebar-link" th:classappend="${activePage == 'placement'} ? 'active'" th:href="@{/student/placement}">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="4" width="14" height="17" rx="2" /><path d="M9 4V2h6v2M8 12l3 3 5-6" /></svg>
+            <a
+              class="sidebar-link"
+              th:classappend="${activePage == 'placement'} ? 'active'"
+              th:href="@{/student/placement}"
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="5" y="4" width="14" height="17" rx="2" />
+                <path d="M9 4V2h6v2M8 12l3 3 5-6" />
+              </svg>
               Kiểm tra đầu vào
             </a>
-            <a class="sidebar-link" th:classappend="${activePage == 'profile'} ? 'active'" th:href="@{/student/profile}">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4" /><path d="M4 21a8 8 0 0 1 16 0" /></svg>
+            <a
+              class="sidebar-link"
+              th:classappend="${activePage == 'profile'} ? 'active'"
+              th:href="@{/student/profile}"
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="8" r="4" />
+                <path d="M4 21a8 8 0 0 1 16 0" />
+              </svg>
               Hồ sơ
             </a>
           </nav>
@@ -117,58 +169,109 @@
         <form class="toolbar" method="get" th:action="@{/student/lessons}">
           <div class="toolbar-search">
             <label for="q">Tìm kiếm</label>
-            <input id="q" name="q" th:value="${q}" maxlength="255" placeholder="Tên bài học hoặc chủ đề" />
+            <input
+              id="q"
+              name="q"
+              th:value="${q}"
+              maxlength="255"
+              placeholder="Tên bài học hoặc chủ đề"
+            />
           </div>
           <div>
             <label for="skill">Kỹ năng</label>
             <select id="skill" name="skill">
               <option value="">Tất cả</option>
-              <option th:each="item : ${skills}" th:value="${item}" th:text="${item}" th:selected="${item == selectedSkill}"></option>
+              <option
+                th:each="item : ${skills}"
+                th:value="${item}"
+                th:text="${item}"
+                th:selected="${item == selectedSkill}"
+              ></option>
             </select>
           </div>
           <div>
             <label for="level">CEFR</label>
             <select id="level" name="level">
               <option value="">Tất cả</option>
-              <option th:each="item : ${levels}" th:value="${item}" th:text="${item}" th:selected="${item == selectedLevel}"></option>
+              <option
+                th:each="item : ${levels}"
+                th:value="${item}"
+                th:text="${item}"
+                th:selected="${item == selectedLevel}"
+              ></option>
             </select>
           </div>
           <button class="button" type="submit">Tìm kiếm</button>
         </form>
 
-        <section class="lesson-library-tree" th:if="${lessons != null and !lessons.isEmpty()}" aria-label="Cây bài học">
+        <section
+          class="lesson-library-tree"
+          th:if="${lessons != null and !lessons.isEmpty()}"
+          aria-label="Cây bài học"
+        >
           <p class="library-count" th:text="${lessons.size() + ' bài học'}"></p>
-          <details class="library-skill">
+          <details
+            class="library-skill"
+            th:each="skillGroup : ${lessonTree}"
+            th:attr="data-skill=${skillGroup.skill}"
+          >
             <summary>
-              <span class="library-skill-name" th:text="${selectedSkill == null or selectedSkill.isBlank() ? 'Tất cả kỹ năng' : selectedSkill}"></span>
-              <span class="library-count" th:text="${lessons.size() + ' bài học'}"></span>
+              <span class="library-skill-name" th:text="${skillGroup.skill}"></span>
+              <span class="library-count" th:text="${skillGroup.lessonCount + ' bài học'}"></span>
             </summary>
             <div class="library-levels">
-              <details class="library-level">
+              <details class="library-level" th:each="levelGroup : ${skillGroup.levels}">
                 <summary>
-                  <span class="library-level-badge" th:text="${selectedLevel == null or selectedLevel.isBlank() ? 'Tất cả cấp độ' : selectedLevel}"></span>
-                  <span class="library-count" th:text="${lessons.size() + ' bài'}"></span>
+                  <span class="library-level-badge" th:text="${levelGroup.level}"></span>
+                  <span
+                    class="library-count"
+                    th:text="${levelGroup.lessons.size() + ' bài'}"
+                  ></span>
                 </summary>
-                <div class="library-topics">
-                  <section class="library-topic" th:each="topicEntry : ${lessonGroups}">
-                    <header><h3 th:text="${topicEntry.key}"></h3></header>
-                    <ol class="library-lessons">
-                      <li th:each="lesson : ${topicEntry.value}" th:with="learningStatus=${lessonStatuses.getOrDefault(lesson.id, 'NOT_STARTED')}" th:attr="data-lesson-id=${lesson.id},data-learning-status=${learningStatus}">
-                        <span class="library-lesson-number" th:text="${lessonNumbers.get(lesson.id)}"></span>
-                        <div class="library-lesson-body">
-                          <a class="library-lesson-title" th:href="@{/student/lessons/{id}(id=${lesson.id})}" th:text="${lesson.title}"></a>
-                          <span class="badge badge-success" th:if="${learningStatus == 'COMPLETED'}">Đã hoàn thành</span>
-                          <span class="muted" th:if="${learningStatus == 'IN_PROGRESS'}">Đang học</span>
-                          <span class="muted" th:if="${learningStatus == 'NOT_STARTED'}">Chưa học</span>
-                        </div>
-                        <div class="library-lesson-actions">
-                          <a class="library-flashcard-link" th:if="${lessonSets.containsKey(lesson.id)}" th:href="@{/student/flashcards/{id}(id=${lessonSets.get(lesson.id).id})}" th:text="${lessonSets.get(lesson.id).count + ' thẻ từ vựng ↗'}"></a>
-                          <a class="button button-secondary button-small" th:href="@{/student/lessons/{id}(id=${lesson.id})}" th:text="${learningStatus == 'COMPLETED' ? 'Ôn lại →' : (learningStatus == 'IN_PROGRESS' ? 'Học tiếp →' : 'Học bài →')}">Học bài →</a>
-                        </div>
-                      </li>
-                    </ol>
-                  </section>
-                </div>
+                <ol class="library-lessons">
+                  <li
+                    th:each="lesson : ${levelGroup.lessons}"
+                    th:with="learningStatus=${lessonStatuses.getOrDefault(lesson.id, 'NOT_STARTED')}"
+                    th:attr="data-lesson-id=${lesson.id},data-learning-status=${learningStatus}"
+                  >
+                    <span
+                      class="library-lesson-number"
+                      th:text="${lessonNumbers.get(lesson.id)}"
+                    ></span>
+                    <div class="library-lesson-body">
+                      <a
+                        class="library-lesson-title"
+                        th:href="@{/student/lessons/{id}(id=${lesson.id})}"
+                        th:text="${lesson.title}"
+                      ></a>
+                      <small
+                        class="library-lesson-topic"
+                        th:if="${lesson.topic != null and !lesson.topic.isBlank()}"
+                        th:text="${lesson.topic}"
+                      ></small>
+                      <span class="badge badge-success" th:if="${learningStatus == 'COMPLETED'}">
+                        Đã hoàn thành
+                      </span>
+                      <span class="muted" th:if="${learningStatus == 'IN_PROGRESS'}">Đang học</span>
+                      <span class="muted" th:if="${learningStatus == 'NOT_STARTED'}">Chưa học</span>
+                    </div>
+                    <div class="library-lesson-actions">
+                      <a
+                        class="library-flashcard-link"
+                        th:if="${lessonSets.containsKey(lesson.id)}"
+                        th:href="@{/student/flashcards/{id}(id=${lessonSets.get(lesson.id).id})}"
+                        th:text="${lessonSets.get(lesson.id).count + ' thẻ từ vựng ↗'}"
+                      ></a>
+                      <a
+                        class="button button-secondary button-small"
+                        th:href="@{/student/lessons/{id}(id=${lesson.id})}"
+                        th:text="${learningStatus == 'COMPLETED' ? 'Ôn lại →' : (learningStatus == 'IN_PROGRESS' ? 'Học tiếp →' : 'Học bài →')}"
+                      >
+                        Học bài →
+                      </a>
+                    </div>
+                  </li>
+                </ol>
               </details>
             </div>
           </details>
