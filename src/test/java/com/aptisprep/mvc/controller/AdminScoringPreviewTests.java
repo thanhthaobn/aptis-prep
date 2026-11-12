@@ -239,6 +239,21 @@ class AdminScoringPreviewTests {
     }
 
     @Test
+    void createSchemeFormShowsExamTypesAndKeepsNewSchemesAsDrafts() throws Exception {
+        mvc.perform(
+                        get("/admin/scoring-schemes/create")
+                                .with(user("admin@aptis.local").roles("ADMIN")))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("Kiểm tra đầu vào")))
+                .andExpect(content().string(containsString("Bài luyện tập")))
+                .andExpect(content().string(containsString("Kiểm tra cuối chặng")))
+                .andExpect(content().string(containsString("Thi thử tổng hợp")))
+                .andExpect(content().string(containsString("Bản nháp")))
+                .andExpect(content().string(not(containsString("id=\"schemeStatus\""))))
+                .andExpect(content().string(not(containsString("Ngưỡng đạt cho kỹ năng"))));
+    }
+
+    @Test
     @Transactional
     void practicePreservesCustomScaleOnEditAndActivatesOnlyAfterSavingADraft() throws Exception {
         var admin = user("admin@aptis.local").roles("ADMIN");
