@@ -183,7 +183,7 @@ class AdminScoringPreviewTests {
     void savesCombinedSchemeWithSkillSpecificScalesAndIndividualRangesInOneRequest()
             throws Exception {
         var admin = user("admin@aptis.local").roles("ADMIN");
-        mvc.perform(get("/admin/scoring-schemes/create").with(admin))
+        mvc.perform(get("/admin/scoring-schemes/create").param("examType", "FULL_MOCK").with(admin))
                 .andExpect(status().isOk())
                 .andExpect(
                         content().string(containsString("ranges[GRAMMAR_VOCABULARY_C1].maxScore")))
@@ -239,18 +239,90 @@ class AdminScoringPreviewTests {
     }
 
     @Test
-    void createSchemeFormShowsExamTypesAndKeepsNewSchemesAsDrafts() throws Exception {
-        mvc.perform(
-                        get("/admin/scoring-schemes/create")
-                                .with(user("admin@aptis.local").roles("ADMIN")))
+    void createSchemeFormSeparatesCombinedAndSingleSkillScoringModes() throws Exception {
+        var admin = user("admin@aptis.local").roles("ADMIN");
+        mvc.perform(get("/admin/scoring-schemes/create").with(admin))
                 .andExpect(status().isOk())
                 .andExpect(content().string(containsString("Kiểm tra đầu vào")))
                 .andExpect(content().string(containsString("Bài luyện tập")))
                 .andExpect(content().string(containsString("Kiểm tra cuối chặng")))
                 .andExpect(content().string(containsString("Thi thử tổng hợp")))
+                .andExpect(content().string(not(containsString("data-scoring-skill="))));
+
+        for (String examType : java.util.List.of("PLACEMENT", "FULL_MOCK")) {
+            mvc.perform(
+                            get("/admin/scoring-schemes/create")
+                                    .param("examType", examType)
+                                    .with(admin))
+                    .andExpect(status().isOk())
+                    .andExpect(content().string(containsString("Thang điểm theo tất cả kỹ năng")))
+                    .andExpect(
+                            content()
+                                    .string(
+                                            containsString(
+                                                    "data-scoring-skill=\"GRAMMAR_VOCABULARY\"")))
+                    .andExpect(content().string(containsString("data-scoring-skill=\"READING\"")))
+                    .andExpect(content().string(containsString("data-scoring-skill=\"LISTENING\"")))
+                    .andExpect(content().string(containsString("data-scoring-skill=\"WRITING\"")))
+                    .andExpect(content().string(containsString("data-scoring-skill=\"SPEAKING\"")))
+                    .andExpect(content().string(containsString("ranges[READING_A0].minScore")))
+                    .andExpect(content().string(not(containsString("Chọn lại kỹ năng"))));
+        }
+
+        mvc.perform(get("/admin/scoring-schemes/create").param("examType", "PRACTICE").with(admin))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("Chọn kỹ năng")))
+                .andExpect(content().string(not(containsString("data-scoring-skill="))));
+
+        mvc.perform(
+                        get("/admin/scoring-schemes/create")
+                                .param("examType", "PRACTICE")
+                                .param("scopeSkill", "READING")
+                                .with(admin))
+                .andExpect(status().isOk())
                 .andExpect(content().string(containsString("Bản nháp")))
                 .andExpect(content().string(not(containsString("id=\"schemeStatus\""))))
-                .andExpect(content().string(not(containsString("Ngưỡng đạt cho kỹ năng"))));
+                .andExpect(content().string(containsString("Thang điểm theo kỹ năng")))
+                .andExpect(content().string(containsString("data-scoring-skill=\"READING\"")))
+                .andExpect(
+                        content().string(not(containsString("data-scoring-skill=\"LISTENING\""))))
+                .andExpect(content().string(not(containsString("ranges[READING_A0].minScore"))))
+                .andExpect(content().string(not(containsString("Ngưỡng đạt"))));
+    }
+
+    @Test
+    @Transactional
+    void placementSchemePersistsBelowA1Range() throws Exception {
+        mvc.perform(
+                        post("/admin/scoring-schemes")
+                                .with(user("admin@aptis.local").roles("ADMIN"))
+                                .with(csrf())
+                                .param("certificateId", certificate.getId().toString())
+                                .param("name", "Placement below A1")
+                                .param("version", "placement-below-a1")
+                                .param("examType", "PLACEMENT")
+                                .param("configureScores", "true")
+                                .param("status", "DRAFT")
+                                .param("skillScales[READING].rawMin", "0")
+                                .param("skillScales[READING].rawMax", "50")
+                                .param("skillScales[READING].scaleMin", "0")
+                                .param("skillScales[READING].scaleMax", "50")
+                                .param("ranges[READING_A0].minScore", "0")
+                                .param("ranges[READING_A0].maxScore", "9.99"))
+                .andExpect(status().is3xxRedirection());
+        var created =
+                schemes.findByCertificateIdOrderByVersionDesc(certificate.getId()).stream()
+                        .filter(value -> "placement-below-a1".equals(value.getVersion()))
+                        .findFirst()
+                        .orElseThrow();
+        var belowA1 =
+                bands.findBySchemeIdOrderBySkillAscMinScoreAsc(created.getId()).stream()
+                        .filter(value -> "READING".equals(value.getSkill()))
+                        .filter(value -> "A0".equals(value.getCefrLevel()))
+                        .findFirst()
+                        .orElseThrow();
+        org.junit.jupiter.api.Assertions.assertEquals(
+                new java.math.BigDecimal("9.99"), belowA1.getMaxScore());
     }
 
     @Test

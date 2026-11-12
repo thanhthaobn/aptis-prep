@@ -240,6 +240,59 @@
         </header>
         <form
           class="dashboard-panel"
+          th:if="${!editing and (schemeForm.examType == null or schemeForm.examType.isBlank())}"
+          th:action="@{/admin/scoring-schemes/create}"
+          method="get"
+        >
+          <fieldset class="scoring-fields">
+            <legend>Chọn loại đề thi</legend>
+            <div class="field">
+              <label for="createSchemeExamType">Loại đề thi</label>
+              <select id="createSchemeExamType" name="examType" required>
+                <option value="">Chọn loại đề</option>
+                <option
+                  th:each="type : ${examTypes}"
+                  th:value="${type}"
+                  th:text="${examTypeLabels.get(type) ?: type}"
+                ></option>
+              </select>
+            </div>
+          </fieldset>
+          <div class="actions">
+            <button class="button" type="submit">Tiếp tục</button>
+          </div>
+        </form>
+        <form
+          class="dashboard-panel"
+          th:if="${!editing and (schemeForm.examType == 'PRACTICE' or schemeForm.examType == 'CHECKPOINT') and (schemeForm.scopeSkill == null or schemeForm.scopeSkill.isBlank())}"
+          th:action="@{/admin/scoring-schemes/create}"
+          method="get"
+        >
+          <input type="hidden" name="examType" th:value="${schemeForm.examType}" />
+          <fieldset class="scoring-fields">
+            <legend>Chọn kỹ năng</legend>
+            <div class="field">
+              <label for="createSchemeScopeSkill">Kỹ năng</label>
+              <select id="createSchemeScopeSkill" name="scopeSkill" required>
+                <option value="">Chọn kỹ năng</option>
+                <option
+                  th:each="skill : ${skillCodes}"
+                  th:value="${skill}"
+                  th:text="${skillLabels.get(skill) ?: skill}"
+                ></option>
+              </select>
+            </div>
+          </fieldset>
+          <div class="actions">
+            <a class="button button-secondary" th:href="@{/admin/scoring-schemes/create}">
+              Quay lại
+            </a>
+            <button class="button" type="submit">Tiếp tục</button>
+          </div>
+        </form>
+        <form
+          class="dashboard-panel"
+          th:if="${editing or schemeForm.examType == 'PLACEMENT' or schemeForm.examType == 'FULL_MOCK' or ((schemeForm.examType == 'PRACTICE' or schemeForm.examType == 'CHECKPOINT') and schemeForm.scopeSkill != null and !schemeForm.scopeSkill.isBlank())}"
           th:object="${schemeForm}"
           th:action="${editing ? '/admin/scoring-schemes/' + scheme.id : '/admin/scoring-schemes'}"
           method="post"
@@ -252,16 +305,19 @@
                 <p class="form-static-value">Aptis ESOL General</p>
               </div>
               <div class="field">
-                <label for="schemeExamType">Loại đề thi</label>
-                <select id="schemeExamType" th:field="*{examType}" th:required="${!editing}">
-                  <option value="">Chọn loại đề</option>
-                  <option
-                    th:each="type : ${examTypes}"
-                    th:value="${type}"
-                    th:text="${examTypeLabels.get(type) ?: type}"
-                  ></option>
-                </select>
-                <p class="field-error" th:errors="*{examType}"></p>
+                <label>Loại đề thi</label>
+                <p
+                  class="form-static-value"
+                  th:text="${schemeForm.examType == null ? 'Chưa gán loại đề' : (examTypeLabels.get(schemeForm.examType) ?: schemeForm.examType)}"
+                ></p>
+                <input type="hidden" th:field="*{examType}" />
+                <a
+                  th:if="${!editing}"
+                  class="field-help"
+                  th:href="@{/admin/scoring-schemes/create}"
+                >
+                  Chọn lại loại đề
+                </a>
               </div>
               <div class="field">
                 <label for="schemeName">Tên bộ chấm điểm</label>
@@ -300,64 +356,40 @@
             class="catalog-form-section"
             th:attr="data-read-only=${readOnly}"
           >
-            <h2>Thang điểm theo kỹ năng</h2>
-            <div class="field" id="scheme-skill-field">
-              <label for="schemeScopeSkill">Kỹ năng</label>
-              <select id="schemeScopeSkill" th:field="*{scopeSkill}" th:disabled="${readOnly}">
-                <option value="">Chọn kỹ năng</option>
-                <option
-                  th:each="skill : ${skillCodes}"
-                  th:value="${skill}"
-                  th:text="${skill == 'GRAMMAR_VOCABULARY' ? 'Grammar & Vocabulary' : skill}"
-                ></option>
-              </select>
-            </div>
-            <p class="field-help" id="scheme-combined-help">
-              Để trống kỹ năng nếu bộ chấm áp dụng cho đề tổng hợp; khi đó cấu hình CEFR riêng cho
-              từng kỹ năng bên dưới.
-            </p>
-            <fieldset
-              id="scheme-target-score"
-              th:disabled="${readOnly}"
-              class="catalog-form-section"
-              th:if="${schemeForm.scopeSkill != null and !schemeForm.scopeSkill.isBlank()}"
+            <h2
+              th:text="${schemeForm.examType == 'PLACEMENT' or schemeForm.examType == 'FULL_MOCK' ? 'Thang điểm theo tất cả kỹ năng' : 'Thang điểm theo kỹ năng'}"
             >
-              <legend>Ngưỡng đạt cho kỹ năng</legend>
-              <p class="muted">
-                Dùng một ngưỡng đạt cho bộ chấm một kỹ năng. Nếu cần đánh giá nhiều trình độ, hãy
-                nhập các khoảng CEFR bên dưới.
-              </p>
-              <div class="catalog-form-grid">
-                <div class="field">
-                  <label for="schemeTargetLevel">Trình độ cần đạt</label>
-                  <select id="schemeTargetLevel" th:field="*{targetLevel}">
-                    <option value="">Dùng bảng CEFR</option>
-                    <option
-                      th:each="level : ${scoringLevels}"
-                      th:if="${level != 'C2'}"
-                      th:value="${level}"
-                      th:text="${level}"
-                    ></option>
-                  </select>
-                </div>
-                <div class="field">
-                  <label for="schemePassingScore">Điểm quy đổi tối thiểu để đạt</label>
-                  <input
-                    id="schemePassingScore"
-                    type="number"
-                    min="0"
-                    max="999.99"
-                    step="0.01"
-                    th:field="*{passingScore}"
-                  />
-                </div>
-              </div>
-            </fieldset>
+              Thang điểm theo kỹ năng
+            </h2>
+            <div
+              class="field"
+              th:if="${schemeForm.examType == 'PRACTICE' or schemeForm.examType == 'CHECKPOINT'}"
+            >
+              <label>Kỹ năng</label>
+              <p
+                class="form-static-value"
+                th:text="${schemeForm.scopeSkill == null ? 'Chưa chọn kỹ năng' : (skillLabels.get(schemeForm.scopeSkill) ?: schemeForm.scopeSkill)}"
+              ></p>
+              <input type="hidden" th:field="*{scopeSkill}" />
+              <a
+                th:if="${!editing}"
+                class="field-help"
+                th:href="@{/admin/scoring-schemes/create(examType=${schemeForm.examType})}"
+              >
+                Chọn lại kỹ năng
+              </a>
+            </div>
+            <input
+              th:if="${schemeForm.examType == 'PLACEMENT' or schemeForm.examType == 'FULL_MOCK'}"
+              type="hidden"
+              name="scopeSkill"
+              value=""
+            />
             <div id="scheme-combined-ranges">
               <fieldset
                 class="catalog-form-section"
                 th:each="skill : ${skillCodes}"
-                th:if="${schemeForm.scopeSkill == null or schemeForm.scopeSkill.isBlank() or schemeForm.scopeSkill == skill}"
+                th:if="${schemeForm.examType == 'PLACEMENT' or schemeForm.examType == 'FULL_MOCK' or schemeForm.scopeSkill == skill}"
                 th:disabled="${readOnly}"
                 th:attr="data-scoring-skill=${skill}"
                 th:with="scale=${schemeForm.skillScales.get(skill)}"
@@ -365,10 +397,6 @@
                 <legend
                   th:text="${skill == 'GRAMMAR_VOCABULARY' ? 'Grammar & Vocabulary' : skill}"
                 ></legend>
-                <p class="muted" th:if="${skill == 'GRAMMAR_VOCABULARY'}">
-                  Với đề tổng hợp, bảng CEFR này chỉ hỗ trợ xét kỹ năng sát ngưỡng theo quy tắc nội
-                  bộ; kết quả G&amp;V chỉ hiển thị điểm.
-                </p>
                 <div class="catalog-form-grid">
                   <input type="hidden" th:name="|skillScales[${skill}].rawMin|" value="0" />
                   <input type="hidden" th:name="|skillScales[${skill}].rawMax|" value="50" />
@@ -414,7 +442,7 @@
                     </thead>
                     <tbody>
                       <tr
-                        th:each="level : ${skill == 'GRAMMAR_VOCABULARY' ? scoringLevels : fullMockScoringLevels}"
+                        th:each="level : ${(schemeForm.examType == 'PLACEMENT' or schemeForm.examType == 'FULL_MOCK') and skill != 'GRAMMAR_VOCABULARY' ? fullMockScoringLevels : scoringLevels}"
                         th:if="${level != 'C2'}"
                         th:classappend="${level == 'A0'} ? 'below-a1-row'"
                         th:with="key=${skill + '_' + level}"

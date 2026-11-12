@@ -379,21 +379,6 @@ public class ScoringAdminServiceImpl implements ScoringAdminService {
                 field.setMaxScore(band.getMaxScore());
             }
         }
-        if (form.getScopeSkill() != null) {
-            var scoped =
-                    bands.stream()
-                            .filter(band -> band.getSkill().equals(form.getScopeSkill()))
-                            .toList();
-            if (scoped.size() == 1) {
-                form.setTargetLevel(scoped.getFirst().getCefrLevel());
-                form.setPassingScore(scoped.getFirst().getMinScore());
-                var field =
-                        form.getRanges()
-                                .get(form.getScopeSkill() + "_" + scoped.getFirst().getCefrLevel());
-                field.setMinScore(null);
-                field.setMaxScore(null);
-            }
-        }
     }
 
     @Transactional
@@ -730,7 +715,8 @@ public class ScoringAdminServiceImpl implements ScoringAdminService {
     }
 
     private boolean supportsBelowA1(ScoringScheme scheme, String skill) {
-        return "FULL_MOCK".equals(scheme.getExamType())
+        return ("PLACEMENT".equals(scheme.getExamType())
+                        || "FULL_MOCK".equals(scheme.getExamType()))
                 && !Skill.GRAMMAR_VOCABULARY.name().equals(skill);
     }
 

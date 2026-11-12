@@ -63,7 +63,10 @@ public class AdminScoringSchemeController {
     }
 
     @GetMapping("/admin/scoring-schemes/create")
-    public String createScheme(Model model) {
+    public String createScheme(
+            @RequestParam(defaultValue = "") String examType,
+            @RequestParam(defaultValue = "") String scopeSkill,
+            Model model) {
         {
             model.addAttribute("certificates", scoring.certificateViews());
             model.addAttribute("examTypes", EXAM_TYPES);
@@ -76,9 +79,21 @@ public class AdminScoringSchemeController {
                     "skills",
                     List.of("Grammar & Vocabulary", "Reading", "Listening", "Writing", "Speaking"));
         }
+        String selectedExamType = examType.trim().toUpperCase(Locale.ROOT);
+        if (!selectedExamType.isBlank() && !EXAM_TYPES.contains(selectedExamType))
+            throw new BusinessRuleException("Loại đề không hợp lệ");
+        boolean singleSkill =
+                "PRACTICE".equals(selectedExamType) || "CHECKPOINT".equals(selectedExamType);
+        String selectedScopeSkill = scopeSkill.trim().toUpperCase(Locale.ROOT);
+        if (!selectedScopeSkill.isBlank()
+                && (!singleSkill || !Skill.codes().contains(selectedScopeSkill)))
+            throw new BusinessRuleException("Kỹ năng không hợp lệ");
+        ScoringSchemeDTO form = new ScoringSchemeDTO();
+        form.setExamType(selectedExamType.isBlank() ? null : selectedExamType);
+        form.setScopeSkill(selectedScopeSkill.isBlank() ? null : selectedScopeSkill);
         model.addAttribute("editing", false);
         model.addAttribute("readOnly", false);
-        model.addAttribute("schemeForm", new ScoringSchemeDTO());
+        model.addAttribute("schemeForm", form);
         model.addAttribute("selectedSkill", "Reading");
         model.addAttribute("bands", List.of());
         model.addAttribute("bandForm", new ScoreBandDTO());
