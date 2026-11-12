@@ -66,9 +66,17 @@ class V2BusinessRegressionTests {
     void setup() {
         admin = createUser(Role.ADMIN);
         learner = createUser(Role.STUDENT);
-        certificate = new Certificate();
-        certificate.setCode("V2-" + System.nanoTime());
-        certificate.setName("V2 certificate");
+        certificate =
+                certificates
+                        .findByCodeIgnoreCase("APTIS_GENERAL")
+                        .orElseGet(
+                                () -> {
+                                    Certificate value = new Certificate();
+                                    value.setCode("APTIS_GENERAL");
+                                    value.setName("Aptis ESOL General");
+                                    value.setStatus(RecordStatus.ACTIVE);
+                                    return certificates.saveAndFlush(value);
+                                });
         certificate.setStatus(RecordStatus.ACTIVE);
         certificate = certificates.saveAndFlush(certificate);
         scheme = new ScoringScheme();

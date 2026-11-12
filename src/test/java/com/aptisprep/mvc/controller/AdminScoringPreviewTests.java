@@ -57,12 +57,12 @@ class AdminScoringPreviewTests {
                                 });
         certificate =
                 certificates
-                        .findByCodeIgnoreCase("TEST_CERT")
+                        .findByCodeIgnoreCase("APTIS_GENERAL")
                         .orElseGet(
                                 () -> {
                                     Certificate value = new Certificate();
-                                    value.setName("Test certificate");
-                                    value.setCode("TEST_CERT");
+                                    value.setName("Aptis ESOL General");
+                                    value.setCode("APTIS_GENERAL");
                                     value.setStatus(RecordStatus.ACTIVE);
                                     value.setCreatedBy(admin);
                                     return certificates.save(value);

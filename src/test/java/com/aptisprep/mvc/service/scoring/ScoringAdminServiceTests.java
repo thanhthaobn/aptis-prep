@@ -41,6 +41,8 @@ class ScoringAdminServiceTests {
         Certificate certificate = mock(Certificate.class);
         when(certificate.getId()).thenReturn(10);
         when(certificate.getStatus()).thenReturn(RecordStatus.ACTIVE);
+        when(certificates.findByCodeIgnoreCase("APTIS_GENERAL"))
+                .thenReturn(Optional.of(certificate));
         ScoringScheme current = mock(ScoringScheme.class);
         when(current.getId()).thenReturn(20);
         when(current.getCertificate()).thenReturn(certificate);

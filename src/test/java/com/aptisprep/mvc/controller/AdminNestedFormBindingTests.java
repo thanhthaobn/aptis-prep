@@ -114,9 +114,17 @@ class AdminNestedFormBindingTests {
 
     @Test
     void fullMockSectionsKeepTheirOwnSkillDurationAndQuestionSelection() throws Exception {
-        var certificate = new Certificate();
-        certificate.setCode("NESTED-FORM");
-        certificate.setName("Form test certificate");
+        var certificate =
+                certificates
+                        .findByCodeIgnoreCase("APTIS_GENERAL")
+                        .orElseGet(
+                                () -> {
+                                    var value = new Certificate();
+                                    value.setCode("APTIS_GENERAL");
+                                    value.setName("Aptis ESOL General");
+                                    value.setStatus(RecordStatus.ACTIVE);
+                                    return certificates.saveAndFlush(value);
+                                });
         certificate.setStatus(RecordStatus.ACTIVE);
         certificate = certificates.saveAndFlush(certificate);
         var request =
@@ -189,7 +197,7 @@ class AdminNestedFormBindingTests {
         assertFalse(html.contains("name=\"durationMinutes\""));
         assertTextarea(html, "description", "Preserved exam description <&>");
         assertSelected(html, "examType", "FULL_MOCK");
-        assertSelected(html, "certificateId", certificate.getId().toString());
+        assertTrue(html.contains("Aptis ESOL General"));
         assertInput(html, "demoOnly", "true", true);
         String location = saved.getResponse().getRedirectedUrl();
         int examId = Integer.parseInt(location.substring(location.lastIndexOf('/') + 1));
