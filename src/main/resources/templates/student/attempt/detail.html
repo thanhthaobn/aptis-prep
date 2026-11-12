@@ -295,6 +295,19 @@
         opacity: .45;
         pointer-events: none;
       }
+      .exam-countdown {
+        width: 100%;
+        margin: 0;
+        color: var(--color-navy);
+        font-size: 1.2rem;
+        font-weight: 800;
+        letter-spacing: .03em;
+        text-align: center;
+      }
+      .exam-control-panel .exam-timer-badge {
+        display: flex;
+        justify-content: center;
+      }
       @media (max-width: 560px) {
         .question-item {
           padding: 1rem;
@@ -358,9 +371,9 @@
           th:if="${attempt.deadline != null}"
           th:attr="data-deadline=${attempt.deadline},data-next-section=${attempt.nextSection},data-section-seconds=${attempt.sectionSkill == null ? null : attempt.remainingSeconds}"
         >
-          Hạn máy chủ:
-          <strong th:text="${#temporals.format(attempt.deadline, 'dd/MM/yyyy HH:mm:ss')}"></strong>
-          <small class="d-block muted">Thời gian được kiểm tra lại khi gửi form.</small>
+          <div id="exam-countdown" class="exam-countdown" aria-live="polite">
+            Đang tính thời gian...
+          </div>
         </div>
         <nav
           class="exam-section-navigation"
@@ -634,5 +647,41 @@
         <span>Nền tảng học tập và luyện thi Aptis</span>
       </div>
     </footer>
+    <script th:if="${attempt.deadline != null}">
+      (function () {
+        const timer = document.getElementById('exam-timer');
+        const countdown = document.getElementById('exam-countdown');
+        if (!timer || !countdown) return;
+
+        const deadline = new Date(timer.dataset.deadline).getTime();
+        if (Number.isNaN(deadline)) {
+          countdown.textContent = 'Không xác định được thời gian';
+          return;
+        }
+
+        const format = (totalSeconds) => {
+          const hours = Math.floor(totalSeconds / 3600);
+          const minutes = Math.floor((totalSeconds % 3600) / 60);
+          const seconds = totalSeconds % 60;
+          const minutePart = String(minutes).padStart(2, '0');
+          const secondPart = String(seconds).padStart(2, '0');
+          return hours > 0
+            ? String(hours).padStart(2, '0') + ':' + minutePart + ':' + secondPart
+            : minutePart + ':' + secondPart;
+        };
+
+        let intervalId;
+        const update = () => {
+          const remaining = Math.max(0, Math.ceil((deadline - Date.now()) / 1000));
+          countdown.textContent = remaining > 0
+            ? 'Còn ' + format(remaining)
+            : 'Đã hết thời gian';
+          if (remaining === 0) window.clearInterval(intervalId);
+        };
+
+        update();
+        intervalId = window.setInterval(update, 1000);
+      })();
+    </script>
   </body>
 </html>
