@@ -19,10 +19,3 @@ public interface CertificateRepository extends JpaRepository<Certificate, Intege
 
     boolean existsByCodeIgnoreCaseAndIdNot(String code, Integer id);
 }
-
-
-
-
-
-
-

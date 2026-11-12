@@ -42,7 +42,6 @@ public class FlashcardReview {
         return state;
     }
 
-
     public String getId() {
         return id;
     }
@@ -79,10 +78,3 @@ public class FlashcardReview {
         this.reviewedAt = value;
     }
 }
-
-
-
-
-
-
-

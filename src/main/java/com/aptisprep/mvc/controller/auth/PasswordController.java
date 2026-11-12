@@ -38,9 +38,12 @@ public class PasswordController {
             RedirectAttributes redirect) {
         if (passwordForm.getPassword() == null || passwordForm.getPassword().isBlank())
             errors.rejectValue("password", "password.required", "Mật khẩu mới không được để trống");
-        if (passwordForm.getConfirmPassword() == null || passwordForm.getConfirmPassword().isBlank())
+        if (passwordForm.getConfirmPassword() == null
+                || passwordForm.getConfirmPassword().isBlank())
             errors.rejectValue(
-                    "confirmPassword", "confirmPassword.required", "Xác nhận mật khẩu không được để trống");
+                    "confirmPassword",
+                    "confirmPassword.required",
+                    "Xác nhận mật khẩu không được để trống");
         if (!Objects.equals(passwordForm.getPassword(), passwordForm.getConfirmPassword()))
             errors.rejectValue(
                     "confirmPassword", "password.mismatch", "Mật khẩu xác nhận không khớp");
@@ -66,10 +69,3 @@ public class PasswordController {
         return "auth/password";
     }
 }
-
-
-
-
-
-
-

@@ -1,16 +1,14 @@
 package com.aptisprep.mvc.service.placement;
-import com.aptisprep.mvc.support.contract.*;
-
-import com.aptisprep.mvc.service.placement.PlacementExamCatalogService;
-import com.aptisprep.mvc.service.account.AccountAccessService;
-import com.aptisprep.mvc.service.catalog.PublishedExamCatalogService;
-import com.aptisprep.mvc.service.exam.ExamAttemptQueryService;
-import com.aptisprep.mvc.service.exam.ExamAttemptCommandService;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 import com.aptisprep.mvc.exception.BusinessRuleException;
+import com.aptisprep.mvc.service.account.AccountAccessService;
+import com.aptisprep.mvc.service.catalog.PublishedExamCatalogService;
+import com.aptisprep.mvc.service.exam.ExamAttemptCommandService;
+import com.aptisprep.mvc.service.exam.ExamAttemptQueryService;
+import com.aptisprep.mvc.support.contract.*;
 import com.aptisprep.mvc.support.contract.IntegrationModels.AttemptHandle;
 import java.util.List;
 import org.junit.jupiter.api.Test;
@@ -73,13 +71,3 @@ class PlacementServiceTests {
         verify(engine, never()).start(any(), any(), any());
     }
 }
-
-
-
-
-
-
-
-
-
-

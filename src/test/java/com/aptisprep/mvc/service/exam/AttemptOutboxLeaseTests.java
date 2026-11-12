@@ -1,7 +1,5 @@
 package com.aptisprep.mvc.service.exam;
 
-import com.aptisprep.mvc.service.exam.impl.AttemptOutboxServiceImpl;
-
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
@@ -9,6 +7,7 @@ import com.aptisprep.mvc.entity.AttemptOutbox;
 import com.aptisprep.mvc.event.AttemptCompletedEvent;
 import com.aptisprep.mvc.repository.AttemptOutboxRepository;
 import com.aptisprep.mvc.repository.ExamAttemptRepository;
+import com.aptisprep.mvc.service.exam.impl.AttemptOutboxServiceImpl;
 import java.time.LocalDateTime;
 import java.util.List;
 import org.junit.jupiter.api.Test;
@@ -45,13 +44,3 @@ class AttemptOutboxLeaseTests {
         assertTrue(row.getNextAttemptAt().isAfter(LocalDateTime.now()));
     }
 }
-
-
-
-
-
-
-
-
-
-

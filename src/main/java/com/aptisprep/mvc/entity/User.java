@@ -19,7 +19,6 @@ import java.time.LocalDateTime;
 public class User {
     public User() {}
 
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
@@ -70,7 +69,6 @@ public class User {
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
     }
-
 
     @PrePersist
     void onCreate() {
@@ -148,7 +146,6 @@ public class User {
         return updatedAt;
     }
 
-
     public void setCreatedAt(LocalDateTime value) {
         this.createdAt = value;
     }
@@ -157,10 +154,3 @@ public class User {
         this.updatedAt = value;
     }
 }
-
-
-
-
-
-
-

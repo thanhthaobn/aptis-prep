@@ -95,13 +95,3 @@ class AccountProfileServiceTests {
         verifyNoInteractions(userGoalSkillRepository);
     }
 }
-
-
-
-
-
-
-
-
-
-

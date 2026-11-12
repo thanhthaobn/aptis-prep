@@ -55,7 +55,6 @@ public class QuestionItem {
         this.responseSeconds = responseSeconds;
     }
 
-
     public QuestionItem() {}
 
     public Integer getId() {
@@ -126,15 +125,7 @@ public class QuestionItem {
         responseSeconds = v;
     }
 
-
     public void setId(Integer value) {
         this.id = value;
     }
 }
-
-
-
-
-
-
-

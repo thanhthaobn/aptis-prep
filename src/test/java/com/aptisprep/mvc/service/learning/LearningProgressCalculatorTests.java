@@ -1,9 +1,8 @@
 package com.aptisprep.mvc.service.learning;
 
-import com.aptisprep.mvc.support.learning.LearningProgressCalculator;
-
 import static org.assertj.core.api.Assertions.*;
 
+import com.aptisprep.mvc.support.learning.LearningProgressCalculator;
 import org.junit.jupiter.api.Test;
 
 class LearningProgressCalculatorTests {
@@ -22,13 +21,3 @@ class LearningProgressCalculatorTests {
                 .isInstanceOf(IllegalArgumentException.class);
     }
 }
-
-
-
-
-
-
-
-
-
-

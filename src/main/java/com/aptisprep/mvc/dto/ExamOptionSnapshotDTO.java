@@ -114,14 +114,3 @@ public class ExamOptionSnapshotDTO {
         this.correct = correct;
     }
 }
-
-
-
-
-
-
-
-
-
-
-

@@ -1,18 +1,18 @@
 package com.aptisprep.mvc.service.exam.impl;
-import com.aptisprep.mvc.support.contract.*;
 
 import com.aptisprep.mvc.config.AiProperties;
-import com.aptisprep.mvc.service.exam.AttemptGradingOrchestrationService;
-import com.aptisprep.mvc.service.exam.AttemptOutboxService;
+import com.aptisprep.mvc.dto.AiAssessmentJobDTO;
 import com.aptisprep.mvc.event.AiAssessmentCompletedEvent;
 import com.aptisprep.mvc.event.AttemptSubmittedEvent;
+import com.aptisprep.mvc.service.exam.AttemptGradingOrchestrationService;
+import com.aptisprep.mvc.service.exam.AttemptOutboxService;
 import com.aptisprep.mvc.service.grading.AiAssessmentService;
-import com.aptisprep.mvc.dto.AiAssessmentJobDTO;
+import com.aptisprep.mvc.service.grading.AttemptFinalizationService;
+import com.aptisprep.mvc.support.contract.*;
 import com.aptisprep.mvc.support.contract.GradingContextFormatter;
 import com.aptisprep.mvc.support.contract.IntegrationModels.LockedAnswer;
-import com.aptisprep.mvc.support.contract.IntegrationModels.LockedItem;
 import com.aptisprep.mvc.support.contract.IntegrationModels.LockedAttempt;
-import com.aptisprep.mvc.service.grading.AttemptFinalizationService;
+import com.aptisprep.mvc.support.contract.IntegrationModels.LockedItem;
 import java.math.BigDecimal;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
@@ -108,12 +108,3 @@ public class AttemptGradingOrchestrationServiceImpl implements AttemptGradingOrc
         outbox.markDelivered(event);
     }
 }
-
-
-
-
-
-
-
-
-

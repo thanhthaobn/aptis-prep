@@ -173,7 +173,16 @@ public final class IntegrationModels {
                 String estimatedLevel,
                 String gradingState,
                 String feedback) {
-            this(skill, rawScore, null, scaleScore, estimatedLevel, gradingState, feedback, false, false);
+            this(
+                    skill,
+                    rawScore,
+                    null,
+                    scaleScore,
+                    estimatedLevel,
+                    gradingState,
+                    feedback,
+                    false,
+                    false);
         }
 
         public SkillResult(
@@ -225,7 +234,16 @@ public final class IntegrationModels {
                 String estimatedLevel,
                 String gradingState,
                 String feedback) {
-            this(skill, rawScore, rawMax, scaleScore, estimatedLevel, gradingState, feedback, false, false);
+            this(
+                    skill,
+                    rawScore,
+                    rawMax,
+                    scaleScore,
+                    estimatedLevel,
+                    gradingState,
+                    feedback,
+                    false,
+                    false);
         }
     }
 
@@ -318,7 +336,8 @@ public final class IntegrationModels {
         }
 
         public boolean hasRetryableGrades() {
-            return skills != null && skills.stream().anyMatch(streamValue -> streamValue.retryable());
+            return skills != null
+                    && skills.stream().anyMatch(streamValue -> streamValue.retryable());
         }
 
         public AttemptResult(
@@ -417,10 +436,3 @@ public final class IntegrationModels {
     public record AdminHistoryPage(
             List<AdminHistoryItem> items, int page, int size, long totalItems) {}
 }
-
-
-
-
-
-
-

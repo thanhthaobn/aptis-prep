@@ -565,13 +565,3 @@ class AdminScoringPreviewTests {
                 .andExpect(content().string(containsString("Khoảng điểm bị chồng lấn")));
     }
 }
-
-
-
-
-
-
-
-
-
-

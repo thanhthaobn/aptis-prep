@@ -13,9 +13,26 @@ import java.time.LocalDateTime;
                         name = "uq_ai_assessment_job_version",
                         columnNames = {"job_id", "answer_version"}))
 public class AiAssessment {
-public AiAssessment() {}
+    public AiAssessment() {}
 
-    public AiAssessment(Integer id, AiAssessmentJob job, String assessmentKey, Integer answerId, Integer answerVersion, AiAssessmentState state, BigDecimal score, String estimatedCefr, String feedback, String transcript, String rubricVersion, String policyVersion, String provider, String model, String errorMessage, LocalDateTime createdAt, LocalDateTime completedAt){
+    public AiAssessment(
+            Integer id,
+            AiAssessmentJob job,
+            String assessmentKey,
+            Integer answerId,
+            Integer answerVersion,
+            AiAssessmentState state,
+            BigDecimal score,
+            String estimatedCefr,
+            String feedback,
+            String transcript,
+            String rubricVersion,
+            String policyVersion,
+            String provider,
+            String model,
+            String errorMessage,
+            LocalDateTime createdAt,
+            LocalDateTime completedAt) {
         this.id = id;
         this.job = job;
         this.assessmentKey = assessmentKey;
@@ -224,7 +241,6 @@ public AiAssessment() {}
         completedAt = value;
     }
 
-
     public void setId(Integer value) {
         this.id = value;
     }
@@ -233,10 +249,3 @@ public AiAssessment() {}
         this.createdAt = value;
     }
 }
-
-
-
-
-
-
-

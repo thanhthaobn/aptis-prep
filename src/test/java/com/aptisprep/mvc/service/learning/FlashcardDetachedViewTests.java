@@ -90,13 +90,3 @@ class FlashcardDetachedViewTests {
         }
     }
 }
-
-
-
-
-
-
-
-
-
-

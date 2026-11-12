@@ -13,10 +13,3 @@ public interface LearningPathItemRepository extends JpaRepository<LearningPathIt
 
     Optional<LearningPathItem> findByLearningPathIdAndLessonId(Integer pathId, Integer lessonId);
 }
-
-
-
-
-
-
-

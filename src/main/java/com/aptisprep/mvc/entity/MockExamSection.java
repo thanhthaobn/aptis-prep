@@ -39,7 +39,6 @@ public class MockExamSection {
         this.status = status;
     }
 
-
     public MockExamSection() {}
 
     public Integer getId() {
@@ -82,7 +81,6 @@ public class MockExamSection {
         status = v;
     }
 
-
     public void setId(Integer value) {
         this.id = value;
     }
@@ -91,10 +89,3 @@ public class MockExamSection {
         return status;
     }
 }
-
-
-
-
-
-
-

@@ -84,7 +84,7 @@ public interface AiAssessmentJobRepository extends JpaRepository<AiAssessmentJob
             Pageable page);
 
     @Query(
-            """
+"""
 select job.assessmentKey from AiAssessmentJob job
 where job.sourceType = 'EXAM_ANSWER'
   and job.state = com.aptisprep.mvc.enums.AiJobState.COMPLETED
@@ -103,10 +103,3 @@ order by job.id
     Optional<AiAssessmentJob> findByAssessmentKeyForUpdate(
             @Param("assessmentKey") String assessmentKey);
 }
-
-
-
-
-
-
-

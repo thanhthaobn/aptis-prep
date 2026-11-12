@@ -1,9 +1,5 @@
 package com.aptisprep.mvc.service.grading;
 
-import com.aptisprep.mvc.service.exam.AttemptOutboxService;
-import com.aptisprep.mvc.service.grading.AttemptFinalizationService;
-import com.aptisprep.mvc.service.grading.impl.AttemptFinalizationServiceImpl;
-
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
@@ -15,6 +11,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
+import com.aptisprep.mvc.dto.AiAssessmentDTO;
 import com.aptisprep.mvc.entity.AiAssessment;
 import com.aptisprep.mvc.entity.AiAssessmentJob;
 import com.aptisprep.mvc.entity.ExamAttempt;
@@ -32,10 +29,9 @@ import com.aptisprep.mvc.repository.ExamSkillResultRepository;
 import com.aptisprep.mvc.repository.MockExamRepository;
 import com.aptisprep.mvc.repository.QuestionRepository;
 import com.aptisprep.mvc.repository.UserAnswerRepository;
-import com.aptisprep.mvc.service.grading.AiAssessmentService;
-import com.aptisprep.mvc.dto.AiAssessmentDTO;
+import com.aptisprep.mvc.service.exam.AttemptOutboxService;
+import com.aptisprep.mvc.service.grading.impl.AttemptFinalizationServiceImpl;
 import com.aptisprep.mvc.service.scoring.ScoringPolicyService;
-import com.aptisprep.mvc.service.exam.impl.AttemptOutboxServiceImpl;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
@@ -237,13 +233,3 @@ class AttemptFinalizationServiceTests {
         return assessment;
     }
 }
-
-
-
-
-
-
-
-
-
-

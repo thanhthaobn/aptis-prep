@@ -14,10 +14,3 @@ public interface LessonCheckAttemptRepository extends JpaRepository<LessonCheckA
 
     List<LessonCheckAttempt> findByLessonId(Integer lessonId);
 }
-
-
-
-
-
-
-

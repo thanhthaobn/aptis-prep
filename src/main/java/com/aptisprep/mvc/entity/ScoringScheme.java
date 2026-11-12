@@ -81,7 +81,6 @@ public class ScoringScheme {
         this.createdAt = createdAt;
     }
 
-
     @PrePersist
     void onCreate() {
         if (createdAt == null) createdAt = LocalDateTime.now();
@@ -135,7 +134,6 @@ public class ScoringScheme {
         this.effectiveFrom = effectiveFrom;
     }
 
-
     public void setId(Integer value) {
         this.id = value;
     }
@@ -144,10 +142,3 @@ public class ScoringScheme {
         this.createdAt = value;
     }
 }
-
-
-
-
-
-
-

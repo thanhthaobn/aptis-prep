@@ -68,10 +68,3 @@ public class AdminDashboardServiceImpl implements AdminDashboardService {
         return new ContentSummary(lessonCount, questionCount, publishedExamCount, recentContent);
     }
 }
-
-
-
-
-
-
-

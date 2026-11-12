@@ -64,7 +64,24 @@ public class AiAssessmentDTO {
                 completedAt);
     }
 
-    public AiAssessmentDTO(Integer id, AiAssessmentJob job, String assessmentKey, Integer answerId, Integer answerVersion, AiAssessmentState state, BigDecimal score, String estimatedCefr, String feedback, String transcript, String rubricVersion, String policyVersion, String provider, String model, String errorMessage, LocalDateTime createdAt, LocalDateTime completedAt){
+    public AiAssessmentDTO(
+            Integer id,
+            AiAssessmentJob job,
+            String assessmentKey,
+            Integer answerId,
+            Integer answerVersion,
+            AiAssessmentState state,
+            BigDecimal score,
+            String estimatedCefr,
+            String feedback,
+            String transcript,
+            String rubricVersion,
+            String policyVersion,
+            String provider,
+            String model,
+            String errorMessage,
+            LocalDateTime createdAt,
+            LocalDateTime completedAt) {
         this.id = id;
         this.job = job;
         this.assessmentKey = assessmentKey;
@@ -264,14 +281,3 @@ public class AiAssessmentDTO {
         this.completedAt = completedAt;
     }
 }
-
-
-
-
-
-
-
-
-
-
-

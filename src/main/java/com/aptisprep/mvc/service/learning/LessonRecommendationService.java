@@ -9,10 +9,3 @@ public interface LessonRecommendationService {
 
     public Recommendation recommend(Integer userId, List<PathProgress> paths);
 }
-
-
-
-
-
-
-

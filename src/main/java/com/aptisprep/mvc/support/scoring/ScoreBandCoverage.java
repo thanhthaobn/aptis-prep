@@ -50,10 +50,3 @@ public final class ScoreBandCoverage {
         }
     }
 }
-
-
-
-
-
-
-

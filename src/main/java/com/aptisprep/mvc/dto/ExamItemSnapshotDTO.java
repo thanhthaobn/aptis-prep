@@ -166,14 +166,3 @@ public class ExamItemSnapshotDTO {
         this.options = options;
     }
 }
-
-
-
-
-
-
-
-
-
-
-

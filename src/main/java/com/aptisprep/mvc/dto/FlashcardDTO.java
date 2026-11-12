@@ -11,12 +11,15 @@ import java.util.*;
 public class FlashcardDTO {
     private Integer id;
     private FlashcardSet set;
+
     @NotBlank(message = "Mặt trước của thẻ không được để trống")
     @Size(max = 200, message = "Mặt trước của thẻ tối đa 200 ký tự")
     private String frontContent;
+
     @NotBlank(message = "Mặt sau của thẻ không được để trống")
     @Size(max = 1000, message = "Mặt sau của thẻ tối đa 1000 ký tự")
     private String backContent;
+
     private String cefrLevel;
     private Integer displayOrder;
     private LocalDateTime createdAt;
@@ -60,7 +63,16 @@ public class FlashcardDTO {
             String status,
             String state,
             LocalDateTime nextReviewAt) {
-        this(id, set, frontContent, backContent, cefrLevel, displayOrder, createdAt, updatedAt, status);
+        this(
+                id,
+                set,
+                frontContent,
+                backContent,
+                cefrLevel,
+                displayOrder,
+                createdAt,
+                updatedAt,
+                status);
         this.state = state;
         this.nextReviewAt = nextReviewAt;
     }
@@ -181,14 +193,3 @@ public class FlashcardDTO {
         this.nextReviewAt = nextReviewAt;
     }
 }
-
-
-
-
-
-
-
-
-
-
-

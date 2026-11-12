@@ -73,7 +73,6 @@ public class LearningPath {
         this.completedAt = completedAt;
     }
 
-
     @PrePersist
     void create() {
         createdAt = LocalDateTime.now();
@@ -167,7 +166,6 @@ public class LearningPath {
         completedAt = v;
     }
 
-
     public void setId(Integer value) {
         this.id = value;
     }
@@ -176,10 +174,3 @@ public class LearningPath {
         this.createdAt = value;
     }
 }
-
-
-
-
-
-
-

@@ -14,12 +14,6 @@ public interface AiAssessmentService {
     public AiAssessmentDTO get(String assessmentKey, Integer requesterId, boolean admin);
 
     public AiAssessmentDTO getForGrading(String assessmentKey);
+
     public void recoverAiJobs();
 }
-
-
-
-
-
-
-

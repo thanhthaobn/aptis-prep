@@ -5,10 +5,3 @@ public enum UserStatus {
     INACTIVE,
     LOCKED
 }
-
-
-
-
-
-
-

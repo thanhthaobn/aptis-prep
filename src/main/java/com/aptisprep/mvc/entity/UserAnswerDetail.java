@@ -93,7 +93,6 @@ public class UserAnswerDetail {
         this.updatedAt = updatedAt;
     }
 
-
     @PrePersist
     void onCreate() {
         LocalDateTime now = LocalDateTime.now();
@@ -186,7 +185,6 @@ public class UserAnswerDetail {
         gradedAt = value;
     }
 
-
     public void setId(Integer value) {
         this.id = value;
     }
@@ -227,10 +225,3 @@ public class UserAnswerDetail {
         this.updatedAt = value;
     }
 }
-
-
-
-
-
-
-

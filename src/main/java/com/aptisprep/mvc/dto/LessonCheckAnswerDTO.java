@@ -15,10 +15,7 @@ public class LessonCheckAnswerDTO {
     public LessonCheckAnswerDTO() {}
 
     public LessonCheckAnswerDTO(
-            Integer id,
-            LessonCheckAttempt attempt,
-            Integer questionId,
-            Integer selectedOption) {
+            Integer id, LessonCheckAttempt attempt, Integer questionId, Integer selectedOption) {
         this.id = id;
         this.attempt = attempt;
         this.questionId = questionId;
@@ -37,10 +34,7 @@ public class LessonCheckAnswerDTO {
     public static LessonCheckAnswer convertDtoToEntity(LessonCheckAnswerDTO dto) {
         if (dto == null) return null;
         return new LessonCheckAnswer(
-                dto.getId(),
-                dto.getAttempt(),
-                dto.getQuestionId(),
-                dto.getSelectedOption());
+                dto.getId(), dto.getAttempt(), dto.getQuestionId(), dto.getSelectedOption());
     }
 
     public Integer getId() {
@@ -75,14 +69,3 @@ public class LessonCheckAnswerDTO {
         this.selectedOption = selectedOption;
     }
 }
-
-
-
-
-
-
-
-
-
-
-

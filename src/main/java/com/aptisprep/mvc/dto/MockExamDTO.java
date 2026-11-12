@@ -1,21 +1,19 @@
 package com.aptisprep.mvc.dto;
 
-import java.time.*;
-import java.math.*;
-import java.util.*;
-
-import java.util.ArrayList;
-import java.util.List;
 import com.aptisprep.mvc.entity.*;
 import com.aptisprep.mvc.enums.*;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
-import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
+import java.math.*;
+import java.time.*;
+import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+
 public class MockExamDTO {
-    public static final List<String> EXAM_TYPES =
-            ExamType.codes();
+    public static final List<String> EXAM_TYPES = ExamType.codes();
 
     private Integer id;
     private LocalDateTime createdAt;
@@ -25,6 +23,7 @@ public class MockExamDTO {
     @NotBlank(message = "Tên đề thi là bắt buộc")
     @Size(max = 255, message = "Tên đề thi tối đa 255 ký tự")
     private String title;
+
     private String description;
 
     @Pattern(
@@ -32,10 +31,9 @@ public class MockExamDTO {
             message = "Loại đề thi không hợp lệ")
     private String examType = "PRACTICE";
 
-    @Pattern(
-            regexp = "^$|A1|A2|B1|B2|C1|C2",
-            message = "Cấp độ mục tiêu không hợp lệ")
+    @Pattern(regexp = "^$|A1|A2|B1|B2|C1|C2", message = "Cấp độ mục tiêu không hợp lệ")
     private String targetLevel = "B1";
+
     private String skill = "READING";
     private Integer durationMinutes;
     private Integer certificateId;
@@ -120,9 +118,23 @@ public class MockExamDTO {
             boolean startable,
             String readinessMessage,
             List<String> readinessChecks) {
-        this(id, createdAt, updatedAt, title, description, examType, targetLevel, skill,
-                durationMinutes, certificateId, scoringSchemeId, sectionSkill,
-                sectionDurationMinutes, questionIds, status, demoOnly);
+        this(
+                id,
+                createdAt,
+                updatedAt,
+                title,
+                description,
+                examType,
+                targetLevel,
+                skill,
+                durationMinutes,
+                certificateId,
+                scoringSchemeId,
+                sectionSkill,
+                sectionDurationMinutes,
+                questionIds,
+                status,
+                demoOnly);
         this.sections = sections == null ? new ArrayList<>() : sections;
         this.skillLabel = skillLabel;
         this.kindLabel = kindLabel;
@@ -133,7 +145,6 @@ public class MockExamDTO {
         this.readinessMessage = readinessMessage;
         this.readinessChecks = readinessChecks == null ? new ArrayList<>() : readinessChecks;
     }
-
 
     public boolean isDemoOnly() {
         return demoOnly;
@@ -372,7 +383,8 @@ public class MockExamDTO {
     }
 
     public void setReadinessChecks(List<String> readinessChecks) {
-        this.readinessChecks = readinessChecks == null ? new ArrayList<>() : new ArrayList<>(readinessChecks);
+        this.readinessChecks =
+                readinessChecks == null ? new ArrayList<>() : new ArrayList<>(readinessChecks);
     }
 
     public String getSkillCode() {
@@ -437,12 +449,4 @@ public class MockExamDTO {
                 dto.getCreatedAt(),
                 dto.getUpdatedAt());
     }
-
 }
-
-
-
-
-
-
-

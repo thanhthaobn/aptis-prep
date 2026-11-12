@@ -18,10 +18,3 @@ public interface ScoringGuideService {
 
     public List<Guide> forResult(AttemptResult result);
 }
-
-
-
-
-
-
-

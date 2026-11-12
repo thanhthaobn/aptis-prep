@@ -1,7 +1,5 @@
 package com.aptisprep.mvc.service.exam;
 
-import com.aptisprep.mvc.service.grading.GeminiGradingService;
-
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
@@ -11,7 +9,7 @@ import com.aptisprep.mvc.entity.*;
 import com.aptisprep.mvc.enums.*;
 import com.aptisprep.mvc.exception.AiGradingException;
 import com.aptisprep.mvc.repository.*;
-import com.aptisprep.mvc.service.grading.impl.GeminiGradingServiceImpl;
+import com.aptisprep.mvc.service.grading.GeminiGradingService;
 import com.aptisprep.mvc.support.grading.GradingResult;
 import java.math.BigDecimal;
 import java.util.List;
@@ -97,8 +95,7 @@ class SubjectiveBlankSubmissionTests {
         skill.setScaleScore(null);
         skill.setCefrLevel(null);
         resultRepository.saveAndFlush(skill);
-        for (UserAnswer answer :
-                answerRepository.findByAttemptIdOrderByQuestionIdAsc(attemptId)) {
+        for (UserAnswer answer : answerRepository.findByAttemptIdOrderByQuestionIdAsc(attemptId)) {
             answer.setAiScore(null);
             answer.setAiFeedback(null);
             answer.setAiProvider(null);
@@ -315,13 +312,3 @@ class SubjectiveBlankSubmissionTests {
 
     private record Fixture(User user, MockExam exam, List<QuestionItem> items) {}
 }
-
-
-
-
-
-
-
-
-
-

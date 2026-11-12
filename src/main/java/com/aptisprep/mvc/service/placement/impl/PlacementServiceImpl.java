@@ -2,18 +2,17 @@ package com.aptisprep.mvc.service.placement.impl;
 
 import com.aptisprep.mvc.exception.BusinessRuleException;
 import com.aptisprep.mvc.service.account.AccountAccessService;
-import com.aptisprep.mvc.service.exam.ExamAttemptCommandService;
 import com.aptisprep.mvc.service.catalog.PublishedExamCatalogService;
+import com.aptisprep.mvc.service.exam.ExamAttemptCommandService;
 import com.aptisprep.mvc.service.exam.ExamAttemptQueryService;
-import com.aptisprep.mvc.support.contract.IntegrationModels.AttemptHandle;
-import com.aptisprep.mvc.support.contract.IntegrationModels.AttemptResult;
 import com.aptisprep.mvc.service.placement.PlacementExamCatalogService;
 import com.aptisprep.mvc.service.placement.PlacementService;
 import com.aptisprep.mvc.service.placement.PlacementService.PlacementOption;
+import com.aptisprep.mvc.support.contract.IntegrationModels.AttemptHandle;
+import com.aptisprep.mvc.support.contract.IntegrationModels.AttemptResult;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
-import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -134,10 +133,3 @@ public class PlacementServiceImpl implements PlacementService {
         return attemptQueries.result(accounts.requireActiveStudent(email), attemptId);
     }
 }
-
-
-
-
-
-
-

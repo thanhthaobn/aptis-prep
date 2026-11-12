@@ -31,10 +31,3 @@ public interface MockExamRepository extends JpaRepository<MockExam, Integer> {
 
     List<MockExam> findBySkillAndStatusOrderByUpdatedAtDesc(String skill, String status);
 }
-
-
-
-
-
-
-

@@ -192,36 +192,125 @@ public class Lesson {
         this.id = id;
     }
 
-    public String getTranscriptVisibility() { return transcriptVisibility; }
-    public void setTranscriptVisibility(String value) { transcriptVisibility = trim(value); }
-    public String getSampleVisibility() { return sampleVisibility; }
-    public void setSampleVisibility(String value) { sampleVisibility = trim(value); }
-    public String getTopic() { return topic; }
-    public void setTopic(String value) { topic = trim(value); }
-    public String getTaskType() { return taskType; }
-    public void setTaskType(String value) { taskType = trim(value); }
-    public String getObjectives() { return objectives; }
-    public void setObjectives(String value) { objectives = trim(value); }
-    public String getStrategy() { return strategy; }
-    public void setStrategy(String value) { strategy = trim(value); }
-    public String getExampleText() { return exampleText; }
-    public void setExampleText(String value) { exampleText = trim(value); }
-    public String getAnalysis() { return analysis; }
-    public void setAnalysis(String value) { analysis = trim(value); }
-    public String getCommonMistakes() { return commonMistakes; }
-    public void setCommonMistakes(String value) { commonMistakes = trim(value); }
-    public String getPracticePrompt() { return practicePrompt; }
-    public void setPracticePrompt(String value) { practicePrompt = trim(value); }
-    public String getSampleResponse() { return sampleResponse; }
-    public void setSampleResponse(String value) { sampleResponse = trim(value); }
-    public String getChecklist() { return checklist; }
-    public void setChecklist(String value) { checklist = trim(value); }
-    public String getVideoUrl() { return videoUrl; }
-    public void setVideoUrl(String value) { videoUrl = trim(value); }
-    public String getSourceUrl() { return sourceUrl; }
-    public void setSourceUrl(String value) { sourceUrl = trim(value); }
-    public String getSourceName() { return sourceName; }
-    public void setSourceName(String value) { sourceName = trim(value); }
+    public String getTranscriptVisibility() {
+        return transcriptVisibility;
+    }
+
+    public void setTranscriptVisibility(String value) {
+        transcriptVisibility = trim(value);
+    }
+
+    public String getSampleVisibility() {
+        return sampleVisibility;
+    }
+
+    public void setSampleVisibility(String value) {
+        sampleVisibility = trim(value);
+    }
+
+    public String getTopic() {
+        return topic;
+    }
+
+    public void setTopic(String value) {
+        topic = trim(value);
+    }
+
+    public String getTaskType() {
+        return taskType;
+    }
+
+    public void setTaskType(String value) {
+        taskType = trim(value);
+    }
+
+    public String getObjectives() {
+        return objectives;
+    }
+
+    public void setObjectives(String value) {
+        objectives = trim(value);
+    }
+
+    public String getStrategy() {
+        return strategy;
+    }
+
+    public void setStrategy(String value) {
+        strategy = trim(value);
+    }
+
+    public String getExampleText() {
+        return exampleText;
+    }
+
+    public void setExampleText(String value) {
+        exampleText = trim(value);
+    }
+
+    public String getAnalysis() {
+        return analysis;
+    }
+
+    public void setAnalysis(String value) {
+        analysis = trim(value);
+    }
+
+    public String getCommonMistakes() {
+        return commonMistakes;
+    }
+
+    public void setCommonMistakes(String value) {
+        commonMistakes = trim(value);
+    }
+
+    public String getPracticePrompt() {
+        return practicePrompt;
+    }
+
+    public void setPracticePrompt(String value) {
+        practicePrompt = trim(value);
+    }
+
+    public String getSampleResponse() {
+        return sampleResponse;
+    }
+
+    public void setSampleResponse(String value) {
+        sampleResponse = trim(value);
+    }
+
+    public String getChecklist() {
+        return checklist;
+    }
+
+    public void setChecklist(String value) {
+        checklist = trim(value);
+    }
+
+    public String getVideoUrl() {
+        return videoUrl;
+    }
+
+    public void setVideoUrl(String value) {
+        videoUrl = trim(value);
+    }
+
+    public String getSourceUrl() {
+        return sourceUrl;
+    }
+
+    public void setSourceUrl(String value) {
+        sourceUrl = trim(value);
+    }
+
+    public String getSourceName() {
+        return sourceName;
+    }
+
+    public void setSourceName(String value) {
+        sourceName = trim(value);
+    }
 
     public String getTitle() {
         return title;
@@ -355,10 +444,3 @@ public class Lesson {
         return value == null ? null : value.trim();
     }
 }
-
-
-
-
-
-
-

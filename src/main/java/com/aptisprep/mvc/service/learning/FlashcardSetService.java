@@ -21,9 +21,11 @@ public interface FlashcardSetService {
     public Map<Integer, FlashcardSetDTO> lessonSets();
 
     public FlashcardSet require(Integer id, boolean admin);
+
     public FlashcardSetDTO requireView(Integer id, boolean admin);
 
     public FlashcardSet requireForStudent(Integer id, String email);
+
     public FlashcardSetDTO requireForStudentView(Integer id, String email);
 
     public FlashcardSetDTO form(Integer id);
@@ -39,12 +41,15 @@ public interface FlashcardSetService {
     public List<com.aptisprep.mvc.dto.FlashcardDTO> study(Integer id, String email);
 
     public FlashcardSet publishedForLesson(Integer lessonId);
+
     public FlashcardSetDTO publishedForLessonView(Integer lessonId);
 
     public FlashcardSet forLesson(Integer lessonId);
+
     public FlashcardSetDTO forLessonView(Integer lessonId);
 
     public List<Lesson> availableLessons();
+
     public List<com.aptisprep.mvc.dto.LessonDTO> availableLessonViews();
 
     public void prepareForLesson(FlashcardSetDTO form, Integer lessonId);
@@ -53,10 +58,3 @@ public interface FlashcardSetService {
 
     public void mark(Integer setId, Integer cardId, String state, String email, String reviewKey);
 }
-
-
-
-
-
-
-

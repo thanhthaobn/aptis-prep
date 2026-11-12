@@ -1,10 +1,10 @@
 package com.aptisprep.mvc.service.exam.impl;
 
-import com.aptisprep.mvc.service.exam.*;
 import com.aptisprep.mvc.entity.*;
-import com.aptisprep.mvc.service.exam.ExamSnapshotService;
 import com.aptisprep.mvc.exception.BusinessRuleException;
 import com.aptisprep.mvc.repository.*;
+import com.aptisprep.mvc.service.exam.*;
+import com.aptisprep.mvc.service.exam.ExamSnapshotService;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.*;
@@ -91,8 +91,7 @@ public class ExamSnapshotServiceImpl implements ExamSnapshotService {
     }
 
     @Transactional
-    public void createSnapshot(
-            ExamAttempt attempt, MockExam exam, List<MockExamQuestion> links) {
+    public void createSnapshot(ExamAttempt attempt, MockExam exam, List<MockExamQuestion> links) {
         // Snapshot cả version scoring/rubric cùng nội dung; nếu không, policy mới của admin có thể
         // tính lại attempt cũ bằng rule khác.
         ExamAttemptSnapshot snapshot = new ExamAttemptSnapshot();
@@ -127,7 +126,9 @@ public class ExamSnapshotServiceImpl implements ExamSnapshotService {
             // client không thể thay đổi thời lượng section sau đó.
             examSections =
                     examSections.stream()
-                            .sorted(Comparator.comparingInt(streamValue -> streamValue.getDisplayOrder()))
+                            .sorted(
+                                    Comparator.comparingInt(
+                                            streamValue -> streamValue.getDisplayOrder()))
                             .toList();
             int minute = 0;
             for (MockExamSection section : examSections) {
@@ -138,8 +139,7 @@ public class ExamSnapshotServiceImpl implements ExamSnapshotService {
             snapshot.setDurationMinutes(minute);
         }
         for (MockExamQuestion link : links) {
-            Question question =
-                    questionRepository.findById(link.getQuestionId()).orElseThrow();
+            Question question = questionRepository.findById(link.getQuestionId()).orElseThrow();
             ExamQuestionSnapshot questionSnapshot = new ExamQuestionSnapshot();
             questionSnapshot.setSourceQuestionId(question.getId());
             questionSnapshot.setPosition(link.getPosition());
@@ -189,8 +189,7 @@ public class ExamSnapshotServiceImpl implements ExamSnapshotService {
                         .findByQuestionItemIdOrderByPosition(item.getId())
                         .forEach(
                                 option -> {
-                                    ExamOptionSnapshot optionSnapshot =
-                                            new ExamOptionSnapshot();
+                                    ExamOptionSnapshot optionSnapshot = new ExamOptionSnapshot();
                                     optionSnapshot.setSourceOptionId(option.getId());
                                     optionSnapshot.setOptionCode(option.getOptionCode());
                                     optionSnapshot.setPosition(option.getPosition());
@@ -246,7 +245,6 @@ public class ExamSnapshotServiceImpl implements ExamSnapshotService {
         examAttemptSnapshotRepository.save(snapshot);
     }
 
-
     public LocalDateTime sectionClockStart(ExamAttempt attempt) {
         long advanceMillis =
                 examAttemptSnapshotRepository
@@ -260,7 +258,8 @@ public class ExamSnapshotServiceImpl implements ExamSnapshotService {
     @Transactional
     public void advanceSectionClock(Integer attemptId, Duration remaining) {
         ExamAttemptSnapshot snapshot = require(attemptId);
-        // Bỏ qua thời gian chưa dùng mà không thay đổi thời lượng đã lưu trong các window section bị khóa.
+        // Bỏ qua thời gian chưa dùng mà không thay đổi thời lượng đã lưu trong các window section
+        // bị khóa.
         long millis = (remaining.toNanos() + 999_999) / 1_000_000;
         snapshot.setSectionAdvanceMillis(snapshot.getSectionAdvanceMillis() + millis);
         examAttemptSnapshotRepository.save(snapshot);
@@ -296,4 +295,3 @@ public class ExamSnapshotServiceImpl implements ExamSnapshotService {
             throw new BusinessRuleException("Câu hỏi không thuộc phần thi đang mở");
     }
 }
-

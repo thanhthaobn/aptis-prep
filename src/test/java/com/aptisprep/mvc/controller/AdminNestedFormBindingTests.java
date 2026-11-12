@@ -353,13 +353,3 @@ class AdminNestedFormBindingTests {
                                         "Duplicate id: " + match.group(1)));
     }
 }
-
-
-
-
-
-
-
-
-
-

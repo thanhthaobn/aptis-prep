@@ -1,8 +1,5 @@
 package com.aptisprep.mvc;
 
-import com.aptisprep.mvc.service.placement.PlacementExamCatalogService;
-import com.aptisprep.mvc.service.scoring.CertificateSchemeService;
-
 import static com.aptisprep.mvc.security.SessionMvcRequests.*;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
@@ -19,6 +16,7 @@ import com.aptisprep.mvc.service.catalog.ScoringSchemeUsageService;
 import com.aptisprep.mvc.service.exam.ExamAttemptService;
 import com.aptisprep.mvc.service.learning.FlashcardSetService;
 import com.aptisprep.mvc.service.scoring.*;
+import com.aptisprep.mvc.service.scoring.CertificateSchemeService;
 import java.math.BigDecimal;
 import java.util.*;
 import org.junit.jupiter.api.*;
@@ -696,13 +694,3 @@ class V2BusinessRegressionTests {
                 goals.findById(old.getId()).orElseThrow().getSkills().getFirst().getTargetLevel());
     }
 }
-
-
-
-
-
-
-
-
-
-

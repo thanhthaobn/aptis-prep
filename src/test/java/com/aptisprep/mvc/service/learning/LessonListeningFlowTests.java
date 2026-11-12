@@ -173,13 +173,3 @@ class LessonListeningFlowTests {
                 .andExpect(status().isForbidden());
     }
 }
-
-
-
-
-
-
-
-
-
-

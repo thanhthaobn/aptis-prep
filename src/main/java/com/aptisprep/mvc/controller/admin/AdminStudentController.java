@@ -2,8 +2,8 @@ package com.aptisprep.mvc.controller.admin;
 
 import com.aptisprep.mvc.enums.UserStatus;
 import com.aptisprep.mvc.exception.BusinessRuleException;
-import com.aptisprep.mvc.service.admin.StudentManagementService;
 import com.aptisprep.mvc.service.account.AccountUnlockRequestService;
+import com.aptisprep.mvc.service.admin.StudentManagementService;
 import java.security.Principal;
 import java.util.List;
 import org.springframework.stereotype.Controller;
@@ -63,7 +63,9 @@ public class AdminStudentController {
         model.addAttribute("student", student);
         model.addAttribute("goal", goal);
         model.addAttribute("profiles", profiles);
-        model.addAttribute("skillCodes", List.of("GRAMMAR_VOCABULARY", "READING", "LISTENING", "WRITING", "SPEAKING"));
+        model.addAttribute(
+                "skillCodes",
+                List.of("GRAMMAR_VOCABULARY", "READING", "LISTENING", "WRITING", "SPEAKING"));
         model.addAttribute("progress", studentManagementService.progress(id));
         model.addAttribute("attempts", attemptHistory.items());
         model.addAttribute("attemptPage", attemptHistory.page());
@@ -123,7 +125,8 @@ public class AdminStudentController {
             @PathVariable int id, Principal principal, RedirectAttributes redirectAttributes) {
         try {
             studentManagementService.restore(principal.getName(), id);
-            redirectAttributes.addFlashAttribute("successMessage", "Đã khôi phục tài khoản học viên.");
+            redirectAttributes.addFlashAttribute(
+                    "successMessage", "Đã khôi phục tài khoản học viên.");
         } catch (BusinessRuleException exception) {
             redirectAttributes.addFlashAttribute("errorMessage", exception.getMessage());
         }
@@ -147,7 +150,8 @@ public class AdminStudentController {
             RedirectAttributes redirectAttributes) {
         try {
             unlockRequestService.approve(principal.getName(), id, adminNote);
-            redirectAttributes.addFlashAttribute("successMessage", "Đã duyệt yêu cầu mở khóa tài khoản.");
+            redirectAttributes.addFlashAttribute(
+                    "successMessage", "Đã duyệt yêu cầu mở khóa tài khoản.");
         } catch (BusinessRuleException exception) {
             redirectAttributes.addFlashAttribute("errorMessage", exception.getMessage());
         }
@@ -162,17 +166,11 @@ public class AdminStudentController {
             RedirectAttributes redirectAttributes) {
         try {
             unlockRequestService.reject(principal.getName(), id, adminNote);
-            redirectAttributes.addFlashAttribute("successMessage", "Đã từ chối yêu cầu mở khóa tài khoản.");
+            redirectAttributes.addFlashAttribute(
+                    "successMessage", "Đã từ chối yêu cầu mở khóa tài khoản.");
         } catch (BusinessRuleException exception) {
             redirectAttributes.addFlashAttribute("errorMessage", exception.getMessage());
         }
         return "redirect:/admin/unlock-requests";
     }
 }
-
-
-
-
-
-
-

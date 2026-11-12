@@ -3,19 +3,15 @@ package com.aptisprep.mvc.controller.student;
 import com.aptisprep.mvc.exception.BusinessRuleException;
 import com.aptisprep.mvc.service.account.AccountAccessService;
 import com.aptisprep.mvc.service.exam.ExamAttemptService;
-import com.aptisprep.mvc.support.web.WebMediaSupport;
 import com.aptisprep.mvc.service.exam.ExamAttemptService.MediaResource;
-import java.io.IOException;
+import com.aptisprep.mvc.support.web.WebMediaSupport;
 import java.security.Principal;
 import java.util.Map;
 import java.util.UUID;
 import org.springframework.core.io.Resource;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
-import org.springframework.http.MediaTypeFactory;
 import org.springframework.http.ResponseEntity;
-import org.springframework.http.ResponseEntity.BodyBuilder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -289,12 +285,4 @@ public class StudentExamController {
             return "redirect:/student/attempts/" + id;
         }
     }
-
 }
-
-
-
-
-
-
-

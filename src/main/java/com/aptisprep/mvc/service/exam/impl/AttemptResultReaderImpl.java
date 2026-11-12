@@ -1,23 +1,21 @@
 package com.aptisprep.mvc.service.exam.impl;
-import com.aptisprep.mvc.support.scoring.*;
-import com.aptisprep.mvc.support.contract.*;
-
-import com.aptisprep.mvc.service.exam.AttemptResultReader;
-import com.aptisprep.mvc.service.exam.ExamSnapshotService;
 
 import com.aptisprep.mvc.entity.*;
 import com.aptisprep.mvc.enums.Role;
 import com.aptisprep.mvc.enums.UserStatus;
 import com.aptisprep.mvc.exception.*;
 import com.aptisprep.mvc.repository.*;
+import com.aptisprep.mvc.service.exam.AttemptResultReader;
+import com.aptisprep.mvc.service.exam.ExamSnapshotService;
+import com.aptisprep.mvc.support.contract.*;
 import com.aptisprep.mvc.support.contract.IntegrationModels.*;
+import com.aptisprep.mvc.support.scoring.*;
 import com.aptisprep.mvc.support.scoring.CheckpointScorePolicy;
 import java.time.*;
 import java.util.*;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
-
 import org.springframework.transaction.annotation.Transactional;
 
 /** Chỉ phụ trách query/read-model; xử lý hết hạn của học viên nằm ở attempt command service. */
@@ -50,9 +48,9 @@ public class AttemptResultReaderImpl implements AttemptResultReader {
 
     @Transactional(readOnly = true)
     public HistoryPage history(Integer userId, int page, int size, HistoryFilter filter) {
-                // Lịch sử cũng được hiển thị ở màn hình chi tiết học viên của admin,
-                // bao gồm cả học viên bị khóa/ngừng hoạt động. Endpoint phía học viên
-                // đã kiểm tra principal đang hoạt động trước khi gọi contract này.
+        // Lịch sử cũng được hiển thị ở màn hình chi tiết học viên của admin,
+        // bao gồm cả học viên bị khóa/ngừng hoạt động. Endpoint phía học viên
+        // đã kiểm tra principal đang hoạt động trước khi gọi contract này.
         int safeSize = Math.min(100, Math.max(1, size));
         int safePage = Math.min(Math.max(0, page), Integer.MAX_VALUE / safeSize);
         HistoryFilter safeFilter = filter == null ? HistoryFilter.empty() : filter;
@@ -158,7 +156,8 @@ public class AttemptResultReaderImpl implements AttemptResultReader {
                                     else if ("WAITING".equals(state)) {
                                         // Cờ WAITING đã cũ không được che mất điểm đã lưu.
                                         // Tình huống này có thể xảy ra khi objective hoàn tất trước
-                                        // khi callback chấm bất đồng bộ cập nhật aggregate của attempt.
+                                        // khi callback chấm bất đồng bộ cập nhật aggregate của
+                                        // attempt.
                                         state =
                                                 value.getRawScore() != null
                                                                 && value.getScaleScore() != null
@@ -218,8 +217,7 @@ public class AttemptResultReaderImpl implements AttemptResultReader {
         for (UserAnswer answer :
                 userAnswerRepository.findByAttemptIdOrderByQuestionIdAsc(attemptId)) {
             if (answer.getAiFeedback() == null || answer.getAiFeedback().isBlank()) continue;
-            Question question =
-                    questionRepository.findById(answer.getQuestionId()).orElse(null);
+            Question question = questionRepository.findById(answer.getQuestionId()).orElse(null);
             if (question == null || !Objects.equals(question.getSkill(), skill)) continue;
             int questionNumber = questionNumber(attemptId, question.getId());
             String label = questionNumber > 0 ? "Câu hỏi " + questionNumber : "Câu hỏi";
@@ -272,10 +270,3 @@ public class AttemptResultReaderImpl implements AttemptResultReader {
         return value == null ? null : value.atZone(ZoneId.systemDefault()).toInstant();
     }
 }
-
-
-
-
-
-
-

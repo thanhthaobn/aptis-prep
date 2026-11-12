@@ -1,12 +1,12 @@
 package com.aptisprep.mvc.dto;
 
-import jakarta.validation.constraints.*;
-import java.util.Locale;
 import com.aptisprep.mvc.entity.*;
 import com.aptisprep.mvc.enums.*;
+import jakarta.validation.constraints.*;
 import java.math.*;
 import java.time.*;
 import java.util.*;
+import java.util.Locale;
 
 public class UserDTO {
     @NotBlank(message = "Họ tên không được để trống")
@@ -15,16 +15,20 @@ public class UserDTO {
             regexp = "^\\p{Lu}[\\p{L}]+(?:[ -][\\p{L}]+)*$",
             message = "Họ tên phải bắt đầu bằng chữ hoa và chỉ chứa chữ cái")
     private String fullName;
+
     @Email(message = "Email không đúng định dạng")
     @Size(max = 255, message = "Email tối đa 255 ký tự")
     private String email;
+
     @Size(min = 8, max = 72, message = "Mật khẩu phải dài từ 8 đến 72 ký tự")
     @Pattern(
             regexp = "^(?=.*\\p{Lu})(?=.*\\d)(?=.*[^\\p{L}\\p{N}\\s])\\S+$",
             message = "Mật khẩu phải có chữ hoa, chữ số, ký tự đặc biệt và không có khoảng trắng")
     private String password;
+
     @Size(max = 72, message = "Mật khẩu xác nhận tối đa 72 ký tự")
     private String confirmPassword;
+
     private String currentPassword;
     private Integer id;
     private String passwordHash;
@@ -190,15 +194,3 @@ public class UserDTO {
         this.updatedAt = updatedAt;
     }
 }
-
-
-
-
-
-
-
-
-
-
-
-

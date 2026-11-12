@@ -70,7 +70,6 @@ public class QuestionMedia {
         this.createdAt = createdAt;
     }
 
-
     public QuestionMedia() {}
 
     @PrePersist
@@ -162,7 +161,6 @@ public class QuestionMedia {
         transcript = v;
     }
 
-
     public void setId(Integer value) {
         this.id = value;
     }
@@ -175,10 +173,3 @@ public class QuestionMedia {
         this.createdAt = value;
     }
 }
-
-
-
-
-
-
-

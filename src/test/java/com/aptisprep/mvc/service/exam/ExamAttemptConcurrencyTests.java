@@ -1,7 +1,5 @@
 package com.aptisprep.mvc.service.exam;
 
-import com.aptisprep.mvc.service.exam.AttemptOutboxService;
-
 import static com.aptisprep.mvc.security.SessionMvcRequests.user;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -897,13 +895,3 @@ class ExamAttemptConcurrencyTests {
             QuestionOption option,
             QuestionMedia media) {}
 }
-
-
-
-
-
-
-
-
-
-

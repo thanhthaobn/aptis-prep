@@ -47,7 +47,6 @@ public class ExamOptionSnapshot {
         this.correct = correct;
     }
 
-
     public Integer getId() {
         return id;
     }
@@ -100,15 +99,7 @@ public class ExamOptionSnapshot {
         correct = value;
     }
 
-
     public void setId(Integer value) {
         this.id = value;
     }
 }
-
-
-
-
-
-
-

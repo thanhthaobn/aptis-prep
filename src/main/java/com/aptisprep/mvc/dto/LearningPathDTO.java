@@ -179,14 +179,3 @@ public class LearningPathDTO {
         this.completedAt = completedAt;
     }
 }
-
-
-
-
-
-
-
-
-
-
-

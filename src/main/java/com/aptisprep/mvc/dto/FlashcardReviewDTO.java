@@ -88,14 +88,3 @@ public class FlashcardReviewDTO {
         this.reviewedAt = reviewedAt;
     }
 }
-
-
-
-
-
-
-
-
-
-
-

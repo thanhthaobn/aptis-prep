@@ -44,8 +44,8 @@ class AdminLessonTreeTests {
         mvc.perform(get("/admin/lessons").with(user("admin").roles("ADMIN")))
                 .andExpect(status().isOk())
                 .andExpect(content().string(containsString("Đã lưu trữ")))
-                        .andExpect(content().string(containsString("Danh sách bài học")))
-                        .andExpect(content().string(not(containsString("Thêm bài vào Reading A2"))));
+                .andExpect(content().string(containsString("Danh sách bài học")))
+                .andExpect(content().string(not(containsString("Thêm bài vào Reading A2"))));
         mvc.perform(
                         get("/admin/lessons")
                                 .param("q", "branch")
@@ -81,13 +81,3 @@ class AdminLessonTreeTests {
                 .andExpect(status().isForbidden());
     }
 }
-
-
-
-
-
-
-
-
-
-

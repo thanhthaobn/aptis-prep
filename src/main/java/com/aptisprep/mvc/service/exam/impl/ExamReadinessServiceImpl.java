@@ -5,15 +5,14 @@ import com.aptisprep.mvc.enums.Skill;
 import com.aptisprep.mvc.exception.BusinessRuleException;
 import com.aptisprep.mvc.exception.ResourceNotFoundException;
 import com.aptisprep.mvc.repository.*;
-import com.aptisprep.mvc.service.scoring.CertificateSchemeService;
 import com.aptisprep.mvc.service.exam.ExamReadinessService;
+import com.aptisprep.mvc.service.scoring.CertificateSchemeService;
 import com.aptisprep.mvc.service.storage.StorageService;
 import java.util.*;
 import org.springframework.core.io.Resource;
-
-/** Các kiểm tra sẵn sàng dùng chung cho catalog và transaction bắt đầu đề thi. */
 import org.springframework.stereotype.Service;
 
+/** Các kiểm tra sẵn sàng dùng chung cho catalog và transaction bắt đầu đề thi. */
 @Service
 public class ExamReadinessServiceImpl implements ExamReadinessService {
     private QuestionRepository questionRepository;
@@ -139,10 +138,3 @@ public class ExamReadinessServiceImpl implements ExamReadinessService {
                 .replaceAll("[^A-Z0-9]+", "_");
     }
 }
-
-
-
-
-
-
-

@@ -3,12 +3,12 @@ package com.aptisprep.mvc.service.catalog.impl;
 import com.aptisprep.mvc.repository.ExamAttemptRepository;
 import com.aptisprep.mvc.repository.MockExamRepository;
 import com.aptisprep.mvc.service.catalog.ScoringSchemeUsageService;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 /** A referenced policy is immutable, including policies retained by old attempts. */
 @Service
@@ -40,10 +40,3 @@ public class ScoringSchemeUsageServiceImpl implements ScoringSchemeUsageService 
         return result;
     }
 }
-
-
-
-
-
-
-

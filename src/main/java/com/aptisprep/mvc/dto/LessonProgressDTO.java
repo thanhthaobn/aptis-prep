@@ -101,14 +101,3 @@ public class LessonProgressDTO {
         this.completedAt = completedAt;
     }
 }
-
-
-
-
-
-
-
-
-
-
-

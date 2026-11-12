@@ -14,10 +14,3 @@ public interface AdminDashboardService {
 
     record ContentUpdate(String title, String kind, String url, LocalDateTime updatedAt) {}
 }
-
-
-
-
-
-
-

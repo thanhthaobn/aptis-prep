@@ -113,15 +113,7 @@ public class FlashcardSet {
         visibility = v;
     }
 
-
     public void setId(Integer value) {
         this.id = value;
     }
 }
-
-
-
-
-
-
-

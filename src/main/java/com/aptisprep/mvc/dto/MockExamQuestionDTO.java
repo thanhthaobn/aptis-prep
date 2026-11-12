@@ -5,7 +5,6 @@ import com.aptisprep.mvc.enums.*;
 import java.math.*;
 import java.time.*;
 import java.util.*;
-import com.aptisprep.mvc.dto.*;
 
 public class MockExamQuestionDTO {
     private Integer id;
@@ -89,14 +88,3 @@ public class MockExamQuestionDTO {
         this.position = position;
     }
 }
-
-
-
-
-
-
-
-
-
-
-

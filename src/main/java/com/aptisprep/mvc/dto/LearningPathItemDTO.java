@@ -113,16 +113,4 @@ public class LearningPathItemDTO {
     public void setCompletedAt(LocalDateTime completedAt) {
         this.completedAt = completedAt;
     }
-
 }
-
-
-
-
-
-
-
-
-
-
-

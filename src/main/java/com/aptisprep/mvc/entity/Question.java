@@ -80,7 +80,6 @@ public class Question {
         this.updatedAt = updatedAt;
     }
 
-
     public Question() {}
 
     @PrePersist
@@ -190,7 +189,6 @@ public class Question {
         return updatedAt;
     }
 
-
     public void setId(Integer value) {
         this.id = value;
     }
@@ -207,10 +205,3 @@ public class Question {
         this.updatedAt = value;
     }
 }
-
-
-
-
-
-
-

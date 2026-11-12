@@ -153,14 +153,3 @@ public class ExamMediaSnapshotDTO {
         this.maxPlayCount = maxPlayCount;
     }
 }
-
-
-
-
-
-
-
-
-
-
-

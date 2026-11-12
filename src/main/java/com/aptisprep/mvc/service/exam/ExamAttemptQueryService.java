@@ -1,8 +1,8 @@
 package com.aptisprep.mvc.service.exam;
 
-import com.aptisprep.mvc.support.contract.IntegrationModels.AttemptResult;
 import com.aptisprep.mvc.support.contract.IntegrationModels.AdminHistoryFilter;
 import com.aptisprep.mvc.support.contract.IntegrationModels.AdminHistoryPage;
+import com.aptisprep.mvc.support.contract.IntegrationModels.AttemptResult;
 import com.aptisprep.mvc.support.contract.IntegrationModels.HistoryFilter;
 import com.aptisprep.mvc.support.contract.IntegrationModels.HistoryPage;
 import java.util.Optional;
@@ -15,8 +15,7 @@ public interface ExamAttemptQueryService {
 
     HistoryPage history(Integer userId, int page, int size, HistoryFilter filter);
 
-    AdminHistoryPage adminHistory(
-            String adminEmail, int page, int size, AdminHistoryFilter filter);
+    AdminHistoryPage adminHistory(String adminEmail, int page, int size, AdminHistoryFilter filter);
 
     AttemptResult adminResult(String adminEmail, Integer attemptId);
 

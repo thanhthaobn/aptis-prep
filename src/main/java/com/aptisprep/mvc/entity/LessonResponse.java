@@ -59,7 +59,6 @@ public class LessonResponse {
         this.assessmentKey = assessmentKey;
     }
 
-
     public Integer getId() {
         return id;
     }
@@ -124,7 +123,6 @@ public class LessonResponse {
         updatedAt = v;
     }
 
-
     public void setId(Integer value) {
         this.id = value;
     }
@@ -133,10 +131,3 @@ public class LessonResponse {
         return updatedAt;
     }
 }
-
-
-
-
-
-
-

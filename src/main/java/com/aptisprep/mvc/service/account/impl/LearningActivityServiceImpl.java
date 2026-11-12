@@ -106,8 +106,7 @@ public class LearningActivityServiceImpl implements LearningActivityService {
         return summarizeDetailed(counts, today);
     }
 
-    private ActivityView summarizeDetailed(
-            Map<LocalDate, DailyCount> source, LocalDate today) {
+    private ActivityView summarizeDetailed(Map<LocalDate, DailyCount> source, LocalDate today) {
         LocalDate start =
                 today.minusWeeks(52).with(TemporalAdjusters.previousOrSame(DayOfWeek.SUNDAY));
         List<Week> weeks = new ArrayList<>();
@@ -169,10 +168,3 @@ public class LearningActivityServiceImpl implements LearningActivityService {
         return left != null && right != null && left.toLocalDate().equals(right.toLocalDate());
     }
 }
-
-
-
-
-
-
-

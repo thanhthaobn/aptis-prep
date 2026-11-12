@@ -32,10 +32,3 @@ public class AiProperties {
         this.gradingModel = gradingModel;
     }
 }
-
-
-
-
-
-
-

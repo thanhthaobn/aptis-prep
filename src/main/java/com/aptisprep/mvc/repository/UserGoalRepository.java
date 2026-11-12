@@ -9,10 +9,3 @@ public interface UserGoalRepository extends JpaRepository<UserGoal, Integer> {
     Optional<UserGoal> findFirstByUserIdAndStatusOrderByCreatedAtDesc(
             Integer userId, GoalStatus status);
 }
-
-
-
-
-
-
-

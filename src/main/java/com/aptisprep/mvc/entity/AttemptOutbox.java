@@ -70,7 +70,6 @@ public class AttemptOutbox {
         this.processedAt = processedAt;
     }
 
-
     @PrePersist
     void onCreate() {
         if (createdAt == null) createdAt = LocalDateTime.now();
@@ -157,7 +156,6 @@ public class AttemptOutbox {
         processedAt = value;
     }
 
-
     public void setId(Long value) {
         this.id = value;
     }
@@ -166,10 +164,3 @@ public class AttemptOutbox {
         this.createdAt = value;
     }
 }
-
-
-
-
-
-
-

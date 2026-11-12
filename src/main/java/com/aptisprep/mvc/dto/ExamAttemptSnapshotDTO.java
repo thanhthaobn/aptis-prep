@@ -58,7 +58,6 @@ public class ExamAttemptSnapshotDTO {
         this.questions = questions;
     }
 
-
     public static ExamAttemptSnapshotDTO convertEntityToDto(ExamAttemptSnapshot entity) {
         if (entity == null) return null;
         return new ExamAttemptSnapshotDTO(
@@ -219,14 +218,3 @@ public class ExamAttemptSnapshotDTO {
         this.questions = questions;
     }
 }
-
-
-
-
-
-
-
-
-
-
-

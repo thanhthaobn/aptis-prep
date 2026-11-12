@@ -1,16 +1,10 @@
 package com.aptisprep.mvc.service.exam;
 
-import com.aptisprep.mvc.support.contract.*;
-import com.aptisprep.mvc.service.exam.ExamGradingPayloadService;
-
-import com.aptisprep.mvc.service.exam.AttemptOutboxService;
-import com.aptisprep.mvc.service.grading.AttemptFinalizationService;
-import com.aptisprep.mvc.service.placement.PlacementExamCatalogService;
-
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 import com.aptisprep.mvc.config.AiProperties;
+import com.aptisprep.mvc.dto.AiAssessmentJobDTO;
 import com.aptisprep.mvc.entity.*;
 import com.aptisprep.mvc.enums.*;
 import com.aptisprep.mvc.event.AttemptSubmittedEvent;
@@ -19,13 +13,13 @@ import com.aptisprep.mvc.exception.ResourceNotFoundException;
 import com.aptisprep.mvc.repository.*;
 import com.aptisprep.mvc.service.admin.CatalogService;
 import com.aptisprep.mvc.service.catalog.PublishedExamCatalogService;
-import com.aptisprep.mvc.service.exam.ExamAttemptService;
-import com.aptisprep.mvc.dto.AiAssessmentJobDTO;
-import com.aptisprep.mvc.support.contract.IntegrationModels.LockedAttempt;
-import com.aptisprep.mvc.service.grading.*;
-import com.aptisprep.mvc.service.placement.impl.PlacementExamCatalogServiceImpl;
 import com.aptisprep.mvc.service.exam.impl.AttemptGradingOrchestrationServiceImpl;
+import com.aptisprep.mvc.service.grading.*;
+import com.aptisprep.mvc.service.grading.AttemptFinalizationService;
+import com.aptisprep.mvc.service.placement.PlacementExamCatalogService;
 import com.aptisprep.mvc.service.student.StudentExamCatalogService;
+import com.aptisprep.mvc.support.contract.*;
+import com.aptisprep.mvc.support.contract.IntegrationModels.LockedAttempt;
 import java.time.LocalDateTime;
 import java.util.*;
 import org.junit.jupiter.api.Test;
@@ -379,19 +373,5 @@ class TramBusinessCompletionTests {
         return new Fixture(user, exam, question, itemList);
     }
 
-    private record Fixture(
-            User user,
-            MockExam exam,
-            Question question,
-            List<QuestionItem> items) {}
+    private record Fixture(User user, MockExam exam, Question question, List<QuestionItem> items) {}
 }
-
-
-
-
-
-
-
-
-
-

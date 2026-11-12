@@ -10,8 +10,8 @@ import com.aptisprep.mvc.exception.BusinessRuleException;
 import com.aptisprep.mvc.exception.ResourceNotFoundException;
 import com.aptisprep.mvc.repository.*;
 import com.aptisprep.mvc.service.catalog.ScoringSchemeUsageService;
-import com.aptisprep.mvc.support.scoring.ScoreBandCoverage;
 import com.aptisprep.mvc.service.scoring.ScoringAdminService;
+import com.aptisprep.mvc.support.scoring.ScoreBandCoverage;
 import com.aptisprep.mvc.support.scoring.ScoringViews;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -71,7 +71,9 @@ public class ScoringAdminServiceImpl implements ScoringAdminService {
         Map<Integer, Set<String>> usageByScheme = usage.examTypesByScheme();
         List<ScoringViews.SchemeView> values =
                 schemeViews().stream()
-                        .filter(scheme -> scheme.certificateId().equals(generalCertificate().getId()))
+                        .filter(
+                                scheme ->
+                                        scheme.certificateId().equals(generalCertificate().getId()))
                         .filter(
                                 scheme ->
                                         certificateId == null
@@ -84,7 +86,8 @@ public class ScoringAdminServiceImpl implements ScoringAdminService {
                                                         : selected.equals(scheme.examType())
                                                                 || usageByScheme
                                                                         .getOrDefault(
-                                                                                scheme.id(), Set.of())
+                                                                                scheme.id(),
+                                                                                Set.of())
                                                                         .contains(selected)))
                         .toList();
         return new SchemeCatalog(values, usageByScheme);
@@ -657,16 +660,17 @@ public class ScoringAdminServiceImpl implements ScoringAdminService {
     }
 
     private Certificate generalCertificate() {
-        return certificateRepository.findByCodeIgnoreCase("APTIS_GENERAL")
+        return certificateRepository
+                .findByCodeIgnoreCase("APTIS_GENERAL")
                 .orElseThrow(
-                        () -> new ResourceNotFoundException(
-                                "Chưa cấu hình chứng chỉ Aptis ESOL General"));
+                        () ->
+                                new ResourceNotFoundException(
+                                        "Chưa cấu hình chứng chỉ Aptis ESOL General"));
     }
 
     private void requireAptisGeneralCode(String code) {
         if (!"APTIS_GENERAL".equalsIgnoreCase(code))
-            throw new BusinessRuleException(
-                    "Hệ thống chỉ phục vụ chứng chỉ Aptis ESOL General");
+            throw new BusinessRuleException("Hệ thống chỉ phục vụ chứng chỉ Aptis ESOL General");
     }
 
     private ScoringViews.SchemeView schemeView(ScoringScheme value) {
@@ -780,10 +784,3 @@ public class ScoringAdminServiceImpl implements ScoringAdminService {
         }
     }
 }
-
-
-
-
-
-
-

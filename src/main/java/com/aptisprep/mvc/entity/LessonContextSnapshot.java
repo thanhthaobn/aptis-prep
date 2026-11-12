@@ -86,7 +86,6 @@ public class LessonContextSnapshot {
         this.maxWords = maxWords;
     }
 
-
     public static LessonContextSnapshot capture(Lesson lesson) {
         LessonContextSnapshot value = new LessonContextSnapshot();
         value.title = lesson.getTitle();
@@ -106,23 +105,57 @@ public class LessonContextSnapshot {
         return value;
     }
 
-
     public Integer getId() {
         return id;
     }
 
-    public String getTitle() { return title; }
-    public String getSkill() { return skill; }
-    public String getDescription() { return description; }
-    public String getObjectives() { return objectives; }
-    public String getStrategy() { return strategy; }
-    public String getExampleText() { return exampleText; }
-    public String getAnalysis() { return analysis; }
-    public String getPracticePrompt() { return practicePrompt; }
-    public String getImagePath() { return imagePath; }
-    public String getAudioPath() { return audioPath; }
-    public String getVideoPath() { return videoPath; }
-    public String getVideoUrl() { return videoUrl; }
+    public String getTitle() {
+        return title;
+    }
+
+    public String getSkill() {
+        return skill;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public String getObjectives() {
+        return objectives;
+    }
+
+    public String getStrategy() {
+        return strategy;
+    }
+
+    public String getExampleText() {
+        return exampleText;
+    }
+
+    public String getAnalysis() {
+        return analysis;
+    }
+
+    public String getPracticePrompt() {
+        return practicePrompt;
+    }
+
+    public String getImagePath() {
+        return imagePath;
+    }
+
+    public String getAudioPath() {
+        return audioPath;
+    }
+
+    public String getVideoPath() {
+        return videoPath;
+    }
+
+    public String getVideoUrl() {
+        return videoUrl;
+    }
 
     public void setId(Integer value) {
         this.id = value;
@@ -192,10 +225,3 @@ public class LessonContextSnapshot {
         this.maxWords = value;
     }
 }
-
-
-
-
-
-
-

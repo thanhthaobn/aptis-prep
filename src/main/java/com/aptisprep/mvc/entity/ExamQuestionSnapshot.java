@@ -81,7 +81,6 @@ public class ExamQuestionSnapshot {
         this.media = media;
     }
 
-
     public Integer getId() {
         return id;
     }
@@ -184,7 +183,6 @@ public class ExamQuestionSnapshot {
         value.setQuestion(this);
     }
 
-
     public void setId(Integer value) {
         this.id = value;
     }
@@ -197,10 +195,3 @@ public class ExamQuestionSnapshot {
         this.media = value;
     }
 }
-
-
-
-
-
-
-

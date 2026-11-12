@@ -8,10 +8,3 @@ public record AiAssessmentCompletedEvent(
         String state,
         String errorMessage,
         Integer answerVersion) {}
-
-
-
-
-
-
-

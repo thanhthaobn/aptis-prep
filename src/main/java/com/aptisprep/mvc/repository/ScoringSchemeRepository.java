@@ -29,10 +29,3 @@ public interface ScoringSchemeRepository extends JpaRepository<ScoringScheme, In
 
     boolean existsByCertificateIdAndVersionIgnoreCase(Integer certificateId, String version);
 }
-
-
-
-
-
-
-

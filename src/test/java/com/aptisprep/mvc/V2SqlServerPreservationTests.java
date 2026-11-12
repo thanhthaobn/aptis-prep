@@ -6,7 +6,6 @@ import com.aptisprep.mvc.dto.LessonCheckDTO;
 import com.aptisprep.mvc.dto.LessonDTO;
 import com.aptisprep.mvc.exception.BusinessRuleException;
 import com.aptisprep.mvc.repository.*;
-import com.aptisprep.mvc.service.learning.LessonTeachingService;
 import com.aptisprep.mvc.service.learning.impl.LessonCheckServiceImpl;
 import com.aptisprep.mvc.service.learning.impl.LessonTeachingServiceImpl;
 import java.nio.file.*;
@@ -205,7 +204,9 @@ class V2SqlServerPreservationTests {
                 documented,
                 "Mermaid must list every physical table and column through V041");
         assertEquals(39, documented.size());
-        assertEquals(416, documented.values().stream().mapToInt(streamValue -> streamValue.size()).sum());
+        assertEquals(
+                416,
+                documented.values().stream().mapToInt(streamValue -> streamValue.size()).sum());
     }
 
     /** Real repositories and service operations against the isolated SQL Server, not H2. */
@@ -232,8 +233,7 @@ class V2SqlServerPreservationTests {
                     var attempts = repositories.getRepository(LessonCheckAttemptRepository.class);
                     var teaching =
                             new LessonTeachingServiceImpl(
-                                    new LessonCheckServiceImpl(
-                                            checks, lessons, users, attempts),
+                                    new LessonCheckServiceImpl(checks, lessons, users, attempts),
                                     null,
                                     lessons,
                                     users,
@@ -525,13 +525,3 @@ class V2SqlServerPreservationTests {
         return new Snapshot(List.copyOf(columns), json.toString());
     }
 }
-
-
-
-
-
-
-
-
-
-

@@ -1,14 +1,12 @@
 package com.aptisprep.mvc.service.grading;
 
-import com.aptisprep.mvc.service.grading.GeminiGradingService;
-import com.aptisprep.mvc.service.grading.impl.GeminiGradingServiceImpl;
-
 import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.*;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.*;
 
 import com.aptisprep.mvc.config.AiProperties;
 import com.aptisprep.mvc.exception.AiGradingException;
+import com.aptisprep.mvc.service.grading.impl.GeminiGradingServiceImpl;
 import java.math.BigDecimal;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -241,13 +239,3 @@ class GeminiGradingServiceTests {
         server.verify();
     }
 }
-
-
-
-
-
-
-
-
-
-

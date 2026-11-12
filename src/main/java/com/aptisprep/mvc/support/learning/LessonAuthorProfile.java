@@ -72,10 +72,3 @@ public record LessonAuthorProfile(
         };
     }
 }
-
-
-
-
-
-
-

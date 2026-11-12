@@ -10,10 +10,3 @@ public interface UserSkillProfileRepository extends JpaRepository<UserSkillProfi
 
     Optional<UserSkillProfile> findByUserIdAndSkill(Integer userId, String skill);
 }
-
-
-
-
-
-
-

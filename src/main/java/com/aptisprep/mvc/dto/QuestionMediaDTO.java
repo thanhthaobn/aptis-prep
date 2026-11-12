@@ -179,14 +179,3 @@ public class QuestionMediaDTO {
         this.createdAt = createdAt;
     }
 }
-
-
-
-
-
-
-
-
-
-
-

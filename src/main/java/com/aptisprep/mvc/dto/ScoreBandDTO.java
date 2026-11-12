@@ -1,16 +1,16 @@
 package com.aptisprep.mvc.dto;
 
-import java.time.*;
-import java.math.*;
-import java.util.*;
-
+import com.aptisprep.mvc.entity.*;
+import com.aptisprep.mvc.enums.*;
 import jakarta.validation.constraints.DecimalMax;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import java.math.*;
 import java.math.BigDecimal;
-import com.aptisprep.mvc.entity.*;
-import com.aptisprep.mvc.enums.*;
+import java.time.*;
+import java.util.*;
+
 public class ScoreBandDTO {
     private ScoringScheme scheme;
     private Integer id;
@@ -34,12 +34,12 @@ public class ScoreBandDTO {
     public ScoreBandDTO() {}
 
     public ScoreBandDTO(
-        String skill,
-        Integer id,
-        String cefrLevel,
-        BigDecimal minScore,
-        BigDecimal maxScore,
-        ScoringScheme scheme) {
+            String skill,
+            Integer id,
+            String cefrLevel,
+            BigDecimal minScore,
+            BigDecimal maxScore,
+            ScoringScheme scheme) {
         this.skill = skill;
         this.id = id;
         this.cefrLevel = cefrLevel;
@@ -51,23 +51,23 @@ public class ScoreBandDTO {
     public static ScoreBandDTO convertEntityToDto(ScoreBand entity) {
         if (entity == null) return null;
         return new ScoreBandDTO(
-            entity.getSkill(),
-            entity.getId(),
-            entity.getCefrLevel(),
-            entity.getMinScore(),
-            entity.getMaxScore(),
-            entity.getScheme());
+                entity.getSkill(),
+                entity.getId(),
+                entity.getCefrLevel(),
+                entity.getMinScore(),
+                entity.getMaxScore(),
+                entity.getScheme());
     }
 
     public static ScoreBand convertDtoToEntity(ScoreBandDTO dto) {
         if (dto == null) return null;
         return new ScoreBand(
-            dto.getSkill(),
-            dto.getId(),
-            dto.getCefrLevel(),
-            dto.getMinScore(),
-            dto.getMaxScore(),
-            dto.getScheme());
+                dto.getSkill(),
+                dto.getId(),
+                dto.getCefrLevel(),
+                dto.getMinScore(),
+                dto.getMaxScore(),
+                dto.getScheme());
     }
 
     public String getSkill() {
@@ -118,10 +118,3 @@ public class ScoreBandDTO {
         this.scheme = value;
     }
 }
-
-
-
-
-
-
-

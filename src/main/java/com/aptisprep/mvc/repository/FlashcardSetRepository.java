@@ -17,10 +17,3 @@ public interface FlashcardSetRepository extends JpaRepository<FlashcardSet, Inte
 
     Optional<FlashcardSet> findFirstByLessonIdAndOwnerIsNullOrderByIdDesc(Integer lessonId);
 }
-
-
-
-
-
-
-

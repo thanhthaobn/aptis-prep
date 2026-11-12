@@ -4,8 +4,8 @@ import com.aptisprep.mvc.entity.User;
 import com.aptisprep.mvc.enums.UserStatus;
 import com.aptisprep.mvc.exception.BusinessRuleException;
 import com.aptisprep.mvc.repository.UserRepository;
-import com.aptisprep.mvc.support.auth.PasswordHasher;
 import com.aptisprep.mvc.service.auth.PasswordService;
+import com.aptisprep.mvc.support.auth.PasswordHasher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -36,11 +36,13 @@ public class PasswordServiceImpl implements PasswordService {
                 || password.isBlank()
                 || password.length() < 8
                 || password.length() > 72
-                || password.codePoints().noneMatch(streamValue -> Character.isUpperCase(streamValue))
+                || password.codePoints()
+                        .noneMatch(streamValue -> Character.isUpperCase(streamValue))
                 || password.codePoints().noneMatch(streamValue -> Character.isDigit(streamValue))
                 || password.codePoints()
                         .noneMatch(c -> !Character.isLetterOrDigit(c) && !Character.isWhitespace(c))
-                || password.codePoints().anyMatch(streamValue -> Character.isWhitespace(streamValue)))
+                || password.codePoints()
+                        .anyMatch(streamValue -> Character.isWhitespace(streamValue)))
             throw new BusinessRuleException(
                     "Mật khẩu phải có từ 8 đến 72 ký tự và không chứa khoảng trắng");
         if (encoder.matches(password, user.getPasswordHash()))
@@ -53,10 +55,3 @@ public class PasswordServiceImpl implements PasswordService {
         return new BusinessRuleException("Không tìm thấy tài khoản hoặc tài khoản không hợp lệ");
     }
 }
-
-
-
-
-
-
-

@@ -11,8 +11,8 @@ import com.aptisprep.mvc.entity.*;
 import com.aptisprep.mvc.enums.*;
 import com.aptisprep.mvc.exception.*;
 import com.aptisprep.mvc.repository.*;
-import com.aptisprep.mvc.support.contract.IntegrationModels.*;
 import com.aptisprep.mvc.service.exam.ExamAttemptService;
+import com.aptisprep.mvc.support.contract.IntegrationModels.*;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.ZoneId;
@@ -243,8 +243,7 @@ class LearningPathCheckpointTests {
                 .thenReturn(new AttemptHandle(1014, "IN_PROGRESS", null));
 
         assertThat(service.retryCheckpoint(user.getId(), 1013)).isEqualTo(1014);
-        assertThat(paths.findById(first.getId()).orElseThrow().getStatus())
-                .isEqualTo("COMPLETED");
+        assertThat(paths.findById(first.getId()).orElseThrow().getStatus()).isEqualTo("COMPLETED");
         verify(engine)
                 .startCheckpointRetake(
                         user.getId(),
@@ -562,13 +561,3 @@ class LearningPathCheckpointTests {
                 .plusSeconds(1);
     }
 }
-
-
-
-
-
-
-
-
-
-

@@ -1,17 +1,16 @@
 package com.aptisprep.mvc.dto;
 
-import java.time.*;
-import java.math.*;
-import java.util.*;
-
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Size;
-import java.math.BigDecimal;
-import java.util.LinkedHashMap;
-import java.util.Map;
 import com.aptisprep.mvc.entity.*;
 import com.aptisprep.mvc.enums.*;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
+import java.math.*;
+import java.math.BigDecimal;
+import java.time.*;
+import java.util.*;
+import java.util.LinkedHashMap;
+import java.util.Map;
+
 public class ScoringSchemeDTO {
     private Integer id;
     private Certificate certificate;
@@ -110,36 +109,36 @@ public class ScoringSchemeDTO {
     public static ScoringSchemeDTO convertEntityToDto(ScoringScheme entity) {
         if (entity == null) return null;
         return new ScoringSchemeDTO(
-            entity.getId(),
-            entity.getCertificate(),
-            entity.getEffectiveFrom(),
-            entity.getCreatedAt(),
-            entity.getCertificate() == null ? null : entity.getCertificate().getId(),
-            entity.getName(),
-            entity.getVersion(),
-            entity.getStatus() == null ? null : entity.getStatus().name(),
-            entity.getExamType(),
-            entity.getScopeSkill(),
-            false,
-            null,
-            null,
-            null,
-            null,
-            null);
+                entity.getId(),
+                entity.getCertificate(),
+                entity.getEffectiveFrom(),
+                entity.getCreatedAt(),
+                entity.getCertificate() == null ? null : entity.getCertificate().getId(),
+                entity.getName(),
+                entity.getVersion(),
+                entity.getStatus() == null ? null : entity.getStatus().name(),
+                entity.getExamType(),
+                entity.getScopeSkill(),
+                false,
+                null,
+                null,
+                null,
+                null,
+                null);
     }
 
     public static ScoringScheme convertDtoToEntity(ScoringSchemeDTO dto) {
         if (dto == null) return null;
         return new ScoringScheme(
-            dto.getId(),
-            dto.getCertificate(),
-            dto.getName(),
-            dto.getVersion(),
-            dto.getExamType(),
-            dto.getScopeSkill(),
-            dto.getStatus() == null ? null : RecordStatus.valueOf(dto.getStatus()),
-            dto.getEffectiveFrom(),
-            dto.getCreatedAt());
+                dto.getId(),
+                dto.getCertificate(),
+                dto.getName(),
+                dto.getVersion(),
+                dto.getExamType(),
+                dto.getScopeSkill(),
+                dto.getStatus() == null ? null : RecordStatus.valueOf(dto.getStatus()),
+                dto.getEffectiveFrom(),
+                dto.getCreatedAt());
     }
 
     public boolean isConfigureScores() {
@@ -278,11 +277,3 @@ public class ScoringSchemeDTO {
         this.createdAt = value;
     }
 }
-
-
-
-
-
-
-
-

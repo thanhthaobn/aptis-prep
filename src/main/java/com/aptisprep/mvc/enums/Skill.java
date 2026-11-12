@@ -28,10 +28,3 @@ public enum Skill {
         return Arrays.stream(values()).map(streamValue -> streamValue.label()).toList();
     }
 }
-
-
-
-
-
-
-

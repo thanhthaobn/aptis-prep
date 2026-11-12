@@ -92,15 +92,7 @@ public class ScoreBand {
         this.maxScore = maxScore;
     }
 
-
     public void setId(Integer value) {
         this.id = value;
     }
 }
-
-
-
-
-
-
-

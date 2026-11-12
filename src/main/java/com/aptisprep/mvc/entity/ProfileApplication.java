@@ -30,18 +30,13 @@ public class ProfileApplication {
     private LocalDateTime appliedAt;
 
     public ProfileApplication(
-            Integer id,
-            Integer userId,
-            Integer attemptId,
-            String skill,
-            LocalDateTime appliedAt) {
+            Integer id, Integer userId, Integer attemptId, String skill, LocalDateTime appliedAt) {
         this.id = id;
         this.userId = userId;
         this.attemptId = attemptId;
         this.skill = skill;
         this.appliedAt = appliedAt;
     }
-
 
     @PrePersist
     void onCreate() {
@@ -76,7 +71,6 @@ public class ProfileApplication {
         skill = value;
     }
 
-
     public void setId(Integer value) {
         this.id = value;
     }
@@ -89,10 +83,3 @@ public class ProfileApplication {
         this.appliedAt = value;
     }
 }
-
-
-
-
-
-
-

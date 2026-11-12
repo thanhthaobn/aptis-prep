@@ -16,10 +16,3 @@ public interface AdminExamService {
 
     public MockExamDTO entry(MockExam exam);
 }
-
-
-
-
-
-
-

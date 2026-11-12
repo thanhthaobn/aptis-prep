@@ -15,13 +15,3 @@ class SqlServerMigrationTests {
         V2SqlServerPreservationTests.validateEntityMappings(url, user, password);
     }
 }
-
-
-
-
-
-
-
-
-
-

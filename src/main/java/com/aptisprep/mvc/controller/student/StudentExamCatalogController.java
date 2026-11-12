@@ -1,18 +1,17 @@
 package com.aptisprep.mvc.controller.student;
-import com.aptisprep.mvc.support.contract.*;
-import com.aptisprep.mvc.dto.MockExamDTO;
 
+import com.aptisprep.mvc.dto.MockExamDTO;
 import com.aptisprep.mvc.enums.Skill;
 import com.aptisprep.mvc.exception.BusinessRuleException;
 import com.aptisprep.mvc.service.account.AccountAccessService;
 import com.aptisprep.mvc.service.exam.ExamAttemptService;
-import com.aptisprep.mvc.support.contract.IntegrationModels.AttemptResult;
-import com.aptisprep.mvc.support.contract.IntegrationModels.HistoryFilter;
-import com.aptisprep.mvc.support.contract.IntegrationModels.HistoryPage;
-import com.aptisprep.mvc.service.exam.ExamAttemptService;
 import com.aptisprep.mvc.service.learning.LessonService;
 import com.aptisprep.mvc.service.scoring.ScoringGuideService;
 import com.aptisprep.mvc.service.student.StudentExamCatalogService;
+import com.aptisprep.mvc.support.contract.*;
+import com.aptisprep.mvc.support.contract.IntegrationModels.AttemptResult;
+import com.aptisprep.mvc.support.contract.IntegrationModels.HistoryFilter;
+import com.aptisprep.mvc.support.contract.IntegrationModels.HistoryPage;
 import java.security.Principal;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -68,7 +67,8 @@ public class StudentExamCatalogController {
                 || !examCatalogService.sortOptions().contains(sort))
             throw new BusinessRuleException("Phân loại hoặc sắp xếp đề thi không hợp lệ");
         Page<MockExamDTO> entries =
-                examCatalogService.browse(q, skill, level, state, examType, sort, PageRequest.of(page, size));
+                examCatalogService.browse(
+                        q, skill, level, state, examType, sort, PageRequest.of(page, size));
         LinkedHashMap<String, List<MockExamDTO>> groups = new LinkedHashMap<>();
         entries.getContent()
                 .forEach(
@@ -77,7 +77,8 @@ public class StudentExamCatalogController {
                                         .add(entry));
         model.addAttribute("entries", entries.getContent());
         model.addAttribute("examGroups", groups);
-        model.addAttribute("examCategories", examCatalogService.categoryCounts(q, skill, level, state));
+        model.addAttribute(
+                "examCategories", examCatalogService.categoryCounts(q, skill, level, state));
         model.addAttribute(
                 "skills",
                 List.of("Grammar & Vocabulary", "Reading", "Listening", "Writing", "Speaking"));
@@ -113,7 +114,8 @@ public class StudentExamCatalogController {
                 || state.length() > 40) throw new BusinessRuleException("Bộ lọc không hợp lệ");
         Integer userId = accountAccessService.requireActiveStudent(principal.getName());
         HistoryPage history =
-                examAttemptContract.history(userId, page, size, new HistoryFilter(q, skill, examType, state));
+                examAttemptContract.history(
+                        userId, page, size, new HistoryFilter(q, skill, examType, state));
         model.addAttribute("history", history);
         model.addAttribute(
                 "totalPages", (history.totalItems() + history.size() - 1) / history.size());
@@ -202,10 +204,3 @@ public class StudentExamCatalogController {
         return "redirect:/student/attempts/" + id + "/result";
     }
 }
-
-
-
-
-
-
-

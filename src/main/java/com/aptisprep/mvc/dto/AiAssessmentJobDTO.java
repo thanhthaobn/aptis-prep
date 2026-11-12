@@ -396,14 +396,3 @@ public class AiAssessmentJobDTO {
         this.sourceType = sourceType;
     }
 }
-
-
-
-
-
-
-
-
-
-
-

@@ -22,16 +22,12 @@ public class LessonPlaybackRange {
     private double endSeconds;
 
     public LessonPlaybackRange(
-            Integer id,
-            LessonEngagement engagement,
-            double startSeconds,
-            double endSeconds) {
+            Integer id, LessonEngagement engagement, double startSeconds, double endSeconds) {
         this.id = id;
         this.engagement = engagement;
         this.startSeconds = startSeconds;
         this.endSeconds = endSeconds;
     }
-
 
     public Integer getId() {
         return id;
@@ -61,15 +57,7 @@ public class LessonPlaybackRange {
         endSeconds = value;
     }
 
-
     public void setId(Integer value) {
         this.id = value;
     }
 }
-
-
-
-
-
-
-

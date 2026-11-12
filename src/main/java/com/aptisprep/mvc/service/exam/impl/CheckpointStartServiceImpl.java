@@ -5,12 +5,11 @@ import com.aptisprep.mvc.exception.BusinessRuleException;
 import com.aptisprep.mvc.repository.LearningPathItemRepository;
 import com.aptisprep.mvc.repository.LearningPathRepository;
 import com.aptisprep.mvc.service.exam.CheckpointStartService;
-import java.util.Locale;
 import java.util.*;
-
-/** Kiểm tra lại quyền truy cập path đã lưu bên trong transaction attempt, sau khi khóa học viên. */
+import java.util.Locale;
 import org.springframework.stereotype.Service;
 
+/** Kiểm tra lại quyền truy cập path đã lưu bên trong transaction attempt, sau khi khóa học viên. */
 @Service
 public class CheckpointStartServiceImpl implements CheckpointStartService {
     private LearningPathRepository learningPathRepository;
@@ -33,8 +32,7 @@ public class CheckpointStartServiceImpl implements CheckpointStartService {
         validatePath(userId, exam, pathId, true);
     }
 
-    private void validatePath(
-            Integer userId, MockExam exam, Integer pathId, boolean retake) {
+    private void validatePath(Integer userId, MockExam exam, Integer pathId, boolean retake) {
         if (pathId == null) throw new BusinessRuleException("Checkpoint cần ngữ cảnh lộ trình học");
         LearningPath path =
                 learningPathRepository
@@ -74,10 +72,3 @@ public class CheckpointStartServiceImpl implements CheckpointStartService {
                 .replaceAll("[^A-Z0-9]+", "_");
     }
 }
-
-
-
-
-
-
-

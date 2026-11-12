@@ -9,10 +9,3 @@ public interface LessonEngagementRepository extends JpaRepository<LessonEngageme
 
     long countByLessonIdAndAudioPlayedAtIsNotNull(Integer lessonId);
 }
-
-
-
-
-
-
-

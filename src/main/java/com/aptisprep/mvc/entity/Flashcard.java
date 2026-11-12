@@ -74,7 +74,6 @@ public class Flashcard {
         this.updatedAt = updatedAt;
     }
 
-
     @PrePersist
     void create() {
         LocalDateTime now = LocalDateTime.now();
@@ -123,7 +122,6 @@ public class Flashcard {
         displayOrder = v;
     }
 
-
     public void setId(Integer value) {
         this.id = value;
     }
@@ -144,10 +142,3 @@ public class Flashcard {
         this.updatedAt = value;
     }
 }
-
-
-
-
-
-
-

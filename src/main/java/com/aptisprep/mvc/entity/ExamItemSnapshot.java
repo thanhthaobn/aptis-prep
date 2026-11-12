@@ -71,7 +71,6 @@ public class ExamItemSnapshot {
         this.options = options;
     }
 
-
     public Integer getId() {
         return id;
     }
@@ -157,7 +156,6 @@ public class ExamItemSnapshot {
         value.setItem(this);
     }
 
-
     public void setId(Integer value) {
         this.id = value;
     }
@@ -166,10 +164,3 @@ public class ExamItemSnapshot {
         this.options = value;
     }
 }
-
-
-
-
-
-
-

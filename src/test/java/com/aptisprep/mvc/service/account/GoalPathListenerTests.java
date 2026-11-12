@@ -68,13 +68,3 @@ class GoalPathListenerTests {
         assertEquals(first.getId(), repeated.getId());
     }
 }
-
-
-
-
-
-
-
-
-
-

@@ -1,14 +1,14 @@
 package com.aptisprep.mvc.controller.admin;
-import com.aptisprep.mvc.support.contract.*;
-import com.aptisprep.mvc.support.contract.IntegrationModels.AdminHistoryFilter;
 
-import com.aptisprep.mvc.service.exam.ExamAttemptService;
 import com.aptisprep.mvc.enums.ExamType;
 import com.aptisprep.mvc.exception.BusinessRuleException;
+import com.aptisprep.mvc.service.exam.ExamAttemptService;
+import com.aptisprep.mvc.support.contract.*;
+import com.aptisprep.mvc.support.contract.IntegrationModels.AdminHistoryFilter;
+import java.security.Principal;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
-import java.security.Principal;
 import java.util.List;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -17,8 +17,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 @Controller
 public class AdminResultController {
-    private static final List<String> EXAM_TYPES =
-            ExamType.codes();
+    private static final List<String> EXAM_TYPES = ExamType.codes();
     private static final List<String> RESULT_STATES =
             List.of("IN_PROGRESS", "WAITING_GRADING", "COMPLETED", "ERROR", "EXPIRED");
     private final ExamAttemptService examAttemptService;
@@ -55,11 +54,7 @@ public class AdminResultController {
                 fromValue = LocalDate.parse(from).atStartOfDay(ZoneOffset.UTC).toInstant();
             }
             if (to != null && !to.isBlank()) {
-                toValue =
-                        LocalDate.parse(to)
-                                .plusDays(1)
-                                .atStartOfDay(ZoneOffset.UTC)
-                                .toInstant();
+                toValue = LocalDate.parse(to).plusDays(1).atStartOfDay(ZoneOffset.UTC).toInstant();
             }
         } catch (RuntimeException exception) {
             throw new BusinessRuleException("Ngày lọc không hợp lệ");
@@ -67,9 +62,12 @@ public class AdminResultController {
         if (fromValue != null && toValue != null && !fromValue.isBefore(toValue)) {
             throw new BusinessRuleException("Ngày bắt đầu phải không sau ngày kết thúc");
         }
-        var history = examAttemptService.adminHistory(
-                principal.getName(), page, size,
-                new AdminHistoryFilter(q, skill, examType, state, fromValue, toValue));
+        var history =
+                examAttemptService.adminHistory(
+                        principal.getName(),
+                        page,
+                        size,
+                        new AdminHistoryFilter(q, skill, examType, state, fromValue, toValue));
         model.addAttribute("history", history);
         model.addAttribute("totalPages", (history.totalItems() + size - 1) / size);
         model.addAttribute("q", q);
@@ -88,7 +86,8 @@ public class AdminResultController {
 
     @GetMapping("/admin/results/{id}")
     public String detail(@PathVariable Integer id, Principal principal, Model model) {
-        model.addAttribute("attemptResult", examAttemptService.adminResult(principal.getName(), id));
+        model.addAttribute(
+                "attemptResult", examAttemptService.adminResult(principal.getName(), id));
         model.addAttribute("review", examAttemptService.adminReview(principal.getName(), id));
         return "admin/result/detail";
     }
@@ -101,12 +100,4 @@ public class AdminResultController {
                 "successMessage", "Đã loại bỏ lượt thi khỏi danh sách.");
         return "redirect:/admin/results";
     }
-
 }
-
-
-
-
-
-
-

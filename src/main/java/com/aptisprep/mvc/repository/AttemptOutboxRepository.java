@@ -13,10 +13,3 @@ public interface AttemptOutboxRepository extends JpaRepository<AttemptOutbox, Lo
     List<AttemptOutbox> findTop50ByStatusInAndNextAttemptAtLessThanEqualOrderByIdAsc(
             Collection<String> statuses, LocalDateTime time);
 }
-
-
-
-
-
-
-

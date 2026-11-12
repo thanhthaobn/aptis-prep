@@ -12,10 +12,3 @@ public interface ExamSkillResultRepository extends JpaRepository<ExamSkillResult
 
     Optional<ExamSkillResult> findByAttemptIdAndSkill(Integer attemptId, String skill);
 }
-
-
-
-
-
-
-

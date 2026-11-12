@@ -231,14 +231,3 @@ public class LessonEngagementDTO {
         this.playbackRanges = playbackRanges;
     }
 }
-
-
-
-
-
-
-
-
-
-
-

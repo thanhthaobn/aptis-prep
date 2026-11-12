@@ -3,19 +3,18 @@ package com.aptisprep.mvc.service.exam.impl;
 import com.aptisprep.mvc.entity.*;
 import com.aptisprep.mvc.exception.*;
 import com.aptisprep.mvc.repository.*;
-import com.aptisprep.mvc.service.exam.ExamSnapshotService;
 import com.aptisprep.mvc.service.exam.ExamAnswerService;
-import com.aptisprep.mvc.support.contract.GradingTextLimits;
+import com.aptisprep.mvc.service.exam.ExamSnapshotService;
 import com.aptisprep.mvc.service.storage.AudioUploadService;
+import com.aptisprep.mvc.support.contract.GradingTextLimits;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
+import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 /** Chỉ lưu đáp án. Caller phải giữ khóa attempt theo chủ sở hữu và transaction. */
-import org.springframework.stereotype.Service;
-
 @Service
 public class ExamAnswerServiceImpl implements ExamAnswerService {
     private QuestionRepository questionRepository;
@@ -43,10 +42,7 @@ public class ExamAnswerServiceImpl implements ExamAnswerService {
     @Override
     @Transactional
     public void saveSpeakingAudio(
-            ExamAttempt attempt,
-            Integer questionId,
-            Integer itemId,
-            MultipartFile audioFile) {
+            ExamAttempt attempt, Integer questionId, Integer itemId, MultipartFile audioFile) {
         Integer attemptId = attempt.getId();
         Question question =
                 questionRepository
@@ -197,8 +193,7 @@ public class ExamAnswerServiceImpl implements ExamAnswerService {
         }
     }
 
-    private ExamItemSnapshot chooseLockedItem(
-            ExamQuestionSnapshot question, Integer itemId) {
+    private ExamItemSnapshot chooseLockedItem(ExamQuestionSnapshot question, Integer itemId) {
         if (question == null)
             throw new BusinessRuleException("Câu hỏi không thuộc snapshot của lượt thi");
         for (ExamItemSnapshot item : question.getItems())
@@ -220,10 +215,3 @@ public class ExamAnswerServiceImpl implements ExamAnswerService {
         return "SINGLE_CHOICE".equals(type) || "MATCHING".equals(type) || "ORDERING".equals(type);
     }
 }
-
-
-
-
-
-
-

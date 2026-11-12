@@ -1,12 +1,12 @@
 package com.aptisprep.mvc.service.learning.impl;
 
-import com.aptisprep.mvc.service.learning.*;
 import com.aptisprep.mvc.dto.LessonCheckDTO;
-import com.aptisprep.mvc.service.learning.LessonCheckService;
 import com.aptisprep.mvc.entity.*;
 import com.aptisprep.mvc.enums.*;
 import com.aptisprep.mvc.exception.*;
 import com.aptisprep.mvc.repository.*;
+import com.aptisprep.mvc.service.learning.*;
+import com.aptisprep.mvc.service.learning.LessonCheckService;
 import com.aptisprep.mvc.service.learning.LessonTeachingService.AnswerFeedback;
 import com.aptisprep.mvc.service.learning.LessonTeachingService.CheckView;
 import com.aptisprep.mvc.service.learning.LessonTeachingService.Feedback;
@@ -212,4 +212,3 @@ public class LessonCheckServiceImpl implements LessonCheckService {
         return value != null && !value.isBlank();
     }
 }
-

@@ -1,18 +1,18 @@
 package com.aptisprep.mvc.service.admin;
 
+import com.aptisprep.mvc.dto.CertificateDTO;
 import com.aptisprep.mvc.dto.MockExamDTO;
 import com.aptisprep.mvc.dto.QuestionDTO;
-import com.aptisprep.mvc.dto.CertificateDTO;
-import com.aptisprep.mvc.dto.ScoringSchemeDTO;
 import com.aptisprep.mvc.dto.QuestionMediaDTO;
+import com.aptisprep.mvc.dto.ScoringSchemeDTO;
 import com.aptisprep.mvc.entity.Certificate;
 import com.aptisprep.mvc.entity.Question;
 import com.aptisprep.mvc.entity.QuestionMedia;
 import com.aptisprep.mvc.entity.ScoringScheme;
 import java.util.List;
 import java.util.Map;
-import org.springframework.data.domain.Page;
 import org.springframework.core.io.Resource;
+import org.springframework.data.domain.Page;
 import org.springframework.web.multipart.MultipartFile;
 
 public interface CatalogService {
@@ -64,15 +64,19 @@ public interface CatalogService {
     public void restoreQuestion(Integer id);
 
     public List<Certificate> activeCertificates();
+
     public List<CertificateDTO> activeCertificateViews();
 
     public List<ScoringScheme> activeSchemes();
+
     public List<ScoringSchemeDTO> activeSchemeViews();
 
     public List<Question> publishedQuestions();
+
     public List<QuestionDTO> publishedQuestionViews();
 
     public List<QuestionMedia> mediaItems(Integer questionId);
+
     public List<QuestionMediaDTO> mediaItemViews(Integer questionId);
 
     public List<String> skills();
@@ -117,10 +121,3 @@ public interface CatalogService {
 
     record MediaContent(Resource resource, String contentType) {}
 }
-
-
-
-
-
-
-

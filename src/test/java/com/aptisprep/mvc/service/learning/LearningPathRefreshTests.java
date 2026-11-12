@@ -167,13 +167,3 @@ class LearningPathRefreshTests {
         return lessons.saveAndFlush(lesson);
     }
 }
-
-
-
-
-
-
-
-
-
-

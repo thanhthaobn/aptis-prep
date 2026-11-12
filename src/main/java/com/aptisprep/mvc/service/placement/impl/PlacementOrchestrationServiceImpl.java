@@ -1,10 +1,10 @@
 package com.aptisprep.mvc.service.placement.impl;
 
 import com.aptisprep.mvc.event.AttemptCompletedEvent;
-import com.aptisprep.mvc.service.placement.PlacementOrchestrationService;
 import com.aptisprep.mvc.service.account.AccountAccessService;
-import com.aptisprep.mvc.service.learning.LearningPathService;
 import com.aptisprep.mvc.service.exam.AttemptOutboxService;
+import com.aptisprep.mvc.service.learning.LearningPathService;
+import com.aptisprep.mvc.service.placement.PlacementOrchestrationService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.Propagation;
@@ -52,12 +52,3 @@ public class PlacementOrchestrationServiceImpl implements PlacementOrchestration
         return paths;
     }
 }
-
-
-
-
-
-
-
-
-

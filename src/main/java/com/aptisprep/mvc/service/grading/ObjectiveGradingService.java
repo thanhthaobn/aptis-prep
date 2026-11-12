@@ -7,10 +7,3 @@ import com.aptisprep.mvc.support.contract.IntegrationModels.LockedAttempt;
 public interface ObjectiveGradingService {
     void gradeObjective(LockedAttempt lockedAttempt, MockExam exam);
 }
-
-
-
-
-
-
-

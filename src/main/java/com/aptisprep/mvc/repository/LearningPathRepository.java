@@ -19,10 +19,3 @@ public interface LearningPathRepository extends JpaRepository<LearningPath, Inte
 
     Optional<LearningPath> findByUserIdAndSourceAttemptId(Integer userId, Integer attemptId);
 }
-
-
-
-
-
-
-

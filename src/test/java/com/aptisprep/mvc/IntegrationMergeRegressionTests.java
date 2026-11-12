@@ -133,13 +133,3 @@ class IntegrationMergeRegressionTests {
         assertThrows(ResourceNotFoundException.class, () -> service.entry("results", 8001));
     }
 }
-
-
-
-
-
-
-
-
-
-

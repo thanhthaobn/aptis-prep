@@ -17,10 +17,3 @@ public interface LessonProgressRepository extends JpaRepository<LessonProgress, 
 
     List<LessonProgress> findByUserIdAndLessonIdIn(Integer userId, Collection<Integer> lessonIds);
 }
-
-
-
-
-
-
-

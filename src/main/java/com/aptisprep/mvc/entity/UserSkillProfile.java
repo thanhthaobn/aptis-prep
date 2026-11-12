@@ -78,7 +78,6 @@ public class UserSkillProfile {
         this.updatedAt = updatedAt;
     }
 
-
     @PrePersist
     @PreUpdate
     void touch() {
@@ -173,7 +172,6 @@ public class UserSkillProfile {
         placementSubmittedAt = value;
     }
 
-
     public void setId(Integer value) {
         this.id = value;
     }
@@ -182,10 +180,3 @@ public class UserSkillProfile {
         this.updatedAt = value;
     }
 }
-
-
-
-
-
-
-

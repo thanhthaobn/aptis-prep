@@ -11,10 +11,3 @@ public interface LessonCheckRepository extends JpaRepository<LessonCheck, Intege
 
     long countByLessonId(Integer lessonId);
 }
-
-
-
-
-
-
-

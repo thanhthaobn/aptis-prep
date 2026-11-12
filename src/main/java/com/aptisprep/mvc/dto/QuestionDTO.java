@@ -9,13 +9,16 @@ import jakarta.validation.constraints.Size;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+
 public class QuestionDTO {
     private Integer id;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+
     @NotBlank(message = "Nội dung câu hỏi là bắt buộc")
     @Size(max = 10000, message = "Nội dung câu hỏi tối đa 10.000 ký tự")
     private String content;
+
     private String instruction;
 
     @Size(max = 50000, message = "Đoạn văn Reading tối đa 50.000 ký tự")
@@ -32,19 +35,26 @@ public class QuestionDTO {
             regexp = "GRAMMAR_VOCABULARY|READING|LISTENING|WRITING|SPEAKING",
             message = "Kỹ năng không hợp lệ")
     private String skill = "READING";
+
     private Integer partNo;
+
     @NotBlank(message = "Cấp độ là bắt buộc")
     @Pattern(regexp = "A1|A2|B1|B2|C1", message = "Cấp độ không hợp lệ")
     private String cefrLevel = "B1";
+
     @NotBlank(message = "Độ khó là bắt buộc")
     @Pattern(regexp = "EASY|MEDIUM|HARD", message = "Độ khó không hợp lệ")
     private String difficulty = "MEDIUM";
+
     private boolean allowOptionReuse = true;
+
     @PositiveOrZero(message = "Thời gian chuẩn bị không được âm")
     private Integer preparationSeconds;
+
     @NotBlank(message = "Trạng thái là bắt buộc")
     @Pattern(regexp = "DRAFT|PUBLISHED|ARCHIVED", message = "Trạng thái không hợp lệ")
     private String status = "DRAFT";
+
     private List<@Valid QuestionItemDTO> items = new ArrayList<>();
 
     public QuestionDTO(
@@ -269,11 +279,3 @@ public class QuestionDTO {
         };
     }
 }
-
-
-
-
-
-
-
-

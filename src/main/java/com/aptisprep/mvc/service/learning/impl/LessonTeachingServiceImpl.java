@@ -1,19 +1,19 @@
 package com.aptisprep.mvc.service.learning.impl;
 
-import com.aptisprep.mvc.service.learning.*;
 import com.aptisprep.mvc.config.AiProperties;
-import com.aptisprep.mvc.service.learning.LessonTeachingService;
-import com.aptisprep.mvc.dto.LessonDTO;
+import com.aptisprep.mvc.dto.AiAssessmentJobDTO;
 import com.aptisprep.mvc.dto.LessonCheckDTO;
-import com.aptisprep.mvc.entity.*;
 import com.aptisprep.mvc.dto.LessonContextSnapshotDTO;
-import com.aptisprep.mvc.dto.LessonWorkSubmissionDTO;
+import com.aptisprep.mvc.dto.LessonDTO;
 import com.aptisprep.mvc.dto.LessonResponseDTO;
+import com.aptisprep.mvc.dto.LessonWorkSubmissionDTO;
+import com.aptisprep.mvc.entity.*;
 import com.aptisprep.mvc.enums.*;
 import com.aptisprep.mvc.exception.*;
 import com.aptisprep.mvc.repository.*;
 import com.aptisprep.mvc.service.grading.AiAssessmentService;
-import com.aptisprep.mvc.dto.AiAssessmentJobDTO;
+import com.aptisprep.mvc.service.learning.*;
+import com.aptisprep.mvc.service.learning.LessonTeachingService;
 import com.aptisprep.mvc.service.storage.StorageService;
 import jakarta.persistence.*;
 import java.math.BigDecimal;
@@ -42,8 +42,6 @@ public class LessonTeachingServiceImpl implements LessonTeachingService {
     @PersistenceContext private EntityManager em;
 
     private AiProperties aiProperties;
-
-
 
     public ReleaseState releaseState(Integer id, String email) {
         User u = user(email);
@@ -111,8 +109,6 @@ public class LessonTeachingServiceImpl implements LessonTeachingService {
     public boolean aiAvailable() {
         return aiProperties.isEnabled() && has(aiProperties.getApiKey());
     }
-
-
 
     public HistoricalMedia historicalMedia(
             Integer lessonId, Integer historyId, String kind, String email, boolean quiz) {
@@ -242,10 +238,6 @@ public class LessonTeachingServiceImpl implements LessonTeachingService {
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy bản ghi âm"));
     }
 
-
-
-
-
     public List<AttemptView> history(Integer lessonId, String email) {
         User u = user(email);
         return lessonCheckAttemptRepository
@@ -288,13 +280,15 @@ public class LessonTeachingServiceImpl implements LessonTeachingService {
 
     public List<LessonWorkSubmissionDTO> submissionHistory(Integer lessonId, String email) {
         User u = user(email);
-        return em.createQuery(
+        return em
+                .createQuery(
                         "select s from LessonWorkSubmission s where s.userId=:user and"
                                 + " s.lessonId=:lesson order by s.submittedAt desc,s.id desc",
                         LessonWorkSubmission.class)
                 .setParameter("user", u.getId())
                 .setParameter("lesson", lessonId)
-                .getResultList().stream()
+                .getResultList()
+                .stream()
                 .map(streamValue -> LessonWorkSubmissionDTO.convertEntityToDto(streamValue))
                 .toList();
     }
@@ -411,8 +405,6 @@ public class LessonTeachingServiceImpl implements LessonTeachingService {
                 .map(streamValue -> streamValue.getLastSection())
                 .orElse(null);
     }
-
-
 
     public LessonStats stats(Integer lessonId) {
         List<LessonCheckAttempt> all = lessonCheckAttemptRepository.findByLessonId(lessonId);
@@ -536,12 +528,6 @@ public class LessonTeachingServiceImpl implements LessonTeachingService {
         return key;
     }
 
-
-
-
-
-
-
     public List<CheckView> questions(Integer id) {
         return checkService.questions(id);
     }
@@ -627,4 +613,3 @@ public class LessonTeachingServiceImpl implements LessonTeachingService {
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy tài khoản"));
     }
 }
-

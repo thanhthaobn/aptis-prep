@@ -1,13 +1,12 @@
 package com.aptisprep.mvc.service.exam;
 
-import com.aptisprep.mvc.service.exam.impl.ExamReadinessServiceImpl;
-
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 import com.aptisprep.mvc.entity.*;
 import com.aptisprep.mvc.exception.BusinessRuleException;
 import com.aptisprep.mvc.repository.*;
+import com.aptisprep.mvc.service.exam.impl.ExamReadinessServiceImpl;
 import com.aptisprep.mvc.service.scoring.CertificateSchemeService;
 import com.aptisprep.mvc.service.storage.StorageService;
 import java.util.List;
@@ -58,13 +57,3 @@ class ExamPublicationReadinessTests {
         assertEquals("DRAFT", exam.getStatus());
     }
 }
-
-
-
-
-
-
-
-
-
-

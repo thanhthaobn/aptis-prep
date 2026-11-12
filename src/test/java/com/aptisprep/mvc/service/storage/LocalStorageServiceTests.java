@@ -1,12 +1,11 @@
 package com.aptisprep.mvc.service.storage;
 
-import com.aptisprep.mvc.service.storage.impl.AudioDurationServiceImpl;
-import com.aptisprep.mvc.service.storage.impl.StorageServiceImpl;
-
 import static org.junit.jupiter.api.Assertions.*;
 
 import com.aptisprep.mvc.config.StorageProperties;
 import com.aptisprep.mvc.exception.BusinessRuleException;
+import com.aptisprep.mvc.service.storage.impl.AudioDurationServiceImpl;
+import com.aptisprep.mvc.service.storage.impl.StorageServiceImpl;
 import com.aptisprep.mvc.support.TestAudio;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -96,7 +95,8 @@ class LocalStorageServiceTests {
         assertArrayEquals(expected, storage.load(relativePath).getContentAsByteArray());
         assertEquals(
                 1.0,
-                new AudioDurationServiceImpl(storage, "missing-ffprobe-for-test").seconds(relativePath),
+                new AudioDurationServiceImpl(storage, "missing-ffprobe-for-test")
+                        .seconds(relativePath),
                 0.01);
 
         storage.delete(relativePath);
@@ -104,13 +104,3 @@ class LocalStorageServiceTests {
         assertThrows(BusinessRuleException.class, () -> storage.load(relativePath));
     }
 }
-
-
-
-
-
-
-
-
-
-

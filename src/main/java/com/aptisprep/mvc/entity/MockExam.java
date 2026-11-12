@@ -83,7 +83,6 @@ public class MockExam {
         this.updatedAt = updatedAt;
     }
 
-
     public MockExam() {}
 
     public static MockExam fromSnapshot(ExamAttemptSnapshot snapshot) {
@@ -190,7 +189,6 @@ public class MockExam {
         return updatedAt;
     }
 
-
     public void setId(Integer value) {
         this.id = value;
     }
@@ -207,10 +205,3 @@ public class MockExam {
         this.updatedAt = value;
     }
 }
-
-
-
-
-
-
-

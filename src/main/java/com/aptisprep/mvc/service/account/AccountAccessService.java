@@ -18,12 +18,4 @@ public interface AccountAccessService {
     }
 
     public User requireActiveStudentById(Integer userId);
-
 }
-
-
-
-
-
-
-

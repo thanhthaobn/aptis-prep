@@ -179,14 +179,3 @@ public class UserSkillProfileDTO {
         this.updatedAt = updatedAt;
     }
 }
-
-
-
-
-
-
-
-
-
-
-

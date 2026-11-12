@@ -1,19 +1,20 @@
 package com.aptisprep.mvc.dto;
 
-import java.time.*;
-import java.math.*;
-import java.util.*;
-
+import com.aptisprep.mvc.entity.*;
+import com.aptisprep.mvc.enums.*;
 import jakarta.validation.constraints.DecimalMax;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotNull;
+import java.math.*;
 import java.math.BigDecimal;
-import com.aptisprep.mvc.entity.*;
-import com.aptisprep.mvc.enums.*;
+import java.time.*;
+import java.util.*;
+
 public class ScoringScaleRuleDTO {
     private Integer id;
     private ScoringScheme scheme;
     private String skill;
+
     @NotNull(message = "Giá trị raw tối thiểu không được để trống")
     @DecimalMin(value = "0", message = "Giá trị raw tối thiểu không được âm")
     private BigDecimal rawMin;
@@ -55,25 +56,25 @@ public class ScoringScaleRuleDTO {
     public static ScoringScaleRuleDTO convertEntityToDto(ScoringScaleRule entity) {
         if (entity == null) return null;
         return new ScoringScaleRuleDTO(
-            entity.getId(),
-            entity.getScheme(),
-            entity.getSkill(),
-            entity.getRawMin(),
-            entity.getRawMax(),
-            entity.getScaleMin(),
-            entity.getScaleMax());
+                entity.getId(),
+                entity.getScheme(),
+                entity.getSkill(),
+                entity.getRawMin(),
+                entity.getRawMax(),
+                entity.getScaleMin(),
+                entity.getScaleMax());
     }
 
     public static ScoringScaleRule convertDtoToEntity(ScoringScaleRuleDTO dto) {
         if (dto == null) return null;
         return new ScoringScaleRule(
-            dto.getId(),
-            dto.getScheme(),
-            dto.getSkill(),
-            dto.getRawMin(),
-            dto.getRawMax(),
-            dto.getScaleMin(),
-            dto.getScaleMax());
+                dto.getId(),
+                dto.getScheme(),
+                dto.getSkill(),
+                dto.getRawMin(),
+                dto.getRawMax(),
+                dto.getScaleMin(),
+                dto.getScaleMax());
     }
 
     public BigDecimal getRawMin() {
@@ -132,10 +133,3 @@ public class ScoringScaleRuleDTO {
         this.skill = value;
     }
 }
-
-
-
-
-
-
-

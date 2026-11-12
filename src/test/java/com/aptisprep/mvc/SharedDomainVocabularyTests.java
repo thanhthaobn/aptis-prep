@@ -25,13 +25,3 @@ class SharedDomainVocabularyTests {
         assertThrows(UnsupportedOperationException.class, () -> Skill.codes().add("OTHER"));
     }
 }
-
-
-
-
-
-
-
-
-
-

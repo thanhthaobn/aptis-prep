@@ -1,7 +1,7 @@
 package com.aptisprep.mvc.controller.admin;
 
-import com.aptisprep.mvc.dto.FlashcardSetDTO;
 import com.aptisprep.mvc.dto.FlashcardDTO;
+import com.aptisprep.mvc.dto.FlashcardSetDTO;
 import com.aptisprep.mvc.exception.BusinessRuleException;
 import com.aptisprep.mvc.service.learning.FlashcardSetService;
 import com.aptisprep.mvc.service.learning.LessonService;
@@ -19,8 +19,7 @@ public class AdminFlashcardController {
     private final LessonService lessonService;
 
     public AdminFlashcardController(
-            FlashcardSetService flashcardSetService,
-            LessonService lessonService) {
+            FlashcardSetService flashcardSetService, LessonService lessonService) {
         this.flashcardSetService = flashcardSetService;
         this.lessonService = lessonService;
     }
@@ -37,8 +36,12 @@ public class AdminFlashcardController {
                                 s ->
                                         s.getLessonSkill() == null
                                                 || s.getLevel() == null
-                                                || !lessonService.getSkills().contains(s.getLessonSkill())
-                                                || !lessonService.getLevels().contains(s.getLevel()))
+                                                || !lessonService
+                                                        .getSkills()
+                                                        .contains(s.getLessonSkill())
+                                                || !lessonService
+                                                        .getLevels()
+                                                        .contains(s.getLevel()))
                         .toList());
         return "admin/flashcards/list";
     }
@@ -154,10 +157,3 @@ public class AdminFlashcardController {
         model.addAttribute("lessons", flashcardSetService.availableLessonViews());
     }
 }
-
-
-
-
-
-
-

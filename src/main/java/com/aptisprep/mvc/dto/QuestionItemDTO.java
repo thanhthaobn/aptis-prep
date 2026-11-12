@@ -13,19 +13,26 @@ import java.util.List;
 public class QuestionItemDTO {
     private Integer id;
     private Integer questionId;
+
     @NotBlank(message = "Nội dung ý hỏi là bắt buộc")
     @Size(max = 10000, message = "Nội dung ý hỏi tối đa 10.000 ký tự")
     private String content;
+
     private Integer correctPosition;
     private int position;
+
     @Positive(message = "Điểm câu hỏi phải lớn hơn 0")
     private BigDecimal points = BigDecimal.ONE;
+
     @PositiveOrZero(message = "Số từ tối thiểu không được âm")
     private Integer minWordCount;
+
     @PositiveOrZero(message = "Số từ tối đa không được âm")
     private Integer maxWordCount;
+
     @Positive(message = "Thời gian trả lời phải lớn hơn 0")
     private Integer responseSeconds;
+
     private List<@Valid QuestionOptionDTO> options = new ArrayList<>();
 
     public QuestionItemDTO(
@@ -166,14 +173,3 @@ public class QuestionItemDTO {
         this.options = options;
     }
 }
-
-
-
-
-
-
-
-
-
-
-

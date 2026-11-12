@@ -1,8 +1,5 @@
 package com.aptisprep.mvc.service.scoring;
 
-import com.aptisprep.mvc.service.scoring.CertificateSchemeService;
-import com.aptisprep.mvc.service.scoring.impl.CertificateSchemeServiceImpl;
-
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
@@ -16,6 +13,7 @@ import com.aptisprep.mvc.exception.ResourceNotFoundException;
 import com.aptisprep.mvc.repository.CertificateRepository;
 import com.aptisprep.mvc.repository.ScoreBandRepository;
 import com.aptisprep.mvc.repository.ScoringSchemeRepository;
+import com.aptisprep.mvc.service.scoring.impl.CertificateSchemeServiceImpl;
 import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
@@ -107,13 +105,3 @@ class CertificateSchemeServiceTests {
         verifyNoInteractions(bands);
     }
 }
-
-
-
-
-
-
-
-
-
-

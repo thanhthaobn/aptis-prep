@@ -34,7 +34,6 @@ public class MockExamQuestion {
         this.position = position;
     }
 
-
     public MockExamQuestion() {}
 
     public Integer getId() {
@@ -73,15 +72,7 @@ public class MockExamQuestion {
         position = v;
     }
 
-
     public void setId(Integer value) {
         this.id = value;
     }
 }
-
-
-
-
-
-
-

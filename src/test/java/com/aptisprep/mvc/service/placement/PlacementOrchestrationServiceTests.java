@@ -1,7 +1,5 @@
 package com.aptisprep.mvc.service.placement;
 
-import com.aptisprep.mvc.service.exam.AttemptOutboxService;
-
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doThrow;
@@ -12,8 +10,8 @@ import static org.mockito.Mockito.when;
 
 import com.aptisprep.mvc.event.AttemptCompletedEvent;
 import com.aptisprep.mvc.service.account.AccountAccessService;
+import com.aptisprep.mvc.service.exam.AttemptOutboxService;
 import com.aptisprep.mvc.service.learning.LearningPathService;
-import com.aptisprep.mvc.service.exam.impl.AttemptOutboxServiceImpl;
 import com.aptisprep.mvc.service.placement.impl.PlacementOrchestrationServiceImpl;
 import org.junit.jupiter.api.Test;
 import org.springframework.transaction.PlatformTransactionManager;
@@ -72,13 +70,3 @@ class PlacementOrchestrationServiceTests {
         verifyNoInteractions(outbox);
     }
 }
-
-
-
-
-
-
-
-
-
-

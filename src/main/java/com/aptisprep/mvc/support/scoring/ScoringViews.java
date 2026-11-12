@@ -29,10 +29,3 @@ public final class ScoringViews {
     public record BandView(
             Integer id, String skill, String cefrLevel, BigDecimal minScore, BigDecimal maxScore) {}
 }
-
-
-
-
-
-
-

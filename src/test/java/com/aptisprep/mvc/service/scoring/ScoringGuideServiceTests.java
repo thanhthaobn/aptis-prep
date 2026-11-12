@@ -1,11 +1,11 @@
 package com.aptisprep.mvc.service.scoring;
-import com.aptisprep.mvc.support.contract.*;
 
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 import com.aptisprep.mvc.entity.*;
 import com.aptisprep.mvc.repository.*;
+import com.aptisprep.mvc.support.contract.*;
 import com.aptisprep.mvc.support.contract.IntegrationModels.*;
 import java.math.BigDecimal;
 import java.util.*;
@@ -65,13 +65,3 @@ class ScoringGuideServiceTests {
         verifyNoInteractions(exams);
     }
 }
-
-
-
-
-
-
-
-
-
-

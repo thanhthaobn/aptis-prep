@@ -1,6 +1,5 @@
 package com.aptisprep.mvc.entity;
 
-
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -67,7 +66,6 @@ public class LessonCheckAttempt {
         this.submittedAt = submittedAt;
     }
 
-
     @PrePersist
     void create() {
         if (submittedAt == null) submittedAt = LocalDateTime.now();
@@ -131,7 +129,6 @@ public class LessonCheckAttempt {
         return submittedAt;
     }
 
-
     public void setAnswers(List<LessonCheckAnswer> value) {
         this.answers = value;
     }
@@ -156,10 +153,3 @@ public class LessonCheckAttempt {
         this.submittedAt = value;
     }
 }
-
-
-
-
-
-
-

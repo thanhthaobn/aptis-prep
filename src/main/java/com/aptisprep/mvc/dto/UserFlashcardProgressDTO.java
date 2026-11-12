@@ -153,14 +153,3 @@ public class UserFlashcardProgressDTO {
         this.easeFactor = easeFactor;
     }
 }
-
-
-
-
-
-
-
-
-
-
-

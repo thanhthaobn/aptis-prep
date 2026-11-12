@@ -1,19 +1,19 @@
 package com.aptisprep.mvc.dto;
 
-import java.time.*;
-import java.math.*;
-import java.util.*;
-
-import jakarta.validation.constraints.*;
-import jakarta.validation.Valid;
-import java.util.*;
 import com.aptisprep.mvc.entity.*;
 import com.aptisprep.mvc.enums.*;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.*;
+import java.math.*;
+import java.time.*;
+import java.util.*;
+
 public class FlashcardSetDTO {
     private Lesson lesson;
     private User owner;
     private Integer id;
     private String visibility;
+
     @NotBlank(message = "Tên bộ thẻ không được để trống")
     @Size(max = 255, message = "Tên bộ thẻ tối đa 255 ký tự")
     private String title;
@@ -21,8 +21,12 @@ public class FlashcardSetDTO {
     @Size(max = 2000, message = "Mô tả bộ thẻ tối đa 2000 ký tự")
     private String description;
 
-    @NotBlank(message = "Cấp độ không được để trống") private String cefrLevel = "A1";
-    @NotBlank(message = "Trạng thái không được để trống") private String status = "DRAFT";
+    @NotBlank(message = "Cấp độ không được để trống")
+    private String cefrLevel = "A1";
+
+    @NotBlank(message = "Trạng thái không được để trống")
+    private String status = "DRAFT";
+
     private Integer lessonId;
     private List<@Valid FlashcardDTO> flashcards = new ArrayList<>();
     private Integer count;
@@ -70,7 +74,17 @@ public class FlashcardSetDTO {
             boolean personal,
             String lessonTitle,
             String lessonSkill) {
-        this(lesson, owner, id, visibility, title, description, lessonId, flashcards, cefrLevel, status);
+        this(
+                lesson,
+                owner,
+                id,
+                visibility,
+                title,
+                description,
+                lessonId,
+                flashcards,
+                cefrLevel,
+                status);
         this.count = count;
         this.personal = personal;
         this.lessonTitle = lessonTitle;
@@ -80,29 +94,29 @@ public class FlashcardSetDTO {
     public static FlashcardSetDTO convertEntityToDto(FlashcardSet entity) {
         if (entity == null) return null;
         return new FlashcardSetDTO(
-            entity.getLesson(),
-            entity.getOwner(),
-            entity.getId(),
-            entity.getVisibility(),
-            entity.getTitle(),
-            entity.getDescription(),
-            entity.getLesson() == null ? null : entity.getLesson().getId(),
-            null,
-            entity.getCefrLevel(),
-            entity.getStatus());
+                entity.getLesson(),
+                entity.getOwner(),
+                entity.getId(),
+                entity.getVisibility(),
+                entity.getTitle(),
+                entity.getDescription(),
+                entity.getLesson() == null ? null : entity.getLesson().getId(),
+                null,
+                entity.getCefrLevel(),
+                entity.getStatus());
     }
 
     public static FlashcardSet convertDtoToEntity(FlashcardSetDTO dto) {
         if (dto == null) return null;
         return new FlashcardSet(
-            dto.getId(),
-            dto.getTitle(),
-            dto.getDescription(),
-            dto.getCefrLevel(),
-            dto.getStatus(),
-            dto.getLesson(),
-            dto.getOwner(),
-            dto.getVisibility());
+                dto.getId(),
+                dto.getTitle(),
+                dto.getDescription(),
+                dto.getCefrLevel(),
+                dto.getStatus(),
+                dto.getLesson(),
+                dto.getOwner(),
+                dto.getVisibility());
     }
 
     public String getTitle() {
@@ -224,12 +238,4 @@ public class FlashcardSetDTO {
     public void setLessonSkill(String lessonSkill) {
         this.lessonSkill = lessonSkill;
     }
-
 }
-
-
-
-
-
-
-

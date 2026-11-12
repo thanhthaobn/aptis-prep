@@ -71,7 +71,6 @@ public class LessonCheck {
         this.explanation = explanation;
     }
 
-
     public Integer getId() {
         return id;
     }
@@ -164,15 +163,7 @@ public class LessonCheck {
         explanation = v;
     }
 
-
     public void setId(Integer value) {
         this.id = value;
     }
 }
-
-
-
-
-
-
-

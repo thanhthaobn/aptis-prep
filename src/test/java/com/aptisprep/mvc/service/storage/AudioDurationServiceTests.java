@@ -1,11 +1,10 @@
 package com.aptisprep.mvc.service.storage;
 
-import com.aptisprep.mvc.service.storage.impl.AudioDurationServiceImpl;
-
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 import com.aptisprep.mvc.exception.BusinessRuleException;
+import com.aptisprep.mvc.service.storage.impl.AudioDurationServiceImpl;
 import com.aptisprep.mvc.support.TestAudio;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -34,7 +33,8 @@ class AudioDurationServiceTests {
         var storage = mock(StorageService.class);
         when(storage.load("stream.wav")).thenReturn(new ByteArrayResource(bytes));
         assertTrue(
-                new AudioDurationServiceImpl(storage, "missing-ffprobe-for-test").seconds("stream.wav")
+                new AudioDurationServiceImpl(storage, "missing-ffprobe-for-test")
+                                .seconds("stream.wav")
                         > 0);
     }
 
@@ -61,13 +61,3 @@ class AudioDurationServiceTests {
                                 .seconds("invalid.wav"));
     }
 }
-
-
-
-
-
-
-
-
-
-

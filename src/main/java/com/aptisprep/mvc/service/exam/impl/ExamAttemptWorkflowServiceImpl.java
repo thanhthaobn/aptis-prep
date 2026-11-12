@@ -1,8 +1,4 @@
 package com.aptisprep.mvc.service.exam.impl;
-import com.aptisprep.mvc.support.contract.*;
-
-import com.aptisprep.mvc.service.exam.*;
-import com.aptisprep.mvc.service.exam.ExamAttemptService;
 
 import com.aptisprep.mvc.entity.*;
 import com.aptisprep.mvc.enums.Role;
@@ -12,21 +8,21 @@ import com.aptisprep.mvc.exception.AccessDeniedException;
 import com.aptisprep.mvc.exception.BusinessRuleException;
 import com.aptisprep.mvc.exception.ResourceNotFoundException;
 import com.aptisprep.mvc.repository.*;
+import com.aptisprep.mvc.service.exam.*;
 import com.aptisprep.mvc.service.exam.ExamAttemptService;
-import com.aptisprep.mvc.support.contract.GradingContextFormatter;
-import com.aptisprep.mvc.support.contract.IntegrationModels.*;
-import com.aptisprep.mvc.service.scoring.ScoringPolicyService;
 import com.aptisprep.mvc.service.grading.AttemptFinalizationService;
 import com.aptisprep.mvc.service.grading.ObjectiveGradingService;
+import com.aptisprep.mvc.service.scoring.ScoringPolicyService;
 import com.aptisprep.mvc.service.storage.StorageService;
-import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.aptisprep.mvc.support.contract.*;
+import com.aptisprep.mvc.support.contract.GradingContextFormatter;
+import com.aptisprep.mvc.support.contract.IntegrationModels.*;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.time.*;
 import java.util.*;
 import java.util.regex.Pattern;
-import java.util.stream.Stream;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
@@ -41,10 +37,8 @@ import org.springframework.web.multipart.MultipartFile;
  * public kiểm tra quyền/trạng thái trước khi ủy quyền cho các service chuyên trách.
  */
 abstract class ExamAttemptWorkflowServiceImpl implements ExamAttemptService {
-    private Pattern CHECKPOINT_REQUEST_KEY =
-            Pattern.compile("checkpoint:(\\d+):(\\d+):after:\\d+");
-    private Set<String> ACTIVE_STATES =
-            Set.of("IN_PROGRESS", "SUBMITTED", "WAITING_GRADING");
+    private Pattern CHECKPOINT_REQUEST_KEY = Pattern.compile("checkpoint:(\\d+):(\\d+):after:\\d+");
+    private Set<String> ACTIVE_STATES = Set.of("IN_PROGRESS", "SUBMITTED", "WAITING_GRADING");
     private UserRepository userRepository;
     private MockExamRepository mockExamRepository;
     private MockExamQuestionRepository mockExamQuestionRepository;
@@ -197,8 +191,7 @@ abstract class ExamAttemptWorkflowServiceImpl implements ExamAttemptService {
                 mockExamQuestionRepository.findByMockExamIdOrderByPosition(examId);
         if (links.isEmpty()) throw new BusinessRuleException("Đề thi chưa có câu hỏi");
         String key = normalizeRequestKey(requestKey, userId, examId);
-        Optional<ExamAttempt> byKey =
-                examAttemptRepository.findByUserIdAndRequestKey(userId, key);
+        Optional<ExamAttempt> byKey = examAttemptRepository.findByUserIdAndRequestKey(userId, key);
         if (byKey.isPresent()) {
             if (!Objects.equals(byKey.get().getMockExamId(), examId)) {
                 throw new BusinessRuleException("Request key đã được dùng cho một đề thi khác");
@@ -719,8 +712,7 @@ abstract class ExamAttemptWorkflowServiceImpl implements ExamAttemptService {
         }
         List<QuestionPage> questions = new ArrayList<>();
         int number = 1;
-        for (ExamQuestionSnapshot question :
-                examSnapshots.lockedQuestionEntities(attemptId)) {
+        for (ExamQuestionSnapshot question : examSnapshots.lockedQuestionEntities(attemptId)) {
             var details = answerDetails(attemptId, question.getSourceQuestionId());
             var page = toQuestionPage(question, details, number);
             questions.add(page);
@@ -730,8 +722,6 @@ abstract class ExamAttemptWorkflowServiceImpl implements ExamAttemptService {
                 current == null ? examSnapshots.require(attemptId).getTitle() : current.getTitle();
         return new AttemptReview(title, List.copyOf(questions));
     }
-
-
 
     @Transactional(readOnly = true)
     public MediaResource reviewMedia(Integer userId, Integer attemptId, Integer mediaId) {
@@ -856,22 +846,6 @@ abstract class ExamAttemptWorkflowServiceImpl implements ExamAttemptService {
                 sectionSkill,
                 List.copyOf(sections));
     }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     private void refreshSnapshotAnswerVersion(ExamAttempt attempt) {
         Integer attemptId = attempt.getId();
@@ -1007,8 +981,7 @@ abstract class ExamAttemptWorkflowServiceImpl implements ExamAttemptService {
         }
     }
 
-    private Map<Integer, UserAnswerDetail> answerDetails(
-            Integer attemptId, Integer questionId) {
+    private Map<Integer, UserAnswerDetail> answerDetails(Integer attemptId, Integer questionId) {
         UserAnswer answer =
                 userAnswerRepository
                         .findByAttemptIdAndQuestionId(attemptId, questionId)
@@ -1084,8 +1057,7 @@ abstract class ExamAttemptWorkflowServiceImpl implements ExamAttemptService {
                 mediaPages);
     }
 
-    private ItemPage toItemPage(
-            ExamItemSnapshot item, UserAnswerDetail answer, int number) {
+    private ItemPage toItemPage(ExamItemSnapshot item, UserAnswerDetail answer, int number) {
         List<OptionPage> options = new ArrayList<>();
         for (ExamOptionSnapshot option : item.getOptions()) {
             options.add(
@@ -1111,6 +1083,3 @@ abstract class ExamAttemptWorkflowServiceImpl implements ExamAttemptService {
                 item.getMaxWordCount());
     }
 }
-
-
-

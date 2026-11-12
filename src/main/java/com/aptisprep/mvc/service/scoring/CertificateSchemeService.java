@@ -13,10 +13,3 @@ public interface CertificateSchemeService {
     public ScoringSchemeDTO requireAvailableScheme(
             Integer certificateId, Integer schemeId, String skill);
 }
-
-
-
-
-
-
-

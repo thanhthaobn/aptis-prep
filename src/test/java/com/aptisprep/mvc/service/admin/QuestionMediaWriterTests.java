@@ -78,13 +78,3 @@ class QuestionMediaWriterTests {
         assertEquals("questions/saved.wav", saved.getValue().getMediaUrl());
     }
 }
-
-
-
-
-
-
-
-
-
-

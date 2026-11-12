@@ -1,15 +1,15 @@
 package com.aptisprep.mvc.controller.student;
 
-import com.aptisprep.mvc.dto.FlashcardSetDTO;
 import com.aptisprep.mvc.dto.FlashcardDTO;
+import com.aptisprep.mvc.dto.FlashcardSetDTO;
 import com.aptisprep.mvc.exception.BusinessRuleException;
 import com.aptisprep.mvc.service.learning.FlashcardSetService;
 import com.aptisprep.mvc.service.learning.LessonService;
 import jakarta.validation.Valid;
-import java.util.ArrayList;
 import java.security.Principal;
-import java.util.UUID;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -23,8 +23,7 @@ public class StudentFlashcardController {
     private final LessonService lessonService;
 
     public StudentFlashcardController(
-            FlashcardSetService flashcardSetService,
-            LessonService lessonService) {
+            FlashcardSetService flashcardSetService, LessonService lessonService) {
         this.flashcardSetService = flashcardSetService;
         this.lessonService = lessonService;
     }
@@ -40,17 +39,15 @@ public class StudentFlashcardController {
             Model model) {
         List<FlashcardSetDTO> all = flashcardSetService.listForStudent(principal.getName());
         List<FlashcardSetDTO> visible =
-                flashcardSetService.filteredListForStudent(principal.getName(), source, q, skill, level, sort);
+                flashcardSetService.filteredListForStudent(
+                        principal.getName(), source, q, skill, level, sort);
         model.addAttribute("sets", visible);
         model.addAttribute("q", q);
         model.addAttribute("selectedSkill", skill);
         model.addAttribute("selectedLevel", level);
         model.addAttribute("selectedSort", sort);
         model.addAttribute(
-                "lessonResultCount",
-                visible.stream()
-                        .filter(set -> !set.isPersonal())
-                        .count());
+                "lessonResultCount", visible.stream().filter(set -> !set.isPersonal()).count());
         model.addAttribute(
                 "mineResultCount",
                 visible.stream().filter(streamValue -> streamValue.isPersonal()).count());
@@ -58,28 +55,17 @@ public class StudentFlashcardController {
         model.addAttribute("skills", lessonService.getSkills());
         model.addAttribute("levels", lessonService.getLevels());
         model.addAttribute(
-                "totalCards",
-                all.stream()
-                        .mapToInt(
-                                streamValue -> streamValue.getCount())
-                        .sum());
+                "totalCards", all.stream().mapToInt(streamValue -> streamValue.getCount()).sum());
         model.addAttribute(
                 "visibleCards",
-                visible.stream()
-                        .mapToInt(
-                                streamValue -> streamValue.getCount())
-                        .sum());
+                visible.stream().mapToInt(streamValue -> streamValue.getCount()).sum());
         model.addAttribute("selectedSource", source);
         model.addAttribute("totalSets", all.size());
         model.addAttribute(
-                "mineCount",
-                all.stream().filter(streamValue -> streamValue.isPersonal()).count());
+                "mineCount", all.stream().filter(streamValue -> streamValue.isPersonal()).count());
         model.addAttribute(
                 "lessonCount",
-                all.stream()
-                        .filter(
-                                set -> !set.isPersonal() && set.getLessonId() != null)
-                        .count());
+                all.stream().filter(set -> !set.isPersonal() && set.getLessonId() != null).count());
         return "student/flashcards/list";
     }
 
@@ -151,9 +137,11 @@ public class StudentFlashcardController {
     }
 
     @PostMapping("/student/flashcards/{id}/archive")
-    public String archive(@PathVariable Integer id, Principal principal, RedirectAttributes redirectAttributes) {
+    public String archive(
+            @PathVariable Integer id, Principal principal, RedirectAttributes redirectAttributes) {
         flashcardSetService.archivePersonal(id, principal.getName());
-        redirectAttributes.addFlashAttribute("message", "Đã lưu trữ bộ thẻ. Bạn có thể tạo lại khi cần.");
+        redirectAttributes.addFlashAttribute(
+                "message", "Đã lưu trữ bộ thẻ. Bạn có thể tạo lại khi cần.");
         return "redirect:/student/flashcards";
     }
 
@@ -207,7 +195,9 @@ public class StudentFlashcardController {
         List<FlashcardDTO> allCards = flashcardSetService.study(id, principal.getName());
         List<FlashcardDTO> queue =
                 unlearned
-                        ? allCards.stream().filter(item -> !"MASTERED".equals(item.getState())).toList()
+                        ? allCards.stream()
+                                .filter(item -> !"MASTERED".equals(item.getState()))
+                                .toList()
                         : allCards;
         int safeCard = queue.isEmpty() ? 0 : Math.max(0, Math.min(card, queue.size() - 1));
         model.addAttribute("cards", allCards);
@@ -252,10 +242,3 @@ public class StudentFlashcardController {
                 + unlearned;
     }
 }
-
-
-
-
-
-
-

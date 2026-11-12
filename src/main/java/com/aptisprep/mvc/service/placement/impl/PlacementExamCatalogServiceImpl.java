@@ -1,8 +1,5 @@
 package com.aptisprep.mvc.service.placement.impl;
 
-import com.aptisprep.mvc.service.placement.PlacementExamCatalogService;
-import org.springframework.stereotype.Service;
-
 import com.aptisprep.mvc.entity.MockExam;
 import com.aptisprep.mvc.enums.Skill;
 import com.aptisprep.mvc.exception.BusinessRuleException;
@@ -10,10 +7,11 @@ import com.aptisprep.mvc.repository.MockExamQuestionRepository;
 import com.aptisprep.mvc.repository.MockExamRepository;
 import com.aptisprep.mvc.repository.MockExamSectionRepository;
 import com.aptisprep.mvc.service.exam.ExamReadinessService;
+import com.aptisprep.mvc.service.placement.PlacementExamCatalogService;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
-
+import org.springframework.stereotype.Service;
 
 /** Read model for Placement only. It deliberately does not expose the admin catalog model. */
 @Service
@@ -92,10 +90,3 @@ public class PlacementExamCatalogServiceImpl implements PlacementExamCatalogServ
         }
     }
 }
-
-
-
-
-
-
-

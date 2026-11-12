@@ -8,10 +8,3 @@ public record AttemptSubmittedEvent(
         Integer examId,
         String examType,
         LockedAttempt lockedAttempt) {}
-
-
-
-
-
-
-

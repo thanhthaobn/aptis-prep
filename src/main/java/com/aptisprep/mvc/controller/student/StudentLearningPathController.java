@@ -18,7 +18,9 @@ public class StudentLearningPathController {
     private final FlashcardSetService flashcardSetService;
 
     public StudentLearningPathController(
-            LearningPathService learningPathService, LessonService lessonService, FlashcardSetService flashcardSetService) {
+            LearningPathService learningPathService,
+            LessonService lessonService,
+            FlashcardSetService flashcardSetService) {
         this.learningPathService = learningPathService;
         this.lessonService = lessonService;
         this.flashcardSetService = flashcardSetService;
@@ -101,10 +103,3 @@ public class StudentLearningPathController {
         }
     }
 }
-
-
-
-
-
-
-

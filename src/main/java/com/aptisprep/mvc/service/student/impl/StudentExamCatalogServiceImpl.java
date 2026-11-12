@@ -15,10 +15,10 @@ import com.aptisprep.mvc.service.student.StudentExamCatalogService;
 import java.text.Normalizer;
 import java.util.*;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -26,8 +26,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 @Transactional(readOnly = true)
 public class StudentExamCatalogServiceImpl implements StudentExamCatalogService {
-    private List<String> examTypes =
-            List.of("PRACTICE", "FULL_MOCK", "PLACEMENT");
+    private List<String> examTypes = List.of("PRACTICE", "FULL_MOCK", "PLACEMENT");
     private List<String> sortOptions = List.of("level", "newest", "duration");
     private List<String> SKILL_ORDER =
             List.of(
@@ -111,8 +110,7 @@ public class StudentExamCatalogServiceImpl implements StudentExamCatalogService 
         LinkedHashMap<String, Long> counts = new LinkedHashMap<>();
         for (String type : examTypes()) {
             counts.put(
-                    type,
-                    matches.stream().filter(exam -> type.equals(exam.getExamType())).count());
+                    type, matches.stream().filter(exam -> type.equals(exam.getExamType())).count());
         }
         return counts;
     }
@@ -166,8 +164,7 @@ public class StudentExamCatalogServiceImpl implements StudentExamCatalogService 
         return index < 0 ? Integer.MAX_VALUE : index;
     }
 
-    private List<MockExam> filteredExams(
-            String query, String skill, String level, String state) {
+    private List<MockExam> filteredExams(String query, String skill, String level, String state) {
         String term = normalize(query);
         return mockExamRepository.findByStatusOrderByUpdatedAtDesc("PUBLISHED").stream()
                 .filter(exam -> !exam.isDemoOnly())
@@ -191,7 +188,9 @@ public class StudentExamCatalogServiceImpl implements StudentExamCatalogService 
                         Comparator.comparing(
                                         (MockExam streamValue) -> streamValue.getUpdatedAt(),
                                         Comparator.nullsLast(Comparator.reverseOrder()))
-                                .thenComparing((MockExam streamValue) -> streamValue.getId(), Comparator.reverseOrder()))
+                                .thenComparing(
+                                        (MockExam streamValue) -> streamValue.getId(),
+                                        Comparator.reverseOrder()))
                 .toList();
     }
 
@@ -248,7 +247,9 @@ public class StudentExamCatalogServiceImpl implements StudentExamCatalogService 
                                                             .filter(
                                                                     link ->
                                                                             section.getId()
-                                                                                    .equals(link.getMockExamSectionId()))
+                                                                                    .equals(
+                                                                                            link
+                                                                                                    .getMockExamSectionId()))
                                                             .count();
                                     sectionDTO.setQuestionCount(questionCount);
                                     sectionDTO.setSkillLabel(displaySkill(section.getSkill()));
@@ -346,10 +347,3 @@ public class StudentExamCatalogServiceImpl implements StudentExamCatalogService 
         };
     }
 }
-
-
-
-
-
-
-

@@ -1,13 +1,15 @@
 package com.aptisprep.mvc.controller.admin;
 
 import com.aptisprep.mvc.dto.MockExamDTO;
+import com.aptisprep.mvc.dto.MockExamSectionDTO;
 import com.aptisprep.mvc.dto.QuestionDTO;
 import com.aptisprep.mvc.dto.QuestionItemDTO;
-import com.aptisprep.mvc.dto.MockExamSectionDTO;
 import com.aptisprep.mvc.dto.ScoringSchemeDTO;
 import com.aptisprep.mvc.exception.BusinessRuleException;
 import com.aptisprep.mvc.service.admin.CatalogService;
 import jakarta.validation.Valid;
+import java.util.ArrayList;
+import java.util.List;
 import org.springframework.core.io.Resource;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -17,8 +19,6 @@ import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
-import java.util.ArrayList;
-import java.util.List;
 
 @Controller
 public class AdminCatalogController {
@@ -50,8 +50,7 @@ public class AdminCatalogController {
         model.addAttribute("skills", catalogService.skills());
         model.addAttribute("levels", catalogService.levels());
         model.addAttribute(
-                "pageData",
-                catalogService.questionPage(q, skill, status, kind, page, size));
+                "pageData", catalogService.questionPage(q, skill, status, kind, page, size));
         model.addAttribute("q", q);
         model.addAttribute("selectedSkill", skill);
         model.addAttribute("selectedStatus", status);
@@ -80,9 +79,7 @@ public class AdminCatalogController {
         model.addAttribute("catalog", catalogService.module("exams"));
         model.addAttribute("skills", catalogService.skills());
         model.addAttribute("levels", catalogService.levels());
-        model.addAttribute(
-                "pageData",
-                catalogService.examPage(q, skill, status, kind, page, size));
+        model.addAttribute("pageData", catalogService.examPage(q, skill, status, kind, page, size));
         model.addAttribute("q", q);
         model.addAttribute("selectedSkill", skill);
         model.addAttribute("selectedStatus", status);
@@ -294,9 +291,7 @@ public class AdminCatalogController {
 
     private void changeQuestionForm(QuestionDTO form, String action) {
         form.setItems(
-                form.getItems() == null
-                        ? new ArrayList<>()
-                        : new ArrayList<>(form.getItems()));
+                form.getItems() == null ? new ArrayList<>() : new ArrayList<>(form.getItems()));
         if (action.startsWith("REMOVE_ITEM_")) {
             try {
                 int index = Integer.parseInt(action.substring("REMOVE_ITEM_".length()));
@@ -420,13 +415,9 @@ public class AdminCatalogController {
 
     private List<QuestionDTO> filteredPublishedQuestionViews(MockExamDTO form) {
         String selectedLevel =
-                form.getQuestionLevelFilter() == null
-                        ? ""
-                        : form.getQuestionLevelFilter().trim();
+                form.getQuestionLevelFilter() == null ? "" : form.getQuestionLevelFilter().trim();
         String selectedType =
-                form.getQuestionTypeFilter() == null
-                        ? ""
-                        : form.getQuestionTypeFilter().trim();
+                form.getQuestionTypeFilter() == null ? "" : form.getQuestionTypeFilter().trim();
         return catalogService.publishedQuestionViews().stream()
                 .filter(
                         question ->
@@ -522,12 +513,4 @@ public class AdminCatalogController {
         catalogService.unpublishExam(id);
         return "redirect:/admin/exams/" + id;
     }
-
 }
-
-
-
-
-
-
-

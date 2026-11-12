@@ -9,10 +9,3 @@ public interface MockExamSectionRepository extends JpaRepository<MockExamSection
 
     void deleteByMockExamId(Integer mockExamId);
 }
-
-
-
-
-
-
-

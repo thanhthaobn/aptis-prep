@@ -103,7 +103,6 @@ public class ExamAttempt {
         this.createdAt = createdAt;
     }
 
-
     @PrePersist
     void onCreate() {
         if (startedAt == null) startedAt = LocalDateTime.now();
@@ -234,7 +233,6 @@ public class ExamAttempt {
         requestKey = value;
     }
 
-
     public void setId(Integer value) {
         this.id = value;
     }
@@ -247,10 +245,3 @@ public class ExamAttempt {
         this.createdAt = value;
     }
 }
-
-
-
-
-
-
-

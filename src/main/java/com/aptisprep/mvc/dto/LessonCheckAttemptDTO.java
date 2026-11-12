@@ -39,6 +39,7 @@ public class LessonCheckAttemptDTO {
         this.answers = answers;
         this.feedback = feedback;
     }
+
     public static LessonCheckAttemptDTO convertEntityToDto(LessonCheckAttempt entity) {
         if (entity == null) return null;
         return new LessonCheckAttemptDTO(
@@ -139,14 +140,3 @@ public class LessonCheckAttemptDTO {
         this.feedback = feedback;
     }
 }
-
-
-
-
-
-
-
-
-
-
-

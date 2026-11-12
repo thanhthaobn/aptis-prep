@@ -56,10 +56,3 @@ public interface ScoringAdminService {
     public void saveScaleRule(
             String adminEmail, Integer schemeId, String skill, ScoringScaleRuleDTO form);
 }
-
-
-
-
-
-
-

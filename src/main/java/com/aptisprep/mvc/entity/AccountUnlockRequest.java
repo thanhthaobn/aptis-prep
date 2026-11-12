@@ -45,20 +45,63 @@ public class AccountUnlockRequest {
     @Column(name = "handled_at")
     private LocalDateTime handledAt;
 
-    public Integer getId() { return id; }
-    public User getUser() { return user; }
-    public String getMessage() { return message; }
-    public UnlockRequestStatus getStatus() { return status; }
-    public String getAdminNote() { return adminNote; }
-    public User getHandledBy() { return handledBy; }
-    public LocalDateTime getCreatedAt() { return createdAt; }
-    public LocalDateTime getHandledAt() { return handledAt; }
+    public Integer getId() {
+        return id;
+    }
 
-    public void setUser(User user) { this.user = user; }
-    public void setMessage(String message) { this.message = message; }
-    public void setStatus(UnlockRequestStatus status) { this.status = status; }
-    public void setAdminNote(String adminNote) { this.adminNote = adminNote; }
-    public void setHandledBy(User handledBy) { this.handledBy = handledBy; }
-    public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
-    public void setHandledAt(LocalDateTime handledAt) { this.handledAt = handledAt; }
+    public User getUser() {
+        return user;
+    }
+
+    public String getMessage() {
+        return message;
+    }
+
+    public UnlockRequestStatus getStatus() {
+        return status;
+    }
+
+    public String getAdminNote() {
+        return adminNote;
+    }
+
+    public User getHandledBy() {
+        return handledBy;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public LocalDateTime getHandledAt() {
+        return handledAt;
+    }
+
+    public void setUser(User user) {
+        this.user = user;
+    }
+
+    public void setMessage(String message) {
+        this.message = message;
+    }
+
+    public void setStatus(UnlockRequestStatus status) {
+        this.status = status;
+    }
+
+    public void setAdminNote(String adminNote) {
+        this.adminNote = adminNote;
+    }
+
+    public void setHandledBy(User handledBy) {
+        this.handledBy = handledBy;
+    }
+
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    public void setHandledAt(LocalDateTime handledAt) {
+        this.handledAt = handledAt;
+    }
 }

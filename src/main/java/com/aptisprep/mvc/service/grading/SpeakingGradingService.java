@@ -11,10 +11,3 @@ public interface SpeakingGradingService {
 
     public GradingResult gradeTranscript(String prompt, String transcript);
 }
-
-
-
-
-
-
-

@@ -114,14 +114,3 @@ public class UserMediaActivityDTO {
         this.playTokenExpiresAt = playTokenExpiresAt;
     }
 }
-
-
-
-
-
-
-
-
-
-
-

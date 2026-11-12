@@ -9,10 +9,9 @@ import com.aptisprep.mvc.service.learning.CheckpointStatusService;
 import com.aptisprep.mvc.support.contract.IntegrationModels.*;
 import java.time.ZoneId;
 import java.util.*;
-
-/** Checkpoint read/status rules shared by stage summaries and checkpoint commands. */
 import org.springframework.stereotype.Service;
 
+/** Checkpoint read/status rules shared by stage summaries and checkpoint commands. */
 @Service
 public class CheckpointStatusServiceImpl implements CheckpointStatusService {
     private ExamAttemptService attempts;
@@ -72,7 +71,9 @@ public class CheckpointStatusServiceImpl implements CheckpointStatusService {
         return history.items().stream()
                 .filter(result -> Objects.equals(result.examId(), path.getCheckpointExamId()))
                 .filter(result -> result.submittedAt() == null || notBeforePath(result, path))
-                .sorted(Comparator.comparing((AttemptResult streamValue) -> streamValue.attemptId()).reversed())
+                .sorted(
+                        Comparator.comparing((AttemptResult streamValue) -> streamValue.attemptId())
+                                .reversed())
                 .toList();
     }
 
@@ -119,10 +120,3 @@ public class CheckpointStatusServiceImpl implements CheckpointStatusService {
                 : value.trim().toUpperCase(Locale.ROOT).replaceAll("[^A-Z0-9]+", "_");
     }
 }
-
-
-
-
-
-
-

@@ -88,7 +88,6 @@ public class ExamSkillResult {
         this.createdAt = createdAt;
     }
 
-
     @PrePersist
     void onCreate() {
         if (createdAt == null) createdAt = LocalDateTime.now();
@@ -194,7 +193,6 @@ public class ExamSkillResult {
         subjectiveRawScore = value;
     }
 
-
     public void setId(Integer value) {
         this.id = value;
     }
@@ -207,10 +205,3 @@ public class ExamSkillResult {
         this.createdAt = value;
     }
 }
-
-
-
-
-
-
-

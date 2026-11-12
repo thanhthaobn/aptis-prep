@@ -10,10 +10,3 @@ public interface AiAssessmentRepository extends JpaRepository<AiAssessment, Inte
 
     Optional<AiAssessment> findFirstByAssessmentKeyOrderByIdDesc(String assessmentKey);
 }
-
-
-
-
-
-
-

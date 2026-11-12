@@ -19,10 +19,11 @@ public record LoginSession(int userId, String credentialVersion) {
 
     public static void start(HttpServletRequest request, UserDTO account) {
         end(request);
-        request.getSession().setAttribute(
-                ATTRIBUTE,
-                new LoginSession(
-                        account.getId(), credentialVersion(account.getPasswordHash())));
+        request.getSession()
+                .setAttribute(
+                        ATTRIBUTE,
+                        new LoginSession(
+                                account.getId(), credentialVersion(account.getPasswordHash())));
     }
 
     static void store(HttpSession session, User user) {
@@ -66,10 +67,3 @@ public record LoginSession(int userId, String credentialVersion) {
         }
     }
 }
-
-
-
-
-
-
-

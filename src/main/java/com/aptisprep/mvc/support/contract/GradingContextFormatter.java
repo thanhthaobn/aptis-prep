@@ -51,10 +51,3 @@ public final class GradingContextFormatter {
         return value == null ? "" : value;
     }
 }
-
-
-
-
-
-
-

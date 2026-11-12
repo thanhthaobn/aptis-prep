@@ -1,17 +1,16 @@
 package com.aptisprep.mvc.service.learning.impl;
 
-import com.aptisprep.mvc.service.learning.*;
-import com.aptisprep.mvc.entity.*;
-import com.aptisprep.mvc.service.learning.LearningPathService;
 import com.aptisprep.mvc.dto.MockExamDTO;
+import com.aptisprep.mvc.entity.*;
+import com.aptisprep.mvc.enums.*;
+import com.aptisprep.mvc.exception.*;
+import com.aptisprep.mvc.repository.*;
 import com.aptisprep.mvc.service.account.AccountAccessService;
 import com.aptisprep.mvc.service.catalog.PublishedExamCatalogService;
 import com.aptisprep.mvc.service.exam.ExamAttemptCommandService;
 import com.aptisprep.mvc.service.exam.ExamAttemptService;
-import com.aptisprep.mvc.service.exam.ExamAttemptQueryService;
-import com.aptisprep.mvc.enums.*;
-import com.aptisprep.mvc.exception.*;
-import com.aptisprep.mvc.repository.*;
+import com.aptisprep.mvc.service.learning.*;
+import com.aptisprep.mvc.service.learning.LearningPathService;
 import com.aptisprep.mvc.support.contract.IntegrationModels.*;
 import com.aptisprep.mvc.support.learning.*;
 import jakarta.persistence.*;
@@ -119,12 +118,6 @@ public class LearningPathServiceImpl implements LearningPathService {
         return summaryOf(owned(userId, pathId));
     }
 
-
-
-
-
-
-
     @Transactional(readOnly = true)
     public List<Stage> stages(String email, String skill) {
         User user = active(email);
@@ -169,7 +162,8 @@ public class LearningPathServiceImpl implements LearningPathService {
                                                                                             .equals(
                                                                                                     item.getLesson()
                                                                                                             .getStatus()),
-                                                                                    item.getLesson().getTopic(),
+                                                                                    item.getLesson()
+                                                                                            .getTopic(),
                                                                                     item
                                                                                             .isRequired(),
                                                                                     completed(
@@ -281,9 +275,12 @@ public class LearningPathServiceImpl implements LearningPathService {
         learningPathRepository.save(path);
         List<AttemptResult> previous = checkpointStatus.history(path);
         Optional<AttemptResult> unfinished =
-                previous.stream().filter(streamValue -> checkpointStatus.unfinished(streamValue)).findFirst();
+                previous.stream()
+                        .filter(streamValue -> checkpointStatus.unfinished(streamValue))
+                        .findFirst();
         if (unfinished.isPresent()) return unfinished.get().attemptId();
-        int last = previous.stream().mapToInt(streamValue -> streamValue.attemptId()).max().orElse(0);
+        int last =
+                previous.stream().mapToInt(streamValue -> streamValue.attemptId()).max().orElse(0);
         return engine.startCheckpoint(
                         userId,
                         checkpoint.getId(),
@@ -314,8 +311,7 @@ public class LearningPathServiceImpl implements LearningPathService {
                                                 "Không xác định được chặng học của checkpoint"));
         LearningPath path = owned(userId, pathId);
         if (!Objects.equals(path.getCheckpointExamId(), previousResult.examId()))
-            throw new BusinessRuleException(
-                    "Checkpoint không khớp với chặng học của kết quả");
+            throw new BusinessRuleException("Checkpoint không khớp với chặng học của kết quả");
 
         // Chặng đang hoạt động có thể làm lại sau khi trượt. Chặng đã hoàn thành
         // chỉ được làm lại như một lần luyện thêm, không mở lại trình độ cũ.
@@ -343,8 +339,7 @@ public class LearningPathServiceImpl implements LearningPathService {
                                 .mapToInt(AttemptResult::attemptId)
                                 .max()
                                 .orElse(0));
-        return attempts
-                .startCheckpointRetake(
+        return attempts.startCheckpointRetake(
                         userId,
                         checkpoint.getId(),
                         pathId,
@@ -419,8 +414,6 @@ public class LearningPathServiceImpl implements LearningPathService {
         syncPaths(user, false);
     }
 
-
-
     private int syncPaths(User user, boolean refreshContent) {
         List<Lesson> published =
                 lessonRepository.findByStatusOrderBySkillAscCefrLevelAscDisplayOrderAsc(
@@ -478,8 +471,10 @@ public class LearningPathServiceImpl implements LearningPathService {
             if (same
                     && !invalidAssignment
                     && (!refreshContent
-                            || assigned.equals(selected.stream().map(streamValue -> streamValue.getId()).toList())))
-                continue;
+                            || assigned.equals(
+                                    selected.stream()
+                                            .map(streamValue -> streamValue.getId())
+                                            .toList()))) continue;
             if (current != null) {
                 archive(current);
                 changed++;
@@ -534,8 +529,14 @@ public class LearningPathServiceImpl implements LearningPathService {
     private PathProgress summaryOf(LearningPath path) {
         List<LearningPathItem> assigned =
                 learningPathItemRepository.findByLearningPathIdOrderByPositionAsc(path.getId());
-        int total = assigned.size(), done = (int) assigned.stream().filter(streamValue -> completed(streamValue)).count();
-        int required = (int) assigned.stream().filter(streamValue -> streamValue.isRequired()).count();
+        int total = assigned.size(),
+                done =
+                        (int)
+                                assigned.stream()
+                                        .filter(streamValue -> completed(streamValue))
+                                        .count();
+        int required =
+                (int) assigned.stream().filter(streamValue -> streamValue.isRequired()).count();
         int completedRequired =
                 (int)
                         assigned.stream()
@@ -684,4 +685,3 @@ public class LearningPathServiceImpl implements LearningPathService {
         return false;
     }
 }
-

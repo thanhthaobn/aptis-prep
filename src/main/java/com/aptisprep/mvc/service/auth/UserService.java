@@ -12,10 +12,3 @@ public interface UserService {
 
     public User registerStudent(UserDTO form);
 }
-
-
-
-
-
-
-

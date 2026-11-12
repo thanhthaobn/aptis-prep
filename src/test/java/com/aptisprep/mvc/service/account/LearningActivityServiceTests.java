@@ -2,33 +2,34 @@ package com.aptisprep.mvc.service.account;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.aptisprep.mvc.service.account.impl.LearningActivityServiceImpl;
 import java.time.LocalDate;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
-import com.aptisprep.mvc.service.account.impl.LearningActivityServiceImpl;
 
 class LearningActivityServiceTests {
     @Test
     void calculatesCurrentAndLongestStreakFromRealActivityDates() {
         LocalDate today = LocalDate.of(2026, 10, 21);
         var result =
-                new LearningActivityServiceImpl(null, null, null, null, null).summarize(
-                        Map.of(
-                                today,
-                                2,
-                                today.minusDays(1),
-                                1,
-                                today.minusDays(2),
-                                4,
-                                today.minusDays(5),
-                                1,
-                                today.minusDays(6),
-                                1,
-                                today.minusDays(7),
-                                1,
-                                today.minusDays(8),
-                                1),
-                        today);
+                new LearningActivityServiceImpl(null, null, null, null, null)
+                        .summarize(
+                                Map.of(
+                                        today,
+                                        2,
+                                        today.minusDays(1),
+                                        1,
+                                        today.minusDays(2),
+                                        4,
+                                        today.minusDays(5),
+                                        1,
+                                        today.minusDays(6),
+                                        1,
+                                        today.minusDays(7),
+                                        1,
+                                        today.minusDays(8),
+                                        1),
+                                today);
         assertThat(result.currentStreak()).isEqualTo(3);
         assertThat(result.longestStreak()).isEqualTo(4);
         assertThat(result.activeDays()).isEqualTo(7);
@@ -41,21 +42,12 @@ class LearningActivityServiceTests {
     void keepsYesterdayStreakCurrentUntilLearnerStudiesToday() {
         LocalDate today = LocalDate.of(2026, 10, 21);
         var result =
-                new LearningActivityServiceImpl(null, null, null, null, null).summarize(
-                        Map.of(
-                                today.minusDays(1), 2,
-                                today.minusDays(2), 1),
-                        today);
+                new LearningActivityServiceImpl(null, null, null, null, null)
+                        .summarize(
+                                Map.of(
+                                        today.minusDays(1), 2,
+                                        today.minusDays(2), 1),
+                                today);
         assertThat(result.currentStreak()).isEqualTo(2);
     }
 }
-
-
-
-
-
-
-
-
-
-

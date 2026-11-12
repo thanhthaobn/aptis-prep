@@ -1,16 +1,15 @@
 package com.aptisprep.mvc.service.scoring.impl;
 
-import com.aptisprep.mvc.service.scoring.*;
-
+import com.aptisprep.mvc.dto.CertificateDTO;
+import com.aptisprep.mvc.dto.ScoringSchemeDTO;
 import com.aptisprep.mvc.entity.*;
 import com.aptisprep.mvc.enums.RecordStatus;
 import com.aptisprep.mvc.enums.Skill;
 import com.aptisprep.mvc.exception.BusinessRuleException;
 import com.aptisprep.mvc.exception.ResourceNotFoundException;
 import com.aptisprep.mvc.repository.*;
+import com.aptisprep.mvc.service.scoring.*;
 import com.aptisprep.mvc.service.scoring.CertificateSchemeService;
-import com.aptisprep.mvc.dto.CertificateDTO;
-import com.aptisprep.mvc.dto.ScoringSchemeDTO;
 import com.aptisprep.mvc.support.scoring.ScoreBandCoverage;
 import java.util.*;
 import org.springframework.stereotype.Service;
@@ -105,17 +104,12 @@ public class CertificateSchemeServiceImpl implements CertificateSchemeService {
     private ScoringSchemeDTO toDto(ScoringScheme scheme) {
         ScoringSchemeDTO result = ScoringSchemeDTO.convertEntityToDto(scheme);
         result.setSkills(
-                scoreBandRepository.findBySchemeIdOrderBySkillAscMinScoreAsc(scheme.getId()).stream()
+                scoreBandRepository
+                        .findBySchemeIdOrderBySkillAscMinScoreAsc(scheme.getId())
+                        .stream()
                         .map(value -> value.getSkill())
                         .distinct()
                         .toList());
         return result;
     }
 }
-
-
-
-
-
-
-

@@ -40,10 +40,3 @@ public interface StudentManagementService {
 
     public long lockedStudents();
 }
-
-
-
-
-
-
-

@@ -9,10 +9,3 @@ public interface QuestionOptionRepository extends JpaRepository<QuestionOption, 
 
     void deleteByQuestionItemId(Integer questionItemId);
 }
-
-
-
-
-
-
-

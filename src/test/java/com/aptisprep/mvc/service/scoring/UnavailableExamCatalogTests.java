@@ -1,4 +1,5 @@
 package com.aptisprep.mvc.service.scoring;
+
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
@@ -36,20 +37,9 @@ class UnavailableExamCatalogTests {
                         exams, sections, questions, validator);
         var result = catalog.browse("", "", "", "", "PRACTICE", "level", PageRequest.of(0, 9));
         assertThat(result.getTotalElements()).isZero();
-        assertThat(catalog.categoryCounts("", "", "", "").values())
-                .allMatch(count -> count == 0L);
+        assertThat(catalog.categoryCounts("", "", "", "").values()).allMatch(count -> count == 0L);
         assertThatThrownBy(() -> catalog.entry("exams", 99))
                 .isInstanceOf(ResourceNotFoundException.class);
         verify(exams, never()).delete(any());
     }
 }
-
-
-
-
-
-
-
-
-
-

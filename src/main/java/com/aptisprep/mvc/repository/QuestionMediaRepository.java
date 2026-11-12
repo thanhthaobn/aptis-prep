@@ -7,10 +7,3 @@ import org.springframework.data.jpa.repository.JpaRepository;
 public interface QuestionMediaRepository extends JpaRepository<QuestionMedia, Integer> {
     List<QuestionMedia> findByQuestionIdOrderByPosition(Integer questionId);
 }
-
-
-
-
-
-
-

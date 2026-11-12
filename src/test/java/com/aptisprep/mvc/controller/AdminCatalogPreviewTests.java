@@ -192,13 +192,3 @@ class AdminCatalogPreviewTests {
                 .andExpect(status().isBadRequest());
     }
 }
-
-
-
-
-
-
-
-
-
-

@@ -128,7 +128,6 @@ public class Certificate {
         this.createdBy = createdBy;
     }
 
-
     public void setId(Integer value) {
         this.id = value;
     }
@@ -141,10 +140,3 @@ public class Certificate {
         this.updatedAt = value;
     }
 }
-
-
-
-
-
-
-

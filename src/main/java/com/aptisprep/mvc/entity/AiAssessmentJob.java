@@ -154,7 +154,6 @@ public class AiAssessmentJob {
         this.processingToken = processingToken;
     }
 
-
     @PrePersist
     void onCreate() {
         LocalDateTime now = LocalDateTime.now();
@@ -323,7 +322,6 @@ public class AiAssessmentJob {
         processingToken = value;
     }
 
-
     public void setId(Integer value) {
         this.id = value;
     }
@@ -336,10 +334,3 @@ public class AiAssessmentJob {
         this.updatedAt = value;
     }
 }
-
-
-
-
-
-
-

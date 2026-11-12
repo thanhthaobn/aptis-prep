@@ -97,13 +97,3 @@ class NavbarActiveTests {
         users.save(value);
     }
 }
-
-
-
-
-
-
-
-
-
-

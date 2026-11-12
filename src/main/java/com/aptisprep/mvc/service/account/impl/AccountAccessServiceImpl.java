@@ -1,7 +1,7 @@
 package com.aptisprep.mvc.service.account.impl;
 
-import com.aptisprep.mvc.entity.*;
 import com.aptisprep.mvc.dto.UserDTO;
+import com.aptisprep.mvc.entity.*;
 import com.aptisprep.mvc.enums.*;
 import com.aptisprep.mvc.exception.AccessDeniedException;
 import com.aptisprep.mvc.exception.BusinessRuleException;
@@ -300,15 +300,10 @@ public class AccountAccessServiceImpl implements AccountAccessService {
         String normalized = value.trim().toUpperCase(Locale.ROOT).replaceAll("[^A-Z0-9]+", "_");
         return normalized.equals("GRAMMAR_VOCABULARY")
                 ? "GRAMMAR_VOCABULARY"
-                : Arrays.stream(Skill.values()).map(streamValue -> streamValue.name()).anyMatch(streamValue -> normalized.equals(streamValue))
+                : Arrays.stream(Skill.values())
+                                .map(streamValue -> streamValue.name())
+                                .anyMatch(streamValue -> normalized.equals(streamValue))
                         ? normalized
                         : null;
     }
 }
-
-
-
-
-
-
-

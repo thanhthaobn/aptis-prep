@@ -6,10 +6,3 @@ public enum AiJobState {
     COMPLETED,
     ERROR
 }
-
-
-
-
-
-
-

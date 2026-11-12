@@ -57,14 +57,14 @@ public class LessonWorkSubmission {
         this.submittedAt = submittedAt;
     }
 
-
     public LessonWorkSubmission() {}
 
     public LessonWorkSubmission(Integer userId, Lesson lesson, LessonResponse work) {
         this.userId = userId;
         lessonId = lesson.getId();
         skill = lesson.getSkill();
-        prompt = lesson.getPracticePrompt() == null ? lesson.getTitle() : lesson.getPracticePrompt();
+        prompt =
+                lesson.getPracticePrompt() == null ? lesson.getTitle() : lesson.getPracticePrompt();
         contextSnapshotEntity = LessonContextSnapshot.capture(lesson);
         text = work.getText();
         audioPath = work.getAudioPath();
@@ -102,7 +102,6 @@ public class LessonWorkSubmission {
     public LocalDateTime getSubmittedAt() {
         return submittedAt;
     }
-
 
     public LessonContextSnapshot getContextSnapshotEntity() {
         return contextSnapshotEntity;
@@ -144,10 +143,3 @@ public class LessonWorkSubmission {
         this.submittedAt = value;
     }
 }
-
-
-
-
-
-
-

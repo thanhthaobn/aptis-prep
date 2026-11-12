@@ -16,10 +16,3 @@ public class AptisPrepApplication {
         SpringApplication.run(AptisPrepApplication.class, args);
     }
 }
-
-
-
-
-
-
-

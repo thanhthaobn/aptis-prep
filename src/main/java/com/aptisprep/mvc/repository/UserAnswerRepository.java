@@ -14,10 +14,3 @@ public interface UserAnswerRepository extends JpaRepository<UserAnswer, Integer>
 
     boolean existsByQuestionId(Integer questionId);
 }
-
-
-
-
-
-
-

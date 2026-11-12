@@ -117,7 +117,6 @@ public class UserAnswer {
         this.updatedAt = updatedAt;
     }
 
-
     @PrePersist
     void onCreate() {
         LocalDateTime now = LocalDateTime.now();
@@ -246,7 +245,6 @@ public class UserAnswer {
         aiModel = value;
     }
 
-
     public void setId(Integer value) {
         this.id = value;
     }
@@ -267,10 +265,3 @@ public class UserAnswer {
         this.updatedAt = value;
     }
 }
-
-
-
-
-
-
-

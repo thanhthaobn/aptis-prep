@@ -253,14 +253,3 @@ public class ExamAttemptDTO {
         this.skillResults = skillResults;
     }
 }
-
-
-
-
-
-
-
-
-
-
-

@@ -1,18 +1,19 @@
 package com.aptisprep.mvc.dto;
 
-import java.time.*;
-import java.math.*;
-import java.util.*;
-
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Size;
 import com.aptisprep.mvc.entity.*;
 import com.aptisprep.mvc.enums.*;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
+import java.math.*;
+import java.time.*;
+import java.util.*;
+
 public class CertificateDTO {
     private Integer id;
     private User createdBy;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+
     @NotBlank(message = "Tên chứng chỉ không được để trống")
     @Size(max = 255, message = "Tên chứng chỉ tối đa 255 ký tự")
     private String name;
@@ -30,14 +31,14 @@ public class CertificateDTO {
     public CertificateDTO() {}
 
     public CertificateDTO(
-        String name,
-        String code,
-        String description,
-        String status,
-        Integer id,
-        User createdBy,
-        LocalDateTime createdAt,
-        LocalDateTime updatedAt) {
+            String name,
+            String code,
+            String description,
+            String status,
+            Integer id,
+            User createdBy,
+            LocalDateTime createdAt,
+            LocalDateTime updatedAt) {
         this.name = name;
         this.code = code;
         this.description = description;
@@ -138,10 +139,3 @@ public class CertificateDTO {
         this.updatedAt = value;
     }
 }
-
-
-
-
-
-
-

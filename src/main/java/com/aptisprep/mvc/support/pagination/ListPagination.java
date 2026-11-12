@@ -25,10 +25,3 @@ public final class ListPagination {
                 items.subList(start, end), PageRequest.of(page, PAGE_SIZE), items.size());
     }
 }
-
-
-
-
-
-
-

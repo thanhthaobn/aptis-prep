@@ -11,10 +11,3 @@ public interface UserFlashcardProgressRepository
 
     List<UserFlashcardProgress> findByUserId(Integer userId);
 }
-
-
-
-
-
-
-

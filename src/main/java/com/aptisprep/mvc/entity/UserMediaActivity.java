@@ -52,7 +52,6 @@ public class UserMediaActivity {
         this.playTokenExpiresAt = playTokenExpiresAt;
     }
 
-
     public Integer getId() {
         return id;
     }
@@ -105,15 +104,7 @@ public class UserMediaActivity {
         playTokenExpiresAt = value;
     }
 
-
     public void setId(Integer value) {
         this.id = value;
     }
 }
-
-
-
-
-
-
-

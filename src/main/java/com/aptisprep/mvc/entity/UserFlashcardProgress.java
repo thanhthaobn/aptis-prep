@@ -67,7 +67,6 @@ public class UserFlashcardProgress {
         this.easeFactor = easeFactor;
     }
 
-
     public Integer getId() {
         return id;
     }
@@ -136,7 +135,6 @@ public class UserFlashcardProgress {
         easeFactor = v;
     }
 
-
     public void setId(Integer value) {
         this.id = value;
     }
@@ -149,10 +147,3 @@ public class UserFlashcardProgress {
         return flashcard;
     }
 }
-
-
-
-
-
-
-

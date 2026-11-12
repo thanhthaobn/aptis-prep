@@ -218,14 +218,3 @@ public class UserAnswerDetailDTO {
         this.updatedAt = updatedAt;
     }
 }
-
-
-
-
-
-
-
-
-
-
-

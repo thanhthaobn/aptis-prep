@@ -11,8 +11,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.security.Principal;
 import java.util.List;
-import org.springframework.core.io.Resource;
 import org.springframework.core.io.InputStreamResource;
+import org.springframework.core.io.Resource;
 import org.springframework.http.*;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
@@ -52,7 +52,9 @@ public class LessonAudioController {
     private final StorageService storage;
 
     public LessonAudioController(
-            LessonService lessonService, LessonTeachingService lessonTeachingService, StorageService storage) {
+            LessonService lessonService,
+            LessonTeachingService lessonTeachingService,
+            StorageService storage) {
         this.lessonService = lessonService;
         this.lessonTeachingService = lessonTeachingService;
         this.storage = storage;
@@ -64,7 +66,8 @@ public class LessonAudioController {
             @RequestHeader(value = HttpHeaders.RANGE, required = false) String rangeHeader,
             Principal principal) {
         LessonDTO lesson =
-                lessonService.requireForMediaView(id, principal.getName(), "Không tìm thấy âm thanh");
+                lessonService.requireForMediaView(
+                        id, principal.getName(), "Không tìm thấy âm thanh");
         if (lesson.getAudioPath() == null)
             throw new ResourceNotFoundException("Bài học chưa có âm thanh");
         Resource resource = storage.load(lesson.getAudioPath());
@@ -187,7 +190,8 @@ public class LessonAudioController {
     @GetMapping("/lesson-media/{id}/image")
     public ResponseEntity<Resource> image(@PathVariable Integer id, Principal principal) {
         LessonDTO lesson =
-                lessonService.requireForMediaView(id, principal.getName(), "Không tìm thấy hình ảnh");
+                lessonService.requireForMediaView(
+                        id, principal.getName(), "Không tìm thấy hình ảnh");
         if (lesson.getImagePath() == null)
             throw new ResourceNotFoundException("Bài học chưa có hình ảnh");
         return ResponseEntity.ok()
@@ -198,7 +202,8 @@ public class LessonAudioController {
 
     @GetMapping("/lesson-media/{id}/video")
     public ResponseEntity<Resource> video(@PathVariable Integer id, Principal principal) {
-        LessonDTO lesson = lessonService.requireForMediaView(id, principal.getName(), "Không tìm thấy video");
+        LessonDTO lesson =
+                lessonService.requireForMediaView(id, principal.getName(), "Không tìm thấy video");
         if (lesson.getVideoPath() == null)
             throw new ResourceNotFoundException("Không tìm thấy video");
         return ResponseEntity.ok()
@@ -220,12 +225,4 @@ public class LessonAudioController {
                 .header(HttpHeaders.CACHE_CONTROL, "private, no-store")
                 .body(storage.load(path));
     }
-
 }
-
-
-
-
-
-
-

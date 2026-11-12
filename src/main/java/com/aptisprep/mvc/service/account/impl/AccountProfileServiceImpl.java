@@ -1,7 +1,7 @@
 package com.aptisprep.mvc.service.account.impl;
 
-import com.aptisprep.mvc.dto.UserGoalDTO;
 import com.aptisprep.mvc.dto.*;
+import com.aptisprep.mvc.dto.UserGoalDTO;
 import com.aptisprep.mvc.entity.*;
 import com.aptisprep.mvc.enums.*;
 import com.aptisprep.mvc.enums.Skill;
@@ -94,8 +94,7 @@ public class AccountProfileServiceImpl implements AccountProfileService {
         List<UserSkillProfile> profiles =
                 userSkillProfileRepository.findByUserIdOrderBySkillAsc(userId);
         for (UserSkillProfile profile : profiles) {
-            result.add(
-                    UserSkillProfileDTO.convertEntityToDto(profile));
+            result.add(UserSkillProfileDTO.convertEntityToDto(profile));
         }
         return List.copyOf(result);
     }
@@ -207,10 +206,3 @@ public class AccountProfileServiceImpl implements AccountProfileService {
         return value == null || value.isBlank() ? "Chưa đánh giá" : value;
     }
 }
-
-
-
-
-
-
-

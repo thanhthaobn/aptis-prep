@@ -40,13 +40,3 @@ class DisplayFormattingTests {
         assertFalse(fallback.contains("<script>"));
     }
 }
-
-
-
-
-
-
-
-
-
-

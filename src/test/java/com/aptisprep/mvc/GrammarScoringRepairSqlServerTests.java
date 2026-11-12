@@ -497,13 +497,3 @@ class GrammarScoringRepairSqlServerTests {
         void run(Connection connection) throws Exception;
     }
 }
-
-
-
-
-
-
-
-
-
-

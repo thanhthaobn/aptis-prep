@@ -16,11 +16,7 @@ public class UserGoalSkillDTO {
     public UserGoalSkillDTO() {}
 
     public UserGoalSkillDTO(
-            Integer id,
-            UserGoal goal,
-            String skill,
-            String targetLevel,
-            BigDecimal targetScore) {
+            Integer id, UserGoal goal, String skill, String targetLevel, BigDecimal targetScore) {
         this.id = id;
         this.goal = goal;
         this.skill = skill;
@@ -88,14 +84,3 @@ public class UserGoalSkillDTO {
         this.targetScore = targetScore;
     }
 }
-
-
-
-
-
-
-
-
-
-
-

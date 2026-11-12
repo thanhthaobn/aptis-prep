@@ -192,14 +192,3 @@ public class ExamQuestionSnapshotDTO {
         this.media = media;
     }
 }
-
-
-
-
-
-
-
-
-
-
-

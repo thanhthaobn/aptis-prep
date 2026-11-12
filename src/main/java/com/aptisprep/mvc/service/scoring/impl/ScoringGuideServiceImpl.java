@@ -1,9 +1,9 @@
 package com.aptisprep.mvc.service.scoring.impl;
 
 import com.aptisprep.mvc.repository.*;
+import com.aptisprep.mvc.service.scoring.ScoringGuideService;
 import com.aptisprep.mvc.support.contract.IntegrationModels.AttemptResult;
 import com.aptisprep.mvc.support.contract.IntegrationModels.SkillResult;
-import com.aptisprep.mvc.service.scoring.ScoringGuideService;
 import java.math.BigDecimal;
 import java.util.*;
 import org.springframework.stereotype.Service;
@@ -135,11 +135,7 @@ public class ScoringGuideServiceImpl implements ScoringGuideService {
         if (a1.min().signum() != 0) return configured;
         List<Band> adjusted = new ArrayList<>();
         adjusted.add(
-                new Band(
-                        BigDecimal.ZERO,
-                        BigDecimal.ZERO,
-                        "A0",
-                        "A0".equals(levels.get(skill))));
+                new Band(BigDecimal.ZERO, BigDecimal.ZERO, "A0", "A0".equals(levels.get(skill))));
         for (Band band : configured) {
             adjusted.add(
                     "A1".equals(band.level())
@@ -153,10 +149,3 @@ public class ScoringGuideServiceImpl implements ScoringGuideService {
         return List.copyOf(adjusted);
     }
 }
-
-
-
-
-
-
-

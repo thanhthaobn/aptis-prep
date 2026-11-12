@@ -5,10 +5,3 @@ public enum AiAssessmentState {
     COMPLETED,
     ERROR
 }
-
-
-
-
-
-
-

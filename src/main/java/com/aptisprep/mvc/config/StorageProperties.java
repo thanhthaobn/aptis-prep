@@ -16,10 +16,3 @@ public class StorageProperties {
         this.uploadDir = uploadDir;
     }
 }
-
-
-
-
-
-
-

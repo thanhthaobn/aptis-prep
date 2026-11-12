@@ -257,14 +257,3 @@ public class UserAnswerDTO {
         this.answerVersion = answerVersion;
     }
 }
-
-
-
-
-
-
-
-
-
-
-

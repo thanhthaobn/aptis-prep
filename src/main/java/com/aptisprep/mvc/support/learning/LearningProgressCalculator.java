@@ -9,10 +9,3 @@ public final class LearningProgressCalculator {
         return total == 0 ? null : (int) Math.floor(completed * 100.0 / total);
     }
 }
-
-
-
-
-
-
-

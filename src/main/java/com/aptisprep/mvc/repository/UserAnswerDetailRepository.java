@@ -11,10 +11,3 @@ public interface UserAnswerDetailRepository extends JpaRepository<UserAnswerDeta
     Optional<UserAnswerDetail> findByUserAnswerIdAndQuestionItemId(
             Integer answerId, Integer itemId);
 }
-
-
-
-
-
-
-

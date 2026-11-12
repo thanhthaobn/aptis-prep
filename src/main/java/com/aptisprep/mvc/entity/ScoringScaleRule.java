@@ -53,7 +53,6 @@ public class ScoringScaleRule {
         this.scaleMax = scaleMax;
     }
 
-
     public Integer getId() {
         return id;
     }
@@ -106,15 +105,7 @@ public class ScoringScaleRule {
         scaleMax = value;
     }
 
-
     public void setId(Integer value) {
         this.id = value;
     }
 }
-
-
-
-
-
-
-

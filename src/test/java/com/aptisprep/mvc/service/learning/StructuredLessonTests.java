@@ -8,7 +8,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.aptisprep.mvc.config.StorageProperties;
 import com.aptisprep.mvc.dto.LessonCheckDTO;
-import com.aptisprep.mvc.dto.LessonDTO;
 import com.aptisprep.mvc.entity.*;
 import com.aptisprep.mvc.enums.*;
 import com.aptisprep.mvc.exception.BusinessRuleException;
@@ -470,13 +469,9 @@ class StructuredLessonTests {
         assertThatThrownBy(() -> teaching.videoId("javascript:alert(1)"))
                 .isInstanceOf(BusinessRuleException.class);
         assertThatThrownBy(
-                        () ->
-                                teaching.videoId(
-                                        "https://youtube.com.evil.test/watch?v=yiwhUC4S5_o"))
+                        () -> teaching.videoId("https://youtube.com.evil.test/watch?v=yiwhUC4S5_o"))
                 .isInstanceOf(BusinessRuleException.class);
-        assertThat(
-                        teaching.videoId(
-                                "https://www.youtube.com/watch?v=yiwhUC4S5_o&feature=share"))
+        assertThat(teaching.videoId("https://www.youtube.com/watch?v=yiwhUC4S5_o&feature=share"))
                 .isEqualTo("yiwhUC4S5_o");
     }
 
@@ -514,13 +509,3 @@ class StructuredLessonTests {
                 .containsExactly(2, 6);
     }
 }
-
-
-
-
-
-
-
-
-
-

@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
+import com.aptisprep.mvc.dto.ExamSkillResultDTO;
 import com.aptisprep.mvc.entity.Certificate;
 import com.aptisprep.mvc.entity.ScoreBand;
 import com.aptisprep.mvc.entity.ScoringScaleRule;
@@ -13,7 +14,6 @@ import com.aptisprep.mvc.exception.BusinessRuleException;
 import com.aptisprep.mvc.repository.ScoreBandRepository;
 import com.aptisprep.mvc.repository.ScoringScaleRuleRepository;
 import com.aptisprep.mvc.repository.ScoringSchemeRepository;
-import com.aptisprep.mvc.dto.ExamSkillResultDTO;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
@@ -148,7 +148,8 @@ class ScoringPolicyServiceTests {
                                 new ExamSkillResultDTO("LISTENING", new BigDecimal("35"), "B1"),
                                 new ExamSkillResultDTO("WRITING", new BigDecimal("30"), "B1"),
                                 new ExamSkillResultDTO("SPEAKING", new BigDecimal("45"), "C1"),
-                                new ExamSkillResultDTO("GRAMMAR_VOCABULARY", new BigDecimal("50"), "C1")));
+                                new ExamSkillResultDTO(
+                                        "GRAMMAR_VOCABULARY", new BigDecimal("50"), "C1")));
 
         assertEquals(new BigDecimal("139.50"), result.getFinalScaleScore());
         assertEquals("B2", result.getEstimatedOverallCefr());
@@ -229,13 +230,3 @@ class ScoringPolicyServiceTests {
         return scheme;
     }
 }
-
-
-
-
-
-
-
-
-
-

@@ -1,7 +1,5 @@
 package com.aptisprep.mvc.service.grading.impl;
 
-import com.aptisprep.mvc.service.grading.*;
-
 import com.aptisprep.mvc.config.AiProperties;
 import com.aptisprep.mvc.dto.AiAssessmentDTO;
 import com.aptisprep.mvc.dto.AiAssessmentJobDTO;
@@ -14,11 +12,12 @@ import com.aptisprep.mvc.exception.AiGradingException;
 import com.aptisprep.mvc.exception.BusinessRuleException;
 import com.aptisprep.mvc.exception.ResourceNotFoundException;
 import com.aptisprep.mvc.repository.*;
+import com.aptisprep.mvc.service.exam.AttemptOutboxService;
+import com.aptisprep.mvc.service.grading.*;
 import com.aptisprep.mvc.service.grading.AiAssessmentService;
+import com.aptisprep.mvc.service.storage.StorageService;
 import com.aptisprep.mvc.support.contract.GradingTextLimits;
 import com.aptisprep.mvc.support.grading.*;
-import com.aptisprep.mvc.service.exam.AttemptOutboxService;
-import com.aptisprep.mvc.service.storage.StorageService;
 import java.math.BigDecimal;
 import java.time.*;
 import java.util.*;
@@ -204,7 +203,8 @@ public class AiAssessmentServiceImpl implements AiAssessmentService {
                     event);
         }
         if (job.getState() == AiJobState.ERROR) {
-            // Lỗi từ provider phải đi qua retry được cấp quyền, không được vô tình gọi process lần hai.
+            // Lỗi từ provider phải đi qua retry được cấp quyền, không được vô tình gọi process lần
+            // hai.
             return new JobSnapshot(
                     key,
                     false,
@@ -622,7 +622,8 @@ public class AiAssessmentServiceImpl implements AiAssessmentService {
                 // Bản ghi âm của đề thi mới là input. Transcript đã tạo trước đó có thể khác.
                 && (("EXAM_ANSWER".equals(job.getSourceType())
                                 && "SPEAKING".equals(job.getTaskType()))
-                        || Objects.equals(job.getTranscript(), blankToNull(request.getTranscript())));
+                        || Objects.equals(
+                                job.getTranscript(), blankToNull(request.getTranscript())));
     }
 
     private User activeUser(Integer id) {
@@ -797,10 +798,3 @@ public class AiAssessmentServiceImpl implements AiAssessmentService {
         return viewFor(job);
     }
 }
-
-
-
-
-
-
-

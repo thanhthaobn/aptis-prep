@@ -24,6 +24,7 @@ public class MockExamSectionDTO {
     @NotNull(message = "Thời lượng section là bắt buộc")
     @Positive(message = "Thời lượng section phải lớn hơn 0")
     private Integer durationMinutes;
+
     private String status;
 
     // Dữ liệu nhập trên form, không phải cột của bảng mock_exam_sections.
@@ -187,9 +188,7 @@ public class MockExamSectionDTO {
     }
 
     public String getValue() {
-        return value == null
-                ? (durationMinutes == null ? null : durationMinutes + " phút")
-                : value;
+        return value == null ? (durationMinutes == null ? null : durationMinutes + " phút") : value;
     }
 
     public void setValue(String value) {
@@ -200,14 +199,3 @@ public class MockExamSectionDTO {
         return getSkillLabel();
     }
 }
-
-
-
-
-
-
-
-
-
-
-

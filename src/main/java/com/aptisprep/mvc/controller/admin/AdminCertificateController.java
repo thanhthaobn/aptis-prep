@@ -3,6 +3,7 @@ package com.aptisprep.mvc.controller.admin;
 import com.aptisprep.mvc.dto.CertificateDTO;
 import com.aptisprep.mvc.exception.BusinessRuleException;
 import com.aptisprep.mvc.service.scoring.ScoringAdminService;
+import com.aptisprep.mvc.support.pagination.ListPagination;
 import com.aptisprep.mvc.support.scoring.ScoringViews;
 import jakarta.validation.Valid;
 import java.security.Principal;
@@ -15,7 +16,6 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
-import com.aptisprep.mvc.support.pagination.ListPagination;
 
 /** Certificate administration endpoints extracted from the scoring controller. */
 @Controller
@@ -55,8 +55,14 @@ public class AdminCertificateController {
         model.addAttribute(
                 "certificateForm",
                 new CertificateDTO(
-                        value.name(), value.code(), value.description(), value.status(),
-                        value.id(), null, null, null));
+                        value.name(),
+                        value.code(),
+                        value.description(),
+                        value.status(),
+                        value.id(),
+                        null,
+                        null,
+                        null));
         model.addAttribute("editing", true);
         model.addAttribute("readOnly", true);
         return "admin/settings/certificate/form";
@@ -118,7 +124,7 @@ public class AdminCertificateController {
             model.addAttribute("certificate", scoring.certificate(id));
             model.addAttribute("editing", true);
             model.addAttribute("readOnly", false);
-        return "admin/settings/certificate/form";
+            return "admin/settings/certificate/form";
         }
     }
 

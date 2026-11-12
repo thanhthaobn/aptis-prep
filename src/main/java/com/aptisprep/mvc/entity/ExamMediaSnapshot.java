@@ -62,7 +62,6 @@ public class ExamMediaSnapshot {
         this.maxPlayCount = maxPlayCount;
     }
 
-
     public Integer getId() {
         return id;
     }
@@ -139,15 +138,7 @@ public class ExamMediaSnapshot {
         maxPlayCount = value;
     }
 
-
     public void setId(Integer value) {
         this.id = value;
     }
 }
-
-
-
-
-
-
-

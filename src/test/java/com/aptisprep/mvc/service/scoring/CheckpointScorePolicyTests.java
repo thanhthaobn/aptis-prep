@@ -1,9 +1,8 @@
 package com.aptisprep.mvc.service.scoring;
 
-import com.aptisprep.mvc.support.scoring.CheckpointScorePolicy;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.aptisprep.mvc.support.scoring.CheckpointScorePolicy;
 import java.math.BigDecimal;
 import org.junit.jupiter.api.Test;
 
@@ -46,13 +45,3 @@ class CheckpointScorePolicyTests {
         assertThat(CheckpointScorePolicy.confirmedLevel("CHECKPOINT", "B1", "A2")).isEqualTo("A2");
     }
 }
-
-
-
-
-
-
-
-
-
-

@@ -10,10 +10,3 @@ public interface ScoringScaleRuleRepository extends JpaRepository<ScoringScaleRu
 
     Optional<ScoringScaleRule> findBySchemeIdAndSkillIgnoreCase(Integer schemeId, String skill);
 }
-
-
-
-
-
-
-

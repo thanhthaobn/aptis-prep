@@ -125,13 +125,3 @@ class ScoringAdminServiceTests {
         return form;
     }
 }
-
-
-
-
-
-
-
-
-
-

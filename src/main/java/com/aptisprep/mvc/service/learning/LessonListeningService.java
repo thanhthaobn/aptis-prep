@@ -23,10 +23,3 @@ public interface LessonListeningService {
 
     public boolean verified(Lesson lesson, LessonEngagement value);
 }
-
-
-
-
-
-
-

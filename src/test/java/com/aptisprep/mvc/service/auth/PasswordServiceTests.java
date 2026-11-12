@@ -1,8 +1,8 @@
 package com.aptisprep.mvc.service.auth;
-import com.aptisprep.mvc.support.auth.*;
 
 import static org.assertj.core.api.Assertions.*;
 
+import com.aptisprep.mvc.support.auth.*;
 import org.junit.jupiter.api.Test;
 
 class PasswordServiceTests {
@@ -17,13 +17,3 @@ class PasswordServiceTests {
         assertThat(hasher.matches("wrong-password", legacyHash)).isFalse();
     }
 }
-
-
-
-
-
-
-
-
-
-

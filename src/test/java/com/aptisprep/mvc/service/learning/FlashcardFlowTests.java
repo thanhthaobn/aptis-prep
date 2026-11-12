@@ -39,7 +39,8 @@ class FlashcardFlowTests {
         var mine = setView(4, "Private", "A1", true, null);
         var tree = service.groupBySkillAndLevel(java.util.List.of(a2, mine, a1, grammar));
         assertThat(tree.keySet()).containsExactly("Grammar & Vocabulary", "Reading");
-        assertThat(tree.get("Reading")).extracting(streamValue -> streamValue.getLevel())
+        assertThat(tree.get("Reading"))
+                .extracting(streamValue -> streamValue.getLevel())
                 .containsExactly("A1", "A2");
         assertThat(tree.get("Reading")).containsExactly(a1, a2);
     }
@@ -87,8 +88,9 @@ class FlashcardFlowTests {
                                                         "/admin/flashcards/" + id + "/edit")))
                         .andReturn();
         @SuppressWarnings("unchecked")
-        var tree = (java.util.Map<String, java.util.List<FlashcardSetDTO>>)
-                result.getModelAndView().getModel().get("lessonBranches");
+        var tree =
+                (java.util.Map<String, java.util.List<FlashcardSetDTO>>)
+                        result.getModelAndView().getModel().get("lessonBranches");
         assertThat(tree.values().stream().flatMap(streamValue -> streamValue.stream()).toList())
                 .extracting(streamValue -> streamValue.getId())
                 .contains(id)
@@ -145,8 +147,8 @@ class FlashcardFlowTests {
                         .andExpect(status().isOk())
                         .andReturn();
         @SuppressWarnings("unchecked")
-        var found = (java.util.List<FlashcardSetDTO>)
-                result.getModelAndView().getModel().get("sets");
+        var found =
+                (java.util.List<FlashcardSetDTO>) result.getModelAndView().getModel().get("sets");
         assertThat(found).extracting(streamValue -> streamValue.getId()).containsExactly(id);
         assertThat(result.getModelAndView().getModel())
                 .containsEntry("totalSets", 1)
@@ -420,6 +422,7 @@ class FlashcardFlowTests {
         service.archivePersonal(id, a.getEmail());
         assertThat(service.listForStudent(a.getEmail())).noneMatch(s -> s.getId().equals(id));
     }
+
     private static FlashcardSetDTO setView(
             int id, String title, String level, boolean personal, String skill) {
         var value = new FlashcardSetDTO();
@@ -431,13 +434,3 @@ class FlashcardFlowTests {
         return value;
     }
 }
-
-
-
-
-
-
-
-
-
-

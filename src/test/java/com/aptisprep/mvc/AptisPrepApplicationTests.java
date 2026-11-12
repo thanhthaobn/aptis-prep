@@ -1,12 +1,9 @@
 package com.aptisprep.mvc;
 
-import com.aptisprep.mvc.service.exam.AttemptOutboxService;
-import com.aptisprep.mvc.service.grading.GeminiGradingService;
-
 import static org.junit.jupiter.api.Assertions.assertSame;
 
-import com.aptisprep.mvc.service.exam.impl.AttemptOutboxServiceImpl;
-import com.aptisprep.mvc.service.grading.impl.GeminiGradingServiceImpl;
+import com.aptisprep.mvc.service.exam.AttemptOutboxService;
+import com.aptisprep.mvc.service.grading.GeminiGradingService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -30,13 +27,3 @@ class AptisPrepApplicationTests {
         }
     }
 }
-
-
-
-
-
-
-
-
-
-

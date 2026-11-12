@@ -50,8 +50,11 @@ public class AudioDurationServiceImpl implements AudioDurationService {
     }
 
     private Path localFile(Resource resource) {
-        try { return resource.getFile().toPath(); }
-        catch (IOException bundledInsideJar) { return null; }
+        try {
+            return resource.getFile().toPath();
+        } catch (IOException bundledInsideJar) {
+            return null;
+        }
     }
 
     private String extension(String relativePath) {
@@ -63,8 +66,11 @@ public class AudioDurationServiceImpl implements AudioDurationService {
 
     private void deleteTemporaryFile(Path temporary) {
         if (temporary == null) return;
-        try { Files.deleteIfExists(temporary); }
-        catch (IOException cleanupFailed) { temporary.toFile().deleteOnExit(); }
+        try {
+            Files.deleteIfExists(temporary);
+        } catch (IOException cleanupFailed) {
+            temporary.toFile().deleteOnExit();
+        }
     }
 
     private double read(Path path) {
@@ -74,37 +80,49 @@ public class AudioDurationServiceImpl implements AudioDurationService {
 
     private Double readWithLibrary(Path path) {
         try {
-            double seconds = AudioFileIO.read(path.toFile()).getAudioHeader().getPreciseTrackLength();
+            double seconds =
+                    AudioFileIO.read(path.toFile()).getAudioHeader().getPreciseTrackLength();
             if (isValidDuration(seconds)) return seconds;
-        } catch (Exception unsupportedFormat) { }
+        } catch (Exception unsupportedFormat) {
+        }
         return null;
     }
 
     private double readWithFfprobe(Path path) {
         Process process = null;
         try {
-            process = new ProcessBuilder(ffprobe, "-v", "error", "-show_entries", "format=duration",
-                            "-of", "default=noprint_wrappers=1:nokey=1", path.toAbsolutePath().toString())
-                    .redirectError(ProcessBuilder.Redirect.DISCARD).start();
+            process =
+                    new ProcessBuilder(
+                                    ffprobe,
+                                    "-v",
+                                    "error",
+                                    "-show_entries",
+                                    "format=duration",
+                                    "-of",
+                                    "default=noprint_wrappers=1:nokey=1",
+                                    path.toAbsolutePath().toString())
+                            .redirectError(ProcessBuilder.Redirect.DISCARD)
+                            .start();
             if (process.waitFor(10, TimeUnit.SECONDS) && process.exitValue() == 0) {
-                double seconds = Double.parseDouble(new String(process.getInputStream().readNBytes(128), StandardCharsets.UTF_8).trim());
+                double seconds =
+                        Double.parseDouble(
+                                new String(
+                                                process.getInputStream().readNBytes(128),
+                                                StandardCharsets.UTF_8)
+                                        .trim());
                 if (isValidDuration(seconds)) return seconds;
             }
         } catch (InterruptedException interrupted) {
             Thread.currentThread().interrupt();
-        } catch (Exception unavailable) { }
-        finally { if (process != null && process.isAlive()) process.destroyForcibly(); }
-        throw new BusinessRuleException("Không đọc được thời lượng audio. Hãy nhờ quản trị viên kiểm tra file hoặc cấu hình ffprobe.");
+        } catch (Exception unavailable) {
+        } finally {
+            if (process != null && process.isAlive()) process.destroyForcibly();
+        }
+        throw new BusinessRuleException(
+                "Không đọc được thời lượng audio. Hãy nhờ quản trị viên kiểm tra file hoặc cấu hình ffprobe.");
     }
 
     private boolean isValidDuration(double seconds) {
         return Double.isFinite(seconds) && seconds > 0 && seconds <= 86400;
     }
 }
-
-
-
-
-
-
-

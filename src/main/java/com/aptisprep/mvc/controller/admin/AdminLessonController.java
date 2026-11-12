@@ -1,12 +1,12 @@
 package com.aptisprep.mvc.controller.admin;
-import com.aptisprep.mvc.support.learning.*;
 
-import com.aptisprep.mvc.dto.LessonDTO;
 import com.aptisprep.mvc.dto.LessonCheckDTO;
+import com.aptisprep.mvc.dto.LessonDTO;
 import com.aptisprep.mvc.exception.BusinessRuleException;
 import com.aptisprep.mvc.service.learning.FlashcardSetService;
-import com.aptisprep.mvc.support.learning.LessonAuthorProfile;
 import com.aptisprep.mvc.service.learning.LessonService;
+import com.aptisprep.mvc.support.learning.*;
+import com.aptisprep.mvc.support.learning.LessonAuthorProfile;
 import jakarta.validation.Valid;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -22,7 +22,8 @@ public class AdminLessonController {
     private final LessonService lessonService;
     private final FlashcardSetService flashcardSetService;
 
-    public AdminLessonController(LessonService lessonService, FlashcardSetService flashcardSetService) {
+    public AdminLessonController(
+            LessonService lessonService, FlashcardSetService flashcardSetService) {
         this.lessonService = lessonService;
         this.flashcardSetService = flashcardSetService;
     }
@@ -66,8 +67,9 @@ public class AdminLessonController {
         form.setTopic(topic);
         model.addAttribute("profile", LessonAuthorProfile.forSkill(form.getSkill()));
         LinkedHashMap<String, LessonAuthorProfile> authorProfiles = new LinkedHashMap<>();
-        lessonService.getSkills().forEach(
-                item -> authorProfiles.put(item, LessonAuthorProfile.forSkill(item)));
+        lessonService
+                .getSkills()
+                .forEach(item -> authorProfiles.put(item, LessonAuthorProfile.forSkill(item)));
         model.addAttribute("authorProfiles", authorProfiles);
         model.addAttribute("form", form);
         model.addAttribute("editing", false);
@@ -97,7 +99,9 @@ public class AdminLessonController {
         }
         if (!bindingResult.hasErrors()) {
             try {
-                LessonDTO lesson = lessonService.saveView(null, lessonForm, audio, false, image, false, video, false);
+                LessonDTO lesson =
+                        lessonService.saveView(
+                                null, lessonForm, audio, false, image, false, video, false);
                 redirectAttributes.addFlashAttribute("message", "Đã tạo bài học");
                 return "redirect:/admin/lessons/" + lesson.getId();
             } catch (BusinessRuleException exception) {
@@ -106,8 +110,9 @@ public class AdminLessonController {
         }
         model.addAttribute("profile", LessonAuthorProfile.forSkill(lessonForm.getSkill()));
         LinkedHashMap<String, LessonAuthorProfile> authorProfiles = new LinkedHashMap<>();
-        lessonService.getSkills().forEach(
-                item -> authorProfiles.put(item, LessonAuthorProfile.forSkill(item)));
+        lessonService
+                .getSkills()
+                .forEach(item -> authorProfiles.put(item, LessonAuthorProfile.forSkill(item)));
         model.addAttribute("authorProfiles", authorProfiles);
         model.addAttribute("form", lessonForm);
         model.addAttribute("editing", false);
@@ -124,8 +129,9 @@ public class AdminLessonController {
         LessonDTO form = lessonService.form(id);
         model.addAttribute("profile", LessonAuthorProfile.forSkill(form.getSkill()));
         LinkedHashMap<String, LessonAuthorProfile> authorProfiles = new LinkedHashMap<>();
-        lessonService.getSkills().forEach(
-                item -> authorProfiles.put(item, LessonAuthorProfile.forSkill(item)));
+        lessonService
+                .getSkills()
+                .forEach(item -> authorProfiles.put(item, LessonAuthorProfile.forSkill(item)));
         model.addAttribute("authorProfiles", authorProfiles);
         model.addAttribute("form", form);
         model.addAttribute("editing", true);
@@ -159,7 +165,16 @@ public class AdminLessonController {
         }
         if (!bindingResult.hasErrors()) {
             try {
-                LessonDTO lesson = lessonService.saveView(id, lessonForm, audio, removeAudio, image, removeImage, video, removeVideo);
+                LessonDTO lesson =
+                        lessonService.saveView(
+                                id,
+                                lessonForm,
+                                audio,
+                                removeAudio,
+                                image,
+                                removeImage,
+                                video,
+                                removeVideo);
                 redirectAttributes.addFlashAttribute("message", "Đã cập nhật bài học");
                 return "redirect:/admin/lessons/" + lesson.getId();
             } catch (BusinessRuleException exception) {
@@ -168,8 +183,9 @@ public class AdminLessonController {
         }
         model.addAttribute("profile", LessonAuthorProfile.forSkill(lessonForm.getSkill()));
         LinkedHashMap<String, LessonAuthorProfile> authorProfiles = new LinkedHashMap<>();
-        lessonService.getSkills().forEach(
-                item -> authorProfiles.put(item, LessonAuthorProfile.forSkill(item)));
+        lessonService
+                .getSkills()
+                .forEach(item -> authorProfiles.put(item, LessonAuthorProfile.forSkill(item)));
         model.addAttribute("authorProfiles", authorProfiles);
         model.addAttribute("form", lessonForm);
         model.addAttribute("editing", true);
@@ -183,9 +199,7 @@ public class AdminLessonController {
 
     private void changeForm(LessonDTO form, String action) {
         form.setChecks(
-                form.getChecks() == null
-                        ? new ArrayList<>()
-                        : new ArrayList<>(form.getChecks()));
+                form.getChecks() == null ? new ArrayList<>() : new ArrayList<>(form.getChecks()));
         if ("ADD_CHECK".equals(action)) {
             LessonCheckDTO check = new LessonCheckDTO();
             check.setPosition(form.getChecks().size() + 1);
@@ -208,7 +222,7 @@ public class AdminLessonController {
                         case "D" -> check.setOptionD(null);
                         case "E" -> check.setOptionE(null);
                         case "F" -> check.setOptionF(null);
-                        default -> { }
+                        default -> {}
                     }
                 } catch (RuntimeException ignored) {
                     // Render the unchanged form for a malformed UI action.
@@ -224,8 +238,9 @@ public class AdminLessonController {
             Model model, LessonDTO form, boolean editing, Integer lessonId, LessonDTO lesson) {
         model.addAttribute("profile", LessonAuthorProfile.forSkill(form.getSkill()));
         LinkedHashMap<String, LessonAuthorProfile> authorProfiles = new LinkedHashMap<>();
-        lessonService.getSkills().forEach(
-                item -> authorProfiles.put(item, LessonAuthorProfile.forSkill(item)));
+        lessonService
+                .getSkills()
+                .forEach(item -> authorProfiles.put(item, LessonAuthorProfile.forSkill(item)));
         model.addAttribute("authorProfiles", authorProfiles);
         model.addAttribute("form", form);
         model.addAttribute("editing", editing);
@@ -239,7 +254,8 @@ public class AdminLessonController {
     @PostMapping("/admin/lessons/{id}/archive")
     public String archive(@PathVariable Integer id, RedirectAttributes redirectAttributes) {
         lessonService.archive(id);
-        redirectAttributes.addFlashAttribute("message", "Đã lưu trữ bài học. Lịch sử học vẫn được giữ lại");
+        redirectAttributes.addFlashAttribute(
+                "message", "Đã lưu trữ bài học. Lịch sử học vẫn được giữ lại");
         return "redirect:/admin/lessons/" + id;
     }
 
@@ -252,17 +268,11 @@ public class AdminLessonController {
 
     @PostMapping("/admin/lessons/{id}/move")
     public String move(
-            @PathVariable Integer id, @RequestParam int direction, RedirectAttributes redirectAttributes) {
+            @PathVariable Integer id,
+            @RequestParam int direction,
+            RedirectAttributes redirectAttributes) {
         lessonService.move(id, direction);
         redirectAttributes.addFlashAttribute("message", "Đã thay đổi thứ tự bài học");
         return "redirect:/admin/lessons";
     }
-
 }
-
-
-
-
-
-
-

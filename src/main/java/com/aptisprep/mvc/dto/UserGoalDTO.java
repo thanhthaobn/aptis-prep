@@ -1,28 +1,30 @@
 package com.aptisprep.mvc.dto;
 
-import java.time.*;
-
+import com.aptisprep.mvc.entity.*;
+import com.aptisprep.mvc.enums.*;
 import jakarta.validation.constraints.FutureOrPresent;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import java.math.BigDecimal;
+import java.time.*;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import org.springframework.format.annotation.DateTimeFormat;
-import com.aptisprep.mvc.entity.*;
-import com.aptisprep.mvc.enums.*;
+
 public class UserGoalDTO {
     private Integer id;
     private User user;
     private Certificate certificate;
+
     /**
      * Tên chứng chỉ đã được materialize trong service transaction để view không
      * phải truy cập trực tiếp vào một quan hệ JPA lazy.
      */
     private String certificateName;
+
     private GoalStatus status;
     private LocalDateTime createdAt;
     private Map<String, BigDecimal> targetScores = new LinkedHashMap<>();
@@ -51,6 +53,7 @@ public class UserGoalDTO {
     @Size(max = 10, message = "Mục tiêu Speaking tối đa 10 ký tự")
     @Pattern(regexp = "^(A1|A2|B1|B2|C1)?$", message = "Mục tiêu học tập chỉ hỗ trợ từ A1 đến C1")
     private String speaking;
+
     private List<UserGoalSkill> skills = new ArrayList<>();
 
     public UserGoalDTO() {}
@@ -89,21 +92,24 @@ public class UserGoalDTO {
     public static UserGoalDTO convertEntityToDto(UserGoal entity) {
         if (entity == null) return null;
         Certificate certificate = entity.getCertificate();
-        UserGoalDTO dto = new UserGoalDTO(
-                entity.getId(),
-                entity.getUser(),
-                certificate,
-                entity.getStatus(),
-                entity.getCreatedAt(),
-                null,
-                certificate == null ? null : certificate.getId(),
-                entity.getTargetDate(),
-                null,
-                null,
-                null,
-                null,
-                null,
-                entity.getSkills() == null ? new ArrayList<>() : new ArrayList<>(entity.getSkills()));
+        UserGoalDTO dto =
+                new UserGoalDTO(
+                        entity.getId(),
+                        entity.getUser(),
+                        certificate,
+                        entity.getStatus(),
+                        entity.getCreatedAt(),
+                        null,
+                        certificate == null ? null : certificate.getId(),
+                        entity.getTargetDate(),
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        entity.getSkills() == null
+                                ? new ArrayList<>()
+                                : new ArrayList<>(entity.getSkills()));
         dto.setCertificateName(certificate == null ? null : certificate.getName());
         return dto;
     }
@@ -130,7 +136,6 @@ public class UserGoalDTO {
                 dto.getCreatedAt(),
                 dto.getSkills());
     }
-
 
     public Integer getId() {
         return id;
@@ -180,11 +185,14 @@ public class UserGoalDTO {
         this.createdAt = value;
     }
 
-    public List<UserGoalSkill> getSkills() { return skills; }
+    public List<UserGoalSkill> getSkills() {
+        return skills;
+    }
 
     public void setSkills(List<UserGoalSkill> value) {
         this.skills = value == null ? new ArrayList<>() : value;
     }
+
     public Map<String, BigDecimal> getTargetScores() {
         return targetScores;
     }
@@ -248,13 +256,4 @@ public class UserGoalDTO {
     public void setSpeaking(String value) {
         speaking = value;
     }
-
 }
-
-
-
-
-
-
-
-

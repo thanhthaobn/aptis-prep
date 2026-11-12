@@ -31,13 +31,3 @@ class RegistrationRaceTests {
         assertThat(form.getFullName()).isEqualTo("Thảo");
     }
 }
-
-
-
-
-
-
-
-
-
-

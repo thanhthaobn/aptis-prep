@@ -44,7 +44,6 @@ class LessonRecommendationTests {
                 public User requireActiveStudentById(Integer id) {
                     throw new UnsupportedOperationException();
                 }
-
             };
     final LessonRecommendationService service =
             new com.aptisprep.mvc.service.learning.impl.LessonRecommendationServiceImpl(
@@ -133,13 +132,3 @@ class LessonRecommendationTests {
         assertNull(service.recommend(1, List.of()));
     }
 }
-
-
-
-
-
-
-
-
-
-

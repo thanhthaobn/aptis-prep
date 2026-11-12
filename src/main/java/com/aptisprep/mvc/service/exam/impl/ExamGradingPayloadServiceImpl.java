@@ -7,15 +7,14 @@ import com.aptisprep.mvc.repository.UserAnswerRepository;
 import com.aptisprep.mvc.service.exam.ExamGradingPayloadService;
 import com.aptisprep.mvc.service.exam.ExamSnapshotService;
 import com.aptisprep.mvc.support.contract.GradingContextFormatter;
-import com.aptisprep.mvc.support.contract.IntegrationModels.*;
 import com.aptisprep.mvc.support.contract.GradingTextLimits;
+import com.aptisprep.mvc.support.contract.IntegrationModels.*;
 import java.time.*;
 import java.util.*;
 import java.util.stream.Collectors;
-
-/** Tạo DTO chấm điểm từ nội dung đã khóa và đáp án đã lưu. Không ghi trạng thái attempt. */
 import org.springframework.stereotype.Service;
 
+/** Tạo DTO chấm điểm từ nội dung đã khóa và đáp án đã lưu. Không ghi trạng thái attempt. */
 @Service
 public class ExamGradingPayloadServiceImpl implements ExamGradingPayloadService {
     private ExamSnapshotService examSnapshots;
@@ -38,7 +37,8 @@ public class ExamGradingPayloadServiceImpl implements ExamGradingPayloadService 
                 examSnapshots.lockedQuestionEntities(attempt.getId()).stream()
                         .collect(
                                 Collectors.toMap(
-                                        (ExamQuestionSnapshot streamValue) -> streamValue.getSourceQuestionId(),
+                                        (ExamQuestionSnapshot streamValue) ->
+                                                streamValue.getSourceQuestionId(),
                                         value -> value,
                                         (left, right) -> left,
                                         () -> new LinkedHashMap<Integer, ExamQuestionSnapshot>()));
@@ -80,7 +80,8 @@ public class ExamGradingPayloadServiceImpl implements ExamGradingPayloadService 
                                         legacyLockedContent =
                                                 String.join("\n--- ITEM ---\n", paths);
                                     }
-                                    // Tương thích đọc với đáp án lịch sử; dữ liệu detail hiện có được giữ nguyên.
+                                    // Tương thích đọc với đáp án lịch sử; dữ liệu detail hiện có
+                                    // được giữ nguyên.
                                     if (legacyLockedContent == null
                                             || legacyLockedContent.isBlank())
                                         legacyLockedContent =
@@ -94,7 +95,10 @@ public class ExamGradingPayloadServiceImpl implements ExamGradingPayloadService 
                                                                                         .getAudioPath(),
                                                                                 detail
                                                                                         .getTranscript()))
-                                                        .filter(streamValue -> Objects.nonNull(streamValue))
+                                                        .filter(
+                                                                streamValue ->
+                                                                        Objects.nonNull(
+                                                                                streamValue))
                                                         .collect(
                                                                 Collectors.joining(
                                                                         "\n--- ITEM ---\n"));
@@ -133,7 +137,9 @@ public class ExamGradingPayloadServiceImpl implements ExamGradingPayloadService 
                                     String lockedContent =
                                             lockedItems.stream()
                                                     .map(streamValue -> streamValue.lockedContent())
-                                                    .filter(streamValue -> Objects.nonNull(streamValue))
+                                                    .filter(
+                                                            streamValue ->
+                                                                    Objects.nonNull(streamValue))
                                                     .filter(value -> !value.isBlank())
                                                     .collect(
                                                             Collectors.joining("\n--- ITEM ---\n"));
@@ -232,10 +238,3 @@ public class ExamGradingPayloadServiceImpl implements ExamGradingPayloadService 
         return value == null ? null : value.atZone(ZoneId.systemDefault()).toInstant();
     }
 }
-
-
-
-
-
-
-

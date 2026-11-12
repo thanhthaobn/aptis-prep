@@ -8,10 +8,3 @@ public interface PublishedExamCatalogService {
 
     public MockExamDTO checkpoint(String skill, String targetLevel);
 }
-
-
-
-
-
-
-

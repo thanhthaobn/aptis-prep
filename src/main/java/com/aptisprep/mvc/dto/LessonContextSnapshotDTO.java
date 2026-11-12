@@ -218,14 +218,3 @@ public class LessonContextSnapshotDTO {
         this.maxWords = maxWords;
     }
 }
-
-
-
-
-
-
-
-
-
-
-

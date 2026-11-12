@@ -1,5 +1,4 @@
 package com.aptisprep.mvc.controller;
-import com.aptisprep.mvc.support.contract.*;
 
 import static com.aptisprep.mvc.security.SessionMvcRequests.csrf;
 import static com.aptisprep.mvc.security.SessionMvcRequests.user;
@@ -20,6 +19,7 @@ import com.aptisprep.mvc.repository.ExamAttemptRepository;
 import com.aptisprep.mvc.repository.ExamSkillResultRepository;
 import com.aptisprep.mvc.repository.MockExamRepository;
 import com.aptisprep.mvc.repository.UserRepository;
+import com.aptisprep.mvc.support.contract.*;
 import com.aptisprep.mvc.support.contract.IntegrationModels.HistoryPage;
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -419,13 +419,3 @@ class StudentResultFlowTests {
         return users.saveAndFlush(learner);
     }
 }
-
-
-
-
-
-
-
-
-
-

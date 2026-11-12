@@ -127,10 +127,3 @@ public interface ExamAttemptRepository extends JpaRepository<ExamAttempt, Intege
             @Param("skill") String skill,
             @Param("states") Collection<String> states);
 }
-
-
-
-
-
-
-

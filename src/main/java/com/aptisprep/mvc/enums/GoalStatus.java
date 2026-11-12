@@ -4,10 +4,3 @@ public enum GoalStatus {
     ACTIVE,
     ARCHIVED
 }
-
-
-
-
-
-
-

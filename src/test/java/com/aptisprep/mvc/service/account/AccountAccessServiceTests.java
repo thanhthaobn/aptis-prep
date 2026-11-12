@@ -1,5 +1,4 @@
 package com.aptisprep.mvc.service.account;
-import com.aptisprep.mvc.support.contract.*;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.*;
@@ -11,6 +10,7 @@ import com.aptisprep.mvc.enums.Role;
 import com.aptisprep.mvc.enums.UserStatus;
 import com.aptisprep.mvc.repository.*;
 import com.aptisprep.mvc.service.exam.ExamAttemptQueryService;
+import com.aptisprep.mvc.support.contract.*;
 import com.aptisprep.mvc.support.contract.IntegrationModels.*;
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -235,13 +235,3 @@ class AccountAccessServiceTests {
                 attemptId, 1, 100, type, 1, "COMPLETED", List.of(skill), submittedAt);
     }
 }
-
-
-
-
-
-
-
-
-
-

@@ -1,5 +1,4 @@
 package com.aptisprep.mvc.controller;
-import com.aptisprep.mvc.support.auth.*;
 
 import static com.aptisprep.mvc.security.SessionMvcRequests.csrf;
 import static com.aptisprep.mvc.security.SessionMvcRequests.user;
@@ -19,6 +18,7 @@ import com.aptisprep.mvc.entity.User;
 import com.aptisprep.mvc.enums.Role;
 import com.aptisprep.mvc.enums.UserStatus;
 import com.aptisprep.mvc.repository.UserRepository;
+import com.aptisprep.mvc.support.auth.*;
 import com.aptisprep.mvc.support.auth.PasswordHasher;
 import java.util.regex.Pattern;
 import org.junit.jupiter.api.BeforeEach;
@@ -326,13 +326,3 @@ class SecurityFlowTests {
         users.save(value);
     }
 }
-
-
-
-
-
-
-
-
-
-

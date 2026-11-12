@@ -52,7 +52,6 @@ public class LessonCheckFeedback {
         this.optionsText = optionsText;
     }
 
-
     public Integer getId() {
         return id;
     }
@@ -113,15 +112,7 @@ public class LessonCheckFeedback {
         optionsText = value;
     }
 
-
     public void setId(Integer value) {
         this.id = value;
     }
 }
-
-
-
-
-
-
-

@@ -1,6 +1,4 @@
 package com.aptisprep.mvc.service.placement;
-import com.aptisprep.mvc.service.placement.PlacementExamCatalogService;
-import com.aptisprep.mvc.service.placement.impl.PlacementExamCatalogServiceImpl;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.*;
@@ -10,6 +8,7 @@ import com.aptisprep.mvc.entity.MockExamQuestion;
 import com.aptisprep.mvc.repository.MockExamQuestionRepository;
 import com.aptisprep.mvc.repository.MockExamRepository;
 import com.aptisprep.mvc.repository.MockExamSectionRepository;
+import com.aptisprep.mvc.service.placement.impl.PlacementExamCatalogServiceImpl;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 
@@ -39,8 +38,7 @@ class PlacementExamCatalogServiceTests {
         var available = service.findPublished(" listening ");
 
         assertEquals(
-                List.of(101),
-                available.stream().map(streamValue -> streamValue.id()).toList());
+                List.of(101), available.stream().map(streamValue -> streamValue.id()).toList());
         verify(examQuestions, never()).findByMockExamIdOrderByPosition(102);
     }
 
@@ -61,13 +59,3 @@ class PlacementExamCatalogServiceTests {
         return link;
     }
 }
-
-
-
-
-
-
-
-
-
-

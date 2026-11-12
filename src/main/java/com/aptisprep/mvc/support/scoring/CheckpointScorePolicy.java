@@ -24,10 +24,3 @@ public final class CheckpointScorePolicy {
         return level == null ? -1 : LEVELS.indexOf(level);
     }
 }
-
-
-
-
-
-
-

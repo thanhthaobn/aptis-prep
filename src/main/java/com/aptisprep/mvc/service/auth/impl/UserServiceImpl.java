@@ -7,8 +7,8 @@ import com.aptisprep.mvc.enums.UserStatus;
 import com.aptisprep.mvc.exception.BusinessRuleException;
 import com.aptisprep.mvc.exception.DuplicateEmailException;
 import com.aptisprep.mvc.repository.UserRepository;
-import com.aptisprep.mvc.support.auth.PasswordHasher;
 import com.aptisprep.mvc.service.auth.UserService;
+import com.aptisprep.mvc.support.auth.PasswordHasher;
 import java.nio.charset.StandardCharsets;
 import java.util.Locale;
 import java.util.Objects;
@@ -53,7 +53,8 @@ public class UserServiceImpl implements UserService {
             return null;
         }
         Optional<User> user = userRepository.findByEmailIgnoreCase(normalizedEmail);
-        String hash = user.map(streamValue -> streamValue.getPasswordHash()).orElse(dummyPasswordHash);
+        String hash =
+                user.map(streamValue -> streamValue.getPasswordHash()).orElse(dummyPasswordHash);
         return passwordHasher.matches(password, hash) ? user.orElse(null) : null;
     }
 
@@ -87,10 +88,3 @@ public class UserServiceImpl implements UserService {
         return UserDTO.convertEntityToDto(user);
     }
 }
-
-
-
-
-
-
-

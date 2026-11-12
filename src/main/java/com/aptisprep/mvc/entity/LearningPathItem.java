@@ -54,7 +54,6 @@ public class LearningPathItem {
         this.completedAt = completedAt;
     }
 
-
     public Integer getId() {
         return id;
     }
@@ -107,15 +106,7 @@ public class LearningPathItem {
         completedAt = v;
     }
 
-
     public void setId(Integer value) {
         this.id = value;
     }
 }
-
-
-
-
-
-
-

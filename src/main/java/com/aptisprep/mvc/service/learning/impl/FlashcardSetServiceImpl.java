@@ -8,8 +8,8 @@ import com.aptisprep.mvc.repository.*;
 import com.aptisprep.mvc.service.learning.FlashcardSetService;
 import com.aptisprep.mvc.service.learning.LessonService;
 import jakarta.persistence.*;
-import java.time.LocalDateTime;
 import java.text.Normalizer;
+import java.time.LocalDateTime;
 import java.util.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -48,7 +48,12 @@ public class FlashcardSetServiceImpl implements FlashcardSetService {
                     values.stream()
                             .filter(set -> !set.isPersonal())
                             .filter(set -> skill.equals(set.getLessonSkill()))
-                            .sorted(Comparator.comparing(streamValue -> streamValue.getLevel(), Comparator.nullsLast((leftValue, rightValue) -> leftValue.compareTo(rightValue))))
+                            .sorted(
+                                    Comparator.comparing(
+                                            streamValue -> streamValue.getLevel(),
+                                            Comparator.nullsLast(
+                                                    (leftValue, rightValue) ->
+                                                            leftValue.compareTo(rightValue))))
                             .toList();
             if (!grouped.isEmpty()) branches.put(skill, grouped);
         }
@@ -94,12 +99,7 @@ public class FlashcardSetServiceImpl implements FlashcardSetService {
 
     @Override
     public List<FlashcardSetDTO> filteredListForStudent(
-            String email,
-            String source,
-            String query,
-            String skill,
-            String level,
-            String sort) {
+            String email, String source, String query, String skill, String level, String sort) {
         if (!List.of("all", "mine", "lesson").contains(source)
                 || query == null
                 || query.length() > 255
@@ -111,18 +111,20 @@ public class FlashcardSetServiceImpl implements FlashcardSetService {
         String normalizedQuery = fold(query);
         Comparator<FlashcardSetDTO> order =
                 "newest".equals(sort)
-                        ? Comparator.comparing(
-                                        (FlashcardSetDTO streamValue) -> streamValue.getId())
+                        ? Comparator.comparing((FlashcardSetDTO streamValue) -> streamValue.getId())
                                 .reversed()
                         : Comparator.comparingInt(
                                         (FlashcardSetDTO set) ->
                                                 set.isPersonal()
                                                         ? lessonService.getSkills().size()
-                                                        : lessonService.getSkills().indexOf(set.getLessonSkill()))
+                                                        : lessonService
+                                                                .getSkills()
+                                                                .indexOf(set.getLessonSkill()))
                                 .thenComparingInt(
                                         set -> lessonService.getLevels().indexOf(set.getLevel()))
                                 .thenComparing(set -> fold(set.getTitle()))
-                                .thenComparing((FlashcardSetDTO streamValue) -> streamValue.getId());
+                                .thenComparing(
+                                        (FlashcardSetDTO streamValue) -> streamValue.getId());
         return listForStudent(email).stream()
                 .filter(
                         set ->
@@ -135,12 +137,12 @@ public class FlashcardSetServiceImpl implements FlashcardSetService {
                 .filter(
                         set ->
                                 normalizedQuery.isBlank()
-                                        || fold(
-                                                        set.getTitle()
-                                                                + " "
-                                                                + Objects.toString(set.getDescription(), "")
-                                                                + " "
-                                                                + Objects.toString(set.getLessonTitle(), ""))
+                                        || fold(set.getTitle()
+                                                        + " "
+                                                        + Objects.toString(set.getDescription(), "")
+                                                        + " "
+                                                        + Objects.toString(
+                                                                set.getLessonTitle(), ""))
                                                 .contains(normalizedQuery))
                 .sorted(order)
                 .toList();
@@ -160,12 +162,16 @@ public class FlashcardSetServiceImpl implements FlashcardSetService {
                             FlashcardSetDTO result = FlashcardSetDTO.convertEntityToDto(s);
                             result.setCount(
                                     flashcardRepository
-                                            .findBySetIdAndStatusOrderByDisplayOrderAsc(s.getId(), "ACTIVE")
+                                            .findBySetIdAndStatusOrderByDisplayOrderAsc(
+                                                    s.getId(), "ACTIVE")
                                             .size());
                             result.setPersonal(s.getOwner() != null);
-                            result.setLessonId(s.getLesson() == null ? null : s.getLesson().getId());
-                            result.setLessonTitle(s.getLesson() == null ? null : s.getLesson().getTitle());
-                            result.setLessonSkill(s.getLesson() == null ? null : s.getLesson().getSkill());
+                            result.setLessonId(
+                                    s.getLesson() == null ? null : s.getLesson().getId());
+                            result.setLessonTitle(
+                                    s.getLesson() == null ? null : s.getLesson().getTitle());
+                            result.setLessonSkill(
+                                    s.getLesson() == null ? null : s.getLesson().getSkill());
                             return result;
                         })
                 .toList();
@@ -245,7 +251,9 @@ public class FlashcardSetServiceImpl implements FlashcardSetService {
         if (!lessonService.getLevels().contains(f.getCefrLevel())
                 || !lessonService.getStatuses().contains(f.getStatus()))
             throw new BusinessRuleException("Cấp độ hoặc trạng thái không hợp lệ");
-        if (f.getFlashcards() == null || f.getFlashcards().isEmpty() || f.getFlashcards().size() > 200)
+        if (f.getFlashcards() == null
+                || f.getFlashcards().isEmpty()
+                || f.getFlashcards().size() > 200)
             throw new BusinessRuleException("Bộ thẻ cần từ 1 đến 200 cặp từ và nghĩa");
         FlashcardSet set =
                 id == null
@@ -275,7 +283,8 @@ public class FlashcardSetServiceImpl implements FlashcardSetService {
                 throw new BusinessRuleException(
                         "Mỗi thẻ cần thuật ngữ và định nghĩa. Tối đa 200 ký tự cho thuật ngữ và"
                                 + " 1000 cho định nghĩa");
-            if (card.getId() != null && (!byId.containsKey(card.getId()) || !seen.add(card.getId())))
+            if (card.getId() != null
+                    && (!byId.containsKey(card.getId()) || !seen.add(card.getId())))
                 throw new BusinessRuleException("Thẻ không thuộc bộ này hoặc bị lặp");
         }
         if (lesson != null) {
@@ -293,7 +302,12 @@ public class FlashcardSetServiceImpl implements FlashcardSetService {
         set.setOwner(owner);
         set.setVisibility(owner == null ? "PUBLIC" : "PRIVATE");
         flashcardSetRepository.save(set);
-        int position = existing.stream().mapToInt(streamValue -> streamValue.getDisplayOrder()).max().orElse(0) + 1;
+        int position =
+                existing.stream()
+                                .mapToInt(streamValue -> streamValue.getDisplayOrder())
+                                .max()
+                                .orElse(0)
+                        + 1;
         for (Flashcard c : existing) {
             c.setStatus("ARCHIVED");
             flashcardRepository.save(c);
@@ -388,7 +402,7 @@ public class FlashcardSetServiceImpl implements FlashcardSetService {
                         })
                 .sorted(
                         Comparator.comparing(
-                                        streamValue -> streamValue.getNextReviewAt(),
+                                streamValue -> streamValue.getNextReviewAt(),
                                 Comparator.nullsFirst(Comparator.naturalOrder())))
                 .toList();
     }
@@ -499,12 +513,4 @@ public class FlashcardSetServiceImpl implements FlashcardSetService {
         userFlashcardProgressRepository.save(value);
         em.persist(new FlashcardReview(key, user.getId(), cardId, state, now));
     }
-
 }
-
-
-
-
-
-
-

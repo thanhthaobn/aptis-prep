@@ -21,12 +21,4 @@ public interface LearningActivityService {
     public ActivityView activity(String email);
 
     public ActivityView summarize(Map<LocalDate, Integer> activityByDate, LocalDate today);
-
 }
-
-
-
-
-
-
-

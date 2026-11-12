@@ -1,12 +1,12 @@
 package com.aptisprep.mvc.service.admin.impl;
 
+import com.aptisprep.mvc.dto.CertificateDTO;
 import com.aptisprep.mvc.dto.MockExamDTO;
 import com.aptisprep.mvc.dto.QuestionDTO;
 import com.aptisprep.mvc.dto.QuestionItemDTO;
-import com.aptisprep.mvc.dto.QuestionOptionDTO;
-import com.aptisprep.mvc.dto.CertificateDTO;
-import com.aptisprep.mvc.dto.ScoringSchemeDTO;
 import com.aptisprep.mvc.dto.QuestionMediaDTO;
+import com.aptisprep.mvc.dto.QuestionOptionDTO;
+import com.aptisprep.mvc.dto.ScoringSchemeDTO;
 import com.aptisprep.mvc.entity.*;
 import com.aptisprep.mvc.enums.CefrLevel;
 import com.aptisprep.mvc.enums.ExamType;
@@ -21,8 +21,8 @@ import com.aptisprep.mvc.service.admin.AdminExamService;
 import com.aptisprep.mvc.service.admin.CatalogService;
 import com.aptisprep.mvc.service.admin.QuestionMediaService;
 import com.aptisprep.mvc.service.storage.StorageService;
-import java.util.*;
 import java.math.BigDecimal;
+import java.util.*;
 import java.util.stream.Collectors;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -78,19 +78,49 @@ public class CatalogServiceImpl implements CatalogService {
     public Map<String, Object> module(String key) {
         if ("questions".equals(key))
             return values(
-                    "key", key, "title", "Ngân hàng câu hỏi",
-                    "description", "Quản lý nội dung, phương án trả lời và tài nguyên đính kèm.",
-                    "singular", "câu hỏi", "createLabel", "Thêm câu hỏi",
-                    "typeLabel", "Dạng câu hỏi",
-                    "kinds", List.of("SINGLE_CHOICE", "MATCHING", "ORDERING", "WRITING_TEXT", "SPEAKING_AUDIO"),
-                    "editable", true, "baseUrl", "/admin/questions");
+                    "key",
+                    key,
+                    "title",
+                    "Ngân hàng câu hỏi",
+                    "description",
+                    "Quản lý nội dung, phương án trả lời và tài nguyên đính kèm.",
+                    "singular",
+                    "câu hỏi",
+                    "createLabel",
+                    "Thêm câu hỏi",
+                    "typeLabel",
+                    "Dạng câu hỏi",
+                    "kinds",
+                    List.of(
+                            "SINGLE_CHOICE",
+                            "MATCHING",
+                            "ORDERING",
+                            "WRITING_TEXT",
+                            "SPEAKING_AUDIO"),
+                    "editable",
+                    true,
+                    "baseUrl",
+                    "/admin/questions");
         if ("exams".equals(key))
             return values(
-                    "key", key, "title", "Đề thi",
-                    "description", "Sắp xếp câu hỏi, thời gian và phạm vi kỹ năng của từng đề.",
-                    "singular", "đề thi", "createLabel", "Tạo đề thi",
-                    "typeLabel", "Loại đề", "kinds", EXAM_TYPES,
-                    "editable", true, "baseUrl", "/admin/exams");
+                    "key",
+                    key,
+                    "title",
+                    "Đề thi",
+                    "description",
+                    "Sắp xếp câu hỏi, thời gian và phạm vi kỹ năng của từng đề.",
+                    "singular",
+                    "đề thi",
+                    "createLabel",
+                    "Tạo đề thi",
+                    "typeLabel",
+                    "Loại đề",
+                    "kinds",
+                    EXAM_TYPES,
+                    "editable",
+                    true,
+                    "baseUrl",
+                    "/admin/exams");
         throw new ResourceNotFoundException("Không tìm thấy nội dung");
     }
 
@@ -106,19 +136,23 @@ public class CatalogServiceImpl implements CatalogService {
         String term = q == null ? "" : q.trim().toLowerCase(Locale.ROOT);
         List<QuestionDTO> values =
                 questionRepository.findAll().stream()
-                    .filter(
-                            x ->
-                                    matches(
-                                            term,
-                                            x.getContent(),
-                                            x.getInstruction(),
-                                            x.getReadingPassage()))
-                    .filter(x -> skill.isBlank() || x.getSkill().equals(skill))
-                    .filter(x -> status.isBlank() || x.getStatus().equals(status))
-                    .filter(x -> kind.isBlank() || x.getQuestionType().equals(kind))
-                    .sorted(Comparator.comparing((Question streamValue) -> streamValue.getUpdatedAt()).reversed())
-                    .map(streamValue -> QuestionDTO.convertEntityToDto(streamValue))
-                    .toList();
+                        .filter(
+                                x ->
+                                        matches(
+                                                term,
+                                                x.getContent(),
+                                                x.getInstruction(),
+                                                x.getReadingPassage()))
+                        .filter(x -> skill.isBlank() || x.getSkill().equals(skill))
+                        .filter(x -> status.isBlank() || x.getStatus().equals(status))
+                        .filter(x -> kind.isBlank() || x.getQuestionType().equals(kind))
+                        .sorted(
+                                Comparator.comparing(
+                                                (Question streamValue) ->
+                                                        streamValue.getUpdatedAt())
+                                        .reversed())
+                        .map(streamValue -> QuestionDTO.convertEntityToDto(streamValue))
+                        .toList();
         return paginate(values, page, size);
     }
 
@@ -128,13 +162,17 @@ public class CatalogServiceImpl implements CatalogService {
         String term = q == null ? "" : q.trim().toLowerCase(Locale.ROOT);
         List<MockExamDTO> values =
                 mockExamRepository.findAll().stream()
-                    .filter(x -> matches(term, x.getTitle(), x.getDescription()))
-                    .filter(x -> skill.isBlank() || Objects.equals(x.getSkill(), skill))
-                    .filter(x -> status.isBlank() || x.getStatus().equals(status))
-                    .filter(x -> kind.isBlank() || x.getExamType().equals(kind))
-                    .sorted(Comparator.comparing((MockExam streamValue) -> streamValue.getUpdatedAt()).reversed())
-                    .map(streamValue -> examCatalog.entry(streamValue))
-                    .toList();
+                        .filter(x -> matches(term, x.getTitle(), x.getDescription()))
+                        .filter(x -> skill.isBlank() || Objects.equals(x.getSkill(), skill))
+                        .filter(x -> status.isBlank() || x.getStatus().equals(status))
+                        .filter(x -> kind.isBlank() || x.getExamType().equals(kind))
+                        .sorted(
+                                Comparator.comparing(
+                                                (MockExam streamValue) ->
+                                                        streamValue.getUpdatedAt())
+                                        .reversed())
+                        .map(streamValue -> examCatalog.entry(streamValue))
+                        .toList();
         return paginate(values, page, size);
     }
 
@@ -182,7 +220,9 @@ public class CatalogServiceImpl implements CatalogService {
                             .findByQuestionItemIdOrderByPosition(item.getId())
                             .stream()
                             .map(streamValue -> QuestionOptionDTO.convertEntityToDto(streamValue))
-                            .collect(Collectors.toCollection(() -> new ArrayList<QuestionOptionDTO>()));
+                            .collect(
+                                    Collectors.toCollection(
+                                            () -> new ArrayList<QuestionOptionDTO>()));
             if (!os.isEmpty()) itemForm.setOptions(os);
             values.add(itemForm);
         }
@@ -262,9 +302,14 @@ public class CatalogServiceImpl implements CatalogService {
                                         section.getSkill(),
                                         section.getDurationMinutes(),
                                         parseQuestionIds(section.getQuestionIds()).stream()
-                                                .map(streamValue -> questionRepository.findById(streamValue))
+                                                .map(
+                                                        streamValue ->
+                                                                questionRepository.findById(
+                                                                        streamValue))
                                                 .flatMap(streamValue -> streamValue.stream())
-                                                .map(streamValue -> examPreviewQuestion(streamValue))
+                                                .map(
+                                                        streamValue ->
+                                                                examPreviewQuestion(streamValue))
                                                 .toList()))
                 .toList();
     }
@@ -484,8 +529,10 @@ public class CatalogServiceImpl implements CatalogService {
 
     public List<ScoringScheme> activeSchemes() {
         return scoringSchemeRepository.findByStatusOrderByName(RecordStatus.ACTIVE).stream()
-                .filter(scheme -> scheme.getCertificate() != null
-                        && scheme.getCertificate().isAptisGeneral())
+                .filter(
+                        scheme ->
+                                scheme.getCertificate() != null
+                                        && scheme.getCertificate().isAptisGeneral())
                 .toList();
     }
 
@@ -584,8 +631,9 @@ public class CatalogServiceImpl implements CatalogService {
             int lastFilled = 0;
             boolean gap = false;
             for (int index = 0; index < options.size(); index++) {
-                boolean filled = options.get(index).getContent() != null
-                        && !options.get(index).getContent().isBlank();
+                boolean filled =
+                        options.get(index).getContent() != null
+                                && !options.get(index).getContent().isBlank();
                 if (filled) {
                     if (gap)
                         throw new BusinessRuleException(
@@ -596,12 +644,13 @@ public class CatalogServiceImpl implements CatalogService {
                 }
             }
             Integer correctPosition = item.getCorrectPosition();
-            boolean correct = correctPosition != null
-                    && correctPosition >= 1
-                    && correctPosition <= lastFilled
-                    && correctPosition <= options.size()
-                    && options.get(correctPosition - 1).getContent() != null
-                    && !options.get(correctPosition - 1).getContent().isBlank();
+            boolean correct =
+                    correctPosition != null
+                            && correctPosition >= 1
+                            && correctPosition <= lastFilled
+                            && correctPosition <= options.size()
+                            && options.get(correctPosition - 1).getContent() != null
+                            && !options.get(correctPosition - 1).getContent().isBlank();
             if (lastFilled < 2 || !correct)
                 throw new BusinessRuleException(
                         "Mỗi ý hỏi phải có ít nhất 2 phương án và một đáp án đúng");
@@ -683,8 +732,7 @@ public class CatalogServiceImpl implements CatalogService {
         for (int index = 0; index < itemForm.getOptions().size(); index++) {
             QuestionOptionDTO optionForm = itemForm.getOptions().get(index);
             if (optionForm.getContent() == null || optionForm.getContent().isBlank()) continue;
-            QuestionOption option =
-                    QuestionOptionDTO.convertDtoToEntity(optionForm);
+            QuestionOption option = QuestionOptionDTO.convertDtoToEntity(optionForm);
             option.setQuestionItemId(itemId);
             option.setContent(optionForm.getContent().trim());
             option.setCorrect(Objects.equals(index + 1, itemForm.getCorrectPosition()));
@@ -693,10 +741,3 @@ public class CatalogServiceImpl implements CatalogService {
         }
     }
 }
-
-
-
-
-
-
-

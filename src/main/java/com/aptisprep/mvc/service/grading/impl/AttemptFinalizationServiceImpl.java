@@ -1,11 +1,7 @@
 package com.aptisprep.mvc.service.grading.impl;
-import com.aptisprep.mvc.support.scoring.*;
-import com.aptisprep.mvc.support.contract.*;
 
-import com.aptisprep.mvc.service.grading.*;
-
-import com.aptisprep.mvc.service.grading.AttemptFinalizationService;
-
+import com.aptisprep.mvc.dto.AiAssessmentDTO;
+import com.aptisprep.mvc.dto.ExamSkillResultDTO;
 import com.aptisprep.mvc.entity.AiAssessment;
 import com.aptisprep.mvc.entity.AiAssessmentJob;
 import com.aptisprep.mvc.entity.ExamAttempt;
@@ -30,13 +26,15 @@ import com.aptisprep.mvc.repository.ExamSkillResultRepository;
 import com.aptisprep.mvc.repository.MockExamRepository;
 import com.aptisprep.mvc.repository.QuestionRepository;
 import com.aptisprep.mvc.repository.UserAnswerRepository;
+import com.aptisprep.mvc.service.exam.AttemptOutboxService;
+import com.aptisprep.mvc.service.grading.*;
 import com.aptisprep.mvc.service.grading.AiAssessmentService;
+import com.aptisprep.mvc.service.grading.AttemptFinalizationService;
+import com.aptisprep.mvc.service.scoring.ScoringPolicyService;
+import com.aptisprep.mvc.support.contract.*;
 import com.aptisprep.mvc.support.contract.GradingContextFormatter;
 import com.aptisprep.mvc.support.contract.IntegrationModels.LockedAnswer;
-import com.aptisprep.mvc.service.scoring.ScoringPolicyService;
-import com.aptisprep.mvc.dto.ExamSkillResultDTO;
-import com.aptisprep.mvc.dto.AiAssessmentDTO;
-import com.aptisprep.mvc.service.exam.AttemptOutboxService;
+import com.aptisprep.mvc.support.scoring.*;
 import com.aptisprep.mvc.support.scoring.CheckpointScorePolicy;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -291,7 +289,8 @@ public class AttemptFinalizationServiceImpl implements AttemptFinalizationServic
                     .ifPresent(value -> subjectiveScores.add(BigDecimal.ZERO));
         }
         // Sau khi restart có thể mất một số callback dù kết quả chấm đã được lưu.
-        // Đồng bộ lại mọi answer hợp lệ trước khi hoàn tất aggregate, không chỉ answer của event này.
+        // Đồng bộ lại mọi answer hợp lệ trước khi hoàn tất aggregate, không chỉ answer của event
+        // này.
         for (AiAssessmentJob job : skillJobs) {
             acceptedAssessment(job)
                     .filter(
@@ -376,8 +375,7 @@ public class AttemptFinalizationServiceImpl implements AttemptFinalizationServic
             if (finalizeIfReady(attempt, exam(attempt))) publishCompleted(attempt, exam(attempt));
             return;
         }
-        result.setScaleScore(
-                scoring.scale(schemeId, question.getSkill(), raw, result.getRawMax()));
+        result.setScaleScore(scoring.scale(schemeId, question.getSkill(), raw, result.getRawMax()));
         result.setCefrLevel(
                 CheckpointScorePolicy.confirmedLevel(
                         exam(attempt).getExamType(),
@@ -592,26 +590,32 @@ public class AttemptFinalizationServiceImpl implements AttemptFinalizationServic
     private BigDecimal subjectiveRawMax(Integer attemptId, String skill) {
         BigDecimal snapshotMax =
                 examAttemptSnapshotRepository
-                .findByAttemptId(attemptId)
-                .map(
-                        snapshot ->
-                                snapshot.getQuestions().stream()
-                                        .filter(q -> skill.equalsIgnoreCase(q.getSkill()))
-                                        .filter(
-                                                q ->
-                                                        "WRITING_TEXT".equals(q.getQuestionType())
-                                                                || "SPEAKING_AUDIO".equals(
-                                                                        q.getQuestionType()))
-                                        .flatMap(q -> q.getItems().stream())
-                                        .map(
-                                                item ->
-                                                        item.getPoints() == null
-                                                                ? BigDecimal.ONE
-                                                                : item.getPoints())
-                                        .reduce(BigDecimal.ZERO, BigDecimal::add))
-                .orElse(BigDecimal.ZERO);
+                        .findByAttemptId(attemptId)
+                        .map(
+                                snapshot ->
+                                        snapshot.getQuestions().stream()
+                                                .filter(q -> skill.equalsIgnoreCase(q.getSkill()))
+                                                .filter(
+                                                        q ->
+                                                                "WRITING_TEXT"
+                                                                                .equals(
+                                                                                        q
+                                                                                                .getQuestionType())
+                                                                        || "SPEAKING_AUDIO"
+                                                                                .equals(
+                                                                                        q
+                                                                                                .getQuestionType()))
+                                                .flatMap(q -> q.getItems().stream())
+                                                .map(
+                                                        item ->
+                                                                item.getPoints() == null
+                                                                        ? BigDecimal.ONE
+                                                                        : item.getPoints())
+                                                .reduce(BigDecimal.ZERO, BigDecimal::add))
+                        .orElse(BigDecimal.ZERO);
         if (snapshotMax.signum() > 0) return snapshotMax;
-        return aiAssessmentJobRepository.findByAttemptIdAndSourceType(attemptId, "EXAM_ANSWER")
+        return aiAssessmentJobRepository
+                .findByAttemptIdAndSourceType(attemptId, "EXAM_ANSWER")
                 .stream()
                 .filter(job -> skill.equalsIgnoreCase(job.getSkill()))
                 .map(AiAssessmentJob::getMaxScore)
@@ -713,10 +717,3 @@ public class AttemptFinalizationServiceImpl implements AttemptFinalizationServic
                                                                 "Không tìm thấy đề thi")));
     }
 }
-
-
-
-
-
-
-

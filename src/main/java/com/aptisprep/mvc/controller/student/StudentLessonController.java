@@ -25,7 +25,9 @@ public class StudentLessonController {
 
     public StudentLessonController(
             LessonListeningService lessonListeningService,
-            LessonService lessonService, LessonTeachingService lessonTeachingService, FlashcardSetService flashcardSetService) {
+            LessonService lessonService,
+            LessonTeachingService lessonTeachingService,
+            FlashcardSetService flashcardSetService) {
         this.lessonListeningService = lessonListeningService;
         this.lessonService = lessonService;
         this.lessonTeachingService = lessonTeachingService;
@@ -44,7 +46,8 @@ public class StudentLessonController {
         String levelParam = level == null ? "" : level;
         if (queryParam.length() > 255 || skillParam.length() > 80 || levelParam.length() > 40)
             throw new BusinessRuleException("Bộ lọc không hợp lệ");
-        List<LessonDTO> items = lessonService.filterPublishedLessonDtos(queryParam, skillParam, levelParam);
+        List<LessonDTO> items =
+                lessonService.filterPublishedLessonDtos(queryParam, skillParam, levelParam);
         Map<String, List<LessonDTO>> lessonGroups = new LinkedHashMap<>();
         Map<Integer, Integer> lessonNumbers = new HashMap<>();
         for (int index = 0; index < items.size(); index++) {
@@ -62,7 +65,8 @@ public class StudentLessonController {
         model.addAttribute(
                 "lessonStatuses",
                 lessonService.lessonStatuses(
-                        principal.getName(), items.stream().map(streamValue -> streamValue.getId()).toList()));
+                        principal.getName(),
+                        items.stream().map(streamValue -> streamValue.getId()).toList()));
         model.addAttribute("lessonSets", flashcardSetService.lessonSets());
         model.addAttribute("lessons", items);
         model.addAttribute("q", q);
@@ -83,18 +87,21 @@ public class StudentLessonController {
         model.addAttribute("lesson", lesson);
         model.addAttribute("flashcardSet", flashcardSetService.publishedForLessonView(id));
         model.addAttribute("questions", lessonTeachingService.questions(id));
-        model.addAttribute("savedResponse", lessonTeachingService.response(id, principal.getName()));
-        model.addAttribute("savedWork", lessonTeachingService.savedWork(id, principal.getName()));
         model.addAttribute(
-                "videoId",
-                lessonTeachingService.videoId(lesson.getVideoUrl()));
+                "savedResponse", lessonTeachingService.response(id, principal.getName()));
+        model.addAttribute("savedWork", lessonTeachingService.savedWork(id, principal.getName()));
+        model.addAttribute("videoId", lessonTeachingService.videoId(lesson.getVideoUrl()));
         model.addAttribute("progress", lessonService.progressView(principal.getName(), id));
-        model.addAttribute("submissions", lessonTeachingService.submissionHistory(id, principal.getName()));
-        model.addAttribute("aiSubmissions", lessonTeachingService.assessableSubmissions(id, principal.getName()));
+        model.addAttribute(
+                "submissions", lessonTeachingService.submissionHistory(id, principal.getName()));
+        model.addAttribute(
+                "aiSubmissions",
+                lessonTeachingService.assessableSubmissions(id, principal.getName()));
         model.addAttribute("completion", lessonTeachingService.completion(id, principal.getName()));
         model.addAttribute("previousLesson", lessonService.previousLessonView(id));
         model.addAttribute("nextLesson", lessonService.nextLessonView(id));
-        model.addAttribute("lastSection", lessonTeachingService.lastSection(id, principal.getName()));
+        model.addAttribute(
+                "lastSection", lessonTeachingService.lastSection(id, principal.getName()));
         return "student/lesson/detail";
     }
 
@@ -104,7 +111,8 @@ public class StudentLessonController {
             @RequestParam Map<String, String> answers,
             Principal principal,
             RedirectAttributes redirect) {
-        redirect.addFlashAttribute("feedback", lessonTeachingService.grade(id, answers, principal.getName()));
+        redirect.addFlashAttribute(
+                "feedback", lessonTeachingService.grade(id, answers, principal.getName()));
         String skill = lessonService.requirePublishedView(id).getSkill();
         return "redirect:/student/lessons/"
                 + id
@@ -151,7 +159,8 @@ public class StudentLessonController {
     }
 
     @PostMapping("/student/lessons/{id}/complete")
-    public String complete(@PathVariable Integer id, Principal principal, RedirectAttributes redirectAttributes) {
+    public String complete(
+            @PathVariable Integer id, Principal principal, RedirectAttributes redirectAttributes) {
         try {
             lessonService.complete(principal.getName(), id);
             redirectAttributes.addFlashAttribute("message", "Đã ghi nhận hoàn thành bài học");
@@ -201,14 +210,17 @@ public class StudentLessonController {
         }
         lessonListeningService.confirmManualListening(id, principal.getName());
         redirect.addFlashAttribute(
-                "message", "Đã ghi nhận bạn hoàn thành phần nghe. Transcript có thể được mở theo cấu hình bài học.");
+                "message",
+                "Đã ghi nhận bạn hoàn thành phần nghe. Transcript có thể được mở theo cấu hình bài học.");
         return "redirect:/student/lessons/" + id;
     }
 
     @PostMapping("/student/lessons/{id}/section")
     @ResponseBody
     public void section(
-            @PathVariable Integer id, @RequestParam(name = "section") String section, Principal principal) {
+            @PathVariable Integer id,
+            @RequestParam(name = "section") String section,
+            Principal principal) {
         lessonTeachingService.section(id, section, principal.getName());
     }
 
@@ -222,12 +234,4 @@ public class StudentLessonController {
         redirectAttributes.addFlashAttribute("message", "Đã lưu bản ghi luyện nói");
         return "redirect:/student/lessons/" + id;
     }
-
 }
-
-
-
-
-
-
-

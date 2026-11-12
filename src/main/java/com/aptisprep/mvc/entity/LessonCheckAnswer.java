@@ -22,16 +22,12 @@ public class LessonCheckAnswer {
     private Integer selectedOption;
 
     public LessonCheckAnswer(
-            Integer id,
-            LessonCheckAttempt attempt,
-            Integer questionId,
-            Integer selectedOption) {
+            Integer id, LessonCheckAttempt attempt, Integer questionId, Integer selectedOption) {
         this.id = id;
         this.attempt = attempt;
         this.questionId = questionId;
         this.selectedOption = selectedOption;
     }
-
 
     public Integer getId() {
         return id;
@@ -61,15 +57,7 @@ public class LessonCheckAnswer {
         selectedOption = value;
     }
 
-
     public void setId(Integer value) {
         this.id = value;
     }
 }
-
-
-
-
-
-
-

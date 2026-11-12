@@ -7,6 +7,7 @@ import static org.hamcrest.Matchers.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
+import com.aptisprep.mvc.dto.MockExamDTO;
 import com.aptisprep.mvc.entity.MockExam;
 import com.aptisprep.mvc.entity.MockExamQuestion;
 import com.aptisprep.mvc.entity.Question;
@@ -19,7 +20,6 @@ import com.aptisprep.mvc.enums.UserStatus;
 import com.aptisprep.mvc.repository.ExamAttemptRepository;
 import com.aptisprep.mvc.repository.UserRepository;
 import com.aptisprep.mvc.service.storage.StorageService;
-import com.aptisprep.mvc.dto.MockExamDTO;
 import com.aptisprep.mvc.support.TestAudio;
 import java.time.LocalDateTime;
 import java.util.HashSet;
@@ -223,9 +223,7 @@ class StudentContentPreviewTests {
                         .andExpect(content().string(not(containsString(prefix + " Draft"))));
         var model = response.andReturn().getModelAndView().getModel();
         var page = (Page<?>) model.get("catalogPage");
-        assertThat(page.getContent().stream()
-                        .map(value -> ((MockExamDTO) value).getId())
-                        .toList())
+        assertThat(page.getContent().stream().map(value -> ((MockExamDTO) value).getId()).toList())
                 .isEqualTo(List.of(a1.getId(), b1.getId(), c1.getId(), writing.getId()));
         assertThat(((java.util.Map<String, Long>) model.get("examCategories")).values())
                 .containsExactlyElementsOf(List.of(4L, 1L, 1L));
@@ -242,9 +240,11 @@ class StudentContentPreviewTests {
                             .andReturn()
                             .getModelAndView()
                             .getModel();
-            assertThat(((Page<?>) sorted.get("catalogPage")).getContent().stream()
-                            .map(value -> ((MockExamDTO) value).getLevel())
-                            .toList())
+            assertThat(
+                            ((Page<?>) sorted.get("catalogPage"))
+                                    .getContent().stream()
+                                            .map(value -> ((MockExamDTO) value).getLevel())
+                                            .toList())
                     .isEqualTo(List.of(order[1], order[2], order[3]));
         }
     }
@@ -613,13 +613,3 @@ class StudentContentPreviewTests {
                 .andExpect(status().isBadRequest());
     }
 }
-
-
-
-
-
-
-
-
-
-

@@ -1,23 +1,21 @@
 package com.aptisprep.mvc.controller.student;
-import com.aptisprep.mvc.support.contract.*;
 
-import com.aptisprep.mvc.support.pagination.ListPagination;
-import com.aptisprep.mvc.dto.UserGoalDTO;
 import com.aptisprep.mvc.dto.*;
+import com.aptisprep.mvc.dto.UserGoalDTO;
 import com.aptisprep.mvc.enums.Skill;
 import com.aptisprep.mvc.exception.BusinessRuleException;
 import com.aptisprep.mvc.service.account.AccountAccessService;
 import com.aptisprep.mvc.service.account.AccountProfileService;
 import com.aptisprep.mvc.service.account.LearningActivityService;
 import com.aptisprep.mvc.service.exam.ExamAttemptService;
-import com.aptisprep.mvc.support.contract.IntegrationModels.AttemptHandle;
-import com.aptisprep.mvc.service.exam.ExamAttemptService;
 import com.aptisprep.mvc.service.learning.LessonService;
 import com.aptisprep.mvc.service.placement.PlacementService;
 import com.aptisprep.mvc.service.scoring.ScoringGuideService;
+import com.aptisprep.mvc.support.contract.*;
+import com.aptisprep.mvc.support.contract.IntegrationModels.AttemptHandle;
+import com.aptisprep.mvc.support.pagination.ListPagination;
 import jakarta.validation.Valid;
 import java.security.Principal;
-import java.util.List;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -133,7 +131,8 @@ public class StudentAccountController {
             Model model) {
         model.addAttribute("skill", "FULL_MOCK");
         var placementPage =
-                ListPagination.slice(placementService.availableForStudent(principal.getName()), page);
+                ListPagination.slice(
+                        placementService.availableForStudent(principal.getName()), page);
         model.addAttribute("placementPage", placementPage);
         model.addAttribute("placementExams", placementPage.getContent());
         return "student/account/placement";
@@ -184,12 +183,4 @@ public class StudentAccountController {
         model.addAttribute("feedbackWithoutGuide", scoreGuideView.feedbackWithoutGuide());
         return "student/attempt/result";
     }
-
 }
-
-
-
-
-
-
-

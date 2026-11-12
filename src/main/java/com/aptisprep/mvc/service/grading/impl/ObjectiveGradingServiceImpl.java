@@ -1,25 +1,23 @@
 package com.aptisprep.mvc.service.grading.impl;
-import com.aptisprep.mvc.support.scoring.*;
-import com.aptisprep.mvc.support.contract.*;
-
-import com.aptisprep.mvc.service.grading.*;
-
-import com.aptisprep.mvc.service.grading.ObjectiveGradingService;
 
 import com.aptisprep.mvc.entity.ExamSkillResult;
 import com.aptisprep.mvc.entity.MockExam;
-import com.aptisprep.mvc.entity.UserAnswerDetail;
 import com.aptisprep.mvc.entity.UserAnswer;
+import com.aptisprep.mvc.entity.UserAnswerDetail;
 import com.aptisprep.mvc.exception.BusinessRuleException;
 import com.aptisprep.mvc.exception.ResourceNotFoundException;
 import com.aptisprep.mvc.repository.ExamSkillResultRepository;
 import com.aptisprep.mvc.repository.UserAnswerDetailRepository;
 import com.aptisprep.mvc.repository.UserAnswerRepository;
+import com.aptisprep.mvc.service.grading.*;
+import com.aptisprep.mvc.service.grading.ObjectiveGradingService;
+import com.aptisprep.mvc.service.scoring.ScoringPolicyService;
+import com.aptisprep.mvc.support.contract.*;
 import com.aptisprep.mvc.support.contract.GradingContextFormatter;
 import com.aptisprep.mvc.support.contract.IntegrationModels.LockedAnswer;
 import com.aptisprep.mvc.support.contract.IntegrationModels.LockedAttempt;
 import com.aptisprep.mvc.support.contract.IntegrationModels.LockedItem;
-import com.aptisprep.mvc.service.scoring.ScoringPolicyService;
+import com.aptisprep.mvc.support.scoring.*;
 import com.aptisprep.mvc.support.scoring.CheckpointScorePolicy;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -64,10 +62,7 @@ public class ObjectiveGradingServiceImpl implements ObjectiveGradingService {
     }
 
     private void gradeSkill(
-            LockedAttempt locked,
-            MockExam exam,
-            String skill,
-            List<LockedAnswer> skillAnswers) {
+            LockedAttempt locked, MockExam exam, String skill, List<LockedAnswer> skillAnswers) {
         int total = 0;
         int correct = 0;
         BigDecimal totalPoints = BigDecimal.ZERO;
@@ -260,10 +255,3 @@ public class ObjectiveGradingServiceImpl implements ObjectiveGradingService {
         return "WRITING_TEXT".equals(type) || "SPEAKING_AUDIO".equals(type);
     }
 }
-
-
-
-
-
-
-

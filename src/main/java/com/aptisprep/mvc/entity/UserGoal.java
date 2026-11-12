@@ -54,7 +54,6 @@ public class UserGoal {
         this.skills = skills;
     }
 
-
     @PrePersist
     void onCreate() {
         if (createdAt == null) createdAt = LocalDateTime.now();
@@ -109,7 +108,6 @@ public class UserGoal {
         skill.setGoal(this);
     }
 
-
     public void setId(Integer value) {
         this.id = value;
     }
@@ -122,10 +120,3 @@ public class UserGoal {
         this.skills = value;
     }
 }
-
-
-
-
-
-
-

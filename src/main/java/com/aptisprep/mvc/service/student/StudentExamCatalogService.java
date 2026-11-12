@@ -24,13 +24,8 @@ public interface StudentExamCatalogService {
     public MockExamDTO entry(String module, int id);
 
     public String categoryLabel(String type);
+
     public List<String> examTypes();
+
     public List<String> sortOptions();
 }
-
-
-
-
-
-
-

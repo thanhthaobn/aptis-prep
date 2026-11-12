@@ -1,5 +1,7 @@
 package com.aptisprep.mvc.service.scoring.impl;
 
+import com.aptisprep.mvc.dto.ExamAttemptDTO;
+import com.aptisprep.mvc.dto.ExamSkillResultDTO;
 import com.aptisprep.mvc.entity.ScoreBand;
 import com.aptisprep.mvc.entity.ScoringScaleRule;
 import com.aptisprep.mvc.entity.ScoringScheme;
@@ -11,10 +13,8 @@ import com.aptisprep.mvc.exception.ResourceNotFoundException;
 import com.aptisprep.mvc.repository.ScoreBandRepository;
 import com.aptisprep.mvc.repository.ScoringScaleRuleRepository;
 import com.aptisprep.mvc.repository.ScoringSchemeRepository;
-import com.aptisprep.mvc.dto.ExamSkillResultDTO;
-import com.aptisprep.mvc.dto.ExamAttemptDTO;
-import com.aptisprep.mvc.support.scoring.ScoreBandCoverage;
 import com.aptisprep.mvc.service.scoring.ScoringPolicyService;
+import com.aptisprep.mvc.support.scoring.ScoreBandCoverage;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.ArrayList;
@@ -69,10 +69,12 @@ public class ScoringPolicyServiceImpl implements ScoringPolicyService {
 
     @Override
     @Transactional(readOnly = true)
-    public BigDecimal raw(
-            Integer schemeId, String skill, BigDecimal earnedRaw, BigDecimal rawMax) {
-        if (earnedRaw == null || rawMax == null || rawMax.signum() <= 0
-                || earnedRaw.signum() < 0 || earnedRaw.compareTo(rawMax) > 0) {
+    public BigDecimal raw(Integer schemeId, String skill, BigDecimal earnedRaw, BigDecimal rawMax) {
+        if (earnedRaw == null
+                || rawMax == null
+                || rawMax.signum() <= 0
+                || earnedRaw.signum() < 0
+                || earnedRaw.compareTo(rawMax) > 0) {
             throw new BusinessRuleException("Điểm raw đạt được/tối đa không hợp lệ");
         }
         // Practice mode derives rawMax from the locked exam, not from an admin-entered range.
@@ -106,8 +108,11 @@ public class ScoringPolicyServiceImpl implements ScoringPolicyService {
     public BigDecimal scale(
             Integer schemeId, String skill, BigDecimal rawScore, BigDecimal rawMax) {
         String normalized = normalizeSkill(skill);
-        if (rawScore == null || rawMax == null || rawMax.signum() <= 0
-                || rawScore.signum() < 0 || rawScore.compareTo(rawMax) > 0) {
+        if (rawScore == null
+                || rawMax == null
+                || rawMax.signum() <= 0
+                || rawScore.signum() < 0
+                || rawScore.compareTo(rawMax) > 0) {
             throw new BusinessRuleException("Điểm raw theo đề thi không hợp lệ");
         }
         ScoringScaleRule rule = requireRule(schemeId, normalized);
@@ -206,8 +211,7 @@ public class ScoringPolicyServiceImpl implements ScoringPolicyService {
     @Override
     @Transactional(readOnly = true)
     // Scoring Aptis tổng hợp không cộng G&V vào điểm bốn kỹ năng, nhưng dùng G&V để xét sát ngưỡng.
-    public ExamAttemptDTO fullMockScore(
-            Integer schemeId, List<ExamSkillResultDTO> skillScores) {
+    public ExamAttemptDTO fullMockScore(Integer schemeId, List<ExamSkillResultDTO> skillScores) {
         var certificate = requireHistoricalScheme(schemeId).getCertificate();
         if (skillScores == null
                 || skillScores.size() != Skill.values().length
@@ -219,7 +223,8 @@ public class ScoringPolicyServiceImpl implements ScoringPolicyService {
                         .anyMatch(
                                 score ->
                                         score.getScaleScore() == null
-                                                || !FULL_MOCK_LEVELS.contains(score.getCefrLevel()))) {
+                                                || !FULL_MOCK_LEVELS.contains(
+                                                        score.getCefrLevel()))) {
             ExamAttemptDTO result = new ExamAttemptDTO();
             result.setSkillResults(skillScores == null ? List.of() : skillScores);
             return result;
@@ -283,8 +288,7 @@ public class ScoringPolicyServiceImpl implements ScoringPolicyService {
         return level;
     }
 
-    private ExamSkillResultDTO scoreDto(
-            String skill, BigDecimal scaleScore, String cefrLevel) {
+    private ExamSkillResultDTO scoreDto(String skill, BigDecimal scaleScore, String cefrLevel) {
         ExamSkillResultDTO result = new ExamSkillResultDTO();
         result.setSkill(skill);
         result.setScaleScore(scaleScore);
@@ -347,10 +351,3 @@ public class ScoringPolicyServiceImpl implements ScoringPolicyService {
         };
     }
 }
-
-
-
-
-
-
-

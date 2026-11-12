@@ -31,18 +31,13 @@ public class UserGoalSkill {
     private BigDecimal targetScore;
 
     public UserGoalSkill(
-            Integer id,
-            UserGoal goal,
-            String skill,
-            String targetLevel,
-            BigDecimal targetScore) {
+            Integer id, UserGoal goal, String skill, String targetLevel, BigDecimal targetScore) {
         this.id = id;
         this.goal = goal;
         this.skill = skill;
         this.targetLevel = targetLevel;
         this.targetScore = targetScore;
     }
-
 
     public Integer getId() {
         return id;
@@ -80,15 +75,7 @@ public class UserGoalSkill {
         this.targetScore = targetScore;
     }
 
-
     public void setId(Integer value) {
         this.id = value;
     }
 }
-
-
-
-
-
-
-

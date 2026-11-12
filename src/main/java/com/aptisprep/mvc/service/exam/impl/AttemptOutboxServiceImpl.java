@@ -1,7 +1,4 @@
 package com.aptisprep.mvc.service.exam.impl;
-import com.aptisprep.mvc.service.exam.*;
-
-import com.aptisprep.mvc.service.exam.AttemptOutboxService;
 
 import com.aptisprep.mvc.entity.AttemptOutbox;
 import com.aptisprep.mvc.event.AiAssessmentCompletedEvent;
@@ -9,6 +6,8 @@ import com.aptisprep.mvc.event.AttemptCompletedEvent;
 import com.aptisprep.mvc.event.AttemptSubmittedEvent;
 import com.aptisprep.mvc.repository.AttemptOutboxRepository;
 import com.aptisprep.mvc.repository.ExamAttemptRepository;
+import com.aptisprep.mvc.service.exam.*;
+import com.aptisprep.mvc.service.exam.AttemptOutboxService;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.util.Base64;
@@ -248,10 +247,3 @@ public class AttemptOutboxServiceImpl implements AttemptOutboxService {
         return new String(Base64.getUrlDecoder().decode(value), StandardCharsets.UTF_8);
     }
 }
-
-
-
-
-
-
-

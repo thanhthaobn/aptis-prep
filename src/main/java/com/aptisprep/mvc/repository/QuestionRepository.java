@@ -9,10 +9,3 @@ public interface QuestionRepository extends JpaRepository<Question, Integer> {
 
     List<Question> findBySkillAndStatusOrderByUpdatedAtDesc(String skill, String status);
 }
-
-
-
-
-
-
-

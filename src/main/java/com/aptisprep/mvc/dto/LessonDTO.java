@@ -1,15 +1,15 @@
 package com.aptisprep.mvc.dto;
 
-import java.time.*;
-import java.math.*;
-import java.util.*;
-
 import com.aptisprep.mvc.entity.*;
-import jakarta.validation.constraints.*;
 import com.aptisprep.mvc.entity.Lesson;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.*;
+import java.math.*;
+import java.time.*;
+import java.util.*;
 import java.util.ArrayList;
 import java.util.List;
+
 public class LessonDTO {
     private Integer id;
     private String videoPath;
@@ -66,6 +66,7 @@ public class LessonDTO {
     private String sourceName;
 
     private List<@Valid LessonCheckDTO> checks = new ArrayList<>();
+
     public LessonDTO() {}
 
     @NotBlank(message = "Tiêu đề bài học không được để trống")
@@ -75,12 +76,16 @@ public class LessonDTO {
     @Size(max = 10000, message = "Mô tả bài học tối đa 10000 ký tự")
     private String description;
 
-    @NotBlank(message = "Kỹ năng không được để trống") private String skill;
-    @NotBlank(message = "Cấp độ không được để trống") private String cefrLevel;
+    @NotBlank(message = "Kỹ năng không được để trống")
+    private String skill;
+
+    @NotBlank(message = "Cấp độ không được để trống")
+    private String cefrLevel;
 
     private Integer displayOrder;
 
-    @NotBlank(message = "Trạng thái không được để trống") private String status;
+    @NotBlank(message = "Trạng thái không được để trống")
+    private String status;
 
     @Size(max = 10000, message = "Transcript tối đa 10000 ký tự")
     private String transcript;
@@ -507,10 +512,3 @@ public class LessonDTO {
         this.maxWordCount = maxWordCount;
     }
 }
-
-
-
-
-
-
-

@@ -140,14 +140,3 @@ public class LessonResponseDTO {
         this.responseVersion = responseVersion;
     }
 }
-
-
-
-
-
-
-
-
-
-
-

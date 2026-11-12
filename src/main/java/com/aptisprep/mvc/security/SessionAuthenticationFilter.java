@@ -22,8 +22,7 @@ import org.springframework.web.util.pattern.PathPatternParser;
 
 @Component
 public class SessionAuthenticationFilter extends OncePerRequestFilter {
-    private static final List<PathPattern> ASSETS =
-            paths("/css/**", "/images/**", "/demo/**");
+    private static final List<PathPattern> ASSETS = paths("/css/**", "/images/**", "/demo/**");
     private static final List<PathPattern> PUBLIC =
             paths("/", "/login", "/register", "/account-locked", "/error");
     private static final List<PathPattern> ADMIN = paths("/admin/**");
@@ -87,8 +86,7 @@ public class SessionAuthenticationFilter extends OncePerRequestFilter {
         chain.doFilter(user == null ? request : authenticated(request, user), response);
     }
 
-    private static HttpServletRequest authenticated(
-            HttpServletRequest request, UserDTO user) {
+    private static HttpServletRequest authenticated(HttpServletRequest request, UserDTO user) {
         request.setAttribute("signedIn", true);
         request.setAttribute("isAdmin", user.getRole() == Role.ADMIN);
         request.setAttribute("isStudent", user.getRole() == Role.STUDENT);
@@ -112,17 +110,12 @@ public class SessionAuthenticationFilter extends OncePerRequestFilter {
     }
 
     private static List<PathPattern> paths(String... patterns) {
-        return Arrays.stream(patterns).map(streamValue -> PathPatternParser.defaultInstance.parse(streamValue)).toList();
+        return Arrays.stream(patterns)
+                .map(streamValue -> PathPatternParser.defaultInstance.parse(streamValue))
+                .toList();
     }
 
     private static boolean matches(List<PathPattern> patterns, PathContainer path) {
         return patterns.stream().anyMatch(pattern -> pattern.matches(path));
     }
 }
-
-
-
-
-
-
-

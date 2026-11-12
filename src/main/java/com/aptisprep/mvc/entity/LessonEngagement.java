@@ -184,7 +184,6 @@ public class LessonEngagement {
         this.updatedAt = updatedAt;
     }
 
-
     @PrePersist
     @PreUpdate
     void touch() {
@@ -231,7 +230,6 @@ public class LessonEngagement {
         return updatedAt;
     }
 
-
     public void setPlaybackRanges(List<LessonPlaybackRange> value) {
         this.playbackRanges = value;
     }
@@ -244,10 +242,3 @@ public class LessonEngagement {
         this.updatedAt = value;
     }
 }
-
-
-
-
-
-
-

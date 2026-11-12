@@ -16,11 +16,7 @@ public class ProfileApplicationDTO {
     public ProfileApplicationDTO() {}
 
     public ProfileApplicationDTO(
-            Integer id,
-            Integer userId,
-            Integer attemptId,
-            String skill,
-            LocalDateTime appliedAt) {
+            Integer id, Integer userId, Integer attemptId, String skill, LocalDateTime appliedAt) {
         this.id = id;
         this.userId = userId;
         this.attemptId = attemptId;
@@ -88,14 +84,3 @@ public class ProfileApplicationDTO {
         this.appliedAt = appliedAt;
     }
 }
-
-
-
-
-
-
-
-
-
-
-

@@ -6,10 +6,3 @@ public interface WritingGradingService {
 
     public GradingResult grade(String prompt, String answer);
 }
-
-
-
-
-
-
-

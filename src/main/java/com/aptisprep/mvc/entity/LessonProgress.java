@@ -46,7 +46,6 @@ public class LessonProgress {
         this.completedAt = completedAt;
     }
 
-
     public Integer getId() {
         return id;
     }
@@ -91,15 +90,7 @@ public class LessonProgress {
         completedAt = v;
     }
 
-
     public void setId(Integer value) {
         this.id = value;
     }
 }
-
-
-
-
-
-
-

@@ -1,24 +1,24 @@
 package com.aptisprep.mvc.service.learning.impl;
 
-import com.aptisprep.mvc.service.learning.*;
 import com.aptisprep.mvc.dto.LessonDTO;
 import com.aptisprep.mvc.dto.LessonProgressDTO;
-import com.aptisprep.mvc.service.learning.LessonService;
 import com.aptisprep.mvc.entity.*;
 import com.aptisprep.mvc.enums.CefrLevel;
 import com.aptisprep.mvc.enums.Skill;
 import com.aptisprep.mvc.enums.UserStatus;
 import com.aptisprep.mvc.exception.*;
 import com.aptisprep.mvc.repository.*;
+import com.aptisprep.mvc.service.learning.*;
+import com.aptisprep.mvc.service.learning.LessonService;
 import com.aptisprep.mvc.service.learning.LessonTeachingService.CompletionState;
 import com.aptisprep.mvc.service.storage.StorageService;
 import java.io.IOException;
 import java.io.InputStream;
+import java.text.Normalizer;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.ArrayList;
 import java.util.stream.IntStream;
-import java.text.Normalizer;
 import org.springframework.beans.BeanUtils;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -56,7 +56,9 @@ public class LessonServiceImpl implements LessonService {
 
     @Override
     public List<LessonDTO> adminLessonDtos() {
-        return adminLessons().stream().map(streamValue -> LessonDTO.convertEntityToDto(streamValue)).toList();
+        return adminLessons().stream()
+                .map(streamValue -> LessonDTO.convertEntityToDto(streamValue))
+                .toList();
     }
 
     @Override
@@ -66,7 +68,8 @@ public class LessonServiceImpl implements LessonService {
         String term = query == null ? "" : query.trim();
         String selectedSkill = skill == null ? "" : skill.trim();
         String selectedLevel = level == null ? "" : level.trim();
-        if (term.length() > 255) throw new BusinessRuleException("Từ khóa tìm kiếm tối đa 255 ký tự");
+        if (term.length() > 255)
+            throw new BusinessRuleException("Từ khóa tìm kiếm tối đa 255 ký tự");
         if (!selectedSkill.isBlank() && !getSkills().contains(selectedSkill))
             throw new BusinessRuleException("Kỹ năng tìm kiếm không hợp lệ");
         if (!selectedLevel.isBlank() && !getLevels().contains(selectedLevel))
@@ -77,10 +80,7 @@ public class LessonServiceImpl implements LessonService {
                 term.isBlank() ? "%" : "%" + escapeLike(term.toLowerCase(Locale.ROOT)) + "%";
         return lessonRepository
                 .searchAdminLessons(
-                        pattern,
-                        selectedSkill,
-                        selectedLevel,
-                        PageRequest.of(safePage, safeSize))
+                        pattern, selectedSkill, selectedLevel, PageRequest.of(safePage, safeSize))
                 .map(LessonDTO::convertEntityToDto);
     }
 
@@ -135,7 +135,8 @@ public class LessonServiceImpl implements LessonService {
         return publishedLessons().stream()
                 .filter(
                         lesson -> {
-                            String topic = lesson.getTopic() == null ? "" : lesson.getTopic().trim();
+                            String topic =
+                                    lesson.getTopic() == null ? "" : lesson.getTopic().trim();
                             String searchable =
                                     Normalizer.normalize(
                                                     lesson.getTitle()
@@ -146,12 +147,12 @@ public class LessonServiceImpl implements LessonService {
                                                     Normalizer.Form.NFD)
                                             .replaceAll("\\p{M}", "")
                                             .toLowerCase(Locale.ROOT);
-                            return normalizedQuery.isBlank() || searchable.contains(normalizedQuery);
+                            return normalizedQuery.isBlank()
+                                    || searchable.contains(normalizedQuery);
                         })
                 .filter(
                         lesson ->
-                                selectedSkill.isBlank()
-                                        || selectedSkill.equals(lesson.getSkill()))
+                                selectedSkill.isBlank() || selectedSkill.equals(lesson.getSkill()))
                 .filter(
                         lesson ->
                                 selectedLevel.isBlank()
@@ -338,7 +339,12 @@ public class LessonServiceImpl implements LessonService {
         Lesson other = branch.get(target);
         int a = current.getDisplayOrder(),
                 b = other.getDisplayOrder(),
-                temp = branch.stream().mapToInt(streamValue -> streamValue.getDisplayOrder()).max().orElse(0) + 1000;
+                temp =
+                        branch.stream()
+                                        .mapToInt(streamValue -> streamValue.getDisplayOrder())
+                                        .max()
+                                        .orElse(0)
+                                + 1000;
         current.setDisplayOrder(temp);
         lessonRepository.saveAndFlush(current);
         other.setDisplayOrder(a);
@@ -412,8 +418,6 @@ public class LessonServiceImpl implements LessonService {
         return u;
     }
 
-
-
     @Override
     public Lesson previousLesson(Lesson lesson) {
         List<Lesson> all =
@@ -438,7 +442,8 @@ public class LessonServiceImpl implements LessonService {
                         .filter(
                                 item ->
                                         item.getSkill().equals(lesson.getSkill())
-                                                && item.getCefrLevel().equals(lesson.getCefrLevel()))
+                                                && item.getCefrLevel()
+                                                        .equals(lesson.getCefrLevel()))
                         .toList();
         int index =
                 IntStream.range(0, all.size())
@@ -489,7 +494,8 @@ public class LessonServiceImpl implements LessonService {
                         .filter(
                                 lesson ->
                                         form.getSkill().equals(lesson.getSkill())
-                                                && form.getCefrLevel().equals(lesson.getCefrLevel()))
+                                                && form.getCefrLevel()
+                                                        .equals(lesson.getCefrLevel()))
                         .mapToInt(Lesson::getDisplayOrder)
                         .max()
                         .orElse(0);
@@ -645,4 +651,3 @@ public class LessonServiceImpl implements LessonService {
         }
     }
 }
-

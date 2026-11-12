@@ -6,10 +6,12 @@ import java.util.List;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 
-public interface AccountUnlockRequestRepository extends JpaRepository<AccountUnlockRequest, Integer> {
+public interface AccountUnlockRequestRepository
+        extends JpaRepository<AccountUnlockRequest, Integer> {
     boolean existsByUserIdAndStatus(Integer userId, UnlockRequestStatus status);
 
-    Optional<AccountUnlockRequest> findFirstByUser_EmailIgnoreCaseOrderByCreatedAtDesc(String email);
+    Optional<AccountUnlockRequest> findFirstByUser_EmailIgnoreCaseOrderByCreatedAtDesc(
+            String email);
 
     List<AccountUnlockRequest> findAllByOrderByCreatedAtDesc();
 

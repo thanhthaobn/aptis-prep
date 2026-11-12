@@ -1,9 +1,9 @@
 package com.aptisprep.mvc.controller.admin;
-import com.aptisprep.mvc.support.contract.*;
 
 import com.aptisprep.mvc.service.admin.AdminDashboardService;
 import com.aptisprep.mvc.service.admin.StudentManagementService;
 import com.aptisprep.mvc.service.exam.ExamAttemptService;
+import com.aptisprep.mvc.support.contract.*;
 import com.aptisprep.mvc.support.contract.IntegrationModels.AdminHistoryFilter;
 import java.security.Principal;
 import org.springframework.stereotype.Controller;
@@ -36,7 +36,8 @@ public class AdminDashboardController {
         model.addAttribute("recentContent", content.recentContent());
         model.addAttribute(
                 "recentAttempts",
-                examAttemptContract.adminHistory(
+                examAttemptContract
+                        .adminHistory(
                                 principal.getName(),
                                 0,
                                 3,
@@ -45,10 +46,3 @@ public class AdminDashboardController {
         return "admin/dashboard";
     }
 }
-
-
-
-
-
-
-

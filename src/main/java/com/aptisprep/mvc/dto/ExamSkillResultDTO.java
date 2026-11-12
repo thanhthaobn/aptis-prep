@@ -211,14 +211,3 @@ public class ExamSkillResultDTO {
         this.createdAt = createdAt;
     }
 }
-
-
-
-
-
-
-
-
-
-
-

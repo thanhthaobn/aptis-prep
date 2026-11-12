@@ -44,26 +44,91 @@ public class AccountUnlockRequestDTO {
         this.handledAt = handledAt;
     }
 
-    public Integer getId() { return id; }
-    public void setId(Integer id) { this.id = id; }
-    public Integer getUserId() { return userId; }
-    public void setUserId(Integer userId) { this.userId = userId; }
-    public String getUserEmail() { return userEmail; }
-    public void setUserEmail(String userEmail) { this.userEmail = userEmail; }
-    public String getUserFullName() { return userFullName; }
-    public void setUserFullName(String userFullName) { this.userFullName = userFullName; }
-    public String getUserStatus() { return userStatus; }
-    public void setUserStatus(String userStatus) { this.userStatus = userStatus; }
-    public String getMessage() { return message; }
-    public void setMessage(String message) { this.message = message; }
-    public UnlockRequestStatus getStatus() { return status; }
-    public void setStatus(UnlockRequestStatus status) { this.status = status; }
-    public String getAdminNote() { return adminNote; }
-    public void setAdminNote(String adminNote) { this.adminNote = adminNote; }
-    public String getHandledByEmail() { return handledByEmail; }
-    public void setHandledByEmail(String handledByEmail) { this.handledByEmail = handledByEmail; }
-    public LocalDateTime getCreatedAt() { return createdAt; }
-    public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
-    public LocalDateTime getHandledAt() { return handledAt; }
-    public void setHandledAt(LocalDateTime handledAt) { this.handledAt = handledAt; }
+    public Integer getId() {
+        return id;
+    }
+
+    public void setId(Integer id) {
+        this.id = id;
+    }
+
+    public Integer getUserId() {
+        return userId;
+    }
+
+    public void setUserId(Integer userId) {
+        this.userId = userId;
+    }
+
+    public String getUserEmail() {
+        return userEmail;
+    }
+
+    public void setUserEmail(String userEmail) {
+        this.userEmail = userEmail;
+    }
+
+    public String getUserFullName() {
+        return userFullName;
+    }
+
+    public void setUserFullName(String userFullName) {
+        this.userFullName = userFullName;
+    }
+
+    public String getUserStatus() {
+        return userStatus;
+    }
+
+    public void setUserStatus(String userStatus) {
+        this.userStatus = userStatus;
+    }
+
+    public String getMessage() {
+        return message;
+    }
+
+    public void setMessage(String message) {
+        this.message = message;
+    }
+
+    public UnlockRequestStatus getStatus() {
+        return status;
+    }
+
+    public void setStatus(UnlockRequestStatus status) {
+        this.status = status;
+    }
+
+    public String getAdminNote() {
+        return adminNote;
+    }
+
+    public void setAdminNote(String adminNote) {
+        this.adminNote = adminNote;
+    }
+
+    public String getHandledByEmail() {
+        return handledByEmail;
+    }
+
+    public void setHandledByEmail(String handledByEmail) {
+        this.handledByEmail = handledByEmail;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    public LocalDateTime getHandledAt() {
+        return handledAt;
+    }
+
+    public void setHandledAt(LocalDateTime handledAt) {
+        this.handledAt = handledAt;
+    }
 }

@@ -15,10 +15,7 @@ public class LessonPlaybackRangeDTO {
     public LessonPlaybackRangeDTO() {}
 
     public LessonPlaybackRangeDTO(
-            Integer id,
-            LessonEngagement engagement,
-            double startSeconds,
-            double endSeconds) {
+            Integer id, LessonEngagement engagement, double startSeconds, double endSeconds) {
         this.id = id;
         this.engagement = engagement;
         this.startSeconds = startSeconds;
@@ -37,10 +34,7 @@ public class LessonPlaybackRangeDTO {
     public static LessonPlaybackRange convertDtoToEntity(LessonPlaybackRangeDTO dto) {
         if (dto == null) return null;
         return new LessonPlaybackRange(
-                dto.getId(),
-                dto.getEngagement(),
-                dto.getStartSeconds(),
-                dto.getEndSeconds());
+                dto.getId(), dto.getEngagement(), dto.getStartSeconds(), dto.getEndSeconds());
     }
 
     public double getEndSeconds() {
@@ -75,14 +69,3 @@ public class LessonPlaybackRangeDTO {
         this.id = id;
     }
 }
-
-
-
-
-
-
-
-
-
-
-

@@ -1,13 +1,11 @@
 package com.aptisprep.mvc.service.grading;
 
-import com.aptisprep.mvc.service.grading.GeminiGradingService;
-import com.aptisprep.mvc.service.grading.impl.GeminiGradingServiceImpl;
-
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.aptisprep.mvc.config.AiProperties;
+import com.aptisprep.mvc.service.grading.impl.GeminiGradingServiceImpl;
 import java.math.BigDecimal;
 import java.util.Set;
 import org.junit.jupiter.api.Assumptions;
@@ -54,13 +52,3 @@ class GeminiLiveGradingServiceTests {
         assertFalse(result.feedback().isBlank());
     }
 }
-
-
-
-
-
-
-
-
-
-

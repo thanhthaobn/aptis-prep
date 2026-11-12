@@ -9,10 +9,3 @@ public interface ScoringSchemeUsageService {
 
     public Map<Integer, Set<String>> examTypesByScheme();
 }
-
-
-
-
-
-
-

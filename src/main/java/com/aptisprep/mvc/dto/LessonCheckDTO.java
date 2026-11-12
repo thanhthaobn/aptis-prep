@@ -45,8 +45,7 @@ public class LessonCheckDTO {
     @Size(max = 4000, message = "Giải thích tối đa 4000 ký tự")
     private String explanation;
 
-    public LessonCheckDTO() {
-    }
+    public LessonCheckDTO() {}
 
     public LessonCheckDTO(
             Integer id,

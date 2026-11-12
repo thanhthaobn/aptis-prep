@@ -8,9 +8,9 @@ import com.aptisprep.mvc.exception.BusinessRuleException;
 import com.aptisprep.mvc.exception.ResourceNotFoundException;
 import com.aptisprep.mvc.repository.*;
 import com.aptisprep.mvc.service.admin.AdminExamService;
-import com.aptisprep.mvc.service.scoring.CertificateSchemeService;
-import com.aptisprep.mvc.service.exam.ExamSnapshotService;
 import com.aptisprep.mvc.service.exam.ExamReadinessService;
+import com.aptisprep.mvc.service.exam.ExamSnapshotService;
+import com.aptisprep.mvc.service.scoring.CertificateSchemeService;
 import java.util.*;
 import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
@@ -58,7 +58,8 @@ public class AdminExamServiceImpl implements AdminExamService {
     public MockExamDTO examForm(Integer id) {
         MockExamDTO form = new MockExamDTO();
         Certificate activeCertificate =
-                certificateRepository.findByCodeIgnoreCase("APTIS_GENERAL")
+                certificateRepository
+                        .findByCodeIgnoreCase("APTIS_GENERAL")
                         .filter(certificate -> certificate.getStatus() == RecordStatus.ACTIVE)
                         .orElse(null);
         if (activeCertificate != null) form.setCertificateId(activeCertificate.getId());
@@ -81,10 +82,8 @@ public class AdminExamServiceImpl implements AdminExamService {
                         .map(x -> "" + x.getQuestionId())
                         .collect(Collectors.joining(",")));
         List<MockExamSectionDTO> sectionForms = new ArrayList<>();
-        for (MockExamSection section :
-                mockExamSectionRepository.findByMockExamIdOrderById(id)) {
-            MockExamSectionDTO sectionForm =
-                    MockExamSectionDTO.convertEntityToDto(section);
+        for (MockExamSection section : mockExamSectionRepository.findByMockExamIdOrderById(id)) {
+            MockExamSectionDTO sectionForm = MockExamSectionDTO.convertEntityToDto(section);
             sectionForm.setQuestionIds(
                     mockExamQuestionRepository.findByMockExamIdOrderByPosition(id).stream()
                             .filter(
@@ -246,8 +245,7 @@ public class AdminExamServiceImpl implements AdminExamService {
             throw new BusinessRuleException("Loại đề hoặc cấp độ không hợp lệ");
         if (form.getSections() == null || form.getSections().isEmpty())
             throw new BusinessRuleException("Đề phải có ít nhất một section");
-        if (form.getSections().stream()
-                .anyMatch(section -> !SKILLS.contains(section.getSkill())))
+        if (form.getSections().stream().anyMatch(section -> !SKILLS.contains(section.getSkill())))
             throw new BusinessRuleException("Kỹ năng section không hợp lệ");
 
         ScoringScheme scheme =
@@ -297,7 +295,8 @@ public class AdminExamServiceImpl implements AdminExamService {
         form.setDurationMinutes((int) duration);
 
         var certificate =
-                certificateRepository.findByCodeIgnoreCase("APTIS_GENERAL")
+                certificateRepository
+                        .findByCodeIgnoreCase("APTIS_GENERAL")
                         .filter(value -> value.getStatus() == RecordStatus.ACTIVE)
                         .orElse(null);
         if (certificate == null) throw new BusinessRuleException("Chứng chỉ không hợp lệ");
@@ -385,8 +384,7 @@ public class AdminExamServiceImpl implements AdminExamService {
             sectionForm.setMockExamId(examId);
             sectionForm.setDisplayOrder(sectionOrder++);
             sectionForm.setStatus("ACTIVE");
-            MockExamSection section =
-                    MockExamSectionDTO.convertDtoToEntity(sectionForm);
+            MockExamSection section = MockExamSectionDTO.convertDtoToEntity(sectionForm);
             if (explicitSections || "FULL_MOCK".equals(form.getExamType()))
                 section = mockExamSectionRepository.save(section);
             for (Integer questionId : questionIds) {
@@ -400,10 +398,3 @@ public class AdminExamServiceImpl implements AdminExamService {
         }
     }
 }
-
-
-
-
-
-
-

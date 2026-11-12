@@ -15,8 +15,7 @@ public class GoalPathListener {
     private final TransactionTemplate transactions;
 
     public GoalPathListener(
-            LearningPathService paths,
-            PlatformTransactionManager transactionManager) {
+            LearningPathService paths, PlatformTransactionManager transactionManager) {
         this.paths = paths;
         this.transactions = new TransactionTemplate(transactionManager);
         this.transactions.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
@@ -27,10 +26,3 @@ public class GoalPathListener {
         transactions.executeWithoutResult(status -> paths.ensurePaths(event.userId()));
     }
 }
-
-
-
-
-
-
-

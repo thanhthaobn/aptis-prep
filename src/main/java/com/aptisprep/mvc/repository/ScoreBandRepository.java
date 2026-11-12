@@ -22,10 +22,3 @@ public interface ScoreBandRepository extends JpaRepository<ScoreBand, Integer> {
     List<ScoreBand> findBySchemeIdAndSkillAndMaxScoreGreaterThanEqualAndMinScoreLessThanEqual(
             Integer schemeId, String skill, BigDecimal min, BigDecimal max);
 }
-
-
-
-
-
-
-

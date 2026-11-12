@@ -1,22 +1,19 @@
 package com.aptisprep.mvc.service.exam;
-import com.aptisprep.mvc.support.contract.*;
-
-import com.aptisprep.mvc.service.exam.AttemptOutboxService;
-import com.aptisprep.mvc.service.grading.AttemptFinalizationService;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 import com.aptisprep.mvc.config.AiProperties;
-import com.aptisprep.mvc.event.AttemptSubmittedEvent;
-import com.aptisprep.mvc.service.grading.AiAssessmentService;
 import com.aptisprep.mvc.dto.AiAssessmentJobDTO;
+import com.aptisprep.mvc.event.AttemptSubmittedEvent;
+import com.aptisprep.mvc.service.exam.impl.AttemptGradingOrchestrationServiceImpl;
+import com.aptisprep.mvc.service.grading.AiAssessmentService;
+import com.aptisprep.mvc.service.grading.AttemptFinalizationService;
+import com.aptisprep.mvc.support.contract.*;
 import com.aptisprep.mvc.support.contract.IntegrationModels.LockedAnswer;
 import com.aptisprep.mvc.support.contract.IntegrationModels.LockedAttempt;
 import com.aptisprep.mvc.support.contract.IntegrationModels.LockedItem;
-import com.aptisprep.mvc.service.grading.impl.AttemptFinalizationServiceImpl;
-import com.aptisprep.mvc.service.exam.impl.AttemptGradingOrchestrationServiceImpl;
 import java.time.Instant;
 import java.util.List;
 import org.junit.jupiter.api.Test;
@@ -75,7 +72,8 @@ class AttemptGradingOrchestrationServiceTests {
 
         service.onSubmitted(new AttemptSubmittedEvent(2, 7, 9, "PRACTICE", locked));
 
-        ArgumentCaptor<AiAssessmentJobDTO> captor = ArgumentCaptor.forClass(AiAssessmentJobDTO.class);
+        ArgumentCaptor<AiAssessmentJobDTO> captor =
+                ArgumentCaptor.forClass(AiAssessmentJobDTO.class);
         verify(ai).request(captor.capture());
         AiAssessmentJobDTO request = captor.getValue();
         assertTrue(
@@ -100,13 +98,3 @@ class AttemptGradingOrchestrationServiceTests {
         assertTrue(!serializedShape.contains("correct") && !serializedShape.contains("answer"));
     }
 }
-
-
-
-
-
-
-
-
-
-

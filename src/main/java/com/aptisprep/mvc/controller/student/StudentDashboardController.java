@@ -1,5 +1,4 @@
 package com.aptisprep.mvc.controller.student;
-import com.aptisprep.mvc.support.contract.*;
 
 import com.aptisprep.mvc.dto.UserGoalDTO;
 import com.aptisprep.mvc.dto.UserSkillProfileDTO;
@@ -7,12 +6,13 @@ import com.aptisprep.mvc.enums.Skill;
 import com.aptisprep.mvc.service.account.AccountProfileService;
 import com.aptisprep.mvc.service.account.LearningActivityService;
 import com.aptisprep.mvc.service.exam.AttemptResultReader;
-import com.aptisprep.mvc.support.contract.IntegrationModels.AttemptResult;
-import com.aptisprep.mvc.support.contract.IntegrationModels.HistoryFilter;
-import com.aptisprep.mvc.support.contract.IntegrationModels.PathProgress;
 import com.aptisprep.mvc.service.learning.LearningPathService;
 import com.aptisprep.mvc.service.learning.LessonRecommendationService;
 import com.aptisprep.mvc.service.learning.LessonRecommendationService.Recommendation;
+import com.aptisprep.mvc.support.contract.*;
+import com.aptisprep.mvc.support.contract.IntegrationModels.AttemptResult;
+import com.aptisprep.mvc.support.contract.IntegrationModels.HistoryFilter;
+import com.aptisprep.mvc.support.contract.IntegrationModels.PathProgress;
 import java.security.Principal;
 import java.util.ArrayList;
 import java.util.List;
@@ -47,12 +47,14 @@ public class StudentDashboardController {
         List<PathProgress> paths = learningPathService.ensureAndSummaries(principal.getName());
         boolean hasLearningContent = paths.stream().anyMatch(path -> path.totalLessons() > 0);
         Recommendation recommendation =
-                lessonRecommendationService.recommend(learningPathService.userId(principal.getName()), paths);
+                lessonRecommendationService.recommend(
+                        learningPathService.userId(principal.getName()), paths);
         model.addAttribute("email", principal.getName());
         model.addAttribute("paths", paths);
         model.addAttribute("hasLearningContent", hasLearningContent);
         UserGoalDTO goalDto = accountProfileService.goal(principal.getName());
-        List<UserSkillProfileDTO> profiles = accountProfileService.skillProfiles(principal.getName());
+        List<UserSkillProfileDTO> profiles =
+                accountProfileService.skillProfiles(principal.getName());
         model.addAttribute("account", accountProfileService.profile(principal.getName()));
         model.addAttribute("goal", goalDto);
         model.addAttribute("profiles", profiles);
@@ -162,10 +164,3 @@ public class StudentDashboardController {
         return "redirect:/student/learning-path";
     }
 }
-
-
-
-
-
-
-

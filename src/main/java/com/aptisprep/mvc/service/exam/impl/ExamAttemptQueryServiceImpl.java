@@ -13,9 +13,9 @@ import com.aptisprep.mvc.repository.UserRepository;
 import com.aptisprep.mvc.service.exam.AttemptResultReader;
 import com.aptisprep.mvc.service.exam.ExamAttemptQueryService;
 import com.aptisprep.mvc.service.exam.ExamSnapshotService;
-import com.aptisprep.mvc.support.contract.IntegrationModels.AttemptResult;
 import com.aptisprep.mvc.support.contract.IntegrationModels.AdminHistoryFilter;
 import com.aptisprep.mvc.support.contract.IntegrationModels.AdminHistoryPage;
+import com.aptisprep.mvc.support.contract.IntegrationModels.AttemptResult;
 import com.aptisprep.mvc.support.contract.IntegrationModels.HistoryFilter;
 import com.aptisprep.mvc.support.contract.IntegrationModels.HistoryPage;
 import java.time.LocalDateTime;
@@ -176,8 +176,7 @@ public class ExamAttemptQueryServiceImpl implements ExamAttemptQueryService {
         if (!"IN_PROGRESS".equals(attempt.getStatus())) return;
         Integer minutes = examSnapshots.durationMinutes(attempt.getId(), exam.getDurationMinutes());
         if (minutes == null || attempt.getStartedAt() == null) return;
-        LocalDateTime deadline =
-                examSnapshots.sectionClockStart(attempt).plusMinutes(minutes);
+        LocalDateTime deadline = examSnapshots.sectionClockStart(attempt).plusMinutes(minutes);
         if (!deadline.isBefore(LocalDateTime.now())) return;
         attempt.setStatus("EXPIRED");
         attempt.setGradingStatus("EXPIRED");

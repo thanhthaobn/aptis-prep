@@ -12,8 +12,8 @@ import com.aptisprep.mvc.exception.ResourceNotFoundException;
 import com.aptisprep.mvc.repository.*;
 import com.aptisprep.mvc.service.admin.StudentManagementService;
 import com.aptisprep.mvc.service.exam.ExamAttemptQueryService;
-import com.aptisprep.mvc.support.contract.IntegrationModels.*;
 import com.aptisprep.mvc.service.learning.LearningPathService;
+import com.aptisprep.mvc.support.contract.IntegrationModels.*;
 import java.util.*;
 import java.util.stream.Collectors;
 import org.springframework.data.domain.Page;
@@ -101,7 +101,8 @@ public class StudentManagementServiceImpl implements StudentManagementService {
         for (Integer userId : userIds) {
             UserGoalDTO goal = goalDto(userId);
             List<String> targets = goalTargets(goal);
-            result.put(userId, targets.isEmpty() ? "Chưa đặt mục tiêu" : String.join(", ", targets));
+            result.put(
+                    userId, targets.isEmpty() ? "Chưa đặt mục tiêu" : String.join(", ", targets));
         }
         return result;
     }
@@ -156,12 +157,20 @@ public class StudentManagementServiceImpl implements StudentManagementService {
     @Override
     @Transactional
     public void restore(String adminEmail, Integer id) {
-        User admin = userRepository.findByEmailIgnoreCase(adminEmail)
-                .orElseThrow(() -> new AccessDeniedException("Không có quyền thực hiện thao tác"));
+        User admin =
+                userRepository
+                        .findByEmailIgnoreCase(adminEmail)
+                        .orElseThrow(
+                                () ->
+                                        new AccessDeniedException(
+                                                "Không có quyền thực hiện thao tác"));
         if (admin.getRole() != Role.ADMIN)
             throw new AccessDeniedException("Chỉ quản trị viên mới được quản lý học viên");
-        User target = userRepository.findByIdForUpdate(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy học viên"));
+        User target =
+                userRepository
+                        .findByIdForUpdate(id)
+                        .orElseThrow(
+                                () -> new ResourceNotFoundException("Không tìm thấy học viên"));
         if (target.getRole() != Role.STUDENT)
             throw new ResourceNotFoundException("Không tìm thấy học viên");
         if (target.getStatus() != UserStatus.INACTIVE)
@@ -225,7 +234,7 @@ public class StudentManagementServiceImpl implements StudentManagementService {
                 case "LISTENING" -> dto.setListening(target);
                 case "WRITING" -> dto.setWriting(target);
                 case "SPEAKING" -> dto.setSpeaking(target);
-                default -> { }
+                default -> {}
             }
             if (skill.getTargetScore() != null)
                 dto.getTargetScores().put(skill.getSkill(), skill.getTargetScore());
@@ -312,10 +321,3 @@ public class StudentManagementServiceImpl implements StudentManagementService {
         return value == null || value.isBlank() ? "Chưa đánh giá" : value;
     }
 }
-
-
-
-
-
-
-

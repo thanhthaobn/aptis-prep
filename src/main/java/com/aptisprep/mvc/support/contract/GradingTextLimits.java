@@ -15,10 +15,3 @@ public final class GradingTextLimits {
         return value == null ? 0 : value.length();
     }
 }
-
-
-
-
-
-
-

@@ -39,7 +39,6 @@ public class QuestionOption {
         this.position = position;
     }
 
-
     public QuestionOption() {}
 
     public Integer getId() {
@@ -86,15 +85,7 @@ public class QuestionOption {
         position = v;
     }
 
-
     public void setId(Integer value) {
         this.id = value;
     }
 }
-
-
-
-
-
-
-

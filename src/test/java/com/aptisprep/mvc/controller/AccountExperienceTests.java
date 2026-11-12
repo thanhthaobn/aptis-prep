@@ -1,5 +1,4 @@
 package com.aptisprep.mvc.controller;
-import com.aptisprep.mvc.support.auth.*;
 
 import static com.aptisprep.mvc.security.SessionMvcRequests.*;
 import static org.assertj.core.api.Assertions.*;
@@ -9,6 +8,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import com.aptisprep.mvc.entity.User;
 import com.aptisprep.mvc.enums.*;
 import com.aptisprep.mvc.repository.UserRepository;
+import com.aptisprep.mvc.support.auth.*;
 import com.aptisprep.mvc.support.auth.PasswordHasher;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -232,13 +232,3 @@ class AccountExperienceTests {
         return users.saveAndFlush(user);
     }
 }
-
-
-
-
-
-
-
-
-
-

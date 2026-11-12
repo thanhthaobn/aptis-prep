@@ -1,5 +1,4 @@
 package com.aptisprep.mvc.service.learning;
-import com.aptisprep.mvc.support.learning.*;
 
 import static com.aptisprep.mvc.security.SessionMvcRequests.*;
 import static org.assertj.core.api.Assertions.*;
@@ -12,6 +11,7 @@ import com.aptisprep.mvc.entity.*;
 import com.aptisprep.mvc.enums.*;
 import com.aptisprep.mvc.exception.BusinessRuleException;
 import com.aptisprep.mvc.repository.*;
+import com.aptisprep.mvc.support.learning.*;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -124,8 +124,7 @@ class SimpleLessonRulesTests {
         for (var skill : java.util.List.of("Writing", "Speaking")) {
             var f = form(skill);
             f.setExampleText(null);
-            assertThat(lessons.save(null, f).getPracticePrompt())
-                    .isEqualTo("Original task");
+            assertThat(lessons.save(null, f).getPracticePrompt()).isEqualTo("Original task");
             var bad = form(skill);
             bad.setPracticePrompt(null);
             assertThatThrownBy(() -> lessons.save(null, bad))
@@ -429,13 +428,3 @@ class SimpleLessonRulesTests {
                 .hasMessageContaining("tải audio");
     }
 }
-
-
-
-
-
-
-
-
-
-

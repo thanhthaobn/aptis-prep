@@ -30,10 +30,3 @@ public class GlobalExceptionHandler {
         return "error/403";
     }
 }
-
-
-
-
-
-
-

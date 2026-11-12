@@ -6,14 +6,14 @@ import com.aptisprep.mvc.enums.UserStatus;
 import com.aptisprep.mvc.exception.BusinessRuleException;
 import com.aptisprep.mvc.exception.DuplicateEmailException;
 import com.aptisprep.mvc.security.LoginSession;
-import com.aptisprep.mvc.service.auth.UserService;
 import com.aptisprep.mvc.service.account.AccountUnlockRequestService;
+import com.aptisprep.mvc.service.auth.UserService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import java.security.Principal;
 import java.util.Objects;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -34,7 +34,8 @@ public class AuthController {
     }
 
     @Autowired
-    public AuthController(UserService userService, AccountUnlockRequestService unlockRequestService) {
+    public AuthController(
+            UserService userService, AccountUnlockRequestService unlockRequestService) {
         this.userService = userService;
         this.unlockRequestService = unlockRequestService;
     }
@@ -86,7 +87,8 @@ public class AuthController {
         if (email != null && !email.isBlank()) {
             model.addAttribute("email", email.trim());
             if (unlockRequestService != null) {
-                unlockRequestService.findLatestByEmail(email)
+                unlockRequestService
+                        .findLatestByEmail(email)
                         .ifPresent(value -> model.addAttribute("latestRequest", value));
             }
         }
@@ -100,9 +102,11 @@ public class AuthController {
             @RequestParam(name = "message", defaultValue = "") String message,
             RedirectAttributes redirectAttributes) {
         try {
-            if (unlockRequestService == null) throw new BusinessRuleException("Chức năng mở khóa chưa sẵn sàng.");
+            if (unlockRequestService == null)
+                throw new BusinessRuleException("Chức năng mở khóa chưa sẵn sàng.");
             unlockRequestService.submit(email, password, message);
-            redirectAttributes.addFlashAttribute("successMessage", "Yêu cầu mở khóa đã được gửi thành công.");
+            redirectAttributes.addFlashAttribute(
+                    "successMessage", "Yêu cầu mở khóa đã được gửi thành công.");
         } catch (BusinessRuleException exception) {
             redirectAttributes.addFlashAttribute("errorMessage", exception.getMessage());
         }
@@ -135,11 +139,14 @@ public class AuthController {
             bindingResult.rejectValue("email", "email.required", "Email không được để trống");
         }
         if (form.getPassword() == null || form.getPassword().isBlank()) {
-            bindingResult.rejectValue("password", "password.required", "Mật khẩu không được để trống");
+            bindingResult.rejectValue(
+                    "password", "password.required", "Mật khẩu không được để trống");
         }
         if (form.getConfirmPassword() == null || form.getConfirmPassword().isBlank()) {
             bindingResult.rejectValue(
-                    "confirmPassword", "confirmPassword.required", "Xác nhận mật khẩu không được để trống");
+                    "confirmPassword",
+                    "confirmPassword.required",
+                    "Xác nhận mật khẩu không được để trống");
         }
         if (!Objects.equals(form.getPassword(), form.getConfirmPassword())) {
             bindingResult.rejectValue(
@@ -170,10 +177,3 @@ public class AuthController {
         return "redirect:/login";
     }
 }
-
-
-
-
-
-
-
