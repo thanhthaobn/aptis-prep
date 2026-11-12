@@ -83,10 +83,18 @@ public class StudentExamController {
     }
 
     @GetMapping("/student/attempts/{id}")
-    public String attempt(@PathVariable Integer id, Principal principal, Model model) {
+    public String attempt(
+            @PathVariable Integer id,
+            @RequestParam(name = "page", defaultValue = "0") int pageNumber,
+            Principal principal,
+            Model model) {
         Integer userId = accounts.requireActiveStudent(principal.getName());
-        ExamAttemptService.AttemptPage page = attempts.page(userId, id);
-        model.addAttribute("attempt", page);
+        ExamAttemptService.AttemptPage attemptPage = attempts.page(userId, id);
+        int totalPages = Math.max(1, attemptPage.questions().size());
+        int currentPage = Math.max(0, Math.min(pageNumber, totalPages - 1));
+        model.addAttribute("attempt", attemptPage);
+        model.addAttribute("currentPage", currentPage);
+        model.addAttribute("totalPages", totalPages);
         return "student/attempt/detail";
     }
 
@@ -116,6 +124,7 @@ public class StudentExamController {
             @RequestParam(name = "selectedOptionId", required = false) Integer selectedOptionId,
             @RequestParam(name = "userPosition", required = false) Integer userPosition,
             @RequestParam(name = "textAnswer", required = false) String textAnswer,
+            @RequestParam(name = "page", defaultValue = "0") int pageNumber,
             Principal principal,
             RedirectAttributes redirect) {
         try {
@@ -125,7 +134,7 @@ public class StudentExamController {
         } catch (BusinessRuleException exception) {
             redirect.addFlashAttribute("error", exception.getMessage());
         }
-        return "redirect:/student/attempts/" + id;
+        return "redirect:/student/attempts/" + id + "?page=" + Math.max(0, pageNumber);
     }
 
     @PostMapping("/student/attempts/{id}/answers/autosave")
@@ -158,6 +167,7 @@ public class StudentExamController {
             @RequestParam(name = "questionId") Integer questionId,
             @RequestParam(name = "itemId", required = false) Integer itemId,
             @RequestParam("audioFile") MultipartFile audioFile,
+            @RequestParam(name = "page", defaultValue = "0") int pageNumber,
             Principal principal,
             RedirectAttributes redirect) {
         try {
@@ -166,7 +176,7 @@ public class StudentExamController {
         } catch (BusinessRuleException exception) {
             redirect.addFlashAttribute("error", exception.getMessage());
         }
-        return "redirect:/student/attempts/" + id;
+        return "redirect:/student/attempts/" + id + "?page=" + Math.max(0, pageNumber);
     }
 
     @PostMapping(
