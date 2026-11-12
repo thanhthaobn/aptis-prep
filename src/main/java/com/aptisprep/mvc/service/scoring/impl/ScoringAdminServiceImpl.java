@@ -196,7 +196,7 @@ public class ScoringAdminServiceImpl implements ScoringAdminService {
     @Transactional
     public Integer saveSchemeWithScores(String email, Integer id, ScoringSchemeDTO form) {
         Integer savedId = saveScheme(email, id, form);
-        if (!form.isConfigureScores() || blankToNull(form.getExamType()) == null) {
+        if (blankToNull(form.getExamType()) == null) {
             if (requireScheme(savedId).getStatus() == RecordStatus.ACTIVE)
                 requireReady(requireScheme(savedId));
             return savedId;
@@ -207,74 +207,40 @@ public class ScoringAdminServiceImpl implements ScoringAdminService {
         if (scheme.getStatus() == RecordStatus.INACTIVE) return savedId;
         for (String skill : skills) {
             ScoringScaleRuleDTO scale = form.getSkillScales().get(skill);
-            if (!hasScale(scale)) {
-                scale = new ScoringScaleRuleDTO();
-                scale.setRawMin(form.getScale().getRawMin());
-                scale.setRawMax(form.getScale().getRawMax());
-                scale.setScaleMin(form.getScale().getScaleMin());
-                scale.setScaleMax(form.getScale().getScaleMax());
+            if (scale == null) scale = new ScoringScaleRuleDTO();
+            List<String> requiredLevels = requiredScoringLevels(scheme, skill);
+            for (String level : requiredLevels) {
+                ScoreBandDTO band = form.getRanges().get(skill + "_" + level);
+                if (band == null || band.getMinScore() == null || band.getMaxScore() == null)
+                    throw new BusinessRuleException("Nhập đầy đủ khoảng điểm CEFR cho " + skill);
             }
-            boolean hasBands =
-                    CefrLevel.scoringCodes().stream()
-                            .map(level -> form.getRanges().get(skill + "_" + level))
-                            .anyMatch(
-                                    band ->
-                                            band != null
-                                                    && (band.getMinScore() != null
-                                                            || band.getMaxScore() != null));
-            boolean targetOnly =
-                    scheme.getScopeSkill() != null
-                            && (blankToNull(form.getTargetLevel()) != null
-                                    || form.getPassingScore() != null);
-            if (targetOnly && hasBands)
-                throw new BusinessRuleException(
-                        "Chọn ngưỡng đạt hoặc bảng CEFR đầy đủ, không dùng đồng thời");
-            if (!hasScale(scale) && !hasBands && !targetOnly) continue;
+            ScoreBandDTO c1 = form.getRanges().get(skill + "_C1");
             // Practice mode derives rawMax from the locked exam. The persisted 0–50 raw range is
             // retained only for compatibility with the existing schema and old admin pages.
             if (scale.getRawMin() == null) scale.setRawMin(BigDecimal.ZERO);
             if (scale.getRawMax() == null) scale.setRawMax(BigDecimal.valueOf(50));
             scale.setScaleMin(BigDecimal.ZERO);
-            if (scale.getScaleMax() == null) scale.setScaleMax(BigDecimal.valueOf(50));
+            scale.setScaleMax(c1.getMaxScore());
             var previousBands =
                     scoreBandRepository.findBySchemeIdAndSkillOrderByMinScoreAsc(savedId, skill);
             scoreBandRepository.deleteAll(previousBands);
             scoreBandRepository.flush();
             saveScaleRule(email, savedId, skill, scale);
-            if (targetOnly) {
+            for (String level : requiredLevels) {
+                ScoreBandDTO band = form.getRanges().get(skill + "_" + level);
                 saveConfiguredBand(
-                        email,
-                        savedId,
-                        skill,
-                        form.getTargetLevel(),
-                        form.getPassingScore(),
-                        scale.getScaleMax());
-            } else {
-                for (String level : CefrLevel.scoringCodes()) {
-                    if (CefrLevel.BELOW_A1.equals(level) && !supportsBelowA1(scheme, skill))
-                        continue;
-                    ScoreBandDTO band = form.getRanges().get(skill + "_" + level);
-                    if (band != null && (band.getMinScore() != null || band.getMaxScore() != null))
-                        saveConfiguredBand(
-                                email,
-                                savedId,
-                                skill,
-                                level,
-                                band.getMinScore(),
-                                band.getMaxScore());
-                }
+                        email, savedId, skill, level, band.getMinScore(), band.getMaxScore());
             }
         }
         if (scheme.getStatus() == RecordStatus.ACTIVE) requireReady(scheme);
         return savedId;
     }
 
-    private boolean hasScale(ScoringScaleRuleDTO scale) {
-        return scale != null
-                && (scale.getRawMin() != null
-                        || scale.getRawMax() != null
-                        || scale.getScaleMin() != null
-                        || scale.getScaleMax() != null);
+    private List<String> requiredScoringLevels(ScoringScheme scheme, String skill) {
+        List<String> levels = new ArrayList<>();
+        if (supportsBelowA1(scheme, skill)) levels.add(CefrLevel.BELOW_A1);
+        levels.addAll(List.of("A1", "A2", "B1", "B2", "C1"));
+        return levels;
     }
 
     @Transactional
