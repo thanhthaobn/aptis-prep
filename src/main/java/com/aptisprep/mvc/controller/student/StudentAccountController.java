@@ -175,9 +175,6 @@ public class StudentAccountController {
         if ("PLACEMENT".equalsIgnoreCase(result.examType()) && terminalResult) {
             accountAccessService.applyAssessment(userId, attemptId);
         }
-        if (!"IN_PROGRESS".equals(result.state())
-                && examAttemptContract instanceof ExamAttemptService reviewService)
-            model.addAttribute("review", reviewService.review(userId, attemptId));
         var scoreGuideView = scoringGuideService.forResultView(result);
         model.addAttribute("scoreGuides", scoreGuideView.guides());
         model.addAttribute("feedbackWithoutGuide", scoreGuideView.feedbackWithoutGuide());
