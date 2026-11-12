@@ -369,18 +369,7 @@
                 <div class="catalog-form-grid">
                   <input type="hidden" th:name="|skillScales[${skill}].rawMin|" value="0" />
                   <input type="hidden" th:name="|skillScales[${skill}].rawMax|" value="50" />
-                  <div class="field">
-                    <label th:for="|${skill}-scale-min|">Điểm quy đổi thấp nhất</label>
-                    <input
-                      th:id="|${skill}-scale-min|"
-                      type="number"
-                      min="0"
-                      max="999.99"
-                      step="0.01"
-                      th:name="|skillScales[${skill}].scaleMin|"
-                      value="0"
-                    />
-                  </div>
+                  <input type="hidden" th:name="|skillScales[${skill}].scaleMin|" value="0" />
                   <div class="field">
                     <label th:for="|${skill}-scale-max|">Điểm quy đổi cao nhất</label>
                     <input
@@ -571,19 +560,7 @@
               <div class="catalog-form-grid">
                 <input type="hidden" th:field="*{rawMin}" value="0" />
                 <input type="hidden" th:field="*{rawMax}" value="50" />
-                <div class="field">
-                  <label for="scaleMin">Scale thấp nhất</label>
-                  <input
-                    id="scaleMin"
-                    th:field="*{scaleMin}"
-                    type="number"
-                    min="0"
-                    max="999.99"
-                    step="0.01"
-                    required
-                    value="0"
-                  />
-                </div>
+                <input type="hidden" name="scaleMin" value="0" />
                 <div class="field">
                   <label for="scaleMax">Scale cao nhất</label>
                   <input

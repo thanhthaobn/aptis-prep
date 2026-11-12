@@ -234,7 +234,7 @@ public class ScoringAdminServiceImpl implements ScoringAdminService {
             // retained only for compatibility with the existing schema and old admin pages.
             if (scale.getRawMin() == null) scale.setRawMin(BigDecimal.ZERO);
             if (scale.getRawMax() == null) scale.setRawMax(BigDecimal.valueOf(50));
-            if (scale.getScaleMin() == null) scale.setScaleMin(BigDecimal.ZERO);
+            scale.setScaleMin(BigDecimal.ZERO);
             if (scale.getScaleMax() == null) scale.setScaleMax(BigDecimal.valueOf(50));
             var previousBands =
                     scoreBandRepository.findBySchemeIdAndSkillOrderByMinScoreAsc(savedId, skill);
@@ -599,7 +599,7 @@ public class ScoringAdminServiceImpl implements ScoringAdminService {
         String normalized = normalizeSkill(skill);
         requireScopeSkill(scheme, normalized);
         BigDecimal rawMin = decimal(form.getRawMin()), rawMax = decimal(form.getRawMax());
-        BigDecimal scaleMin = decimal(form.getScaleMin()), scaleMax = decimal(form.getScaleMax());
+        BigDecimal scaleMin = BigDecimal.ZERO, scaleMax = decimal(form.getScaleMax());
         if (rawMin == null
                 || rawMax == null
                 || scaleMin == null

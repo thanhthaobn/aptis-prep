@@ -91,7 +91,7 @@ class ScoringAdminServiceTests {
         scale.setScaleMax(BigDecimal.valueOf(60));
         service.saveScaleRule("admin@aptis.local", 20, "SPEAKING", scale);
         verify(scaleRules).save(rule);
-        assertEquals(new BigDecimal("1.00"), rule.getScaleMin());
+        assertEquals(0, BigDecimal.ZERO.compareTo(rule.getScaleMin()));
         assertEquals(new BigDecimal("60.00"), rule.getScaleMax());
 
         ScoreBandDTO band = new ScoreBandDTO();

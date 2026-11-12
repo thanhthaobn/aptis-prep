@@ -284,6 +284,7 @@ class AdminScoringPreviewTests {
                 .andExpect(content().string(not(containsString("id=\"schemeStatus\""))))
                 .andExpect(content().string(containsString("Thang điểm theo kỹ năng")))
                 .andExpect(content().string(containsString("data-scoring-skill=\"READING\"")))
+                .andExpect(content().string(not(containsString("Điểm quy đổi thấp nhất"))))
                 .andExpect(
                         content().string(not(containsString("data-scoring-skill=\"LISTENING\""))))
                 .andExpect(content().string(not(containsString("ranges[READING_A0].minScore"))))
