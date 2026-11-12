@@ -549,6 +549,7 @@
                   name="userPosition"
                   th:id="${'position-' + (item.itemId)}"
                   th:value="${item.userPosition}"
+                  onchange="this.form.submit()"
                 />
               </div>
               <div
@@ -561,6 +562,7 @@
                     name="selectedOptionId"
                     th:value="${option.id}"
                     th:checked="${item.selectedOptionId == option.id}"
+                    onchange="this.form.submit()"
                   />
                   <span th:text="${option.code + ' · ' + option.content}"></span>
                 </label>
@@ -578,10 +580,10 @@
                   rows="6"
                   th:attr="data-min-words=${item.minWordCount},data-max-words=${item.maxWordCount}"
                   th:text="${item.textAnswer}"
+                  onblur="this.form.submit()"
                 ></textarea>
                 <p class="writing-limit-error alert alert-danger" hidden role="alert"></p>
               </div>
-              <button class="button button-secondary button-small" type="submit">Lưu đáp án</button>
             </form>
             <form
               th:if="${question.type == 'SPEAKING_AUDIO'}"
