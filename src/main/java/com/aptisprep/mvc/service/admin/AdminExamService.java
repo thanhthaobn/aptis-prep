@@ -12,6 +12,8 @@ public interface AdminExamService {
 
     public void unpublishExam(Integer id);
 
+    public void restoreExam(Integer id);
+
     public void normalizeSections(MockExamDTO form);
 
     public MockExamDTO entry(MockExam exam);

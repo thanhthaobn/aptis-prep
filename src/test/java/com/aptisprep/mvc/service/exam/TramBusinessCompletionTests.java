@@ -227,6 +227,7 @@ class TramBusinessCompletionTests {
         assertTrue(admin.examForm(f.exam().getId()).isDemoOnly());
         assertNotNull(engine.page(f.user().getId(), id));
         save(f, id, 0, "Historical saved response");
+        save(f, id, 1, "Historical saved second response");
         assertDoesNotThrow(() -> engine.submit(f.user().getId(), id, "finish-legacy"));
         assertNotNull(engine.result(f.user().getId(), id));
         assertTrue(exams.findById(f.exam().getId()).orElseThrow().isDemoOnly());

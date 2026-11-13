@@ -216,6 +216,18 @@
             </a>
           </div>
         </header>
+        <div
+          class="alert alert-success"
+          role="status"
+          th:if="${successMessage != null}"
+          th:text="${successMessage}"
+        ></div>
+        <div
+          class="alert alert-danger"
+          role="alert"
+          th:if="${error != null}"
+          th:text="${error}"
+        ></div>
         <section class="dashboard-panel">
           <div class="panel-heading">
             <h2>Thông tin chung</h2>
@@ -687,7 +699,7 @@
           </div>
           <div class="page-actions">
             <form
-              th:if="${(entry.status == 'DRAFT' and catalog.key == 'questions') or (entry.status != 'PUBLISHED' and catalog.key == 'exams')}"
+              th:if="${(entry.status == 'DRAFT' and catalog.key == 'questions') or (entry.status == 'DRAFT' and catalog.key == 'exams')}"
               method="post"
               th:action="${'/admin/' + catalog.key + '/' + entry.id + '/publish'}"
             >
@@ -698,7 +710,14 @@
               method="post"
               th:action="@{/admin/exams/{id}/unpublish(id=${entry.id})}"
             >
-              <button class="button button-secondary" type="submit">Ngừng công bố</button>
+              <button class="button button-secondary" type="submit">Lưu trữ đề</button>
+            </form>
+            <form
+              th:if="${catalog.key == 'exams' and entry.status == 'ARCHIVED'}"
+              method="post"
+              th:action="@{/admin/exams/{id}/restore(id=${entry.id})}"
+            >
+              <button class="button button-secondary" type="submit">Đưa về bản nháp</button>
             </form>
             <form
               th:if="${catalog.key == 'questions' and entry.status != 'ARCHIVED'}"

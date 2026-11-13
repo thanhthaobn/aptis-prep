@@ -302,6 +302,7 @@ class V2BusinessRegressionTests {
         var exam = exam(null, "READING", "PRACTICE");
         link(exam, id);
         int attempt = engine.start(learner.getId(), exam.getId(), "v2-raw").attemptId();
+        selectLastOption(attempt);
         engine.submit(learner.getId(), attempt, "submit");
         var result = engine.result(learner.getId(), attempt);
         assertEquals("COMPLETED", result.state());
@@ -486,6 +487,19 @@ class V2BusinessRegressionTests {
         assertEquals("PUBLISHED", exams.findById(exam.getId()).orElseThrow().getStatus());
     }
 
+    private void selectLastOption(int attemptId) {
+        var question = engine.page(learner.getId(), attemptId).questions().getFirst();
+        var item = question.items().getFirst();
+        engine.saveAnswer(
+                learner.getId(),
+                attemptId,
+                question.questionId(),
+                item.itemId(),
+                item.options().getLast().id(),
+                null,
+                null);
+    }
+
     private MockExam readingExam(String type, Integer policy) {
         int id = catalog.saveQuestion(null, question("SINGLE_CHOICE", "READING"), null);
         catalog.publishQuestion(id);
@@ -656,6 +670,7 @@ class V2BusinessRegressionTests {
         int first = placement.start(learner.getEmail(), "READING", exam.getId()).attemptId();
         int second = placement.start(learner.getEmail(), "READING", exam.getId()).attemptId();
         assertEquals(first, second);
+        selectLastOption(first);
         engine.submit(learner.getId(), first, "valid-placement-submit");
         var result = engine.result(learner.getId(), first);
         assertEquals("COMPLETED", result.state());

@@ -4,12 +4,10 @@ import com.aptisprep.mvc.dto.MockExamDTO;
 import com.aptisprep.mvc.dto.MockExamSectionDTO;
 import com.aptisprep.mvc.dto.QuestionDTO;
 import com.aptisprep.mvc.dto.QuestionItemDTO;
-import com.aptisprep.mvc.dto.ScoringSchemeDTO;
 import com.aptisprep.mvc.exception.BusinessRuleException;
 import com.aptisprep.mvc.service.admin.CatalogService;
 import jakarta.validation.Valid;
 import java.util.ArrayList;
-import java.util.List;
 import org.springframework.core.io.Resource;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -367,67 +365,19 @@ public class AdminCatalogController {
         }
     }
 
-    private void preserveExamQuestionIds(MockExamDTO form) {
-        if (form.getSections() == null) return;
-        for (MockExamSectionDTO section : form.getSections()) {
-            java.util.LinkedHashSet<String> ids = new java.util.LinkedHashSet<>();
-            if (section.getQuestionIds() != null) {
-                for (String id : section.getQuestionIds().split(",")) {
-                    if (id != null && !id.isBlank()) ids.add(id.trim());
-                }
-            }
-            if (section.getSelectedQuestionIds() != null) {
-                section.getSelectedQuestionIds().stream()
-                        .filter(java.util.Objects::nonNull)
-                        .map(String::valueOf)
-                        .forEach(ids::add);
-            }
-            section.setQuestionIds(String.join(",", ids));
-        }
-    }
-
     private void renderExamForm(
             Model model, MockExamDTO form, boolean editing, Integer id, String error) {
         model.addAttribute("catalog", catalogService.module("exams"));
         model.addAttribute("skills", catalogService.skills());
         model.addAttribute("levels", catalogService.levels());
-        model.addAttribute("questionTypes", catalogService.questionTypes());
         model.addAttribute("editing", editing);
         model.addAttribute("examForm", form);
         model.addAttribute("certificates", catalogService.activeCertificateViews());
-        model.addAttribute("schemes", filteredSchemeViews(form));
-        model.addAttribute("publishedQuestions", filteredPublishedQuestionViews(form));
+        model.addAttribute("schemes", catalogService.activeSchemeViews());
+        model.addAttribute("publishedQuestions", catalogService.publishedQuestionViews());
         model.addAttribute("examTypes", catalogService.examTypes());
         if (editing && id != null) model.addAttribute("entry", catalogService.exam(id));
         if (error != null) model.addAttribute("examError", error);
-    }
-
-    private List<ScoringSchemeDTO> filteredSchemeViews(MockExamDTO form) {
-        String selectedExamType = form.getExamType() == null ? "" : form.getExamType().trim();
-        return catalogService.activeSchemeViews().stream()
-                .filter(
-                        scheme ->
-                                selectedExamType.isBlank()
-                                        || scheme.getExamType() == null
-                                        || selectedExamType.equals(scheme.getExamType()))
-                .toList();
-    }
-
-    private List<QuestionDTO> filteredPublishedQuestionViews(MockExamDTO form) {
-        String selectedLevel =
-                form.getQuestionLevelFilter() == null ? "" : form.getQuestionLevelFilter().trim();
-        String selectedType =
-                form.getQuestionTypeFilter() == null ? "" : form.getQuestionTypeFilter().trim();
-        return catalogService.publishedQuestionViews().stream()
-                .filter(
-                        question ->
-                                selectedLevel.isBlank()
-                                        || selectedLevel.equals(question.getCefrLevel()))
-                .filter(
-                        question ->
-                                selectedType.isBlank()
-                                        || selectedType.equals(question.getQuestionType()))
-                .toList();
     }
 
     @PostMapping("/admin/exams")
@@ -438,8 +388,7 @@ public class AdminCatalogController {
             Model model) {
         if (!"SAVE".equals(formAction)) {
             changeExamForm(form, formAction);
-            if ("REFRESH_FILTERS".equals(formAction)) preserveExamQuestionIds(form);
-            else normalizeExamQuestionIds(form);
+            normalizeExamQuestionIds(form);
             renderExamForm(model, form, false, null, null);
             return "admin/catalog/form";
         }
@@ -472,8 +421,7 @@ public class AdminCatalogController {
             Model model) {
         if (!"SAVE".equals(formAction)) {
             changeExamForm(form, formAction);
-            if ("REFRESH_FILTERS".equals(formAction)) preserveExamQuestionIds(form);
-            else normalizeExamQuestionIds(form);
+            normalizeExamQuestionIds(form);
             renderExamForm(model, form, true, id, null);
             return "admin/catalog/form";
         }
@@ -511,6 +459,12 @@ public class AdminCatalogController {
     @PostMapping("/admin/exams/{id}/unpublish")
     public String unpublishExam(@PathVariable int id) {
         catalogService.unpublishExam(id);
+        return "redirect:/admin/exams/" + id;
+    }
+
+    @PostMapping("/admin/exams/{id}/restore")
+    public String restoreExam(@PathVariable int id) {
+        catalogService.restoreExam(id);
         return "redirect:/admin/exams/" + id;
     }
 }
