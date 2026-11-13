@@ -9,6 +9,7 @@ import com.aptisprep.mvc.entity.Certificate;
 import com.aptisprep.mvc.entity.Question;
 import com.aptisprep.mvc.entity.QuestionMedia;
 import com.aptisprep.mvc.entity.ScoringScheme;
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
 import org.springframework.core.io.Resource;
@@ -41,6 +42,8 @@ public interface CatalogService {
     public void publishExam(Integer id);
 
     public void unpublishExam(Integer id);
+
+    public void restoreExam(Integer id);
 
     public List<ExamPreviewSection> examPreview(Integer id);
 
@@ -103,7 +106,7 @@ public interface CatalogService {
     record ExamPreviewItem(
             int position,
             String content,
-            java.math.BigDecimal points,
+            BigDecimal points,
             Integer responseSeconds,
             Integer minWordCount,
             Integer maxWordCount,

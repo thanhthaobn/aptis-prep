@@ -43,9 +43,6 @@ public class MockExamDTO {
     private String questionIds;
     private String status = "DRAFT";
     private boolean demoOnly;
-    // Chỉ dùng cho bộ lọc trên màn hình tạo đề, không lưu vào bảng mock_exams.
-    private String questionLevelFilter = "";
-    private String questionTypeFilter = "";
     private String skillLabel;
     private String kindLabel;
     private String durationLabel;
@@ -152,22 +149,6 @@ public class MockExamDTO {
 
     public void setDemoOnly(boolean value) {
         demoOnly = value;
-    }
-
-    public String getQuestionLevelFilter() {
-        return questionLevelFilter;
-    }
-
-    public void setQuestionLevelFilter(String value) {
-        questionLevelFilter = value == null ? "" : value;
-    }
-
-    public String getQuestionTypeFilter() {
-        return questionTypeFilter;
-    }
-
-    public void setQuestionTypeFilter(String value) {
-        questionTypeFilter = value == null ? "" : value;
     }
 
     public String getTitle() {
@@ -406,7 +387,7 @@ public class MockExamDTO {
     public String getStatusLabel() {
         return switch (status) {
             case "PUBLISHED" -> "Đã công bố";
-            case "ARCHIVED" -> "Đã ngừng công bố";
+            case "ARCHIVED" -> "Đã lưu trữ";
             default -> "Bản nháp";
         };
     }

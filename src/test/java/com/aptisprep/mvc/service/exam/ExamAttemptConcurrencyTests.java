@@ -116,6 +116,7 @@ class ExamAttemptConcurrencyTests {
         int attemptId =
                 attempts.start(fixture.user().getId(), fixture.exam().getId(), "submit-key")
                         .attemptId();
+        saveCorrectAnswer(fixture, attemptId);
         ExecutorService pool = Executors.newFixedThreadPool(2);
         try {
             List<Future<Void>> results =
@@ -170,6 +171,7 @@ class ExamAttemptConcurrencyTests {
                         attempts.playMedia(
                                 fixture.user().getId(), attemptId, fixture.media().getId()));
 
+        saveCorrectAnswer(fixture, attemptId);
         var attempt = attemptRepository.findById(attemptId).orElseThrow();
         attempt.setStartedAt(LocalDateTime.now().minusMinutes(2));
         attemptRepository.saveAndFlush(attempt);
@@ -371,6 +373,7 @@ class ExamAttemptConcurrencyTests {
         int first =
                 attempts.start(fixture.user().getId(), fixture.exam().getId(), "same-terminal-key")
                         .attemptId();
+        saveCorrectAnswer(fixture, first);
         attempts.submit(fixture.user().getId(), first, "submit-terminal");
         int second =
                 attempts.start(fixture.user().getId(), fixture.exam().getId(), "same-terminal-key")
@@ -422,6 +425,13 @@ class ExamAttemptConcurrencyTests {
         fixture.exam().setExamType("CHECKPOINT");
         fixture.exam().setTargetLevel("A1");
         exams.saveAndFlush(fixture.exam());
+        var incorrect = new QuestionOption();
+        incorrect.setQuestionItemId(fixture.item().getId());
+        incorrect.setOptionCode("B");
+        incorrect.setContent("Incorrect");
+        incorrect.setCorrect(false);
+        incorrect.setPosition(2);
+        options.saveAndFlush(incorrect);
         int id =
                 attempts.startCheckpoint(
                                 fixture.user().getId(),
@@ -429,7 +439,15 @@ class ExamAttemptConcurrencyTests {
                                 readyPath(fixture),
                                 "checkpoint:" + fixture.user().getId() + ":1:after:0")
                         .attemptId();
-        attempts.submit(fixture.user().getId(), id, "checkpoint-empty-submit");
+        attempts.saveAnswer(
+                fixture.user().getId(),
+                id,
+                fixture.question().getId(),
+                fixture.item().getId(),
+                incorrect.getId(),
+                null,
+                null);
+        attempts.submit(fixture.user().getId(), id, "checkpoint-incorrect-submit");
         var result = attempts.result(fixture.user().getId(), id);
         assertEquals("COMPLETED", result.state());
         assertEquals(0, result.skills().getFirst().scaleScore().signum());
@@ -680,6 +698,13 @@ class ExamAttemptConcurrencyTests {
         extraItem.setContent("Second item in the same audio");
         extraItem.setPosition(2);
         items.saveAndFlush(extraItem);
+        var extraOption = new QuestionOption();
+        extraOption.setQuestionItemId(extraItem.getId());
+        extraOption.setOptionCode("A");
+        extraOption.setContent("Second answer");
+        extraOption.setCorrect(true);
+        extraOption.setPosition(1);
+        options.saveAndFlush(extraOption);
         var secondSectionItem = new QuestionItem();
         secondSectionItem.setQuestionId(secondId);
         secondSectionItem.setContent("First item of the next section");
@@ -739,6 +764,16 @@ class ExamAttemptConcurrencyTests {
         assertEquals(
                 fixture.question().getId(),
                 attempts.page(userId, attemptId).questions().getFirst().questionId());
+        assertThrows(
+                BusinessRuleException.class, () -> attempts.advanceSection(userId, attemptId, 2));
+        attempts.saveAnswer(
+                userId,
+                attemptId,
+                fixture.question().getId(),
+                extraItem.getId(),
+                extraOption.getId(),
+                null,
+                null);
         attempts.advanceSection(userId, attemptId, 2);
         var next = attempts.page(userId, attemptId);
         assertEquals("COMPLETED", next.sections().getFirst().state());
@@ -772,6 +807,17 @@ class ExamAttemptConcurrencyTests {
                 () -> attempts.start(userId, examId, "new-after-unpublish"));
         attempts.submit(userId, attemptId, "submit-after-unpublish");
         assertEquals("COMPLETED", attemptRepository.findById(attemptId).orElseThrow().getStatus());
+    }
+
+    private void saveCorrectAnswer(Fixture fixture, int attemptId) {
+        attempts.saveAnswer(
+                fixture.user().getId(),
+                attemptId,
+                fixture.question().getId(),
+                fixture.item().getId(),
+                fixture.option().getId(),
+                null,
+                null);
     }
 
     private Integer readyPath(Fixture fixture) {

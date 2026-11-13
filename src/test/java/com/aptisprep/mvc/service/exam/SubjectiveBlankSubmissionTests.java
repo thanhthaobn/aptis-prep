@@ -8,10 +8,12 @@ import com.aptisprep.mvc.config.AiProperties;
 import com.aptisprep.mvc.entity.*;
 import com.aptisprep.mvc.enums.*;
 import com.aptisprep.mvc.exception.AiGradingException;
+import com.aptisprep.mvc.exception.BusinessRuleException;
 import com.aptisprep.mvc.repository.*;
 import com.aptisprep.mvc.service.grading.GeminiGradingService;
 import com.aptisprep.mvc.support.grading.GradingResult;
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
@@ -47,7 +49,7 @@ class SubjectiveBlankSubmissionTests {
 
     @ParameterizedTest
     @CsvSource({"WRITING,true", "WRITING,false", "SPEAKING,true", "SPEAKING,false"})
-    void submittedBlankSkillsReceiveZeroWithoutCallingAi(String skill, boolean enabled) {
+    void blankSubjectiveAnswersBlockSubmissionWithoutCallingAi(String skill, boolean enabled) {
         properties.setEnabled(enabled);
         Fixture fixture = fixture(skill, 1, true);
         int attemptId =
@@ -56,20 +58,11 @@ class SubjectiveBlankSubmissionTests {
                                 fixture.exam().getId(),
                                 UUID.randomUUID().toString())
                         .attemptId();
+        assertThrows(
+                BusinessRuleException.class,
+                () -> attempts.submit(fixture.user().getId(), attemptId, "blank-submit"));
         assertEquals("IN_PROGRESS", attempts.result(fixture.user().getId(), attemptId).state());
-        attempts.submit(fixture.user().getId(), attemptId, "blank-submit");
-        var result = attempts.result(fixture.user().getId(), attemptId);
-        assertEquals("COMPLETED", result.state());
-        assertEquals(0, result.skills().getFirst().rawScore().signum());
-        assertEquals(0, result.skills().getFirst().scaleScore().signum());
-        attempts.submit(fixture.user().getId(), attemptId, "blank-submit");
-        assertEquals(
-                0,
-                attempts.result(fixture.user().getId(), attemptId)
-                        .skills()
-                        .getFirst()
-                        .rawScore()
-                        .signum());
+        assertNull(attemptRepository.findById(attemptId).orElseThrow().getSubmittedAt());
         verifyNoInteractions(provider);
     }
 
@@ -80,15 +73,16 @@ class SubjectiveBlankSubmissionTests {
         int attemptId =
                 attempts.start(fixture.user().getId(), fixture.exam().getId(), "legacy-empty")
                         .attemptId();
-        attempts.submit(fixture.user().getId(), attemptId, "legacy-empty-submit");
         ExamAttempt saved = attemptRepository.findById(attemptId).orElseThrow();
+        saved.setSubmittedAt(LocalDateTime.now());
         saved.setStatus("ERROR");
         saved.setGradingStatus("ERROR");
         saved.setFinalScaleScore(null);
         saved.setEstimatedOverallCefr(null);
         attemptRepository.saveAndFlush(saved);
-        ExamSkillResult skill =
-                resultRepository.findByAttemptIdAndSkill(attemptId, "WRITING").orElseThrow();
+        ExamSkillResult skill = new ExamSkillResult();
+        skill.setAttemptId(attemptId);
+        skill.setSkill("WRITING");
         skill.setGradingMethod("AI_EMPTY");
         skill.setGradingStatus("ERROR");
         skill.setRawScore(null);
@@ -172,22 +166,20 @@ class SubjectiveBlankSubmissionTests {
     }
 
     @Test
-    void unscaledBlankPracticeStillCompletesWithRawZero() {
+    void unscaledBlankPracticeAlsoBlocksSubmission() {
         properties.setEnabled(false);
         Fixture fixture = fixture("WRITING", 1, false);
         int attemptId =
                 attempts.start(fixture.user().getId(), fixture.exam().getId(), "unscaled-blank")
                         .attemptId();
-        attempts.submit(fixture.user().getId(), attemptId, "unscaled-blank-submit");
-        var result = attempts.result(fixture.user().getId(), attemptId);
-        assertEquals("COMPLETED", result.state());
-        assertEquals(0, result.skills().getFirst().rawScore().signum());
-        assertNull(result.skills().getFirst().scaleScore());
-        assertNull(result.skills().getFirst().estimatedLevel());
+        assertThrows(
+                BusinessRuleException.class,
+                () -> attempts.submit(fixture.user().getId(), attemptId, "unscaled-blank-submit"));
+        assertEquals("IN_PROGRESS", attempts.result(fixture.user().getId(), attemptId).state());
     }
 
     @Test
-    void answeredQuestionAndBlankQuestionAreBothIncludedInTheAverage() {
+    void partlyAnsweredExamCanOnlyBeSubmittedAfterTheLastAnswerIsSaved() {
         properties.setEnabled(true);
         when(provider.grade(anyString(), anyString()))
                 .thenReturn(
@@ -210,11 +202,24 @@ class SubjectiveBlankSubmissionTests {
                 null,
                 null,
                 "This is my saved answer.");
-        attempts.submit(fixture.user().getId(), attemptId, "partly-blank-submit");
+        assertThrows(
+                BusinessRuleException.class,
+                () -> attempts.submit(fixture.user().getId(), attemptId, "partly-blank-submit"));
+        verifyNoInteractions(provider);
+        QuestionItem last = fixture.items().getLast();
+        attempts.saveAnswer(
+                fixture.user().getId(),
+                attemptId,
+                last.getQuestionId(),
+                last.getId(),
+                null,
+                null,
+                "This is my last answer.");
+        attempts.submit(fixture.user().getId(), attemptId, "complete-submit");
         var result = attempts.result(fixture.user().getId(), attemptId);
         assertEquals("COMPLETED", result.state());
-        assertEquals(0, new BigDecimal("10.00").compareTo(result.skills().getFirst().rawScore()));
-        verify(provider).grade(anyString(), anyString());
+        assertEquals(0, BigDecimal.valueOf(20).compareTo(result.skills().getFirst().rawScore()));
+        verify(provider, times(2)).grade(anyString(), anyString());
     }
 
     @Test

@@ -209,6 +209,18 @@ public class AdminExamServiceImpl implements AdminExamService {
         }
     }
 
+    @Transactional
+    public void restoreExam(Integer id) {
+        MockExam exam =
+                mockExamRepository
+                        .findByIdForUpdate(id)
+                        .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy đề thi"));
+        if ("ARCHIVED".equals(exam.getStatus())) {
+            exam.setStatus("DRAFT");
+            mockExamRepository.save(exam);
+        }
+    }
+
     public void normalizeSections(MockExamDTO form) {
         if (form.getSections() != null && !form.getSections().isEmpty()) return;
         MockExamSectionDTO section = new MockExamSectionDTO();
@@ -394,7 +406,9 @@ public class AdminExamServiceImpl implements AdminExamService {
             Integer examId, MockExamDTO form, boolean explicitSections, boolean editing) {
         if (editing) {
             mockExamQuestionRepository.deleteByMockExamId(examId);
+            mockExamQuestionRepository.flush();
             mockExamSectionRepository.deleteByMockExamId(examId);
+            mockExamSectionRepository.flush();
         }
         int position = 1;
         int sectionOrder = 1;

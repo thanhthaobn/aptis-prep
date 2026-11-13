@@ -31,6 +31,7 @@
     <link rel="stylesheet" th:href="@{/css/catalog-compact.css}" />
     <link rel="stylesheet" th:href="@{/css/admin-overview.css}" />
     <link rel="stylesheet" th:href="@{/css/typography.css}" />
+    <script th:if="${catalog.key == 'exams'}" th:src="@{/js/exam-editor.js}" defer></script>
   </head>
   <body class="admin-theme">
     <header class="site-header">
@@ -621,19 +622,7 @@
               th:if="${examError != null}"
               th:text="${examError}"
             ></p>
-            <div class="field">
-              <label class="inline-checkbox">
-                <input type="hidden" name="_demoOnly" value="on" />
-                <input
-                  type="checkbox"
-                  id="demoOnly"
-                  name="demoOnly"
-                  value="true"
-                  th:checked="${examForm.demoOnly}"
-                />
-                Đề demo
-              </label>
-            </div>
+            <input type="hidden" name="demoOnly" th:value="${examForm.demoOnly}" />
             <div class="field">
               <label for="title">Tên đề thi</label>
               <input
@@ -700,64 +689,13 @@
                     th:value="${item.id}"
                     th:text="${item.name + ' — v' + item.version}"
                     th:selected="${examForm.scoringSchemeId == item.id}"
+                    th:attr="data-exam-type=${item.examType},data-skill=${item.scopeSkill}"
                   ></option>
                 </select>
               </div>
               <div class="exam-total-summary">
                 <span>Tổng thời lượng</span>
                 <small>Hệ thống cộng thời lượng của tất cả các phần khi lưu đề.</small>
-              </div>
-            </div>
-            <div class="catalog-form-grid exam-question-filter-grid">
-              <div class="field">
-                <label for="questionLevelFilter">Cấp độ câu hỏi</label>
-                <select id="questionLevelFilter" name="questionLevelFilter">
-                  <option
-                    value=""
-                    th:selected="${examForm.questionLevelFilter == null or examForm.questionLevelFilter == ''}"
-                  >
-                    Tất cả cấp độ
-                  </option>
-                  <option
-                    th:each="item : ${levels}"
-                    th:value="${item}"
-                    th:text="${item}"
-                    th:selected="${examForm.questionLevelFilter == item}"
-                  ></option>
-                </select>
-              </div>
-              <div class="field">
-                <label for="questionTypeFilter">Dạng câu hỏi</label>
-                <select id="questionTypeFilter" name="questionTypeFilter">
-                  <option
-                    value=""
-                    th:selected="${examForm.questionTypeFilter == null or examForm.questionTypeFilter == ''}"
-                  >
-                    Tất cả dạng câu hỏi
-                  </option>
-                  <option
-                    th:each="item : ${questionTypes}"
-                    th:value="${item}"
-                    th:text="${item == 'SINGLE_CHOICE' ? 'Chọn một đáp án' : item == 'MATCHING' ? 'Ghép nối' : item == 'ORDERING' ? 'Sắp xếp' : item == 'WRITING_TEXT' ? 'Trả lời bằng văn bản' : 'Trả lời bằng âm thanh'}"
-                    th:selected="${examForm.questionTypeFilter == item}"
-                  ></option>
-                </select>
-              </div>
-              <div class="field exam-question-filter-action">
-                <label>&nbsp;</label>
-                <button
-                  class="button button-secondary"
-                  type="submit"
-                  name="formAction"
-                  value="REFRESH_FILTERS"
-                  formnovalidate
-                >
-                  Cập nhật danh sách
-                </button>
-                <small class="field-help">
-                  Sau khi đổi loại đề, cấp độ, dạng câu hoặc kỹ năng section, hãy nhấn nút này để tải
-                  lại câu hỏi và bộ chấm điểm phù hợp.
-                </small>
               </div>
             </div>
             <section class="catalog-form-section">
@@ -828,12 +766,14 @@
                     <label
                       class="section-question-label"
                       th:each="question : ${publishedQuestions}"
-                      th:if="${question.skill == section.skill}"
+                      th:attr="data-skill=${question.skill},data-level=${question.cefrLevel}"
+                      th:hidden="${question.skill != section.skill or (!#strings.isEmpty(examForm.targetLevel) and !#strings.equals(question.cefrLevel, examForm.targetLevel))}"
                     >
                       <input
                         type="checkbox"
                         th:name="${sectionPath + '.selectedQuestionIds'}"
                         th:value="${question.id}"
+                        th:disabled="${question.skill != section.skill or (!#strings.isEmpty(examForm.targetLevel) and !#strings.equals(question.cefrLevel, examForm.targetLevel))}"
                         th:checked="${section.questionIds != null and (',' + section.questionIds + ',').contains(',' + question.id + ',')}"
                       />
                       <span

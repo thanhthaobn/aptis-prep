@@ -168,7 +168,9 @@ class AdminNestedFormBindingTests {
             questionIds.add(questionId);
             request.param("sections[" + index + "].skill", skill)
                     .param("sections[" + index + "].durationMinutes", String.valueOf(10 + index))
-                    .param("sections[" + index + "].questionIds", String.valueOf(questionId));
+                    .param(
+                            "sections[" + index + "].selectedQuestionIds",
+                            String.valueOf(questionId));
         }
         var saved = mvc.perform(request).andExpect(status().is3xxRedirection()).andReturn();
         String html =
@@ -198,7 +200,8 @@ class AdminNestedFormBindingTests {
         assertTextarea(html, "description", "Preserved exam description <&>");
         assertSelected(html, "examType", "FULL_MOCK");
         assertTrue(html.contains("Aptis ESOL General"));
-        assertInput(html, "demoOnly", "true", true);
+        assertInput(html, "demoOnly", "true", false);
+        assertTrue(html.contains("type=\"hidden\" name=\"demoOnly\""));
         String location = saved.getResponse().getRedirectedUrl();
         int examId = Integer.parseInt(location.substring(location.lastIndexOf('/') + 1));
         assertEquals(60, exams.findById(examId).orElseThrow().getDurationMinutes());
@@ -228,18 +231,18 @@ class AdminNestedFormBindingTests {
                         .param("examType", "FULL_MOCK")
                         .param("certificateId", certificate.getId().toString())
                         .param("status", "DRAFT")
-                        .param("_demoOnly", "on");
+                        .param("demoOnly", "true");
         for (int index = 0; index < skillCodes.size(); index++) {
             update.param("sections[" + index + "].skill", skillCodes.get(index))
                     .param("sections[" + index + "].durationMinutes", String.valueOf(10 + index))
                     .param(
-                            "sections[" + index + "].questionIds",
+                            "sections[" + index + "].selectedQuestionIds",
                             questionIds.get(index).toString());
         }
         mvc.perform(update).andExpect(status().is3xxRedirection());
-        assertFalse(
+        assertTrue(
                 exams.findById(examId).orElseThrow().isDemoOnly(),
-                "Unchecking the checkbox must clear a previously enabled flag");
+                "Editing the exam must preserve the stored demo flag");
         assertEquals(
                 1,
                 Pattern.compile("<form\\b[^>]*class=\"[^\"]*catalog-preview-form", Pattern.DOTALL)

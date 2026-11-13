@@ -33,6 +33,7 @@
     <link rel="stylesheet" th:href="@{/css/catalog-compact.css}" />
     <link rel="stylesheet" th:href="@{/css/admin-overview.css}" />
     <link rel="stylesheet" th:href="@{/css/typography.css}" />
+    <script th:src="@{/js/exam-attempt.js}" defer></script>
   </head>
   <body
     class="student-theme exam-page"
@@ -80,23 +81,12 @@
         height: 42px;
         accent-color: #087a9d;
       }
-      .media-audio-shell {
-        position: relative;
-      }
       .media-play-trigger {
-        position: absolute;
-        z-index: 2;
-        top: 0;
-        left: 0;
-        width: 58px;
-        height: 42px;
-        padding: 0;
-        border: 0;
-        background: transparent;
-        cursor: pointer;
+        justify-self: start;
       }
-      .media-play-trigger:disabled {
-        cursor: not-allowed;
+      .media-player [hidden],
+      .question-item [hidden] {
+        display: none;
       }
       .media-status {
         min-height: 1.1rem;
@@ -225,42 +215,10 @@
         margin: 0.15rem 0 0;
         font-size: var(--text-small);
       }
-      .recording-meter {
-        grid-column: 1 / -1;
-        display: grid;
-        gap: 0.45rem;
-        flex: 1 1 100%;
-        margin-top: 0.35rem;
-        padding: 0.75rem 0.85rem;
-        border: 1px solid #c8dce5;
-        border-radius: var(--radius);
-        background: #f2fbfd;
-      }
-      .recording-meter-heading {
-        display: flex;
-        justify-content: space-between;
-        gap: 1rem;
-        color: #075c78;
-        font-size: var(--text-small);
-        font-weight: 700;
-      }
-      .recording-meter progress {
-        width: 100%;
-        height: 0.7rem;
-        accent-color: #087a9d;
-      }
       .speaking-recorder .recording-preview {
         width: min(100%, 460px);
         height: 42px;
         margin-top: 0.85rem;
-      }
-      .recording-preview.is-empty {
-        visibility: hidden;
-        pointer-events: none;
-      }
-      .speaking-recorder .recording-preview {
-        display: block;
-        width: 100%;
       }
       .full-mock-exam.pagination-ready .full-mock-question:not(.is-active) {
         display: none;
@@ -444,29 +402,31 @@
               name="sectionEndMinute"
               th:value="${attempt.nextSectionAfterMinute}"
             />
-            <button id="next-section" class="button" type="submit">Sang phần tiếp theo</button>
+            <button
+              id="next-section"
+              class="button"
+              type="submit"
+              aria-describedby="attempt-completion-status"
+              th:disabled="${attempt.totalItems() == 0 or attempt.answeredItems() != attempt.totalItems()}"
+            >Sang phần tiếp theo</button>
           </form>
           <form
+            th:unless="${attempt.nextSection()}"
             id="submit-attempt-form"
             method="post"
             th:action="@{/student/attempts/{id}/submit(id=${attempt.attemptId})}"
           >
-            <p
-              id="attempt-submit-error"
-              class="alert alert-danger ap-alert ap-alert-danger"
-              role="alert"
-              tabindex="-1"
-              hidden
-            ></p>
             <button
               id="submit-attempt"
               class="button"
-              th:classappend="${attempt.nextSection()} ? 'button-secondary'"
               type="submit"
+              aria-describedby="attempt-completion-status"
+              th:disabled="${attempt.totalItems() == 0 or attempt.answeredItems() != attempt.totalItems()}"
             >
               Nộp bài
             </button>
           </form>
+          <p id="attempt-completion-status" class="muted" role="status"></p>
           <form
             id="exit-attempt-form"
             method="post"
@@ -516,17 +476,21 @@
               th:alt="${media.filename}"
             />
             <div th:if="${media.type == 'AUDIO'}" class="media-player">
+              <button class="button button-secondary media-play-trigger" type="button">
+                Phát bài nghe
+              </button>
               <audio
                 class="media-audio"
                 controls
                 controlsList="nodownload noplaybackrate"
                 disablepictureinpicture
-                preload="metadata"
-                th:src="@{/student/attempts/{id}/media/{mediaId}/listen(id=${attempt.attemptId},mediaId=${media.id})}"
+                hidden
+                preload="none"
+                th:attr="data-play=@{/student/attempts/{id}/media/{mediaId}/play(id=${attempt.attemptId},mediaId=${media.id})},data-content=@{/student/attempts/{id}/media/{mediaId}/content(id=${attempt.attemptId},mediaId=${media.id})}"
               >
                 Trình duyệt không hỗ trợ phát audio.
               </audio>
-              <span class="media-status muted">Audio được cấp quyền bởi máy chủ khi mở.</span>
+              <span class="media-status muted" role="status"></span>
             </div>
           </div>
           <div
@@ -534,7 +498,7 @@
             class="question-item"
             tabindex="-1"
             th:id="${'item-' + item.itemId}"
-            th:attr="data-saved=${item.audioSaved},data-item-id=${item.itemId}"
+            th:attr="data-answered=${item.answered()},data-item-id=${item.itemId}"
           >
             <div class="question-item-header">
               <span
@@ -545,9 +509,10 @@
               <p class="question-item-prompt" th:text="${item.content}"></p>
             </div>
             <form
+              th:unless="${question.type == 'SPEAKING_AUDIO'}"
               class="answer-form"
               method="post"
-              th:action="@{/student/attempts/{id}/answers(id=${attempt.attemptId})}"
+              th:action="@{/student/attempts/{id}/answers/autosave(id=${attempt.attemptId})}"
               th:id="${'answer-form-' + item.itemId}"
             >
               <input type="hidden" name="questionId" th:value="${question.questionId}" />
@@ -562,7 +527,6 @@
                   name="userPosition"
                   th:id="${'position-' + (item.itemId)}"
                   th:value="${item.userPosition}"
-                  onchange="this.form.submit()"
                 />
               </div>
               <div
@@ -575,7 +539,6 @@
                     name="selectedOptionId"
                     th:value="${option.id}"
                     th:checked="${item.selectedOptionId == option.id}"
-                    onchange="this.form.submit()"
                   />
                   <span th:text="${option.code + ' · ' + option.content}"></span>
                 </label>
@@ -593,29 +556,44 @@
                   rows="6"
                   th:attr="data-min-words=${item.minWordCount},data-max-words=${item.maxWordCount}"
                   th:text="${item.textAnswer}"
-                  onblur="this.form.submit()"
                 ></textarea>
-                <p class="writing-limit-error alert alert-danger" hidden role="alert"></p>
               </div>
+              <small class="answer-status muted" role="status"></small>
+              <button class="button button-secondary button-small save-retry" type="button" hidden>
+                Thử lưu lại
+              </button>
             </form>
             <form
               th:if="${question.type == 'SPEAKING_AUDIO'}"
               class="speaking-recorder"
               method="post"
               enctype="multipart/form-data"
-              th:action="@{/student/attempts/{id}/answers/audio(id=${attempt.attemptId})}"
+              th:action="@{/student/attempts/{id}/answers/audio/autosave(id=${attempt.attemptId})}"
+              th:attr="data-response-seconds=${item.responseSeconds}"
             >
               <input type="hidden" name="questionId" th:value="${question.questionId}" />
               <input type="hidden" name="itemId" th:value="${item.itemId}" />
               <input type="hidden" name="page" th:value="${currentPage}" />
               <span class="speaking-recorder-label">Câu trả lời của bạn</span>
-              <input type="file" name="audioFile" accept="audio/*" required />
-              <small class="muted">Hãy tải lên file audio đã ghi.</small>
-              <button class="button button-secondary button-small" type="submit">Lưu bản ghi</button>
-              <span
-                class="muted recording-saved"
-                th:text="${item.audioSaved ? 'Đã lưu bản ghi.' : 'Chưa có bản ghi đã lưu.'}"
-              ></span>
+              <div class="microphone-recorder" hidden>
+                <div class="speaking-recorder-actions">
+                  <button class="button button-secondary recording-start" type="button">Bắt đầu ghi âm</button>
+                  <button class="button button-secondary recording-stop" type="button" disabled>Dừng ghi âm</button>
+                </div>
+              </div>
+              <div class="speaking-recorder-actions">
+                <button class="button button-secondary recording-retry" type="button" hidden>Ghi âm lại</button>
+                <button class="button button-primary recording-save" type="button" disabled>Lưu ghi âm</button>
+              </div>
+              <audio class="recording-preview" controls hidden></audio>
+              <label>
+                <span>Tải tệp ghi âm</span>
+                <input type="file" name="audioFile" accept="audio/*" />
+              </label>
+              <small class="recording-status muted" role="status" th:text="${item.audioSaved ? 'Đã lưu bản ghi.' : ''}"></small>
+              <button class="button button-secondary button-small save-retry" type="button" hidden>
+                Thử lưu lại
+              </button>
             </form>
           </div>
         </section>

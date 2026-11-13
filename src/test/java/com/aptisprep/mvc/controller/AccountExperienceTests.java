@@ -7,6 +7,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.aptisprep.mvc.entity.User;
 import com.aptisprep.mvc.enums.*;
+import com.aptisprep.mvc.repository.AccountUnlockRequestRepository;
 import com.aptisprep.mvc.repository.UserRepository;
 import com.aptisprep.mvc.support.auth.*;
 import com.aptisprep.mvc.support.auth.PasswordHasher;
@@ -24,6 +25,7 @@ import org.springframework.transaction.annotation.Transactional;
 class AccountExperienceTests {
     @Autowired MockMvc mvc;
     @Autowired UserRepository users;
+    @Autowired AccountUnlockRequestRepository unlockRequests;
     @Autowired PasswordHasher encoder;
     @Autowired com.aptisprep.mvc.repository.LessonRepository lessons;
     @Autowired com.aptisprep.mvc.repository.UserSkillProfileRepository profiles;
@@ -184,6 +186,46 @@ class AccountExperienceTests {
                                 "Mat-khau-moi-2026",
                                 users.findById(student.getId()).orElseThrow().getPasswordHash()))
                 .isTrue();
+    }
+
+    @Test
+    void lockedStudentRequestIsPersistedAndVisibleToAdmin() throws Exception {
+        User locked = student("unlock-experience@example.com");
+        locked.setStatus(UserStatus.LOCKED);
+        locked.setLockReason("Cần xác minh lại tài khoản");
+        users.saveAndFlush(locked);
+
+        mvc.perform(
+                        post("/account-unlock-request")
+                                .with(csrf())
+                                .param("email", locked.getEmail())
+                                .param("password", "Hoc-tieng-Anh-2026")
+                                .param("message", "Tôi muốn xác minh và mở lại tài khoản."))
+                .andExpect(redirectedUrl("/account-locked"));
+
+        assertThat(
+                        unlockRequests
+                                .findFirstByUser_EmailIgnoreCaseOrderByCreatedAtDesc(
+                                        locked.getEmail())
+                                .orElseThrow()
+                                .getStatus())
+                .isEqualTo(UnlockRequestStatus.PENDING);
+
+        User admin = new User();
+        admin.setFullName("Admin");
+        admin.setEmail("unlock-admin-experience@example.com");
+        admin.setRole(Role.ADMIN);
+        admin.setStatus(UserStatus.ACTIVE);
+        admin.setPasswordHash(encoder.encode("Admin-password-2026"));
+        users.saveAndFlush(admin);
+
+        mvc.perform(
+                        get("/admin/unlock-requests")
+                                .param("status", "PENDING")
+                                .with(user(admin.getEmail()).roles("ADMIN")))
+                .andExpect(status().isOk())
+                .andExpect(
+                        content().string(org.hamcrest.Matchers.containsString(locked.getEmail())));
     }
 
     @Test

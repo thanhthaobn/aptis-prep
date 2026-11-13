@@ -292,6 +292,11 @@ public class CatalogServiceImpl implements CatalogService {
         examCatalog.unpublishExam(id);
     }
 
+    @Override
+    public void restoreExam(Integer id) {
+        examCatalog.restoreExam(id);
+    }
+
     public List<ExamPreviewSection> examPreview(Integer id) {
         MockExamDTO form = examCatalog.examForm(id);
         examCatalog.normalizeSections(form);

@@ -429,14 +429,13 @@ abstract class ExamAttemptWorkflowServiceImpl implements ExamAttemptService {
                                         new AccessDeniedException(
                                                 "Bạn không có quyền với lượt thi này"));
         if ("COMPLETED".equals(attempt.getStatus()) || attempt.getSubmittedAt() != null) return;
-        // Kiểm tra deadline có thể đã đánh dấu attempt chưa submit là EXPIRED.
-        // Vẫn cần một lần submit cuối ở server để chấm objective/AI hoàn tất
-        // và học viên đọc được kết quả.
+        // Lượt hết giờ vẫn có thể nộp nếu tất cả đáp án đã được lưu.
         if (!"IN_PROGRESS".equals(attempt.getStatus())
                 && !"WAITING_GRADING".equals(attempt.getStatus())
                 && !("EXPIRED".equals(attempt.getStatus()) && attempt.getSubmittedAt() == null)) {
             throw new BusinessRuleException("Lượt thi không thể nộp ở trạng thái hiện tại");
         }
+        requireCompleteAnswers(attemptId, examSnapshots.lockedQuestionEntities(attemptId));
         MockExam exam = examFor(attempt);
         LocalDateTime now = LocalDateTime.now();
         LocalDateTime end = examDeadline(attempt, exam);
@@ -620,8 +619,9 @@ abstract class ExamAttemptWorkflowServiceImpl implements ExamAttemptService {
         LocalDateTime now = LocalDateTime.now();
         LocalDateTime clockStart = examSnapshots.sectionClockStart(attempt);
         LocalDateTime sectionEnd = clockStart.plusMinutes(sectionEndMinute);
+        List<ExamQuestionSnapshot> questions = examSnapshots.lockedQuestionEntities(attemptId);
         List<ExamSnapshotService.SectionWindow> windows =
-                examSnapshots.lockedQuestionEntities(attemptId).stream()
+                questions.stream()
                         .filter(question -> question.getSectionEndMinute() != null)
                         .map(
                                 question ->
@@ -641,6 +641,15 @@ abstract class ExamAttemptWorkflowServiceImpl implements ExamAttemptService {
                                                         clockStart.plusMinutes(window.end())));
         boolean hasNext = windows.stream().anyMatch(window -> window.start() == sectionEndMinute);
         if (current && hasNext) {
+            requireCompleteAnswers(
+                    attemptId,
+                    questions.stream()
+                            .filter(
+                                    question ->
+                                            Objects.equals(
+                                                    question.getSectionEndMinute(),
+                                                    sectionEndMinute))
+                            .toList());
             Duration remaining =
                     now.isBefore(sectionEnd) ? Duration.between(now, sectionEnd) : Duration.ZERO;
             examSnapshots.advanceSectionClock(attemptId, remaining);
@@ -994,6 +1003,32 @@ abstract class ExamAttemptWorkflowServiceImpl implements ExamAttemptService {
             detailByItem.put(detail.getQuestionItemId(), detail);
         }
         return detailByItem;
+    }
+
+    private void requireCompleteAnswers(Integer attemptId, List<ExamQuestionSnapshot> questions) {
+        if (questions.isEmpty())
+            throw new BusinessRuleException("Lượt thi không có câu hỏi để nộp");
+        for (ExamQuestionSnapshot question : questions) {
+            Map<Integer, UserAnswerDetail> details =
+                    answerDetails(attemptId, question.getSourceQuestionId());
+            for (ExamItemSnapshot item : question.getItems()) {
+                UserAnswerDetail answer = details.get(item.getSourceItemId());
+                if (answer == null || !hasAnswer(question.getQuestionType(), answer))
+                    throw new BusinessRuleException(
+                            "Bài làm còn câu chưa trả lời. Hãy hoàn thành tất cả câu hỏi trước khi tiếp tục.");
+            }
+        }
+    }
+
+    private boolean hasAnswer(String type, UserAnswerDetail answer) {
+        return switch (type) {
+            case "ORDERING" -> answer.getUserPosition() != null;
+            case "WRITING_TEXT" ->
+                    answer.getAnswerText() != null && !answer.getAnswerText().isBlank();
+            case "SPEAKING_AUDIO" ->
+                    answer.getAudioPath() != null && !answer.getAudioPath().isBlank();
+            default -> answer.getSelectedOptionId() != null;
+        };
     }
 
     private void validateWritingWordLimits(Integer attemptId) {
