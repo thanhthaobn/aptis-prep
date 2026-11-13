@@ -1,5 +1,6 @@
 (() => {
   const examType = document.getElementById('examType');
+  const targetLevel = document.getElementById('targetLevel');
   const scheme = document.getElementById('scoringSchemeId');
   const sections = document.getElementById('exam-sections');
   const sectionSkills = [...sections.querySelectorAll('.section-skill')];
@@ -24,18 +25,40 @@
   examType.addEventListener('change', filterSchemes);
   for (const field of sectionSkills) {
     const section = field.closest('.exam-section-editor');
+
+    function syncQuestionIds() {
+      section.querySelector('.section-question-ids').value = [...section.querySelectorAll(
+        '.section-question-label input:checked:not(:disabled)',
+      )]
+        .map((input) => input.value)
+        .join(',');
+    }
+
     function filterQuestions() {
+      const selectedLevel = targetLevel.value;
       section.querySelectorAll('.section-question-label').forEach((label) => {
         const matchesSkill = label.dataset.skill === field.value;
-        label.hidden = !matchesSkill;
-        label.querySelector('input').disabled = !matchesSkill;
+        const matchesLevel = !selectedLevel || label.dataset.level === selectedLevel;
+        const matches = matchesSkill && matchesLevel;
+        const input = label.querySelector('input');
+        label.hidden = !matches;
+        input.disabled = !matches;
+        if (!matches) input.checked = false;
       });
+      syncQuestionIds();
     }
+
     field.addEventListener('change', () => {
       filterQuestions();
       filterSchemes();
     });
+    section.querySelectorAll('.section-question-label input').forEach((input) => {
+      input.addEventListener('change', syncQuestionIds);
+    });
     filterQuestions();
   }
+  targetLevel.addEventListener('change', () => {
+    sectionSkills.forEach((field) => field.dispatchEvent(new Event('change')));
+  });
   filterSchemes();
 })();
