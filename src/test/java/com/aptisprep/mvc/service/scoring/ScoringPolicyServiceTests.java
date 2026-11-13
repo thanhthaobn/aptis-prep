@@ -124,7 +124,7 @@ class ScoringPolicyServiceTests {
     }
 
     @Test
-    void fullMockNormalizesFourScalesAndUsesCoreOnlyAtTheNextBoundary() {
+    void fullMockSumsFourConfiguredScalesAndUsesCoreOnlyAtTheNextBoundary() {
         when(schemes.findById(1)).thenReturn(Optional.of(activeScheme()));
         when(scaleRules.findBySchemeIdAndSkillIgnoreCase(eq(1), anyString()))
                 .thenAnswer(
@@ -151,7 +151,7 @@ class ScoringPolicyServiceTests {
                                 new ExamSkillResultDTO(
                                         "GRAMMAR_VOCABULARY", new BigDecimal("50"), "C1")));
 
-        assertEquals(new BigDecimal("139.50"), result.getFinalScaleScore());
+        assertEquals(new BigDecimal("169.00"), result.getFinalScaleScore());
         assertEquals("B2", result.getEstimatedOverallCefr());
         assertEquals("B2", result.getSkillResults().get(0).getCefrLevel());
         assertEquals("B1", result.getSkillResults().get(1).getCefrLevel());

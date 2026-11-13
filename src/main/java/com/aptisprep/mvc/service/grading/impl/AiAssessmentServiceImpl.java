@@ -102,8 +102,8 @@ public class AiAssessmentServiceImpl implements AiAssessmentService {
                         default ->
                                 throw new AiGradingException("Dạng bài tự luận không được hỗ trợ.");
                     };
-            result = normalizePracticeScore(result, claim.maxScore());
-            validateResult(result, claim.maxScore());
+            if (!claim.examAnswer()) result = normalizePracticeScore(result, claim.maxScore());
+            validateResult(result, claim.examAnswer() ? BigDecimal.valueOf(50) : claim.maxScore());
         } catch (AiGradingException exception) {
             return fail(claim, cleanError(exception.getMessage()));
         } catch (RuntimeException exception) {

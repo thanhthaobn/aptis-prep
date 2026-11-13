@@ -852,15 +852,23 @@ class ExamAttemptConcurrencyTests {
         user.setRole(Role.STUDENT);
         user.setStatus(UserStatus.ACTIVE);
         user = users.saveAndFlush(user);
-        Certificate certificate = new Certificate();
-        certificate.setName("Test certificate");
-        certificate.setCode("TEST-" + suffix + "-" + System.nanoTime());
+        Certificate certificate =
+                certificates
+                        .findByCodeIgnoreCase("APTIS_GENERAL")
+                        .orElseGet(
+                                () -> {
+                                    Certificate value = new Certificate();
+                                    value.setName("Aptis ESOL General");
+                                    value.setCode("APTIS_GENERAL");
+                                    value.setStatus(RecordStatus.ACTIVE);
+                                    return certificates.saveAndFlush(value);
+                                });
         certificate.setStatus(RecordStatus.ACTIVE);
         certificate = certificates.saveAndFlush(certificate);
         ScoringScheme scheme = new ScoringScheme();
         scheme.setCertificate(certificate);
         scheme.setName("Test scheme");
-        scheme.setVersion("v1");
+        scheme.setVersion("v1-" + Long.toUnsignedString(System.nanoTime()));
         scheme.setStatus(RecordStatus.ACTIVE);
         scheme = schemes.saveAndFlush(scheme);
         ScoreBand band = new ScoreBand();

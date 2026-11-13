@@ -168,8 +168,33 @@ public class AdminExamServiceImpl implements AdminExamService {
         exam.setDurationMinutes(form.getDurationMinutes());
         readiness.validateForPublication(
                 exam, mockExamQuestionRepository.findByMockExamIdOrderByPosition(id));
+        archivePublishedExamConflict(exam);
         exam.setStatus("PUBLISHED");
         mockExamRepository.save(exam);
+    }
+
+    /**
+     * Chỉ giữ một đề Placement công bố tại một thời điểm. Với Checkpoint, mỗi cặp kỹ năng và cấp
+     * độ mục tiêu cũng chỉ có một đề đang công bố để lộ trình luôn trỏ tới đúng đề.
+     */
+    private void archivePublishedExamConflict(MockExam exam) {
+        if (!Set.of("PLACEMENT", "CHECKPOINT").contains(exam.getExamType())) return;
+        List<MockExam> published = mockExamRepository.findByStatusOrderByUpdatedAtDesc("PUBLISHED");
+        List<MockExam> conflicts =
+                published.stream()
+                        .filter(value -> !Objects.equals(value.getId(), exam.getId()))
+                        .filter(value -> Objects.equals(value.getExamType(), exam.getExamType()))
+                        .filter(
+                                value ->
+                                        "PLACEMENT".equals(exam.getExamType())
+                                                || (Objects.equals(
+                                                                value.getSkill(), exam.getSkill())
+                                                        && Objects.equals(
+                                                                value.getTargetLevel(),
+                                                                exam.getTargetLevel())))
+                        .toList();
+        conflicts.forEach(value -> value.setStatus("ARCHIVED"));
+        if (!conflicts.isEmpty()) mockExamRepository.saveAll(conflicts);
     }
 
     @Transactional

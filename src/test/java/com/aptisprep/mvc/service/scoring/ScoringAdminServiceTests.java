@@ -48,7 +48,6 @@ class ScoringAdminServiceTests {
         when(current.getCertificate()).thenReturn(certificate);
         when(current.getVersion()).thenReturn("1");
         when(schemes.findByIdForUpdate(20)).thenReturn(Optional.of(current));
-        when(certificates.findById(10)).thenReturn(Optional.of(certificate));
         when(users.findByEmailIgnoreCase("admin@aptis.local")).thenReturn(Optional.of(admin));
         when(usage.isUsed(20)).thenReturn(true);
 
@@ -92,7 +91,7 @@ class ScoringAdminServiceTests {
         scale.setScaleMax(BigDecimal.valueOf(60));
         service.saveScaleRule("admin@aptis.local", 20, "SPEAKING", scale);
         verify(scaleRules).save(rule);
-        assertEquals(new BigDecimal("1.00"), rule.getScaleMin());
+        assertEquals(0, BigDecimal.ZERO.compareTo(rule.getScaleMin()));
         assertEquals(new BigDecimal("60.00"), rule.getScaleMax());
 
         ScoreBandDTO band = new ScoreBandDTO();

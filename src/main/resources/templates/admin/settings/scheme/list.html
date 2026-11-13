@@ -223,24 +223,12 @@
               <option
                 th:each="type : ${examTypes}"
                 th:value="${type}"
-                th:text="${examTypeLabels[type]}"
+                th:text="${examTypeLabels.get(type) ?: type}"
                 th:selected="${type == examType}"
               ></option>
               <option value="UNASSIGNED" th:selected="${examType == 'UNASSIGNED'}">
                 Chưa gán cho đề
               </option>
-            </select>
-          </div>
-          <div>
-            <label for="filterCertificate">Chứng chỉ</label>
-            <select id="filterCertificate" name="certificateId">
-              <option value="">Tất cả chứng chỉ</option>
-              <option
-                th:each="certificate : ${certificates}"
-                th:value="${certificate.id}"
-                th:text="${certificate.name}"
-                th:selected="${certificate.id == certificateId}"
-              ></option>
             </select>
           </div>
           <button class="button" type="submit">Lọc</button>
@@ -280,7 +268,7 @@
                     <div
                       th:if="${scheme.examType == null}"
                       th:each="type : ${types}"
-                      th:text="${examTypeLabels[type]}"
+                      th:text="${examTypeLabels.get(type) ?: type}"
                     ></div>
                   </td>
                   <td data-label="Trạng thái">
@@ -305,7 +293,7 @@
             </table>
           </div>
           <th:block
-            th:with="currentPage=${schemePage.number}, totalPages=${schemePage.totalPages}, totalItems=${schemePage.totalElements}, baseUrl=@{/admin/scoring-schemes(examType=${examType},certificateId=${certificateId})}, pageParam='schemePage'"
+            th:with="currentPage=${schemePage.number}, totalPages=${schemePage.totalPages}, totalItems=${schemePage.totalElements}, baseUrl=@{/admin/scoring-schemes(examType=${examType})}, pageParam='schemePage'"
           >
             <nav
               th:with="pageUrl=${baseUrl + (#strings.contains(baseUrl, '?') ? '&' : '?') + pageParam + '='}"
@@ -427,10 +415,10 @@
           </p>
           <p>Kết quả phục vụ luyện tập, không phải điểm hoặc chứng chỉ Aptis chính thức.</p>
           <p>
-            Đề tổng hợp có ngưỡng CEFR riêng cho từng kỹ năng. Tổng điểm cộng bốn kỹ năng sau khi
-            đưa về thang 0–50. Grammar &amp; Vocabulary có điểm riêng và hỗ trợ xét CEFR trong phạm
-            vi 1 điểm dưới ngưỡng kế tiếp, nếu khoảng CEFR nội bộ của phần này đạt mức kế tiếp trở
-            lên.
+            Đề tổng hợp có ngưỡng CEFR riêng cho từng kỹ năng. Tổng điểm là tổng điểm quy đổi của
+            Reading, Listening, Writing và Speaking; mẫu số bằng tổng scale cao nhất của bốn kỹ
+            năng. Grammar &amp; Vocabulary có điểm riêng và hỗ trợ xét CEFR trong phạm vi 1 điểm
+            dưới ngưỡng kế tiếp, nếu khoảng CEFR nội bộ của phần này đạt mức kế tiếp trở lên.
           </p>
         </details>
       </main>

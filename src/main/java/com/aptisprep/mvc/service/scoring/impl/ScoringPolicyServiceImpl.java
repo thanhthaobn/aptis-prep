@@ -136,6 +136,7 @@ public class ScoringPolicyServiceImpl implements ScoringPolicyService {
         // Không có câu đúng nghĩa là kết quả dưới ngưỡng A1. Một số scheme cũ bắt đầu
         // band A1 từ 0, nên chỉ dựa vào band cấu hình sẽ báo sai A1 cho skill bỏ trống hoàn toàn.
         if (scaleScore.signum() == 0) return CefrLevel.BELOW_A1;
+        if ("CHECKPOINT".equals(requireHistoricalScheme(schemeId).getExamType())) return "A1";
         return scoreBandRepository
                 .findBySchemeIdAndSkillOrderByMinScoreAsc(schemeId, normalized)
                 .stream()
@@ -177,6 +178,7 @@ public class ScoringPolicyServiceImpl implements ScoringPolicyService {
         requireActiveScheme(schemeId);
         String normalized = normalizeSkill(skill);
         ScoringScaleRule rule = requireRule(schemeId, normalized);
+        if ("CHECKPOINT".equals(requireHistoricalScheme(schemeId).getExamType())) return;
         ScoreBandCoverage.requireComplete(
                 rule,
                 scoreBandRepository.findBySchemeIdAndSkillOrderByMinScoreAsc(schemeId, normalized));
@@ -245,12 +247,7 @@ public class ScoringPolicyServiceImpl implements ScoringPolicyService {
             }
             ScoringScaleRule rule = requireRule(schemeId, score.getSkill());
             BigDecimal range = rule.getScaleMax().subtract(rule.getScaleMin());
-            total =
-                    total.add(
-                            score.getScaleScore()
-                                    .subtract(rule.getScaleMin())
-                                    .multiply(BigDecimal.valueOf(50))
-                                    .divide(range, 8, RoundingMode.HALF_UP));
+            total = total.add(score.getScaleScore().subtract(rule.getScaleMin()));
             int level = borderlineLevel(schemeId, score, coreLevel, range);
             String reportedLevel = certificate.scoringLevel(FULL_MOCK_LEVELS.get(level));
             level = FULL_MOCK_LEVELS.indexOf(reportedLevel);

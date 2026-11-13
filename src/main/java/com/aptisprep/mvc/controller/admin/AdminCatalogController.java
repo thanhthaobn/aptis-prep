@@ -4,10 +4,12 @@ import com.aptisprep.mvc.dto.MockExamDTO;
 import com.aptisprep.mvc.dto.MockExamSectionDTO;
 import com.aptisprep.mvc.dto.QuestionDTO;
 import com.aptisprep.mvc.dto.QuestionItemDTO;
+import com.aptisprep.mvc.dto.QuestionOptionDTO;
 import com.aptisprep.mvc.exception.BusinessRuleException;
 import com.aptisprep.mvc.service.admin.CatalogService;
 import jakarta.validation.Valid;
 import java.util.ArrayList;
+import java.util.List;
 import org.springframework.core.io.Resource;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -306,6 +308,49 @@ public class AdminCatalogController {
         else if ("SPEAKING".equals(form.getSkill())) form.setQuestionType("SPEAKING_AUDIO");
         else if (!java.util.Set.of("SINGLE_CHOICE", "MATCHING", "ORDERING")
                 .contains(form.getQuestionType())) form.setQuestionType("SINGLE_CHOICE");
+        if (action.startsWith("ADD_OPTION_") || action.startsWith("REMOVE_OPTION_")) {
+            int separator = action.lastIndexOf('_');
+            try {
+                int itemIndex = Integer.parseInt(action.substring(separator + 1));
+                if (itemIndex >= 0 && itemIndex < form.getItems().size()) {
+                    int optionIndex =
+                            action.startsWith("ADD_OPTION_")
+                                    ? -1
+                                    : Integer.parseInt(
+                                            action.substring("REMOVE_OPTION_".length(), separator));
+                    QuestionItemDTO item = form.getItems().get(itemIndex);
+                    List<QuestionOptionDTO> options =
+                            item.getOptions() == null
+                                    ? new ArrayList<>()
+                                    : new ArrayList<>(item.getOptions());
+                    if (action.startsWith("ADD_OPTION_") && options.size() < 26) {
+                        options.add(
+                                new QuestionOptionDTO(
+                                        null,
+                                        null,
+                                        null,
+                                        String.valueOf((char) ('A' + options.size())),
+                                        false,
+                                        options.size() + 1));
+                    } else if (action.startsWith("REMOVE_OPTION_")
+                            && options.size() > 2
+                            && optionIndex >= 0
+                            && optionIndex < options.size()) {
+                        options.remove(optionIndex);
+                        for (int index = 0; index < options.size(); index++) {
+                            options.get(index).setOptionCode(String.valueOf((char) ('A' + index)));
+                            options.get(index).setPosition(index + 1);
+                        }
+                        if (item.getCorrectPosition() != null
+                                && item.getCorrectPosition() > options.size())
+                            item.setCorrectPosition(null);
+                    }
+                    item.setOptions(options);
+                }
+            } catch (NumberFormatException ignored) {
+                // Ignore malformed option actions and render the unchanged form.
+            }
+        }
     }
 
     private void renderQuestionForm(
@@ -354,14 +399,14 @@ public class AdminCatalogController {
     private void normalizeExamQuestionIds(MockExamDTO form) {
         if (form.getSections() == null) return;
         for (MockExamSectionDTO section : form.getSections()) {
+            if (section.getSelectedQuestionIds() == null
+                    || section.getSelectedQuestionIds().isEmpty()) continue;
             section.setQuestionIds(
-                    section.getSelectedQuestionIds() == null
-                            ? ""
-                            : section.getSelectedQuestionIds().stream()
-                                    .filter(java.util.Objects::nonNull)
-                                    .map(String::valueOf)
-                                    .distinct()
-                                    .collect(java.util.stream.Collectors.joining(",")));
+                    section.getSelectedQuestionIds().stream()
+                            .filter(java.util.Objects::nonNull)
+                            .map(String::valueOf)
+                            .distinct()
+                            .collect(java.util.stream.Collectors.joining(",")));
         }
     }
 

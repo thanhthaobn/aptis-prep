@@ -46,7 +46,9 @@
         <nav class="nav-links" id="primaryNav" aria-label="Điều hướng chính">
           <a th:href="@{/}">Trang chủ</a>
           <a th:if="${isStudent}" th:href="@{/student/dashboard}">Học tập</a>
-          <a th:if="${isAdmin}" th:href="@{/admin/dashboard}" class="active" aria-current="page">Quản trị</a>
+          <a th:if="${isAdmin}" th:href="@{/admin/dashboard}" class="active" aria-current="page">
+            Quản trị
+          </a>
           <form th:if="${signedIn}" th:action="@{/logout}" method="post">
             <button class="button button-secondary button-small" type="submit">Đăng xuất</button>
           </form>
@@ -60,36 +62,62 @@
           <span class="sidebar-label">QUẢN TRỊ</span>
           <nav class="sidebar-nav" aria-label="Điều hướng quản trị">
             <a class="sidebar-link" th:href="@{/admin/dashboard}">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h6v6H4zm10 0h6v6h-6zM4 14h6v6H4zm10 0h6v6h-6z" /></svg>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M4 4h6v6H4zm10 0h6v6h-6zM4 14h6v6H4zm10 0h6v6h-6z" />
+              </svg>
               Tổng quan
             </a>
             <a class="sidebar-link" th:href="@{/admin/students}">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="8" r="3" /><path d="M3 20v-2a6 6 0 0 1 12 0v2M16 5a3 3 0 1 1 0 6m2 3a5 5 0 0 1 3 4v2" /></svg>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="9" cy="8" r="3" />
+                <path d="M3 20v-2a6 6 0 0 1 12 0v2M16 5a3 3 0 1 1 0 6m2 3a5 5 0 0 1 3 4v2" />
+              </svg>
               Học viên
             </a>
             <a class="sidebar-link active" aria-current="page" th:href="@{/admin/unlock-requests}">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="10" width="14" height="10" rx="2" /><path d="M8 10V7a4 4 0 0 1 8 0v3" /></svg>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="5" y="10" width="14" height="10" rx="2" />
+                <path d="M8 10V7a4 4 0 0 1 8 0v3" />
+              </svg>
               Yêu cầu mở khóa
-              <span th:if="${pendingCount != null and pendingCount > 0}" class="badge badge-warning" th:text="${pendingCount}">0</span>
+              <span
+                th:if="${pendingCount != null and pendingCount > 0}"
+                class="badge badge-warning"
+                th:text="${pendingCount}"
+              >
+                0
+              </span>
             </a>
             <a class="sidebar-link" th:href="@{/admin/lessons}">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20V4H6.5A2.5 2.5 0 0 0 4 6.5z" /></svg>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20V4H6.5A2.5 2.5 0 0 0 4 6.5z" />
+              </svg>
               Bài học
             </a>
             <a class="sidebar-link" th:href="@{/admin/questions}">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9" /><path d="M9.5 9a2.5 2.5 0 1 1 3.2 2.4c-.7.3-.7.8-.7 1.6M12 17h.01" /></svg>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="9" />
+                <path d="M9.5 9a2.5 2.5 0 1 1 3.2 2.4c-.7.3-.7.8-.7 1.6M12 17h.01" />
+              </svg>
               Ngân hàng câu hỏi
             </a>
             <a class="sidebar-link" th:href="@{/admin/exams}">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 3h10v4H7zM5 7h14v14H5z" /></svg>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M7 3h10v4H7zM5 7h14v14H5z" />
+              </svg>
               Đề thi
             </a>
             <a class="sidebar-link" th:href="@{/admin/results}">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19V5m0 14h16M8 16v-4m4 4V7m4 9v-6" /></svg>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M4 19V5m0 14h16M8 16v-4m4 4V7m4 9v-6" />
+              </svg>
               Kết quả
             </a>
             <a class="sidebar-link" th:href="@{/admin/flashcards}">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="6" y="6" width="15" height="15" rx="3" /><path d="M17 6V3H3v14h3" /></svg>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="6" y="6" width="15" height="15" rx="3" />
+                <path d="M17 6V3H3v14h3" />
+              </svg>
               Flashcard
             </a>
           </nav>
@@ -97,7 +125,15 @@
           <span class="sidebar-label">HỆ THỐNG</span>
           <nav class="sidebar-nav">
             <a class="sidebar-link" th:href="@{/admin/scoring-schemes}">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 19h16M7 16v-5m5 5V5m5 11V8" /></svg>
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                aria-hidden="true"
+              >
+                <path d="M4 19h16M7 16v-5m5 5V5m5 11V8" />
+              </svg>
               Chấm điểm
             </a>
           </nav>
@@ -106,8 +142,16 @@
 
       <main class="app-main" id="main-content" tabindex="-1">
         <div class="messages-container" aria-live="polite">
-          <div th:if="${successMessage}" class="alert alert-success ap-alert ap-alert-success" th:text="${successMessage}"></div>
-          <div th:if="${errorMessage}" class="alert alert-danger ap-alert ap-alert-danger" th:text="${errorMessage}"></div>
+          <div
+            th:if="${successMessage}"
+            class="alert alert-success ap-alert ap-alert-success"
+            th:text="${successMessage}"
+          ></div>
+          <div
+            th:if="${errorMessage}"
+            class="alert alert-danger ap-alert ap-alert-danger"
+            th:text="${errorMessage}"
+          ></div>
         </div>
 
         <header class="page-header">
@@ -122,22 +166,36 @@
             <a
               class="button button-small"
               th:classappend="${selectedStatus == 'PENDING'} ? '' : 'button-secondary'"
-              th:href="@{/admin/unlock-requests(status='PENDING')}"
-            >Chờ xử lý<span th:if="${pendingCount != null and pendingCount > 0}" class="badge badge-warning" th:text="${pendingCount}">0</span></a>
+              th:href="@{/admin/unlock-requests(status='PENDING', page=0, size=${pageData.size})}"
+            >
+              Chờ xử lý
+              <span
+                th:if="${pendingCount != null and pendingCount > 0}"
+                class="badge badge-warning"
+                th:text="${pendingCount}"
+              >
+                0
+              </span>
+            </a>
             <a
               class="button button-small"
               th:classappend="${selectedStatus == 'ALL'} ? '' : 'button-secondary'"
-              th:href="@{/admin/unlock-requests(status='ALL')}"
-            >Tất cả</a>
+              th:href="@{/admin/unlock-requests(status='ALL', page=0, size=${pageData.size})}"
+            >
+              Tất cả
+            </a>
           </div>
         </div>
 
-        <div class="empty-box" th:if="${requests == null or requests.isEmpty()}">
+        <div class="empty-box" th:if="${pageData.content == null or pageData.content.isEmpty()}">
           <h2>Không có yêu cầu</h2>
           <p>Hiện chưa có yêu cầu mở khóa nào phù hợp với bộ lọc.</p>
         </div>
 
-        <div class="table-wrap" th:if="${requests != null and !requests.isEmpty()}">
+        <div
+          class="table-wrap unlock-request-table-wrap"
+          th:if="${pageData.content != null and !pageData.content.isEmpty()}"
+        >
           <table class="data-table">
             <caption class="visually-hidden">Danh sách yêu cầu mở khóa tài khoản</caption>
             <thead>
@@ -150,40 +208,129 @@
               </tr>
             </thead>
             <tbody>
-              <tr th:each="request : ${requests}">
+              <tr th:each="request : ${pageData.content}">
                 <td>
                   <strong th:text="${request.userFullName}">Họ tên</strong>
-                  <small class="d-block muted" th:text="${request.userEmail}">email@example.com</small>
+                  <small class="d-block muted" th:text="${request.userEmail}">
+                    email@example.com
+                  </small>
                 </td>
-                <td class="unlock-request-message" th:text="${request.message}">Nội dung yêu cầu</td>
-                <td th:text="${#temporals.format(request.createdAt, 'dd/MM/yyyy HH:mm')}">12/11/2026 10:00</td>
+                <td class="unlock-request-message" th:text="${request.message}">
+                  Nội dung yêu cầu
+                </td>
+                <td th:text="${#temporals.format(request.createdAt, 'dd/MM/yyyy HH:mm')}">
+                  12/11/2026 10:00
+                </td>
                 <td>
                   <span
                     class="status-badge"
                     th:classappend="${request.status.name() == 'PENDING' ? 'status-pending' : (request.status.name() == 'APPROVED' ? 'status-approved' : 'status-rejected')}"
                     th:text="${request.status.name() == 'PENDING' ? 'Chờ xử lý' : (request.status.name() == 'APPROVED' ? 'Đã duyệt' : 'Đã từ chối')}"
-                  >Chờ xử lý</span>
-                  <small class="d-block muted" th:if="${request.adminNote != null and !request.adminNote.isBlank()}" th:text="${request.adminNote}"></small>
+                  >
+                    Chờ xử lý
+                  </span>
                 </td>
                 <td>
                   <div th:if="${request.status.name() == 'PENDING'}" class="unlock-request-actions">
-                    <form th:action="@{/admin/unlock-requests/{id}/approve(id=${request.id})}" method="post">
-                      <label class="visually-hidden" th:for="${'approve-note-' + request.id}">Ghi chú duyệt</label>
-                      <input th:id="${'approve-note-' + request.id}" class="form-control" name="adminNote" maxlength="1000" placeholder="Ghi chú (tùy chọn)" />
+                    <form
+                      th:action="@{/admin/unlock-requests/{id}/approve(id=${request.id})}"
+                      method="post"
+                    >
+                      <label class="visually-hidden" th:for="${'approve-note-' + request.id}">
+                        Ghi chú duyệt
+                      </label>
+                      <input
+                        th:id="${'approve-note-' + request.id}"
+                        class="form-control"
+                        name="adminNote"
+                        maxlength="1000"
+                        placeholder="Ghi chú (tùy chọn)"
+                      />
                       <button class="button button-small" type="submit">Duyệt</button>
                     </form>
-                    <form th:action="@{/admin/unlock-requests/{id}/reject(id=${request.id})}" method="post">
-                      <label class="visually-hidden" th:for="${'reject-note-' + request.id}">Lý do từ chối</label>
-                      <input th:id="${'reject-note-' + request.id}" class="form-control" name="adminNote" maxlength="1000" placeholder="Lý do từ chối" required />
-                      <button class="button button-danger button-small" type="submit">Từ chối</button>
+                    <form
+                      th:action="@{/admin/unlock-requests/{id}/reject(id=${request.id})}"
+                      method="post"
+                    >
+                      <label class="visually-hidden" th:for="${'reject-note-' + request.id}">
+                        Lý do từ chối
+                      </label>
+                      <input
+                        th:id="${'reject-note-' + request.id}"
+                        class="form-control"
+                        name="adminNote"
+                        maxlength="1000"
+                        placeholder="Lý do từ chối"
+                        required
+                      />
+                      <button class="button button-danger button-small" type="submit">
+                        Từ chối
+                      </button>
                     </form>
                   </div>
-                  <span th:unless="${request.status.name() == 'PENDING'}" class="muted">Đã xử lý</span>
+                  <span th:unless="${request.status.name() == 'PENDING'}" class="muted">
+                    Đã xử lý
+                  </span>
                 </td>
               </tr>
             </tbody>
           </table>
         </div>
+
+        <th:block
+          th:with="currentPage=${pageData.number}, totalPages=${pageData.totalPages}, totalItems=${pageData.totalElements}"
+        >
+          <nav
+            class="pagination student-pagination unlock-request-pagination"
+            aria-label="Phân trang yêu cầu mở khóa"
+          >
+            <span th:text="${totalItems + ' yêu cầu'}">0 yêu cầu</span>
+            <div class="pagination-pages" th:if="${totalPages > 1}">
+              <a
+                class="page-link"
+                th:if="${currentPage > 0}"
+                th:href="@{/admin/unlock-requests(page=${currentPage - 1}, size=${pageData.size}, status=${selectedStatus})}"
+                aria-label="Trang trước"
+              >
+                ‹
+              </a>
+              <span
+                class="page-link disabled"
+                th:unless="${currentPage > 0}"
+                aria-disabled="true"
+                aria-label="Trang trước"
+              >
+                ‹
+              </span>
+              <a
+                class="page-link"
+                th:each="pageNumber : ${#numbers.sequence(0, totalPages - 1)}"
+                th:classappend="${pageNumber == currentPage ? 'active' : ''}"
+                th:href="@{/admin/unlock-requests(page=${pageNumber}, size=${pageData.size}, status=${selectedStatus})}"
+                th:attr="aria-current=${pageNumber == currentPage ? 'page' : null}"
+                th:text="${pageNumber + 1}"
+              >
+                1
+              </a>
+              <a
+                class="page-link"
+                th:if="${currentPage + 1 < totalPages}"
+                th:href="@{/admin/unlock-requests(page=${currentPage + 1}, size=${pageData.size}, status=${selectedStatus})}"
+                aria-label="Trang sau"
+              >
+                ›
+              </a>
+              <span
+                class="page-link disabled"
+                th:unless="${currentPage + 1 < totalPages}"
+                aria-disabled="true"
+                aria-label="Trang sau"
+              >
+                ›
+              </span>
+            </div>
+          </nav>
+        </th:block>
       </main>
     </div>
     <footer class="site-footer">

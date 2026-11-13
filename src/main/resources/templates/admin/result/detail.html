@@ -211,10 +211,10 @@
         <section class="dashboard-panel result-overall-panel">
           <div>
             <span
-              th:text="${attemptResult.isCombined() ? 'Tổng bốn kỹ năng /200' : 'Điểm quy đổi'}"
+              th:text="${attemptResult.isCombined() ? 'Tổng bốn kỹ năng' : 'Điểm quy đổi'}"
             ></span>
             <strong
-              th:text="${attemptResult.finalScaleScore==null?'—':attemptResult.finalScaleScore}"
+              th:text="${attemptResult.finalScaleScore==null?'—':(attemptResult.isCombined() ? attemptResult.finalScaleScore + '/' + overallScaleMax.stripTrailingZeros().toPlainString() : attemptResult.finalScaleScore)}"
             ></strong>
           </div>
           <div>

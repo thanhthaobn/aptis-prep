@@ -43,19 +43,16 @@ public class AdminScoringSchemeController {
     public String showScoringSchemes(
             @RequestParam(defaultValue = "0") int schemePage,
             @RequestParam(name = "examType", defaultValue = "") String examType,
-            @RequestParam(required = false) Integer certificateId,
             Model model) {
         String normalizedExamType = examType == null ? "" : examType;
         if (!normalizedExamType.isBlank()
                 && !"UNASSIGNED".equals(normalizedExamType)
                 && !EXAM_TYPES.contains(normalizedExamType))
             throw new BusinessRuleException("Loại đề không hợp lệ");
-        var catalog = scoring.filteredSchemes(certificateId, normalizedExamType);
+        var catalog = scoring.filteredSchemes(null, normalizedExamType);
         model.addAttribute("schemePage", ListPagination.slice(catalog.schemes(), schemePage));
         model.addAttribute("schemeExamTypes", catalog.examTypesByScheme());
         model.addAttribute("examType", normalizedExamType);
-        model.addAttribute("certificateId", certificateId);
-        model.addAttribute("certificates", scoring.certificateViews());
         model.addAttribute("examTypes", EXAM_TYPES);
         model.addAttribute("examTypeLabels", EXAM_TYPE_LABELS);
         model.addAttribute("skillLabels", SKILL_LABELS);
@@ -63,26 +60,83 @@ public class AdminScoringSchemeController {
     }
 
     @GetMapping("/admin/scoring-schemes/create")
-    public String createScheme(Model model) {
-        {
-            model.addAttribute("certificates", scoring.certificateViews());
-            model.addAttribute("examTypes", EXAM_TYPES);
-            model.addAttribute("scoringLevels", CefrLevel.codes());
-            model.addAttribute("fullMockScoringLevels", CefrLevel.scoringCodes());
-            model.addAttribute("skillCodes", Skill.codes());
-            model.addAttribute("examTypeLabels", EXAM_TYPE_LABELS);
-            model.addAttribute("skillLabels", SKILL_LABELS);
-            model.addAttribute(
-                    "skills",
-                    List.of("Grammar & Vocabulary", "Reading", "Listening", "Writing", "Speaking"));
-        }
+    public String createScheme(
+            @RequestParam(defaultValue = "") String examType,
+            @RequestParam(defaultValue = "") String scopeSkill,
+            Model model) {
+        addSchemeFormOptions(model);
+        String selectedExamType = examType.trim().toUpperCase(Locale.ROOT);
+        if (!selectedExamType.isBlank() && !EXAM_TYPES.contains(selectedExamType))
+            throw new BusinessRuleException("Loại đề không hợp lệ");
+        boolean singleSkill =
+                "PRACTICE".equals(selectedExamType) || "CHECKPOINT".equals(selectedExamType);
+        String selectedScopeSkill = scopeSkill.trim().toUpperCase(Locale.ROOT);
+        if (!selectedScopeSkill.isBlank()
+                && (!singleSkill || !Skill.codes().contains(selectedScopeSkill)))
+            throw new BusinessRuleException("Kỹ năng không hợp lệ");
+        ScoringSchemeDTO form = new ScoringSchemeDTO();
+        form.setExamType(selectedExamType.isBlank() ? null : selectedExamType);
+        form.setScopeSkill(selectedScopeSkill.isBlank() ? null : selectedScopeSkill);
         model.addAttribute("editing", false);
         model.addAttribute("readOnly", false);
-        model.addAttribute("schemeForm", new ScoringSchemeDTO());
+        model.addAttribute("schemeForm", form);
         model.addAttribute("selectedSkill", "Reading");
         model.addAttribute("bands", List.of());
         model.addAttribute("bandForm", new ScoreBandDTO());
         return "admin/settings/scheme/form";
+    }
+
+    @PostMapping("/admin/scoring-schemes/create/configure")
+    public String configureNewScheme(
+            @ModelAttribute("schemeForm") ScoringSchemeDTO form,
+            BindingResult result,
+            Model model) {
+        String examType = normalizeCode(form.getExamType());
+        String scopeSkill = normalizeCode(form.getScopeSkill());
+        form.setExamType(examType.isBlank() ? null : examType);
+
+        if (examType.isBlank()) {
+            form.setScopeSkill(null);
+            result.rejectValue("examType", "scheme.examType", "Chọn loại đề thi");
+        } else if (!EXAM_TYPES.contains(examType)) {
+            form.setScopeSkill(null);
+            result.rejectValue("examType", "scheme.examType", "Loại đề không hợp lệ");
+        } else if ("PLACEMENT".equals(examType) || "FULL_MOCK".equals(examType)) {
+            form.setScopeSkill(null);
+        } else if (scopeSkill.isBlank()) {
+            form.setScopeSkill(null);
+            result.rejectValue("scopeSkill", "scheme.scopeSkill", "Chọn kỹ năng áp dụng");
+        } else if (!Skill.codes().contains(scopeSkill)) {
+            form.setScopeSkill(null);
+            result.rejectValue("scopeSkill", "scheme.scopeSkill", "Kỹ năng không hợp lệ");
+        } else {
+            form.setScopeSkill(scopeSkill);
+        }
+
+        addSchemeFormOptions(model);
+        model.addAttribute("editing", false);
+        model.addAttribute("readOnly", false);
+        model.addAttribute("selectedSkill", "Reading");
+        model.addAttribute("bands", List.of());
+        model.addAttribute("bandForm", new ScoreBandDTO());
+        return "admin/settings/scheme/form";
+    }
+
+    private String normalizeCode(String value) {
+        return value == null ? "" : value.trim().toUpperCase(Locale.ROOT);
+    }
+
+    private void addSchemeFormOptions(Model model) {
+        model.addAttribute("certificates", scoring.certificateViews());
+        model.addAttribute("examTypes", EXAM_TYPES);
+        model.addAttribute("scoringLevels", CefrLevel.codes());
+        model.addAttribute("fullMockScoringLevels", CefrLevel.scoringCodes());
+        model.addAttribute("skillCodes", Skill.codes());
+        model.addAttribute("examTypeLabels", EXAM_TYPE_LABELS);
+        model.addAttribute("skillLabels", SKILL_LABELS);
+        model.addAttribute(
+                "skills",
+                List.of("Grammar & Vocabulary", "Reading", "Listening", "Writing", "Speaking"));
     }
 
     @GetMapping("/admin/scoring-schemes/{id}")

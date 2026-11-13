@@ -312,15 +312,23 @@ class TramBusinessCompletionTests {
         user.setRole(Role.STUDENT);
         user.setStatus(UserStatus.ACTIVE);
         user = users.saveAndFlush(user);
-        var certificate = new Certificate();
-        certificate.setCode("TRAM-" + UUID.randomUUID());
-        certificate.setName("Regression certificate");
+        var certificate =
+                certificates
+                        .findByCodeIgnoreCase("APTIS_GENERAL")
+                        .orElseGet(
+                                () -> {
+                                    var value = new Certificate();
+                                    value.setCode("APTIS_GENERAL");
+                                    value.setName("Aptis ESOL General");
+                                    value.setStatus(RecordStatus.ACTIVE);
+                                    return certificates.saveAndFlush(value);
+                                });
         certificate.setStatus(RecordStatus.ACTIVE);
         certificate = certificates.saveAndFlush(certificate);
         var scheme = new ScoringScheme();
         scheme.setCertificate(certificate);
         scheme.setName("Placement regression policy");
-        scheme.setVersion("test-v1");
+        scheme.setVersion("test-" + UUID.randomUUID().toString().substring(0, 8));
         scheme.setStatus(RecordStatus.ACTIVE);
         scheme = schemes.saveAndFlush(scheme);
         var rule = new ScoringScaleRule();

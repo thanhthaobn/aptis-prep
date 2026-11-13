@@ -1,0 +1,207 @@
+.account-locked-page {
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at 12% 18%, rgba(224, 231, 255, 0.8) 0, transparent 28%),
+    radial-gradient(circle at 88% 82%, rgba(207, 250, 254, 0.7) 0, transparent 30%),
+    var(--color-background);
+}
+
+.account-locked-shell {
+  width: min(calc(100% - 2rem), 860px);
+  min-height: 100vh;
+  padding-block: clamp(2rem, 7vw, 5.5rem);
+}
+
+.account-locked-card {
+  width: 100%;
+  max-width: 820px;
+  padding: clamp(1.5rem, 4vw, 3rem);
+  border: 1px solid #e2e8f0;
+  border-top: 4px solid var(--color-danger);
+  box-shadow: 0 22px 55px rgba(15, 23, 42, 0.1);
+}
+
+.account-locked-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.account-locked-heading .eyebrow {
+  margin-bottom: 0;
+  color: var(--color-primary);
+  font-size: 0.85rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+}
+
+.account-locked-icon {
+  display: grid;
+  width: 2.5rem;
+  height: 2.5rem;
+  flex: 0 0 2.5rem;
+  place-items: center;
+  border: 1px solid var(--color-danger-border);
+  border-radius: 50%;
+  color: var(--color-danger);
+  background: var(--color-danger-bg);
+  font-size: 1.35rem;
+  font-weight: 800;
+}
+
+.account-locked-card h1 {
+  max-width: none;
+  margin-top: 1.1rem;
+  margin-bottom: 0.65rem;
+  font-size: clamp(2.1rem, 6vw, 3.4rem);
+  line-height: 1.08;
+}
+
+.account-locked-intro {
+  margin-bottom: 1.35rem;
+  color: var(--color-muted);
+  font-size: 1.05rem;
+}
+
+.account-locked-reason {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  margin-bottom: 1.25rem;
+  padding: 0.95rem 1.05rem;
+  border: 1px solid var(--color-danger-border);
+  border-radius: var(--radius);
+  color: var(--color-danger);
+  background: var(--color-danger-bg);
+}
+
+.account-locked-reason-label {
+  flex: 0 0 auto;
+}
+
+.account-locked-reason-text {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.account-locked-request-status {
+  margin-bottom: 0;
+}
+
+.account-locked-form {
+  margin-top: 2rem;
+  padding-top: 2rem;
+  border-top: 1px solid var(--color-border);
+}
+
+.account-locked-form-heading h2 {
+  margin-bottom: 0.35rem;
+  font-size: clamp(1.35rem, 3vw, 1.75rem);
+}
+
+.account-locked-form-heading p {
+  margin-bottom: 1.35rem;
+  color: var(--color-muted);
+}
+
+.unlock-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.unlock-form-field {
+  display: grid;
+  min-width: 0;
+  gap: 0.45rem;
+}
+
+.unlock-form-field label {
+  color: #334155;
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.unlock-form-field input,
+.unlock-form-field textarea {
+  width: 100%;
+  min-width: 0;
+  min-height: 48px;
+  padding: 0.75rem 0.85rem;
+  border: 1px solid #cbd5e1;
+  border-radius: var(--radius-sm);
+  outline: none;
+  color: var(--color-text);
+  background: #fff;
+  transition: border-color 150ms ease, box-shadow 150ms ease;
+}
+
+.unlock-form-field textarea {
+  min-height: 112px;
+  resize: vertical;
+}
+
+.unlock-form-field input:hover,
+.unlock-form-field textarea:hover {
+  border-color: #a5b4fc;
+}
+
+.unlock-form-field input:focus,
+.unlock-form-field textarea:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 4px rgba(var(--color-primary-rgb), 0.16);
+}
+
+.unlock-form-field small {
+  color: var(--color-muted);
+  font-size: 0.78rem;
+}
+
+.unlock-message-field {
+  grid-column: 1 / -1;
+}
+
+.unlock-form-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 1.35rem;
+}
+
+.unlock-form-actions .button {
+  flex: 1 1 220px;
+}
+
+@media (max-width: 620px) {
+  .account-locked-shell {
+    width: min(calc(100% - 1rem), 860px);
+    padding-block: 1rem;
+  }
+
+  .account-locked-card {
+    padding: 1.35rem;
+  }
+
+  .account-locked-heading {
+    align-items: flex-start;
+  }
+
+  .account-locked-reason {
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+
+  .unlock-form-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .unlock-message-field {
+    grid-column: auto;
+  }
+
+  .unlock-form-actions {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

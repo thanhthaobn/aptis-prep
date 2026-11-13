@@ -164,11 +164,9 @@ public class StudentExamCatalogController {
         model.addAttribute("attemptResult", result);
         var scoreGuideView = scoringGuideService.forResultView(result);
         model.addAttribute("scoreGuides", scoreGuideView.guides());
+        model.addAttribute("overallScaleMax", scoreGuideView.combinedScaleMax());
         model.addAttribute("feedbackWithoutGuide", scoreGuideView.feedbackWithoutGuide());
         model.addAttribute("canRegradeEmpty", examAttemptContract.canRegradeEmpty(userId, id));
-        if (!"IN_PROGRESS".equals(result.state())
-                && examAttemptContract instanceof ExamAttemptService reviewService)
-            model.addAttribute("review", reviewService.review(userId, id));
         return "student/attempt/result";
     }
 

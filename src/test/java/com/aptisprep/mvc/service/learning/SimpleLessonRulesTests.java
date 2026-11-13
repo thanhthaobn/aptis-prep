@@ -112,10 +112,13 @@ class SimpleLessonRulesTests {
                             LessonAuthorProfile.forSkill(skill).exampleLabel(),
                             "name=\"image\"",
                             "name=\"video\"",
-                            "name=\"audio\"",
-                            "sampleVisibility",
-                            "transcriptVisibility")
+                            "sampleVisibility")
                     .doesNotContain("block-list", "Thêm khối");
+            if (skill.equals("Listening")) {
+                assertThat(html).contains("name=\"audio\"", "transcriptVisibility");
+            } else {
+                assertThat(html).doesNotContain("name=\"audio\"", "transcriptVisibility");
+            }
         }
     }
 

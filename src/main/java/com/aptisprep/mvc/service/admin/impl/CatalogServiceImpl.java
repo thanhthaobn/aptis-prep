@@ -694,10 +694,13 @@ public class CatalogServiceImpl implements CatalogService {
 
     private void normalizeQuestionFields(QuestionDTO form) {
         String skill = form.getSkill();
-        if ("WRITING".equals(skill)) form.setQuestionType("WRITING_TEXT");
-        else if ("SPEAKING".equals(skill)) form.setQuestionType("SPEAKING_AUDIO");
-        else if (!Set.of("SINGLE_CHOICE", "MATCHING", "ORDERING").contains(form.getQuestionType()))
+        if (form.getQuestionType() == null || form.getQuestionType().isBlank()) {
+            if ("WRITING".equals(skill)) form.setQuestionType("WRITING_TEXT");
+            else if ("SPEAKING".equals(skill)) form.setQuestionType("SPEAKING_AUDIO");
+            else form.setQuestionType("SINGLE_CHOICE");
+        } else if (!TYPES.contains(form.getQuestionType())) {
             form.setQuestionType("SINGLE_CHOICE");
+        }
         String type = form.getQuestionType();
         if (type == null || !TYPES.contains(type)) return;
         if (!"READING".equals(skill)) form.setReadingPassage(null);

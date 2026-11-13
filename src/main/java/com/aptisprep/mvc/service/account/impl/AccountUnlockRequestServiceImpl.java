@@ -17,6 +17,8 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -89,6 +91,30 @@ public class AccountUnlockRequestServiceImpl implements AccountUnlockRequestServ
         } catch (IllegalArgumentException exception) {
             throw new BusinessRuleException("Trạng thái yêu cầu không hợp lệ");
         }
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<AccountUnlockRequestDTO> page(String status, int page, int size) {
+        int safePage = Math.max(0, page);
+        int safeSize = Math.min(50, Math.max(1, size));
+        Page<AccountUnlockRequest> result;
+        if (status == null || status.isBlank() || "ALL".equalsIgnoreCase(status)) {
+            result =
+                    requestRepository.findAllByOrderByCreatedAtDesc(
+                            PageRequest.of(safePage, safeSize));
+        } else {
+            UnlockRequestStatus filter;
+            try {
+                filter = UnlockRequestStatus.valueOf(status.trim().toUpperCase(Locale.ROOT));
+            } catch (IllegalArgumentException exception) {
+                throw new BusinessRuleException("Trạng thái yêu cầu không hợp lệ");
+            }
+            result =
+                    requestRepository.findByStatusOrderByCreatedAtDesc(
+                            filter, PageRequest.of(safePage, safeSize));
+        }
+        return result.map(this::toDto);
     }
 
     @Override

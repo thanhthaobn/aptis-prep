@@ -11,6 +11,7 @@ import com.aptisprep.mvc.entity.*;
 import com.aptisprep.mvc.enums.*;
 import com.aptisprep.mvc.exception.*;
 import com.aptisprep.mvc.repository.*;
+import com.aptisprep.mvc.service.exam.ExamAttemptQueryService;
 import com.aptisprep.mvc.service.exam.ExamAttemptService;
 import com.aptisprep.mvc.support.contract.IntegrationModels.*;
 import java.math.BigDecimal;
@@ -45,9 +46,31 @@ class LearningPathCheckpointTests {
     @Autowired org.springframework.context.ApplicationEventPublisher events;
     @Autowired org.springframework.transaction.PlatformTransactionManager transactionManager;
     @MockitoBean ExamAttemptService engine;
+    @MockitoBean ExamAttemptQueryService attemptQueries;
 
     @BeforeEach
     void curriculum() {
+        when(attemptQueries.result(anyInt(), anyInt()))
+                .thenAnswer(
+                        invocation ->
+                                engine.result(
+                                        invocation.getArgument(0), invocation.getArgument(1)));
+        when(attemptQueries.history(anyInt(), anyInt(), anyInt(), any()))
+                .thenAnswer(
+                        invocation ->
+                                engine.history(
+                                        invocation.getArgument(0),
+                                        invocation.getArgument(1),
+                                        invocation.getArgument(2),
+                                        invocation.getArgument(3)));
+        when(attemptQueries.checkpointOriginPathId(anyInt(), anyInt()))
+                .thenAnswer(
+                        invocation ->
+                                Optional.ofNullable(
+                                                engine.checkpointOriginPathId(
+                                                        invocation.getArgument(0),
+                                                        invocation.getArgument(1)))
+                                        .orElse(Optional.empty()));
         for (String level : List.of("A1", "A2", "B1", "B2", "C1"))
             if (lessons.findAll().stream()
                     .noneMatch(lesson -> lesson.getTitle().equals("Checkpoint " + level))) {

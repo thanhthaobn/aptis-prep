@@ -107,8 +107,7 @@ class AdminScoringPreviewTests {
                                 .param("certificatePage", "1")
                                 .with(user("admin@aptis.local").roles("ADMIN")))
                 .andExpect(status().isOk())
-                .andExpect(
-                        content().string(containsString("/admin/certificates?certificatePage=0")))
+                .andExpect(content().string(not(containsString("Pagination certificate"))))
                 .andExpect(content().string(not(containsString("Pagination scheme"))));
         var exam = new MockExam();
         exam.setTitle("Assigned full mock");
@@ -137,16 +136,17 @@ class AdminScoringPreviewTests {
     @Test
     @Transactional
     void aNewSchemeIsFilteredByItsScopeBeforeAnyExamUsesIt() throws Exception {
-        mvc.perform(
-                        post("/admin/scoring-schemes")
-                                .param("certificateId", certificate.getId().toString())
-                                .param("name", "Reading practice scope")
-                                .param("version", "scope-test")
-                                .param("examType", "PRACTICE")
-                                .param("scopeSkill", "READING")
-                                .with(user("admin@aptis.local").roles("ADMIN"))
-                                .with(csrf()))
-                .andExpect(status().is3xxRedirection());
+        var request =
+                post("/admin/scoring-schemes")
+                        .param("certificateId", certificate.getId().toString())
+                        .param("name", "Reading practice scope")
+                        .param("version", "scope-test")
+                        .param("examType", "PRACTICE")
+                        .param("scopeSkill", "READING")
+                        .with(user("admin@aptis.local").roles("ADMIN"))
+                        .with(csrf());
+        addCompleteRanges(request, "READING", false);
+        mvc.perform(request).andExpect(status().is3xxRedirection());
         var created =
                 schemes.findByCertificateIdOrderByVersionDesc(certificate.getId()).stream()
                         .filter(value -> "scope-test".equals(value.getVersion()))
@@ -184,32 +184,34 @@ class AdminScoringPreviewTests {
     void savesCombinedSchemeWithSkillSpecificScalesAndIndividualRangesInOneRequest()
             throws Exception {
         var admin = user("admin@aptis.local").roles("ADMIN");
-        mvc.perform(get("/admin/scoring-schemes/create").with(admin))
+        mvc.perform(get("/admin/scoring-schemes/create").param("examType", "FULL_MOCK").with(admin))
                 .andExpect(status().isOk())
                 .andExpect(
-                        content().string(containsString("ranges[GRAMMAR_VOCABULARY_C2].maxScore")));
+                        content().string(containsString("ranges[GRAMMAR_VOCABULARY_C1].maxScore")))
+                .andExpect(
+                        content()
+                                .string(
+                                        not(
+                                                containsString(
+                                                        "ranges[GRAMMAR_VOCABULARY_C2].maxScore"))));
+        var request =
+                post("/admin/scoring-schemes")
+                        .with(admin)
+                        .with(csrf())
+                        .param("certificateId", certificate.getId().toString())
+                        .param("name", "Combined scoring editor")
+                        .param("version", "combined-editor")
+                        .param("examType", "FULL_MOCK")
+                        .param("configureScores", "true")
+                        .param("skillScales[READING].rawMin", "0")
+                        .param("skillScales[READING].rawMax", "40");
+        addCompleteRanges(request, "GRAMMAR_VOCABULARY", false);
+        addCompleteRanges(request, "READING", true);
+        addCompleteRanges(request, "LISTENING", true);
+        addCompleteRanges(request, "WRITING", true);
+        addCompleteRanges(request, "SPEAKING", true);
         var response =
-                mvc.perform(
-                                post("/admin/scoring-schemes")
-                                        .with(admin)
-                                        .with(csrf())
-                                        .param("certificateId", certificate.getId().toString())
-                                        .param("name", "Combined scoring editor")
-                                        .param("version", "combined-editor")
-                                        .param("examType", "FULL_MOCK")
-                                        .param("configureScores", "true")
-                                        .param("skillScales[READING].rawMin", "0")
-                                        .param("skillScales[READING].rawMax", "40")
-                                        .param("skillScales[READING].scaleMin", "0")
-                                        .param("skillScales[READING].scaleMax", "50")
-                                        .param("skillScales[LISTENING].rawMin", "0")
-                                        .param("skillScales[LISTENING].rawMax", "50")
-                                        .param("skillScales[LISTENING].scaleMin", "0")
-                                        .param("skillScales[LISTENING].scaleMax", "50")
-                                        .param("ranges[READING_A1].minScore", "0")
-                                        .param("ranges[READING_A1].maxScore", "17.99")
-                                        .param("ranges[LISTENING_A1].minScore", "0")
-                                        .param("ranges[LISTENING_A1].maxScore", "12.99"))
+                mvc.perform(request)
                         .andExpect(status().is3xxRedirection())
                         .andReturn()
                         .getResponse();
@@ -219,7 +221,7 @@ class AdminScoringPreviewTests {
                         .findFirst()
                         .orElseThrow();
         org.junit.jupiter.api.Assertions.assertEquals(
-                2, bands.findBySchemeIdOrderBySkillAscMinScoreAsc(created.getId()).size());
+                29, bands.findBySchemeIdOrderBySkillAscMinScoreAsc(created.getId()).size());
         org.junit.jupiter.api.Assertions.assertNull(created.getEffectiveFrom());
         var raw = new java.math.BigDecimal("33.25");
         org.junit.jupiter.api.Assertions.assertEquals(
@@ -229,8 +231,147 @@ class AdminScoringPreviewTests {
                 raw, scoringPolicy.scale(created.getId(), "LISTENING", raw));
         mvc.perform(get(response.getRedirectedUrl()).with(admin))
                 .andExpect(status().isOk())
-                .andExpect(content().string(containsString("17.99")))
-                .andExpect(content().string(containsString("12.99")));
+                .andExpect(content().string(containsString("49.99")));
+    }
+
+    @Test
+    void createSchemeFormSeparatesCombinedAndSingleSkillScoringModes() throws Exception {
+        var admin = user("admin@aptis.local").roles("ADMIN");
+        mvc.perform(get("/admin/scoring-schemes/create").with(admin))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("Kiểm tra đầu vào")))
+                .andExpect(content().string(containsString("Bài luyện tập")))
+                .andExpect(content().string(containsString("Kiểm tra cuối chặng")))
+                .andExpect(content().string(containsString("Thi thử tổng hợp")))
+                .andExpect(content().string(not(containsString("data-scoring-skill="))));
+
+        for (String examType : java.util.List.of("PLACEMENT", "FULL_MOCK")) {
+            mvc.perform(
+                            get("/admin/scoring-schemes/create")
+                                    .param("examType", examType)
+                                    .with(admin))
+                    .andExpect(status().isOk())
+                    .andExpect(content().string(containsString("Thang điểm theo tất cả kỹ năng")))
+                    .andExpect(
+                            content()
+                                    .string(
+                                            containsString(
+                                                    "data-scoring-skill=\"GRAMMAR_VOCABULARY\"")))
+                    .andExpect(content().string(containsString("data-scoring-skill=\"READING\"")))
+                    .andExpect(content().string(containsString("data-scoring-skill=\"LISTENING\"")))
+                    .andExpect(content().string(containsString("data-scoring-skill=\"WRITING\"")))
+                    .andExpect(content().string(containsString("data-scoring-skill=\"SPEAKING\"")))
+                    .andExpect(content().string(containsString("ranges[READING_A0].minScore")))
+                    .andExpect(content().string(not(containsString("Chọn lại kỹ năng"))));
+        }
+
+        mvc.perform(get("/admin/scoring-schemes/create").param("examType", "PRACTICE").with(admin))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("Kỹ năng áp dụng")))
+                .andExpect(content().string(not(containsString("data-scoring-skill="))));
+
+        mvc.perform(
+                        get("/admin/scoring-schemes/create")
+                                .param("examType", "PRACTICE")
+                                .param("scopeSkill", "READING")
+                                .with(admin))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("Bản nháp")))
+                .andExpect(content().string(not(containsString("id=\"schemeStatus\""))))
+                .andExpect(content().string(containsString("Thang điểm theo kỹ năng")))
+                .andExpect(content().string(containsString("data-scoring-skill=\"READING\"")))
+                .andExpect(content().string(not(containsString("Điểm quy đổi thấp nhất"))))
+                .andExpect(content().string(not(containsString("Điểm quy đổi cao nhất"))))
+                .andExpect(
+                        content().string(not(containsString("data-scoring-skill=\"LISTENING\""))))
+                .andExpect(content().string(not(containsString("ranges[READING_A0].minScore"))))
+                .andExpect(content().string(not(containsString("Ngưỡng đạt"))));
+    }
+
+    @Test
+    void scoringModeCanBeChangedInsideTheSameFormWithoutLosingEnteredInformation()
+            throws Exception {
+        var admin = user("admin@aptis.local").roles("ADMIN");
+
+        mvc.perform(
+                        post("/admin/scoring-schemes/create/configure")
+                                .with(admin)
+                                .with(csrf())
+                                .param("name", "Bộ điểm đang nhập")
+                                .param("version", "2.0")
+                                .param("status", "DRAFT")
+                                .param("examType", "PRACTICE")
+                                .param("scopeSkill", "READING"))
+                .andExpect(status().isOk())
+                .andExpect(
+                        model().attribute(
+                                        "schemeForm",
+                                        allOf(
+                                                hasProperty("name", is("Bộ điểm đang nhập")),
+                                                hasProperty("version", is("2.0")),
+                                                hasProperty("examType", is("PRACTICE")),
+                                                hasProperty("scopeSkill", is("READING")))))
+                .andExpect(content().string(containsString("data-scoring-skill=\"READING\"")))
+                .andExpect(
+                        content().string(not(containsString("data-scoring-skill=\"LISTENING\""))));
+
+        mvc.perform(
+                        post("/admin/scoring-schemes/create/configure")
+                                .with(admin)
+                                .with(csrf())
+                                .param("name", "Bộ điểm đang nhập")
+                                .param("version", "2.0")
+                                .param("status", "DRAFT")
+                                .param("examType", "FULL_MOCK")
+                                .param("scopeSkill", "READING"))
+                .andExpect(status().isOk())
+                .andExpect(
+                        model().attribute(
+                                        "schemeForm",
+                                        allOf(
+                                                hasProperty("name", is("Bộ điểm đang nhập")),
+                                                hasProperty("version", is("2.0")),
+                                                hasProperty("examType", is("FULL_MOCK")),
+                                                hasProperty("scopeSkill", nullValue()))))
+                .andExpect(content().string(containsString("Thang điểm theo tất cả kỹ năng")))
+                .andExpect(content().string(containsString("data-scoring-skill=\"READING\"")))
+                .andExpect(content().string(containsString("data-scoring-skill=\"LISTENING\"")))
+                .andExpect(content().string(containsString("data-scoring-skill=\"WRITING\"")))
+                .andExpect(content().string(containsString("data-scoring-skill=\"SPEAKING\"")));
+    }
+
+    @Test
+    @Transactional
+    void placementSchemePersistsBelowA1Range() throws Exception {
+        var request =
+                post("/admin/scoring-schemes")
+                        .with(user("admin@aptis.local").roles("ADMIN"))
+                        .with(csrf())
+                        .param("certificateId", certificate.getId().toString())
+                        .param("name", "Placement below A1")
+                        .param("version", "placement-below-a1")
+                        .param("examType", "PLACEMENT")
+                        .param("configureScores", "true")
+                        .param("status", "DRAFT");
+        addCompleteRanges(request, "GRAMMAR_VOCABULARY", false);
+        addCompleteRanges(request, "READING", true);
+        addCompleteRanges(request, "LISTENING", true);
+        addCompleteRanges(request, "WRITING", true);
+        addCompleteRanges(request, "SPEAKING", true);
+        mvc.perform(request).andExpect(status().is3xxRedirection());
+        var created =
+                schemes.findByCertificateIdOrderByVersionDesc(certificate.getId()).stream()
+                        .filter(value -> "placement-below-a1".equals(value.getVersion()))
+                        .findFirst()
+                        .orElseThrow();
+        var belowA1 =
+                bands.findBySchemeIdOrderBySkillAscMinScoreAsc(created.getId()).stream()
+                        .filter(value -> "READING".equals(value.getSkill()))
+                        .filter(value -> "A0".equals(value.getCefrLevel()))
+                        .findFirst()
+                        .orElseThrow();
+        org.junit.jupiter.api.Assertions.assertEquals(
+                new java.math.BigDecimal("9.99"), belowA1.getMaxScore());
     }
 
     @Test
@@ -252,12 +393,12 @@ class AdminScoringPreviewTests {
                         .param("skillScales[READING].rawMax", "40")
                         .param("skillScales[READING].scaleMin", "0")
                         .param("skillScales[READING].scaleMax", "60");
-        String[] levels = {"A1", "A2", "B1", "B2", "C1", "C2"};
+        String[] levels = {"A1", "A2", "B1", "B2", "C1"};
         for (int i = 0; i < levels.length; i++) {
             request.param("ranges[READING_" + levels[i] + "].minScore", String.valueOf(i * 10))
                     .param(
                             "ranges[READING_" + levels[i] + "].maxScore",
-                            i == 5
+                            i == levels.length - 1
                                     ? "60"
                                     : java.math.BigDecimal.valueOf((i + 1) * 10)
                                             .subtract(new java.math.BigDecimal("0.01"))
@@ -271,7 +412,7 @@ class AdminScoringPreviewTests {
                         .orElseThrow();
         org.junit.jupiter.api.Assertions.assertEquals(RecordStatus.DRAFT, created.getStatus());
         org.junit.jupiter.api.Assertions.assertEquals(
-                6, bands.findBySchemeIdOrderBySkillAscMinScoreAsc(created.getId()).size());
+                5, bands.findBySchemeIdOrderBySkillAscMinScoreAsc(created.getId()).size());
 
         // Reuse every submitted value while editing; the scale must stay 0–60, not become 0–40.
         var edit = post("/admin/scoring-schemes/" + created.getId()).with(admin).with(csrf());
@@ -330,20 +471,19 @@ class AdminScoringPreviewTests {
                                 .param("name", "Draft certificate")
                                 .param("code", "DRAFT_CREATE_TEST")
                                 .param("status", "ACTIVE"))
-                .andExpect(status().is3xxRedirection());
-        var draft = certificates.findByCodeIgnoreCase("DRAFT_CREATE_TEST").orElseThrow();
-        org.junit.jupiter.api.Assertions.assertEquals(RecordStatus.DRAFT, draft.getStatus());
-        mvc.perform(
-                        post("/admin/certificates/{id}/activate", draft.getId())
-                                .with(admin)
-                                .with(csrf()))
-                .andExpect(status().is3xxRedirection());
-        org.junit.jupiter.api.Assertions.assertEquals(RecordStatus.ACTIVE, draft.getStatus());
+                .andExpect(status().isOk())
+                .andExpect(
+                        content()
+                                .string(
+                                        containsString(
+                                                "Hệ thống chỉ phục vụ chứng chỉ Aptis ESOL General")));
+        org.junit.jupiter.api.Assertions.assertTrue(
+                certificates.findByCodeIgnoreCase("DRAFT_CREATE_TEST").isEmpty());
     }
 
     @Test
     @Transactional
-    void singleSkillSchemeUsesOneLevelWithAnExplicitPassingScore() throws Exception {
+    void singleSkillSchemeRejectsAnIncompleteCefrConfiguration() throws Exception {
         mvc.perform(
                         post("/admin/scoring-schemes")
                                 .with(user("admin@aptis.local").roles("ADMIN"))
@@ -360,30 +500,24 @@ class AdminScoringPreviewTests {
                                 .param("scale.rawMax", "50")
                                 .param("targetLevel", "B1")
                                 .param("passingScore", "25"))
-                .andExpect(status().is3xxRedirection());
-        var created =
-                schemes.findByCertificateIdOrderByVersionDesc(certificate.getId()).stream()
-                        .filter(value -> "checkpoint-editor".equals(value.getVersion()))
-                        .findFirst()
-                        .orElseThrow();
-        var below = new java.math.BigDecimal("24.99");
-        org.junit.jupiter.api.Assertions.assertNull(created.getEffectiveFrom());
-        mvc.perform(
-                        post("/admin/scoring-schemes/{id}/activate", created.getId())
-                                .with(user("admin@aptis.local").roles("ADMIN"))
-                                .with(csrf()))
-                .andExpect(status().is3xxRedirection());
-        var vietnamNow = LocalDateTime.now(java.time.ZoneId.of("Asia/Ho_Chi_Minh"));
-        org.junit.jupiter.api.Assertions.assertTrue(
-                created.getEffectiveFrom().isAfter(vietnamNow.minusMinutes(1))
-                        && !created.getEffectiveFrom().isAfter(vietnamNow));
-        var threshold = new java.math.BigDecimal("25.00");
-        org.junit.jupiter.api.Assertions.assertTrue(
-                scoringPolicy.belowConfiguredTarget(created.getId(), "READING", below));
-        org.junit.jupiter.api.Assertions.assertNull(
-                scoringPolicy.estimatedLevel(created.getId(), "READING", below));
-        org.junit.jupiter.api.Assertions.assertEquals(
-                "B1", scoringPolicy.estimatedLevel(created.getId(), "READING", threshold));
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("Nhập đầy đủ khoảng điểm CEFR")));
+    }
+
+    private void addCompleteRanges(
+            org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder request,
+            String skill,
+            boolean belowA1) {
+        String[] levels =
+                belowA1
+                        ? new String[] {"A0", "A1", "A2", "B1", "B2", "C1"}
+                        : new String[] {"A1", "A2", "B1", "B2", "C1"};
+        for (int index = 0; index < levels.length; index++) {
+            int min = index * 10;
+            String max = index == levels.length - 1 ? "50" : (min + 9) + ".99";
+            request.param("ranges[" + skill + "_" + levels[index] + "].minScore", "" + min)
+                    .param("ranges[" + skill + "_" + levels[index] + "].maxScore", max);
+        }
     }
 
     @Test
@@ -470,22 +604,23 @@ class AdminScoringPreviewTests {
         mvc.perform(
                         post("/admin/certificates")
                                 .param("name", "New certificate")
-                                .param("code", "NEW_CERT")
+                                .param("code", "APTIS_GENERAL")
                                 .param("status", "ACTIVE")
                                 .with(user("admin@aptis.local").roles("ADMIN")))
                 .andExpect(status().isForbidden());
         mvc.perform(
                         post("/admin/certificates")
                                 .param("name", "New certificate")
-                                .param("code", "NEW_CERT")
+                                .param("code", "APTIS_GENERAL")
                                 .param("status", "ACTIVE")
                                 .with(user("admin@aptis.local").roles("ADMIN"))
                                 .with(csrf()))
-                .andExpect(status().is3xxRedirection());
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("Mã chứng chỉ đã tồn tại")));
         mvc.perform(
                         post("/admin/certificates")
                                 .param("name", "Duplicate certificate")
-                                .param("code", "NEW_CERT")
+                                .param("code", "APTIS_GENERAL")
                                 .param("status", "ACTIVE")
                                 .with(user("admin@aptis.local").roles("ADMIN"))
                                 .with(csrf()))

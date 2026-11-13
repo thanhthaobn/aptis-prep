@@ -240,6 +240,32 @@
         font-weight: 700;
         text-align: center;
       }
+      .attempt-pagination {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 1rem;
+        margin-top: 1.5rem;
+        padding: 1rem 0 0;
+        border-top: 1px solid var(--color-border);
+      }
+      .attempt-pagination .button[aria-disabled='true'] {
+        opacity: .45;
+        pointer-events: none;
+      }
+      .exam-countdown {
+        width: 100%;
+        margin: 0;
+        color: var(--color-navy);
+        font-size: 1.2rem;
+        font-weight: 800;
+        letter-spacing: .03em;
+        text-align: center;
+      }
+      .exam-control-panel .exam-timer-badge {
+        display: flex;
+        justify-content: center;
+      }
       @media (max-width: 560px) {
         .question-item {
           padding: 1rem;
@@ -303,9 +329,9 @@
           th:if="${attempt.deadline != null}"
           th:attr="data-deadline=${attempt.deadline},data-next-section=${attempt.nextSection},data-section-seconds=${attempt.sectionSkill == null ? null : attempt.remainingSeconds}"
         >
-          Hạn máy chủ:
-          <strong th:text="${#temporals.format(attempt.deadline, 'dd/MM/yyyy HH:mm:ss')}"></strong>
-          <small class="d-block muted">Thời gian được kiểm tra lại khi gửi form.</small>
+          <div id="exam-countdown" class="exam-countdown" aria-live="polite">
+            Đang tính thời gian...
+          </div>
         </div>
         <nav
           class="exam-section-navigation"
@@ -352,11 +378,11 @@
             câu đã làm
           </span>
           <div class="exam-question-grid">
-            <th:block th:each="question : ${attempt.questions}">
+            <th:block th:each="question, questionStat : ${attempt.questions}">
               <a
                 th:each="item : ${question.items}"
                 class="exam-question-link"
-                th:href="${'#item-' + item.itemId}"
+                th:href="@{/student/attempts/{id}(id=${attempt.attemptId},page=${questionStat.index})} + '#item-' + ${item.itemId}"
                 th:text="${item.position}"
                 th:classappend="${item.answered()} ? 'is-answered'"
                 th:attr="data-item-id=${item.itemId},aria-label=${'Câu ' + item.position}"
@@ -423,6 +449,7 @@
         <section
           class="dashboard-panel dashboard-section full-mock-question"
           th:each="question, questionStat : ${attempt.questions}"
+          th:if="${questionStat.index == currentPage}"
           th:attr="data-question-page=${questionStat.index}"
         >
           <p
@@ -490,6 +517,7 @@
             >
               <input type="hidden" name="questionId" th:value="${question.questionId}" />
               <input type="hidden" name="itemId" th:value="${item.itemId}" />
+              <input type="hidden" name="page" th:value="${currentPage}" />
               <div th:if="${question.type == 'ORDERING'}" class="field">
                 <label th:for="${'position-' + (item.itemId)}">Vị trí trong thứ tự</label>
                 <input
@@ -545,6 +573,7 @@
             >
               <input type="hidden" name="questionId" th:value="${question.questionId}" />
               <input type="hidden" name="itemId" th:value="${item.itemId}" />
+              <input type="hidden" name="page" th:value="${currentPage}" />
               <span class="speaking-recorder-label">Câu trả lời của bạn</span>
               <div class="microphone-recorder" hidden>
                 <div class="speaking-recorder-actions">
@@ -568,6 +597,26 @@
             </form>
           </div>
         </section>
+        <nav
+          class="attempt-pagination"
+          th:if="${totalPages > 1}"
+          aria-label="Chuyển phần bài thi"
+        >
+          <a
+            class="button button-secondary"
+            th:href="@{/student/attempts/{id}(id=${attempt.attemptId},page=${currentPage - 1})}"
+            th:attr="aria-disabled=${currentPage == 0}"
+          >← Phần trước</a>
+          <span
+            class="full-mock-pagination-info"
+            th:text="${'Phần ' + (currentPage + 1) + ' / ' + totalPages}"
+          ></span>
+          <a
+            class="button"
+            th:href="@{/student/attempts/{id}(id=${attempt.attemptId},page=${currentPage + 1})}"
+            th:attr="aria-disabled=${currentPage == totalPages - 1}"
+          >Phần tiếp theo →</a>
+        </nav>
       </main>
     </div>
     <footer class="site-footer">
@@ -576,5 +625,41 @@
         <span>Nền tảng học tập và luyện thi Aptis</span>
       </div>
     </footer>
+    <script th:if="${attempt.deadline != null}">
+      (function () {
+        const timer = document.getElementById('exam-timer');
+        const countdown = document.getElementById('exam-countdown');
+        if (!timer || !countdown) return;
+
+        const deadline = new Date(timer.dataset.deadline).getTime();
+        if (Number.isNaN(deadline)) {
+          countdown.textContent = 'Không xác định được thời gian';
+          return;
+        }
+
+        const format = (totalSeconds) => {
+          const hours = Math.floor(totalSeconds / 3600);
+          const minutes = Math.floor((totalSeconds % 3600) / 60);
+          const seconds = totalSeconds % 60;
+          const minutePart = String(minutes).padStart(2, '0');
+          const secondPart = String(seconds).padStart(2, '0');
+          return hours > 0
+            ? String(hours).padStart(2, '0') + ':' + minutePart + ':' + secondPart
+            : minutePart + ':' + secondPart;
+        };
+
+        let intervalId;
+        const update = () => {
+          const remaining = Math.max(0, Math.ceil((deadline - Date.now()) / 1000));
+          countdown.textContent = remaining > 0
+            ? 'Còn ' + format(remaining)
+            : 'Đã hết thời gian';
+          if (remaining === 0) window.clearInterval(intervalId);
+        };
+
+        update();
+        intervalId = window.setInterval(update, 1000);
+      })();
+    </script>
   </body>
 </html>

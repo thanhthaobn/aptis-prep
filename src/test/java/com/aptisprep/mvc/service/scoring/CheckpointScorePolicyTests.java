@@ -12,14 +12,18 @@ class CheckpointScorePolicyTests {
         assertThat(CheckpointScorePolicy.confirmedLevel("CHECKPOINT", "A1", "C2")).isEqualTo("A1");
         assertThat(CheckpointScorePolicy.passed("CHECKPOINT", "A1", "A1", new BigDecimal("50")))
                 .isTrue();
+        assertThat(
+                        CheckpointScorePolicy.confirmedLevel(
+                                "CHECKPOINT", "B1", "A1", new BigDecimal("40")))
+                .isEqualTo("B1");
     }
 
     @Test
-    void confirmedCefrFromTheConfiguredBandDecidesPassWithoutASecondHardCodedThreshold() {
-        assertThat(CheckpointScorePolicy.passed("CHECKPOINT", "A1", "A1", new BigDecimal("30")))
+    void checkpointRequiresAtLeastEightyPercent() {
+        assertThat(CheckpointScorePolicy.passed("CHECKPOINT", "A1", "A1", new BigDecimal("40")))
                 .isTrue();
-        assertThat(CheckpointScorePolicy.passed("CHECKPOINT", "A1", "A1", new BigDecimal("29.99")))
-                .isTrue();
+        assertThat(CheckpointScorePolicy.passed("CHECKPOINT", "A1", "A1", new BigDecimal("39.99")))
+                .isFalse();
         assertThat(CheckpointScorePolicy.passed("CHECKPOINT", "A1", "A1", BigDecimal.ZERO))
                 .isFalse();
     }
@@ -27,7 +31,7 @@ class CheckpointScorePolicyTests {
     @Test
     void lowLevelAndMissingResultCannotPass() {
         assertThat(CheckpointScorePolicy.passed("CHECKPOINT", "A2", "A1", new BigDecimal("40")))
-                .isFalse();
+                .isTrue();
         assertThat(CheckpointScorePolicy.passed("CHECKPOINT", "A1", null, new BigDecimal("40")))
                 .isFalse();
         assertThat(CheckpointScorePolicy.passed("CHECKPOINT", "A1", "A1", null)).isFalse();
